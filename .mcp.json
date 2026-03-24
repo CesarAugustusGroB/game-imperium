@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "map2d": {
+      "command": "npx",
+      "args": ["tsx", "tools/mcp-server.ts"],
+      "cwd": "C:\\Users\\TecdataEngineering\\Development\\Map2D"
+    }
+  }
+}

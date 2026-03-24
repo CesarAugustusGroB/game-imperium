@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grand Strategy Map</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a2e; }
+      canvas { display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+      #army-overlay { pointer-events: none; z-index: 10; }
+      #tooltip {
+        display: none;
+        position: absolute;
+        pointer-events: none;
+        background: rgba(10, 10, 30, 0.9);
+        color: #e0e0e0;
+        border: 1px solid rgba(180, 160, 100, 0.6);
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        font-size: 13px;
+        line-height: 1.4;
+        z-index: 100;
+        max-width: 250px;
+      }
+      #tooltip .province-name { font-weight: 600; color: #f0d080; font-size: 14px; }
+      #tooltip .province-owner { color: #a0c0f0; }
+      #tooltip .province-terrain { color: #90b090; font-style: italic; }
+      #debug-panel {
+        position: fixed; top: 10px; right: 10px; z-index: 200;
+        background: rgba(10, 10, 30, 0.85); border: 1px solid rgba(180, 160, 100, 0.4);
+        border-radius: 6px; padding: 8px; font-family: 'Segoe UI', system-ui, sans-serif;
+        font-size: 12px; color: #c0c0c0;
+      }
+      .dp-title { font-weight: 600; color: #f0d080; margin-bottom: 6px; font-size: 13px; }
+      .dp-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+      .dp-btn {
+        background: rgba(60, 60, 80, 0.8); border: 1px solid rgba(100, 100, 120, 0.5);
+        color: #b0b0b0; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 11px;
+      }
+      .dp-btn:hover { background: rgba(80, 80, 110, 0.9); color: #e0e0e0; }
+      .dp-btn.dp-active { background: rgba(100, 80, 40, 0.8); color: #f0d080; border-color: rgba(180, 160, 100, 0.6); }
+      .dp-screenshot { width: 100%; margin-top: 2px; }
+    </style>
+  </head>
+  <body>
+    <canvas id="map-canvas"></canvas>
+    <canvas id="army-overlay"></canvas>
+    <div id="tooltip">
+      <div class="province-name"></div>
+      <div class="province-owner"></div>
+      <div class="province-terrain"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

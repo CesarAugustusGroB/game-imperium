@@ -1,0 +1,30 @@
+{
+  "nations": [
+    { "id": "france",           "name": "France",           "color": [30, 50, 180],    "capital": 1 },
+    { "id": "england",          "name": "England",          "color": [180, 30, 30],    "capital": 10 },
+    { "id": "scotland",         "name": "Scotland",         "color": [30, 100, 180],   "capital": 16 },
+    { "id": "castile",          "name": "Castile",          "color": [200, 180, 30],   "capital": 18 },
+    { "id": "aragon",           "name": "Aragon",           "color": [200, 120, 30],   "capital": 19 },
+    { "id": "portugal",         "name": "Portugal",         "color": [30, 140, 60],    "capital": 20 },
+    { "id": "granada",          "name": "Granada",          "color": [20, 160, 80],    "capital": 21 },
+    { "id": "hre",              "name": "Holy Roman Empire","color": [160, 160, 160],  "capital": 24 },
+    { "id": "milan",            "name": "Milan",            "color": [200, 200, 200],  "capital": 25 },
+    { "id": "florence",         "name": "Florence",         "color": [180, 60, 80],    "capital": 26 },
+    { "id": "papal",            "name": "Papal States",     "color": [240, 220, 100],  "capital": 27 },
+    { "id": "naples",           "name": "Naples",           "color": [200, 160, 100],  "capital": 28 },
+    { "id": "venice",           "name": "Venice",           "color": [40, 180, 160],   "capital": 30 },
+    { "id": "burgundy_nation",  "name": "Burgundy",         "color": [130, 30, 100],   "capital": 31 },
+    { "id": "denmark",          "name": "Denmark",          "color": [180, 30, 60],    "capital": 33 },
+    { "id": "sweden",           "name": "Sweden",           "color": [30, 60, 160],    "capital": 34 },
+    { "id": "norway",           "name": "Norway",           "color": [100, 30, 30],    "capital": 35 },
+    { "id": "poland",           "name": "Poland",           "color": [180, 30, 60],    "capital": 36 },
+    { "id": "lithuania",        "name": "Lithuania",        "color": [120, 60, 30],    "capital": 37 },
+    { "id": "muscovy",          "name": "Muscovy",          "color": [60, 120, 30],    "capital": 38 },
+    { "id": "ottomans",         "name": "Ottoman Empire",   "color": [50, 140, 50],    "capital": 40 },
+    { "id": "hungary",          "name": "Hungary",          "color": [150, 80, 80],    "capital": 43 },
+    { "id": "bohemia",          "name": "Bohemia",          "color": [170, 140, 60],   "capital": 44 },
+    { "id": "austria",          "name": "Austria",          "color": [220, 220, 220],  "capital": 45 },
+    { "id": "switzerland",      "name": "Switzerland",      "color": [180, 30, 30],    "capital": 46 },
+    { "id": "ireland",          "name": "Ireland",          "color": [30, 160, 60],    "capital": 47 }
+  ]
+}
