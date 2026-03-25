@@ -1,7 +1,8 @@
 import type { Hex, Point } from './hex';
-import { hexKey, hexNeighbors, offsetToAxial, HEX_SIZE } from './hex';
+import { hexKey, hexNeighbors, hexDistance, offsetToAxial, HEX_SIZE } from './hex';
 
 export type Faction = 'blue' | 'red';
+export type BattlePhase = 'fighting' | 'victory';
 
 export interface BattleUnit {
   id: number;
@@ -24,6 +25,12 @@ export interface BattleConfig {
 const DEFAULT_CONFIG: BattleConfig = { cols: 10, rows: 7, hexSize: HEX_SIZE };
 const MOVE_RANGE = 3;           // max hexes per move action
 const MOVE_ANIM_SPEED = 3.0;    // progress per second (1/speed = hop duration)
+const DAMAGE_PER_ROLL = 300;
+const MORALE_BREAK_THRESHOLD = 0.3;
+
+function rollD6(): number {
+  return Math.floor(Math.random() * 6) + 1;
+}
 
 export class BattleState {
   readonly config: BattleConfig;
@@ -32,6 +39,12 @@ export class BattleState {
   readonly units = new Map<number, BattleUnit>();
   selectedUnitId: number | null = null;
   private nextId = 1;
+
+  // Combat state
+  phase: BattlePhase = 'fighting';
+  winner: Faction | null = null;
+  roundCount = 0;
+  private startingStrength = new Map<Faction, number>();
 
   constructor(config?: Partial<BattleConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -166,7 +179,7 @@ export class BattleState {
     return result;
   }
 
-  /** BFS shortest path from → to, avoiding occupied hexes (except destination). */
+  /** BFS shortest path from -> to, avoiding occupied hexes (except destination). */
   findPath(from: Hex, to: Hex): Hex[] | null {
     const fromKey = hexKey(from.q, from.r);
     const toKey = hexKey(to.q, to.r);
@@ -199,7 +212,6 @@ export class BattleState {
         const nbKey = hexKey(nb.q, nb.r);
         if (visited.has(nbKey)) continue;
         if (!this.isValidHex(nb)) continue;
-        // Can pass through empty hexes or the target hex
         const occupant = this.getUnitAt(nb);
         if (occupant && nbKey !== toKey) continue;
         visited.add(nbKey);
@@ -211,9 +223,88 @@ export class BattleState {
     return null;
   }
 
+  // ── Combat ──
+
+  getAdjacentEnemies(unit: BattleUnit): BattleUnit[] {
+    const neighbors = hexNeighbors(unit.hex);
+    const enemies: BattleUnit[] = [];
+    for (const nh of neighbors) {
+      const other = this.getUnitAt(nh);
+      if (other && other.faction !== unit.faction) enemies.push(other);
+    }
+    return enemies;
+  }
+
+  getFactionUnits(faction: Faction): BattleUnit[] {
+    const result: BattleUnit[] = [];
+    for (const u of this.units.values()) {
+      if (u.faction === faction) result.push(u);
+    }
+    return result;
+  }
+
+  getFactionStrength(faction: Faction): number {
+    let total = 0;
+    for (const u of this.units.values()) {
+      if (u.faction === faction) total += u.strength;
+    }
+    return total;
+  }
+
+  findNearestEnemy(unit: BattleUnit): BattleUnit | null {
+    let nearest: BattleUnit | null = null;
+    let bestDist = Infinity;
+    for (const other of this.units.values()) {
+      if (other.faction === unit.faction) continue;
+      const d = hexDistance(unit.hex, other.hex);
+      if (d < bestDist) {
+        bestDist = d;
+        nearest = other;
+      }
+    }
+    return nearest;
+  }
+
+  /** Returns the first step on the shortest path (uses findPath internally). */
+  findStepToward(from: Hex, to: Hex): Hex | null {
+    const path = this.findPath(from, to);
+    if (!path || path.length < 2) return null;
+    return path[1];
+  }
+
+  resolveCombat(attacker: BattleUnit, defender: BattleUnit): void {
+    const atkRoll = rollD6();
+    const defRoll = rollD6() + 1; // defender advantage
+
+    attacker.strength -= defRoll * DAMAGE_PER_ROLL;
+    defender.strength -= atkRoll * DAMAGE_PER_ROLL;
+
+    // Remove destroyed units + clear selection
+    if (attacker.strength <= 0) {
+      this.units.delete(attacker.id);
+      if (this.selectedUnitId === attacker.id) this.selectedUnitId = null;
+    }
+    if (defender.strength <= 0) {
+      this.units.delete(defender.id);
+      if (this.selectedUnitId === defender.id) this.selectedUnitId = null;
+    }
+  }
+
+  checkMorale(): void {
+    for (const faction of ['blue', 'red'] as Faction[]) {
+      const current = this.getFactionStrength(faction);
+      const starting = this.startingStrength.get(faction) ?? 1;
+      if (current <= 0 || current / starting < MORALE_BREAK_THRESHOLD) {
+        this.phase = 'victory';
+        this.winner = faction === 'blue' ? 'red' : 'blue';
+        return;
+      }
+    }
+  }
+
   // ── Animation ──
 
-  /** Advance movement animations; consume path queue on hop completion (mirrors strategic update). */
+  /** Advance movement animations; consume path queue on hop completion. */
   updateAnimations(dt: number): void {
     for (const unit of this.units.values()) {
       if (unit.moveProgress >= 1) continue;
@@ -226,13 +317,11 @@ export class BattleState {
         // Advance to next hop in path queue
         if (unit.path.length > 0) {
           const next = unit.path.shift()!;
-          // Check if next hex is still free
           if (!this.getUnitAt(next)) {
             unit.prevHex = { q: unit.hex.q, r: unit.hex.r };
             unit.hex = { q: next.q, r: next.r };
             unit.moveProgress = 0;
           } else {
-            // Path blocked — stop
             unit.path = [];
           }
         }
@@ -243,7 +332,6 @@ export class BattleState {
   // ── Setup ──
 
   placeStartingUnits(): void {
-    // Blue faction — left side
     const bluePositions = [
       offsetToAxial(0, 1), offsetToAxial(0, 3), offsetToAxial(0, 5),
       offsetToAxial(1, 2), offsetToAxial(1, 4),
@@ -252,7 +340,6 @@ export class BattleState {
       this.addUnit('blue', hex, 2000 + i * 500, `${i + 1}st Blue Infantry`);
     });
 
-    // Red faction — right side
     const redPositions = [
       offsetToAxial(9, 1), offsetToAxial(9, 3), offsetToAxial(9, 5),
       offsetToAxial(8, 2), offsetToAxial(8, 4),
@@ -260,5 +347,9 @@ export class BattleState {
     redPositions.forEach((hex, i) => {
       this.addUnit('red', hex, 2000 + i * 500, `${i + 1}st Red Infantry`);
     });
+
+    // Record starting strengths for morale check
+    this.startingStrength.set('blue', this.getFactionStrength('blue'));
+    this.startingStrength.set('red', this.getFactionStrength('red'));
   }
 }
