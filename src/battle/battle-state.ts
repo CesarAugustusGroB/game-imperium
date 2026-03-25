@@ -29,7 +29,7 @@ export interface BattleConfig {
   hexSize: number;
 }
 
-const DEFAULT_CONFIG: BattleConfig = { cols: 10, rows: 7, hexSize: HEX_SIZE };
+const DEFAULT_CONFIG: BattleConfig = { cols: 20, rows: 14, hexSize: HEX_SIZE };
 const MOVE_RANGE = 3;           // max hexes per move action
 const MOVE_ANIM_SPEED = 1.2;    // progress per second (~0.83s per hop, 3 hops ≈ 2.5s)
 const DAMAGE_PER_ROLL = 300;
@@ -375,18 +375,22 @@ export class BattleState {
   placeStartingUnits(): void {
     const bluePositions = [
       offsetToAxial(0, 1), offsetToAxial(0, 3), offsetToAxial(0, 5),
-      offsetToAxial(1, 2), offsetToAxial(1, 4),
+      offsetToAxial(0, 7), offsetToAxial(0, 9), offsetToAxial(0, 11),
+      offsetToAxial(1, 2), offsetToAxial(1, 4), offsetToAxial(1, 6),
+      offsetToAxial(1, 10),
     ];
     bluePositions.forEach((hex, i) => {
-      this.addUnit('blue', hex, 2000 + i * 500, `${i + 1}st Blue Infantry`);
+      this.addUnit('blue', hex, 2000 + i * 300, `${i + 1}st Blue Infantry`);
     });
 
     const redPositions = [
-      offsetToAxial(9, 1), offsetToAxial(9, 3), offsetToAxial(9, 5),
-      offsetToAxial(8, 2), offsetToAxial(8, 4),
+      offsetToAxial(19, 1), offsetToAxial(19, 3), offsetToAxial(19, 5),
+      offsetToAxial(19, 7), offsetToAxial(19, 9), offsetToAxial(19, 11),
+      offsetToAxial(18, 2), offsetToAxial(18, 4), offsetToAxial(18, 6),
+      offsetToAxial(18, 10),
     ];
     redPositions.forEach((hex, i) => {
-      this.addUnit('red', hex, 2000 + i * 500, `${i + 1}st Red Infantry`);
+      this.addUnit('red', hex, 2000 + i * 300, `${i + 1}st Red Infantry`);
     });
 
     // Record starting strengths for morale check
