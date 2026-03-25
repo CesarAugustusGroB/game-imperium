@@ -395,7 +395,7 @@ export class BattleState {
       offsetToAxial(1, 10),
     ];
     bluePositions.forEach((hex, i) => {
-      this.addUnit('blue', hex, 2000 + i * 300, `${i + 1}st Blue Infantry`);
+      this.addUnit('blue', hex, 3000 + i * 450, `${i + 1}st Blue Infantry`);
     });
 
     const redPositions = [
@@ -405,7 +405,7 @@ export class BattleState {
       offsetToAxial(18, 10),
     ];
     redPositions.forEach((hex, i) => {
-      this.addUnit('red', hex, 2000 + i * 300, `${i + 1}st Red Infantry`);
+      this.addUnit('red', hex, 3000 + i * 450, `${i + 1}st Red Infantry`);
     });
 
     // Record starting strengths for morale check
