@@ -232,10 +232,26 @@ export class BattleRenderer {
       ctx.globalAlpha = 1 - fadeT;
     }
 
-    // Shake offset: rapid random jitter decaying over time
     let sx = center.x, sy = center.y;
+
+    // Lunge: unit rushes toward target hex then snaps back
+    if (unit.lungeTarget && unit.lungeTimer > 0) {
+      const origin = this.state.getGridOrigin(this.canvas.width, this.canvas.height);
+      const targetPt = hexToPixel(unit.lungeTarget, this.state.config.hexSize, origin);
+      // t goes 0→1 as timer counts down
+      const t = 1 - unit.lungeTimer / 0.4;
+      // Forward in first half (0→0.5), snap back in second half (0.5→1)
+      const lungeFrac = t < 0.5
+        ? t * 2                          // 0→1 (rush forward)
+        : 1 - (t - 0.5) * 2;            // 1→0 (snap back)
+      const lungeAmount = lungeFrac * 0.45; // travel 45% of distance to target
+      sx += (targetPt.x - center.x) * lungeAmount;
+      sy += (targetPt.y - center.y) * lungeAmount;
+    }
+
+    // Shake offset: rapid random jitter decaying over time
     if (unit.shakeTimer > 0) {
-      const intensity = unit.shakeTimer * 10; // decays from ~3.5px to 0
+      const intensity = unit.shakeTimer * 8;
       sx += (Math.random() - 0.5) * intensity;
       sy += (Math.random() - 0.5) * intensity;
     }
@@ -264,12 +280,19 @@ export class BattleRenderer {
 
     ctx.shadowColor = 'transparent';
 
-    // White flash overlay on hit
+    // Impact flash — red outer burst + white core
     if (unit.flashTimer > 0) {
-      const flashAlpha = unit.flashTimer * 4; // fades from ~0.8 to 0
-      ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.8, flashAlpha)})`;
+      const t = unit.flashTimer / 0.35; // 1→0 as flash fades
+      // Outer red glow — expands then fades
+      const outerR = iconSize / 2 + (1 - t) * 6;
+      ctx.fillStyle = `rgba(255, 60, 30, ${t * 0.35})`;
       ctx.beginPath();
-      ctx.arc(0, -4, iconSize / 2, 0, Math.PI * 2);
+      ctx.arc(0, -4, outerR, 0, Math.PI * 2);
+      ctx.fill();
+      // Inner white core — bright then fades fast
+      ctx.fillStyle = `rgba(255, 255, 240, ${Math.pow(t, 2) * 0.7})`;
+      ctx.beginPath();
+      ctx.arc(0, -4, iconSize / 3 * t, 0, Math.PI * 2);
       ctx.fill();
     }
 

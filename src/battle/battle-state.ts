@@ -17,7 +17,9 @@ export interface BattleUnit {
   // Combat animation state
   startingStrength: number;
   shakeTimer: number;   // seconds remaining of shake effect
-  flashTimer: number;   // seconds remaining of white flash
+  flashTimer: number;   // seconds remaining of impact flash
+  lungeTarget: Hex | null; // hex to lunge toward
+  lungeTimer: number;   // seconds remaining (forward then snap back)
   isDying: boolean;
   deathProgress: number; // 0→1 (0-0.33 = cracks spread, 0.33-1.0 = fade out)
   crackSeed: number;     // deterministic seed for crack generation
@@ -34,8 +36,9 @@ const MOVE_RANGE = 3;           // max hexes per move action
 const MOVE_ANIM_SPEED = 1.2;    // progress per second (~0.83s per hop, 3 hops ≈ 2.5s)
 const DAMAGE_PER_ROLL = 300;
 const MORALE_BREAK_THRESHOLD = 0.3;
-const SHAKE_DURATION = 0.6;     // seconds of shake on hit
-const FLASH_DURATION = 0.4;     // seconds of white flash on hit
+const SHAKE_DURATION = 0.5;     // seconds of shake on hit
+const FLASH_DURATION = 0.35;    // seconds of impact flash
+const LUNGE_DURATION = 0.4;     // seconds for lunge forward + snap back
 const DEATH_DURATION = 2.5;     // seconds for full death animation
 
 function rollD6(): number {
@@ -102,6 +105,7 @@ export class BattleState {
       prevHex: null, moveProgress: 1, path: [],
       startingStrength: strength,
       shakeTimer: 0, flashTimer: 0,
+      lungeTarget: null, lungeTimer: 0,
       isDying: false, deathProgress: 0,
       crackSeed: id * 7919, // prime for deterministic crack angles
     };
@@ -297,7 +301,13 @@ export class BattleState {
     attacker.strength -= defRoll * DAMAGE_PER_ROLL;
     defender.strength -= atkRoll * DAMAGE_PER_ROLL;
 
-    // Trigger hit animations on both
+    // Trigger hit animations — both lunge toward each other then recoil
+    attacker.lungeTarget = { q: defender.hex.q, r: defender.hex.r };
+    attacker.lungeTimer = LUNGE_DURATION;
+    defender.lungeTarget = { q: attacker.hex.q, r: attacker.hex.r };
+    defender.lungeTimer = LUNGE_DURATION;
+
+    // Shake + flash kick in after lunge peaks (delayed slightly)
     attacker.shakeTimer = SHAKE_DURATION;
     attacker.flashTimer = FLASH_DURATION;
     defender.shakeTimer = SHAKE_DURATION;
@@ -356,6 +366,10 @@ export class BattleState {
       }
 
       // Combat effect timers
+      if (unit.lungeTimer > 0) {
+        unit.lungeTimer = Math.max(0, unit.lungeTimer - dt);
+        if (unit.lungeTimer <= 0) unit.lungeTarget = null;
+      }
       if (unit.shakeTimer > 0) unit.shakeTimer = Math.max(0, unit.shakeTimer - dt);
       if (unit.flashTimer > 0) unit.flashTimer = Math.max(0, unit.flashTimer - dt);
 
