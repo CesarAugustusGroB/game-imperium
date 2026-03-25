@@ -1,9 +1,7 @@
 import { BattleState } from './battle-state';
 import { BattleRenderer } from './battle-renderer';
 import { BattleInput } from './battle-input';
-import { runAI } from './battle-ai';
-
-const COMBAT_INTERVAL = 3.0;
+import { tickAI } from './battle-ai';
 
 export class BattleMode {
   private container: HTMLElement;
@@ -13,7 +11,6 @@ export class BattleMode {
   private input: BattleInput;
   private onExitCallback: () => void;
   private _isVisible = false;
-  private roundTimer = 0;
 
   constructor(onExitCallback: () => void) {
     this.onExitCallback = onExitCallback;
@@ -36,7 +33,6 @@ export class BattleMode {
     this.state = new BattleState();
     this.state.generateGrid();
     this.state.placeStartingUnits();
-    this.roundTimer = 0;
 
     this.renderer.setState(this.state);
     this.input.setState(this.state);
@@ -55,21 +51,16 @@ export class BattleMode {
   update(dt: number): void {
     if (!this._isVisible) return;
 
-    // Always tick movement animations (path queue + interpolation)
+    // Tick all animations (movement, shake, flash, lunge, death, cooldowns)
     this.state.updateAnimations(dt);
 
     if (this.state.phase !== 'fighting') return;
 
-    this.roundTimer += dt;
-    if (this.roundTimer < COMBAT_INTERVAL) return;
-    this.roundTimer -= COMBAT_INTERVAL;
-    this.state.roundCount++;
+    // Semi-real-time: each unit acts on its own cooldown
+    tickAI(this.state, 'blue');
+    tickAI(this.state, 'red');
 
-    // Both AIs act simultaneously
-    runAI(this.state, 'blue');
-    runAI(this.state, 'red');
-
-    // Check victory condition
+    // Check victory
     this.state.checkMorale();
   }
 

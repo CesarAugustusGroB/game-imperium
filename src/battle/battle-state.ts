@@ -23,6 +23,8 @@ export interface BattleUnit {
   isDying: boolean;
   deathProgress: number; // 0→1 (0-0.33 = cracks spread, 0.33-1.0 = fade out)
   crackSeed: number;     // deterministic seed for crack generation
+  // Semi-real-time action cooldown
+  actionCooldown: number; // seconds until this unit can act again
 }
 
 export interface BattleConfig {
@@ -40,6 +42,8 @@ const SHAKE_DURATION = 0.5;     // seconds of shake on hit
 const FLASH_DURATION = 0.35;    // seconds of impact flash
 const LUNGE_DURATION = 0.4;     // seconds for lunge forward + snap back
 const DEATH_DURATION = 2.5;     // seconds for full death animation
+const ACTION_COOLDOWN = 1.8;    // base seconds between unit actions
+const ACTION_JITTER = 0.6;      // random ± jitter so units don't sync
 
 function rollD6(): number {
   return Math.floor(Math.random() * 6) + 1;
@@ -107,6 +111,7 @@ export class BattleState {
       shakeTimer: 0, flashTimer: 0,
       lungeTarget: null, lungeTimer: 0,
       isDying: false, deathProgress: 0,
+      actionCooldown: (id % 5) * 0.35, // stagger so units act at different times
       crackSeed: id * 7919, // prime for deterministic crack angles
     };
     this.units.set(unit.id, unit);
@@ -158,6 +163,19 @@ export class BattleState {
   /** True if the unit is currently walking a path. */
   isUnitMoving(unit: BattleUnit): boolean {
     return unit.moveProgress < 1 || unit.path.length > 0;
+  }
+
+  /** True if the unit can act (cooldown expired, not moving/dying/lunging). */
+  canAct(unit: BattleUnit): boolean {
+    return unit.actionCooldown <= 0
+      && !unit.isDying
+      && !this.isUnitMoving(unit)
+      && unit.lungeTimer <= 0;
+  }
+
+  /** Reset a unit's action cooldown with random jitter. */
+  resetCooldown(unit: BattleUnit): void {
+    unit.actionCooldown = ACTION_COOLDOWN + (Math.random() - 0.5) * ACTION_JITTER * 2;
   }
 
   // ── Selection ──
@@ -372,6 +390,9 @@ export class BattleState {
       }
       if (unit.shakeTimer > 0) unit.shakeTimer = Math.max(0, unit.shakeTimer - dt);
       if (unit.flashTimer > 0) unit.flashTimer = Math.max(0, unit.flashTimer - dt);
+
+      // Action cooldown tick
+      if (unit.actionCooldown > 0) unit.actionCooldown = Math.max(0, unit.actionCooldown - dt);
 
       // Death animation
       if (unit.isDying) {
