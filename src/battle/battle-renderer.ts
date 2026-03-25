@@ -216,7 +216,7 @@ export class BattleRenderer {
     const { ctx } = this;
     const isSelected = unit.id === this.state.selectedUnitId;
     const shieldImg = unit.faction === 'blue' ? this.blueShield : this.redShield;
-    const iconSize = this.state.config.hexSize;
+    const iconSize = 50;
 
     // Compute damage ratio for cracks
     const damageRatio = 1 - Math.max(0, unit.strength) / unit.startingStrength;
