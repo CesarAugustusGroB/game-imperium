@@ -192,7 +192,11 @@ export class BattleRenderer {
       // Interpolate position during movement animation
       if (unit.prevHex && unit.moveProgress < 1) {
         const src = hexToPixel(unit.prevHex, size, origin);
-        const t = this.easeOutCubic(unit.moveProgress);
+        // Use linear for mid-path hops (smooth continuous walk),
+        // easeOut only for the final hop (gentle stop)
+        const t = unit.path.length > 0
+          ? unit.moveProgress                      // linear — no pause between hops
+          : this.easeOutCubic(unit.moveProgress);  // decelerate into final position
         const center = {
           x: src.x + (dest.x - src.x) * t,
           y: src.y + (dest.y - src.y) * t,

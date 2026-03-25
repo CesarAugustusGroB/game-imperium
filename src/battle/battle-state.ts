@@ -24,7 +24,7 @@ export interface BattleConfig {
 
 const DEFAULT_CONFIG: BattleConfig = { cols: 10, rows: 7, hexSize: HEX_SIZE };
 const MOVE_RANGE = 3;           // max hexes per move action
-const MOVE_ANIM_SPEED = 3.0;    // progress per second (1/speed = hop duration)
+const MOVE_ANIM_SPEED = 1.2;    // progress per second (~0.83s per hop, 3 hops ≈ 2.5s)
 const DAMAGE_PER_ROLL = 300;
 const MORALE_BREAK_THRESHOLD = 0.3;
 
