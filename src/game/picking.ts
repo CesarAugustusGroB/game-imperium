@@ -86,6 +86,14 @@ export class ProvincePicker {
   pick(screenX: number, screenY: number, camera: Camera): string | null {
     const { gl } = this;
 
+    // Save GL state that the pick pass changes
+    const blendEnabled = gl.isEnabled(gl.BLEND);
+    const prevClear = gl.getParameter(gl.COLOR_CLEAR_VALUE) as Float32Array;
+
+    // Isolate FBO pass: no blending (preserve exact ID colors), black clear
+    if (blendEnabled) gl.disable(gl.BLEND);
+    gl.clearColor(0, 0, 0, 0);
+
     // Render ID map to offscreen FBO
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
     gl.viewport(0, 0, this.width, this.height);
@@ -104,12 +112,17 @@ export class ProvincePicker {
     gl.bindVertexArray(this.quad.vao);
     gl.drawElements(gl.TRIANGLES, this.quad.indexCount, gl.UNSIGNED_SHORT, 0);
 
-    // Read pixel at mouse position (flip Y for WebGL coords)
-    const flippedY = this.height - screenY;
-    gl.readPixels(screenX, flippedY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, this.pixel);
+    // Read pixel at mouse position (flip Y for WebGL coords, round to integer)
+    const px = Math.round(screenX);
+    const py = this.height - 1 - Math.round(screenY);
+    gl.readPixels(px, py, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, this.pixel);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, this.width, this.height);
+
+    // Restore GL state
+    gl.clearColor(prevClear[0], prevClear[1], prevClear[2], prevClear[3]);
+    if (blendEnabled) gl.enable(gl.BLEND);
 
     const [r, g, b] = this.pixel;
     // Skip black pixels (no province)
