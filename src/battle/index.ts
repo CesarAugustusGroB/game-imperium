@@ -47,6 +47,11 @@ export class BattleMode {
     this.onExitCallback();
   }
 
+  update(dt: number): void {
+    if (!this._isVisible) return;
+    this.state.updateAnimations(dt);
+  }
+
   render(): void {
     if (!this._isVisible) return;
     this.renderer.render();

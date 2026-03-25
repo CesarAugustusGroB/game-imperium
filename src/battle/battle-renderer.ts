@@ -57,6 +57,7 @@ export class BattleRenderer {
     this.drawHoveredHex();
     this.drawMovementRange();
     this.drawSelectedHex();
+    this.drawPaths();
     this.drawUnits();
   }
 
@@ -141,14 +142,69 @@ export class BattleRenderer {
     this.strokeHexStyled(center, this.state.config.hexSize, 'rgba(255, 215, 0, 0.7)', 2);
   }
 
+  /** Draw dashed path lines for units that have a queued path. */
+  private drawPaths(): void {
+    const { ctx } = this;
+    const origin = this.state.getGridOrigin(this.canvas.width, this.canvas.height);
+    const size = this.state.config.hexSize;
+
+    for (const unit of this.state.units.values()) {
+      if (unit.path.length === 0) continue;
+
+      ctx.save();
+      ctx.strokeStyle = unit.faction === 'blue'
+        ? 'rgba(100, 180, 255, 0.5)'
+        : 'rgba(255, 100, 100, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+
+      // Start from current hex
+      const start = hexToPixel(unit.hex, size, origin);
+      ctx.beginPath();
+      ctx.moveTo(start.x, start.y);
+
+      for (const pathHex of unit.path) {
+        const pt = hexToPixel(pathHex, size, origin);
+        ctx.lineTo(pt.x, pt.y);
+      }
+      ctx.stroke();
+
+      // Target circle at final destination
+      const last = unit.path[unit.path.length - 1];
+      const target = hexToPixel(last, size, origin);
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.arc(target.x, target.y, 6, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+  }
+
   private drawUnits(): void {
     const origin = this.state.getGridOrigin(this.canvas.width, this.canvas.height);
     const size = this.state.config.hexSize;
 
     for (const unit of this.state.units.values()) {
-      const center = hexToPixel(unit.hex, size, origin);
-      this.drawUnit(unit, center);
+      const dest = hexToPixel(unit.hex, size, origin);
+
+      // Interpolate position during movement animation
+      if (unit.prevHex && unit.moveProgress < 1) {
+        const src = hexToPixel(unit.prevHex, size, origin);
+        const t = this.easeOutCubic(unit.moveProgress);
+        const center = {
+          x: src.x + (dest.x - src.x) * t,
+          y: src.y + (dest.y - src.y) * t,
+        };
+        this.drawUnit(unit, center);
+      } else {
+        this.drawUnit(unit, dest);
+      }
     }
+  }
+
+  private easeOutCubic(t: number): number {
+    return 1 - Math.pow(1 - t, 3);
   }
 
   private drawUnit(unit: BattleUnit, center: Point): void {
