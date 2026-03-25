@@ -84,11 +84,12 @@ export class BattleState {
   getGridOrigin(canvasW: number, canvasH: number): Point {
     const sqrt3 = Math.sqrt(3);
     const s = this.config.hexSize;
-    const totalW = (this.config.cols - 1) * s * 1.5 + s * 2;
-    const totalH = this.config.rows * s * sqrt3 + s * sqrt3 * 0.5;
+    // Pointy-top: width uses sqrt3, height uses 3/2
+    const totalW = this.config.cols * s * sqrt3 + s * sqrt3 * 0.5;
+    const totalH = (this.config.rows - 1) * s * 1.5 + s * 2;
     return {
-      x: (canvasW - totalW) / 2 + s,
-      y: (canvasH - totalH) / 2 + s * sqrt3 / 2,
+      x: (canvasW - totalW) / 2 + s * sqrt3 / 2,
+      y: (canvasH - totalH) / 2 + s,
     };
   }
 

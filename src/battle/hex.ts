@@ -12,26 +12,26 @@ export const HEX_SIZE = 40;
 
 const SQRT3 = Math.sqrt(3);
 
-// Flat-top hex directions (axial coordinates)
+// Pointy-top hex directions (axial coordinates)
 const HEX_DIRS: ReadonlyArray<Hex> = [
   { q: 1, r: 0 },  { q: 1, r: -1 }, { q: 0, r: -1 },
   { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 },
 ];
 
-// ── Coordinate conversions (flat-top) ──
+// ── Coordinate conversions (pointy-top) ──
 
 export function hexToPixel(hex: Hex, size: number, origin: Point): Point {
   return {
-    x: size * (3 / 2 * hex.q) + origin.x,
-    y: size * (SQRT3 / 2 * hex.q + SQRT3 * hex.r) + origin.y,
+    x: size * (SQRT3 * hex.q + SQRT3 / 2 * hex.r) + origin.x,
+    y: size * (3 / 2 * hex.r) + origin.y,
   };
 }
 
 export function pixelToHex(px: number, py: number, size: number, origin: Point): Hex {
   const x = px - origin.x;
   const y = py - origin.y;
-  const q = (2 / 3 * x) / size;
-  const r = (-1 / 3 * x + SQRT3 / 3 * y) / size;
+  const q = (SQRT3 / 3 * x - 1 / 3 * y) / size;
+  const r = (2 / 3 * y) / size;
   return hexRound(q, r);
 }
 
@@ -74,7 +74,7 @@ export function hexNeighbors(hex: Hex): Hex[] {
 export function hexCorners(center: Point, size: number): Point[] {
   const corners: Point[] = [];
   for (let i = 0; i < 6; i++) {
-    const angleDeg = 60 * i;
+    const angleDeg = 60 * i + 30; // +30° offset for pointy-top
     const angleRad = (Math.PI / 180) * angleDeg;
     corners.push({
       x: center.x + size * Math.cos(angleRad),
@@ -84,10 +84,10 @@ export function hexCorners(center: Point, size: number): Point[] {
   return corners;
 }
 
-// ── Grid generation ──
+// ── Grid generation (pointy-top offset "even-r") ──
 
 export function offsetToAxial(col: number, row: number): Hex {
-  const q = col;
-  const r = row - Math.floor(col / 2);
+  const q = col - Math.floor(row / 2);
+  const r = row;
   return { q, r };
 }
