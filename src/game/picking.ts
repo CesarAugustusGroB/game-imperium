@@ -35,6 +35,8 @@ export class ProvincePicker {
   private width: number;
   private height: number;
   private pixel = new Uint8Array(4);
+  private uCam: WebGLUniformLocation | null;
+  private uIdMap: WebGLUniformLocation | null;
 
   constructor(
     gl: WebGL2RenderingContext,
@@ -50,6 +52,10 @@ export class ProvincePicker {
 
     // Create a simple pick shader
     this.pickProgram = createShaderProgram(gl, pickVert, pickFrag);
+
+    // Cache uniform locations
+    this.uCam = gl.getUniformLocation(this.pickProgram, 'uCameraMatrix');
+    this.uIdMap = gl.getUniformLocation(this.pickProgram, 'uIdMap');
 
     // Create offscreen FBO
     const fbo = gl.createFramebuffer();
@@ -92,11 +98,8 @@ export class ProvincePicker {
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.useProgram(this.pickProgram);
-    const uCam = gl.getUniformLocation(this.pickProgram, 'uCameraMatrix');
-    gl.uniformMatrix3fv(uCam, false, camera.getMatrix());
-
-    const uIdMap = gl.getUniformLocation(this.pickProgram, 'uIdMap');
-    gl.uniform1i(uIdMap, 0);
+    gl.uniformMatrix3fv(this.uCam, false, camera.getMatrix());
+    gl.uniform1i(this.uIdMap, 0);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.idMapTexture);

@@ -3,7 +3,7 @@ export function createWebGL2Context(canvas: HTMLCanvasElement): WebGL2RenderingC
     alpha: false,
     antialias: false,
     premultipliedAlpha: false,
-    preserveDrawingBuffer: true,
+    preserveDrawingBuffer: false,
   });
 
   if (!gl) {

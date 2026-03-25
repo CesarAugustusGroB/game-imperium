@@ -11,6 +11,7 @@ export class BattleInput {
   private boundClick: (e: MouseEvent) => void;
   private boundKeydown: (e: KeyboardEvent) => void;
   private boundMousemove: (e: MouseEvent) => void;
+  private isAttached = false;
 
   constructor(canvas: HTMLCanvasElement, state: BattleState, renderer: BattleRenderer, onExit: () => void) {
     this.canvas = canvas;
@@ -28,16 +29,20 @@ export class BattleInput {
   }
 
   attach(): void {
+    if (this.isAttached) return;
     this.canvas.addEventListener('click', this.boundClick);
     this.canvas.addEventListener('mousemove', this.boundMousemove);
     window.addEventListener('keydown', this.boundKeydown);
+    this.isAttached = true;
   }
 
   detach(): void {
+    if (!this.isAttached) return;
     this.canvas.removeEventListener('click', this.boundClick);
     this.canvas.removeEventListener('mousemove', this.boundMousemove);
     window.removeEventListener('keydown', this.boundKeydown);
     this.renderer.setHoveredHex(null);
+    this.isAttached = false;
   }
 
   private onClick(e: MouseEvent): void {
@@ -46,7 +51,7 @@ export class BattleInput {
       return;
     }
     const origin = this.state.getGridOrigin(this.canvas.width, this.canvas.height);
-    const clicked = pixelToHex(e.clientX, e.clientY, this.state.config.hexSize, origin);
+    const clicked = pixelToHex(e.offsetX, e.offsetY, this.state.config.hexSize, origin);
 
     if (!this.state.isValidHex(clicked)) {
       this.state.selectUnit(null);
@@ -80,7 +85,7 @@ export class BattleInput {
 
   private onMousemove(e: MouseEvent): void {
     const origin = this.state.getGridOrigin(this.canvas.width, this.canvas.height);
-    const hex = pixelToHex(e.clientX, e.clientY, this.state.config.hexSize, origin);
+    const hex = pixelToHex(e.offsetX, e.offsetY, this.state.config.hexSize, origin);
     this.renderer.setHoveredHex(this.state.isValidHex(hex) ? hex : null);
   }
 

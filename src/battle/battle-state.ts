@@ -41,7 +41,6 @@ export class BattleState {
   // Combat state
   phase: BattlePhase = 'fighting';
   winner: Faction | null = null;
-  roundTimer = 0;
   roundCount = 0;
   private startingStrength = new Map<Faction, number>();
 
@@ -214,9 +213,15 @@ export class BattleState {
     attacker.strength -= defRoll * DAMAGE_PER_ROLL;
     defender.strength -= atkRoll * DAMAGE_PER_ROLL;
 
-    // Remove destroyed units
-    if (attacker.strength <= 0) this.units.delete(attacker.id);
-    if (defender.strength <= 0) this.units.delete(defender.id);
+    // Remove destroyed units + clear selection
+    if (attacker.strength <= 0) {
+      this.units.delete(attacker.id);
+      if (this.selectedUnitId === attacker.id) this.selectedUnitId = null;
+    }
+    if (defender.strength <= 0) {
+      this.units.delete(defender.id);
+      if (this.selectedUnitId === defender.id) this.selectedUnitId = null;
+    }
   }
 
   checkMorale(): void {
