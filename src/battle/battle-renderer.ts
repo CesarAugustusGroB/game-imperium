@@ -287,36 +287,6 @@ export class BattleRenderer {
       ctx.stroke();
     }
 
-    // Strength label pill (hide during death fade)
-    if (!unit.isDying) {
-      const sizeText = unit.strength >= 1000
-        ? `${(unit.strength / 1000).toFixed(1)}K`
-        : String(unit.strength);
-
-      const fontSize = 11;
-      ctx.font = `bold ${fontSize}px 'Segoe UI', system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-
-      const metrics = ctx.measureText(sizeText);
-      const pillW = metrics.width + 10;
-      const pillH = fontSize + 6;
-      const pillY = iconSize / 2 - 2;
-
-      ctx.beginPath();
-      ctx.roundRect(-pillW / 2, pillY, pillW, pillH, 3);
-      ctx.fillStyle = 'rgba(10, 10, 30, 0.85)';
-      ctx.fill();
-      const borderColor = unit.faction === 'blue'
-        ? 'rgba(80, 130, 220, 0.6)'
-        : 'rgba(220, 80, 80, 0.6)';
-      ctx.strokeStyle = borderColor;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      ctx.fillStyle = '#f0e0c0';
-      ctx.fillText(sizeText, 0, pillY + 3);
-    }
 
     ctx.restore();
   }
