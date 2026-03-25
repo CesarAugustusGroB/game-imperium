@@ -8,7 +8,7 @@ export interface Point {
   y: number;
 }
 
-export const HEX_SIZE = 80;
+export const HEX_SIZE = 40;
 
 const SQRT3 = Math.sqrt(3);
 
