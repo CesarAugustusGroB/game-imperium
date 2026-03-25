@@ -58,6 +58,7 @@ export class BattleRenderer {
     this.drawMovementRange();
     this.drawSelectedHex();
     this.drawUnits();
+    this.drawVictoryOverlay();
   }
 
   // ── Layers ──
@@ -221,6 +222,50 @@ export class BattleRenderer {
     ctx.fillText(sizeText, 0, pillY + 3);
 
     ctx.restore();
+  }
+
+  private drawVictoryOverlay(): void {
+    if (this.state.phase !== 'victory' || !this.state.winner) return;
+
+    const { ctx, canvas } = this;
+
+    // Dim background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const label = this.state.winner === 'blue' ? 'Blue Faction Wins!' : 'Red Faction Wins!';
+    const color = this.state.winner === 'blue' ? '#5588dd' : '#dd5555';
+
+    // Banner background
+    const bannerH = 100;
+    const bannerY = (canvas.height - bannerH) / 2;
+    ctx.fillStyle = 'rgba(10, 10, 30, 0.9)';
+    ctx.fillRect(0, bannerY, canvas.width, bannerH);
+
+    // Top/bottom gold lines
+    ctx.strokeStyle = 'rgba(220, 190, 100, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, bannerY);
+    ctx.lineTo(canvas.width, bannerY);
+    ctx.moveTo(0, bannerY + bannerH);
+    ctx.lineTo(canvas.width, bannerY + bannerH);
+    ctx.stroke();
+
+    // Victory text
+    ctx.font = "bold 36px 'Segoe UI', system-ui, sans-serif";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 16;
+    ctx.fillText(label, canvas.width / 2, bannerY + bannerH / 2 - 8);
+    ctx.shadowColor = 'transparent';
+
+    // Subtitle
+    ctx.font = "14px 'Segoe UI', system-ui, sans-serif";
+    ctx.fillStyle = 'rgba(200, 190, 160, 0.6)';
+    ctx.fillText(`Battle concluded in ${this.state.roundCount} rounds — press ESC to return`, canvas.width / 2, bannerY + bannerH / 2 + 22);
   }
 
   // ── Hex drawing helpers ──

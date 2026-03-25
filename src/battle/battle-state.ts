@@ -1,7 +1,8 @@
 import type { Hex, Point } from './hex';
-import { hexKey, hexNeighbors, offsetToAxial, HEX_SIZE } from './hex';
+import { hexKey, hexNeighbors, hexDistance, offsetToAxial, HEX_SIZE } from './hex';
 
 export type Faction = 'blue' | 'red';
+export type BattlePhase = 'fighting' | 'victory';
 
 export interface BattleUnit {
   id: number;
@@ -18,6 +19,12 @@ export interface BattleConfig {
 }
 
 const DEFAULT_CONFIG: BattleConfig = { cols: 10, rows: 7, hexSize: HEX_SIZE };
+const DAMAGE_PER_ROLL = 300;
+const MORALE_BREAK_THRESHOLD = 0.3;
+
+function rollD6(): number {
+  return Math.floor(Math.random() * 6) + 1;
+}
 
 export class BattleState {
   readonly config: BattleConfig;
@@ -26,6 +33,13 @@ export class BattleState {
   readonly units = new Map<number, BattleUnit>();
   selectedUnitId: number | null = null;
   private nextId = 1;
+
+  // Combat state
+  phase: BattlePhase = 'fighting';
+  winner: Faction | null = null;
+  roundTimer = 0;
+  roundCount = 0;
+  private startingStrength = new Map<Faction, number>();
 
   constructor(config?: Partial<BattleConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -102,10 +116,115 @@ export class BattleState {
     return hexNeighbors(hex).filter(n => this.isValidHex(n) && !this.getUnitAt(n));
   }
 
+  // ── Combat ──
+
+  getAdjacentEnemies(unit: BattleUnit): BattleUnit[] {
+    const neighbors = hexNeighbors(unit.hex);
+    const enemies: BattleUnit[] = [];
+    for (const nh of neighbors) {
+      const other = this.getUnitAt(nh);
+      if (other && other.faction !== unit.faction) enemies.push(other);
+    }
+    return enemies;
+  }
+
+  getFactionUnits(faction: Faction): BattleUnit[] {
+    const result: BattleUnit[] = [];
+    for (const u of this.units.values()) {
+      if (u.faction === faction) result.push(u);
+    }
+    return result;
+  }
+
+  getFactionStrength(faction: Faction): number {
+    let total = 0;
+    for (const u of this.units.values()) {
+      if (u.faction === faction) total += u.strength;
+    }
+    return total;
+  }
+
+  findNearestEnemy(unit: BattleUnit): BattleUnit | null {
+    let nearest: BattleUnit | null = null;
+    let bestDist = Infinity;
+    for (const other of this.units.values()) {
+      if (other.faction === unit.faction) continue;
+      const d = hexDistance(unit.hex, other.hex);
+      if (d < bestDist) {
+        bestDist = d;
+        nearest = other;
+      }
+    }
+    return nearest;
+  }
+
+  findStepToward(from: Hex, to: Hex): Hex | null {
+    // BFS to find first step on shortest path
+    const visited = new Set<string>();
+    const parent = new Map<string, string>();
+    const queue: Hex[] = [from];
+    const fromKey = hexKey(from.q, from.r);
+    const toKey = hexKey(to.q, to.r);
+    visited.add(fromKey);
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      const curKey = hexKey(current.q, current.r);
+
+      if (curKey === toKey) {
+        // Trace back to find first step
+        let step = toKey;
+        while (parent.get(step) !== fromKey) {
+          const p = parent.get(step);
+          if (!p) return null;
+          step = p;
+        }
+        const [q, r] = step.split(',').map(Number);
+        return { q, r };
+      }
+
+      for (const nb of hexNeighbors(current)) {
+        const nbKey = hexKey(nb.q, nb.r);
+        if (visited.has(nbKey)) continue;
+        if (!this.isValidHex(nb)) continue;
+        // Can pass through empty hexes or the target hex
+        const occupant = this.getUnitAt(nb);
+        if (occupant && nbKey !== toKey) continue;
+        visited.add(nbKey);
+        parent.set(nbKey, curKey);
+        queue.push(nb);
+      }
+    }
+    return null;
+  }
+
+  resolveCombat(attacker: BattleUnit, defender: BattleUnit): void {
+    const atkRoll = rollD6();
+    const defRoll = rollD6() + 1; // defender advantage
+
+    attacker.strength -= defRoll * DAMAGE_PER_ROLL;
+    defender.strength -= atkRoll * DAMAGE_PER_ROLL;
+
+    // Remove destroyed units
+    if (attacker.strength <= 0) this.units.delete(attacker.id);
+    if (defender.strength <= 0) this.units.delete(defender.id);
+  }
+
+  checkMorale(): void {
+    for (const faction of ['blue', 'red'] as Faction[]) {
+      const current = this.getFactionStrength(faction);
+      const starting = this.startingStrength.get(faction) ?? 1;
+      if (current <= 0 || current / starting < MORALE_BREAK_THRESHOLD) {
+        this.phase = 'victory';
+        this.winner = faction === 'blue' ? 'red' : 'blue';
+        return;
+      }
+    }
+  }
+
   // ── Setup ──
 
   placeStartingUnits(): void {
-    // Blue faction — left side
     const bluePositions = [
       offsetToAxial(0, 1), offsetToAxial(0, 3), offsetToAxial(0, 5),
       offsetToAxial(1, 2), offsetToAxial(1, 4),
@@ -114,7 +233,6 @@ export class BattleState {
       this.addUnit('blue', hex, 2000 + i * 500, `${i + 1}st Blue Infantry`);
     });
 
-    // Red faction — right side
     const redPositions = [
       offsetToAxial(9, 1), offsetToAxial(9, 3), offsetToAxial(9, 5),
       offsetToAxial(8, 2), offsetToAxial(8, 4),
@@ -122,5 +240,9 @@ export class BattleState {
     redPositions.forEach((hex, i) => {
       this.addUnit('red', hex, 2000 + i * 500, `${i + 1}st Red Infantry`);
     });
+
+    // Record starting strengths for morale check
+    this.startingStrength.set('blue', this.getFactionStrength('blue'));
+    this.startingStrength.set('red', this.getFactionStrength('red'));
   }
 }

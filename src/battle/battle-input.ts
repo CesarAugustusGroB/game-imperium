@@ -41,6 +41,10 @@ export class BattleInput {
   }
 
   private onClick(e: MouseEvent): void {
+    if (this.state.phase === 'victory') {
+      this.onExit();
+      return;
+    }
     const origin = this.state.getGridOrigin(this.canvas.width, this.canvas.height);
     const clicked = pixelToHex(e.clientX, e.clientY, this.state.config.hexSize, origin);
 
@@ -82,6 +86,11 @@ export class BattleInput {
 
   private onKeydown(e: KeyboardEvent): void {
     if (e.key === 'Escape') {
+      // During victory, ESC always exits
+      if (this.state.phase === 'victory') {
+        this.onExit();
+        return;
+      }
       if (this.state.selectedUnitId !== null) {
         this.state.selectUnit(null);
       } else {

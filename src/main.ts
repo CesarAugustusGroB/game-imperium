@@ -167,6 +167,7 @@ async function main() {
 
     camera.update();
     if (gameRunning) armyManager.update(dt);
+    battleMode.update(dt);
     renderer.render();
     armyRenderer.render();
     battleMode.render();
