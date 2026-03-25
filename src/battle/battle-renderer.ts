@@ -147,9 +147,25 @@ export class BattleRenderer {
     const size = this.state.config.hexSize;
 
     for (const unit of this.state.units.values()) {
-      const center = hexToPixel(unit.hex, size, origin);
-      this.drawUnit(unit, center);
+      const dest = hexToPixel(unit.hex, size, origin);
+
+      // Interpolate position during movement animation
+      if (unit.prevHex && unit.moveProgress < 1) {
+        const src = hexToPixel(unit.prevHex, size, origin);
+        const t = this.easeOutCubic(unit.moveProgress);
+        const center = {
+          x: src.x + (dest.x - src.x) * t,
+          y: src.y + (dest.y - src.y) * t,
+        };
+        this.drawUnit(unit, center);
+      } else {
+        this.drawUnit(unit, dest);
+      }
     }
+  }
+
+  private easeOutCubic(t: number): number {
+    return 1 - Math.pow(1 - t, 3);
   }
 
   private drawUnit(unit: BattleUnit, center: Point): void {

@@ -54,6 +54,10 @@ export class BattleMode {
 
   update(dt: number): void {
     if (!this._isVisible) return;
+
+    // Always tick movement animations
+    this.state.updateAnimations(dt);
+
     if (this.state.phase !== 'fighting') return;
 
     this.roundTimer += dt;

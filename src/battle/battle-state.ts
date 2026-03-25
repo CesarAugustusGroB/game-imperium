@@ -10,6 +10,9 @@ export interface BattleUnit {
   hex: Hex;
   strength: number;
   name: string;
+  // Animation state
+  prevHex: Hex | null;
+  moveProgress: number; // 0 = at prevHex, 1 = at hex
 }
 
 export interface BattleConfig {
@@ -21,6 +24,7 @@ export interface BattleConfig {
 const DEFAULT_CONFIG: BattleConfig = { cols: 10, rows: 7, hexSize: HEX_SIZE };
 const DAMAGE_PER_ROLL = 300;
 const MORALE_BREAK_THRESHOLD = 0.3;
+const MOVE_ANIM_SPEED = 3.0; // progress per second (1/speed = duration)
 
 function rollD6(): number {
   return Math.floor(Math.random() * 6) + 1;
@@ -80,7 +84,10 @@ export class BattleState {
   // ── Units ──
 
   addUnit(faction: Faction, hex: Hex, strength: number, name: string): BattleUnit {
-    const unit: BattleUnit = { id: this.nextId++, faction, hex, strength, name };
+    const unit: BattleUnit = {
+      id: this.nextId++, faction, hex, strength, name,
+      prevHex: null, moveProgress: 1,
+    };
     this.units.set(unit.id, unit);
     return unit;
   }
@@ -97,7 +104,9 @@ export class BattleState {
     if (!unit) return false;
     if (!this.isValidHex(target)) return false;
     if (this.getUnitAt(target)) return false;
+    unit.prevHex = { q: unit.hex.q, r: unit.hex.r };
     unit.hex = { q: target.q, r: target.r };
+    unit.moveProgress = 0;
     return true;
   }
 
@@ -218,6 +227,17 @@ export class BattleState {
         this.phase = 'victory';
         this.winner = faction === 'blue' ? 'red' : 'blue';
         return;
+      }
+    }
+  }
+
+  // ── Animation ──
+
+  updateAnimations(dt: number): void {
+    for (const unit of this.units.values()) {
+      if (unit.moveProgress < 1) {
+        unit.moveProgress = Math.min(1, unit.moveProgress + MOVE_ANIM_SPEED * dt);
+        if (unit.moveProgress >= 1) unit.prevHex = null;
       }
     }
   }
