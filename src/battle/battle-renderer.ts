@@ -291,51 +291,99 @@ export class BattleRenderer {
     ctx.restore();
   }
 
-  /** Draw seeded crack lines over the unit sprite. */
+  /** Seeded PRNG — deterministic float in [0,1) from integer seed. */
+  private seededRandom(seed: number): number {
+    const x = Math.sin(seed * 127.1 + seed * 311.7) * 43758.5453;
+    return x - Math.floor(x);
+  }
+
+  /** Draw refined cracks over the unit sprite — fractal jagged paths with branches. */
   private drawCracks(seed: number, iconSize: number, intensity: number): void {
     const { ctx } = this;
-    const MAX_CRACKS = 8;
-    const crackCount = Math.ceil(intensity * MAX_CRACKS);
+    const MAX_MAIN_CRACKS = 6;
+    const crackCount = Math.ceil(intensity * MAX_MAIN_CRACKS);
     const radius = iconSize / 2;
 
     ctx.save();
     ctx.translate(0, -4); // center on sprite
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     for (let i = 0; i < crackCount; i++) {
-      // Deterministic angle + jitter from seed
-      const baseSeed = seed + i * 3571;
-      const angle = ((baseSeed % 360) / 360) * Math.PI * 2;
-      const jitter = ((baseSeed * 13 % 100) / 100 - 0.5) * 0.4;
-      const len = radius * (0.5 + ((baseSeed * 7 % 100) / 100) * 0.5) * Math.min(1, intensity * 1.5);
+      const rng = (offset: number) => this.seededRandom(seed + i * 3571 + offset);
 
-      // Main crack line
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      const midX = Math.cos(angle + jitter) * len * 0.5;
-      const midY = Math.sin(angle + jitter) * len * 0.5;
-      const endX = Math.cos(angle) * len;
-      const endY = Math.sin(angle) * len;
-      ctx.lineTo(midX, midY);
-      ctx.lineTo(endX, endY);
+      // Evenly distributed base angles with jitter for natural feel
+      const baseAngle = (i / MAX_MAIN_CRACKS) * Math.PI * 2;
+      const angle = baseAngle + (rng(0) - 0.5) * 0.8;
+      const len = radius * (0.6 + rng(1) * 0.4) * Math.min(1, intensity * 1.4);
 
-      // Branch at midpoint
-      if (i % 2 === 0) {
-        const branchAngle = angle + jitter + (i % 3 === 0 ? 0.6 : -0.6);
-        const branchLen = len * 0.35;
-        ctx.moveTo(midX, midY);
-        ctx.lineTo(
-          midX + Math.cos(branchAngle) * branchLen,
-          midY + Math.sin(branchAngle) * branchLen,
-        );
+      // Build multi-segment jagged main crack path
+      const segments = 4 + Math.floor(rng(2) * 3); // 4-6 segments
+      const points: { x: number; y: number }[] = [{ x: 0, y: 0 }];
+
+      for (let s = 1; s <= segments; s++) {
+        const t = s / segments;
+        const drift = (rng(s * 17) - 0.5) * len * 0.18; // lateral jitter
+        const px = Math.cos(angle) * len * t + Math.sin(angle) * drift;
+        const py = Math.sin(angle) * len * t - Math.cos(angle) * drift;
+        points.push({ x: px, y: py });
       }
 
-      // Dark stroke with slight glow
-      ctx.strokeStyle = 'rgba(20, 10, 5, 0.9)';
-      ctx.lineWidth = 2;
+      // Draw outer dark stroke (depth shadow)
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let s = 1; s < points.length; s++) {
+        ctx.lineTo(points[s].x, points[s].y);
+      }
+      ctx.strokeStyle = 'rgba(10, 5, 2, 0.7)';
+      ctx.lineWidth = 2.5;
       ctx.stroke();
-      ctx.strokeStyle = 'rgba(80, 40, 20, 0.5)';
-      ctx.lineWidth = 3.5;
+
+      // Draw inner bright highlight (hot crack interior)
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let s = 1; s < points.length; s++) {
+        ctx.lineTo(points[s].x, points[s].y);
+      }
+      ctx.strokeStyle = `rgba(160, 80, 30, ${0.3 + intensity * 0.4})`;
+      ctx.lineWidth = 1;
       ctx.stroke();
+
+      // Branches — thinner cracks forking off at ~40-60% along the main path
+      const branchCount = Math.floor(rng(3) * 2) + 1; // 1-2 branches
+      for (let b = 0; b < branchCount; b++) {
+        const branchIdx = 1 + Math.floor(rng(b * 31 + 50) * (points.length - 2));
+        const origin = points[branchIdx];
+        const branchAngle = angle + (rng(b * 47 + 70) - 0.5) * 1.8;
+        const branchLen = len * (0.2 + rng(b * 61 + 80) * 0.2);
+
+        const bSegs = 2 + Math.floor(rng(b * 71 + 90) * 2); // 2-3 segments
+        const bPts: { x: number; y: number }[] = [origin];
+        for (let s = 1; s <= bSegs; s++) {
+          const bt = s / bSegs;
+          const drift = (rng(b * 100 + s * 19) - 0.5) * branchLen * 0.2;
+          bPts.push({
+            x: origin.x + Math.cos(branchAngle) * branchLen * bt + Math.sin(branchAngle) * drift,
+            y: origin.y + Math.sin(branchAngle) * branchLen * bt - Math.cos(branchAngle) * drift,
+          });
+        }
+
+        // Branch outer stroke
+        ctx.beginPath();
+        ctx.moveTo(bPts[0].x, bPts[0].y);
+        for (let s = 1; s < bPts.length; s++) ctx.lineTo(bPts[s].x, bPts[s].y);
+        ctx.strokeStyle = 'rgba(10, 5, 2, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Branch inner highlight
+        ctx.beginPath();
+        ctx.moveTo(bPts[0].x, bPts[0].y);
+        for (let s = 1; s < bPts.length; s++) ctx.lineTo(bPts[s].x, bPts[s].y);
+        ctx.strokeStyle = `rgba(140, 60, 20, ${0.2 + intensity * 0.3})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
     }
 
     ctx.restore();
