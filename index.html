@@ -42,9 +42,196 @@
       .dp-btn:hover { background: rgba(80, 80, 110, 0.9); color: #e0e0e0; }
       .dp-btn.dp-active { background: rgba(100, 80, 40, 0.8); color: #f0d080; border-color: rgba(180, 160, 100, 0.6); }
       .dp-screenshot { width: 100%; margin-top: 2px; }
+
+      /* ── Main Menu ── */
+      #main-menu {
+        position: fixed; inset: 0; z-index: 500;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97));
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        transition: opacity 0.5s ease;
+      }
+      #main-menu.hidden { opacity: 0; pointer-events: none; }
+
+      .menu-shield {
+        width: 120px; height: 120px; margin-bottom: 8px;
+        filter: drop-shadow(0 0 24px rgba(180, 160, 100, 0.4));
+        animation: menu-float 3s ease-in-out infinite;
+      }
+      @keyframes menu-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+      }
+
+      .menu-title {
+        font-size: 42px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+        color: #f0d080;
+        text-shadow: 0 2px 12px rgba(180, 140, 60, 0.5), 0 0 40px rgba(180, 140, 60, 0.15);
+        margin-bottom: 4px;
+      }
+      .menu-subtitle {
+        font-size: 14px; letter-spacing: 6px; text-transform: uppercase;
+        color: rgba(180, 170, 140, 0.6); margin-bottom: 48px;
+      }
+
+      .menu-buttons { display: flex; flex-direction: column; gap: 12px; width: 280px; }
+
+      .menu-btn {
+        position: relative; padding: 14px 24px;
+        background: linear-gradient(135deg, rgba(40, 36, 60, 0.9), rgba(28, 26, 48, 0.95));
+        border: 1px solid rgba(180, 160, 100, 0.3);
+        border-radius: 4px; cursor: pointer;
+        font-family: inherit; font-size: 16px; font-weight: 600; letter-spacing: 2px;
+        text-transform: uppercase; color: #d0c8a8;
+        transition: all 0.2s ease; overflow: hidden;
+      }
+      .menu-btn::before {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(180, 160, 100, 0.08), transparent);
+        transform: translateX(-100%); transition: transform 0.4s ease;
+      }
+      .menu-btn:hover::before { transform: translateX(100%); }
+      .menu-btn:hover {
+        border-color: rgba(220, 190, 100, 0.6);
+        color: #f0e0b0;
+        box-shadow: 0 0 20px rgba(180, 160, 100, 0.15), inset 0 0 20px rgba(180, 160, 100, 0.05);
+      }
+      .menu-btn:active { transform: scale(0.98); }
+
+      .menu-btn:disabled {
+        opacity: 0.35; cursor: default;
+        border-color: rgba(100, 100, 100, 0.2);
+      }
+      .menu-btn:disabled:hover { color: #d0c8a8; border-color: rgba(100, 100, 100, 0.2); box-shadow: none; }
+      .menu-btn:disabled::before { display: none; }
+
+      .menu-btn.primary {
+        background: linear-gradient(135deg, rgba(80, 60, 20, 0.7), rgba(50, 40, 18, 0.9));
+        border-color: rgba(220, 190, 100, 0.5); color: #f0d080;
+      }
+
+      .menu-version {
+        position: fixed; bottom: 16px; right: 20px;
+        font-size: 11px; color: rgba(140, 130, 110, 0.4); letter-spacing: 1px;
+      }
+
+      /* ── Settings overlay ── */
+      #settings-overlay {
+        position: fixed; inset: 0; z-index: 510;
+        display: none; align-items: center; justify-content: center;
+        background: rgba(6, 6, 14, 0.85);
+      }
+      #settings-overlay.active { display: flex; }
+
+      .settings-panel {
+        background: rgba(20, 18, 38, 0.95);
+        border: 1px solid rgba(180, 160, 100, 0.3); border-radius: 8px;
+        padding: 32px 40px; min-width: 340px;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+      }
+      .settings-title {
+        font-size: 20px; font-weight: 600; color: #f0d080;
+        letter-spacing: 2px; text-transform: uppercase;
+        margin-bottom: 24px; text-align: center;
+      }
+      .settings-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px 0; border-bottom: 1px solid rgba(100, 100, 120, 0.15);
+      }
+      .settings-label { font-size: 14px; color: #b0a890; }
+      .settings-control input[type="range"] {
+        width: 120px; accent-color: #c0a050;
+      }
+      .settings-control select {
+        background: rgba(40, 36, 60, 0.9); border: 1px solid rgba(100, 100, 120, 0.4);
+        color: #d0c8a8; padding: 4px 8px; border-radius: 3px; font-size: 13px;
+      }
+      .settings-back {
+        margin-top: 24px; width: 100%; padding: 10px;
+        background: rgba(40, 36, 60, 0.8); border: 1px solid rgba(180, 160, 100, 0.3);
+        border-radius: 4px; color: #d0c8a8; font-size: 14px; font-weight: 600;
+        letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+        font-family: inherit; transition: all 0.2s ease;
+      }
+      .settings-back:hover { border-color: rgba(220, 190, 100, 0.6); color: #f0e0b0; }
+
+      /* ── Battle Screen ── */
+      #battle-screen {
+        position: fixed; inset: 0; z-index: 400;
+        background: #0a0a14;
+        transition: opacity 0.3s ease;
+      }
+      #battle-screen.hidden { opacity: 0; pointer-events: none; }
+      #battle-screen canvas { width: 100%; height: 100%; display: block; }
+      #battle-hud {
+        position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+        z-index: 410; display: flex; flex-direction: column; align-items: center; gap: 4px;
+        font-family: 'Segoe UI', system-ui, sans-serif; pointer-events: none;
+      }
+      .battle-title {
+        font-size: 18px; font-weight: 600; color: #f0d080;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+        letter-spacing: 2px; text-transform: uppercase;
+      }
+      .battle-hint {
+        font-size: 12px; color: rgba(200, 190, 160, 0.5); letter-spacing: 1px;
+      }
     </style>
   </head>
   <body>
+    <!-- Main Menu -->
+    <div id="main-menu">
+      <img class="menu-shield" src="/asset/blue-soldier.png" alt="Shield">
+      <div class="menu-title">Grand Strategy</div>
+      <div class="menu-subtitle">Map 2D</div>
+      <div class="menu-buttons">
+        <button class="menu-btn primary" id="btn-new-game">New Game</button>
+        <button class="menu-btn" id="btn-continue" disabled>Continue</button>
+        <button class="menu-btn" id="btn-settings">Settings</button>
+        <button class="menu-btn" id="btn-exit">Exit</button>
+      </div>
+      <div class="menu-version">v0.0.1</div>
+    </div>
+
+    <!-- Settings Overlay -->
+    <div id="settings-overlay">
+      <div class="settings-panel">
+        <div class="settings-title">Settings</div>
+        <div class="settings-row">
+          <span class="settings-label">Music Volume</span>
+          <span class="settings-control"><input type="range" id="set-music" min="0" max="100" value="70"></span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label">SFX Volume</span>
+          <span class="settings-control"><input type="range" id="set-sfx" min="0" max="100" value="80"></span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label">Map Quality</span>
+          <span class="settings-control">
+            <select id="set-quality">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+            </select>
+          </span>
+        </div>
+        <div class="settings-row">
+          <span class="settings-label">Camera Smoothing</span>
+          <span class="settings-control"><input type="range" id="set-smoothing" min="1" max="30" value="12"></span>
+        </div>
+        <button class="settings-back" id="btn-settings-back">Back</button>
+      </div>
+    </div>
+
+    <!-- Battle Screen -->
+    <div id="battle-screen" class="hidden">
+      <canvas id="battle-canvas"></canvas>
+      <div id="battle-hud">
+        <span class="battle-title">Tactical Battle</span>
+        <span class="battle-hint">Click unit to select &bull; Click adjacent hex to move &bull; ESC to exit</span>
+      </div>
+    </div>
+
     <canvas id="map-canvas"></canvas>
     <canvas id="army-overlay"></canvas>
     <div id="tooltip">

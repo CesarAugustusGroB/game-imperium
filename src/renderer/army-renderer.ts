@@ -9,6 +9,8 @@ export class ArmyRenderer {
   private camera: Camera;
   private armyManager: ArmyManager;
   private gameState: GameState;
+  private shieldImage: HTMLImageElement | null = null;
+  private tintedShields: Map<string, HTMLCanvasElement> = new Map();
   selectedArmyId: number | null = null;
 
   constructor(
@@ -24,6 +26,34 @@ export class ArmyRenderer {
     this.camera = camera;
     this.armyManager = armyManager;
     this.gameState = gameState;
+    this.loadShieldImage();
+  }
+
+  private loadShieldImage(): void {
+    const img = new Image();
+    img.onload = () => { this.shieldImage = img; };
+    img.src = '/asset/blue-soldier.png';
+  }
+
+  private getTintedShield(nationId: string, color: number[]): HTMLCanvasElement | null {
+    if (this.tintedShields.has(nationId)) return this.tintedShields.get(nationId)!;
+    if (!this.shieldImage) return null;
+
+    const c = document.createElement('canvas');
+    c.width = this.shieldImage.width;
+    c.height = this.shieldImage.height;
+    const tctx = c.getContext('2d')!;
+
+    // Draw original shield
+    tctx.drawImage(this.shieldImage, 0, 0);
+
+    // Tint with nation color — source-atop preserves transparency
+    tctx.globalCompositeOperation = 'source-atop';
+    tctx.fillStyle = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.45)`;
+    tctx.fillRect(0, 0, c.width, c.height);
+
+    this.tintedShields.set(nationId, c);
+    return c;
   }
 
   resize(width: number, height: number): void {
@@ -62,77 +92,81 @@ export class ArmyRenderer {
     const isMoving = army.targetProvinceIndex !== null;
 
     const scale = Math.min(Math.max(this.camera.zoom * 0.5, 0.6), 2.5);
-    const w = 40 * scale;
-    const h = 22 * scale;
+    const shieldSize = 38 * scale;
+
+    // Get nation-tinted shield (cached per nation)
+    const shield = this.getTintedShield(army.owner, color);
 
     ctx.save();
     ctx.translate(sx, sy);
 
-    // Combat pulse — red tint pulsing
-    let bannerColor: string;
+    // Combat pulse — scale throb + red glow
+    let drawScale = 1.0;
     if (army.inCombat) {
       const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 200);
-      const r = Math.min(255, color[0] + 80 * pulse);
-      const g = Math.max(0, color[1] - 30 * pulse);
-      const b = Math.max(0, color[2] - 30 * pulse);
-      bannerColor = `rgb(${r}, ${g}, ${b})`;
+      drawScale = 1.0 + 0.08 * pulse;
+      ctx.shadowColor = `rgba(255, 50, 50, ${0.5 + 0.3 * pulse})`;
+      ctx.shadowBlur = 10 * scale;
+    } else if (isSelected) {
+      ctx.shadowColor = '#ffd700';
+      ctx.shadowBlur = 12 * scale;
     } else {
-      bannerColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 4 * scale;
+      ctx.shadowOffsetY = 2 * scale;
     }
 
-    // Drop shadow
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    ctx.shadowBlur = 4 * scale;
-    ctx.shadowOffsetY = 2 * scale;
+    const s = shieldSize * drawScale;
+    const half = s / 2;
 
-    // Banner background
-    ctx.beginPath();
-    ctx.roundRect(-w / 2, -h / 2 - 4 * scale, w, h, 3 * scale);
-    ctx.fillStyle = bannerColor;
-    ctx.fill();
-
-    // Border
-    if (isSelected) {
-      ctx.strokeStyle = '#ffd700';
-      ctx.lineWidth = 2.5 * scale;
-    } else if (army.inCombat) {
-      ctx.strokeStyle = '#ff3333';
-      ctx.lineWidth = 2 * scale;
+    // Draw shield image (or fallback circle)
+    if (shield) {
+      ctx.drawImage(shield, -half, -half, s, s);
     } else {
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.lineWidth = 1 * scale;
+      ctx.beginPath();
+      ctx.arc(0, 0, half, 0, Math.PI * 2);
+      ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+      ctx.fill();
     }
-    ctx.stroke();
 
     ctx.shadowColor = 'transparent';
 
-    // Movement indicator
+    // Selection ring
+    if (isSelected) {
+      ctx.beginPath();
+      ctx.arc(0, 0, half + 2 * scale, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2.5 * scale;
+      ctx.stroke();
+    }
+
+    // Movement indicator dot
     if (isMoving && !army.inCombat) {
       ctx.fillStyle = '#ffcc00';
       ctx.beginPath();
-      ctx.arc(w / 2 - 2 * scale, -h / 2 - 2 * scale, 3 * scale, 0, Math.PI * 2);
+      ctx.arc(half * 0.7, -half * 0.7, 3.5 * scale, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
 
     // Crossed swords for combat
     if (army.inCombat) {
-      const swordY = -h / 2 - 10 * scale;
+      const swordY = -half - 6 * scale;
       const swordSize = 6 * scale;
       ctx.strokeStyle = '#ff4444';
       ctx.lineWidth = 2 * scale;
       ctx.lineCap = 'round';
-      // Sword 1
       ctx.beginPath();
       ctx.moveTo(-swordSize, swordY - swordSize);
       ctx.lineTo(swordSize, swordY + swordSize);
       ctx.stroke();
-      // Sword 2
       ctx.beginPath();
       ctx.moveTo(swordSize, swordY - swordSize);
       ctx.lineTo(-swordSize, swordY + swordSize);
       ctx.stroke();
 
-      // Dice roll display
       if (army.lastRoll > 0) {
         const rollFontSize = Math.max(9, 10 * scale);
         ctx.font = `bold ${rollFontSize}px 'Segoe UI', system-ui, sans-serif`;
@@ -142,25 +176,30 @@ export class ArmyRenderer {
       }
     }
 
-    // Army size text
-    const fontSize = Math.max(10, 12 * scale);
+    // Army size label below shield
+    const fontSize = Math.max(9, 11 * scale);
     ctx.font = `bold ${fontSize}px 'Segoe UI', system-ui, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    const brightness = (color[0] * 299 + color[1] * 587 + color[2] * 114) / 1000;
-    ctx.fillStyle = brightness > 128 ? '#1a1a1a' : '#f0f0f0';
+    ctx.textBaseline = 'top';
 
     const sizeText = army.size >= 1000 ? `${(army.size / 1000).toFixed(1)}K` : String(army.size);
-    ctx.fillText(sizeText, 0, -4 * scale);
+    const labelY = half + 2 * scale;
 
-    // Flag pole
+    // Text background pill
+    const metrics = ctx.measureText(sizeText);
+    const pillW = metrics.width + 8 * scale;
+    const pillH = fontSize + 4 * scale;
     ctx.beginPath();
-    ctx.moveTo(0, h / 2 - 4 * scale);
-    ctx.lineTo(0, h / 2 + 4 * scale);
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.lineWidth = 2 * scale;
+    ctx.roundRect(-pillW / 2, labelY - 1 * scale, pillW, pillH, 3 * scale);
+    ctx.fillStyle = 'rgba(10, 10, 30, 0.8)';
+    ctx.fill();
+    ctx.strokeStyle = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.6)`;
+    ctx.lineWidth = 1;
     ctx.stroke();
+
+    // Text
+    ctx.fillStyle = '#f0e0c0';
+    ctx.fillText(sizeText, 0, labelY);
 
     ctx.restore();
   }

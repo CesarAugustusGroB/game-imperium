@@ -12,6 +12,8 @@ import { ProvincePicker } from './game/picking';
 import { ArmyManager } from './game/army';
 import { Overlay } from './ui/overlay';
 import { DebugPanel } from './ui/debug-panel';
+import { MainMenu } from './ui/main-menu';
+import { BattleMode } from './battle/index';
 import { rgbToIndex, keyToRgb } from './utils/color';
 import mapVert from './shaders/map.vert';
 import mapFrag from './shaders/map.frag';
@@ -50,8 +52,11 @@ async function main() {
   const armyManager = new ArmyManager(gameState.topology);
   const armyRenderer = new ArmyRenderer(armyCanvas, camera, armyManager, gameState);
 
-  // Spawn starter armies for major nations
-  spawnStarterArmies(armyManager, gameState);
+  // Battle mode
+  let gameRunning = false;
+  const battleMode = new BattleMode(() => {
+    gameRunning = true;
+  });
 
   // Screenshot function
   function takeScreenshot() {
@@ -86,10 +91,12 @@ async function main() {
     resizeViewport(gl, canvas.width, canvas.height);
     picker.resize(canvas.width, canvas.height);
     armyRenderer.resize(canvas.width, canvas.height);
+    battleMode.resize(canvas.width, canvas.height);
   });
 
   // Mouse interaction
   canvas.addEventListener('mousemove', (e) => {
+    if (menu.isVisible || battleMode.isVisible) return;
     const provinceKey = picker.pick(e.clientX, e.clientY, camera);
     gameState.hoveredProvinceKey = provinceKey;
     overlay.update(e.clientX, e.clientY);
@@ -98,6 +105,8 @@ async function main() {
 
   // Left-click: select army first, then province
   canvas.addEventListener('click', (e) => {
+    if (menu.isVisible || battleMode.isVisible) return;
+
     // Check if clicking an army
     const armyId = armyRenderer.hitTest(e.clientX, e.clientY);
     if (armyId !== null) {
@@ -137,6 +146,7 @@ async function main() {
   // Right-click: move selected army to target province
   canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault();
+    if (menu.isVisible || battleMode.isVisible) return;
 
     if (armyRenderer.selectedArmyId === null) return;
 
@@ -156,15 +166,39 @@ async function main() {
     lastTime = now;
 
     camera.update();
-    armyManager.update(dt);
+    if (gameRunning) armyManager.update(dt);
     renderer.render();
     armyRenderer.render();
+    battleMode.render();
 
     requestAnimationFrame(frame);
   }
 
-  console.log('Grand Strategy Map ready — left-click to select armies, right-click to move them');
+  // Start render loop (shows map behind menu)
   requestAnimationFrame(frame);
+
+  // Main menu
+  const menu = new MainMenu({
+    onNewGame: () => {
+      spawnStarterArmies(armyManager, gameState);
+      gameRunning = true;
+      console.log('Grand Strategy Map ready — left-click to select armies, right-click to move them');
+    },
+    onContinue: () => {
+      gameRunning = true;
+    },
+  });
+  menu.setCamera(camera);
+
+  // B key enters battle mode from campaign
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'b' || e.key === 'B') {
+      if (!menu.isVisible && !battleMode.isVisible && gameRunning) {
+        gameRunning = false;
+        battleMode.enter();
+      }
+    }
+  });
 }
 
 function spawnStarterArmies(armyManager: ArmyManager, gameState: GameState) {
