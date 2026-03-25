@@ -3,7 +3,7 @@ import { BattleRenderer } from './battle-renderer';
 import { BattleInput } from './battle-input';
 import { runAI } from './battle-ai';
 
-const COMBAT_INTERVAL = 1.5;
+const COMBAT_INTERVAL = 3.0;
 
 export class BattleMode {
   private container: HTMLElement;

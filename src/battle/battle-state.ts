@@ -34,9 +34,9 @@ const MOVE_RANGE = 3;           // max hexes per move action
 const MOVE_ANIM_SPEED = 1.2;    // progress per second (~0.83s per hop, 3 hops ≈ 2.5s)
 const DAMAGE_PER_ROLL = 300;
 const MORALE_BREAK_THRESHOLD = 0.3;
-const SHAKE_DURATION = 0.35;    // seconds of shake on hit
-const FLASH_DURATION = 0.2;     // seconds of white flash on hit
-const DEATH_DURATION = 1.5;     // seconds for full death animation
+const SHAKE_DURATION = 0.6;     // seconds of shake on hit
+const FLASH_DURATION = 0.4;     // seconds of white flash on hit
+const DEATH_DURATION = 2.5;     // seconds for full death animation
 
 function rollD6(): number {
   return Math.floor(Math.random() * 6) + 1;
