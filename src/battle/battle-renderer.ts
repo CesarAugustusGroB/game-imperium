@@ -31,9 +31,12 @@ export class BattleRenderer {
   }
 
   private loadAssets(): void {
+    const bgSrc = Math.random() < 0.5
+      ? '/textures/battleground.png'
+      : '/textures/battleground2.png';
     const bg = new Image();
     bg.onload = () => { this.bgImage = bg; };
-    bg.src = '/textures/battleground.png';
+    bg.src = bgSrc;
 
     const blue = new Image();
     blue.onload = () => { this.blueShield = blue; };
