@@ -170,7 +170,8 @@ export class BattleState {
     return unit.actionCooldown <= 0
       && !unit.isDying
       && !this.isUnitMoving(unit)
-      && unit.lungeTimer <= 0;
+      && unit.lungeTimer <= 0
+      && unit.shakeTimer <= 0;
   }
 
   /** Reset a unit's action cooldown with random jitter. */
@@ -286,6 +287,7 @@ export class BattleState {
   getFactionStrength(faction: Faction): number {
     let total = 0;
     for (const u of this.units.values()) {
+      if (u.isDying) continue;
       if (u.faction === faction) total += u.strength;
     }
     return total;
@@ -295,6 +297,7 @@ export class BattleState {
     let nearest: BattleUnit | null = null;
     let bestDist = Infinity;
     for (const other of this.units.values()) {
+      if (other.isDying) continue;
       if (other.faction === unit.faction) continue;
       const d = hexDistance(unit.hex, other.hex);
       if (d < bestDist) {
@@ -314,10 +317,10 @@ export class BattleState {
 
   resolveCombat(attacker: BattleUnit, defender: BattleUnit): void {
     const atkRoll = rollD6();
-    const defRoll = rollD6() + 1; // defender advantage
+    const defRoll = rollD6(); // no +1 bonus on counter-attack
 
-    attacker.strength -= defRoll * DAMAGE_PER_ROLL;
     defender.strength -= atkRoll * DAMAGE_PER_ROLL;
+    attacker.strength -= Math.floor(defRoll * DAMAGE_PER_ROLL * 0.6);
 
     // Trigger hit animations — both lunge toward each other then recoil
     attacker.lungeTarget = { q: defender.hex.q, r: defender.hex.r };
@@ -409,24 +412,30 @@ export class BattleState {
   // ── Setup ──
 
   placeStartingUnits(): void {
-    const bluePositions = [
-      offsetToAxial(0, 1), offsetToAxial(0, 3), offsetToAxial(0, 5),
-      offsetToAxial(0, 7), offsetToAxial(0, 9), offsetToAxial(0, 11),
-      offsetToAxial(1, 2), offsetToAxial(1, 4), offsetToAxial(1, 6),
-      offsetToAxial(1, 10),
-    ];
-    bluePositions.forEach((hex, i) => {
-      this.addUnit('blue', hex, 3000 + i * 450, `${i + 1}st Blue Infantry`);
+    const BASE_HP = 4000;
+
+    // Blue front line (col 2): rows 1, 3, 5, 7, 9, 11 — 6 units
+    const blueFrontRows = [1, 3, 5, 7, 9, 11];
+    blueFrontRows.forEach((row, i) => {
+      this.addUnit('blue', offsetToAxial(2, row), BASE_HP, `${i + 1}st Blue Vanguard`);
     });
 
-    const redPositions = [
-      offsetToAxial(19, 1), offsetToAxial(19, 3), offsetToAxial(19, 5),
-      offsetToAxial(19, 7), offsetToAxial(19, 9), offsetToAxial(19, 11),
-      offsetToAxial(18, 2), offsetToAxial(18, 4), offsetToAxial(18, 6),
-      offsetToAxial(18, 10),
-    ];
-    redPositions.forEach((hex, i) => {
-      this.addUnit('red', hex, 3000 + i * 450, `${i + 1}st Red Infantry`);
+    // Blue back line (col 0): rows 2, 4, 6, 8 — 4 units
+    const blueBackRows = [2, 4, 6, 8];
+    blueBackRows.forEach((row, i) => {
+      this.addUnit('blue', offsetToAxial(0, row), BASE_HP, `${i + 1}st Blue Reserve`);
+    });
+
+    // Red front line (col 17): rows 1, 3, 5, 7, 9, 11 — 6 units
+    const redFrontRows = [1, 3, 5, 7, 9, 11];
+    redFrontRows.forEach((row, i) => {
+      this.addUnit('red', offsetToAxial(17, row), BASE_HP, `${i + 1}st Red Vanguard`);
+    });
+
+    // Red back line (col 19): rows 2, 4, 6, 8 — 4 units
+    const redBackRows = [2, 4, 6, 8];
+    redBackRows.forEach((row, i) => {
+      this.addUnit('red', offsetToAxial(19, row), BASE_HP, `${i + 1}st Red Reserve`);
     });
 
     // Record starting strengths for morale check
