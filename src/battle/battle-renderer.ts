@@ -218,8 +218,26 @@ export class BattleRenderer {
     const shieldImg = unit.faction === 'blue' ? this.blueShield : this.redShield;
     const iconSize = this.state.config.hexSize * 0.75;
 
+    // Compute damage ratio for cracks
+    const damageRatio = 1 - Math.max(0, unit.strength) / unit.startingStrength;
+
     ctx.save();
-    ctx.translate(center.x, center.y);
+
+    // Death fade: reduce global alpha during fade phase (deathProgress 0.33→1.0)
+    if (unit.isDying && unit.deathProgress > 0.33) {
+      const fadeT = (unit.deathProgress - 0.33) / 0.67; // 0→1
+      ctx.globalAlpha = 1 - fadeT;
+    }
+
+    // Shake offset: rapid random jitter decaying over time
+    let sx = center.x, sy = center.y;
+    if (unit.shakeTimer > 0) {
+      const intensity = unit.shakeTimer * 10; // decays from ~3.5px to 0
+      sx += (Math.random() - 0.5) * intensity;
+      sy += (Math.random() - 0.5) * intensity;
+    }
+
+    ctx.translate(sx, sy);
 
     // Selection glow
     if (isSelected) {
@@ -243,6 +261,23 @@ export class BattleRenderer {
 
     ctx.shadowColor = 'transparent';
 
+    // White flash overlay on hit
+    if (unit.flashTimer > 0) {
+      const flashAlpha = unit.flashTimer * 4; // fades from ~0.8 to 0
+      ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.8, flashAlpha)})`;
+      ctx.beginPath();
+      ctx.arc(0, -4, iconSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Damage cracks (grietas) — accumulate with damage
+    const crackRatio = unit.isDying
+      ? Math.min(1, unit.deathProgress / 0.33) // spread to full during death phase 1
+      : damageRatio;
+    if (crackRatio > 0.05) {
+      this.drawCracks(unit.crackSeed, iconSize, crackRatio);
+    }
+
     // Selection ring
     if (isSelected) {
       ctx.beginPath();
@@ -252,34 +287,86 @@ export class BattleRenderer {
       ctx.stroke();
     }
 
-    // Strength label pill
-    const sizeText = unit.strength >= 1000
-      ? `${(unit.strength / 1000).toFixed(1)}K`
-      : String(unit.strength);
+    // Strength label pill (hide during death fade)
+    if (!unit.isDying) {
+      const sizeText = unit.strength >= 1000
+        ? `${(unit.strength / 1000).toFixed(1)}K`
+        : String(unit.strength);
 
-    const fontSize = 11;
-    ctx.font = `bold ${fontSize}px 'Segoe UI', system-ui, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
+      const fontSize = 11;
+      ctx.font = `bold ${fontSize}px 'Segoe UI', system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
 
-    const metrics = ctx.measureText(sizeText);
-    const pillW = metrics.width + 10;
-    const pillH = fontSize + 6;
-    const pillY = iconSize / 2 - 2;
+      const metrics = ctx.measureText(sizeText);
+      const pillW = metrics.width + 10;
+      const pillH = fontSize + 6;
+      const pillY = iconSize / 2 - 2;
 
-    ctx.beginPath();
-    ctx.roundRect(-pillW / 2, pillY, pillW, pillH, 3);
-    ctx.fillStyle = 'rgba(10, 10, 30, 0.85)';
-    ctx.fill();
-    const borderColor = unit.faction === 'blue'
-      ? 'rgba(80, 130, 220, 0.6)'
-      : 'rgba(220, 80, 80, 0.6)';
-    ctx.strokeStyle = borderColor;
-    ctx.lineWidth = 1;
-    ctx.stroke();
+      ctx.beginPath();
+      ctx.roundRect(-pillW / 2, pillY, pillW, pillH, 3);
+      ctx.fillStyle = 'rgba(10, 10, 30, 0.85)';
+      ctx.fill();
+      const borderColor = unit.faction === 'blue'
+        ? 'rgba(80, 130, 220, 0.6)'
+        : 'rgba(220, 80, 80, 0.6)';
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 1;
+      ctx.stroke();
 
-    ctx.fillStyle = '#f0e0c0';
-    ctx.fillText(sizeText, 0, pillY + 3);
+      ctx.fillStyle = '#f0e0c0';
+      ctx.fillText(sizeText, 0, pillY + 3);
+    }
+
+    ctx.restore();
+  }
+
+  /** Draw seeded crack lines over the unit sprite. */
+  private drawCracks(seed: number, iconSize: number, intensity: number): void {
+    const { ctx } = this;
+    const MAX_CRACKS = 8;
+    const crackCount = Math.ceil(intensity * MAX_CRACKS);
+    const radius = iconSize / 2;
+
+    ctx.save();
+    ctx.translate(0, -4); // center on sprite
+
+    for (let i = 0; i < crackCount; i++) {
+      // Deterministic angle + jitter from seed
+      const baseSeed = seed + i * 3571;
+      const angle = ((baseSeed % 360) / 360) * Math.PI * 2;
+      const jitter = ((baseSeed * 13 % 100) / 100 - 0.5) * 0.4;
+      const len = radius * (0.5 + ((baseSeed * 7 % 100) / 100) * 0.5) * Math.min(1, intensity * 1.5);
+
+      // Main crack line
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      const midX = Math.cos(angle + jitter) * len * 0.5;
+      const midY = Math.sin(angle + jitter) * len * 0.5;
+      const endX = Math.cos(angle) * len;
+      const endY = Math.sin(angle) * len;
+      ctx.lineTo(midX, midY);
+      ctx.lineTo(endX, endY);
+
+      // Branch at midpoint
+      if (i % 2 === 0) {
+        const branchAngle = angle + jitter + (i % 3 === 0 ? 0.6 : -0.6);
+        const branchLen = len * 0.35;
+        ctx.moveTo(midX, midY);
+        ctx.lineTo(
+          midX + Math.cos(branchAngle) * branchLen,
+          midY + Math.sin(branchAngle) * branchLen,
+        );
+      }
+
+      // Dark stroke with slight glow
+      ctx.strokeStyle = 'rgba(20, 10, 5, 0.9)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(80, 40, 20, 0.5)';
+      ctx.lineWidth = 3.5;
+      ctx.stroke();
+    }
 
     ctx.restore();
   }

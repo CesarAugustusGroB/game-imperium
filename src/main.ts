@@ -49,7 +49,7 @@ async function main() {
   const renderer = new MapRenderer(gl, program, quad, textures, camera, registry);
 
   // Army system
-  const armyManager = new ArmyManager(gameState.topology);
+  const armyManager = new ArmyManager(gameState.topology, gameState, registry);
   const armyRenderer = new ArmyRenderer(armyCanvas, camera, armyManager, gameState);
 
   // Battle mode

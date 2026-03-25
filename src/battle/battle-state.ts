@@ -14,6 +14,13 @@ export interface BattleUnit {
   prevHex: Hex | null;
   moveProgress: number; // 0 = at prevHex, 1 = at hex
   path: Hex[];          // queued hexes to walk through
+  // Combat animation state
+  startingStrength: number;
+  shakeTimer: number;   // seconds remaining of shake effect
+  flashTimer: number;   // seconds remaining of white flash
+  isDying: boolean;
+  deathProgress: number; // 0→1 (0-0.33 = cracks spread, 0.33-1.0 = fade out)
+  crackSeed: number;     // deterministic seed for crack generation
 }
 
 export interface BattleConfig {
@@ -27,6 +34,9 @@ const MOVE_RANGE = 3;           // max hexes per move action
 const MOVE_ANIM_SPEED = 1.2;    // progress per second (~0.83s per hop, 3 hops ≈ 2.5s)
 const DAMAGE_PER_ROLL = 300;
 const MORALE_BREAK_THRESHOLD = 0.3;
+const SHAKE_DURATION = 0.35;    // seconds of shake on hit
+const FLASH_DURATION = 0.2;     // seconds of white flash on hit
+const DEATH_DURATION = 1.5;     // seconds for full death animation
 
 function rollD6(): number {
   return Math.floor(Math.random() * 6) + 1;
@@ -85,9 +95,14 @@ export class BattleState {
   // ── Units ──
 
   addUnit(faction: Faction, hex: Hex, strength: number, name: string): BattleUnit {
+    const id = this.nextId++;
     const unit: BattleUnit = {
-      id: this.nextId++, faction, hex, strength, name,
+      id, faction, hex, strength, name,
       prevHex: null, moveProgress: 1, path: [],
+      startingStrength: strength,
+      shakeTimer: 0, flashTimer: 0,
+      isDying: false, deathProgress: 0,
+      crackSeed: id * 7919, // prime for deterministic crack angles
     };
     this.units.set(unit.id, unit);
     return unit;
@@ -95,6 +110,7 @@ export class BattleState {
 
   getUnitAt(hex: Hex): BattleUnit | null {
     for (const unit of this.units.values()) {
+      if (unit.isDying) continue;
       if (unit.hex.q === hex.q && unit.hex.r === hex.r) return unit;
     }
     return null;
@@ -229,7 +245,7 @@ export class BattleState {
     const neighbors = hexNeighbors(unit.hex);
     const enemies: BattleUnit[] = [];
     for (const nh of neighbors) {
-      const other = this.getUnitAt(nh);
+      const other = this.getUnitAt(nh); // already skips dying
       if (other && other.faction !== unit.faction) enemies.push(other);
     }
     return enemies;
@@ -238,6 +254,7 @@ export class BattleState {
   getFactionUnits(faction: Faction): BattleUnit[] {
     const result: BattleUnit[] = [];
     for (const u of this.units.values()) {
+      if (u.isDying) continue;
       if (u.faction === faction) result.push(u);
     }
     return result;
@@ -279,13 +296,23 @@ export class BattleState {
     attacker.strength -= defRoll * DAMAGE_PER_ROLL;
     defender.strength -= atkRoll * DAMAGE_PER_ROLL;
 
-    // Remove destroyed units + clear selection
+    // Trigger hit animations on both
+    attacker.shakeTimer = SHAKE_DURATION;
+    attacker.flashTimer = FLASH_DURATION;
+    defender.shakeTimer = SHAKE_DURATION;
+    defender.flashTimer = FLASH_DURATION;
+
+    // Start death animation instead of immediate deletion
     if (attacker.strength <= 0) {
-      this.units.delete(attacker.id);
+      attacker.strength = 0;
+      attacker.isDying = true;
+      attacker.deathProgress = 0;
       if (this.selectedUnitId === attacker.id) this.selectedUnitId = null;
     }
     if (defender.strength <= 0) {
-      this.units.delete(defender.id);
+      defender.strength = 0;
+      defender.isDying = true;
+      defender.deathProgress = 0;
       if (this.selectedUnitId === defender.id) this.selectedUnitId = null;
     }
   }
@@ -304,28 +331,42 @@ export class BattleState {
 
   // ── Animation ──
 
-  /** Advance movement animations; consume path queue on hop completion. */
+  /** Advance all animations: movement, shake, flash, death. */
   updateAnimations(dt: number): void {
+    const toRemove: number[] = [];
+
     for (const unit of this.units.values()) {
-      if (unit.moveProgress >= 1) continue;
-
-      unit.moveProgress = Math.min(1, unit.moveProgress + MOVE_ANIM_SPEED * dt);
-
-      if (unit.moveProgress >= 1) {
-        unit.prevHex = null;
-
-        // Advance to next hop in path queue
-        if (unit.path.length > 0) {
-          const next = unit.path.shift()!;
-          if (!this.getUnitAt(next)) {
-            unit.prevHex = { q: unit.hex.q, r: unit.hex.r };
-            unit.hex = { q: next.q, r: next.r };
-            unit.moveProgress = 0;
-          } else {
-            unit.path = [];
+      // Movement animation
+      if (unit.moveProgress < 1) {
+        unit.moveProgress = Math.min(1, unit.moveProgress + MOVE_ANIM_SPEED * dt);
+        if (unit.moveProgress >= 1) {
+          unit.prevHex = null;
+          if (unit.path.length > 0) {
+            const next = unit.path.shift()!;
+            if (!this.getUnitAt(next)) {
+              unit.prevHex = { q: unit.hex.q, r: unit.hex.r };
+              unit.hex = { q: next.q, r: next.r };
+              unit.moveProgress = 0;
+            } else {
+              unit.path = [];
+            }
           }
         }
       }
+
+      // Combat effect timers
+      if (unit.shakeTimer > 0) unit.shakeTimer = Math.max(0, unit.shakeTimer - dt);
+      if (unit.flashTimer > 0) unit.flashTimer = Math.max(0, unit.flashTimer - dt);
+
+      // Death animation
+      if (unit.isDying) {
+        unit.deathProgress = Math.min(1, unit.deathProgress + dt / DEATH_DURATION);
+        if (unit.deathProgress >= 1) toRemove.push(unit.id);
+      }
+    }
+
+    for (const id of toRemove) {
+      this.units.delete(id);
     }
   }
 

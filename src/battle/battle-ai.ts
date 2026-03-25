@@ -7,8 +7,9 @@ export function runAI(state: BattleState, faction: Faction): void {
   shuffle(units);
 
   for (const unit of units) {
-    // Skip if unit was destroyed this round
+    // Skip if unit was destroyed or is dying
     if (!state.units.has(unit.id)) continue;
+    if (unit.isDying) continue;
 
     // Check for adjacent enemies first — attack
     const enemies = state.getAdjacentEnemies(unit);
