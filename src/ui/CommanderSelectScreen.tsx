@@ -2,6 +2,7 @@ import { signal } from '@preact/signals';
 import { COMMANDERS } from '../data/commanders';
 import { FACTION_COLORS } from '../game/commander';
 import type { Commander } from '../game/commander';
+import { startNewRun } from '../game/game-state';
 import { navigateTo } from './screens';
 
 const hoveredId = signal<string | null>(null);
@@ -9,7 +10,7 @@ const selectedId = signal<string | null>(null);
 
 function selectCommander(commander: Commander) {
   selectedId.value = commander.id;
-  // TODO (S1-09): store in GameState, init resources
+  startNewRun(commander);
   setTimeout(() => navigateTo('hub'), 300);
 }
 

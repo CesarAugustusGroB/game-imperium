@@ -1,10 +1,11 @@
 import { currentScreen } from './screens';
+import { ResourceBar } from './ResourceBar';
 import { TitleScreen } from './TitleScreen';
 import { CommanderSelectScreen } from './CommanderSelectScreen';
 import { HubScreen } from './HubScreen';
 import { NodeMapScreen } from './NodeMapScreen';
 
-export function App() {
+function ScreenContent() {
   const screen = currentScreen.value;
 
   switch (screen) {
@@ -16,8 +17,6 @@ export function App() {
       return <HubScreen />;
     case 'node-map':
       return <NodeMapScreen />;
-    // battle: handled by Canvas (Preact UI hidden)
-    // post-battle, victory, defeat: placeholders for later sprints
     default:
       return (
         <div style={{
@@ -29,4 +28,16 @@ export function App() {
         </div>
       );
   }
+}
+
+export function App() {
+  const screen = currentScreen.value;
+  const showResourceBar = screen !== 'title' && screen !== 'commander-select' && screen !== 'battle';
+
+  return (
+    <>
+      {showResourceBar && <ResourceBar />}
+      <ScreenContent />
+    </>
+  );
 }
