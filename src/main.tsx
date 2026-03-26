@@ -1,7 +1,12 @@
+import { render } from 'preact';
+import { TestPreact } from './ui/TestPreact';
 import { BattleMode } from './battle/index';
 
+// Mount Preact UI into #app-root
+const appRoot = document.getElementById('app-root');
+if (appRoot) render(<TestPreact />, appRoot);
+
 const battleMode = new BattleMode(() => {
-  // On exit, restart a new battle
   battleMode.enter();
 });
 
