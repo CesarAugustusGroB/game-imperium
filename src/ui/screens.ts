@@ -10,10 +10,18 @@ export type ScreenName =
   | 'victory'
   | 'defeat';
 
-export const currentScreen = signal<ScreenName>('title');
+// Read initial screen from URL hash (e.g., #battle, #hub, #node-map)
+function getInitialScreen(): ScreenName {
+  const hash = window.location.hash.slice(1) as ScreenName;
+  const valid: ScreenName[] = ['title', 'commander-select', 'hub', 'node-map', 'battle', 'post-battle', 'victory', 'defeat'];
+  return valid.includes(hash) ? hash : 'title';
+}
+
+export const currentScreen = signal<ScreenName>(getInitialScreen());
 
 export function navigateTo(screen: ScreenName): void {
   currentScreen.value = screen;
+  window.location.hash = screen;
 
   // Toggle DOM visibility: battle uses Canvas, everything else uses Preact
   const appRoot = document.getElementById('app-root');
