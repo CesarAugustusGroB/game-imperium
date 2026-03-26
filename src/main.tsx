@@ -1,23 +1,32 @@
 import { render } from 'preact';
 import { App } from './ui/App';
-import { navigateTo } from './ui/screens';
+import { currentScreen, navigateTo } from './ui/screens';
 import { BattleMode } from './battle/index';
 
 // Mount Preact UI
 const appRoot = document.getElementById('app-root');
 if (appRoot) render(<App />, appRoot);
 
-// Hide battle screen on startup (title screen shows first)
 const battleScreen = document.getElementById('battle-screen');
-if (battleScreen) battleScreen.style.display = 'none';
 
 // Battle mode — on exit, return to node map
 const battleMode = new BattleMode(() => {
   navigateTo('node-map');
 });
 
-// Enter battle when battle-screen becomes visible
+// Apply initial screen state (handles #battle on page load)
 let battleActive = false;
+const initialScreen = currentScreen.value;
+if (initialScreen === 'battle') {
+  if (appRoot) appRoot.style.display = 'none';
+  if (battleScreen) battleScreen.style.display = 'block';
+  battleActive = true;
+  battleMode.enter();
+} else {
+  if (battleScreen) battleScreen.style.display = 'none';
+}
+
+// Enter/exit battle when battle-screen visibility changes via navigateTo()
 const observer = new MutationObserver(() => {
   const visible = battleScreen?.style.display !== 'none';
   if (visible && !battleActive) {
