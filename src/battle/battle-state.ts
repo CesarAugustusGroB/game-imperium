@@ -1,49 +1,19 @@
 import type { Hex, Point } from './hex';
-import { hexKey, hexNeighbors, hexDistance, offsetToAxial, HEX_SIZE } from './hex';
+import { hexKey, hexNeighbors, hexDistance, offsetToAxial } from './hex';
+import type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig } from './battle-types';
+import {
+  DEFAULT_CONFIG, CAPTURE_DURATION, MOVE_RANGE, MOVE_ANIM_SPEED,
+  MORALE_BREAK_THRESHOLD, SHAKE_DURATION, FLASH_DURATION,
+  LUNGE_DURATION, DEATH_DURATION, ACTION_COOLDOWN, ACTION_JITTER,
+  DODGE_AGI_FACTOR, DODGE_MAX, DOUBLE_STRIKE_RATIO, ROLE_STATS,
+  BLUE_VANGUARD_ROWS, BLUE_VANGUARD_COL, BLUE_RESERVE_ROWS, BLUE_RESERVE_COL,
+  BLUE_GUARD_ROWS, BLUE_GUARD_COL,
+  RED_VANGUARD_ROWS, RED_VANGUARD_COL, RED_RESERVE_ROWS, RED_RESERVE_COL,
+  RED_GUARD_ROWS, RED_GUARD_COL,
+} from './battle-config';
 
-export type Faction = 'blue' | 'red';
-export type BattlePhase = 'fighting' | 'victory';
-
-export interface BattleUnit {
-  id: number;
-  faction: Faction;
-  hex: Hex;
-  strength: number;
-  name: string;
-  // Movement state (mirrors strategic ArmyData.path pattern)
-  prevHex: Hex | null;
-  moveProgress: number; // 0 = at prevHex, 1 = at hex
-  path: Hex[];          // queued hexes to walk through
-  // Combat animation state
-  startingStrength: number;
-  shakeTimer: number;   // seconds remaining of shake effect
-  flashTimer: number;   // seconds remaining of impact flash
-  lungeTarget: Hex | null; // hex to lunge toward
-  lungeTimer: number;   // seconds remaining (forward then snap back)
-  isDying: boolean;
-  deathProgress: number; // 0→1 (0-0.33 = cracks spread, 0.33-1.0 = fade out)
-  crackSeed: number;     // deterministic seed for crack generation
-  // Semi-real-time action cooldown
-  actionCooldown: number; // seconds until this unit can act again
-}
-
-export interface BattleConfig {
-  cols: number;
-  rows: number;
-  hexSize: number;
-}
-
-const DEFAULT_CONFIG: BattleConfig = { cols: 20, rows: 14, hexSize: HEX_SIZE };
-const MOVE_RANGE = 3;           // max hexes per move action
-const MOVE_ANIM_SPEED = 1.2;    // progress per second (~0.83s per hop, 3 hops ≈ 2.5s)
-const DAMAGE_PER_ROLL = 300;
-const MORALE_BREAK_THRESHOLD = 0.3;
-const SHAKE_DURATION = 0.5;     // seconds of shake on hit
-const FLASH_DURATION = 0.35;    // seconds of impact flash
-const LUNGE_DURATION = 0.4;     // seconds for lunge forward + snap back
-const DEATH_DURATION = 2.5;     // seconds for full death animation
-const ACTION_COOLDOWN = 1.8;    // base seconds between unit actions
-const ACTION_JITTER = 0.6;      // random ± jitter so units don't sync
+// Re-export types for backward compatibility
+export type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig };
 
 function rollD6(): number {
   return Math.floor(Math.random() * 6) + 1;
@@ -62,6 +32,10 @@ export class BattleState {
   winner: Faction | null = null;
   roundCount = 0;
   private startingStrength = new Map<Faction, number>();
+
+  // Capture-the-star state
+  readonly stars = new Map<Faction, Hex>();          // each faction's star hex
+  readonly captureProgress = new Map<Faction, number>(); // seconds enemy has stood on star
 
   constructor(config?: Partial<BattleConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -102,16 +76,17 @@ export class BattleState {
 
   // ── Units ──
 
-  addUnit(faction: Faction, hex: Hex, strength: number, name: string): BattleUnit {
+  addUnit(faction: Faction, hex: Hex, name: string, role: UnitRole = 'vanguard', stats?: UnitStats): BattleUnit {
     const id = this.nextId++;
+    const unitStats = stats ?? ROLE_STATS[role];
     const unit: BattleUnit = {
-      id, faction, hex, strength, name,
+      id, faction, role, hex, stats: unitStats, currentHp: unitStats.hp, name,
       prevHex: null, moveProgress: 1, path: [],
-      startingStrength: strength,
       shakeTimer: 0, flashTimer: 0,
       lungeTarget: null, lungeTimer: 0,
       isDying: false, deathProgress: 0,
-      actionCooldown: (id % 5) * 0.35, // stagger so units act at different times
+      pinnedBy: null,
+      actionCooldown: 0.1, // near-zero so all units move together from the start
       crackSeed: id * 7919, // prime for deterministic crack angles
     };
     this.units.set(unit.id, unit);
@@ -288,7 +263,7 @@ export class BattleState {
     let total = 0;
     for (const u of this.units.values()) {
       if (u.isDying) continue;
-      if (u.faction === faction) total += u.strength;
+      if (u.faction === faction) total += u.currentHp;
     }
     return total;
   }
@@ -316,40 +291,131 @@ export class BattleState {
   }
 
   resolveCombat(attacker: BattleUnit, defender: BattleUnit): void {
-    const atkRoll = rollD6();
-    const defRoll = rollD6(); // no +1 bonus on counter-attack
+    // Pin the defender — can't move until attacker is dead
+    if (defender.pinnedBy === null) {
+      defender.pinnedBy = attacker.id;
+    }
 
-    defender.strength -= atkRoll * DAMAGE_PER_ROLL;
-    attacker.strength -= Math.floor(defRoll * DAMAGE_PER_ROLL * 0.6);
-
-    // Trigger hit animations — both lunge toward each other then recoil
+    // Lunge animation — attacker lunges toward defender
     attacker.lungeTarget = { q: defender.hex.q, r: defender.hex.r };
     attacker.lungeTimer = LUNGE_DURATION;
-    defender.lungeTarget = { q: attacker.hex.q, r: attacker.hex.r };
-    defender.lungeTimer = LUNGE_DURATION;
 
-    // Shake + flash kick in after lunge peaks (delayed slightly)
+    // Perform strike (and possibly a double strike)
+    this.performStrike(attacker, defender);
+
+    if (attacker.stats.agi >= defender.stats.agi * DOUBLE_STRIKE_RATIO && !defender.isDying) {
+      this.performStrike(attacker, defender);
+    }
+  }
+
+  private performStrike(attacker: BattleUnit, defender: BattleUnit): void {
+    // Dodge check: defender's AGI advantage gives dodge chance
+    const dodgeChance = Math.min(DODGE_MAX, Math.max(0,
+      (defender.stats.agi - attacker.stats.agi) * DODGE_AGI_FACTOR,
+    ));
+    if (Math.random() * 100 < dodgeChance) {
+      // Dodge — no damage, defender shakes briefly to show the miss
+      defender.shakeTimer = SHAKE_DURATION * 0.3;
+      return;
+    }
+
+    // Damage: roll × ATK - DEF, minimum 1
+    const roll = rollD6();
+    const damage = Math.max(1, roll * attacker.stats.atk - defender.stats.def);
+    defender.currentHp -= damage;
+
+    // Hit animations
     attacker.shakeTimer = SHAKE_DURATION;
     attacker.flashTimer = FLASH_DURATION;
     defender.shakeTimer = SHAKE_DURATION;
     defender.flashTimer = FLASH_DURATION;
 
-    // Start death animation instead of immediate deletion
-    if (attacker.strength <= 0) {
-      attacker.strength = 0;
-      attacker.isDying = true;
-      attacker.deathProgress = 0;
-      if (this.selectedUnitId === attacker.id) this.selectedUnitId = null;
-    }
-    if (defender.strength <= 0) {
-      defender.strength = 0;
+    // Death check — defender only (no counter-attack)
+    if (defender.currentHp <= 0) {
+      defender.currentHp = 0;
       defender.isDying = true;
       defender.deathProgress = 0;
       if (this.selectedUnitId === defender.id) this.selectedUnitId = null;
     }
   }
 
-  checkMorale(): void {
+  checkVictory(): void {
+    switch (this.config.victoryMode) {
+      case 'capture':
+        this.checkCapture();
+        break;
+      case 'annihilation':
+        this.checkAnnihilation();
+        break;
+      case 'morale':
+        this.checkMorale();
+        break;
+    }
+  }
+
+  private checkAnnihilation(): void {
+    for (const faction of ['blue', 'red'] as Faction[]) {
+      const alive = this.getFactionUnits(faction);
+      if (alive.length === 0) {
+        this.phase = 'victory';
+        this.winner = faction === 'blue' ? 'red' : 'blue';
+        return;
+      }
+    }
+  }
+
+  private checkCapture(): void {
+    // Also check annihilation — if all units of a faction are dead, the other wins
+    for (const faction of ['blue', 'red'] as Faction[]) {
+      if (this.getFactionUnits(faction).length === 0) {
+        this.phase = 'victory';
+        this.winner = faction === 'blue' ? 'red' : 'blue';
+        return;
+      }
+    }
+    // Check if any star has been fully captured
+    for (const faction of ['blue', 'red'] as Faction[]) {
+      if ((this.captureProgress.get(faction) ?? 0) >= CAPTURE_DURATION) {
+        this.phase = 'victory';
+        this.winner = faction === 'blue' ? 'red' : 'blue'; // enemy of the star's owner wins
+        return;
+      }
+    }
+
+    // Draw: if both sides only have Guards left, nobody can attack
+    const blueUnits = this.getFactionUnits('blue');
+    const redUnits = this.getFactionUnits('red');
+    const blueOnlyGuards = blueUnits.length > 0 && blueUnits.every(u => u.role === 'guard');
+    const redOnlyGuards = redUnits.length > 0 && redUnits.every(u => u.role === 'guard');
+    if (blueOnlyGuards && redOnlyGuards) {
+      this.phase = 'draw';
+    }
+  }
+
+  /** Tick capture progress — call each frame from updateAnimations. */
+  updateCapture(dt: number): void {
+    if (this.config.victoryMode !== 'capture') return;
+    for (const faction of ['blue', 'red'] as Faction[]) {
+      const star = this.stars.get(faction);
+      if (!star) continue;
+      const occupant = this.getUnitAt(star);
+      if (occupant && occupant.faction !== faction) {
+        // Enemy is on this star — advance capture
+        this.captureProgress.set(faction, (this.captureProgress.get(faction) ?? 0) + dt);
+      } else {
+        // No enemy — reset progress
+        this.captureProgress.set(faction, 0);
+      }
+    }
+  }
+
+  /** Get the enemy faction's star hex (the star this faction wants to capture). */
+  getEnemyStar(faction: Faction): Hex | null {
+    const enemy: Faction = faction === 'blue' ? 'red' : 'blue';
+    return this.stars.get(enemy) ?? null;
+  }
+
+  private checkMorale(): void {
     for (const faction of ['blue', 'red'] as Faction[]) {
       const current = this.getFactionStrength(faction);
       const starting = this.startingStrength.get(faction) ?? 1;
@@ -406,40 +472,49 @@ export class BattleState {
 
     for (const id of toRemove) {
       this.units.delete(id);
+      // Unpin all units that were pinned by this dead unit
+      for (const unit of this.units.values()) {
+        if (unit.pinnedBy === id) unit.pinnedBy = null;
+      }
     }
+
+    this.updateCapture(dt);
   }
 
   // ── Setup ──
 
   placeStartingUnits(): void {
-    const BASE_HP = 4000;
-
-    // Blue front line (col 2): rows 1, 3, 5, 7, 9, 11 — 6 units
-    const blueFrontRows = [1, 3, 5, 7, 9, 11];
-    blueFrontRows.forEach((row, i) => {
-      this.addUnit('blue', offsetToAxial(2, row), BASE_HP, `${i + 1}st Blue Vanguard`);
+    // ── Blue ──
+    BLUE_VANGUARD_ROWS.forEach((row, i) => {
+      this.addUnit('blue', offsetToAxial(BLUE_VANGUARD_COL, row), `${i + 1}st Blue Vanguard`, 'vanguard');
+    });
+    BLUE_RESERVE_ROWS.forEach((row, i) => {
+      this.addUnit('blue', offsetToAxial(BLUE_RESERVE_COL, row), `${i + 1}st Blue Reserve`, 'reserve');
+    });
+    BLUE_GUARD_ROWS.forEach((row, i) => {
+      this.addUnit('blue', offsetToAxial(BLUE_GUARD_COL, row), `${i + 1}st Blue Guard`, 'guard');
     });
 
-    // Blue back line (col 0): rows 2, 4, 6, 8 — 4 units
-    const blueBackRows = [2, 4, 6, 8];
-    blueBackRows.forEach((row, i) => {
-      this.addUnit('blue', offsetToAxial(0, row), BASE_HP, `${i + 1}st Blue Reserve`);
+    // ── Red ──
+    RED_VANGUARD_ROWS.forEach((row, i) => {
+      this.addUnit('red', offsetToAxial(RED_VANGUARD_COL, row), `${i + 1}st Red Vanguard`, 'vanguard');
     });
-
-    // Red front line (col 17): rows 1, 3, 5, 7, 9, 11 — 6 units
-    const redFrontRows = [1, 3, 5, 7, 9, 11];
-    redFrontRows.forEach((row, i) => {
-      this.addUnit('red', offsetToAxial(17, row), BASE_HP, `${i + 1}st Red Vanguard`);
+    RED_RESERVE_ROWS.forEach((row, i) => {
+      this.addUnit('red', offsetToAxial(RED_RESERVE_COL, row), `${i + 1}st Red Reserve`, 'reserve');
     });
-
-    // Red back line (col 19): rows 2, 4, 6, 8 — 4 units
-    const redBackRows = [2, 4, 6, 8];
-    redBackRows.forEach((row, i) => {
-      this.addUnit('red', offsetToAxial(19, row), BASE_HP, `${i + 1}st Red Reserve`);
+    RED_GUARD_ROWS.forEach((row, i) => {
+      this.addUnit('red', offsetToAxial(RED_GUARD_COL, row), `${i + 1}st Red Guard`, 'guard');
     });
 
     // Record starting strengths for morale check
     this.startingStrength.set('blue', this.getFactionStrength('blue'));
     this.startingStrength.set('red', this.getFactionStrength('red'));
+
+    // Place capture stars at the back-center of each side
+    const midRow = Math.floor(this.config.rows / 2);
+    this.stars.set('blue', offsetToAxial(0, midRow));
+    this.stars.set('red', offsetToAxial(this.config.cols - 1, midRow));
+    this.captureProgress.set('blue', 0);
+    this.captureProgress.set('red', 0);
   }
 }

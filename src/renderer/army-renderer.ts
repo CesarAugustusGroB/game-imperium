@@ -9,8 +9,9 @@ export class ArmyRenderer {
   private camera: Camera;
   private armyManager: ArmyManager;
   private gameState: GameState;
-  private shieldImage: HTMLImageElement | null = null;
+  private shieldImage: HTMLCanvasElement | null = null;
   private tintedShields: Map<string, HTMLCanvasElement> = new Map();
+  private static readonly CACHE_SIZE = 256; // pre-render resolution for crisp scaling
   selectedArmyId: number | null = null;
 
   constructor(
@@ -31,26 +32,47 @@ export class ArmyRenderer {
 
   private loadShieldImage(): void {
     const img = new Image();
-    img.onload = () => { this.shieldImage = img; };
-    img.src = '/asset/blue-soldier.png';
+    img.onload = () => {
+      const sz = ArmyRenderer.CACHE_SIZE;
+      const offscreen = document.createElement('canvas');
+      offscreen.width = sz;
+      offscreen.height = sz;
+      const octx = offscreen.getContext('2d')!;
+      octx.imageSmoothingEnabled = true;
+      octx.imageSmoothingQuality = 'high';
+      const aspect = img.width / img.height;
+      let dw: number, dh: number, dx: number, dy: number;
+      if (aspect > 1) {
+        dw = sz; dh = sz / aspect; dx = 0; dy = (sz - dh) / 2;
+      } else {
+        dh = sz; dw = sz * aspect; dx = (sz - dw) / 2; dy = 0;
+      }
+      octx.drawImage(img, dx, dy, dw, dh);
+      this.shieldImage = offscreen;
+      this.tintedShields.clear(); // re-tint from new cached source
+    };
+    img.src = '/asset/roman_round.png';
   }
 
   private getTintedShield(nationId: string, color: number[]): HTMLCanvasElement | null {
     if (this.tintedShields.has(nationId)) return this.tintedShields.get(nationId)!;
     if (!this.shieldImage) return null;
 
+    const sz = ArmyRenderer.CACHE_SIZE;
     const c = document.createElement('canvas');
-    c.width = this.shieldImage.width;
-    c.height = this.shieldImage.height;
+    c.width = sz;
+    c.height = sz;
     const tctx = c.getContext('2d')!;
+    tctx.imageSmoothingEnabled = true;
+    tctx.imageSmoothingQuality = 'high';
 
-    // Draw original shield
+    // Draw pre-cached shield
     tctx.drawImage(this.shieldImage, 0, 0);
 
     // Tint with nation color — source-atop preserves transparency
     tctx.globalCompositeOperation = 'source-atop';
     tctx.fillStyle = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.45)`;
-    tctx.fillRect(0, 0, c.width, c.height);
+    tctx.fillRect(0, 0, sz, sz);
 
     this.tintedShields.set(nationId, c);
     return c;
@@ -63,6 +85,8 @@ export class ArmyRenderer {
 
   render(): void {
     const { ctx, canvas } = this;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (const [, army] of this.armyManager.armies) {

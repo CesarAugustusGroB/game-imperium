@@ -61,7 +61,7 @@ export class BattleMode {
     tickAI(this.state, 'red');
 
     // Check victory
-    this.state.checkMorale();
+    this.state.checkVictory();
   }
 
   render(): void {

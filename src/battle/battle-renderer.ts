@@ -1,6 +1,9 @@
-import type { BattleState, BattleUnit } from './battle-state';
+import type { BattleState } from './battle-state';
+import type { BattleUnit, Faction } from './battle-types';
 import type { Point } from './hex';
 import { hexToPixel, hexCorners } from './hex';
+import { hexToCol } from './battle-zones';
+import { CAPTURE_DURATION } from './battle-config';
 
 export class BattleRenderer {
   private canvas: HTMLCanvasElement;
@@ -8,8 +11,9 @@ export class BattleRenderer {
   private state: BattleState;
 
   private bgImage: HTMLImageElement | null = null;
-  private blueShield: HTMLImageElement | null = null;
-  private redShield: HTMLImageElement | null = null;
+  private blueShield: HTMLCanvasElement | null = null;
+  private redShield: HTMLCanvasElement | null = null;
+  private starImage: HTMLCanvasElement | null = null;
 
   private hoveredHex: { q: number; r: number } | null = null;
 
@@ -31,20 +35,51 @@ export class BattleRenderer {
   }
 
   private loadAssets(): void {
-    const bgSrc = Math.random() < 0.5
-      ? '/textures/battleground.png'
-      : '/textures/battleground2.png';
+    const backgrounds = [
+      '/textures/battleground.png',
+      '/textures/battleground2.png',
+      '/textures/Battleground3.png',
+    ];
+    const bgSrc = backgrounds[Math.floor(Math.random() * backgrounds.length)];
     const bg = new Image();
     bg.onload = () => { this.bgImage = bg; };
     bg.src = bgSrc;
 
-    const blue = new Image();
-    blue.onload = () => { this.blueShield = blue; };
-    blue.src = '/asset/blue-soldier.png';
+    this.loadShield('/asset/roman_round.png', (c) => { this.blueShield = c; });
+    this.loadShield('/asset/spartan_round.png', (c) => { this.redShield = c; });
+    this.loadShield('/asset/commander_round.png', (c) => { this.starImage = c; });
+  }
 
-    const red = new Image();
-    red.onload = () => { this.redShield = red; };
-    red.src = '/asset/roman-soldier.png';
+  /** Pre-render a sprite to an offscreen canvas at 2x display size for crisp rendering. */
+  private loadShield(src: string, onReady: (canvas: HTMLCanvasElement) => void): void {
+    const img = new Image();
+    img.onload = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const cacheSize = Math.round(60 * dpr * 2); // 2x oversampling for sharpness
+      const offscreen = document.createElement('canvas');
+      offscreen.width = cacheSize;
+      offscreen.height = cacheSize;
+      const octx = offscreen.getContext('2d')!;
+      octx.imageSmoothingEnabled = true;
+      octx.imageSmoothingQuality = 'high';
+      // Fit the image into the square cache canvas preserving aspect ratio
+      const aspect = img.width / img.height;
+      let dw: number, dh: number, dx: number, dy: number;
+      if (aspect > 1) {
+        dw = cacheSize;
+        dh = cacheSize / aspect;
+        dx = 0;
+        dy = (cacheSize - dh) / 2;
+      } else {
+        dh = cacheSize;
+        dw = cacheSize * aspect;
+        dx = (cacheSize - dw) / 2;
+        dy = 0;
+      }
+      octx.drawImage(img, dx, dy, dw, dh);
+      onReady(offscreen);
+    };
+    img.src = src;
   }
 
   resize(width: number, height: number): void {
@@ -54,9 +89,13 @@ export class BattleRenderer {
 
   render(): void {
     const { ctx, canvas } = this;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     this.drawBackground();
     this.drawGrid();
+    this.drawZones();
+    this.drawStars();
     this.drawHoveredHex();
     this.drawMovementRange();
     this.drawSelectedHex();
@@ -106,7 +145,154 @@ export class BattleRenderer {
     for (const hex of this.state.gridHexes) {
       const center = hexToPixel(hex, size, origin);
       this.strokeHex(center, size);
+
+      // Coordinate label (offset col,row)
+      const col = hex.q + Math.floor(hex.r / 2);
+      ctx.font = '8px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(200, 180, 120, 0.35)';
+      ctx.fillText(`${col},${hex.r}`, center.x, center.y);
     }
+  }
+
+  /** Tint hexes for the 3 zones per side: camp, reserve, center. */
+  private drawZones(): void {
+    if (this.state.config.victoryMode !== 'capture') return;
+    const origin = this.state.getGridOrigin(this.canvas.width, this.canvas.height);
+    const size = this.state.config.hexSize;
+    const cols = this.state.config.cols;
+
+    // Zone boundaries (offset columns)
+    const campCols = Math.round(cols * 0.2);     // 4
+    const reserveCols = Math.round(cols * 0.15);  // 3
+
+    for (const hex of this.state.gridHexes) {
+      const col = hexToCol(hex);
+      const center = hexToPixel(hex, size, origin);
+
+      // Blue side
+      if (col < campCols) {
+        this.fillHex(center, size, 'rgba(80, 140, 255, 0.10)');  // camp
+      } else if (col < campCols + reserveCols) {
+        this.fillHex(center, size, 'rgba(200, 180, 80, 0.06)');  // reserve
+      }
+
+      // Red side
+      if (col >= cols - campCols) {
+        this.fillHex(center, size, 'rgba(255, 80, 80, 0.10)');   // camp
+      } else if (col >= cols - campCols - reserveCols) {
+        this.fillHex(center, size, 'rgba(200, 180, 80, 0.06)');  // reserve
+      }
+    }
+
+    // Draw zone boundary lines
+    this.drawZoneLine(origin, size, campCols, 'rgba(80, 140, 255, 0.25)');
+    this.drawZoneLine(origin, size, campCols + reserveCols, 'rgba(200, 180, 80, 0.20)');
+    this.drawZoneLine(origin, size, cols - campCols, 'rgba(255, 80, 80, 0.25)');
+    this.drawZoneLine(origin, size, cols - campCols - reserveCols, 'rgba(200, 180, 80, 0.20)');
+  }
+
+  /** Draw a vertical dashed line at a given offset column boundary. */
+  private drawZoneLine(origin: Point, hexSize: number, col: number, color: string): void {
+    const { ctx } = this;
+    const rows = this.state.config.rows;
+
+    // Get top and bottom hex centers at this column to draw between
+    const topHex = { q: col - Math.floor(0 / 2), r: 0 };
+    const botHex = { q: col - Math.floor((rows - 1) / 2), r: rows - 1 };
+    const topPt = hexToPixel(topHex, hexSize, origin);
+    const botPt = hexToPixel(botHex, hexSize, origin);
+
+    // Offset to left edge of the hex column
+    const xOffset = -hexSize * Math.sqrt(3) / 2;
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(topPt.x + xOffset, topPt.y - hexSize);
+    ctx.lineTo(botPt.x + xOffset, botPt.y + hexSize);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  private drawStars(): void {
+    if (this.state.config.victoryMode !== 'capture') return;
+    const { ctx } = this;
+    const origin = this.state.getGridOrigin(this.canvas.width, this.canvas.height);
+    const size = this.state.config.hexSize;
+
+    for (const faction of ['blue', 'red'] as Faction[]) {
+      const star = this.state.stars.get(faction);
+      if (!star) continue;
+      const center = hexToPixel(star, size, origin);
+      const progress = this.state.captureProgress.get(faction) ?? 0;
+      const captureRatio = Math.min(1, progress / CAPTURE_DURATION);
+
+      // Hex highlight — faction tint, pulses when being captured
+      const baseAlpha = 0.12 + captureRatio * 0.2;
+      const pulseAlpha = captureRatio > 0
+        ? baseAlpha + 0.1 * Math.sin(Date.now() / 150)
+        : baseAlpha;
+      const color = faction === 'blue' ? '80, 140, 255' : '255, 80, 80';
+      this.fillHex(center, size, `rgba(${color}, ${pulseAlpha})`);
+      this.strokeHexStyled(center, size, `rgba(${color}, ${0.4 + captureRatio * 0.4})`, 2);
+
+      // Draw commander round image (or fallback star shape)
+      ctx.save();
+      ctx.translate(center.x, center.y);
+
+      const glowColor = faction === 'blue' ? '#5588ff' : '#ff5555';
+      ctx.shadowColor = glowColor;
+      ctx.shadowBlur = 10 + captureRatio * 10;
+
+      const iconSize = size * 1.2;
+      if (this.starImage) {
+        ctx.drawImage(this.starImage, -iconSize / 2, -iconSize / 2, iconSize, iconSize);
+      } else {
+        // Fallback procedural star if image hasn't loaded yet
+        const starRadius = size * 0.45;
+        const innerRadius = starRadius * 0.4;
+        this.drawStarShape(ctx, starRadius, innerRadius, faction === 'blue' ? '#6699ff' : '#ff6666');
+      }
+
+      ctx.restore();
+
+      // Capture progress arc
+      if (captureRatio > 0) {
+        ctx.save();
+        ctx.translate(center.x, center.y);
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.6, -Math.PI / 2, -Math.PI / 2 + captureRatio * Math.PI * 2);
+        const enemyColor = faction === 'blue' ? '#ff4444' : '#4488ff';
+        ctx.strokeStyle = enemyColor;
+        ctx.lineWidth = 3;
+        ctx.shadowColor = enemyColor;
+        ctx.shadowBlur = 6;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+  }
+
+  private drawStarShape(ctx: CanvasRenderingContext2D, outerR: number, innerR: number, fillColor: string): void {
+    const spikes = 5;
+    ctx.beginPath();
+    for (let i = 0; i < spikes * 2; i++) {
+      const r = i % 2 === 0 ? outerR : innerR;
+      const a = (i * Math.PI) / spikes - Math.PI / 2;
+      if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+      else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
   }
 
   private drawHoveredHex(): void {
@@ -195,11 +381,10 @@ export class BattleRenderer {
       // Interpolate position during movement animation
       if (unit.prevHex && unit.moveProgress < 1) {
         const src = hexToPixel(unit.prevHex, size, origin);
-        // Use linear for mid-path hops (smooth continuous walk),
-        // easeOut only for the final hop (gentle stop)
+        // Smooth easing for all hops — easeInOut for mid-path, easeOut for final
         const t = unit.path.length > 0
-          ? unit.moveProgress                      // linear — no pause between hops
-          : this.easeOutCubic(unit.moveProgress);  // decelerate into final position
+          ? this.easeInOutCubic(unit.moveProgress)  // smooth continuous walk
+          : this.easeOutCubic(unit.moveProgress);   // decelerate into final position
         const center = {
           x: src.x + (dest.x - src.x) * t,
           y: src.y + (dest.y - src.y) * t,
@@ -215,6 +400,10 @@ export class BattleRenderer {
     return 1 - Math.pow(1 - t, 3);
   }
 
+  private easeInOutCubic(t: number): number {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
   private drawUnit(unit: BattleUnit, center: Point): void {
     const { ctx } = this;
     const isSelected = unit.id === this.state.selectedUnitId;
@@ -222,7 +411,7 @@ export class BattleRenderer {
     const iconSize = 60;
 
     // Compute damage ratio for cracks
-    const damageRatio = 1 - Math.max(0, unit.strength) / unit.startingStrength;
+    const damageRatio = 1 - Math.max(0, unit.currentHp) / unit.stats.hp;
 
     ctx.save();
 
@@ -416,7 +605,9 @@ export class BattleRenderer {
   }
 
   private drawVictoryOverlay(): void {
-    if (this.state.phase !== 'victory' || !this.state.winner) return;
+    const isDraw = this.state.phase === 'draw';
+    const isVictory = this.state.phase === 'victory' && this.state.winner;
+    if (!isDraw && !isVictory) return;
 
     const { ctx, canvas } = this;
 
@@ -424,8 +615,12 @@ export class BattleRenderer {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const label = this.state.winner === 'blue' ? 'Blue Faction Wins!' : 'Red Faction Wins!';
-    const color = this.state.winner === 'blue' ? '#5588dd' : '#dd5555';
+    const label = isDraw
+      ? 'Draw!'
+      : this.state.winner === 'blue' ? 'Blue Faction Wins!' : 'Red Faction Wins!';
+    const color = isDraw
+      ? '#ccaa44'
+      : this.state.winner === 'blue' ? '#5588dd' : '#dd5555';
 
     // Banner background
     const bannerH = 100;

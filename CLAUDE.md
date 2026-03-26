@@ -32,6 +32,12 @@ WebGL2 grand strategy map renderer (EU4/CK3 style) with dice-based combat and AI
 - Textures use UNPACK_FLIP_Y_WEBGL — topology UVs store V from top, army renderer flips V
 - Combat: d6 dice rolls every 1.5s, defender gets +1, damage = roll * 500
 
+## Self-Improvement Loop
+- After ANY correction from the user: update `tasks/lessons.md` with the pattern
+- Write rules for yourself that prevent the same mistake
+- Ruthlessly iterate on these lessons until mistake rate drops
+- Review lessons at session start for relevant project
+
 ## Conventions
 - Branch naming: `<type>/<task-id>-<short-slug>` (e.g. `feat/42-add-diplomacy`)
 - Commit style: Conventional Commits
