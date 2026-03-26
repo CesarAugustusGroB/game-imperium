@@ -48,6 +48,8 @@ export class BattleState {
     this.gridHexes.length = 0;
     for (let col = 0; col < this.config.cols; col++) {
       for (let row = 0; row < this.config.rows; row++) {
+        // Skip col 0 even rows (jagged left edge)
+        if (col === 0 && row % 2 === 0) continue;
         const hex = offsetToAxial(col, row);
         const key = hexKey(hex.q, hex.r);
         if (!this.grid.has(key)) {
