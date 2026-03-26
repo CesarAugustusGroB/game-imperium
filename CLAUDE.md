@@ -44,10 +44,4 @@ WebGL2 grand strategy map renderer (EU4/CK3 style) with dice-based combat and AI
 - Gitflow: feature branches from `develop`, PRs target `develop`, releases merge to `main`
 
 ## Notion Board
-- **Workspace**: https://www.notion.so/32d6c88ed4248195935cc01cdb6be666
-- **Tasks DB**: https://www.notion.so/2e99d960763e466787315f64fd65cd58
-- **Changelog DB**: https://www.notion.so/afe998af94814c28a93ddd4ca82909c9
-- **Nations DB**: https://www.notion.so/6adaeab7c6b3496889c8a66792527e2a
-- **Provinces DB**: https://www.notion.so/8044e1d8b8c341a6b6355cb190a6d906
-- **Armies DB**: https://www.notion.so/f62cbf3e891842c894cd85f01928bdd0
-- **Battle Log DB**: https://www.notion.so/bcdfa8a409cd4d8c8def13e02035caab
+- **Board**: https://www.notion.so/0fa1bf712e0e44faaf0f31c680cd0bde?v=9a8dc5aa86f445578315dcd2da97bd64
