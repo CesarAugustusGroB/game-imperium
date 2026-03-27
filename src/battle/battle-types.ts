@@ -38,6 +38,14 @@ export interface BattleUnit {
   actionCooldown: number; // seconds until this unit can act again
 }
 
+export interface FloatingText {
+  text: string;
+  hex: Hex;
+  color: string;
+  timer: number;    // seconds remaining (counts down from duration)
+  duration: number;  // total seconds
+}
+
 export interface BattleConfig {
   cols: number;
   rows: number;

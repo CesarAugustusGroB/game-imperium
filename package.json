@@ -9,12 +9,15 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@preact/preset-vite": "^2.10.5",
     "typescript": "~5.9.3",
     "vite": "^8.0.1",
     "vite-plugin-glsl": "^1.5.6"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "@preact/signals": "^2.8.2",
+    "preact": "^10.29.0",
     "tsx": "^4.21.0"
   }
 }
