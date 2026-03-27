@@ -38,6 +38,13 @@ WebGL2 grand strategy map renderer (EU4/CK3 style) with dice-based combat and AI
 - Ruthlessly iterate on these lessons until mistake rate drops
 - Review lessons at session start for relevant project
 
+## FIX: Workflow
+When the user's message starts with `FIX:`:
+1. **Branch** — create `fix/<current-feat-slug>` from the current feature branch (e.g., `fix/sprint-1` from `feat/sprint-1`)
+2. **Spawn agent team** — delegate all described issues to parallel agents; implement all fixes on the fix branch
+3. **Verify prompt** — when done, tell the user what was fixed and ask them to verify; await their approval
+4. **Merge** — only after explicit user approval, merge `fix/*` back into the originating `feat/*` branch and delete the fix branch
+
 ## Conventions
 - Branch naming: `<type>/<task-id>-<short-slug>` (e.g. `feat/42-add-diplomacy`)
 - Commit style: Conventional Commits

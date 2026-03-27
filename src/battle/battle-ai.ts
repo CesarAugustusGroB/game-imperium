@@ -158,7 +158,7 @@ function tickReserve(
         }
       }
       // Otherwise advance forward
-      const target = findAdvanceTarget(state, unit, ctx.dir, 1);
+      const target = findAdvanceTarget(state, unit, ctx.dir, 3);
       if (target) {
         moveForward(state, unit.id, target, ctx.dir);
         state.resetCooldown(unit);

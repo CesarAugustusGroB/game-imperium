@@ -6,7 +6,7 @@ export const COMMANDERS: Commander[] = [
     name: 'Pope Innocent',
     faction: 'gold',
     culture: 'Roman / Papal',
-    portrait: '/asset/spartan_gold_round.png',
+    portrait: '/asset/char_pope_innocent.png',
     quote: 'I am patient. God rewards the faithful.',
     passive: {
       name: 'Deus Vult',
@@ -32,7 +32,7 @@ export const COMMANDERS: Commander[] = [
     name: 'Boudicca',
     faction: 'red',
     culture: 'Gaelic / Celtic',
-    portrait: '/asset/commander_round.png',
+    portrait: '/asset/char_boudicca.png',
     quote: 'Every battle makes me stronger. Stop fighting and I wither.',
     passive: {
       name: 'Veteran Stacks',
@@ -58,7 +58,7 @@ export const COMMANDERS: Commander[] = [
     name: 'Augustus',
     faction: 'blue',
     culture: 'Roman / Imperial',
-    portrait: '/asset/roman_round.png',
+    portrait: '/asset/char_caesar_augustus.png',
     quote: 'Why fight when others can fight for you?',
     passive: {
       name: 'Web of Alliances',
@@ -84,7 +84,7 @@ export const COMMANDERS: Commander[] = [
     name: 'Marcus Crassus',
     faction: 'purple',
     culture: 'Roman / Patrician',
-    portrait: '/asset/spartan_round.png',
+    portrait: '/asset/char_marcus_crassus.png',
     quote: 'Everything has a price, and I can afford all of it.',
     passive: {
       name: 'War Profiteer',

@@ -15,11 +15,12 @@ export class BattleRenderer {
   private h = 0;
 
   private bgImage: HTMLImageElement | null = null;
-  private blueShield: HTMLCanvasElement | null = null;
-  private redShield: HTMLCanvasElement | null = null;
+  // Per-faction, per-role sprite cache: key = "faction:role"
+  private shields = new Map<string, HTMLCanvasElement>();
   private starImage: HTMLCanvasElement | null = null;
 
   private hoveredHex: { q: number; r: number } | null = null;
+  showCoords = false;
 
   constructor(canvas: HTMLCanvasElement, state: BattleState) {
     this.canvas = canvas;
@@ -49,8 +50,15 @@ export class BattleRenderer {
     bg.onload = () => { this.bgImage = bg; };
     bg.src = bgSrc;
 
-    this.loadShield('/asset/viking_round.png', (c) => { this.blueShield = c; });
-    this.loadShield('/asset/spartan_gold_round.png', (c) => { this.redShield = c; });
+    // Blue team: Viking / Samurai / Companion
+    this.loadShield('/asset/viking_round.png', (c) => { this.shields.set('blue:vanguard', c); });
+    this.loadShield('/asset/samurai_round.png', (c) => { this.shields.set('blue:reserve', c); });
+    this.loadShield('/asset/companio_gold_round.png', (c) => { this.shields.set('blue:guard', c); });
+    // Red team: Spartan Gold / Roman / Spartan
+    this.loadShield('/asset/persina_inmortal_round.png', (c) => { this.shields.set('red:vanguard', c); });
+    this.loadShield('/asset/roman_round.png', (c) => { this.shields.set('red:reserve', c); });
+    this.loadShield('/asset/spartan_round.png', (c) => { this.shields.set('red:guard', c); });
+    // Star objective
     this.loadShield('/asset/commander_round.png', (c) => { this.starImage = c; });
   }
 
@@ -111,6 +119,7 @@ export class BattleRenderer {
     this.drawSelectedHex();
     this.drawPaths();
     this.drawUnits();
+    this.drawFloatingTexts();
     this.drawVictoryOverlay();
   }
 
@@ -156,13 +165,15 @@ export class BattleRenderer {
       const center = hexToPixel(hex, size, origin);
       this.strokeHex(center, size);
 
-      // Coordinate label (offset col,row)
-      const col = hex.q + Math.floor(hex.r / 2);
-      ctx.font = '8px monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = 'rgba(200, 180, 120, 0.35)';
-      ctx.fillText(`${col},${hex.r}`, center.x, center.y);
+      // Coordinate label (offset col,row) — only when enabled
+      if (this.showCoords) {
+        const col = hex.q + Math.floor(hex.r / 2);
+        ctx.font = '8px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillText(`${col},${hex.r}`, center.x, center.y);
+      }
     }
   }
 
@@ -183,47 +194,48 @@ export class BattleRenderer {
 
       // Blue side
       if (col < campCols) {
-        this.fillHex(center, size, 'rgba(80, 140, 255, 0.10)');  // camp
+        this.fillHex(center, size, 'rgba(80, 140, 255, 0.25)');  // camp
       } else if (col < campCols + reserveCols) {
-        this.fillHex(center, size, 'rgba(200, 180, 80, 0.06)');  // reserve
+        this.fillHex(center, size, 'rgba(200, 180, 80, 0.18)');  // reserve
       }
 
       // Red side
       if (col >= cols - campCols) {
-        this.fillHex(center, size, 'rgba(255, 80, 80, 0.10)');   // camp
+        this.fillHex(center, size, 'rgba(255, 80, 80, 0.25)');   // camp
       } else if (col >= cols - campCols - reserveCols) {
-        this.fillHex(center, size, 'rgba(200, 180, 80, 0.06)');  // reserve
+        this.fillHex(center, size, 'rgba(200, 180, 80, 0.18)');  // reserve
       }
     }
 
     // Draw zone boundary lines
-    this.drawZoneLine(origin, size, campCols, 'rgba(80, 140, 255, 0.25)');
-    this.drawZoneLine(origin, size, campCols + reserveCols, 'rgba(200, 180, 80, 0.20)');
-    this.drawZoneLine(origin, size, cols - campCols, 'rgba(255, 80, 80, 0.25)');
-    this.drawZoneLine(origin, size, cols - campCols - reserveCols, 'rgba(200, 180, 80, 0.20)');
+    this.drawZoneLine(origin, size, campCols, 'rgba(80, 140, 255, 0.50)');
+    this.drawZoneLine(origin, size, campCols + reserveCols, 'rgba(200, 180, 80, 0.40)');
+    this.drawZoneLine(origin, size, cols - campCols, 'rgba(255, 80, 80, 0.50)');
+    this.drawZoneLine(origin, size, cols - campCols - reserveCols, 'rgba(200, 180, 80, 0.40)');
   }
 
-  /** Draw a vertical dashed line at a given offset column boundary. */
+  /** Draw a straight vertical dashed line at a given offset column boundary. */
   private drawZoneLine(origin: Point, hexSize: number, col: number, color: string): void {
     const { ctx } = this;
     const rows = this.state.config.rows;
+    const sqrt3 = Math.sqrt(3);
 
-    // Get top and bottom hex centers at this column to draw between
-    const topHex = { q: col - Math.floor(0 / 2), r: 0 };
-    const botHex = { q: col - Math.floor((rows - 1) / 2), r: rows - 1 };
+    // Compute x from the top row (row 0) hex center, then offset to left edge
+    const topHex = { q: col, r: 0 }; // row 0: offset col == axial q
     const topPt = hexToPixel(topHex, hexSize, origin);
-    const botPt = hexToPixel(botHex, hexSize, origin);
+    const x = topPt.x - hexSize * sqrt3 / 2;
 
-    // Offset to left edge of the hex column
-    const xOffset = -hexSize * Math.sqrt(3) / 2;
+    // Compute y range from top and bottom row hex centers
+    const botHex = { q: col - Math.floor((rows - 1) / 2), r: rows - 1 };
+    const botPt = hexToPixel(botHex, hexSize, origin);
 
     ctx.save();
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.5;
     ctx.setLineDash([6, 4]);
     ctx.beginPath();
-    ctx.moveTo(topPt.x + xOffset, topPt.y - hexSize);
-    ctx.lineTo(botPt.x + xOffset, botPt.y + hexSize);
+    ctx.moveTo(x, topPt.y - hexSize);
+    ctx.lineTo(x, botPt.y + hexSize);
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.restore();
@@ -417,7 +429,7 @@ export class BattleRenderer {
   private drawUnit(unit: BattleUnit, center: Point): void {
     const { ctx } = this;
     const isSelected = unit.id === this.state.selectedUnitId;
-    const shieldImg = unit.faction === 'blue' ? this.blueShield : this.redShield;
+    const shieldImg = this.shields.get(`${unit.faction}:${unit.role}`) ?? null;
     const iconSize = 60;
 
     // Compute damage ratio for cracks
@@ -612,6 +624,36 @@ export class BattleRenderer {
     }
 
     ctx.restore();
+  }
+
+  private drawFloatingTexts(): void {
+    const { ctx } = this;
+    const origin = this.state.getGridOrigin(this.w, this.h);
+    const size = this.state.config.hexSize;
+
+    for (const ft of this.state.floatingTexts) {
+      const center = hexToPixel(ft.hex, size, origin);
+      const t = 1 - ft.timer / ft.duration; // 0→1 as text ages
+      const offsetY = -30 - t * 40; // float upward
+      const alpha = t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3; // fade out last 30%
+
+      ctx.save();
+      ctx.translate(center.x, center.y + offsetY);
+      ctx.font = "bold 16px 'Segoe UI', system-ui, sans-serif";
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.globalAlpha = alpha;
+      // Outline
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+      ctx.lineWidth = 3;
+      ctx.strokeText(ft.text, 0, 0);
+      // Fill
+      ctx.fillStyle = ft.color;
+      ctx.shadowColor = ft.color;
+      ctx.shadowBlur = 8;
+      ctx.fillText(ft.text, 0, 0);
+      ctx.restore();
+    }
   }
 
   private drawVictoryOverlay(): void {
