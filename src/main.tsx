@@ -1,4 +1,5 @@
 import { render } from 'preact';
+import { effect } from '@preact/signals';
 import { App } from './ui/App';
 import { currentScreen, navigateTo } from './ui/screens';
 import { BattleMode } from './battle/index';
@@ -7,11 +8,9 @@ import { BattleMode } from './battle/index';
 const appRoot = document.getElementById('app-root');
 if (appRoot) render(<App />, appRoot);
 
-const battleScreen = document.getElementById('battle-screen');
-
-// Battle mode — on exit, return to node map
+// Battle mode — on exit, return to title
 const battleMode = new BattleMode(() => {
-  navigateTo('node-map');
+  navigateTo('title');
 });
 
 // Apply initial screen state (handles #battle on page load)
@@ -19,26 +18,24 @@ let battleActive = false;
 const initialScreen = currentScreen.value;
 if (initialScreen === 'battle') {
   if (appRoot) appRoot.style.display = 'none';
+  const battleScreen = document.getElementById('battle-screen');
   if (battleScreen) battleScreen.style.display = 'block';
   battleActive = true;
   battleMode.enter();
 } else {
+  const battleScreen = document.getElementById('battle-screen');
   if (battleScreen) battleScreen.style.display = 'none';
 }
 
-// Enter/exit battle when battle-screen visibility changes via navigateTo()
-const observer = new MutationObserver(() => {
-  const visible = battleScreen?.style.display !== 'none';
-  if (visible && !battleActive) {
+// Enter/exit battle when currentScreen signal changes
+effect(() => {
+  if (currentScreen.value === 'battle' && !battleActive) {
     battleActive = true;
     battleMode.enter();
-  } else if (!visible && battleActive) {
+  } else if (currentScreen.value !== 'battle' && battleActive) {
     battleActive = false;
   }
 });
-if (battleScreen) {
-  observer.observe(battleScreen, { attributes: true, attributeFilter: ['style'] });
-}
 
 // Resize
 window.addEventListener('resize', () => {
@@ -50,8 +47,10 @@ let lastTime = performance.now();
 function frame(now: number) {
   const dt = (now - lastTime) / 1000;
   lastTime = now;
-  battleMode.update(dt);
-  battleMode.render();
+  if (battleActive) {
+    battleMode.update(dt);
+    battleMode.render();
+  }
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

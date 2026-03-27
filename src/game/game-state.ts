@@ -39,6 +39,7 @@ export function startNewRun(commander: Commander): void {
 
 /**
  * Reset everything back to pre-run state.
+ * @note Callers must also call navigateTo('title') after this function to return the player to the title screen.
  */
 export function resetRun(): void {
   selectedCommander.value = null;

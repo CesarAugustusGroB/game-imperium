@@ -4,7 +4,6 @@ import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
 
 export class BattleMode {
-  private container: HTMLElement;
   private canvas: HTMLCanvasElement;
   private state: BattleState;
   private renderer: BattleRenderer;
@@ -14,7 +13,6 @@ export class BattleMode {
 
   constructor(onExitCallback: () => void) {
     this.onExitCallback = onExitCallback;
-    this.container = document.getElementById('battle-screen')!;
     this.canvas = document.getElementById('battle-canvas') as HTMLCanvasElement;
 
     this.state = new BattleState();
@@ -28,7 +26,6 @@ export class BattleMode {
 
   enter(): void {
     this._isVisible = true;
-    this.container.classList.remove('hidden');
 
     this.state = new BattleState();
     this.state.generateGrid();
@@ -43,7 +40,6 @@ export class BattleMode {
 
   exit(): void {
     this._isVisible = false;
-    this.container.classList.add('hidden');
     this.input.detach();
     this.onExitCallback();
   }
