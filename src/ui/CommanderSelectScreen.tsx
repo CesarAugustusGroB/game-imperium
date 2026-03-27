@@ -1,4 +1,5 @@
 import { signal } from '@preact/signals';
+import { useEffect } from 'preact/hooks';
 import { COMMANDERS } from '../data/commanders';
 import { FACTION_COLORS } from '../game/commander';
 import type { Commander } from '../game/commander';
@@ -7,8 +8,22 @@ import { navigateTo } from './screens';
 
 const hoveredId = signal<string | null>(null);
 const selectedId = signal<string | null>(null);
+const selecting = signal(false);
+
+// Inject animation CSS once
+if (typeof document !== 'undefined' && !document.getElementById('cmdr-styles')) {
+  const el = document.createElement('style');
+  el.id = 'cmdr-styles';
+  el.textContent = `
+    @keyframes fade-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .cmdr-grid { animation: fade-in 0.4s ease-out; }
+  `;
+  document.head.appendChild(el);
+}
 
 function selectCommander(commander: Commander) {
+  if (selecting.value === true) return;
+  selecting.value = true;
   selectedId.value = commander.id;
   startNewRun(commander);
   setTimeout(() => navigateTo('hub'), 300);
@@ -25,7 +40,7 @@ function CommanderCard({ commander }: { commander: Commander }) {
       onMouseLeave={() => { hoveredId.value = null; }}
       onClick={() => selectCommander(commander)}
       style={{
-        width: '220px',
+        width: '210px',
         background: isSelected
           ? `linear-gradient(135deg, ${color}30, ${color}18)`
           : 'linear-gradient(135deg, rgba(30, 28, 48, 0.95), rgba(20, 18, 36, 0.98))',
@@ -44,31 +59,25 @@ function CommanderCard({ commander }: { commander: Commander }) {
         gap: '10px',
       }}
     >
-      {/* Portrait */}
+      {/* Portrait — name is baked into the image */}
       <img
         src={commander.portrait}
         alt={commander.name}
         style={{
-          width: '72px', height: '72px', borderRadius: '50%',
-          border: `2px solid ${color}`,
-          filter: `drop-shadow(0 0 8px ${color}60)`,
+          width: '188px', height: '210px',
+          objectFit: 'contain', objectPosition: 'center top',
+          filter: `drop-shadow(0 0 12px ${color}50)`,
+          transition: 'filter 0.25s ease',
         }}
       />
 
-      {/* Name + Culture */}
-      <div style={{ textAlign: 'center' }}>
-        <div style={{
-          fontSize: '16px', fontWeight: 700, color: color,
-          letterSpacing: '1px', textTransform: 'uppercase',
-        }}>
-          {commander.name}
-        </div>
-        <div style={{
-          fontSize: '11px', color: 'rgba(180, 170, 150, 0.5)',
-          letterSpacing: '1px', marginTop: '2px',
-        }}>
-          {commander.culture}
-        </div>
+      {/* Culture */}
+      <div style={{
+        fontSize: '11px', color: 'rgba(180, 170, 150, 0.45)',
+        letterSpacing: '2px', textTransform: 'uppercase', textAlign: 'center',
+        marginTop: '-4px',
+      }}>
+        {commander.culture}
       </div>
 
       {/* Faction badge */}
@@ -103,35 +112,31 @@ function CommanderCard({ commander }: { commander: Commander }) {
         </div>
       </div>
 
-      {/* Abilities (shown on hover) */}
-      {isHovered && (
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <AbilityRow
-            label="Strategic"
-            name={commander.strategicAbility.name}
-            cost={commander.strategicAbility.cost}
-            color={color}
-          />
-          <AbilityRow
-            label="Tactical"
-            name={commander.tacticalAbility.name}
-            cost={commander.tacticalAbility.cost}
-            color={color}
-          />
-        </div>
-      )}
+      {/* Abilities (always visible) */}
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <AbilityRow
+          label="Strategic"
+          name={commander.strategicAbility.name}
+          cost={commander.strategicAbility.cost}
+          color={color}
+        />
+        <AbilityRow
+          label="Tactical"
+          name={commander.tacticalAbility.name}
+          cost={commander.tacticalAbility.cost}
+          color={color}
+        />
+      </div>
 
-      {/* Starting resources (shown on hover) */}
-      {isHovered && (
-        <div style={{
-          display: 'flex', gap: '8px', fontSize: '11px', color: 'rgba(200, 190, 160, 0.6)',
-        }}>
-          {commander.startingResources.gold > 0 && <span>💰{commander.startingResources.gold}</span>}
-          {commander.startingResources.faith > 0 && <span>⭐{commander.startingResources.faith}</span>}
-          {commander.startingResources.influence > 0 && <span>👑{commander.startingResources.influence}</span>}
-          {commander.startingResources.momentum > 0 && <span>🔥{commander.startingResources.momentum}</span>}
-        </div>
-      )}
+      {/* Starting resources (always visible) */}
+      <div style={{
+        display: 'flex', gap: '8px', fontSize: '11px', color: 'rgba(200, 190, 160, 0.6)',
+      }}>
+        {commander.startingResources.gold > 0 && <span>💰{commander.startingResources.gold}</span>}
+        {commander.startingResources.faith > 0 && <span>⭐{commander.startingResources.faith}</span>}
+        {commander.startingResources.influence > 0 && <span>👑{commander.startingResources.influence}</span>}
+        {commander.startingResources.momentum > 0 && <span>🔥{commander.startingResources.momentum}</span>}
+      </div>
     </div>
   );
 }
@@ -168,17 +173,24 @@ function AbilityRow({ label, name, cost, color }: {
 }
 
 export function CommanderSelectScreen() {
+  useEffect(() => {
+    // Reset stale state from previous visit
+    hoveredId.value = null;
+    selectedId.value = null;
+    selecting.value = false;
+    return () => {
+      hoveredId.value = null;
+      selectedId.value = null;
+      selecting.value = false;
+    };
+  }, []);
+
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
       background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
     }}>
-      <style>{`
-        @keyframes fade-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        .cmdr-grid { animation: fade-in 0.4s ease-out; }
-      `}</style>
-
       <div style={{
         fontSize: '20px', fontWeight: 600, color: '#f0d080',
         letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '32px',
@@ -198,7 +210,7 @@ export function CommanderSelectScreen() {
         marginTop: '32px', fontSize: '12px', color: 'rgba(180, 170, 150, 0.3)',
         letterSpacing: '1px',
       }}>
-        Hover to preview abilities • Click to select
+        Click to select
       </div>
     </div>
   );
