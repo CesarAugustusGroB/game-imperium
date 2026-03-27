@@ -10,6 +10,7 @@ export class BattleMode {
   private input: BattleInput;
   private onExitCallback: () => void;
   private _isVisible = false;
+  private boundToggleCoords: () => void;
 
   constructor(onExitCallback: () => void) {
     this.onExitCallback = onExitCallback;
@@ -18,6 +19,12 @@ export class BattleMode {
     this.state = new BattleState();
     this.renderer = new BattleRenderer(this.canvas, this.state);
     this.input = new BattleInput(this.canvas, this.state, this.renderer, () => this.exit());
+
+    const btn = document.getElementById('btn-coords');
+    this.boundToggleCoords = () => {
+      this.renderer.showCoords = !this.renderer.showCoords;
+      btn?.classList.toggle('active', this.renderer.showCoords);
+    };
   }
 
   get isVisible(): boolean {
@@ -36,11 +43,13 @@ export class BattleMode {
 
     this.resize(window.innerWidth, window.innerHeight);
     this.input.attach();
+    document.getElementById('btn-coords')?.addEventListener('click', this.boundToggleCoords);
   }
 
   exit(): void {
     this._isVisible = false;
     this.input.detach();
+    document.getElementById('btn-coords')?.removeEventListener('click', this.boundToggleCoords);
     this.onExitCallback();
   }
 
