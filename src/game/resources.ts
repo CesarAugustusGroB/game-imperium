@@ -34,9 +34,10 @@ export function getResource(type: ResourceType): number {
 
 /**
  * Add a resource. Applies 2x multiplier if it matches the faction's primary.
- * Returns the actual amount added.
+ * Returns the actual amount added. Negative amounts are ignored and return 0.
  */
 export function addResource(type: ResourceType, amount: number, faction?: Faction): number {
+  if (amount < 0) return 0;
   const multiplier = faction && FACTION_PRIMARY_RESOURCE[faction] === type ? 2 : 1;
   const actual = Math.floor(amount * multiplier);
   resourceSignals[type].value += actual;
@@ -44,9 +45,10 @@ export function addResource(type: ResourceType, amount: number, faction?: Factio
 }
 
 /**
- * Spend a resource. Returns false if insufficient (no deduction).
+ * Spend a resource. Returns false if insufficient or negative (no deduction).
  */
 export function spendResource(type: ResourceType, amount: number): boolean {
+  if (amount < 0) return false;
   if (resourceSignals[type].value < amount) return false;
   resourceSignals[type].value -= amount;
   return true;
@@ -60,16 +62,15 @@ export function canAfford(type: ResourceType, amount: number): boolean {
 /**
  * Exchange resources. Primary resource converts at 2:2, others at 3:2.
  * Returns the amount gained, or 0 if insufficient.
+ * @param amount - The amount to spend from the source resource.
  */
 export function exchangeResources(
   from: ResourceType, to: ResourceType, amount: number, faction: Faction,
 ): number {
+  if (amount <= 0) return 0;
   const isPrimary = FACTION_PRIMARY_RESOURCE[faction] === from;
-  const rate = isPrimary ? 1 : 2 / 3; // 2:2 for primary, 3:2 for others
-  const cost = isPrimary ? amount : Math.ceil(amount / rate);
-
-  if (!spendResource(from, cost)) return 0;
-  const gained = isPrimary ? amount : Math.floor(cost * rate);
+  const gained = isPrimary ? amount : Math.floor(amount * 2 / 3);
+  if (!spendResource(from, amount)) return 0;
   resourceSignals[to].value += gained;
   return gained;
 }
