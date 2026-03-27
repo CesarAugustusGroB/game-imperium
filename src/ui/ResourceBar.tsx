@@ -42,13 +42,17 @@ function ResourceCounter({ type }: { type: ResourceType }) {
       el.style.transform = 'scale(1)';
     }, 400);
     return () => clearTimeout(timer);
-  });
+  }, [sig.value]);
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '4px',
-      opacity: isPrimary ? 1 : 0.7,
-    }}>
+    <div
+      title={info.label ?? type}
+      aria-label={`${info.label ?? type}: ${sig.value}`}
+      style={{
+        display: 'flex', alignItems: 'center', gap: '4px',
+        opacity: isPrimary ? 1 : 0.7,
+      }}
+    >
       <span style={{ fontSize: '14px' }}>{info.icon}</span>
       <span
         ref={ref}
