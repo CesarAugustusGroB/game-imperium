@@ -1,45 +1,34 @@
-# Plan: S2-05 — Implement Battle node (transition to Canvas hex battle, return on end)
+# Plan: S2-06 — Implement Rest node (modal: heal army, gain resources)
 
 ## Task
-When the player clicks a battle/boss node on the spoke, transition into the existing Canvas hex battle. On battle end, capture the result (victory/defeat/draw) in a signal and route back to the appropriate screen (post-battle for in-spoke runs, title for Quick Battle).
+When the player clicks a rest node on the spoke, show a modal overlay granting +1 of each resource (with faction 2x multiplier). The modal is a reusable `NodeModal` component for S2-07 events too.
 
 ## Approach
-Minimal wiring — add a `lastBattleResult` signal, expose `BattleMode.state` as readonly, and update the exit callback to read battle outcome and route conditionally. No new UI components; this is pure plumbing between the node map click and the battle system.
+Create a generic `NodeModal` component (dark backdrop, centered panel, title + children + close). In `NodeMapScreen`, replace the rest-node auto-resolve with a signal-driven modal that calls `addResource` for each type, displays the gains, then resolves the node on "Continue".
 
 ## Steps
-1. Add `lastBattleResult` signal (`'victory' | 'defeat' | 'draw' | null`) to `src/game/spoke.ts`
-2. Change `BattleMode.state` from `private` to `readonly` in `src/battle/index.ts`
-3. Update the `BattleMode` exit callback in `src/main.tsx`:
-   - Read `battleMode.state.phase` and `battleMode.state.winner`
-   - Map: winner === 'blue' → 'victory', winner === 'red' → 'defeat', else 'draw'
-   - If `currentSpoke.value !== null` → `navigateTo('post-battle')`
-   - Else (Quick Battle) → `navigateTo('title')`
-   - Set `lastBattleResult.value` accordingly
+1. Create `src/ui/NodeModal.tsx` — reusable modal overlay with title, children, onClose
+2. In `NodeMapScreen`:
+   a. Add a `showRestModal` signal
+   b. On rest node click → set `showRestModal.value = true` (instead of auto-advancing)
+   c. Compute gained amounts using `addResource` return values
+   d. Show `NodeModal` with title "Your Army Rests", body with gained resources, "Continue" button
+   e. "Continue" → `advanceNode()`, close modal
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `src/game/spoke.ts` | modify | Add `lastBattleResult` signal |
-| `src/battle/index.ts` | modify | Change `state` from `private` to `readonly` |
-| `src/main.tsx` | modify | Wire exit callback to read battle result and route conditionally |
+| `src/ui/NodeModal.tsx` | create | Reusable modal overlay for rest and event nodes |
+| `src/ui/NodeMapScreen.tsx` | modify | Wire rest node click to show rest modal |
 
 ## Design decisions
-- **Pattern**: Same signal-based reactive pattern used throughout (`currentSpoke`, `currentNodeIndex`)
-- **SOLID notes**: Single Responsibility — spoke.ts owns spoke state including battle result; main.tsx owns the wiring between battle and routing
-- **DRY notes**: No duplication; reuses existing `navigateTo()` and `currentSpoke` checks
+- **Pattern**: Same signal-driven modal as `showRetreatConfirm` — proven pattern in this codebase
+- **DRY**: `NodeModal` extracted as reusable so S2-07 events don't duplicate the overlay
 
 ## Test plan
-- Happy paths: battle node click → battle starts → victory → lastBattleResult = 'victory' → navigates to post-battle
-- Edge cases: Quick Battle (no spoke) → navigates to title; draw result; ESC exit
-- Error paths: N/A (no new external inputs)
-
-## Risks
-| Risk | Mitigation |
-|------|------------|
-| `BattleMode.state` gets replaced in `enter()` — reading stale ref | Read `battleMode.state` inside the exit callback (closure captures `this`) |
+- Happy paths: click rest node → modal appears → resources granted → "Continue" resolves node
+- Edge cases: faction 2x multiplier shows correct doubled amount for primary resource
 
 ## Out of scope
-- PostBattleScreen UI (S2-08)
-- Boss difficulty scaling (Sprint 3)
-- Commander faction wired to battle sides (S3-01)
-- Node advancement after battle (handled by PostBattleScreen S2-08)
+- Event node modals (S2-07)
+- Army HP healing (no persistent HP yet — conceptual only)

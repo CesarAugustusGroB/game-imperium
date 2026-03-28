@@ -4,7 +4,10 @@ import { navigateTo } from './screens';
 import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke } from '../game/spoke';
 import type { SpokeNode, NodeType } from '../game/spoke';
 import { selectedCommander, completedSpokes } from '../game/game-state';
-import { FACTION_COLORS } from '../game/commander';
+import { FACTION_COLORS, RESOURCE_INFO } from '../game/commander';
+import type { ResourceType } from '../game/commander';
+import { addResource } from '../game/resources';
+import { NodeModal } from './NodeModal';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('node-map-styles')) {
@@ -40,24 +43,22 @@ const NODE_LABELS: Record<NodeType, string> = {
   boss: 'Boss',
 };
 
-// ── Retreat confirmation state ──
+// ── Modal state ──
 const showRetreatConfirm = signal(false);
+const showRestModal = signal(false);
+const restGains = signal<{ type: ResourceType; actual: number }[]>([]);
 
-function NodeCircle({ node, isCurrent, color }: {
+function NodeCircle({ node, isCurrent, color, onActivate }: {
   node: SpokeNode;
   isCurrent: boolean;
   color: string;
+  onActivate: () => void;
 }) {
   const stateClass = node.resolved ? 'node-resolved' : isCurrent ? 'node-current' : 'node-future';
 
   function handleClick() {
     if (!isCurrent || node.resolved) return;
-    if (node.type === 'battle' || node.type === 'boss') {
-      navigateTo('battle');
-    } else {
-      // rest/event: auto-resolve for now (S2-06/S2-07 will add modals)
-      advanceNode();
-    }
+    onActivate();
   }
 
   return (
@@ -175,6 +176,7 @@ function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; o
 export function NodeMapScreen() {
   // Reset stale modal state on each render
   showRetreatConfirm.value = false;
+  showRestModal.value = false;
 
   const spoke = currentSpoke.value;
   const nodeIdx = currentNodeIndex.value;
@@ -198,6 +200,33 @@ export function NodeMapScreen() {
     showRetreatConfirm.value = false;
     resetSpoke();
     navigateTo('hub');
+  }
+
+  function handleNodeActivate(node: SpokeNode) {
+    if (node.type === 'battle' || node.type === 'boss') {
+      navigateTo('battle');
+    } else if (node.type === 'rest') {
+      openRestModal();
+    } else {
+      // event: auto-resolve for now (S2-07 will add event modal)
+      advanceNode();
+    }
+  }
+
+  function openRestModal() {
+    const faction = commander?.faction;
+    const types: ResourceType[] = ['gold', 'faith', 'influence', 'momentum'];
+    const gains = types.map((type) => ({
+      type,
+      actual: addResource(type, 1, faction),
+    }));
+    restGains.value = gains;
+    showRestModal.value = true;
+  }
+
+  function handleRestContinue() {
+    showRestModal.value = false;
+    advanceNode();
   }
 
   function handleSpokeComplete() {
@@ -247,6 +276,7 @@ export function NodeMapScreen() {
               node={node}
               isCurrent={i === nodeIdx}
               color={color}
+              onActivate={() => handleNodeActivate(node)}
             />
           </Fragment>
         ))}
@@ -298,6 +328,43 @@ export function NodeMapScreen() {
       >
         ← Retreat
       </button>
+
+      {/* Rest modal */}
+      {showRestModal.value && (
+        <NodeModal title="Your Army Rests" onClose={handleRestContinue}>
+          <div style={{
+            fontSize: '13px', color: 'rgba(200, 190, 160, 0.6)',
+            lineHeight: '1.5', marginBottom: '16px',
+          }}>
+            Your forces recover their strength.
+          </div>
+          <div style={{
+            display: 'flex', gap: '12px', justifyContent: 'center',
+            flexWrap: 'wrap', marginBottom: '20px',
+          }}>
+            {restGains.value.map((g) => (
+              <span key={g.type} style={{
+                fontSize: '13px', fontWeight: 600,
+                color: RESOURCE_INFO[g.type].color,
+              }}>
+                {RESOURCE_INFO[g.type].icon} +{g.actual} {RESOURCE_INFO[g.type].label}
+              </span>
+            ))}
+          </div>
+          <button
+            onClick={handleRestContinue}
+            style={{
+              padding: '8px 24px', borderRadius: '4px', cursor: 'pointer',
+              background: `linear-gradient(135deg, ${color}30, ${color}15)`,
+              border: `1px solid ${color}60`,
+              color, fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
+              letterSpacing: '1px',
+            }}
+          >
+            Continue
+          </button>
+        </NodeModal>
+      )}
 
       {/* Retreat confirmation modal */}
       {showRetreatConfirm.value && (
