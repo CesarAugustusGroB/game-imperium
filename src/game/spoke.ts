@@ -48,3 +48,24 @@ export function resetSpoke(): void {
   currentSpoke.value = null;
   currentNodeIndex.value = 0;
 }
+
+// ── Spoke generator (S2-03) ──
+
+/** Fixed introductory spoke for the MVP. Replaced by procedural gen in Sprint 6. */
+export function generateFixedSpoke(): Spoke {
+  const nodes: SpokeNode[] = [
+    { id: 'node-0', type: 'event',  position: 0, resolved: false, reward: null },
+    { id: 'node-1', type: 'battle', position: 1, resolved: false, reward: [{ resource: 'gold', amount: 2 }, { resource: 'momentum', amount: 3 }] },
+    { id: 'node-2', type: 'rest',   position: 2, resolved: false, reward: [{ resource: 'gold', amount: 1 }, { resource: 'faith', amount: 1 }, { resource: 'influence', amount: 1 }, { resource: 'momentum', amount: 1 }] },
+    { id: 'node-3', type: 'battle', position: 3, resolved: false, reward: [{ resource: 'gold', amount: 2 }, { resource: 'momentum', amount: 3 }] },
+    { id: 'node-4', type: 'event',  position: 4, resolved: false, reward: null },
+    { id: 'node-5', type: 'boss',   position: 5, resolved: false, reward: [{ resource: 'gold', amount: 4 }, { resource: 'faith', amount: 2 }, { resource: 'momentum', amount: 4 }] },
+  ];
+  return { nodes, label: 'The First March', completed: false };
+}
+
+/** Create a new spoke and set it as active. */
+export function startSpoke(): void {
+  currentSpoke.value = generateFixedSpoke();
+  currentNodeIndex.value = 0;
+}
