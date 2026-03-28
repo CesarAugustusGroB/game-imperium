@@ -1,24 +1,37 @@
-# Plan: Tactical battle animations — attack shake, damage cracks, crack+fade death
+# Plan: S2-01 — Define SpokeNode type
 
 ## Task
-Add three visual feedback layers to hex tactical combat: (1) attack lunge + defender shake/flash, (2) accumulating damage cracks (grietas) drawn over unit sprites, (3) crack+fade death sequence. All pure Canvas 2D, non-blocking.
+Create the foundational type definitions for the node map system: `NodeType`, `NodeReward`, and `SpokeNode`. These types are the building blocks for all Sprint 2 work (spoke generator, node map UI, node resolution).
 
 ## Approach
-Add animation state fields to `BattleUnit` (shake timer, damage ratio, death progress, crack seed). The renderer reads these fields to apply visual offsets, overlays, and alpha. `resolveCombat()` triggers animation state instead of immediately deleting dead units. `updateAnimations()` ticks all effect timers and removes units only after death animation completes.
+Single new file `src/game/spoke.ts` following the same pattern as `src/game/commander.ts` — plain TypeScript interfaces and type aliases, importing `ResourceType` to avoid duplication. This file will grow in S2-02 (Spoke type + signals) and S2-03 (generator function).
 
 ## Steps
-1. Add animation fields to `BattleUnit`: `startingStrength`, `shakeTimer`, `flashTimer`, `isDying`, `deathProgress`, `crackSeed`
-2. Update `addUnit()` and `placeStartingUnits()` to initialize new fields
-3. Update `resolveCombat()` to set shake/flash on damaged units, set `isDying` instead of deleting dead units
-4. Update `updateAnimations()` to tick shake, flash, and death timers; remove dead units when `deathProgress >= 1`
-5. Update `drawUnit()` in renderer: apply shake offset, white flash overlay, crack lines based on damage ratio, death fade
-6. Add `drawCracks()` helper: seeded jagged lines radiating from center, count based on damage ratio
-7. Skip dying units in AI and combat adjacency checks
-8. Type-check and build
+1. Create `src/game/spoke.ts`
+2. Import `ResourceType` from `./commander`
+3. Define `NodeType` union: `'battle' | 'rest' | 'event' | 'boss'`
+4. Define `NodeReward` type: `{ resource: ResourceType; amount: number }[]`
+5. Define `SpokeNode` interface with all fields from the Notion spec
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `src/battle/battle-state.ts` | modify | Animation state fields, deferred death, combat triggers effects |
-| `src/battle/battle-renderer.ts` | modify | Shake offset, flash overlay, crack drawing, death fade |
-| `src/battle/battle-ai.ts` | modify | Skip dying units |
+| `src/game/spoke.ts` | create | New file for spoke/node types |
+
+## Design decisions
+- **DRY**: Reuse `ResourceType` from `commander.ts` instead of redefining resource strings
+- **Extensibility**: `NodeType` is a union that Sprint 6 will extend with 5 more variants
+- **NodeReward as array**: A node can grant multiple resource types (e.g. battle gives gold + momentum)
+
+## Test plan
+- `npx tsc --noEmit` passes (type-only task, no runtime behavior)
+
+## Risks
+| Risk | Mitigation |
+|------|------------|
+| None | Estimate S, pure types |
+
+## Out of scope
+- `Spoke` container type (S2-02)
+- Signals and reactive state (S2-02)
+- Spoke generator function (S2-03)
