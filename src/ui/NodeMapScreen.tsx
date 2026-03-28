@@ -6,8 +6,10 @@ import type { SpokeNode, NodeType } from '../game/spoke';
 import { selectedCommander, completedSpokes } from '../game/game-state';
 import { FACTION_COLORS, RESOURCE_INFO } from '../game/commander';
 import type { ResourceType } from '../game/commander';
-import { addResource } from '../game/resources';
+import { addResource, spendResource, canAfford } from '../game/resources';
 import { NodeModal } from './NodeModal';
+import { EVENTS } from '../data/events';
+import type { GameEvent, EventChoice } from '../data/events';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('node-map-styles')) {
@@ -47,6 +49,8 @@ const NODE_LABELS: Record<NodeType, string> = {
 const showRetreatConfirm = signal(false);
 const showRestModal = signal(false);
 const restGains = signal<{ type: ResourceType; actual: number }[]>([]);
+const showEventModal = signal(false);
+const activeEvent = signal<GameEvent | null>(null);
 
 function NodeCircle({ node, isCurrent, color, onActivate }: {
   node: SpokeNode;
@@ -177,6 +181,7 @@ export function NodeMapScreen() {
   // Reset stale modal state on each render
   showRetreatConfirm.value = false;
   showRestModal.value = false;
+  showEventModal.value = false;
 
   const spoke = currentSpoke.value;
   const nodeIdx = currentNodeIndex.value;
@@ -207,9 +212,8 @@ export function NodeMapScreen() {
       navigateTo('battle');
     } else if (node.type === 'rest') {
       openRestModal();
-    } else {
-      // event: auto-resolve for now (S2-07 will add event modal)
-      advanceNode();
+    } else if (node.type === 'event') {
+      openEventModal();
     }
   }
 
@@ -227,6 +231,33 @@ export function NodeMapScreen() {
   function handleRestContinue() {
     showRestModal.value = false;
     advanceNode();
+  }
+
+  function openEventModal() {
+    // Deterministic pick by node position
+    const event = EVENTS[nodeIdx % EVENTS.length];
+    activeEvent.value = event;
+    showEventModal.value = true;
+  }
+
+  function handleEventChoice(choice: EventChoice) {
+    const faction = commander?.faction;
+    for (const effect of choice.effects) {
+      if (effect.amount > 0) {
+        addResource(effect.resource, effect.amount, faction);
+      } else if (effect.amount < 0) {
+        spendResource(effect.resource, Math.abs(effect.amount));
+      }
+    }
+    showEventModal.value = false;
+    activeEvent.value = null;
+    advanceNode();
+  }
+
+  function canAffordChoice(choice: EventChoice): boolean {
+    return choice.effects.every((e) =>
+      e.amount >= 0 || canAfford(e.resource, Math.abs(e.amount))
+    );
   }
 
   function handleSpokeComplete() {
@@ -363,6 +394,56 @@ export function NodeMapScreen() {
           >
             Continue
           </button>
+        </NodeModal>
+      )}
+
+      {/* Event modal */}
+      {showEventModal.value && activeEvent.value && (
+        <NodeModal title={activeEvent.value.title} onClose={() => { showEventModal.value = false; activeEvent.value = null; advanceNode(); }}>
+          <div style={{
+            fontSize: '13px', color: 'rgba(200, 190, 160, 0.6)',
+            lineHeight: '1.5', marginBottom: '20px',
+          }}>
+            {activeEvent.value.description}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {activeEvent.value.choices.map((choice, i) => {
+              const affordable = canAffordChoice(choice);
+              return (
+                <button
+                  key={i}
+                  onClick={() => affordable && handleEventChoice(choice)}
+                  disabled={!affordable}
+                  style={{
+                    padding: '10px 16px', borderRadius: '4px',
+                    cursor: affordable ? 'pointer' : 'default',
+                    background: affordable ? 'rgba(60, 60, 80, 0.6)' : 'rgba(30, 30, 40, 0.4)',
+                    border: `1px solid ${affordable ? 'rgba(180, 160, 100, 0.3)' : 'rgba(80, 80, 80, 0.2)'}`,
+                    color: affordable ? '#d0c8a8' : 'rgba(120, 110, 100, 0.4)',
+                    fontFamily: 'inherit', fontSize: '13px',
+                    textAlign: 'left',
+                    opacity: affordable ? 1 : 0.5,
+                  }}
+                >
+                  <div style={{ fontWeight: 600, marginBottom: choice.effects.length ? '4px' : '0' }}>
+                    {choice.text}
+                  </div>
+                  {choice.effects.length > 0 && (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '11px' }}>
+                      {choice.effects.map((e, j) => (
+                        <span key={j} style={{
+                          color: e.amount > 0 ? RESOURCE_INFO[e.resource].color : '#c66',
+                          fontWeight: 600,
+                        }}>
+                          {RESOURCE_INFO[e.resource].icon} {e.amount > 0 ? '+' : ''}{e.amount} {RESOURCE_INFO[e.resource].label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </NodeModal>
       )}
 
