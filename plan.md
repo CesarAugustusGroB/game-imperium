@@ -1,28 +1,23 @@
-# Plan: S2-08 — Build PostBattleScreen
+# Plan: S2-09 — Wire resource gains (spoke tracking + faction audit)
 
 ## Task
-After each battle, show a results screen with a VICTORY/DEFEAT/DRAW banner and let the player pick one reward before returning to the node map. On defeat, rewards are reduced.
+Add a `spokeGains` tracking signal and `grantSpokeResource` wrapper so all spoke-level resource gains are accumulated for the summary screen (S2-10). Replace direct `addResource` calls with the wrapper.
 
 ## Approach
-Create `PostBattleScreen.tsx` following the same screen component pattern. Read `lastBattleResult` for the banner. Offer 4 reward buttons (pick 1). On pick: apply reward via `addResource`, resolve the battle node via `advanceNode`, navigate to `'node-map'`. Wire into App.tsx switch.
+Add `spokeGains` signal and `grantSpokeResource()` to `spoke.ts`. It wraps `addResource`, passing through the return value while accumulating gains. Reset `spokeGains` in `startSpoke()`. Replace all 3 callsites (rest modal, event choices, post-battle rewards).
 
 ## Steps
-1. Create `src/ui/PostBattleScreen.tsx`:
-   - Read `lastBattleResult`, `selectedCommander` signals
-   - Banner: VICTORY (gold), DEFEAT (red), DRAW (grey)
-   - 4 reward buttons: Heal Army (conceptual), Bonus Gold, Bonus Momentum, Bonus Faith
-   - Victory amounts: Gold +3, Momentum +2, Faith +1; Defeat: all +1
-   - On pick: `addResource`, `advanceNode`, `navigateTo('node-map')`
-   - Disable buttons after first pick (signal-driven)
-2. Add `PostBattleScreen` to App.tsx `ScreenContent` switch for `'post-battle'`
-3. Ensure `showResourceBar` is true for `'post-battle'` (already is — only excluded for title/commander-select/battle)
+1. In `src/game/spoke.ts`: add `spokeGains` signal, `grantSpokeResource()` wrapper, reset in `startSpoke()`
+2. In `src/ui/NodeMapScreen.tsx`: replace `addResource` calls in rest modal and event handler with `grantSpokeResource`
+3. In `src/ui/PostBattleScreen.tsx`: replace `addResource` with `grantSpokeResource`
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `src/ui/PostBattleScreen.tsx` | create | Post-battle results and reward screen |
-| `src/ui/App.tsx` | modify | Add import + switch case for 'post-battle' |
+| `src/game/spoke.ts` | modify | Add spokeGains signal + grantSpokeResource wrapper |
+| `src/ui/NodeMapScreen.tsx` | modify | Use grantSpokeResource for rest/event gains |
+| `src/ui/PostBattleScreen.tsx` | modify | Use grantSpokeResource for battle rewards |
 
 ## Out of scope
-- Army HP healing mechanics (conceptual only in Sprint 2)
-- Battle difficulty scaling
+- Spoke completion summary screen (S2-10)
+- Verifying 2x multiplier visually (already works via addResource)
