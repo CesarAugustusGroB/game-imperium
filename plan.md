@@ -1,22 +1,45 @@
-# Plan: S2-02 — Define Spoke type and spoke signals
+# Plan: S2-05 — Implement Battle node (transition to Canvas hex battle, return on end)
 
 ## Task
-Add the Spoke container interface and reactive Preact signals to `src/game/spoke.ts`. These drive the NodeMapScreen (S2-04) and all node resolution flows.
+When the player clicks a battle/boss node on the spoke, transition into the existing Canvas hex battle. On battle end, capture the result (victory/defeat/draw) in a signal and route back to the appropriate screen (post-battle for in-spoke runs, title for Quick Battle).
 
 ## Approach
-Extend `src/game/spoke.ts` — keep spoke types and spoke state together. Import `signal` from `@preact/signals` (same pattern as `game-state.ts`). No deps on `game-state.ts` or `screens.ts`.
+Minimal wiring — add a `lastBattleResult` signal, expose `BattleMode.state` as readonly, and update the exit callback to read battle outcome and route conditionally. No new UI components; this is pure plumbing between the node map click and the battle system.
 
 ## Steps
-1. Add `Spoke` interface: `{ nodes: SpokeNode[], label: string, completed: boolean }`
-2. Add `currentSpoke` signal: `Signal<Spoke | null>`, initialized to null
-3. Add `currentNodeIndex` signal: `Signal<number>`, initialized to 0
-4. Add `getCurrentNode()` helper
-5. Add `resetSpoke()` function
+1. Add `lastBattleResult` signal (`'victory' | 'defeat' | 'draw' | null`) to `src/game/spoke.ts`
+2. Change `BattleMode.state` from `private` to `readonly` in `src/battle/index.ts`
+3. Update the `BattleMode` exit callback in `src/main.tsx`:
+   - Read `battleMode.state.phase` and `battleMode.state.winner`
+   - Map: winner === 'blue' → 'victory', winner === 'red' → 'defeat', else 'draw'
+   - If `currentSpoke.value !== null` → `navigateTo('post-battle')`
+   - Else (Quick Battle) → `navigateTo('title')`
+   - Set `lastBattleResult.value` accordingly
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `src/game/spoke.ts` | modify | Add Spoke interface, signals, helpers |
+| `src/game/spoke.ts` | modify | Add `lastBattleResult` signal |
+| `src/battle/index.ts` | modify | Change `state` from `private` to `readonly` |
+| `src/main.tsx` | modify | Wire exit callback to read battle result and route conditionally |
+
+## Design decisions
+- **Pattern**: Same signal-based reactive pattern used throughout (`currentSpoke`, `currentNodeIndex`)
+- **SOLID notes**: Single Responsibility — spoke.ts owns spoke state including battle result; main.tsx owns the wiring between battle and routing
+- **DRY notes**: No duplication; reuses existing `navigateTo()` and `currentSpoke` checks
+
+## Test plan
+- Happy paths: battle node click → battle starts → victory → lastBattleResult = 'victory' → navigates to post-battle
+- Edge cases: Quick Battle (no spoke) → navigates to title; draw result; ESC exit
+- Error paths: N/A (no new external inputs)
+
+## Risks
+| Risk | Mitigation |
+|------|------------|
+| `BattleMode.state` gets replaced in `enter()` — reading stale ref | Read `battleMode.state` inside the exit callback (closure captures `this`) |
 
 ## Out of scope
-- Spoke generator (S2-03), spoke gains tracking (S2-09)
+- PostBattleScreen UI (S2-08)
+- Boss difficulty scaling (Sprint 3)
+- Commander faction wired to battle sides (S3-01)
+- Node advancement after battle (handled by PostBattleScreen S2-08)

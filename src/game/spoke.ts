@@ -33,6 +33,10 @@ export interface Spoke {
 /** The active spoke, or null when the player is at the hub. */
 export const currentSpoke = signal<Spoke | null>(null);
 
+/** Result of the last battle (S2-05). Read by PostBattleScreen to show outcome. */
+export type BattleResult = 'victory' | 'defeat' | 'draw';
+export const lastBattleResult = signal<BattleResult | null>(null);
+
 /** Index of the node the player is currently at (0-based). */
 export const currentNodeIndex = signal(0);
 
@@ -47,6 +51,30 @@ export function getCurrentNode(): SpokeNode | null {
 export function resetSpoke(): void {
   currentSpoke.value = null;
   currentNodeIndex.value = 0;
+}
+
+/** Mark the current node as resolved and advance to the next one.
+ *  Returns true if the spoke is now complete. */
+export function advanceNode(): boolean {
+  const spoke = currentSpoke.value;
+  if (!spoke) return false;
+  const idx = currentNodeIndex.value;
+  const node = spoke.nodes[idx];
+  if (!node) return true;
+
+  node.resolved = true;
+  // Trigger reactivity by replacing the spoke reference
+  currentSpoke.value = { ...spoke, nodes: [...spoke.nodes] };
+  const next = idx + 1;
+  currentNodeIndex.value = next;
+  return next >= spoke.nodes.length;
+}
+
+/** Mark the spoke as completed and reset. */
+export function completeSpoke(): void {
+  const spoke = currentSpoke.value;
+  if (spoke) spoke.completed = true;
+  resetSpoke();
 }
 
 // ── Spoke generator (S2-03) ──

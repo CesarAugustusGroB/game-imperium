@@ -5,7 +5,7 @@ import { tickAI } from './battle-ai';
 
 export class BattleMode {
   private canvas: HTMLCanvasElement;
-  private state: BattleState;
+  private _state: BattleState;
   private renderer: BattleRenderer;
   private input: BattleInput;
   private onExitCallback: () => void;
@@ -16,9 +16,9 @@ export class BattleMode {
     this.onExitCallback = onExitCallback;
     this.canvas = document.getElementById('battle-canvas') as HTMLCanvasElement;
 
-    this.state = new BattleState();
-    this.renderer = new BattleRenderer(this.canvas, this.state);
-    this.input = new BattleInput(this.canvas, this.state, this.renderer, () => this.exit());
+    this._state = new BattleState();
+    this.renderer = new BattleRenderer(this.canvas, this._state);
+    this.input = new BattleInput(this.canvas, this._state, this.renderer, () => this.exit());
 
     const btn = document.getElementById('btn-coords');
     this.boundToggleCoords = () => {
@@ -31,15 +31,19 @@ export class BattleMode {
     return this._isVisible;
   }
 
+  get state(): BattleState {
+    return this._state;
+  }
+
   enter(): void {
     this._isVisible = true;
 
-    this.state = new BattleState();
-    this.state.generateGrid();
-    this.state.placeStartingUnits();
+    this._state = new BattleState();
+    this._state.generateGrid();
+    this._state.placeStartingUnits();
 
-    this.renderer.setState(this.state);
-    this.input.setState(this.state);
+    this.renderer.setState(this._state);
+    this.input.setState(this._state);
 
     this.resize(window.innerWidth, window.innerHeight);
     this.input.attach();
@@ -57,16 +61,16 @@ export class BattleMode {
     if (!this._isVisible) return;
 
     // Tick all animations (movement, shake, flash, lunge, death, cooldowns)
-    this.state.updateAnimations(dt);
+    this._state.updateAnimations(dt);
 
-    if (this.state.phase !== 'fighting') return;
+    if (this._state.phase !== 'fighting') return;
 
     // Semi-real-time: each unit acts on its own cooldown
-    tickAI(this.state, 'blue');
-    tickAI(this.state, 'red');
+    tickAI(this._state, 'blue');
+    tickAI(this._state, 'red');
 
     // Check victory
-    this.state.checkVictory();
+    this._state.checkVictory();
   }
 
   render(): void {
