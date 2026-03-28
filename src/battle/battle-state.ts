@@ -1,6 +1,6 @@
 import type { Hex, Point } from './hex';
 import { hexKey, hexNeighbors, hexDistance, offsetToAxial } from './hex';
-import type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig } from './battle-types';
+import type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText } from './battle-types';
 import {
   DEFAULT_CONFIG, CAPTURE_DURATION, MOVE_RANGE, MOVE_ANIM_SPEED,
   MORALE_BREAK_THRESHOLD, SHAKE_DURATION, FLASH_DURATION,
@@ -13,7 +13,9 @@ import {
 } from './battle-config';
 
 // Re-export types for backward compatibility
-export type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig };
+export type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText };
+
+const FLOAT_TEXT_DURATION = 0.8; // seconds for floating text to live
 
 function rollD6(): number {
   return Math.floor(Math.random() * 6) + 1;
@@ -32,6 +34,9 @@ export class BattleState {
   winner: Faction | null = null;
   roundCount = 0;
   private startingStrength = new Map<Faction, number>();
+
+  // Floating combat text (dodge, crit, etc.)
+  readonly floatingTexts: FloatingText[] = [];
 
   // Capture-the-star state
   readonly stars = new Map<Faction, Hex>();          // each faction's star hex
@@ -306,6 +311,10 @@ export class BattleState {
     this.performStrike(attacker, defender);
 
     if (attacker.stats.agi >= defender.stats.agi * DOUBLE_STRIKE_RATIO && !defender.isDying) {
+      this.floatingTexts.push({
+        text: 'CRIT!!', hex: { q: attacker.hex.q, r: attacker.hex.r },
+        color: '#ffdd00', timer: FLOAT_TEXT_DURATION, duration: FLOAT_TEXT_DURATION,
+      });
       this.performStrike(attacker, defender);
     }
   }
@@ -318,6 +327,10 @@ export class BattleState {
     if (Math.random() * 100 < dodgeChance) {
       // Dodge — no damage, defender shakes briefly to show the miss
       defender.shakeTimer = SHAKE_DURATION * 0.3;
+      this.floatingTexts.push({
+        text: 'DODGE!', hex: { q: defender.hex.q, r: defender.hex.r },
+        color: '#44ddff', timer: FLOAT_TEXT_DURATION, duration: FLOAT_TEXT_DURATION,
+      });
       return;
     }
 
@@ -478,6 +491,12 @@ export class BattleState {
       for (const unit of this.units.values()) {
         if (unit.pinnedBy === id) unit.pinnedBy = null;
       }
+    }
+
+    // Floating text countdown
+    for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+      this.floatingTexts[i].timer -= dt;
+      if (this.floatingTexts[i].timer <= 0) this.floatingTexts.splice(i, 1);
     }
 
     this.updateCapture(dt);

@@ -55,7 +55,7 @@ export class BattleInput {
       this.onExit();
       return;
     }
-    const origin = this.state.getGridOrigin(this.canvas.width, this.canvas.height);
+    const origin = this.state.getGridOrigin(this.canvas.clientWidth, this.canvas.clientHeight);
     const clicked = pixelToHex(e.offsetX, e.offsetY, this.state.config.hexSize, origin);
 
     if (!this.state.isValidHex(clicked)) {
@@ -82,7 +82,7 @@ export class BattleInput {
     if (!selected) return;
     if (this.state.isUnitMoving(selected)) return;
 
-    const origin = this.state.getGridOrigin(this.canvas.width, this.canvas.height);
+    const origin = this.state.getGridOrigin(this.canvas.clientWidth, this.canvas.clientHeight);
     const clicked = pixelToHex(e.clientX, e.clientY, this.state.config.hexSize, origin);
 
     if (!this.state.isValidHex(clicked)) return;
@@ -94,7 +94,7 @@ export class BattleInput {
   }
 
   private onMousemove(e: MouseEvent): void {
-    const origin = this.state.getGridOrigin(this.canvas.width, this.canvas.height);
+    const origin = this.state.getGridOrigin(this.canvas.clientWidth, this.canvas.clientHeight);
     const hex = pixelToHex(e.offsetX, e.offsetY, this.state.config.hexSize, origin);
     this.renderer.setHoveredHex(this.state.isValidHex(hex) ? hex : null);
   }

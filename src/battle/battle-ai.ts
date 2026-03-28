@@ -1,8 +1,8 @@
 import type { BattleState } from './battle-state';
 import type { Faction, BattleUnit } from './battle-types';
 import type { Hex } from './hex';
-import { hexDistance } from './hex';
-import { getZones, isInCamp, hexToCol, type ZoneBounds } from './battle-zones';
+import { hexDistance, hexNeighbors } from './hex';
+import { getZones, isInCamp, isInReserveOrDeeper, hexToCol, type ZoneBounds } from './battle-zones';
 
 /**
  * Football-style zonal battle AI.
@@ -93,8 +93,8 @@ function tickVanguard(state: BattleState, units: BattleUnit[], ctx: TickContext)
       }
     }
 
-    // 3. Advance forward 1 step
-    const target = findAdvanceTarget(state, unit, ctx.dir, 1);
+    // 3. Advance forward up to 3 steps
+    const target = findAdvanceTarget(state, unit, ctx.dir, 3);
     if (target) {
       moveForward(state, unit.id, target, ctx.dir);
       state.resetCooldown(unit);
@@ -158,7 +158,7 @@ function tickReserve(
         }
       }
       // Otherwise advance forward
-      const target = findAdvanceTarget(state, unit, ctx.dir, 1);
+      const target = findAdvanceTarget(state, unit, ctx.dir, 3);
       if (target) {
         moveForward(state, unit.id, target, ctx.dir);
         state.resetCooldown(unit);
@@ -171,7 +171,10 @@ function tickReserve(
     if (busyTargetId !== undefined) {
       const target = state.units.get(busyTargetId);
       if (target && !target.isDying) {
-        state.moveUnitAlongPath(unit.id, target.hex);
+        const interceptHex = findInterceptHex(state, unit, target);
+        if (interceptHex) {
+          state.moveUnitAlongPath(unit.id, interceptHex);
+        }
         state.resetCooldown(unit);
         continue;
       }
@@ -179,11 +182,11 @@ function tickReserve(
       busyTargets.delete(unit.id);
     }
 
-    // 4. Idle: look for enemies past the midfield (in our half)
-    const midCol = Math.floor(state.config.cols / 2);
+    // 4. Idle: intercept enemy vanguards that entered our reserve zone (or deeper)
     const reserveThreats = ctx.allEnemies.filter(e => {
+      if (e.role !== 'vanguard') return false;
       const col = hexToCol(e.hex);
-      return faction === 'blue' ? col < midCol : col >= midCol;
+      return isInReserveOrDeeper(col, ctx.zones, faction);
     });
     if (reserveThreats.length > 0) {
       // Find nearest threat not already being chased by another reserve
@@ -194,7 +197,10 @@ function tickReserve(
         : findClosestTo(unit, reserveThreats); // all taken — double up
       if (target) {
         busyTargets.set(unit.id, target.id);
-        state.moveUnitAlongPath(unit.id, target.hex);
+        const interceptHex = findInterceptHex(state, unit, target);
+        if (interceptHex) {
+          state.moveUnitAlongPath(unit.id, interceptHex);
+        }
         state.resetCooldown(unit);
         continue;
       }
@@ -243,6 +249,19 @@ function moveForward(state: BattleState, unitId: number, target: Hex, dir: numbe
 /** Pick the weakest unit (lowest HP). */
 function pickWeakest(units: BattleUnit[]): BattleUnit {
   return units.reduce((a, b) => a.currentHp < b.currentHp ? a : b);
+}
+
+/** Find the nearest empty hex adjacent to the target (for interception pathing). */
+function findInterceptHex(state: BattleState, chaser: BattleUnit, target: BattleUnit): Hex | null {
+  let bestHex: Hex | null = null;
+  let bestDist = Infinity;
+  for (const nb of hexNeighbors(target.hex)) {
+    if (!state.isValidHex(nb)) continue;
+    if (state.getUnitAt(nb)) continue;
+    const d = hexDistance(chaser.hex, nb);
+    if (d < bestDist) { bestDist = d; bestHex = nb; }
+  }
+  return bestHex;
 }
 
 /** Find the closest target by hex distance. */

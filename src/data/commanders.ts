@@ -1,0 +1,108 @@
+import type { Commander } from '../game/commander';
+
+export const COMMANDERS: Commander[] = [
+  {
+    id: 'pope-innocent',
+    name: 'Pope Innocent',
+    faction: 'gold',
+    culture: 'Roman / Papal',
+    portrait: '/asset/char_pope_innocent.png',
+    quote: 'I am patient. God rewards the faithful.',
+    passive: {
+      name: 'Deus Vult',
+      description: '+1 Faith at spoke start. Bonus Faith from prayer and relic nodes.',
+    },
+    strategicAbility: {
+      name: 'Call Crusade',
+      description: 'Next 3 battles deal +30% damage. Enemies drop relics.',
+      type: 'strategic',
+      cost: { resource: 'faith', amount: 3 },
+    },
+    tacticalAbility: {
+      name: 'Miracle',
+      description: 'Fully heal one unit OR deal 2000 damage to one enemy.',
+      type: 'tactical',
+      cost: { resource: 'faith', amount: 2 },
+      cooldown: 'unlimited',
+    },
+    startingResources: { gold: 3, faith: 2, influence: 0, momentum: 0 },
+  },
+  {
+    id: 'boudicca',
+    name: 'Boudicca',
+    faction: 'red',
+    culture: 'Gaelic / Celtic',
+    portrait: '/asset/char_boudicca.png',
+    quote: 'Every battle makes me stronger. Stop fighting and I wither.',
+    passive: {
+      name: 'Veteran Stacks',
+      description: '+5% damage per battle won (stacks). 3 spokes without battle = lose all stacks.',
+    },
+    strategicAbility: {
+      name: 'War Cry',
+      description: 'All units start battle with zero cooldown — instant first strike.',
+      type: 'strategic',
+      cost: null,
+    },
+    tacticalAbility: {
+      name: 'Fury Charge',
+      description: 'All player units lunge 2 hexes forward and deal impact damage.',
+      type: 'tactical',
+      cost: { resource: 'momentum', amount: 2 },
+      cooldown: 'once-per-battle',
+    },
+    startingResources: { gold: 2, faith: 0, influence: 0, momentum: 3 },
+  },
+  {
+    id: 'augustus',
+    name: 'Augustus',
+    faction: 'blue',
+    culture: 'Roman / Imperial',
+    portrait: '/asset/char_caesar_augustus.png',
+    quote: 'Why fight when others can fight for you?',
+    passive: {
+      name: 'Web of Alliances',
+      description: 'Each alliance = +1 allied unit in battle. Spending Influence doesn\'t reduce allies.',
+    },
+    strategicAbility: {
+      name: 'Manipulate',
+      description: 'Change a node outcome — redirect war, reveal paths, turn enemy to negotiation.',
+      type: 'strategic',
+      cost: { resource: 'influence', amount: 2 },
+    },
+    tacticalAbility: {
+      name: 'Turncoat',
+      description: 'Convert one enemy unit to your side at 50% HP.',
+      type: 'tactical',
+      cost: { resource: 'influence', amount: 3 },
+      cooldown: 'once-per-battle',
+    },
+    startingResources: { gold: 2, faith: 0, influence: 2, momentum: 0 },
+  },
+  {
+    id: 'crassus',
+    name: 'Marcus Crassus',
+    faction: 'purple',
+    culture: 'Roman / Patrician',
+    portrait: '/asset/char_marcus_crassus.png',
+    quote: 'Everything has a price, and I can afford all of it.',
+    passive: {
+      name: 'War Profiteer',
+      description: '+50% gold from all sources. Better prices and more options at shops.',
+    },
+    strategicAbility: {
+      name: 'Golden Opportunity',
+      description: 'Unlock a bonus trade spoke — massive gold but attracts raiders.',
+      type: 'strategic',
+      cost: { resource: 'gold', amount: 5 },
+    },
+    tacticalAbility: {
+      name: 'Buy Reinforcements',
+      description: 'Deploy mercenary at 70% HP. First: 3 Gold, second: 6 Gold. Max 2 per battle.',
+      type: 'tactical',
+      cost: { resource: 'gold', amount: 3 },
+      cooldown: 'unlimited',
+    },
+    startingResources: { gold: 8, faith: 0, influence: 0, momentum: 0 },
+  },
+];
