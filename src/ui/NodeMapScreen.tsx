@@ -200,6 +200,7 @@ export function NodeMapScreen() {
 
   function handleRetreat() {
     showRetreatConfirm.value = false;
+    // TODO S6: threatLevel.value += 1 — retreating should have consequences
     resetSpoke();
     navigateTo('hub');
   }
