@@ -6,6 +6,7 @@ import { TitleScreen } from './TitleScreen';
 import { CommanderSelectScreen } from './CommanderSelectScreen';
 import { HubScreen } from './HubScreen';
 import { NodeMapScreen } from './NodeMapScreen';
+import { PostBattleScreen } from './PostBattleScreen';
 
 // Inject screen transition CSS once
 if (typeof document !== 'undefined' && !document.getElementById('screen-transition-styles')) {
@@ -59,6 +60,8 @@ function ScreenContent() {
       return <HubScreen />;
     case 'node-map':
       return <NodeMapScreen />;
+    case 'post-battle':
+      return <PostBattleScreen />;
     default:
       return (
         <div style={{

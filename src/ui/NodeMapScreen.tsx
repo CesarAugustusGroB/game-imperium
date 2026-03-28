@@ -178,11 +178,6 @@ function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; o
 }
 
 export function NodeMapScreen() {
-  // Reset stale modal state on each render
-  showRetreatConfirm.value = false;
-  showRestModal.value = false;
-  showEventModal.value = false;
-
   const spoke = currentSpoke.value;
   const nodeIdx = currentNodeIndex.value;
   const commander = selectedCommander.value;

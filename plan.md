@@ -1,31 +1,28 @@
-# Plan: S2-07 — Implement Event node (modal with choices, 5 hardcoded events)
+# Plan: S2-08 — Build PostBattleScreen
 
 ## Task
-Narrative choice nodes — when the player clicks an event node, show a modal with a scenario description and 2-3 choice buttons. Each choice has resource effects (gains via `addResource`, costs via `spendResource`). Unaffordable choices are greyed out.
+After each battle, show a results screen with a VICTORY/DEFEAT/DRAW banner and let the player pick one reward before returning to the node map. On defeat, rewards are reduced.
 
 ## Approach
-Create `src/data/events.ts` with typed event data (5 events). In `NodeMapScreen`, wire the event node click to open a `NodeModal` populated from the event data. Choice buttons show colored resource effects; clicking one applies effects and advances the node.
+Create `PostBattleScreen.tsx` following the same screen component pattern. Read `lastBattleResult` for the banner. Offer 4 reward buttons (pick 1). On pick: apply reward via `addResource`, resolve the battle node via `advanceNode`, navigate to `'node-map'`. Wire into App.tsx switch.
 
 ## Steps
-1. Create `src/data/events.ts` — `GameEvent` and `EventChoice` types, 5 hardcoded events
-2. In `NodeMapScreen`:
-   a. Add `showEventModal` signal and `activeEvent` signal
-   b. On event node click → pick event (by node position for determinism), set signals
-   c. Render `NodeModal` with event title, description, choice buttons
-   d. Each choice button shows resource effects (green for gain, red for cost)
-   e. Grey out unaffordable choices (use `canAfford`)
-   f. On choice click → apply effects → `advanceNode()` → close modal
+1. Create `src/ui/PostBattleScreen.tsx`:
+   - Read `lastBattleResult`, `selectedCommander` signals
+   - Banner: VICTORY (gold), DEFEAT (red), DRAW (grey)
+   - 4 reward buttons: Heal Army (conceptual), Bonus Gold, Bonus Momentum, Bonus Faith
+   - Victory amounts: Gold +3, Momentum +2, Faith +1; Defeat: all +1
+   - On pick: `addResource`, `advanceNode`, `navigateTo('node-map')`
+   - Disable buttons after first pick (signal-driven)
+2. Add `PostBattleScreen` to App.tsx `ScreenContent` switch for `'post-battle'`
+3. Ensure `showResourceBar` is true for `'post-battle'` (already is — only excluded for title/commander-select/battle)
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `src/data/events.ts` | create | Event type definitions and 5 starter events |
-| `src/ui/NodeMapScreen.tsx` | modify | Wire event node click to event modal with choices |
-
-## Design decisions
-- **Pattern**: Reuses `NodeModal` from S2-06; event data is pure data (easy to extend in Sprint 7)
-- **DRY**: Choice effect rendering shares RESOURCE_INFO colors/icons with rest modal
+| `src/ui/PostBattleScreen.tsx` | create | Post-battle results and reward screen |
+| `src/ui/App.tsx` | modify | Add import + switch case for 'post-battle' |
 
 ## Out of scope
-- Procedural event generation (Sprint 7)
-- Persistent event consequences beyond immediate resource effects
+- Army HP healing mechanics (conceptual only in Sprint 2)
+- Battle difficulty scaling
