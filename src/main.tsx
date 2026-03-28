@@ -3,14 +3,30 @@ import { effect } from '@preact/signals';
 import { App } from './ui/App';
 import { currentScreen, navigateTo } from './ui/screens';
 import { BattleMode } from './battle/index';
+import { currentSpoke, lastBattleResult } from './game/spoke';
 
 // Mount Preact UI
 const appRoot = document.getElementById('app-root');
 if (appRoot) render(<App />, appRoot);
 
-// Battle mode — on exit, return to title
+// Battle mode — on exit, capture result and route accordingly
 const battleMode = new BattleMode(() => {
-  navigateTo('title');
+  const { phase, winner } = battleMode.state;
+
+  if (phase === 'victory' || phase === 'draw') {
+    lastBattleResult.value = winner === 'blue' ? 'victory'
+      : winner === 'red' ? 'defeat'
+      : 'draw';
+  } else {
+    // ESC exit mid-battle — treat as defeat
+    lastBattleResult.value = 'defeat';
+  }
+
+  if (currentSpoke.value) {
+    navigateTo('post-battle');
+  } else {
+    navigateTo('title');
+  }
 });
 
 // Apply initial screen state (handles #battle on page load)

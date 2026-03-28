@@ -33,6 +33,10 @@ export interface Spoke {
 /** The active spoke, or null when the player is at the hub. */
 export const currentSpoke = signal<Spoke | null>(null);
 
+/** Result of the last battle (S2-05). Read by PostBattleScreen to show outcome. */
+export type BattleResult = 'victory' | 'defeat' | 'draw';
+export const lastBattleResult = signal<BattleResult | null>(null);
+
 /** Index of the node the player is currently at (0-based). */
 export const currentNodeIndex = signal(0);
 
