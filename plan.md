@@ -1,34 +1,31 @@
-# Plan: S2-06 — Implement Rest node (modal: heal army, gain resources)
+# Plan: S2-07 — Implement Event node (modal with choices, 5 hardcoded events)
 
 ## Task
-When the player clicks a rest node on the spoke, show a modal overlay granting +1 of each resource (with faction 2x multiplier). The modal is a reusable `NodeModal` component for S2-07 events too.
+Narrative choice nodes — when the player clicks an event node, show a modal with a scenario description and 2-3 choice buttons. Each choice has resource effects (gains via `addResource`, costs via `spendResource`). Unaffordable choices are greyed out.
 
 ## Approach
-Create a generic `NodeModal` component (dark backdrop, centered panel, title + children + close). In `NodeMapScreen`, replace the rest-node auto-resolve with a signal-driven modal that calls `addResource` for each type, displays the gains, then resolves the node on "Continue".
+Create `src/data/events.ts` with typed event data (5 events). In `NodeMapScreen`, wire the event node click to open a `NodeModal` populated from the event data. Choice buttons show colored resource effects; clicking one applies effects and advances the node.
 
 ## Steps
-1. Create `src/ui/NodeModal.tsx` — reusable modal overlay with title, children, onClose
+1. Create `src/data/events.ts` — `GameEvent` and `EventChoice` types, 5 hardcoded events
 2. In `NodeMapScreen`:
-   a. Add a `showRestModal` signal
-   b. On rest node click → set `showRestModal.value = true` (instead of auto-advancing)
-   c. Compute gained amounts using `addResource` return values
-   d. Show `NodeModal` with title "Your Army Rests", body with gained resources, "Continue" button
-   e. "Continue" → `advanceNode()`, close modal
+   a. Add `showEventModal` signal and `activeEvent` signal
+   b. On event node click → pick event (by node position for determinism), set signals
+   c. Render `NodeModal` with event title, description, choice buttons
+   d. Each choice button shows resource effects (green for gain, red for cost)
+   e. Grey out unaffordable choices (use `canAfford`)
+   f. On choice click → apply effects → `advanceNode()` → close modal
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `src/ui/NodeModal.tsx` | create | Reusable modal overlay for rest and event nodes |
-| `src/ui/NodeMapScreen.tsx` | modify | Wire rest node click to show rest modal |
+| `src/data/events.ts` | create | Event type definitions and 5 starter events |
+| `src/ui/NodeMapScreen.tsx` | modify | Wire event node click to event modal with choices |
 
 ## Design decisions
-- **Pattern**: Same signal-driven modal as `showRetreatConfirm` — proven pattern in this codebase
-- **DRY**: `NodeModal` extracted as reusable so S2-07 events don't duplicate the overlay
-
-## Test plan
-- Happy paths: click rest node → modal appears → resources granted → "Continue" resolves node
-- Edge cases: faction 2x multiplier shows correct doubled amount for primary resource
+- **Pattern**: Reuses `NodeModal` from S2-06; event data is pure data (easy to extend in Sprint 7)
+- **DRY**: Choice effect rendering shares RESOURCE_INFO colors/icons with rest modal
 
 ## Out of scope
-- Event node modals (S2-07)
-- Army HP healing (no persistent HP yet — conceptual only)
+- Procedural event generation (Sprint 7)
+- Persistent event consequences beyond immediate resource effects
