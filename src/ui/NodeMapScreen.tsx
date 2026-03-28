@@ -1,12 +1,12 @@
 import { Fragment } from 'preact';
 import { signal } from '@preact/signals';
 import { navigateTo } from './screens';
-import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke } from '../game/spoke';
+import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource } from '../game/spoke';
 import type { SpokeNode, NodeType } from '../game/spoke';
 import { selectedCommander, completedSpokes } from '../game/game-state';
 import { FACTION_COLORS, RESOURCE_INFO } from '../game/commander';
 import type { ResourceType } from '../game/commander';
-import { addResource, spendResource, canAfford } from '../game/resources';
+import { spendResource, canAfford } from '../game/resources';
 import { NodeModal } from './NodeModal';
 import { EVENTS } from '../data/events';
 import type { GameEvent, EventChoice } from '../data/events';
@@ -217,7 +217,7 @@ export function NodeMapScreen() {
     const types: ResourceType[] = ['gold', 'faith', 'influence', 'momentum'];
     const gains = types.map((type) => ({
       type,
-      actual: addResource(type, 1, faction),
+      actual: grantSpokeResource(type, 1, faction),
     }));
     restGains.value = gains;
     showRestModal.value = true;
@@ -239,7 +239,7 @@ export function NodeMapScreen() {
     const faction = commander?.faction;
     for (const effect of choice.effects) {
       if (effect.amount > 0) {
-        addResource(effect.resource, effect.amount, faction);
+        grantSpokeResource(effect.resource, effect.amount, faction);
       } else if (effect.amount < 0) {
         spendResource(effect.resource, Math.abs(effect.amount));
       }

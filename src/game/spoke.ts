@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
-import type { ResourceType } from './commander';
+import type { Faction, ResourceType } from './commander';
+import { addResource } from './resources';
 
 // ── Node types (S2-01) ──
 
@@ -39,6 +40,23 @@ export const lastBattleResult = signal<BattleResult | null>(null);
 
 /** Index of the node the player is currently at (0-based). */
 export const currentNodeIndex = signal(0);
+
+// ── Spoke gains tracking (S2-09) ──
+
+const ZERO_GAINS: Record<ResourceType, number> = { gold: 0, faith: 0, influence: 0, momentum: 0 };
+
+/** Cumulative resource gains during the current spoke. Read by spoke completion summary. */
+export const spokeGains = signal<Record<ResourceType, number>>({ ...ZERO_GAINS });
+
+/**
+ * Grant a resource during a spoke, tracking the gain.
+ * Wraps addResource — passes through the actual amount added (after 2x multiplier).
+ */
+export function grantSpokeResource(type: ResourceType, amount: number, faction?: Faction): number {
+  const actual = addResource(type, amount, faction);
+  spokeGains.value = { ...spokeGains.value, [type]: spokeGains.value[type] + actual };
+  return actual;
+}
 
 /** Get the current node, or null if no spoke is active. */
 export function getCurrentNode(): SpokeNode | null {
@@ -96,4 +114,5 @@ export function generateFixedSpoke(): Spoke {
 export function startSpoke(): void {
   currentSpoke.value = generateFixedSpoke();
   currentNodeIndex.value = 0;
+  spokeGains.value = { ...ZERO_GAINS };
 }

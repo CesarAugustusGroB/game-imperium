@@ -1,11 +1,10 @@
 import { signal } from '@preact/signals';
 import { navigateTo } from './screens';
-import { lastBattleResult, advanceNode } from '../game/spoke';
+import { lastBattleResult, advanceNode, grantSpokeResource } from '../game/spoke';
 import type { BattleResult } from '../game/spoke';
 import { selectedCommander } from '../game/game-state';
 import { FACTION_COLORS, RESOURCE_INFO } from '../game/commander';
 import type { ResourceType } from '../game/commander';
-import { addResource } from '../game/resources';
 
 // ── Reward definitions ──
 
@@ -50,7 +49,7 @@ export function PostBattleScreen() {
     const reward = REWARDS[index];
     if (reward.resource) {
       const amount = isVictory ? reward.victory : reward.defeat;
-      addResource(reward.resource, amount, commander?.faction);
+      grantSpokeResource(reward.resource, amount, commander?.faction);
     }
 
     // Resolve battle node and return to node map
