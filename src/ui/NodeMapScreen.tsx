@@ -543,27 +543,15 @@ export function NodeMapScreen() {
         Node <span style={{ color: `${color}90`, fontWeight: 600 }}>{Math.min(nodeIdx + 1, spoke.nodes.length)}</span> of {spoke.nodes.length}
       </div>
 
-      {/* Road band + Node chain */}
-      <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-        {/* Subtle road texture behind chain */}
-        <div style={{
-          position: 'absolute', top: '50%', left: '0', right: '0',
-          height: '52px', transform: 'translateY(-50%)',
-          background: 'linear-gradient(180deg, transparent, rgba(40, 36, 30, 0.25) 20%, rgba(40, 36, 30, 0.35) 50%, rgba(40, 36, 30, 0.25) 80%, transparent)',
-          borderTop: '1px solid rgba(80, 70, 50, 0.08)',
-          borderBottom: '1px solid rgba(80, 70, 50, 0.08)',
-          pointerEvents: 'none',
-        }} />
-
-        {/* Node chain */}
-        <div
-          class="node-chain-scroll"
-          style={{
-            display: 'flex', alignItems: 'center', gap: '0',
-            padding: '12px 32px', maxWidth: '100%', overflowX: 'auto',
-            position: 'relative', zIndex: '1',
-          }}
-        >
+      {/* Node chain */}
+      <div
+        class="node-chain-scroll"
+        style={{
+          display: 'flex', alignItems: 'center', gap: '0',
+          padding: '12px 32px', width: '100%', overflowX: 'auto',
+          justifyContent: 'center',
+        }}
+      >
           {spoke.nodes.map((node, i) => (
             <Fragment key={node.id}>
               {i > 0 && (
@@ -581,7 +569,6 @@ export function NodeMapScreen() {
               />
             </Fragment>
           ))}
-        </div>
       </div>
 
       {/* Dynamic hint text */}
