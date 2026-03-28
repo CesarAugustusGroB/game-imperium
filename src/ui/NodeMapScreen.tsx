@@ -1,6 +1,6 @@
 import { Fragment } from 'preact';
 import { signal } from '@preact/signals';
-import { useEffect } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { navigateTo } from './screens';
 import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../game/spoke';
 import type { SpokeNode, NodeType } from '../game/spoke';
@@ -19,14 +19,82 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
   el.textContent = `
     @keyframes node-pulse {
       0%, 100% { box-shadow: 0 0 12px var(--glow), 0 0 24px var(--glow); transform: scale(1); }
-      50% { box-shadow: 0 0 20px var(--glow), 0 0 40px var(--glow); transform: scale(1.08); }
+      50% { box-shadow: 0 0 24px var(--glow), 0 0 48px var(--glow); transform: scale(1.06); }
     }
+    @keyframes checkmark-pop {
+      0%   { transform: scale(0) rotate(-45deg); opacity: 0; }
+      60%  { transform: scale(1.3) rotate(0deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    @keyframes resolve-flash {
+      0%   { box-shadow: 0 0 0 0 rgba(212, 168, 67, 0.6); }
+      50%  { box-shadow: 0 0 30px 8px rgba(212, 168, 67, 0.4); }
+      100% { box-shadow: 0 0 0 0 rgba(212, 168, 67, 0); }
+    }
+    @keyframes line-sweep {
+      0%   { background-position: -64px 0; }
+      100% { background-position: 64px 0; }
+    }
+    @keyframes boss-breathe {
+      0%, 100% { box-shadow: 0 0 16px var(--type-glow), 0 0 32px var(--type-glow), inset 0 0 8px var(--type-glow); transform: scale(1); }
+      50%      { box-shadow: 0 0 24px var(--type-glow), 0 0 48px var(--type-glow), inset 0 0 14px var(--type-glow); transform: scale(1.04); }
+    }
+    @keyframes tooltip-in {
+      from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
     .node-circle { transition: all 0.25s ease; }
-    .node-circle:hover { filter: brightness(1.15); }
-    .node-current { animation: node-pulse 2s ease-in-out infinite; cursor: pointer; }
-    .node-current:hover { transform: scale(1.12); }
-    .node-resolved { opacity: 0.45; }
-    .node-future { opacity: 0.35; cursor: default; }
+    .node-circle:hover { filter: brightness(1.2); }
+    .node-current { animation: node-pulse 2.5s ease-in-out infinite; cursor: pointer; }
+    .node-current:hover { transform: scale(1.15) !important; }
+    .node-current.node-boss { animation: boss-breathe 2.5s ease-in-out infinite; }
+    .node-resolved { opacity: 0.6; }
+    .node-future { opacity: 0.5; cursor: default; }
+
+    .checkmark-overlay {
+      animation: checkmark-pop 0.4s ease-out forwards;
+    }
+
+    .node-tooltip {
+      position: absolute;
+      bottom: calc(100% + 14px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(16, 14, 28, 0.95);
+      border: 1px solid rgba(180, 160, 100, 0.3);
+      border-radius: 4px;
+      padding: 6px 12px;
+      white-space: nowrap;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      pointer-events: none;
+      z-index: 50;
+      animation: tooltip-in 0.15s ease-out;
+    }
+    .node-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: rgba(180, 160, 100, 0.3);
+    }
+
+    .line-next-active {
+      position: relative;
+      overflow: hidden;
+    }
+    .line-next-active::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 30%, var(--faction-color) 50%, transparent 70%);
+      background-size: 64px 100%;
+      animation: line-sweep 1.8s linear infinite;
+      opacity: 0.5;
+    }
 
     /* Retreat button hover */
     .retreat-btn { transition: all 0.2s ease; }
@@ -69,20 +137,10 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
     .retreat-cancel-btn:active { transform: scale(0.97); }
 
     /* Thin scrollbar for node chain */
-    .node-chain-scroll::-webkit-scrollbar {
-      height: 4px;
-    }
-    .node-chain-scroll::-webkit-scrollbar-track {
-      background: rgba(20, 18, 36, 0.5);
-      border-radius: 2px;
-    }
-    .node-chain-scroll::-webkit-scrollbar-thumb {
-      background: rgba(180, 160, 100, 0.2);
-      border-radius: 2px;
-    }
-    .node-chain-scroll::-webkit-scrollbar-thumb:hover {
-      background: rgba(180, 160, 100, 0.35);
-    }
+    .node-chain-scroll::-webkit-scrollbar { height: 4px; }
+    .node-chain-scroll::-webkit-scrollbar-track { background: rgba(20, 18, 36, 0.5); border-radius: 2px; }
+    .node-chain-scroll::-webkit-scrollbar-thumb { background: rgba(180, 160, 100, 0.2); border-radius: 2px; }
+    .node-chain-scroll::-webkit-scrollbar-thumb:hover { background: rgba(180, 160, 100, 0.35); }
 
     /* Empty state link */
     .empty-state-btn { transition: all 0.2s ease; }
@@ -97,10 +155,10 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
 
 // ── Icons per node type ──
 const NODE_ICONS: Record<NodeType, string> = {
-  battle: '\u2694\uFE0F',  // crossed swords
-  rest:   '\uD83C\uDFD5\uFE0F',  // camping
-  event:  '\uD83D\uDCDC',  // scroll
-  boss:   '\uD83D\uDC80',  // skull
+  battle: '\u2694\uFE0F',
+  rest:   '\uD83C\uDFD5\uFE0F',
+  event:  '\uD83D\uDCDC',
+  boss:   '\uD83D\uDC80',
 };
 
 const NODE_LABELS: Record<NodeType, string> = {
@@ -109,6 +167,17 @@ const NODE_LABELS: Record<NodeType, string> = {
   event: 'Event',
   boss: 'Boss',
 };
+
+// ── Node type visual styles ──
+const NODE_STYLES: Record<NodeType, { color: string; glow: string; hoverLabel: string; hint: string }> = {
+  battle: { color: '#c24a3a', glow: '#c24a3a60', hoverLabel: 'Enter Battle',       hint: 'Prepare for battle...' },
+  rest:   { color: '#4a9a6a', glow: '#4a9a6a60', hoverLabel: 'Rest Here',           hint: 'A place to rest...' },
+  event:  { color: '#d4a843', glow: '#d4a84360', hoverLabel: 'Make a Choice',       hint: 'Something stirs ahead...' },
+  boss:   { color: '#8a4ac2', glow: '#8a4ac260', hoverLabel: 'Face the Boss',       hint: 'The final challenge awaits...' },
+};
+
+const NODE_SIZE_REGULAR = 68;
+const NODE_SIZE_BOSS = 82;
 
 // ── Modal state ──
 const showRetreatConfirm = signal(false);
@@ -125,32 +194,62 @@ function NodeCircle({ node, isCurrent, color, onActivate }: {
   color: string;
   onActivate: () => void;
 }) {
-  const stateClass = node.resolved ? 'node-resolved' : isCurrent ? 'node-current' : 'node-future';
+  const [hovered, setHovered] = useState(false);
+  const typeStyle = NODE_STYLES[node.type];
+  const isBoss = node.type === 'boss';
+  const size = isBoss ? NODE_SIZE_BOSS : NODE_SIZE_REGULAR;
+  const stateClass = node.resolved
+    ? 'node-resolved'
+    : isCurrent
+      ? `node-current${isBoss ? ' node-boss' : ''}`
+      : 'node-future';
 
   function handleClick() {
     if (!isCurrent || node.resolved) return;
     onActivate();
   }
 
+  // Compute background
+  const bg = node.resolved
+    ? `linear-gradient(135deg, rgba(40, 38, 55, 0.9), rgba(30, 28, 45, 0.95))`
+    : isCurrent
+      ? `linear-gradient(135deg, ${typeStyle.color}30, ${typeStyle.color}10)`
+      : `linear-gradient(135deg, ${typeStyle.color}12, ${typeStyle.color}06)`;
+
+  // Compute border color
+  const borderColor = node.resolved
+    ? 'rgba(212, 168, 67, 0.35)'
+    : isCurrent
+      ? typeStyle.color
+      : `${typeStyle.color}25`;
+
+  // Tooltip text
+  const tooltipText = node.resolved
+    ? 'Completed'
+    : isCurrent
+      ? typeStyle.hoverLabel
+      : node.reward
+        ? `${NODE_LABELS[node.type]} \u2014 ${node.reward.map(r => `${RESOURCE_INFO[r.resource].icon}${r.amount}`).join(' ')}`
+        : NODE_LABELS[node.type];
+
   return (
     <div
       class={`node-circle ${stateClass}`}
       onClick={handleClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       role={isCurrent && !node.resolved ? 'button' : undefined}
       aria-label={isCurrent && !node.resolved ? `Activate ${NODE_LABELS[node.type]} node` : undefined}
       tabIndex={isCurrent && !node.resolved ? 0 : undefined}
       onKeyDown={isCurrent && !node.resolved ? (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onActivate(); } } : undefined}
       style={{
-        '--glow': color + '60',
-        width: '56px',
-        height: '56px',
+        '--glow': isCurrent ? typeStyle.glow : color + '60',
+        '--type-glow': typeStyle.glow,
+        width: `${size}px`,
+        height: `${size}px`,
         borderRadius: '50%',
-        background: node.resolved
-          ? 'rgba(40, 38, 55, 0.9)'
-          : isCurrent
-            ? `linear-gradient(135deg, ${color}25, ${color}10)`
-            : 'rgba(30, 28, 48, 0.9)',
-        border: `2px solid ${isCurrent ? color : node.resolved ? 'rgba(100, 100, 100, 0.3)' : 'rgba(180, 160, 100, 0.15)'}`,
+        background: bg,
+        border: `${isCurrent ? 3 : 2}px solid ${borderColor}`,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -161,49 +260,88 @@ function NodeCircle({ node, isCurrent, color, onActivate }: {
       } as Record<string, string>}
     >
       {/* Icon */}
-      <span style={{ fontSize: '20px', lineHeight: '1' }}>
-        {node.resolved ? '\u2714' : NODE_ICONS[node.type]}
-      </span>
+      {node.resolved ? (
+        <>
+          <span style={{ fontSize: isBoss ? '22px' : '18px', lineHeight: '1', opacity: 0.3 }}>
+            {NODE_ICONS[node.type]}
+          </span>
+          <span class="checkmark-overlay" style={{
+            position: 'absolute',
+            fontSize: '16px',
+            lineHeight: '1',
+            color: '#d4a843',
+            textShadow: '0 0 8px rgba(212, 168, 67, 0.5)',
+          }}>
+            {'\u2714'}
+          </span>
+        </>
+      ) : (
+        <span style={{
+          fontSize: isBoss ? '28px' : '22px',
+          lineHeight: '1',
+          filter: isCurrent ? `drop-shadow(0 0 4px ${typeStyle.glow})` : 'none',
+        }}>
+          {NODE_ICONS[node.type]}
+        </span>
+      )}
 
       {/* Label below circle */}
       <div style={{
         position: 'absolute',
-        bottom: '-20px',
+        bottom: '-22px',
         fontSize: '9px',
         letterSpacing: '1px',
         textTransform: 'uppercase',
-        color: isCurrent ? color : 'rgba(180, 170, 150, 0.4)',
+        color: isCurrent ? typeStyle.color : node.resolved ? 'rgba(212, 168, 67, 0.4)' : `${typeStyle.color}50`,
         whiteSpace: 'nowrap',
         fontWeight: isCurrent ? '600' : '400',
       }}>
         {NODE_LABELS[node.type]}
       </div>
+
+      {/* Tooltip on hover */}
+      {hovered && (
+        <div class="node-tooltip" style={{
+          color: node.resolved ? '#d4a843' : isCurrent ? typeStyle.color : 'rgba(200, 190, 160, 0.7)',
+        }}>
+          {tooltipText}
+        </div>
+      )}
     </div>
   );
 }
 
-function ConnectingLine({ resolved, color }: { resolved: boolean; color: string }) {
+function ConnectingLine({ resolved, color, isNextActive }: {
+  resolved: boolean;
+  color: string;
+  isNextActive: boolean;
+}) {
+  const lineClass = isNextActive ? 'line-next-active' : '';
   return (
-    <div style={{
-      width: '48px',
-      height: '2px',
-      background: resolved
-        ? 'rgba(100, 100, 100, 0.25)'
-        : `linear-gradient(90deg, ${color}50, ${color}25)`,
-      flexShrink: 0,
-      alignSelf: 'center',
-    }} />
+    <div
+      class={lineClass}
+      aria-hidden="true"
+      style={{
+        '--faction-color': color,
+        width: '64px',
+        height: '3px',
+        borderRadius: '1.5px',
+        background: resolved
+          ? `linear-gradient(90deg, ${color}60, ${color}35)`
+          : 'repeating-linear-gradient(90deg, rgba(100,100,100,0.2) 0px, rgba(100,100,100,0.2) 6px, transparent 6px, transparent 12px)',
+        flexShrink: '0',
+        alignSelf: 'center',
+        position: 'relative',
+        boxShadow: resolved ? `0 0 6px ${color}30` : 'none',
+      } as Record<string, string>}
+    />
   );
 }
 
 function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
-  // Escape key handler
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onCancel();
-      }
+      if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
     }
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
@@ -211,9 +349,7 @@ function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; o
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Retreat confirmation"
+      role="dialog" aria-modal="true" aria-label="Retreat confirmation"
       style={{
         position: 'fixed', inset: '0', zIndex: '200',
         background: 'rgba(0, 0, 0, 0.7)',
@@ -242,28 +378,18 @@ function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; o
           You'll keep your army and resources, but forfeit all remaining spoke rewards.
         </div>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-          <button
-            class="retreat-confirm-btn"
-            onClick={onConfirm}
-            style={{
-              padding: '10px 20px', borderRadius: '4px', cursor: 'pointer',
-              background: 'rgba(180, 60, 60, 0.3)', border: '1px solid rgba(200, 80, 80, 0.5)',
-              color: '#e0a0a0', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
-              letterSpacing: '1px',
-            }}
-          >
+          <button class="retreat-confirm-btn" onClick={onConfirm} style={{
+            padding: '10px 20px', borderRadius: '4px', cursor: 'pointer',
+            background: 'rgba(180, 60, 60, 0.3)', border: '1px solid rgba(200, 80, 80, 0.5)',
+            color: '#e0a0a0', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, letterSpacing: '1px',
+          }}>
             Confirm Retreat
           </button>
-          <button
-            class="retreat-cancel-btn"
-            onClick={onCancel}
-            style={{
-              padding: '10px 20px', borderRadius: '4px', cursor: 'pointer',
-              background: 'rgba(60, 60, 80, 0.6)', border: '1px solid rgba(180, 160, 100, 0.25)',
-              color: '#d0c8a8', fontFamily: 'inherit', fontSize: '13px',
-              letterSpacing: '1px',
-            }}
-          >
+          <button class="retreat-cancel-btn" onClick={onCancel} style={{
+            padding: '10px 20px', borderRadius: '4px', cursor: 'pointer',
+            background: 'rgba(60, 60, 80, 0.6)', border: '1px solid rgba(180, 160, 100, 0.25)',
+            color: '#d0c8a8', fontFamily: 'inherit', fontSize: '13px', letterSpacing: '1px',
+          }}>
             Cancel
           </button>
         </div>
@@ -279,7 +405,6 @@ export function NodeMapScreen() {
   const color = commander ? FACTION_COLORS[commander.faction] : '#f0d080';
   const spokeComplete = spoke ? nodeIdx >= spoke.nodes.length : false;
 
-  // Empty state with navigation fallback
   if (!spoke) {
     return (
       <div style={{
@@ -288,28 +413,21 @@ export function NodeMapScreen() {
         background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
         gap: '16px',
       }}>
-        <div style={{
-          color: 'rgba(200, 190, 160, 0.5)', fontSize: '14px',
-          letterSpacing: '1px',
-        }}>
+        <div style={{ color: 'rgba(200, 190, 160, 0.5)', fontSize: '14px', letterSpacing: '1px' }}>
           No active spoke
         </div>
-        <button
-          class="empty-state-btn"
-          onClick={() => navigateTo('hub')}
-          style={{
-            padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
-            background: 'rgba(60, 60, 80, 0.6)',
-            border: '1px solid rgba(180, 160, 100, 0.25)',
-            color: '#d0c8a8', fontFamily: 'inherit', fontSize: '13px',
-            fontWeight: 600, letterSpacing: '1px',
-          }}
-        >
+        <button class="empty-state-btn" onClick={() => navigateTo('hub')} style={{
+          padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
+          background: 'rgba(60, 60, 80, 0.6)', border: '1px solid rgba(180, 160, 100, 0.25)',
+          color: '#d0c8a8', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, letterSpacing: '1px',
+        }}>
           Return to Hub
         </button>
       </div>
     );
   }
+
+  // ── Handlers ──
 
   function handleRetreat() {
     showRetreatConfirm.value = false;
@@ -345,7 +463,6 @@ export function NodeMapScreen() {
   }
 
   function openEventModal() {
-    // Deterministic pick by node position
     const event = EVENTS[nodeIdx % EVENTS.length];
     activeEvent.value = event;
     showEventModal.value = true;
@@ -390,136 +507,163 @@ export function NodeMapScreen() {
     navigateTo('hub');
   }
 
+  // Current node for dynamic hint
+  const currentNode = spoke.nodes[nodeIdx] ?? null;
+  const resolvedCount = spoke.nodes.filter(n => n.resolved).length;
+  const progressPct = Math.round((resolvedCount / spoke.nodes.length) * 100);
+
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
       background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
-      paddingTop: '38px', // leave room for ResourceBar
+      paddingTop: '38px',
     }}>
       {/* Spoke label */}
       <div style={{
-        fontSize: '14px', fontWeight: 600, color,
-        letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px',
-        textShadow: `0 2px 8px ${color}30`,
+        fontSize: '18px', fontWeight: 600, color,
+        letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '4px',
+        textShadow: `0 2px 12px ${color}50, 0 0 24px ${color}20`,
       }}>
         {spoke.label}
       </div>
+
+      {/* Decorative underline */}
+      <div style={{
+        width: '80px', height: '2px', marginBottom: '8px',
+        background: `linear-gradient(90deg, transparent, ${color}60, transparent)`,
+        borderRadius: '1px',
+      }} />
 
       {/* Progress text */}
       <div style={{
         fontSize: '11px', color: 'rgba(180, 170, 150, 0.4)',
         letterSpacing: '1px', marginBottom: '40px',
       }}>
-        Node {Math.min(nodeIdx + 1, spoke.nodes.length)} of {spoke.nodes.length}
+        Node <span style={{ color: `${color}90`, fontWeight: 600 }}>{Math.min(nodeIdx + 1, spoke.nodes.length)}</span> of {spoke.nodes.length}
       </div>
 
-      {/* Node chain */}
-      <div
-        class="node-chain-scroll"
-        style={{
-          display: 'flex', alignItems: 'center', gap: '0',
-          padding: '0 24px 8px', maxWidth: '100%', overflowX: 'auto',
-        }}
-      >
-        {spoke.nodes.map((node, i) => (
-          <Fragment key={node.id}>
-            {i > 0 && (
-              <ConnectingLine
-                resolved={spoke.nodes[i - 1].resolved}
-                color={color}
-              />
-            )}
-            <NodeCircle
-              node={node}
-              isCurrent={i === nodeIdx}
-              color={color}
-              onActivate={() => handleNodeActivate(node)}
-            />
-          </Fragment>
-        ))}
-      </div>
-
-      {/* Current node hint */}
-      {!spokeComplete && (
+      {/* Road band + Node chain */}
+      <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+        {/* Subtle road texture behind chain */}
         <div style={{
-          marginTop: '40px', fontSize: '12px',
-          color: 'rgba(180, 170, 150, 0.4)', letterSpacing: '1px',
+          position: 'absolute', top: '50%', left: '0', right: '0',
+          height: '52px', transform: 'translateY(-50%)',
+          background: 'linear-gradient(180deg, transparent, rgba(40, 36, 30, 0.25) 20%, rgba(40, 36, 30, 0.35) 50%, rgba(40, 36, 30, 0.25) 80%, transparent)',
+          borderTop: '1px solid rgba(80, 70, 50, 0.08)',
+          borderBottom: '1px solid rgba(80, 70, 50, 0.08)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* Node chain */}
+        <div
+          class="node-chain-scroll"
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0',
+            padding: '12px 32px', maxWidth: '100%', overflowX: 'auto',
+            position: 'relative', zIndex: '1',
+          }}
+        >
+          {spoke.nodes.map((node, i) => (
+            <Fragment key={node.id}>
+              {i > 0 && (
+                <ConnectingLine
+                  resolved={spoke.nodes[i - 1].resolved}
+                  color={color}
+                  isNextActive={i === nodeIdx && spoke.nodes[i - 1].resolved}
+                />
+              )}
+              <NodeCircle
+                node={node}
+                isCurrent={i === nodeIdx}
+                color={color}
+                onActivate={() => handleNodeActivate(node)}
+              />
+            </Fragment>
+          ))}
+        </div>
+      </div>
+
+      {/* Dynamic hint text */}
+      {!spokeComplete && currentNode && (
+        <div style={{
+          marginTop: '32px', fontSize: '13px',
+          color: `${NODE_STYLES[currentNode.type].color}99`,
+          letterSpacing: '1px',
+          fontStyle: 'italic',
+          textShadow: `0 0 12px ${NODE_STYLES[currentNode.type].glow}`,
         }}>
-          Click the active node to proceed
+          {NODE_STYLES[currentNode.type].hint}
         </div>
       )}
 
+      {/* Progress bar */}
+      <div style={{
+        marginTop: '16px',
+        width: '280px', maxWidth: '80%',
+        height: '3px',
+        background: 'rgba(40, 36, 60, 0.6)',
+        borderRadius: '2px',
+        overflow: 'hidden',
+        border: '1px solid rgba(80, 70, 50, 0.12)',
+      }}>
+        <div style={{
+          width: `${progressPct}%`,
+          height: '100%',
+          background: `linear-gradient(90deg, ${color}, ${color}cc)`,
+          borderRadius: '2px',
+          transition: 'width 0.6s ease-out',
+          boxShadow: `0 0 8px ${color}40`,
+        }} />
+      </div>
+
       {/* Retreat button */}
-      <button
-        class="retreat-btn"
-        onClick={() => { showRetreatConfirm.value = true; }}
-        style={{
-          position: 'fixed', bottom: '20px', left: '20px',
-          padding: '10px 18px', borderRadius: '4px', cursor: 'pointer',
-          background: 'rgba(40, 36, 60, 0.9)',
-          border: '1px solid rgba(180, 160, 100, 0.2)',
-          color: 'rgba(200, 180, 140, 0.5)',
-          fontFamily: 'inherit', fontSize: '12px', letterSpacing: '1px',
-        }}
-      >
+      <button class="retreat-btn" onClick={() => { showRetreatConfirm.value = true; }} style={{
+        position: 'fixed', bottom: '20px', left: '20px',
+        padding: '10px 18px', borderRadius: '4px', cursor: 'pointer',
+        background: 'rgba(40, 36, 60, 0.9)',
+        border: '1px solid rgba(180, 160, 100, 0.2)',
+        color: 'rgba(200, 180, 140, 0.5)',
+        fontFamily: 'inherit', fontSize: '12px', letterSpacing: '1px',
+      }}>
         Retreat
       </button>
 
       {/* Rest modal */}
       {showRestModal.value && (
         <NodeModal title="Your Army Rests" onClose={handleRestContinue}>
-          <div style={{
-            fontSize: '13px', color: 'rgba(200, 190, 160, 0.6)',
-            lineHeight: '1.5', marginBottom: '16px',
-          }}>
+          <div style={{ fontSize: '13px', color: 'rgba(200, 190, 160, 0.6)', lineHeight: '1.5', marginBottom: '16px' }}>
             Your forces recover their strength.
           </div>
-          <div style={{
-            display: 'flex', gap: '12px', justifyContent: 'center',
-            flexWrap: 'wrap', marginBottom: '20px',
-          }}>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '20px' }}>
             {restGains.value.map((g) => (
-              <span key={g.type} style={{
-                fontSize: '13px', fontWeight: 600,
-                color: RESOURCE_INFO[g.type].color,
-              }}>
+              <span key={g.type} style={{ fontSize: '13px', fontWeight: 600, color: RESOURCE_INFO[g.type].color }}>
                 {RESOURCE_INFO[g.type].icon} +{g.actual} {RESOURCE_INFO[g.type].label}
               </span>
             ))}
           </div>
-          <button
-            class="modal-action-btn"
-            onClick={handleRestContinue}
-            style={{
-              padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
-              background: `linear-gradient(135deg, ${color}30, ${color}15)`,
-              border: `1px solid ${color}60`,
-              color, fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
-              letterSpacing: '1px',
-            }}
-          >
+          <button class="modal-action-btn" onClick={handleRestContinue} style={{
+            padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
+            background: `linear-gradient(135deg, ${color}30, ${color}15)`,
+            border: `1px solid ${color}60`,
+            color, fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, letterSpacing: '1px',
+          }}>
             Continue
           </button>
         </NodeModal>
       )}
 
-      {/* Event modal — backdrop click does NOT advance; player must choose */}
+      {/* Event modal */}
       {showEventModal.value && activeEvent.value && (
         <NodeModal title={activeEvent.value.title} onClose={() => { /* no-op: force a choice */ }}>
-          <div style={{
-            fontSize: '13px', color: 'rgba(200, 190, 160, 0.6)',
-            lineHeight: '1.5', marginBottom: '20px',
-          }}>
+          <div style={{ fontSize: '13px', color: 'rgba(200, 190, 160, 0.6)', lineHeight: '1.5', marginBottom: '20px' }}>
             {activeEvent.value.description}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {activeEvent.value.choices.map((choice, i) => {
               const affordable = canAffordChoice(choice);
               return (
-                <button
-                  class="event-choice-btn"
-                  key={i}
+                <button class="event-choice-btn" key={i}
                   onClick={() => affordable && handleEventChoice(choice)}
                   disabled={!affordable}
                   style={{
@@ -528,8 +672,7 @@ export function NodeMapScreen() {
                     background: affordable ? 'rgba(60, 60, 80, 0.6)' : 'rgba(30, 30, 40, 0.4)',
                     border: `1px solid ${affordable ? 'rgba(180, 160, 100, 0.3)' : 'rgba(80, 80, 80, 0.2)'}`,
                     color: affordable ? '#d0c8a8' : 'rgba(120, 110, 100, 0.4)',
-                    fontFamily: 'inherit', fontSize: '13px',
-                    textAlign: 'left',
+                    fontFamily: 'inherit', fontSize: '13px', textAlign: 'left',
                     opacity: affordable ? 1 : 0.5,
                   }}
                 >
@@ -540,8 +683,7 @@ export function NodeMapScreen() {
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '11px' }}>
                       {choice.effects.map((e, j) => (
                         <span key={j} style={{
-                          color: e.amount > 0 ? RESOURCE_INFO[e.resource].color : '#c66',
-                          fontWeight: 600,
+                          color: e.amount > 0 ? RESOURCE_INFO[e.resource].color : '#c66', fontWeight: 600,
                         }}>
                           {RESOURCE_INFO[e.resource].icon} {e.amount > 0 ? '+' : ''}{e.amount} {RESOURCE_INFO[e.resource].label}
                         </span>
@@ -581,26 +723,18 @@ export function NodeMapScreen() {
                   display: 'flex', gap: '12px', justifyContent: 'center',
                   flexWrap: 'wrap', marginBottom: '20px',
                 }}>
-                  {allTypes.map((t) => gains[t] > 0 && (
-                    <span key={t} style={{
-                      fontSize: '13px', fontWeight: 600,
-                      color: RESOURCE_INFO[t].color,
-                    }}>
+                  {allTypes.filter(t => gains[t] > 0).map(t => (
+                    <span key={t} style={{ fontSize: '13px', fontWeight: 600, color: RESOURCE_INFO[t].color }}>
                       {RESOURCE_INFO[t].icon} +{gains[t]} {RESOURCE_INFO[t].label}
                     </span>
                   ))}
                 </div>
-                <button
-                  class="modal-action-btn"
-                  onClick={handleReturnToHub}
-                  style={{
-                    padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
-                    background: `linear-gradient(135deg, ${color}30, ${color}15)`,
-                    border: `1px solid ${color}60`,
-                    color, fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
-                    letterSpacing: '1px',
-                  }}
-                >
+                <button class="modal-action-btn" onClick={handleReturnToHub} style={{
+                  padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
+                  background: `linear-gradient(135deg, ${color}30, ${color}15)`,
+                  border: `1px solid ${color}60`,
+                  color, fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, letterSpacing: '1px',
+                }}>
                   Return to Hub
                 </button>
               </>
