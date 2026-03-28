@@ -77,7 +77,7 @@ export function TitleScreen() {
       <div style={titleStyle}>IMPERIUM</div>
       <div style={subtitleStyle}>Roguelite Grand Strategy</div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '280px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '280px', padding: '0 16px' }}>
         <button
           class="title-btn title-btn-primary"
           onClick={() => navigateTo('commander-select')}
@@ -95,7 +95,7 @@ export function TitleScreen() {
         </button>
       </div>
 
-      <div style={versionStyle}>v0.1.0 — Sprint 1</div>
+      <div style={versionStyle}>v0.2.0 — Sprint 2</div>
     </div>
   );
 }

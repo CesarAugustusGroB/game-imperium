@@ -1,6 +1,6 @@
 import { Component } from 'preact';
 import type { ComponentChildren } from 'preact';
-import { currentScreen } from './screens';
+import { currentScreen, navigateTo } from './screens';
 import { ResourceBar } from './ResourceBar';
 import { TitleScreen } from './TitleScreen';
 import { CommanderSelectScreen } from './CommanderSelectScreen';
@@ -14,11 +14,28 @@ if (typeof document !== 'undefined' && !document.getElementById('screen-transiti
   el.id = 'screen-transition-styles';
   el.textContent = `
     @keyframes screen-fade-in {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .screen-wrapper {
-      animation: screen-fade-in 0.2s ease-out;
+      animation: screen-fade-in 0.25s ease-out;
+    }
+
+    /* Global focus-visible styles for keyboard accessibility */
+    *:focus-visible {
+      outline: 2px solid rgba(240, 208, 128, 0.6);
+      outline-offset: 2px;
+    }
+
+    /* Suppress outline on mouse focus */
+    *:focus:not(:focus-visible) {
+      outline: none;
+    }
+
+    /* Global selection color */
+    ::selection {
+      background: rgba(240, 208, 128, 0.3);
+      color: #f0d080;
     }
   `;
   document.head.appendChild(el);
@@ -35,12 +52,26 @@ class ErrorBoundary extends Component<{ children: ComponentChildren }, EBState> 
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', height: '100vh',
           fontFamily: "'Segoe UI', system-ui, sans-serif",
-          color: 'rgba(220, 160, 100, 0.8)', gap: '12px',
+          background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+          color: 'rgba(220, 160, 100, 0.8)', gap: '16px',
         }}>
-          <div style={{ fontSize: '18px', fontWeight: 600 }}>Something went wrong</div>
-          <div style={{ fontSize: '12px', color: 'rgba(180, 170, 150, 0.5)' }}>
+          <div style={{ fontSize: '18px', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase' }}>
+            Something went wrong
+          </div>
+          <div style={{ fontSize: '12px', color: 'rgba(180, 170, 150, 0.5)', maxWidth: '400px', textAlign: 'center', lineHeight: '1.5' }}>
             {this.state.error.message}
           </div>
+          <button
+            onClick={() => { this.setState({ error: null }); window.location.hash = 'title'; window.location.reload(); }}
+            style={{
+              marginTop: '8px', padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
+              background: 'rgba(60, 60, 80, 0.6)', border: '1px solid rgba(180, 160, 100, 0.25)',
+              color: '#d0c8a8', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
+              letterSpacing: '1px', transition: 'all 0.2s ease',
+            }}
+          >
+            Return to Title
+          </button>
         </div>
       );
     }
@@ -65,11 +96,26 @@ function ScreenContent() {
     default:
       return (
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           height: '100vh', color: 'rgba(200, 190, 160, 0.5)',
           fontFamily: "'Segoe UI', system-ui, sans-serif",
+          background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+          gap: '16px',
         }}>
-          Screen: {screen} — coming soon
+          <div style={{ fontSize: '14px', letterSpacing: '1px' }}>
+            {screen} — coming soon
+          </div>
+          <button
+            onClick={() => navigateTo('title')}
+            style={{
+              padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
+              background: 'rgba(60, 60, 80, 0.6)', border: '1px solid rgba(180, 160, 100, 0.25)',
+              color: '#d0c8a8', fontFamily: 'inherit', fontSize: '13px',
+              fontWeight: 600, letterSpacing: '1px', transition: 'all 0.2s ease',
+            }}
+          >
+            Return to Title
+          </button>
         </div>
       );
   }

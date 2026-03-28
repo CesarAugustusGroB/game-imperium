@@ -69,10 +69,12 @@ export function getCurrentNode(): SpokeNode | null {
 export function resetSpoke(): void {
   currentSpoke.value = null;
   currentNodeIndex.value = 0;
+  spokeGains.value = { ...ZERO_GAINS };
 }
 
 /** Mark the current node as resolved and advance to the next one.
- *  Returns true if the spoke is now complete. */
+ *  Returns true if the spoke is now complete.
+ *  Safe to call multiple times — resolved nodes are skipped. */
 export function advanceNode(): boolean {
   const spoke = currentSpoke.value;
   if (!spoke) return false;
@@ -80,9 +82,14 @@ export function advanceNode(): boolean {
   const node = spoke.nodes[idx];
   if (!node) return true;
 
-  node.resolved = true;
-  // Trigger reactivity by replacing the spoke reference
-  currentSpoke.value = { ...spoke, nodes: [...spoke.nodes] };
+  // Guard: already resolved — don't double-advance
+  if (node.resolved) return idx + 1 >= spoke.nodes.length;
+
+  // Create new node object to avoid in-place mutation
+  const updatedNodes = spoke.nodes.map((n, i) =>
+    i === idx ? { ...n, resolved: true } : n,
+  );
+  currentSpoke.value = { ...spoke, nodes: updatedNodes };
   const next = idx + 1;
   currentNodeIndex.value = next;
   return next >= spoke.nodes.length;
@@ -91,7 +98,10 @@ export function advanceNode(): boolean {
 /** Mark the spoke as completed and reset. */
 export function completeSpoke(): void {
   const spoke = currentSpoke.value;
-  if (spoke) spoke.completed = true;
+  if (spoke) {
+    // Trigger reactivity with a new object instead of in-place mutation
+    currentSpoke.value = { ...spoke, completed: true };
+  }
   resetSpoke();
 }
 
