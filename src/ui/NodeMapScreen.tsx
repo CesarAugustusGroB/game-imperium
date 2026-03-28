@@ -1,7 +1,7 @@
 import { Fragment } from 'preact';
 import { signal } from '@preact/signals';
 import { navigateTo } from './screens';
-import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource } from '../game/spoke';
+import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../game/spoke';
 import type { SpokeNode, NodeType } from '../game/spoke';
 import { selectedCommander, completedSpokes } from '../game/game-state';
 import { FACTION_COLORS, RESOURCE_INFO } from '../game/commander';
@@ -51,6 +51,8 @@ const showRestModal = signal(false);
 const restGains = signal<{ type: ResourceType; actual: number }[]>([]);
 const showEventModal = signal(false);
 const activeEvent = signal<GameEvent | null>(null);
+const showSpokeCompleteModal = signal(false);
+const spokeBonusApplied = signal(false);
 
 function NodeCircle({ node, isCurrent, color, onActivate }: {
   node: SpokeNode;
@@ -255,7 +257,20 @@ export function NodeMapScreen() {
     );
   }
 
-  function handleSpokeComplete() {
+  // Apply completion bonus once when spoke finishes
+  if (spokeComplete && !spokeBonusApplied.value) {
+    const faction = commander?.faction;
+    grantSpokeResource('gold', 3, faction);
+    grantSpokeResource('faith', 2, faction);
+    grantSpokeResource('influence', 2, faction);
+    grantSpokeResource('momentum', 2, faction);
+    spokeBonusApplied.value = true;
+    showSpokeCompleteModal.value = true;
+  }
+
+  function handleReturnToHub() {
+    showSpokeCompleteModal.value = false;
+    spokeBonusApplied.value = false;
     completedSpokes.value += 1;
     completeSpoke();
     navigateTo('hub');
@@ -308,29 +323,8 @@ export function NodeMapScreen() {
         ))}
       </div>
 
-      {/* Current node hint / spoke complete */}
-      {spokeComplete ? (
-        <div style={{ marginTop: '40px', textAlign: 'center' }}>
-          <div style={{
-            fontSize: '14px', fontWeight: 600, color,
-            letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px',
-          }}>
-            Spoke Complete!
-          </div>
-          <button
-            onClick={handleSpokeComplete}
-            style={{
-              padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
-              background: `linear-gradient(135deg, ${color}30, ${color}15)`,
-              border: `1px solid ${color}60`,
-              color, fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
-              letterSpacing: '1px',
-            }}
-          >
-            Return to Hub
-          </button>
-        </div>
-      ) : (
+      {/* Current node hint */}
+      {!spokeComplete && (
         <div style={{
           marginTop: '40px', fontSize: '12px',
           color: 'rgba(180, 170, 150, 0.4)', letterSpacing: '1px',
@@ -439,6 +433,59 @@ export function NodeMapScreen() {
               );
             })}
           </div>
+        </NodeModal>
+      )}
+
+      {/* Spoke completion summary modal */}
+      {showSpokeCompleteModal.value && (
+        <NodeModal title={`${spoke.label} \u2014 Complete!`} onClose={handleReturnToHub}>
+          {(() => {
+            const battlesWon = spoke.nodes.filter((n) => (n.type === 'battle' || n.type === 'boss') && n.resolved).length;
+            const gains = spokeGains.value;
+            const allTypes: ResourceType[] = ['gold', 'faith', 'influence', 'momentum'];
+            return (
+              <>
+                <div style={{
+                  display: 'flex', gap: '16px', justifyContent: 'center',
+                  marginBottom: '16px', fontSize: '12px', color: 'rgba(180, 170, 150, 0.5)',
+                }}>
+                  <span>{spoke.nodes.length} nodes resolved</span>
+                  <span>{battlesWon} battles won</span>
+                </div>
+                <div style={{
+                  fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase',
+                  color: 'rgba(180, 170, 150, 0.35)', marginBottom: '8px',
+                }}>
+                  Total Gains
+                </div>
+                <div style={{
+                  display: 'flex', gap: '12px', justifyContent: 'center',
+                  flexWrap: 'wrap', marginBottom: '20px',
+                }}>
+                  {allTypes.map((t) => gains[t] > 0 && (
+                    <span key={t} style={{
+                      fontSize: '13px', fontWeight: 600,
+                      color: RESOURCE_INFO[t].color,
+                    }}>
+                      {RESOURCE_INFO[t].icon} +{gains[t]} {RESOURCE_INFO[t].label}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  onClick={handleReturnToHub}
+                  style={{
+                    padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
+                    background: `linear-gradient(135deg, ${color}30, ${color}15)`,
+                    border: `1px solid ${color}60`,
+                    color, fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
+                    letterSpacing: '1px',
+                  }}
+                >
+                  Return to Hub
+                </button>
+              </>
+            );
+          })()}
         </NodeModal>
       )}
 

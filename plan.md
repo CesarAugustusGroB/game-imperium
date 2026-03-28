@@ -1,23 +1,27 @@
-# Plan: S2-09 — Wire resource gains (spoke tracking + faction audit)
+# Plan: S2-10 — Implement spoke completion (summary screen, return to hub)
 
 ## Task
-Add a `spokeGains` tracking signal and `grantSpokeResource` wrapper so all spoke-level resource gains are accumulated for the summary screen (S2-10). Replace direct `addResource` calls with the wrapper.
+When the last node is resolved, show a summary modal with spoke stats (nodes resolved, battles won, cumulative resource gains from `spokeGains`) and a completion bonus. "Return to Hub" clears spoke state and navigates back.
 
 ## Approach
-Add `spokeGains` signal and `grantSpokeResource()` to `spoke.ts`. It wraps `addResource`, passing through the return value while accumulating gains. Reset `spokeGains` in `startSpoke()`. Replace all 3 callsites (rest modal, event choices, post-battle rewards).
+Replace the existing "Spoke Complete!" text + button in `NodeMapScreen` with a `NodeModal` showing summary stats. Apply completion bonus via `grantSpokeResource` before showing the modal. On "Return to Hub": increment `completedSpokes`, call `completeSpoke()`, navigate to hub.
 
 ## Steps
-1. In `src/game/spoke.ts`: add `spokeGains` signal, `grantSpokeResource()` wrapper, reset in `startSpoke()`
-2. In `src/ui/NodeMapScreen.tsx`: replace `addResource` calls in rest modal and event handler with `grantSpokeResource`
-3. In `src/ui/PostBattleScreen.tsx`: replace `addResource` with `grantSpokeResource`
+1. In `NodeMapScreen`:
+   a. Add `showSpokeCompleteModal` signal
+   b. When `spokeComplete` is true and modal not yet shown, apply completion bonus and show modal
+   c. Replace "Spoke Complete!" block with `NodeModal` showing:
+      - Title: spoke label + "Complete!"
+      - Stats: nodes resolved, battles won
+      - Resource gains from `spokeGains` (including bonus)
+      - "Return to Hub" button
+   d. "Return to Hub" calls existing `handleSpokeComplete()`
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `src/game/spoke.ts` | modify | Add spokeGains signal + grantSpokeResource wrapper |
-| `src/ui/NodeMapScreen.tsx` | modify | Use grantSpokeResource for rest/event gains |
-| `src/ui/PostBattleScreen.tsx` | modify | Use grantSpokeResource for battle rewards |
+| `src/ui/NodeMapScreen.tsx` | modify | Replace placeholder completion with summary modal |
 
 ## Out of scope
-- Spoke completion summary screen (S2-10)
-- Verifying 2x multiplier visually (already works via addResource)
+- Procedural spoke generation (Sprint 6)
+- Threat level escalation
