@@ -17,6 +17,12 @@ if (typeof document !== 'undefined' && !document.getElementById('cmdr-styles')) 
   el.textContent = `
     @keyframes fade-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     .cmdr-grid { animation: fade-in 0.4s ease-out; }
+    .cmdr-back-btn { transition: all 0.2s ease; }
+    .cmdr-back-btn:hover {
+      border-color: rgba(220, 190, 100, 0.4) !important;
+      color: rgba(220, 200, 160, 0.7) !important;
+    }
+    .cmdr-back-btn:active { transform: scale(0.97); }
   `;
   document.head.appendChild(el);
 }
@@ -188,16 +194,23 @@ export function CommanderSelectScreen() {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
+      minHeight: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
       background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+      padding: '40px 16px',
     }}>
       <div style={{
         fontSize: '20px', fontWeight: 600, color: '#f0d080',
-        letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '32px',
+        letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px',
         textShadow: '0 2px 8px rgba(180, 140, 60, 0.3)',
       }}>
         Choose Your Commander
       </div>
+
+      {/* Decorative divider */}
+      <div style={{
+        width: '60px', height: '1px', marginBottom: '32px',
+        background: 'linear-gradient(90deg, transparent, rgba(240, 208, 128, 0.4), transparent)',
+      }} />
 
       <div class="cmdr-grid" style={{
         display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center',
@@ -212,6 +225,22 @@ export function CommanderSelectScreen() {
       }}>
         Click to select
       </div>
+
+      {/* Back button */}
+      <button
+        class="cmdr-back-btn"
+        onClick={() => navigateTo('title')}
+        style={{
+          position: 'fixed', bottom: '20px', left: '20px',
+          padding: '10px 18px', borderRadius: '4px', cursor: 'pointer',
+          background: 'rgba(40, 36, 60, 0.9)',
+          border: '1px solid rgba(180, 160, 100, 0.2)',
+          color: 'rgba(200, 180, 140, 0.5)',
+          fontFamily: 'inherit', fontSize: '12px', letterSpacing: '1px',
+        }}
+      >
+        Back
+      </button>
     </div>
   );
 }

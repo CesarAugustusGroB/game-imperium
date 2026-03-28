@@ -1,5 +1,6 @@
 import { Fragment } from 'preact';
 import { signal } from '@preact/signals';
+import { useEffect } from 'preact/hooks';
 import { navigateTo } from './screens';
 import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../game/spoke';
 import type { SpokeNode, NodeType } from '../game/spoke';
@@ -26,16 +27,80 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
     .node-current:hover { transform: scale(1.12); }
     .node-resolved { opacity: 0.45; }
     .node-future { opacity: 0.35; cursor: default; }
+
+    /* Retreat button hover */
+    .retreat-btn { transition: all 0.2s ease; }
+    .retreat-btn:hover {
+      border-color: rgba(200, 80, 80, 0.4) !important;
+      color: rgba(220, 180, 140, 0.7) !important;
+      background: rgba(60, 36, 40, 0.9) !important;
+    }
+    .retreat-btn:active { transform: scale(0.97); }
+
+    /* Event choice hover */
+    .event-choice-btn { transition: all 0.2s ease; }
+    .event-choice-btn:not(:disabled):hover {
+      border-color: rgba(220, 190, 100, 0.5) !important;
+      background: rgba(70, 70, 95, 0.7) !important;
+    }
+    .event-choice-btn:not(:disabled):active { transform: scale(0.98); }
+
+    /* Modal action buttons */
+    .modal-action-btn { transition: all 0.2s ease; }
+    .modal-action-btn:hover {
+      filter: brightness(1.2);
+      box-shadow: 0 0 12px rgba(180, 160, 100, 0.15);
+    }
+    .modal-action-btn:active { transform: scale(0.97); }
+
+    /* Retreat confirm buttons */
+    .retreat-confirm-btn { transition: all 0.2s ease; }
+    .retreat-confirm-btn:hover {
+      border-color: rgba(220, 100, 100, 0.7) !important;
+      background: rgba(200, 60, 60, 0.4) !important;
+    }
+    .retreat-confirm-btn:active { transform: scale(0.97); }
+
+    .retreat-cancel-btn { transition: all 0.2s ease; }
+    .retreat-cancel-btn:hover {
+      border-color: rgba(220, 190, 100, 0.4) !important;
+      color: #e0d8b8 !important;
+    }
+    .retreat-cancel-btn:active { transform: scale(0.97); }
+
+    /* Thin scrollbar for node chain */
+    .node-chain-scroll::-webkit-scrollbar {
+      height: 4px;
+    }
+    .node-chain-scroll::-webkit-scrollbar-track {
+      background: rgba(20, 18, 36, 0.5);
+      border-radius: 2px;
+    }
+    .node-chain-scroll::-webkit-scrollbar-thumb {
+      background: rgba(180, 160, 100, 0.2);
+      border-radius: 2px;
+    }
+    .node-chain-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(180, 160, 100, 0.35);
+    }
+
+    /* Empty state link */
+    .empty-state-btn { transition: all 0.2s ease; }
+    .empty-state-btn:hover {
+      border-color: rgba(220, 190, 100, 0.5) !important;
+      color: #f0d080 !important;
+    }
+    .empty-state-btn:active { transform: scale(0.97); }
   `;
   document.head.appendChild(el);
 }
 
 // ── Icons per node type ──
 const NODE_ICONS: Record<NodeType, string> = {
-  battle: '\u2694\uFE0F',  // ⚔️
-  rest:   '\uD83C\uDFD5\uFE0F',  // 🏕️
-  event:  '\uD83D\uDCDC',  // 📜
-  boss:   '\uD83D\uDC80',  // 💀
+  battle: '\u2694\uFE0F',  // crossed swords
+  rest:   '\uD83C\uDFD5\uFE0F',  // camping
+  event:  '\uD83D\uDCDC',  // scroll
+  boss:   '\uD83D\uDC80',  // skull
 };
 
 const NODE_LABELS: Record<NodeType, string> = {
@@ -71,6 +136,10 @@ function NodeCircle({ node, isCurrent, color, onActivate }: {
     <div
       class={`node-circle ${stateClass}`}
       onClick={handleClick}
+      role={isCurrent && !node.resolved ? 'button' : undefined}
+      aria-label={isCurrent && !node.resolved ? `Activate ${NODE_LABELS[node.type]} node` : undefined}
+      tabIndex={isCurrent && !node.resolved ? 0 : undefined}
+      onKeyDown={isCurrent && !node.resolved ? (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onActivate(); } } : undefined}
       style={{
         '--glow': color + '60',
         width: '56px',
@@ -88,6 +157,7 @@ function NodeCircle({ node, isCurrent, color, onActivate }: {
         justifyContent: 'center',
         position: 'relative',
         flexShrink: '0',
+        outline: 'none',
       } as Record<string, string>}
     >
       {/* Icon */}
@@ -127,18 +197,37 @@ function ConnectingLine({ resolved, color }: { resolved: boolean; color: string 
 }
 
 function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
+  // Escape key handler
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onCancel();
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onCancel]);
+
   return (
-    <div style={{
-      position: 'fixed', inset: '0', zIndex: '200',
-      background: 'rgba(0, 0, 0, 0.7)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: "'Segoe UI', system-ui, sans-serif",
-    }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Retreat confirmation"
+      style={{
+        position: 'fixed', inset: '0', zIndex: '200',
+        background: 'rgba(0, 0, 0, 0.7)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: "'Segoe UI', system-ui, sans-serif",
+        animation: 'node-modal-fade 0.2s ease-out',
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+    >
       <div style={{
         background: 'linear-gradient(135deg, rgba(30, 28, 48, 0.98), rgba(20, 18, 36, 0.99))',
         border: '1px solid rgba(180, 160, 100, 0.25)',
         borderRadius: '8px', padding: '28px 32px',
-        maxWidth: '360px', textAlign: 'center',
+        maxWidth: '360px', width: '90%', textAlign: 'center',
       }}>
         <div style={{
           fontSize: '16px', fontWeight: 600, color: '#f0d080',
@@ -154,21 +243,25 @@ function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; o
         </div>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
           <button
+            class="retreat-confirm-btn"
             onClick={onConfirm}
             style={{
-              padding: '8px 18px', borderRadius: '4px', cursor: 'pointer',
+              padding: '10px 20px', borderRadius: '4px', cursor: 'pointer',
               background: 'rgba(180, 60, 60, 0.3)', border: '1px solid rgba(200, 80, 80, 0.5)',
               color: '#e0a0a0', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
+              letterSpacing: '1px',
             }}
           >
             Confirm Retreat
           </button>
           <button
+            class="retreat-cancel-btn"
             onClick={onCancel}
             style={{
-              padding: '8px 18px', borderRadius: '4px', cursor: 'pointer',
+              padding: '10px 20px', borderRadius: '4px', cursor: 'pointer',
               background: 'rgba(60, 60, 80, 0.6)', border: '1px solid rgba(180, 160, 100, 0.25)',
               color: '#d0c8a8', fontFamily: 'inherit', fontSize: '13px',
+              letterSpacing: '1px',
             }}
           >
             Cancel
@@ -186,14 +279,34 @@ export function NodeMapScreen() {
   const color = commander ? FACTION_COLORS[commander.faction] : '#f0d080';
   const spokeComplete = spoke ? nodeIdx >= spoke.nodes.length : false;
 
+  // Empty state with navigation fallback
   if (!spoke) {
     return (
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        height: '100vh', color: 'rgba(200, 190, 160, 0.5)',
-        fontFamily: "'Segoe UI', system-ui, sans-serif",
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
+        background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+        gap: '16px',
       }}>
-        No active spoke — return to hub
+        <div style={{
+          color: 'rgba(200, 190, 160, 0.5)', fontSize: '14px',
+          letterSpacing: '1px',
+        }}>
+          No active spoke
+        </div>
+        <button
+          class="empty-state-btn"
+          onClick={() => navigateTo('hub')}
+          style={{
+            padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
+            background: 'rgba(60, 60, 80, 0.6)',
+            border: '1px solid rgba(180, 160, 100, 0.25)',
+            color: '#d0c8a8', fontFamily: 'inherit', fontSize: '13px',
+            fontWeight: 600, letterSpacing: '1px',
+          }}
+        >
+          Return to Hub
+        </button>
       </div>
     );
   }
@@ -302,10 +415,13 @@ export function NodeMapScreen() {
       </div>
 
       {/* Node chain */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '0',
-        padding: '0 24px', maxWidth: '100%', overflowX: 'auto',
-      }}>
+      <div
+        class="node-chain-scroll"
+        style={{
+          display: 'flex', alignItems: 'center', gap: '0',
+          padding: '0 24px 8px', maxWidth: '100%', overflowX: 'auto',
+        }}
+      >
         {spoke.nodes.map((node, i) => (
           <Fragment key={node.id}>
             {i > 0 && (
@@ -336,18 +452,18 @@ export function NodeMapScreen() {
 
       {/* Retreat button */}
       <button
+        class="retreat-btn"
         onClick={() => { showRetreatConfirm.value = true; }}
         style={{
           position: 'fixed', bottom: '20px', left: '20px',
-          padding: '8px 16px', borderRadius: '4px', cursor: 'pointer',
+          padding: '10px 18px', borderRadius: '4px', cursor: 'pointer',
           background: 'rgba(40, 36, 60, 0.9)',
           border: '1px solid rgba(180, 160, 100, 0.2)',
           color: 'rgba(200, 180, 140, 0.5)',
           fontFamily: 'inherit', fontSize: '12px', letterSpacing: '1px',
-          transition: 'all 0.2s ease',
         }}
       >
-        ← Retreat
+        Retreat
       </button>
 
       {/* Rest modal */}
@@ -373,9 +489,10 @@ export function NodeMapScreen() {
             ))}
           </div>
           <button
+            class="modal-action-btn"
             onClick={handleRestContinue}
             style={{
-              padding: '8px 24px', borderRadius: '4px', cursor: 'pointer',
+              padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
               background: `linear-gradient(135deg, ${color}30, ${color}15)`,
               border: `1px solid ${color}60`,
               color, fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
@@ -387,9 +504,9 @@ export function NodeMapScreen() {
         </NodeModal>
       )}
 
-      {/* Event modal */}
+      {/* Event modal — backdrop click does NOT advance; player must choose */}
       {showEventModal.value && activeEvent.value && (
-        <NodeModal title={activeEvent.value.title} onClose={() => { showEventModal.value = false; activeEvent.value = null; advanceNode(); }}>
+        <NodeModal title={activeEvent.value.title} onClose={() => { /* no-op: force a choice */ }}>
           <div style={{
             fontSize: '13px', color: 'rgba(200, 190, 160, 0.6)',
             lineHeight: '1.5', marginBottom: '20px',
@@ -401,6 +518,7 @@ export function NodeMapScreen() {
               const affordable = canAffordChoice(choice);
               return (
                 <button
+                  class="event-choice-btn"
                   key={i}
                   onClick={() => affordable && handleEventChoice(choice)}
                   disabled={!affordable}
@@ -473,6 +591,7 @@ export function NodeMapScreen() {
                   ))}
                 </div>
                 <button
+                  class="modal-action-btn"
                   onClick={handleReturnToHub}
                   style={{
                     padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',

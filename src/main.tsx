@@ -25,6 +25,8 @@ const battleMode = new BattleMode(() => {
   if (currentSpoke.value) {
     navigateTo('post-battle');
   } else {
+    // Quick Battle or no spoke — clear stale result and return to title
+    lastBattleResult.value = null;
     navigateTo('title');
   }
 });
