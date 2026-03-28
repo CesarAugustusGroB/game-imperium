@@ -49,6 +49,30 @@ export function resetSpoke(): void {
   currentNodeIndex.value = 0;
 }
 
+/** Mark the current node as resolved and advance to the next one.
+ *  Returns true if the spoke is now complete. */
+export function advanceNode(): boolean {
+  const spoke = currentSpoke.value;
+  if (!spoke) return false;
+  const idx = currentNodeIndex.value;
+  const node = spoke.nodes[idx];
+  if (!node) return true;
+
+  node.resolved = true;
+  // Trigger reactivity by replacing the spoke reference
+  currentSpoke.value = { ...spoke, nodes: [...spoke.nodes] };
+  const next = idx + 1;
+  currentNodeIndex.value = next;
+  return next >= spoke.nodes.length;
+}
+
+/** Mark the spoke as completed and reset. */
+export function completeSpoke(): void {
+  const spoke = currentSpoke.value;
+  if (spoke) spoke.completed = true;
+  resetSpoke();
+}
+
 // ── Spoke generator (S2-03) ──
 
 /** Fixed introductory spoke for the MVP. Replaced by procedural gen in Sprint 6. */
