@@ -1,5 +1,5 @@
 import type { BattleState } from './battle-state';
-import type { BattleUnit, Faction } from './battle-types';
+import type { BattleUnit, Faction, LieutenantOrder } from './battle-types';
 import type { Point } from './hex';
 import { hexToPixel, hexCorners } from './hex';
 import { hexToCol } from './battle-zones';
@@ -121,6 +121,7 @@ export class BattleRenderer {
     this.drawUnits();
     this.drawFloatingTexts();
     this.drawVictoryOverlay();
+    this.drawOrderIndicator();
   }
 
   // ── Layers ──
@@ -704,6 +705,31 @@ export class BattleRenderer {
     ctx.font = "14px 'Segoe UI', system-ui, sans-serif";
     ctx.fillStyle = 'rgba(200, 190, 160, 0.6)';
     ctx.fillText(`Battle concluded in ${this.state.roundCount} rounds — press ESC to return`, this.w / 2, bannerY + bannerH / 2 + 22);
+  }
+
+  private drawOrderIndicator(): void {
+    if (this.state.phase !== 'fighting') return;
+    const labels: Record<LieutenantOrder, { text: string; icon: string }> = {
+      attack:   { text: 'ATTACK',   icon: '\u2694' },
+      defend:   { text: 'DEFEND',   icon: '\uD83D\uDEE1' },
+      skirmish: { text: 'SKIRMISH', icon: '\u21C4' },
+      mobile:   { text: 'MOBILE',   icon: '\u27A5' },
+    };
+    const info = labels[this.state.lieutenantOrder];
+    const { ctx } = this;
+    ctx.save();
+    ctx.font = "bold 14px 'Segoe UI', system-ui, sans-serif";
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(200, 180, 140, 0.7)';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(`${info.icon} ${info.text}`, 12, 12);
+    ctx.shadowColor = 'transparent';
+    ctx.font = "11px 'Segoe UI', system-ui, sans-serif";
+    ctx.fillStyle = 'rgba(180, 170, 150, 0.4)';
+    ctx.fillText('1-Attack  2-Defend  3-Skirmish  4-Mobile', 12, 30);
+    ctx.restore();
   }
 
   // ── Hex drawing helpers ──

@@ -56,18 +56,28 @@ function tickCapture(state: BattleState, faction: Faction): void {
     allEnemies: state.getFactionUnits(enemyFaction),
   };
 
-  const vanguard: BattleUnit[] = [];
-  const reserve: BattleUnit[] = [];
-  const guard: BattleUnit[] = [];
-  for (const u of units) {
-    if (u.role === 'guard') guard.push(u);
-    else if (u.role === 'reserve') reserve.push(u);
-    else vanguard.push(u);
+  if (faction === 'blue') {
+    // Player faction — dispatch ALL units according to the current lieutenant order
+    switch (state.lieutenantOrder) {
+      case 'attack':   tickVanguard(state, units, ctx); break;
+      case 'defend':   tickGuard(state, units); break;
+      case 'skirmish': tickSkirmish(state, units, ctx); break;
+      case 'mobile':   tickReserve(state, units, faction, ctx); break;
+    }
+  } else {
+    // Enemy faction — keep existing role-based dispatch
+    const vanguard: BattleUnit[] = [];
+    const reserve: BattleUnit[] = [];
+    const guard: BattleUnit[] = [];
+    for (const u of units) {
+      if (u.role === 'guard') guard.push(u);
+      else if (u.role === 'reserve') reserve.push(u);
+      else vanguard.push(u);
+    }
+    tickVanguard(state, vanguard, ctx);
+    tickReserve(state, reserve, faction, ctx);
+    tickGuard(state, guard);
   }
-
-  tickVanguard(state, vanguard, ctx);
-  tickReserve(state, reserve, faction, ctx);
-  tickGuard(state, guard);
 }
 
 // ── VANGUARD: always march forward ──
@@ -116,6 +126,45 @@ function tickGuard(state: BattleState, units: BattleUnit[]): void {
     }
     // Otherwise: do nothing, hold position
   }
+}
+
+// ── SKIRMISH: strike adjacent enemies then retreat; approach when none are adjacent ──
+
+function tickSkirmish(state: BattleState, units: BattleUnit[], ctx: TickContext): void {
+  for (const unit of units) {
+    if (!state.canAct(unit)) continue;
+    if (handlePinned(state, unit)) continue;
+
+    const enemies = state.getAdjacentEnemies(unit);
+    if (enemies.length > 0) {
+      // Strike the weakest adjacent enemy
+      state.resolveCombat(unit, pickWeakest(enemies));
+      // Then retreat one step backward
+      const retreatHex = findRetreatHex(state, unit, ctx.dir);
+      if (retreatHex) {
+        state.moveUnitAlongPath(unit.id, retreatHex);
+      }
+      state.resetCooldown(unit);
+      continue;
+    }
+
+    // No adjacent enemies — approach the nearest enemy
+    const target = findClosestTo(unit, ctx.allEnemies);
+    if (target) {
+      state.moveUnitAlongPath(unit.id, target.hex);
+      state.resetCooldown(unit);
+    }
+  }
+}
+
+/** Find an empty hex one step backward (opposite of dir) from the unit's current hex. */
+function findRetreatHex(state: BattleState, unit: BattleUnit, dir: number): Hex | null {
+  for (const neighbor of hexNeighbors(unit.hex)) {
+    if ((neighbor.q - unit.hex.q) * dir < 0 && state.isValidHex(neighbor) && !state.getUnitAt(neighbor)) {
+      return neighbor;
+    }
+  }
+  return null;
 }
 
 // ── RESERVE: intercept with busy state, become vanguard when enemy vanguard dies ──

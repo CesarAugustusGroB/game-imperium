@@ -1,6 +1,6 @@
 import type { Hex, Point } from './hex';
 import { hexKey, hexNeighbors, hexDistance, offsetToAxial } from './hex';
-import type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText } from './battle-types';
+import type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder } from './battle-types';
 import {
   DEFAULT_CONFIG, CAPTURE_DURATION, MOVE_RANGE, MOVE_ANIM_SPEED,
   MORALE_BREAK_THRESHOLD, SHAKE_DURATION, FLASH_DURATION,
@@ -13,7 +13,7 @@ import {
 } from './battle-config';
 
 // Re-export types for backward compatibility
-export type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText };
+export type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder };
 
 const FLOAT_TEXT_DURATION = 0.8; // seconds for floating text to live
 
@@ -33,6 +33,7 @@ export class BattleState {
   phase: BattlePhase = 'fighting';
   winner: Faction | null = null;
   roundCount = 0;
+  lieutenantOrder: LieutenantOrder = 'attack';
   private startingStrength = new Map<Faction, number>();
 
   // Floating combat text (dodge, crit, etc.)
@@ -159,6 +160,11 @@ export class BattleState {
   /** Reset a unit's action cooldown with random jitter. */
   resetCooldown(unit: BattleUnit): void {
     unit.actionCooldown = ACTION_COOLDOWN + (Math.random() - 0.5) * ACTION_JITTER * 2;
+  }
+
+  /** Set the player's lieutenant order (governs all blue-faction AI behaviour). */
+  setLieutenantOrder(order: LieutenantOrder): void {
+    this.lieutenantOrder = order;
   }
 
   // ── Selection ──
