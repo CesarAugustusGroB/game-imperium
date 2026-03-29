@@ -4,6 +4,7 @@ import { App } from './ui/App';
 import { currentScreen, navigateTo } from './ui/screens';
 import { BattleMode } from './battle/index';
 import { currentSpoke, lastBattleResult } from './game/spoke';
+import { selectedCommander, veteranStacks, spokesSinceLastBattle } from './game/game-state';
 
 // Mount Preact UI
 const appRoot = document.getElementById('app-root');
@@ -20,6 +21,11 @@ const battleMode = new BattleMode(() => {
   } else {
     // ESC exit mid-battle — treat as defeat
     lastBattleResult.value = 'defeat';
+  }
+
+  if (lastBattleResult.value === 'victory' && selectedCommander.value?.id === 'boudicca') {
+    veteranStacks.value += 1;
+    spokesSinceLastBattle.value = 0;
   }
 
   if (currentSpoke.value) {
