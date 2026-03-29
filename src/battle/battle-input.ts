@@ -1,5 +1,6 @@
 import type { BattleState } from './battle-state';
 import type { BattleRenderer } from './battle-renderer';
+import type { LieutenantOrder } from './battle-types';
 import { pixelToHex, hexEqual } from './hex';
 
 export class BattleInput {
@@ -100,6 +101,13 @@ export class BattleInput {
   }
 
   private onKeydown(e: KeyboardEvent): void {
+    if (this.state.phase === 'fighting') {
+      const orderKeys: Record<string, LieutenantOrder> = {
+        '1': 'attack', '2': 'defend', '3': 'skirmish', '4': 'mobile',
+      };
+      const order = orderKeys[e.key];
+      if (order) { this.state.setLieutenantOrder(order); return; }
+    }
     if (e.key === 'Escape') {
       // During victory, ESC always exits
       if (this.state.phase === 'victory') {
