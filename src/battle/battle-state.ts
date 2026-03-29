@@ -34,6 +34,7 @@ export class BattleState {
   winner: Faction | null = null;
   roundCount = 0;
   lieutenantOrder: LieutenantOrder = 'auto';
+  veteranBonus: number = 0; // multiplier from Boudicca's veteran stacks (e.g., 0.15 = +15%)
   private startingStrength = new Map<Faction, number>();
 
   // Ability targeting state (S3-03)
@@ -359,7 +360,11 @@ export class BattleState {
 
     // Damage: roll × ATK - DEF, minimum 1
     const roll = rollD6();
-    const damage = Math.max(1, roll * attacker.stats.atk - defender.stats.def);
+    let damage = Math.max(1, roll * attacker.stats.atk - defender.stats.def);
+    // Boudicca veteran bonus: +5% damage per stack for blue units
+    if (attacker.faction === 'blue' && this.veteranBonus > 0) {
+      damage = Math.floor(damage * (1 + this.veteranBonus));
+    }
     defender.currentHp -= damage;
 
     // Hit animations

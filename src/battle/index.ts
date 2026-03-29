@@ -3,6 +3,7 @@ import { BattleRenderer } from './battle-renderer';
 import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
 import { initAbilityBar, updateAbilityBar, destroyAbilityBar } from './ability-ui';
+import { selectedCommander, veteranStacks } from '../game/game-state';
 
 export class BattleMode {
   private canvas: HTMLCanvasElement;
@@ -42,6 +43,10 @@ export class BattleMode {
     this._state = new BattleState();
     this._state.generateGrid();
     this._state.placeStartingUnits();
+
+    if (selectedCommander.value?.id === 'boudicca') {
+      this._state.veteranBonus = veteranStacks.value * 0.05;
+    }
 
     this.renderer.setState(this._state);
     this.input.setState(this._state);

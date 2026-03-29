@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals';
 import type { Faction, ResourceType } from './commander';
 import { addResource } from './resources';
+import { veteranStacks, spokesSinceLastBattle, selectedCommander } from './game-state';
 
 // ── Node types (S2-01) ──
 
@@ -122,6 +123,11 @@ export function generateFixedSpoke(): Spoke {
 
 /** Create a new spoke and set it as active. */
 export function startSpoke(): void {
+  spokesSinceLastBattle.value += 1;
+  if (selectedCommander.value?.id === 'boudicca' && spokesSinceLastBattle.value >= 3) {
+    veteranStacks.value = 0;
+  }
+
   currentSpoke.value = generateFixedSpoke();
   currentNodeIndex.value = 0;
   spokeGains.value = { ...ZERO_GAINS };

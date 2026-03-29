@@ -122,6 +122,7 @@ export class BattleRenderer {
     this.drawFloatingTexts();
     this.drawVictoryOverlay();
     this.drawOrderIndicator();
+    this.drawVeteranIndicator();
   }
 
   // ── Layers ──
@@ -402,19 +403,35 @@ export class BattleRenderer {
       const dest = hexToPixel(unit.hex, size, origin);
 
       // Interpolate position during movement animation
+      let center: Point;
       if (unit.prevHex && unit.moveProgress < 1) {
         const src = hexToPixel(unit.prevHex, size, origin);
         // Smooth easing for all hops — easeInOut for mid-path, easeOut for final
         const t = unit.path.length > 0
           ? this.easeInOutCubic(unit.moveProgress)  // smooth continuous walk
           : this.easeOutCubic(unit.moveProgress);   // decelerate into final position
-        const center = {
+        center = {
           x: src.x + (dest.x - src.x) * t,
           y: src.y + (dest.y - src.y) * t,
         };
-        this.drawUnit(unit, center);
       } else {
-        this.drawUnit(unit, dest);
+        center = dest;
+      }
+      this.drawUnit(unit, center);
+
+      // Veteran flames
+      if (unit.faction === 'blue' && this.state.veteranBonus > 0) {
+        const flames = Math.floor(this.state.veteranBonus / 0.10);
+        if (flames > 0) {
+          const { ctx } = this;
+          ctx.save();
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'center';
+          for (let f = 0; f < Math.min(flames, 5); f++) {
+            ctx.fillText('🔥', center.x - 8 + f * 8, center.y - size * 0.6);
+          }
+          ctx.restore();
+        }
       }
     }
   }
@@ -730,6 +747,29 @@ export class BattleRenderer {
     ctx.font = "11px 'Segoe UI', system-ui, sans-serif";
     ctx.fillStyle = 'rgba(180, 170, 150, 0.4)';
     ctx.fillText('0-Auto  1-Attack  2-Defend  3-Skirmish  4-Mobile', 12, 30);
+    ctx.restore();
+  }
+
+  private drawVeteranIndicator(): void {
+    if (this.state.phase !== 'fighting') return;
+    if (this.state.veteranBonus <= 0) return;
+    const stacks = Math.round(this.state.veteranBonus / 0.05);
+    const pct = Math.round(this.state.veteranBonus * 100);
+    const { ctx } = this;
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    // Flame icon + stack count
+    ctx.font = "bold 14px 'Segoe UI', system-ui, sans-serif";
+    ctx.fillStyle = '#ff6b35';
+    ctx.shadowColor = 'rgba(255, 80, 0, 0.4)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(`\uD83D\uDD25 ${stacks}`, 12, this.h - 52);
+    ctx.shadowColor = 'transparent';
+    // Bonus text
+    ctx.font = "11px 'Segoe UI', system-ui, sans-serif";
+    ctx.fillStyle = 'rgba(255, 160, 80, 0.6)';
+    ctx.fillText(`+${pct}% DMG`, 12, this.h - 38);
     ctx.restore();
   }
 
