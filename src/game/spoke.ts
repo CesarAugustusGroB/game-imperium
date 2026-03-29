@@ -131,4 +131,9 @@ export function startSpoke(): void {
   currentSpoke.value = generateFixedSpoke();
   currentNodeIndex.value = 0;
   spokeGains.value = { ...ZERO_GAINS };
+
+  // S3-09: Deus Vult — Pope Innocent gains Faith at spoke start
+  if (selectedCommander.value?.id === 'innocent') {
+    grantSpokeResource('faith', 1, selectedCommander.value.faction);
+  }
 }

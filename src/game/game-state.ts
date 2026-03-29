@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Commander } from './commander';
-import { initResources } from './resources';
+import { initResources, setWarProfiler } from './resources';
 
 // ── Core run state ──
 export const selectedCommander = signal<Commander | null>(null);
@@ -25,6 +25,7 @@ export const veteranStacks = signal(0);
 export function startNewRun(commander: Commander): void {
   selectedCommander.value = commander;
   initResources(commander.startingResources);
+  setWarProfiler(commander.id === 'crassus');
 
   completedSpokes.value = 0;
   threatLevel.value = 0;
@@ -44,6 +45,7 @@ export function startNewRun(commander: Commander): void {
 export function resetRun(): void {
   selectedCommander.value = null;
   initResources({ gold: 0, faith: 0, influence: 0, momentum: 0 });
+  setWarProfiler(false);
 
   completedSpokes.value = 0;
   threatLevel.value = 0;

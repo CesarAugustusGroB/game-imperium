@@ -2,6 +2,13 @@ import { signal } from '@preact/signals';
 import type { Faction, ResourceType } from './commander';
 import { FACTION_PRIMARY_RESOURCE } from './commander';
 
+// S3-11: War Profiteer flag — set by game-state when Crassus is the active commander
+let warProfilerActive = false;
+
+export function setWarProfiler(active: boolean): void {
+  warProfilerActive = active;
+}
+
 export interface Resources {
   gold: number;
   faith: number;
@@ -38,8 +45,12 @@ export function getResource(type: ResourceType): number {
  */
 export function addResource(type: ResourceType, amount: number, faction?: Faction): number {
   if (amount < 0) return 0;
-  const multiplier = faction && FACTION_PRIMARY_RESOURCE[faction] === type ? 2 : 1;
-  const actual = Math.floor(amount * multiplier);
+  const factionMultiplier = faction && FACTION_PRIMARY_RESOURCE[faction] === type ? 2 : 1;
+  let actual = Math.floor(amount * factionMultiplier);
+  // S3-11: Crassus War Profiteer — +50% gold from all sources
+  if (type === 'gold' && warProfilerActive) {
+    actual = Math.floor(actual * 1.5);
+  }
   resourceSignals[type].value += actual;
   return actual;
 }

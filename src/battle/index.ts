@@ -3,7 +3,8 @@ import { BattleRenderer } from './battle-renderer';
 import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
 import { initAbilityBar, updateAbilityBar, destroyAbilityBar } from './ability-ui';
-import { selectedCommander, veteranStacks } from '../game/game-state';
+import { selectedCommander, veteranStacks, allianceCount } from '../game/game-state';
+import { offsetToAxial } from './hex';
 
 export class BattleMode {
   private canvas: HTMLCanvasElement;
@@ -46,6 +47,20 @@ export class BattleMode {
 
     if (selectedCommander.value?.id === 'boudicca') {
       this._state.veteranBonus = veteranStacks.value * 0.05;
+    }
+
+    // S3-10: Augustus — spawn extra allied units based on allianceCount
+    if (selectedCommander.value?.id === 'augustus') {
+      const extraUnits = allianceCount.value;
+      for (let i = 0; i < extraUnits; i++) {
+        // Spawn in blue reserve area (col 4, varied rows)
+        const row = 3 + i * 4; // rows 3, 7
+        const hex = offsetToAxial(4, row);
+        if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
+          const unit = this._state.addUnit('blue', hex, `Allied ${i + 1}`, 'reserve');
+          unit.currentHp = Math.floor(unit.stats.hp * 0.85); // slightly weaker allies
+        }
+      }
     }
 
     this.renderer.setState(this._state);
