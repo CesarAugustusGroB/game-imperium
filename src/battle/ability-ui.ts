@@ -40,6 +40,9 @@ export function initAbilityBar(state: BattleState): void {
     const target = state.getUnitAt(targetHex);
     if (!target || target.isDying) return;
 
+    // Turncoat requires an enemy target
+    if (abilityId === 'Turncoat' && target.faction === 'blue') return;
+
     // Deduct cost
     if (ab.cost) {
       if (!spendResource(ab.cost.resource, ab.cost.amount)) return;
@@ -55,7 +58,10 @@ export function initAbilityBar(state: BattleState): void {
       case 'Miracle':
         executeMiracle(state, target);
         break;
-      // TODO S3-06+: add Turncoat, Buy Reinforcements
+      case 'Turncoat':
+        executeTurncoat(state, target);
+        break;
+      // TODO S3-07: add Buy Reinforcements
       default:
         break;
     }
@@ -213,5 +219,25 @@ function executeFuryCharge(state: BattleState): void {
   state.floatingTexts.push({
     text: 'FURY CHARGE!', hex: { q: 10, r: 7 },
     color: '#ff4444', timer: 1.0, duration: 1.0,
+  });
+}
+
+// ── Turncoat (Augustus) ──
+
+function executeTurncoat(state: BattleState, target: { id: number; faction: string; hex: { q: number; r: number }; currentHp: number; stats: { hp: number }; flashTimer: number; pinnedBy: number | null }): void {
+  // Switch faction to player side
+  (target as { faction: string }).faction = 'blue';
+
+  // Set HP to 50% of max (demoralized)
+  target.currentHp = Math.floor(target.stats.hp * 0.5);
+
+  // Clear pin — converted unit is no longer engaged
+  target.pinnedBy = null;
+
+  // Visual feedback
+  target.flashTimer = FLASH_DURATION;
+  state.floatingTexts.push({
+    text: 'TURNCOAT!', hex: { q: target.hex.q, r: target.hex.r },
+    color: '#4a7cc2', timer: 1.0, duration: 1.0,
   });
 }
