@@ -33,7 +33,7 @@ export class BattleState {
   phase: BattlePhase = 'fighting';
   winner: Faction | null = null;
   roundCount = 0;
-  lieutenantOrder: LieutenantOrder = 'attack';
+  lieutenantOrder: LieutenantOrder = 'auto';
   private startingStrength = new Map<Faction, number>();
 
   // Floating combat text (dodge, crit, etc.)

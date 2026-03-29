@@ -103,7 +103,7 @@ export class BattleInput {
   private onKeydown(e: KeyboardEvent): void {
     if (this.state.phase === 'fighting') {
       const orderKeys: Record<string, LieutenantOrder> = {
-        '1': 'attack', '2': 'defend', '3': 'skirmish', '4': 'mobile',
+        '0': 'auto', '1': 'attack', '2': 'defend', '3': 'skirmish', '4': 'mobile',
       };
       const order = orderKeys[e.key];
       if (order) { this.state.setLieutenantOrder(order); return; }

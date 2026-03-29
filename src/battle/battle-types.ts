@@ -3,7 +3,7 @@ import type { Hex } from './hex';
 export type Faction = 'blue' | 'red';
 export type BattlePhase = 'fighting' | 'victory' | 'draw';
 export type UnitRole = 'vanguard' | 'reserve' | 'guard';
-export type LieutenantOrder = 'attack' | 'defend' | 'skirmish' | 'mobile';
+export type LieutenantOrder = 'auto' | 'attack' | 'defend' | 'skirmish' | 'mobile';
 export type VictoryMode = 'morale' | 'annihilation' | 'capture';
 
 export interface UnitStats {

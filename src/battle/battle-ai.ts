@@ -56,7 +56,7 @@ function tickCapture(state: BattleState, faction: Faction): void {
     allEnemies: state.getFactionUnits(enemyFaction),
   };
 
-  if (faction === 'blue') {
+  if (faction === 'blue' && state.lieutenantOrder !== 'auto') {
     // Player faction — dispatch ALL units according to the current lieutenant order
     switch (state.lieutenantOrder) {
       case 'attack':   tickVanguard(state, units, ctx); break;
@@ -65,7 +65,7 @@ function tickCapture(state: BattleState, faction: Faction): void {
       case 'mobile':   tickReserve(state, units, faction, ctx); break;
     }
   } else {
-    // Enemy faction — keep existing role-based dispatch
+    // Auto (default) or enemy — role-based dispatch: vanguard attacks, reserve intercepts, guard defends
     const vanguard: BattleUnit[] = [];
     const reserve: BattleUnit[] = [];
     const guard: BattleUnit[] = [];

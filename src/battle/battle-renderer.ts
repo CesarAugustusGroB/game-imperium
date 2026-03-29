@@ -710,6 +710,7 @@ export class BattleRenderer {
   private drawOrderIndicator(): void {
     if (this.state.phase !== 'fighting') return;
     const labels: Record<LieutenantOrder, { text: string; icon: string }> = {
+      auto:     { text: 'AUTO',     icon: '\u2699' },
       attack:   { text: 'ATTACK',   icon: '\u2694' },
       defend:   { text: 'DEFEND',   icon: '\uD83D\uDEE1' },
       skirmish: { text: 'SKIRMISH', icon: '\u21C4' },
@@ -728,7 +729,7 @@ export class BattleRenderer {
     ctx.shadowColor = 'transparent';
     ctx.font = "11px 'Segoe UI', system-ui, sans-serif";
     ctx.fillStyle = 'rgba(180, 170, 150, 0.4)';
-    ctx.fillText('1-Attack  2-Defend  3-Skirmish  4-Mobile', 12, 30);
+    ctx.fillText('0-Auto  1-Attack  2-Defend  3-Skirmish  4-Mobile', 12, 30);
     ctx.restore();
   }
 
