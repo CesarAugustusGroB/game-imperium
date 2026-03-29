@@ -2,7 +2,10 @@ import { signal } from '@preact/signals';
 import type { Faction, ResourceType } from './commander';
 import { FACTION_PRIMARY_RESOURCE } from './commander';
 
-// S3-11: War Profiteer flag — set by game-state when Crassus is the active commander
+// S3-11: War Profiteer flag — kept as module-level state (NOT imported from game-state.ts)
+// to avoid a circular dependency: game-state.ts imports resources.ts; if resources.ts
+// imported game-state.ts the chain would be circular. Instead, game-state.ts pushes
+// the flag in via setWarProfiler() during startNewRun / resetRun.
 let warProfilerActive = false;
 
 export function setWarProfiler(active: boolean): void {

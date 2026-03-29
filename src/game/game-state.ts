@@ -18,11 +18,19 @@ export const allies = signal<string[]>([]);
 // ── Boudicca-specific ──
 export const veteranStacks = signal(0);
 
+/** Known valid commander IDs. Used for runtime validation in startNewRun. */
+const KNOWN_COMMANDER_IDS = new Set(['innocent', 'boudicca', 'augustus', 'crassus']);
+
 /**
  * Start a new run with the given commander.
  * Initializes all signals to fresh state.
  */
 export function startNewRun(commander: Commander): void {
+  // Runtime guard: warn if an unrecognized commander ID is used (data integrity check)
+  if (!KNOWN_COMMANDER_IDS.has(commander.id)) {
+    console.warn(`[startNewRun] Unknown commander ID: "${commander.id}". Expected one of: ${[...KNOWN_COMMANDER_IDS].join(', ')}`);
+  }
+
   selectedCommander.value = commander;
   initResources(commander.startingResources);
   setWarProfiler(commander.id === 'crassus');

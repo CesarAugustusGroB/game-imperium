@@ -347,7 +347,6 @@ function findAdvanceTarget(
     return null;
   }
 
-  if (target.q === unit.hex.q && target.r === unit.hex.r) return null;
   return target;
 }
 
