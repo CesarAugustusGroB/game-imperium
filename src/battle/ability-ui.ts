@@ -3,6 +3,7 @@ import { canAfford, spendResource } from '../game/resources';
 import { RESOURCE_INFO } from '../game/commander';
 import type { Commander, CommanderAbility } from '../game/commander';
 import type { BattleState } from './battle-state';
+import type { BattleUnit } from './battle-types';
 import { SHAKE_DURATION, FLASH_DURATION, ROLE_STATS } from './battle-config';
 import { hexToCol } from './battle-zones';
 
@@ -20,6 +21,12 @@ let currentState: BattleState | null = null;
 let abilityButton: HTMLButtonElement | null = null;
 let mercCount = 0;
 
+/**
+ * Initialize the ability bar for the current battle.
+ * Renders the commander's tactical ability button and wires up the
+ * `onAbilityExecute` callback on the given BattleState.
+ * Must be called once when a battle starts.
+ */
 export function initAbilityBar(state: BattleState): void {
   currentState = state;
   const bar = document.getElementById('ability-bar');
@@ -132,6 +139,10 @@ function handleAbilityClick(ability: CommanderAbility): void {
   currentState.setTargeting(ability.name);
 }
 
+/**
+ * Update the ability button's enabled/disabled state and targeting highlight
+ * every frame. Call this from the render/update loop while a battle is active.
+ */
 export function updateAbilityBar(): void {
   if (!currentState || !abilityButton) return;
 
@@ -152,8 +163,24 @@ export function updateAbilityBar(): void {
 
   abilityButton.disabled = disabled;
   abilityButton.classList.toggle('targeting', isTargeting);
+
+  // Update cost display for Buy Reinforcements to show the current dynamic cost
+  if (ability.name === 'Buy Reinforcements') {
+    const costSpan = abilityButton.querySelector('.ability-cost');
+    if (costSpan) {
+      const resourceInfo = RESOURCE_INFO[costResource];
+      costSpan.textContent = maxedOut
+        ? 'Max mercs hired'
+        : `${resourceInfo.icon} ${currentCost} ${resourceInfo.label}`;
+    }
+  }
 }
 
+/**
+ * Tear down the ability bar at the end of a battle.
+ * Clears the DOM, nulls the button reference, and resets merc count.
+ * Should be called in the battle cleanup / unmount path.
+ */
 export function destroyAbilityBar(): void {
   const bar = document.getElementById('ability-bar');
   if (bar) bar.innerHTML = '';
@@ -164,7 +191,7 @@ export function destroyAbilityBar(): void {
 
 // ── Miracle (Pope Innocent) ──
 
-function executeMiracle(state: BattleState, target: { id: number; faction: string; hex: { q: number; r: number }; currentHp: number; stats: { hp: number }; isDying: boolean; shakeTimer: number; flashTimer: number }): void {
+function executeMiracle(state: BattleState, target: BattleUnit): void {
   if (target.faction === 'blue') {
     // Heal friendly unit to full HP
     target.currentHp = target.stats.hp;
@@ -247,9 +274,11 @@ function executeFuryCharge(state: BattleState): void {
     }
   }
 
-  // Floating text for the charge itself
+  // Floating text for the charge itself — anchor to grid center
+  const { cols, rows } = state.config;
+  const centerHex = { q: Math.floor(cols / 2), r: Math.floor(rows / 2) };
   state.floatingTexts.push({
-    text: 'FURY CHARGE!', hex: { q: 10, r: 7 },
+    text: 'FURY CHARGE!', hex: centerHex,
     color: '#ff4444', timer: 1.0, duration: 1.0,
   });
 }
@@ -270,9 +299,9 @@ function executeBuyReinforcements(state: BattleState, hex: { q: number; r: numbe
 
 // ── Turncoat (Augustus) ──
 
-function executeTurncoat(state: BattleState, target: { id: number; faction: string; hex: { q: number; r: number }; currentHp: number; stats: { hp: number }; flashTimer: number; pinnedBy: number | null }): void {
+function executeTurncoat(state: BattleState, target: BattleUnit): void {
   // Switch faction to player side
-  (target as { faction: string }).faction = 'blue';
+  (target as any).faction = 'blue';
 
   // Set HP to 50% of max (demoralized)
   target.currentHp = Math.floor(target.stats.hp * 0.5);

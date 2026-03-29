@@ -34,7 +34,8 @@ export class BattleState {
   winner: Faction | null = null;
   roundCount = 0;
   lieutenantOrder: LieutenantOrder = 'auto';
-  veteranBonus: number = 0; // multiplier from Boudicca's veteran stacks (e.g., 0.15 = +15%)
+  /** Additive damage multiplier from Boudicca's veteran stacks. Each stack adds 0.05 (VETERAN_BONUS_PER_STACK), so e.g. 3 stacks = 0.15 = +15% damage for all blue units. */
+  veteranBonus: number = 0;
   private startingStrength = new Map<Faction, number>();
 
   // Ability targeting state (S3-03)
@@ -173,10 +174,20 @@ export class BattleState {
     this.lieutenantOrder = order;
   }
 
+  /**
+   * Enter or exit ability targeting mode.
+   * Pass an ability name to highlight the cursor for targeting, or `null` to cancel.
+   * While targeting, clicks on hexes are routed through `onAbilityExecute`.
+   */
   setTargeting(abilityId: string | null): void {
     this.targetingAbility = abilityId;
   }
 
+  /**
+   * Mark an ability as used for this battle (once-per-battle tracking).
+   * After calling this, `isAbilityOnCooldown(abilityId)` returns true
+   * and the button is disabled for the remainder of the battle.
+   */
   markAbilityUsed(abilityId: string): void {
     this.abilityCooldowns.add(abilityId);
   }
@@ -423,6 +434,13 @@ export class BattleState {
         this.winner = faction === 'blue' ? 'red' : 'blue'; // enemy of the star's owner wins
         return;
       }
+    }
+
+    // Round timeout: prevent infinite stalemates
+    if (this.roundCount > 200) {
+      this.phase = 'draw';
+      this.winner = null;
+      return;
     }
 
     // Draw: if both sides only have Guards left, nobody can attack

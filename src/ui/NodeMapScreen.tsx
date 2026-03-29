@@ -186,7 +186,6 @@ const restGains = signal<{ type: ResourceType; actual: number }[]>([]);
 const showEventModal = signal(false);
 const activeEvent = signal<GameEvent | null>(null);
 const showSpokeCompleteModal = signal(false);
-const spokeBonusApplied = signal(false);
 
 function NodeCircle({ node, isCurrent, color, onActivate }: {
   node: SpokeNode;
@@ -488,20 +487,19 @@ export function NodeMapScreen() {
     );
   }
 
-  // Apply completion bonus once when spoke finishes
-  if (spokeComplete && !spokeBonusApplied.value) {
+  // Show the spoke complete modal when all nodes are resolved
+  if (spokeComplete && !showSpokeCompleteModal.value) {
+    showSpokeCompleteModal.value = true;
+  }
+
+  function handleReturnToHub() {
+    // Apply completion bonus once, before marking spoke complete
     const faction = commander?.faction;
     grantSpokeResource('gold', 3, faction);
     grantSpokeResource('faith', 2, faction);
     grantSpokeResource('influence', 2, faction);
     grantSpokeResource('momentum', 2, faction);
-    spokeBonusApplied.value = true;
-    showSpokeCompleteModal.value = true;
-  }
-
-  function handleReturnToHub() {
     showSpokeCompleteModal.value = false;
-    spokeBonusApplied.value = false;
     completedSpokes.value += 1;
     completeSpoke();
     navigateTo('hub');

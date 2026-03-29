@@ -112,6 +112,7 @@ export class BattleRenderer {
     ctx.clearRect(0, 0, this.w, this.h);
     this.drawBackground();
     this.drawGrid();
+    this.drawTargetingHighlights();
     this.drawZones();
     this.drawStars();
     this.drawHoveredHex();
@@ -175,6 +176,42 @@ export class BattleRenderer {
         ctx.textBaseline = 'middle';
         ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
         ctx.fillText(`${col},${hex.r}`, center.x, center.y);
+      }
+    }
+  }
+
+  /** Highlight valid target hexes when an ability is in targeting mode. */
+  private drawTargetingHighlights(): void {
+    if (!this.state.targetingAbility) return;
+
+    const abilityId = this.state.targetingAbility;
+    const origin = this.state.getGridOrigin(this.w, this.h);
+    const size = this.state.config.hexSize;
+
+    // Determine which hexes are valid based on ability type
+    for (const hex of this.state.gridHexes) {
+      const center = hexToPixel(hex, size, origin);
+      const col = hexToCol(hex);
+      const unitAtHex = this.state.getUnitAt(hex);
+
+      if (abilityId === 'Buy Reinforcements') {
+        // Valid: empty hexes in columns 0-3 (blue back area)
+        if (!unitAtHex && col < 4) {
+          this.fillHex(center, size, 'rgba(240, 208, 128, 0.15)');
+          this.strokeHexStyled(center, size, 'rgba(240, 208, 128, 0.35)', 1.5);
+        }
+      } else if (abilityId === 'Miracle') {
+        // Valid: any hex with a unit
+        if (unitAtHex && !unitAtHex.isDying) {
+          this.fillHex(center, size, 'rgba(240, 208, 128, 0.15)');
+          this.strokeHexStyled(center, size, 'rgba(240, 208, 128, 0.35)', 1.5);
+        }
+      } else if (abilityId === 'Turncoat') {
+        // Valid: hexes with enemy (red) units only
+        if (unitAtHex && !unitAtHex.isDying && unitAtHex.faction === 'red') {
+          this.fillHex(center, size, 'rgba(240, 208, 128, 0.15)');
+          this.strokeHexStyled(center, size, 'rgba(240, 208, 128, 0.35)', 1.5);
+        }
       }
     }
   }
@@ -542,6 +579,24 @@ export class BattleRenderer {
       ctx.stroke();
     }
 
+    // Role indicator dot — only for blue (player) units
+    if (unit.faction === 'blue') {
+      const roleColors: Record<string, string> = {
+        vanguard: '#c24a3a',
+        reserve:  '#4a7cc2',
+        guard:    '#d4a843',
+      };
+      const dotColor = roleColors[unit.role] ?? '#888888';
+      const dotY = iconSize / 2 - 4; // bottom of the unit hex
+      ctx.shadowColor = 'transparent';
+      ctx.beginPath();
+      ctx.arc(0, dotY, 4, 0, Math.PI * 2);
+      ctx.fillStyle = dotColor;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
 
     ctx.restore();
   }
@@ -759,17 +814,22 @@ export class BattleRenderer {
     ctx.save();
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';
-    // Flame icon + stack count
-    ctx.font = "bold 14px 'Segoe UI', system-ui, sans-serif";
+    // Flame icon + stack count — larger with orange glow shadow
+    ctx.font = "bold 16px 'Segoe UI', system-ui, sans-serif";
     ctx.fillStyle = '#ff6b35';
-    ctx.shadowColor = 'rgba(255, 80, 0, 0.4)';
-    ctx.shadowBlur = 6;
-    ctx.fillText(`\uD83D\uDD25 ${stacks}`, 12, this.h - 52);
+    ctx.shadowColor = 'rgba(255, 100, 0, 0.7)';
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.fillText(`\uD83D\uDD25 ${stacks}`, 12, this.h - 58);
     ctx.shadowColor = 'transparent';
-    // Bonus text
-    ctx.font = "11px 'Segoe UI', system-ui, sans-serif";
-    ctx.fillStyle = 'rgba(255, 160, 80, 0.6)';
-    ctx.fillText(`+${pct}% DMG`, 12, this.h - 38);
+    // Bonus DMG text
+    ctx.font = "bold 12px 'Segoe UI', system-ui, sans-serif";
+    ctx.fillStyle = 'rgba(255, 160, 80, 0.75)';
+    ctx.shadowColor = 'rgba(255, 100, 0, 0.5)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(`+${pct}% DMG`, 12, this.h - 40);
+    ctx.shadowColor = 'transparent';
     ctx.restore();
   }
 

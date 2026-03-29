@@ -44,7 +44,7 @@ const REWARDS: Reward[] = [
   { label: 'Heal Army', description: 'Your soldiers recover', resource: null, victory: 0, defeat: 0 },
   { label: 'Bonus Gold', description: 'Plunder the battlefield', resource: 'gold', victory: 3, defeat: 1 },
   { label: 'Bonus Momentum', description: 'Press the advantage', resource: 'momentum', victory: 2, defeat: 1 },
-  { label: 'Bonus Faith', description: 'The gods favor you', resource: 'faith', victory: 1, defeat: 1 },
+  { label: 'Bonus Faith',    description: 'The gods favor you',  resource: 'faith',    victory: 1, defeat: 1 },
 ];
 
 const BANNER: Record<BattleResult, { text: string; color: string }> = {
@@ -139,17 +139,22 @@ export function PostBattleScreen() {
                 opacity: chosenIndex.value !== null && !isChosen ? 0.4 : 1,
               }}
             >
-              <div style={{ fontWeight: 600, marginBottom: '2px' }}>
-                {reward.label}
-              </div>
-              <div style={{ fontSize: '11px', color: 'rgba(180, 170, 150, 0.5)' }}>
-                {reward.description}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                <span style={{ fontWeight: 600 }}>{reward.label}</span>
                 {reward.resource && amount > 0 && (
                   <span style={{
-                    marginLeft: '8px', fontWeight: 600,
+                    fontWeight: 700, fontSize: '14px',
                     color: RESOURCE_INFO[reward.resource].color,
                   }}>
                     {RESOURCE_INFO[reward.resource].icon} +{amount}
+                  </span>
+                )}
+              </div>
+              <div style={{ fontSize: '11px', color: 'rgba(180, 170, 150, 0.5)' }}>
+                {reward.description}
+                {reward.resource === null && (
+                  <span style={{ marginLeft: '6px', color: 'rgba(160, 150, 130, 0.4)', fontStyle: 'italic' }}>
+                    (Army healing coming in future update)
                   </span>
                 )}
               </div>

@@ -94,7 +94,7 @@ export class BattleInput {
     if (this.state.isUnitMoving(selected)) return;
 
     const origin = this.state.getGridOrigin(this.canvas.clientWidth, this.canvas.clientHeight);
-    const clicked = pixelToHex(e.clientX, e.clientY, this.state.config.hexSize, origin);
+    const clicked = pixelToHex(e.offsetX, e.offsetY, this.state.config.hexSize, origin);
 
     if (!this.state.isValidHex(clicked)) return;
 

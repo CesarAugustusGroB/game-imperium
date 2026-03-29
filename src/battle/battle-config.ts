@@ -2,7 +2,10 @@ import type { BattleConfig, UnitStats, UnitRole } from './battle-types';
 import { HEX_SIZE } from './hex';
 
 // ── Combat ──
+/** Fraction of starting HP below which a faction's morale breaks and they lose (morale victory mode). */
 export const MORALE_BREAK_THRESHOLD = 0.3;
+/** Damage multiplier added per Boudicca veteran stack (0.05 = +5% per stack). Applied in BattleState.veteranBonus. */
+export const VETERAN_BONUS_PER_STACK = 0.05;
 export const DODGE_AGI_FACTOR = 0.5;      // dodgeChance = (defAGI - atkAGI) * factor
 export const DODGE_MAX = 30;              // max dodge chance %
 export const DOUBLE_STRIKE_RATIO = 1.5;   // atk.agi >= def.agi * ratio → double strike

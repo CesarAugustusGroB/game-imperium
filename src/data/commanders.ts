@@ -2,7 +2,7 @@ import type { Commander } from '../game/commander';
 
 export const COMMANDERS: Commander[] = [
   {
-    id: 'pope-innocent',
+    id: 'innocent',
     name: 'Pope Innocent',
     faction: 'gold',
     culture: 'Roman / Papal',
