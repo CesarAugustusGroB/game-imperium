@@ -56,6 +56,16 @@ export class BattleInput {
       this.onExit();
       return;
     }
+    // Targeting mode — redirect click to ability execution
+    if (this.state.targetingAbility !== null) {
+      const origin = this.state.getGridOrigin(this.canvas.clientWidth, this.canvas.clientHeight);
+      const clicked = pixelToHex(e.offsetX, e.offsetY, this.state.config.hexSize, origin);
+      if (this.state.isValidHex(clicked) && this.state.onAbilityExecute) {
+        this.state.onAbilityExecute(this.state.targetingAbility, clicked);
+      }
+      this.state.setTargeting(null);
+      return;
+    }
     const origin = this.state.getGridOrigin(this.canvas.clientWidth, this.canvas.clientHeight);
     const clicked = pixelToHex(e.offsetX, e.offsetY, this.state.config.hexSize, origin);
 
@@ -101,6 +111,11 @@ export class BattleInput {
   }
 
   private onKeydown(e: KeyboardEvent): void {
+    // ESC cancels targeting mode before anything else
+    if (e.key === 'Escape' && this.state.targetingAbility !== null) {
+      this.state.setTargeting(null);
+      return;
+    }
     if (this.state.phase === 'fighting') {
       const orderKeys: Record<string, LieutenantOrder> = {
         '0': 'auto', '1': 'attack', '2': 'defend', '3': 'skirmish', '4': 'mobile',

@@ -45,6 +45,11 @@ When the user's message starts with `FIX:`:
 3. **Verify prompt** — when done, tell the user what was fixed and ask them to verify; await their approval
 4. **Merge** — only after explicit user approval, merge `fix/*` back into the originating `feat/*` branch and delete the fix branch
 
+## Agent Model Policy
+- When implementing a plan (plan mode approved → execution), use **Sonnet 4.6** agents for the implementation work
+- Same applies to `/dev-task` Phase 5 (Implement): spawn Sonnet 4.6 agents for coding
+- Opus stays in the driver seat for planning, review, and coordination
+
 ## Conventions
 - Branch naming: `<type>/<task-id>-<short-slug>` (e.g. `feat/42-add-diplomacy`)
 - Commit style: Conventional Commits

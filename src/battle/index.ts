@@ -2,6 +2,7 @@ import { BattleState } from './battle-state';
 import { BattleRenderer } from './battle-renderer';
 import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
+import { initAbilityBar, updateAbilityBar, destroyAbilityBar } from './ability-ui';
 
 export class BattleMode {
   private canvas: HTMLCanvasElement;
@@ -47,12 +48,14 @@ export class BattleMode {
 
     this.resize(window.innerWidth, window.innerHeight);
     this.input.attach();
+    initAbilityBar(this._state);
     document.getElementById('btn-coords')?.addEventListener('click', this.boundToggleCoords);
   }
 
   exit(): void {
     this._isVisible = false;
     this.input.detach();
+    destroyAbilityBar();
     document.getElementById('btn-coords')?.removeEventListener('click', this.boundToggleCoords);
     this.onExitCallback();
   }
@@ -71,6 +74,8 @@ export class BattleMode {
 
     // Check victory
     this._state.checkVictory();
+
+    updateAbilityBar();
   }
 
   render(): void {

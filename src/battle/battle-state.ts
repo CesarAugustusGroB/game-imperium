@@ -36,6 +36,11 @@ export class BattleState {
   lieutenantOrder: LieutenantOrder = 'auto';
   private startingStrength = new Map<Faction, number>();
 
+  // Ability targeting state (S3-03)
+  targetingAbility: string | null = null;
+  abilityCooldowns = new Set<string>(); // ability IDs used (for once-per-battle)
+  onAbilityExecute: ((abilityId: string, targetHex: Hex) => void) | null = null;
+
   // Floating combat text (dodge, crit, etc.)
   readonly floatingTexts: FloatingText[] = [];
 
@@ -165,6 +170,18 @@ export class BattleState {
   /** Set the player's lieutenant order (governs all blue-faction AI behaviour). */
   setLieutenantOrder(order: LieutenantOrder): void {
     this.lieutenantOrder = order;
+  }
+
+  setTargeting(abilityId: string | null): void {
+    this.targetingAbility = abilityId;
+  }
+
+  markAbilityUsed(abilityId: string): void {
+    this.abilityCooldowns.add(abilityId);
+  }
+
+  isAbilityOnCooldown(abilityId: string): boolean {
+    return this.abilityCooldowns.has(abilityId);
   }
 
   // ── Selection ──
