@@ -3,6 +3,7 @@ import { canAfford, spendResource } from '../game/resources';
 import { RESOURCE_INFO } from '../game/commander';
 import type { Commander, CommanderAbility } from '../game/commander';
 import type { BattleState } from './battle-state';
+import { SHAKE_DURATION, FLASH_DURATION } from './battle-config';
 
 let currentState: BattleState | null = null;
 let abilityButton: HTMLButtonElement | null = null;
@@ -25,12 +26,16 @@ export function initAbilityBar(state: BattleState): void {
   bar.appendChild(btn);
   abilityButton = btn;
 
-  // Placeholder ability execution — S3-04+ will implement real effects
-  state.onAbilityExecute = (abilityId: string, _targetHex) => {
+  // Ability execution — dispatch by ability name
+  state.onAbilityExecute = (abilityId: string, targetHex) => {
     const cmdr = selectedCommander.value;
     if (!cmdr) return;
     const ab = cmdr.tacticalAbility;
     if (ab.name !== abilityId) return;
+
+    // Must target a unit
+    const target = state.getUnitAt(targetHex);
+    if (!target || target.isDying) return;
 
     // Deduct cost
     if (ab.cost) {
@@ -42,8 +47,15 @@ export function initAbilityBar(state: BattleState): void {
       state.markAbilityUsed(abilityId);
     }
 
-    // TODO S3-04+: execute actual ability effect based on abilityId and targetHex
-    console.log(`[Ability] ${abilityId} activated`);
+    // Execute ability effect
+    switch (abilityId) {
+      case 'Miracle':
+        executeMiracle(state, target);
+        break;
+      // TODO S3-05+: add Fury Charge, Turncoat, Buy Reinforcements
+      default:
+        break;
+    }
   };
 }
 
@@ -99,4 +111,33 @@ export function destroyAbilityBar(): void {
   if (bar) bar.innerHTML = '';
   abilityButton = null;
   currentState = null;
+}
+
+// ── Miracle (Pope Innocent) ──
+
+function executeMiracle(state: BattleState, target: { id: number; faction: string; hex: { q: number; r: number }; currentHp: number; stats: { hp: number }; isDying: boolean; shakeTimer: number; flashTimer: number }): void {
+  if (target.faction === 'blue') {
+    // Heal friendly unit to full HP
+    target.currentHp = target.stats.hp;
+    target.flashTimer = FLASH_DURATION;
+    state.floatingTexts.push({
+      text: 'HEALED!', hex: { q: target.hex.q, r: target.hex.r },
+      color: '#ffd700', timer: 0.8, duration: 0.8,
+    });
+  } else {
+    // Smite enemy unit — deal 2000 damage
+    const damage = 2000;
+    target.currentHp -= damage;
+    target.shakeTimer = SHAKE_DURATION;
+    target.flashTimer = FLASH_DURATION;
+    state.floatingTexts.push({
+      text: 'SMITE!', hex: { q: target.hex.q, r: target.hex.r },
+      color: '#ffd700', timer: 0.8, duration: 0.8,
+    });
+    // Death check
+    if (target.currentHp <= 0) {
+      target.currentHp = 0;
+      target.isDying = true;
+    }
+  }
 }
