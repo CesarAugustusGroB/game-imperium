@@ -1,46 +1,25 @@
-# Plan: S3-03 — Build commander ability UI (bottom bar, costs, click to activate)
+# Plan: S3-04 — Implement Miracle (Pope Innocent): spend 2 Faith, heal or smite
 
 ## Task
-Add a DOM overlay ability bar at the bottom of the battle screen showing the selected commander's tactical ability with resource cost. Click to enter targeting mode, click a unit/hex to apply, ESC to cancel. Grey out when can't afford or on cooldown.
+Replace the placeholder `onAbilityExecute` in `ability-ui.ts` with real Miracle logic. Click friendly unit → heal to full HP (golden flash). Click enemy unit → deal 2000 damage (golden smite). Costs 2 Faith per use, unlimited uses per battle if you can afford it.
 
 ## Approach
-Vanilla DOM (not Preact — `#app-root` is hidden during battle). Create `src/battle/ability-ui.ts` that manages an `#ability-bar` div inside `#battle-screen`. Add targeting mode state to `BattleState`. Intercept clicks in `BattleInput` when targeting is active.
+The ability UI and targeting mode already work from S3-03. Only need to replace the `console.log` placeholder with actual game logic. Use existing `BattleState` methods for damage/death and `floatingTexts` for combat text.
 
 ## Steps
-1. **Add `#ability-bar` markup + CSS** to `index.html` — fixed bottom-center bar inside `#battle-screen`
-2. **Add targeting state** to `src/battle/battle-state.ts`:
-   - `targetingAbility: string | null` (ability id or null)
-   - `setTargeting(id: string | null)` method
-   - `abilityCooldowns: Map<string, boolean>` for once-per-battle tracking
-3. **Create `src/battle/ability-ui.ts`**:
-   - `initAbilityBar(state: BattleState)` — populate bar from `selectedCommander.value.tacticalAbility`
-   - `updateAbilityBar(state)` — refresh enabled/disabled state (called each frame from render loop)
-   - `destroyAbilityBar()` — cleanup on battle exit
-   - Click handler: check `canAfford` → enter targeting mode → update button visual to "targeting" state
-4. **Add targeting mode to `BattleInput`**:
-   - In `onClick`: if `state.targetingAbility !== null`, intercept click → resolve to hex/unit → fire ability callback → clear targeting
-   - In `onKeydown`: ESC cancels targeting before deselect/exit
-5. **Wire in `src/battle/index.ts`**:
-   - `enter()`: call `initAbilityBar(state)`
-   - `exit()`: call `destroyAbilityBar()`
-   - `render()`: call `updateAbilityBar(state)` (or in main loop)
-6. **Ability execution placeholder**: S3-04 through S3-07 implement actual effects. For now, `executeAbility(state, abilityId, targetHex)` logs and deducts cost.
+1. In `ability-ui.ts`, replace the placeholder `onAbilityExecute` callback:
+   - Get unit at target hex via `state.getUnitAt(targetHex)`
+   - If no unit → do nothing, refund (don't deduct cost)
+   - If friendly unit (faction === 'blue') → set `currentHp = stats.hp` (full heal), add golden flash + floating text "HEALED!"
+   - If enemy unit → deal 2000 damage, add golden flash + shake + floating text "SMITE!", check death
+   - Deduct 2 Faith only on successful target (not on empty hex)
+2. Add golden flash support: set `flashTimer` on target unit (existing mechanic) + push floating text
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `index.html` | Add `#ability-bar` div + CSS | DOM structure for ability bar |
-| `src/battle/battle-state.ts` | Add targeting state + cooldown tracking | State management |
-| `src/battle/ability-ui.ts` | Create | Ability bar rendering + click handlers |
-| `src/battle/battle-input.ts` | Add targeting intercept in onClick/onKeydown | Click redirection |
-| `src/battle/index.ts` | Init/destroy ability UI on enter/exit | Lifecycle |
-
-## Design decisions
-- **Vanilla DOM, not Preact** — battle screen hides `#app-root`, so Preact components can't render here without a second root. Vanilla DOM matches the existing `#battle-hud` and `#btn-coords` pattern.
-- **Targeting state on BattleState** — keeps it accessible to both ability-ui.ts and battle-input.ts without circular deps
-- **Placeholder execution** — S3-04+ plug in real effects. This task only builds the UI shell + targeting flow.
+| `src/battle/ability-ui.ts` | modify | Replace placeholder with Miracle execution logic |
 
 ## Out of scope
-- Actual ability effects (Miracle, Fury Charge, Turncoat, Buy Reinforcements — S3-04 to S3-07)
-- Strategic abilities (node-map level, not battle)
-- Event card abilities
+- Other commander abilities (S3-05 to S3-07)
+- Custom golden flash color in renderer (reuses existing flash, S3 polish can add gold tint later)
