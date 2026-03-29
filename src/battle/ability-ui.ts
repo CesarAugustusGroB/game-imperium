@@ -3,13 +3,22 @@ import { canAfford, spendResource } from '../game/resources';
 import { RESOURCE_INFO } from '../game/commander';
 import type { Commander, CommanderAbility } from '../game/commander';
 import type { BattleState } from './battle-state';
-import { SHAKE_DURATION, FLASH_DURATION } from './battle-config';
+import { SHAKE_DURATION, FLASH_DURATION, ROLE_STATS } from './battle-config';
+import { hexToCol } from './battle-zones';
 
 /** Abilities that fire immediately (no targeting needed). */
 const IMMEDIATE_ABILITIES = new Set(['Fury Charge']);
 
+/** Abilities that target an empty hex (not a unit). */
+const EMPTY_HEX_ABILITIES = new Set(['Buy Reinforcements']);
+
+const MAX_MERCS = 2;
+const MERC_COST = [3, 6]; // cost for 1st and 2nd merc
+const BLUE_BACK_COL_MAX = 4; // columns 0-3 are blue's back rows
+
 let currentState: BattleState | null = null;
 let abilityButton: HTMLButtonElement | null = null;
+let mercCount = 0;
 
 export function initAbilityBar(state: BattleState): void {
   currentState = state;
@@ -28,6 +37,7 @@ export function initAbilityBar(state: BattleState): void {
   btn.addEventListener('click', () => handleAbilityClick(ability));
   bar.appendChild(btn);
   abilityButton = btn;
+  mercCount = 0;
 
   // Ability execution — dispatch by ability name
   state.onAbilityExecute = (abilityId: string, targetHex) => {
@@ -36,7 +46,23 @@ export function initAbilityBar(state: BattleState): void {
     const ab = cmdr.tacticalAbility;
     if (ab.name !== abilityId) return;
 
-    // Must target a unit
+    // Buy Reinforcements targets an empty hex
+    if (EMPTY_HEX_ABILITIES.has(abilityId)) {
+      if (state.getUnitAt(targetHex)) return; // must be empty
+      if (abilityId === 'Buy Reinforcements') {
+        if (mercCount >= MAX_MERCS) return;
+        const col = hexToCol(targetHex);
+        if (col >= BLUE_BACK_COL_MAX) return; // must be back rows
+        const cost = MERC_COST[mercCount] ?? MERC_COST[MERC_COST.length - 1];
+        if (!spendResource('gold', cost)) return;
+        executeBuyReinforcements(state, targetHex);
+        mercCount++;
+        if (mercCount >= MAX_MERCS) state.markAbilityUsed(abilityId);
+      }
+      return;
+    }
+
+    // Other targeted abilities require a unit
     const target = state.getUnitAt(targetHex);
     if (!target || target.isDying) return;
 
@@ -61,7 +87,6 @@ export function initAbilityBar(state: BattleState): void {
       case 'Turncoat':
         executeTurncoat(state, target);
         break;
-      // TODO S3-07: add Buy Reinforcements
       default:
         break;
     }
@@ -116,8 +141,14 @@ export function updateAbilityBar(): void {
   const ability = commander.tacticalAbility;
   const isTargeting = currentState.targetingAbility === ability.name;
   const onCooldown = ability.cooldown === 'once-per-battle' && currentState.isAbilityOnCooldown(ability.name);
-  const affordable = !ability.cost || canAfford(ability.cost.resource, ability.cost.amount);
-  const disabled = onCooldown || !affordable || currentState.phase !== 'fighting';
+  // Buy Reinforcements has variable cost
+  const currentCost = ability.name === 'Buy Reinforcements'
+    ? MERC_COST[mercCount] ?? MERC_COST[MERC_COST.length - 1]
+    : ability.cost?.amount ?? 0;
+  const costResource = ability.cost?.resource ?? 'gold';
+  const affordable = currentCost === 0 || canAfford(costResource, currentCost);
+  const maxedOut = ability.name === 'Buy Reinforcements' && mercCount >= MAX_MERCS;
+  const disabled = onCooldown || maxedOut || !affordable || currentState.phase !== 'fighting';
 
   abilityButton.disabled = disabled;
   abilityButton.classList.toggle('targeting', isTargeting);
@@ -128,6 +159,7 @@ export function destroyAbilityBar(): void {
   if (bar) bar.innerHTML = '';
   abilityButton = null;
   currentState = null;
+  mercCount = 0;
 }
 
 // ── Miracle (Pope Innocent) ──
@@ -219,6 +251,20 @@ function executeFuryCharge(state: BattleState): void {
   state.floatingTexts.push({
     text: 'FURY CHARGE!', hex: { q: 10, r: 7 },
     color: '#ff4444', timer: 1.0, duration: 1.0,
+  });
+}
+
+// ── Buy Reinforcements (Crassus) ──
+
+function executeBuyReinforcements(state: BattleState, hex: { q: number; r: number }): void {
+  const stats = { ...ROLE_STATS.vanguard };
+  const unit = state.addUnit('blue', hex, `Mercenary ${mercCount + 1}`, 'vanguard', stats);
+  // 70% HP — expendable hired troops
+  unit.currentHp = Math.floor(unit.stats.hp * 0.7);
+  unit.flashTimer = FLASH_DURATION;
+  state.floatingTexts.push({
+    text: 'HIRED!', hex: { q: hex.q, r: hex.r },
+    color: '#d4a843', timer: 0.8, duration: 0.8,
   });
 }
 
