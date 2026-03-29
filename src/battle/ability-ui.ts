@@ -5,6 +5,9 @@ import type { Commander, CommanderAbility } from '../game/commander';
 import type { BattleState } from './battle-state';
 import { SHAKE_DURATION, FLASH_DURATION } from './battle-config';
 
+/** Abilities that fire immediately (no targeting needed). */
+const IMMEDIATE_ABILITIES = new Set(['Fury Charge']);
+
 let currentState: BattleState | null = null;
 let abilityButton: HTMLButtonElement | null = null;
 
@@ -52,7 +55,7 @@ export function initAbilityBar(state: BattleState): void {
       case 'Miracle':
         executeMiracle(state, target);
         break;
-      // TODO S3-05+: add Fury Charge, Turncoat, Buy Reinforcements
+      // TODO S3-06+: add Turncoat, Buy Reinforcements
       default:
         break;
     }
@@ -85,6 +88,14 @@ function handleAbilityClick(ability: CommanderAbility): void {
 
   // Check cost
   if (ability.cost && !canAfford(ability.cost.resource, ability.cost.amount)) return;
+
+  // Immediate abilities — execute directly, no targeting
+  if (IMMEDIATE_ABILITIES.has(ability.name)) {
+    if (ability.cost && !spendResource(ability.cost.resource, ability.cost.amount)) return;
+    if (ability.cooldown === 'once-per-battle') currentState.markAbilityUsed(ability.name);
+    executeImmediate(currentState, ability.name);
+    return;
+  }
 
   // Enter targeting mode
   currentState.setTargeting(ability.name);
@@ -140,4 +151,67 @@ function executeMiracle(state: BattleState, target: { id: number; faction: strin
       target.isDying = true;
     }
   }
+}
+
+// ── Immediate ability dispatch ──
+
+function executeImmediate(state: BattleState, abilityId: string): void {
+  switch (abilityId) {
+    case 'Fury Charge':
+      executeFuryCharge(state);
+      break;
+  }
+}
+
+// ── Fury Charge (Boudicca) ──
+
+function executeFuryCharge(state: BattleState): void {
+  const blueUnits = state.getFactionUnits('blue');
+  const dir = 1; // blue advances right (+q)
+
+  for (const unit of blueUnits) {
+    if (unit.isDying) continue;
+
+    // Try to advance 2 hexes forward
+    let currentHex = unit.hex;
+    let moved = 0;
+    for (let step = 0; step < 2; step++) {
+      const nextHex = { q: currentHex.q + dir, r: currentHex.r };
+      if (!state.isValidHex(nextHex)) break;
+
+      const occupant = state.getUnitAt(nextHex);
+      if (occupant && !occupant.isDying) {
+        if (occupant.faction !== 'blue') {
+          // Impact damage on collision with enemy
+          const impactDamage = 1000;
+          occupant.currentHp -= impactDamage;
+          occupant.shakeTimer = SHAKE_DURATION;
+          occupant.flashTimer = FLASH_DURATION;
+          state.floatingTexts.push({
+            text: 'CHARGE!', hex: { q: occupant.hex.q, r: occupant.hex.r },
+            color: '#ff4444', timer: 0.8, duration: 0.8,
+          });
+          if (occupant.currentHp <= 0) {
+            occupant.currentHp = 0;
+            occupant.isDying = true;
+          }
+        }
+        break; // blocked by unit (friendly or enemy after impact)
+      }
+
+      currentHex = nextHex;
+      moved++;
+    }
+
+    // Move unit to furthest reached hex
+    if (moved > 0) {
+      state.moveUnitAlongPath(unit.id, currentHex);
+    }
+  }
+
+  // Floating text for the charge itself
+  state.floatingTexts.push({
+    text: 'FURY CHARGE!', hex: { q: 10, r: 7 },
+    color: '#ff4444', timer: 1.0, duration: 1.0,
+  });
 }
