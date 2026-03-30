@@ -1,7 +1,7 @@
 import { navigateTo } from './screens';
 import { startSpoke } from '../game/spoke';
 import { completedSpokes, selectedCommander } from '../game/game-state';
-import { FACTION_COLORS } from '../game/commander';
+
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
@@ -30,7 +30,6 @@ if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
 
 export function HubScreen() {
   const commander = selectedCommander.value;
-  const color = commander ? FACTION_COLORS[commander.faction] : '#f0d080';
 
   function handleStartSpoke() {
     startSpoke();
@@ -41,13 +40,13 @@ export function HubScreen() {
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
-      background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+      background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
       paddingTop: '38px',
     }}>
       {/* Commander indicator */}
       {commander && (
         <div style={{
-          fontSize: '11px', color: 'rgba(180, 170, 150, 0.4)',
+          fontSize: '11px', color: 'rgba(70, 55, 35, 0.6)',
           letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px',
         }}>
           {commander.name}
@@ -55,9 +54,9 @@ export function HubScreen() {
       )}
 
       <div style={{
-        fontSize: '20px', fontWeight: 600, color: '#f0d080',
+        fontSize: '20px', fontWeight: 600, color: '#5a3a1a',
         letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px',
-        textShadow: '0 2px 8px rgba(180, 140, 60, 0.3)',
+        textShadow: '0 1px 2px rgba(0, 0, 0, 0.15)',
       }}>
         Hub
       </div>
@@ -65,12 +64,12 @@ export function HubScreen() {
       {/* Decorative divider */}
       <div style={{
         width: '60px', height: '1px', marginBottom: '24px',
-        background: `linear-gradient(90deg, transparent, ${color}40, transparent)`,
+        background: 'linear-gradient(90deg, transparent, rgba(90, 58, 26, 0.4), transparent)',
       }} />
 
       {completedSpokes.value > 0 && (
         <div style={{
-          fontSize: '12px', color: 'rgba(180, 170, 150, 0.5)',
+          fontSize: '12px', color: 'rgba(70, 55, 35, 0.55)',
           letterSpacing: '1px', marginBottom: '16px',
         }}>
           Spokes completed: {completedSpokes.value}
