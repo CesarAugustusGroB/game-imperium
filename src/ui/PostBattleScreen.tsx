@@ -159,6 +159,7 @@ export function PostBattleScreen() {
     }
 
     // Resolve battle node and return to node map
+    // Season ticks are handled by NodeMapScreen when it renders
     advanceNode();
     lastBattleResult.value = null;
     navigateTo('node-map');

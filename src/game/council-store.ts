@@ -283,7 +283,7 @@ export function generateSpokeFromCouncil(): Spoke {
     reward: rewardForType('boss'),
   });
 
-  return { nodes, label, completed: false };
+  return { nodes, label, completed: false, duration, currentSeason: 1, posture };
 }
 
 const ZERO_GAINS: Record<ResourceType, number> = { gold: 0, faith: 0, influence: 0, momentum: 0 };

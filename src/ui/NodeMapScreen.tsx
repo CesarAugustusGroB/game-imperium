@@ -3,8 +3,8 @@ import { signal } from '@preact/signals';
 import { useEffect, useState } from 'preact/hooks';
 import { navigateTo } from './screens';
 import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../game/spoke';
-import type { SpokeNode, NodeType } from '../game/spoke';
-import { selectedCommander, completedSpokes } from '../game/game-state';
+import type { SpokeNode, NodeType, SeasonTickResult } from '../game/spoke';
+import { selectedCommander, completedSpokes, threatLevel } from '../game/game-state';
 import { FACTION_COLORS, RESOURCE_INFO } from '../game/commander';
 import type { ResourceType } from '../game/commander';
 import { spendResource, canAfford } from '../game/resources';
@@ -187,6 +187,8 @@ const restGains = signal<{ type: ResourceType; actual: number }[]>([]);
 const showEventModal = signal(false);
 const activeEvent = signal<GameEvent | null>(null);
 const showSpokeCompleteModal = signal(false);
+const showSeasonModal = signal(false);
+const lastSeasonTick = signal<SeasonTickResult | null>(null);
 
 function NodeCircle({ node, isCurrent, color, onActivate }: {
   node: SpokeNode;
@@ -431,7 +433,7 @@ export function NodeMapScreen() {
 
   function handleRetreat() {
     showRetreatConfirm.value = false;
-    // TODO S6: threatLevel.value += 1 — retreating should have consequences
+    threatLevel.value += 1;
     resetSpoke();
     navigateTo('hub');
   }
@@ -459,7 +461,11 @@ export function NodeMapScreen() {
 
   function handleRestContinue() {
     showRestModal.value = false;
-    advanceNode();
+    const result = advanceNode();
+    if (result.seasonTicked) {
+      lastSeasonTick.value = result.seasonTicked;
+      showSeasonModal.value = true;
+    }
   }
 
   function openEventModal() {
@@ -496,7 +502,11 @@ export function NodeMapScreen() {
     }
     showEventModal.value = false;
     activeEvent.value = null;
-    advanceNode();
+    const result = advanceNode();
+    if (result.seasonTicked) {
+      lastSeasonTick.value = result.seasonTicked;
+      showSeasonModal.value = true;
+    }
   }
 
   function canAffordChoice(choice: EventChoice): boolean {
@@ -570,6 +580,11 @@ export function NodeMapScreen() {
           letterSpacing: '1px', marginBottom: '12px',
         }}>
           Node <span style={{ color: `${color}90`, fontWeight: 600 }}>{Math.min(nodeIdx + 1, spoke.nodes.length)}</span> of {spoke.nodes.length}
+          {spoke.duration > 1 && (
+            <span style={{ marginLeft: '12px', color: 'rgba(200, 160, 100, 0.5)' }}>
+              Season {spoke.currentSeason}/{spoke.duration}
+            </span>
+          )}
         </div>
 
         {/* Node chain */}
@@ -757,6 +772,45 @@ export function NodeMapScreen() {
               </>
             );
           })()}
+        </NodeModal>
+      )}
+
+      {/* Season tick modal */}
+      {showSeasonModal.value && lastSeasonTick.value && (
+        <NodeModal title={`Season ${lastSeasonTick.value.season} Begins`} onClose={() => { showSeasonModal.value = false; }}>
+          <div style={{ fontSize: '12px', color: 'rgba(200, 190, 160, 0.7)', lineHeight: '1.8' }}>
+            {lastSeasonTick.value.upkeepPaid.length > 0 && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: 'rgba(240, 208, 128, 0.6)', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Upkeep Paid</span>
+                {lastSeasonTick.value.upkeepPaid.map((u, i) => (
+                  <div key={i} style={{ color: 'rgba(200, 130, 130, 0.8)' }}>
+                    {RESOURCE_INFO[u.resource].icon} -{u.amount} {RESOURCE_INFO[u.resource].label}
+                  </div>
+                ))}
+              </div>
+            )}
+            {lastSeasonTick.value.upkeepShortfall.length > 0 && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: '#c05050', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Shortfall</span>
+                {lastSeasonTick.value.upkeepShortfall.map((u, i) => (
+                  <div key={i} style={{ color: '#c05050' }}>
+                    {RESOURCE_INFO[u.resource].icon} Cannot afford {u.deficit} {RESOURCE_INFO[u.resource].label}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ color: 'rgba(200, 160, 100, 0.7)' }}>
+              Threat +{lastSeasonTick.value.threatIncrease}
+            </div>
+          </div>
+          <button class="modal-action-btn" onClick={() => { showSeasonModal.value = false; }} style={{
+            marginTop: '12px', padding: '8px 20px', borderRadius: '4px', cursor: 'pointer',
+            background: 'rgba(50, 42, 20, 0.7)', border: '1px solid rgba(220, 190, 100, 0.4)',
+            color: '#f0d080', fontFamily: 'inherit', fontSize: '12px', fontWeight: 600,
+            letterSpacing: '1px', textTransform: 'uppercase',
+          }}>
+            Continue
+          </button>
         </NodeModal>
       )}
 
