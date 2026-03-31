@@ -98,7 +98,6 @@ export function DecretumCard({ decretum, castable, selected, onCast, onSell }: D
     boxSizing: 'border-box' as const,
     userSelect: 'none' as const,
     flexShrink: 0,
-    transform: selected ? 'scale(1.05)' : undefined,
     transition: 'transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease',
     cursor: castable ? 'pointer' : 'default',
   };

@@ -299,16 +299,15 @@ export function DoctrineScreen() {
                     onDragEnd={handleDragEnd}
                     style={{
                       width: '130px', padding: '10px',
-                      background: 'rgba(30, 28, 48, 0.8)',
-                      border: `1px solid rgba(180, 160, 100, ${canEquip ? '0.2' : '0.1'})`,
+                      background: `rgba(30, 28, 48, ${canEquip ? '0.8' : '0.45'})`,
+                      border: `1px solid rgba(180, 160, 100, ${canEquip ? '0.2' : '0.06'})`,
                       borderTop: `3px solid ${FACTION_COLORS[d.color]}`,
                       borderRadius: '5px',
-                      opacity: canEquip ? 1 : 0.55,
                       cursor: canEquip ? 'grab' : 'default',
                     }}
                   >
                     <div style={{
-                      fontSize: '9px', fontWeight: 700, color: FACTION_COLORS[d.color],
+                      fontSize: '9px', fontWeight: 700, color: canEquip ? FACTION_COLORS[d.color] : `${FACTION_COLORS[d.color]}88`,
                       letterSpacing: '0.8px', textTransform: 'uppercase',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       marginBottom: '4px',
@@ -318,6 +317,7 @@ export function DoctrineScreen() {
                     <div style={{
                       fontSize: '9px', color: 'rgba(200, 190, 160, 0.5)', lineHeight: '1.4',
                       marginBottom: '8px',
+                      opacity: canEquip ? 1 : 0.45,
                     }}>
                       {d.levels[d.currentLevel - 1].description}
                     </div>
