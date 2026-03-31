@@ -2,7 +2,7 @@ import { BattleState } from './battle-state';
 import { BattleRenderer } from './battle-renderer';
 import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
-import { initAbilityBar, updateAbilityBar, destroyAbilityBar } from './ability-ui';
+import { initAbilityBar, updateAbilityBar, destroyAbilityBar, initDecretumBar, updateDecretumBar, destroyDecretumBar } from './ability-ui';
 import { selectedCommander, veteranStacks, allianceCount } from '../game/game-state';
 import { VETERAN_BONUS_PER_STACK } from './battle-config';
 import { offsetToAxial } from './hex';
@@ -71,6 +71,7 @@ export class BattleMode {
     this.resize(window.innerWidth, window.innerHeight);
     this.input.attach();
     initAbilityBar(this._state);
+    initDecretumBar(this._state);
     document.getElementById('btn-coords')?.addEventListener('click', this.boundToggleCoords);
   }
 
@@ -78,6 +79,7 @@ export class BattleMode {
     this._isVisible = false;
     this.input.detach();
     destroyAbilityBar();
+    destroyDecretumBar();
     document.getElementById('btn-coords')?.removeEventListener('click', this.boundToggleCoords);
     this.onExitCallback();
   }
@@ -98,6 +100,7 @@ export class BattleMode {
     this._state.checkVictory();
 
     updateAbilityBar();
+    updateDecretumBar();
   }
 
   render(): void {
