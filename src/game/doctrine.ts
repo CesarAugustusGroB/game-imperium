@@ -1,4 +1,5 @@
 import type { Faction, ResourceType } from './commander';
+import { isColorMatch } from './commander';
 
 // ── Upgrade costs ──
 
@@ -47,8 +48,7 @@ export interface Doctrine {
  * White commanders can equip ANY color.
  */
 export function isDoctrineEquippable(doctrine: Doctrine, commanderColor: Faction): boolean {
-  if (commanderColor === 'white') return true;
-  return doctrine.color === commanderColor || doctrine.color === 'white';
+  return isColorMatch(doctrine.color, commanderColor);
 }
 
 // ── Helpers ──

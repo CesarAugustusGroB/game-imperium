@@ -193,7 +193,7 @@ export function DoctrineSlot({
         flexDirection: 'column',
         overflow: 'hidden',
         position: 'relative',
-        opacity: isOffColor ? 0.65 : 1,
+        opacity: isOffColor ? 0.55 : 1,
         fontFamily: "'Segoe UI', system-ui, sans-serif",
       }}
     >

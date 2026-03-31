@@ -37,6 +37,8 @@ export class BattleState {
   lieutenantOrder: LieutenantOrder = 'auto';
   /** Additive damage multiplier from Boudicca's veteran stacks. Each stack adds 0.05 (VETERAN_BONUS_PER_STACK), so e.g. 3 stacks = 0.15 = +15% damage for all blue units. */
   veteranBonus: number = 0;
+  /** Remaining prevent-death charges from Decretum Oracle — blue units survive at 1 HP instead of dying. */
+  preventDeathCount = 0;
   private startingStrength = new Map<Faction, number>();
 
   // Ability targeting state (S3-03)
@@ -388,21 +390,37 @@ export class BattleState {
     defender.flashTimer = FLASH_DURATION;
 
     // Death check — defender only (no counter-attack)
-    if (defender.currentHp <= 0) {
-      // Doctrine revive: if unit hasn't revived yet and has a threshold, restore HP instead of dying
-      if (!defender.hasRevived && defender.reviveThreshold > 0) {
-        defender.currentHp = Math.max(1, Math.floor(defender.stats.hp * defender.reviveThreshold / 100));
-        defender.hasRevived = true;
-        defender.flashTimer = FLASH_DURATION;
+    this.applyDeathCheck(defender);
+  }
+
+  private applyDeathCheck(unit: BattleUnit): void {
+    if (unit.currentHp <= 0) {
+      // Priority 1: prevent-death (Decretum Oracle) — blue units survive at 1 HP
+      if (this.preventDeathCount > 0 && unit.faction === 'blue') {
+        this.preventDeathCount--;
+        unit.currentHp = 1;
+        unit.flashTimer = FLASH_DURATION;
         this.floatingTexts.push({
-          text: 'REVIVED!', hex: { q: defender.hex.q, r: defender.hex.r },
+          text: 'SAVED!', hex: { q: unit.hex.q, r: unit.hex.r },
+          color: '#ffd700', timer: FLOAT_TEXT_DURATION, duration: FLOAT_TEXT_DURATION,
+        });
+        return;
+      }
+      // Priority 2: revive (Doctrine Pantheon) — restore HP instead of dying
+      if (!unit.hasRevived && unit.reviveThreshold > 0) {
+        unit.currentHp = Math.max(1, Math.floor(unit.stats.hp * unit.reviveThreshold / 100));
+        unit.hasRevived = true;
+        unit.flashTimer = FLASH_DURATION;
+        this.floatingTexts.push({
+          text: 'REVIVED!', hex: { q: unit.hex.q, r: unit.hex.r },
           color: '#44ff88', timer: FLOAT_TEXT_DURATION, duration: FLOAT_TEXT_DURATION,
         });
       } else {
-        defender.currentHp = 0;
-        defender.isDying = true;
-        defender.deathProgress = 0;
-        if (this.selectedUnitId === defender.id) this.selectedUnitId = null;
+        // Priority 3: actual death
+        unit.currentHp = 0;
+        unit.isDying = true;
+        unit.deathProgress = 0;
+        if (this.selectedUnitId === unit.id) this.selectedUnitId = null;
       }
     }
   }
@@ -589,7 +607,7 @@ export class BattleState {
             unit.currentHp -= effect.amount;
             unit.shakeTimer = SHAKE_DURATION;
             unit.flashTimer = FLASH_DURATION;
-            if (unit.currentHp <= 0) { unit.currentHp = 0; unit.isDying = true; }
+            this.applyDeathCheck(unit);
           }
         } else if (targetHex) {
           const unit = this.getUnitAt(targetHex);
@@ -597,7 +615,7 @@ export class BattleState {
             unit.currentHp -= effect.amount;
             unit.shakeTimer = SHAKE_DURATION;
             unit.flashTimer = FLASH_DURATION;
-            if (unit.currentHp <= 0) { unit.currentHp = 0; unit.isDying = true; }
+            this.applyDeathCheck(unit);
           }
         }
         break;
@@ -632,7 +650,7 @@ export class BattleState {
         break;
       }
       case 'prevent-death': {
-        // TODO: implement death prevention tracking
+        this.preventDeathCount += effect.count;
         break;
       }
       case 'reveal':

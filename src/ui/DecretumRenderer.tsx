@@ -91,7 +91,7 @@ export function DecretumCard({ decretum, castable, selected, onCast, onSell }: D
     outline: selected ? '2px solid #f0d080' : '1px solid rgba(180,160,100,0.18)',
     outlineOffset: selected ? '0px' : '-1px',
     boxShadow,
-    opacity: castable ? 1 : 0.5,
+    opacity: castable ? 1 : 0.55,
     display: 'flex' as const,
     flexDirection: 'column' as const,
     padding: '6px 6px 6px 8px',
@@ -159,7 +159,7 @@ export function DecretumCard({ decretum, castable, selected, onCast, onSell }: D
       <div
         style={{
           fontSize: '11px',
-          fontFamily: 'serif',
+          fontFamily: "'Segoe UI', system-ui, sans-serif",
           letterSpacing: '0.8px',
           textTransform: 'uppercase',
           color: factionColor,
@@ -177,7 +177,7 @@ export function DecretumCard({ decretum, castable, selected, onCast, onSell }: D
       <div
         style={{
           fontSize: '9px',
-          fontFamily: 'sans-serif',
+          fontFamily: "'Segoe UI', system-ui, sans-serif",
           color: 'rgba(180,170,160,0.8)',
           lineHeight: 1.3,
           overflowWrap: 'break-word',
