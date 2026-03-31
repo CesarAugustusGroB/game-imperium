@@ -51,6 +51,10 @@ if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
       color: #fff0c0 !important;
     }
     .merchant-sell-all:active { transform: scale(0.97); }
+    @keyframes gold-flash {
+      from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
   `;
   document.head.appendChild(el);
 }
@@ -126,7 +130,7 @@ export function HubScreen() {
           color: '#f0d080', fontSize: '14px', fontWeight: 700,
           letterSpacing: '1px', zIndex: 300,
           boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
-          animation: 'screen-fade-in 0.2s ease-out',
+          animation: 'gold-flash 0.2s ease-out',
         }}>
           {goldFlash.value}
         </div>
@@ -142,7 +146,7 @@ export function HubScreen() {
         border: '1px solid rgba(180, 160, 100, 0.15)',
         padding: '28px 24px 24px',
         maxWidth: '90%',
-        width: '600px',
+        width: 'min(600px, 90vw)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
       }}>
         {/* Commander indicator */}
@@ -288,7 +292,7 @@ export function HubScreen() {
                           background: 'rgba(30, 28, 48, 0.8)',
                           border: '1px solid rgba(180, 160, 100, 0.15)',
                           borderTop: `3px solid ${fColor}`,
-                          borderRadius: '5px', opacity: 0.75,
+                          borderRadius: '5px', opacity: 0.55,
                         }}>
                           <div style={{
                             fontSize: '9px', fontWeight: 700, color: fColor,

@@ -1,5 +1,6 @@
 import type { Faction } from './commander';
 import type { ResourceType } from './commander';
+import { isColorMatch } from './commander';
 
 // ── Rarity ──
 
@@ -62,8 +63,7 @@ export interface Decretum {
  * White commanders can cast ANY color.
  */
 export function isDecretumCastable(decretum: Decretum, commanderColor: Faction): boolean {
-  if (commanderColor === 'white') return true;
-  return decretum.color === commanderColor || decretum.color === 'white';
+  return isColorMatch(decretum.color, commanderColor);
 }
 
 /** Sell price in gold based on rarity. */

@@ -2,7 +2,7 @@ import { signal } from '@preact/signals';
 import { navigateTo } from './screens';
 import { selectedCommander } from '../game/game-state';
 import { equippedDoctrines, doctrineCollection, equipDoctrine, unequipDoctrine, upgradeDoctrine, sellDoctrine } from '../game/doctrine-store';
-import { isDoctrineEquippable } from '../game/doctrine';
+import { isDoctrineEquippable, getDoctrineSellPrice } from '../game/doctrine';
 import type { Doctrine } from '../game/doctrine';
 import { DoctrineSlot } from './DoctrineRenderer';
 import { FACTION_COLORS } from '../game/commander';
@@ -81,12 +81,12 @@ export function DoctrineScreen() {
         border: '1px solid rgba(180, 160, 100, 0.15)',
         padding: '24px',
         maxWidth: '90%',
-        width: '680px',
+        width: 'min(680px, 90vw)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
       }}>
         {/* Title */}
         <div style={{
-          fontSize: '16px', fontWeight: 600, color,
+          fontSize: '20px', fontWeight: 600, color,
           letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '4px',
         }}>
           Doctrines
@@ -261,7 +261,7 @@ export function DoctrineScreen() {
                         letterSpacing: '0.8px', fontFamily: 'inherit',
                       }}
                     >
-                      Sell ({8 + (d.currentLevel - 1) * 4}g)
+                      Sell ({getDoctrineSellPrice(d)}g)
                     </button>
                   </div>
                 );

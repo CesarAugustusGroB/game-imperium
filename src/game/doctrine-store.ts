@@ -119,6 +119,8 @@ export function upgradeDoctrine(slotIndex: number): boolean {
  * Returns the gold gained, or 0 if the doctrine was not found in the collection.
  */
 export function sellDoctrine(doctrineId: string): number {
+  // Cannot sell equipped doctrines — unequip first
+  if (equippedDoctrines.value.some(d => d?.id === doctrineId)) return 0;
   const collection = doctrineCollection.value.slice();
   const index = collection.findIndex(d => d.id === doctrineId);
   if (index === -1) return 0;
@@ -175,7 +177,7 @@ export function getExtraEventChoices(): number {
 }
 
 /** Aggregate income-modifier multiplier for a given resource (additive). Returns 0 if none. */
-export function getIncomeModifier(resource: string): number {
+export function getIncomeModifier(resource: ResourceType): number {
   return getActiveEffects()
     .filter((e): e is Extract<DoctrineEffect, { type: 'income-modifier' }> => e.type === 'income-modifier' && e.resource === resource)
     .reduce((sum, e) => sum + e.multiplier, 0);

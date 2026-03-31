@@ -427,7 +427,7 @@ function handleDecretumClick(decretumId: string, state: BattleState): void {
 
 function executeTurncoat(state: BattleState, target: BattleUnit): void {
   // Switch faction to player side
-  (target as any).faction = 'blue';
+  Object.assign(target, { faction: 'blue' as const });
 
   // Set HP to 50% of max (demoralized)
   target.currentHp = Math.floor(target.stats.hp * 0.5);

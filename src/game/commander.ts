@@ -40,6 +40,15 @@ export const FACTION_PRIMARY_RESOURCE: Record<Faction, ResourceType | null> = {
   white: null,
 };
 
+/**
+ * Shared color-lock rule: item color matches commander color,
+ * or item is white (universal), or commander is white (can use any).
+ */
+export function isColorMatch(itemColor: Faction, commanderColor: Faction): boolean {
+  if (commanderColor === 'white') return true;
+  return itemColor === commanderColor || itemColor === 'white';
+}
+
 /** Resource display info. */
 export const RESOURCE_INFO: Record<ResourceType, { icon: string; label: string; color: string }> = {
   gold: { icon: '\uD83D\uDCB0', label: 'Gold', color: '#d4a843' },
