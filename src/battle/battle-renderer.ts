@@ -53,7 +53,7 @@ export class BattleRenderer {
     // Blue team: Viking / Samurai / Companion
     this.loadShield('/asset/viking_round.png', (c) => { this.shields.set('blue:vanguard', c); });
     this.loadShield('/asset/samurai_round.png', (c) => { this.shields.set('blue:reserve', c); });
-    this.loadShield('/asset/companio_gold_round.png', (c) => { this.shields.set('blue:guard', c); });
+    this.loadShield('/asset/war_elephant_round.png', (c) => { this.shields.set('blue:guard', c); });
     // Red team: Spartan Gold / Roman / Spartan
     this.loadShield('/asset/persina_inmortal_round.png', (c) => { this.shields.set('red:vanguard', c); });
     this.loadShield('/asset/roman_round.png', (c) => { this.shields.set('red:reserve', c); });
