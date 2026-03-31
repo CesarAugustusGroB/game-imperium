@@ -1,6 +1,9 @@
 import { signal } from '@preact/signals';
 import type { Commander } from './commander';
 import { initResources, setWarProfiler } from './resources';
+import { addDecretum, resetDecretumHand } from './decretum-store';
+import { resetDoctrineStore } from './doctrine-store';
+import { STARTER_DECRETUM } from '../data/decretum-data';
 
 // ── Core run state ──
 export const selectedCommander = signal<Commander | null>(null);
@@ -44,6 +47,14 @@ export function startNewRun(commander: Commander): void {
   allies.value = [];
 
   veteranStacks.value = 0;
+
+  // Give starter Decretum matching commander color + white
+  resetDecretumHand();
+  for (const d of STARTER_DECRETUM) {
+    if (d.color === commander.faction || d.color === 'white') {
+      addDecretum(d);
+    }
+  }
 }
 
 /**
@@ -54,6 +65,8 @@ export function resetRun(): void {
   selectedCommander.value = null;
   initResources({ gold: 0, faith: 0, influence: 0, momentum: 0 });
   setWarProfiler(false);
+  resetDecretumHand();
+  resetDoctrineStore();
 
   completedSpokes.value = 0;
   threatLevel.value = 0;
