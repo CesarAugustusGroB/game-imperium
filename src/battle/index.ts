@@ -152,7 +152,6 @@ export class BattleMode {
     this.input.detach();
     destroyAbilityBar();
     destroyDecretumBar();
-    this.renderer.destroy();
     document.getElementById('btn-coords')?.removeEventListener('click', this.boundToggleCoords);
     this.onExitCallback();
   }
