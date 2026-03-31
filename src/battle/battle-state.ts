@@ -393,7 +393,7 @@ export class BattleState {
     this.applyDeathCheck(defender);
   }
 
-  private applyDeathCheck(unit: BattleUnit): void {
+  applyDeathCheck(unit: BattleUnit): void {
     if (unit.currentHp <= 0) {
       // Priority 1: prevent-death (Decretum Oracle) — blue units survive at 1 HP
       if (this.preventDeathCount > 0 && unit.faction === 'blue') {

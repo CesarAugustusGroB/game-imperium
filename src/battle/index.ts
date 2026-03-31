@@ -8,6 +8,7 @@ import { VETERAN_BONUS_PER_STACK } from './battle-config';
 import { offsetToAxial } from './hex';
 import { getActiveEffects } from '../game/doctrine-store';
 import type { DoctrineEffect } from '../game/doctrine';
+import { pauseMusic, resumeMusic } from '../ui/music';
 
 export class BattleMode {
   private canvas: HTMLCanvasElement;
@@ -43,6 +44,7 @@ export class BattleMode {
 
   enter(): void {
     this._isVisible = true;
+    pauseMusic();
 
     this._state = new BattleState();
     this._state.generateGrid();
@@ -146,9 +148,11 @@ export class BattleMode {
 
   exit(): void {
     this._isVisible = false;
+    resumeMusic();
     this.input.detach();
     destroyAbilityBar();
     destroyDecretumBar();
+    this.renderer.destroy();
     document.getElementById('btn-coords')?.removeEventListener('click', this.boundToggleCoords);
     this.onExitCallback();
   }

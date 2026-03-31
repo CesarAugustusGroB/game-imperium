@@ -9,7 +9,7 @@ import { NodeMapScreen } from './NodeMapScreen';
 import { PostBattleScreen } from './PostBattleScreen';
 import { DoctrineScreen } from './DoctrineScreen';
 import { CouncilScreen } from './CouncilScreen';
-import { startMusic, pauseMusic, resumeMusic, toggleMute, musicMuted } from './music';
+import { toggleMute, musicMuted } from './music';
 
 // Inject screen transition CSS once
 if (typeof document !== 'undefined' && !document.getElementById('screen-transition-styles')) {
@@ -131,14 +131,6 @@ function ScreenContent() {
 export function App() {
   const screen = currentScreen.value;
   const showResourceBar = screen !== 'title' && screen !== 'commander-select' && screen !== 'battle';
-
-  // Music: start on first non-battle screen, pause during battle
-  if (screen === 'battle') {
-    pauseMusic();
-  } else {
-    startMusic();
-    resumeMusic();
-  }
 
   const showCurtains = screen !== 'battle';
 

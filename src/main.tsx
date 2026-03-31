@@ -58,6 +58,7 @@ effect(() => {
     battleMode.enter();
   } else if (currentScreen.value !== 'battle' && battleActive) {
     battleActive = false;
+    battleMode.exit();
   }
 });
 
