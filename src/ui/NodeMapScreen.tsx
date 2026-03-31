@@ -12,6 +12,7 @@ import { NodeModal } from './NodeModal';
 import { EVENTS } from '../data/events';
 import type { GameEvent, EventChoice } from '../data/events';
 import { getExtraEventChoices } from '../game/doctrine-store';
+import { councilSlots, grantAdvisorXp, tierUpNotices } from '../game/council-store';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('node-map-styles')) {
@@ -527,6 +528,17 @@ export function NodeMapScreen() {
     grantSpokeResource('faith', 2, faction);
     grantSpokeResource('influence', 2, faction);
     grantSpokeResource('momentum', 2, faction);
+
+    // Grant XP to each seated advisor; collect names of those who tiered up
+    const newTierUps: string[] = [];
+    for (const advisor of councilSlots.value) {
+      if (advisor !== null) {
+        const tieredUp = grantAdvisorXp(advisor.id, 1);
+        if (tieredUp) newTierUps.push(advisor.name);
+      }
+    }
+    if (newTierUps.length > 0) tierUpNotices.value = newTierUps;
+
     showSpokeCompleteModal.value = false;
     completedSpokes.value += 1;
     completeSpoke();
@@ -599,12 +611,9 @@ export function NodeMapScreen() {
         {/* Node chain */}
         <div
           class="node-chain-scroll"
-          style={{
-            display: 'flex', alignItems: 'center', gap: '0',
-            padding: '52px 32px 36px', width: '100%', overflowX: 'auto',
-            justifyContent: 'center',
-          }}
+          style={{ width: '100%', overflowX: 'auto', padding: '52px 0 36px' }}
         >
+          <div style={{ display: 'flex', alignItems: 'center', margin: '0 auto', padding: '0 32px', width: 'max-content', minWidth: '100%', justifyContent: 'center' }}>
             {spoke.nodes.map((node, i) => (
               <Fragment key={node.id}>
                 {i > 0 && (
@@ -622,6 +631,7 @@ export function NodeMapScreen() {
                 />
               </Fragment>
             ))}
+          </div>
         </div>
 
         {/* Dynamic hint text */}

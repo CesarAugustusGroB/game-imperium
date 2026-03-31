@@ -16,6 +16,9 @@ export const councilSlots = signal<(Advisor | null)[]>([null, null, null]);
 /** Advisors owned but not currently seated. */
 export const advisorPool = signal<Advisor[]>([]);
 
+/** Names of advisors who tiered up at last spoke completion. Cleared when hub is shown. */
+export const tierUpNotices = signal<string[]>([]);
+
 // ── Slot management ──
 
 /**
@@ -330,12 +333,6 @@ export function startSpokeFromCouncil(): void {
     }
   }
 
-  // Grant 1 XP to each seated advisor
-  for (const advisor of councilSlots.value) {
-    if (advisor !== null) {
-      grantAdvisorXp(advisor.id, 1);
-    }
-  }
 }
 
 /** Reset all council state (called on run end / title screen return). */
