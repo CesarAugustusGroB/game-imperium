@@ -83,6 +83,16 @@ export function HubScreen() {
         >
           Start Spoke
         </button>
+        <button
+          class="hub-btn"
+          onClick={() => navigateTo('doctrine')}
+          style={{
+            background: 'linear-gradient(135deg, rgba(40, 35, 60, 0.7), rgba(30, 25, 45, 0.9))',
+            border: '1px solid rgba(180, 160, 100, 0.25)', color: 'rgba(220, 200, 160, 0.8)',
+          }}
+        >
+          Doctrines
+        </button>
       </div>
     </div>
   );
