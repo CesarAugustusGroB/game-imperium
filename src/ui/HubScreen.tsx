@@ -1,6 +1,5 @@
 import { signal } from '@preact/signals';
 import { navigateTo } from './screens';
-import { startSpoke } from '../game/spoke';
 import { completedSpokes, selectedCommander } from '../game/game-state';
 import { decretumHand } from '../game/decretum-store';
 import { sellDecretum } from '../game/decretum-store';
@@ -73,11 +72,6 @@ export function HubScreen() {
   const commander = selectedCommander.value;
   const faction = commander?.faction;
   const color = faction ? FACTION_COLORS[faction] : '#d4a843';
-
-  function handleStartSpoke() {
-    startSpoke();
-    navigateTo('node-map');
-  }
 
   // ── Off-color items ──
   const offColorScrolls = faction
@@ -183,8 +177,8 @@ export function HubScreen() {
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '240px', marginBottom: '24px' }}>
-          <button class="hub-btn hub-btn-primary" onClick={handleStartSpoke}>
-            Start Spoke
+          <button class="hub-btn hub-btn-primary" onClick={() => navigateTo('council')}>
+            Council
           </button>
           <button
             class="hub-btn"

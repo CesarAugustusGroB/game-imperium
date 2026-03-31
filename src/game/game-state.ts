@@ -6,6 +6,8 @@ import { resetDoctrineStore, getIncomeModifier, addDoctrineToCollection } from '
 import { STARTER_DECRETUM } from '../data/decretum-data';
 import { STARTER_DOCTRINES } from '../data/doctrine-data';
 import { isDoctrineEquippable } from './doctrine';
+import { resetCouncilStore, hireAdvisor } from './council-store';
+import { STARTER_ADVISORS } from '../data/advisor-data';
 
 // ── Core run state ──
 export const selectedCommander = signal<Commander | null>(null);
@@ -66,6 +68,12 @@ export function startNewRun(commander: Commander): void {
       addDoctrineToCollection({ ...d, currentLevel: 1 });
     }
   }
+
+  // Give starter Advisors — all colors (UNRESTRICTED color rule)
+  resetCouncilStore();
+  for (const a of STARTER_ADVISORS) {
+    hireAdvisor({ ...a, currentTier: 1, xp: 0 });
+  }
 }
 
 /**
@@ -79,6 +87,7 @@ export function resetRun(): void {
   setIncomeModifierFn(null);
   resetDecretumHand();
   resetDoctrineStore();
+  resetCouncilStore();
 
   completedSpokes.value = 0;
   threatLevel.value = 0;

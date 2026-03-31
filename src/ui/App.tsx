@@ -8,6 +8,7 @@ import { HubScreen } from './HubScreen';
 import { NodeMapScreen } from './NodeMapScreen';
 import { PostBattleScreen } from './PostBattleScreen';
 import { DoctrineScreen } from './DoctrineScreen';
+import { CouncilScreen } from './CouncilScreen';
 import { startMusic, pauseMusic, resumeMusic, toggleMute, musicMuted } from './music';
 
 // Inject screen transition CSS once
@@ -93,6 +94,8 @@ function ScreenContent() {
       return <HubScreen />;
     case 'doctrine':
       return <DoctrineScreen />;
+    case 'council':
+      return <CouncilScreen />;
     case 'node-map':
       return <NodeMapScreen />;
     case 'post-battle':
