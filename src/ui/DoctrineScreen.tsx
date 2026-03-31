@@ -14,13 +14,17 @@ if (typeof document !== 'undefined' && !document.getElementById('doctrine-screen
   el.textContent = `
     .doctrine-coll-card {
       transition: all 0.2s ease;
-      cursor: pointer;
+      cursor: grab;
     }
     .doctrine-coll-card:hover {
       border-color: rgba(180, 160, 100, 0.5) !important;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
     }
-    .doctrine-coll-card:active { transform: scale(0.98); }
+    .doctrine-coll-card:active { cursor: grabbing; }
+    .doctrine-coll-card.dragging {
+      opacity: 0.35;
+      transform: scale(0.95);
+    }
     .doctrine-sell-btn {
       transition: all 0.15s ease;
       cursor: pointer;
@@ -30,12 +34,25 @@ if (typeof document !== 'undefined' && !document.getElementById('doctrine-screen
       border-color: rgba(220, 100, 100, 0.5) !important;
       color: #e8a0a0 !important;
     }
+    .doctrine-slot-drop {
+      border-radius: 8px;
+      transition: box-shadow 0.15s ease;
+    }
+    .doctrine-slot-drop.drag-over {
+      box-shadow: 0 0 0 2px rgba(240, 208, 128, 0.7), 0 0 16px rgba(240, 208, 128, 0.2);
+    }
   `;
   document.head.appendChild(el);
 }
 
-/** Which slot (0-3) is currently selected for equipping, or null. */
+/** Which slot (0-3) is currently selected for equipping via click, or null. */
 const equipTargetSlot = signal<number | null>(null);
+
+/** ID of the doctrine currently being dragged from the collection. */
+const draggedId = signal<string | null>(null);
+
+/** Which equipped slot the drag is currently hovering over. */
+const dragOverSlot = signal<number | null>(null);
 
 export function DoctrineScreen() {
   const commander = selectedCommander.value;
@@ -61,7 +78,44 @@ export function DoctrineScreen() {
     sellDoctrine(doctrineId);
   }
 
-  // Filter collection to equippable only (for the equip picker)
+  // ── Drag handlers ──
+  function handleDragStart(e: DragEvent, doctrineId: string) {
+    draggedId.value = doctrineId;
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', doctrineId);
+    }
+  }
+
+  function handleDragEnd() {
+    draggedId.value = null;
+    dragOverSlot.value = null;
+  }
+
+  function handleSlotDragOver(e: DragEvent, slotIndex: number) {
+    if (!draggedId.value) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    dragOverSlot.value = slotIndex;
+  }
+
+  function handleSlotDragLeave() {
+    dragOverSlot.value = null;
+  }
+
+  function handleSlotDrop(e: DragEvent, slotIndex: number) {
+    e.preventDefault();
+    dragOverSlot.value = null;
+    const id = draggedId.value ?? e.dataTransfer?.getData('text/plain') ?? null;
+    if (!id) return;
+    const doctrine = collection.find(d => d.id === id);
+    if (!doctrine) return;
+    if (faction && !isDoctrineEquippable(doctrine, faction)) return;
+    equipDoctrine(slotIndex, doctrine);
+    draggedId.value = null;
+  }
+
+  // Filter collection to equippable only (for the click-equip picker)
   const equippable = collection.filter(d => faction && isDoctrineEquippable(d, faction));
 
   return (
@@ -109,19 +163,26 @@ export function DoctrineScreen() {
           marginBottom: '24px',
         }}>
           {slots.map((doctrine, i) => (
-            <DoctrineSlot
+            <div
               key={i}
-              doctrine={doctrine}
-              slot={i}
-              equippable={true}
-              onUpgrade={doctrine ? () => handleUpgrade(i) : undefined}
-              onUnequip={doctrine ? () => handleUnequip(i) : undefined}
-              onEquip={!doctrine ? () => { equipTargetSlot.value = i; } : undefined}
-            />
+              class={`doctrine-slot-drop${dragOverSlot.value === i ? ' drag-over' : ''}`}
+              onDragOver={(e) => handleSlotDragOver(e as unknown as DragEvent, i)}
+              onDragLeave={handleSlotDragLeave}
+              onDrop={(e) => handleSlotDrop(e as unknown as DragEvent, i)}
+            >
+              <DoctrineSlot
+                doctrine={doctrine}
+                slot={i}
+                equippable={true}
+                onUpgrade={doctrine ? () => handleUpgrade(i) : undefined}
+                onUnequip={doctrine ? () => handleUnequip(i) : undefined}
+                onEquip={!doctrine ? () => { equipTargetSlot.value = i; } : undefined}
+              />
+            </div>
           ))}
         </div>
 
-        {/* ── Equip picker (shown when a slot is selected) ── */}
+        {/* ── Equip picker (shown when a slot is selected via click) ── */}
         {equipTargetSlot.value !== null && (
           <div style={{
             width: '100%', marginBottom: '20px',
@@ -204,10 +265,16 @@ export function DoctrineScreen() {
         }}>
           <div style={{
             fontSize: '10px', color: 'rgba(180, 170, 150, 0.5)',
-            letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px',
+            letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '6px',
             textAlign: 'center',
           }}>
             Collection ({collection.length})
+          </div>
+          <div style={{
+            fontSize: '9px', color: 'rgba(180, 170, 150, 0.3)',
+            textAlign: 'center', marginBottom: '10px', fontStyle: 'italic',
+          }}>
+            Drag a doctrine onto a slot to equip it
           </div>
 
           {collection.length === 0 ? (
@@ -222,9 +289,14 @@ export function DoctrineScreen() {
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
               {collection.map(d => {
                 const canEquip = faction ? isDoctrineEquippable(d, faction) : false;
+                const isDragging = draggedId.value === d.id;
                 return (
                   <div
                     key={d.id}
+                    class={`doctrine-coll-card${isDragging ? ' dragging' : ''}`}
+                    draggable={canEquip}
+                    onDragStart={canEquip ? (e) => handleDragStart(e as unknown as DragEvent, d.id) : undefined}
+                    onDragEnd={handleDragEnd}
                     style={{
                       width: '130px', padding: '10px',
                       background: 'rgba(30, 28, 48, 0.8)',
@@ -232,6 +304,7 @@ export function DoctrineScreen() {
                       borderTop: `3px solid ${FACTION_COLORS[d.color]}`,
                       borderRadius: '5px',
                       opacity: canEquip ? 1 : 0.55,
+                      cursor: canEquip ? 'grab' : 'default',
                     }}
                   >
                     <div style={{
