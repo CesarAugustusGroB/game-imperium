@@ -7,7 +7,7 @@ import { doctrineCollection, equippedDoctrines, sellDoctrine } from '../game/doc
 import { isDoctrineEquippable, getDoctrineSellPrice } from '../game/doctrine';
 import { FACTION_COLORS } from '../game/commander';
 import { DecretumCard } from './DecretumRenderer';
-import { councilSlots, startSpokeFromCouncil, generateSpokeFromCouncil } from '../game/council-store';
+import { councilSlots, startSpokeFromCouncil, generateSpokeFromCouncil, tierUpNotices } from '../game/council-store';
 import { getCurrentTier } from '../game/advisor';
 import { ResourceExchangeModal } from './ResourceExchangeModal';
 
@@ -137,6 +137,23 @@ export function HubScreen() {
           boxShadow: '0 4px 16px rgba(0,0,0,0.4)', animation: 'gold-flash 0.2s ease-out',
         }}>
           {goldFlash.value}
+        </div>
+      )}
+
+      {tierUpNotices.value.length > 0 && (
+        <div
+          onClick={() => { tierUpNotices.value = []; }}
+          style={{
+            position: 'fixed', top: '92px', left: '50%', transform: 'translateX(-50%)',
+            background: 'rgba(20, 40, 60, 0.97)', border: '1px solid rgba(100, 160, 220, 0.6)',
+            borderRadius: '6px', padding: '8px 20px',
+            color: '#80c8f0', fontSize: '12px', fontWeight: 700,
+            letterSpacing: '1.5px', textTransform: 'uppercase',
+            zIndex: 300, cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+          }}
+        >
+          {tierUpNotices.value.map(n => `${n} leveled up!`).join(' · ')} &nbsp;✕
         </div>
       )}
 

@@ -1,42 +1,34 @@
-# Plan: S4-12 — Implement off-color selling (Spoils to Gold at Hub)
+# Plan: S5-08 — Implement advisor leveling (XP on spoke completion + tier-up notification)
 
 ## Task
-Add a "Merchant" section to the Hub screen where players can sell off-color Decretum (spoils) and Doctrines for gold. The sell stores and renderer components already exist — this is purely a UI wiring task.
+Move XP grants from spoke start to spoke completion, so advisors earn experience for finishing spokes rather than starting them. Show a tier-up notification banner at the Hub when any advisor levels up.
 
 ## Approach
-Extend HubScreen with a collapsible Merchant panel. Reuse existing DecretumCard and a simple doctrine card for display. Filter items using isDecretumCastable / isDoctrineEquippable to show only off-color ones. Use existing sellDecretum / sellDoctrine store functions for the actual selling.
+1. Remove the XP-grant loop from `startSpokeFromCouncil()` in council-store.ts.
+2. In `handleReturnToHub()` in NodeMapScreen.tsx, loop over seated advisors, call `grantAdvisorXp()`, collect tier-up results.
+3. Store tier-up advisor names in a module-level signal; display a brief banner in HubScreen when that signal is non-empty.
 
 ## Steps
-1. Add imports to HubScreen: decretumHand, doctrineCollection, sell functions, castability/equippability checks, renderers, sell price helpers
-2. Add a Merchant section below the existing buttons showing:
-   - Header with total estimated gold value
-   - "Scrolls" subsection: off-color Decretum with sell buttons via DecretumCard
-   - "Doctrines" subsection: off-color Doctrines with sell buttons
-   - "Sell All Spoils" batch button (scrolls + doctrines)
-3. Show empty state "Nothing to sell" when no off-color items exist
-4. Add gold flash notification on sell (brief floating text)
-5. TypeScript check
+1. Remove XP grant from `startSpokeFromCouncil()` (council-store.ts lines 333-338)
+2. Add XP grant + tier-up collection in `handleReturnToHub()` (NodeMapScreen.tsx ~line 523)
+3. Export a `tierUpNotices` signal from council-store.ts (array of advisor names)
+4. In HubScreen, import `tierUpNotices` and render a dismissible banner when non-empty
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| src/ui/HubScreen.tsx | modify | Add Merchant section with sell UI |
+| `src/game/council-store.ts` | remove XP at start, add tierUpNotices signal | correctness + notification source |
+| `src/ui/NodeMapScreen.tsx` | grant XP at handleReturnToHub, populate tierUpNotices | spoke completion trigger |
+| `src/ui/HubScreen.tsx` | show tier-up banner if tierUpNotices non-empty | user feedback |
 
 ## Design decisions
-- **Single file change**: All logic lives in HubScreen — no new files needed
-- **Reuse DecretumCard**: Already has SELL tag and onSell callback
-- **Inline doctrine cards**: Simpler than DoctrineSlot for a sell-only context
+- **module-level signal in council-store**: keeps notification state co-located with advisor data; HubScreen just reads it
+- **clear on dismiss**: user clicks a close button or banner auto-clears on next navigate-to-hub
 
 ## Test plan
-- Happy paths: off-color scroll appears in Merchant, selling adds gold, item disappears
-- Edge cases: empty merchant (no off-color items), sell all with mixed items
-- Error paths: none expected — store functions handle missing IDs gracefully
-
-## Risks
-| Risk | Mitigation |
-|------|------------|
-| None significant | Stores are tested, renderers exist |
+- Complete a spoke → advisors gain XP, Hub shows tier-up banner if threshold crossed
+- No banner if no tier-up (XP gained but no threshold crossed)
+- Banner dismisses on click
 
 ## Out of scope
-- Confirmation dialog for high-value batch sells (polish for later)
-- Merchant during battle (Hub is not accessible during battle)
+- XP for partial spoke completion (only full completion)
