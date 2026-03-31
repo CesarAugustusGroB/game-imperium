@@ -481,6 +481,12 @@ export function CouncilScreen() {
                 <span style={{ fontWeight: 600, color: 'rgba(240, 208, 128, 0.6)' }}>
                   {spokePreview.label}
                 </span>
+                <span style={{
+                  fontWeight: 700, letterSpacing: '0.5px',
+                  color: spokePreview.posture === 'attacking' ? '#e07050' : '#60a8d0',
+                }}>
+                  {spokePreview.posture === 'attacking' ? '⚔ Attacking' : '🛡 Defending'}
+                </span>
                 <span>~{spokePreview.nodes.length} nodes</span>
               </div>
             </div>

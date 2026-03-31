@@ -558,13 +558,22 @@ export function NodeMapScreen() {
         width: '860px',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
       }}>
-        {/* Spoke label */}
-        <div style={{
-          fontSize: '18px', fontWeight: 600, color,
-          letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '4px',
-          textShadow: `0 2px 12px ${color}50, 0 0 24px ${color}20`,
-        }}>
-          {spoke.label}
+        {/* Spoke label + posture badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+          <div style={{
+            fontSize: '18px', fontWeight: 600, color,
+            letterSpacing: '4px', textTransform: 'uppercase',
+            textShadow: `0 2px 12px ${color}50, 0 0 24px ${color}20`,
+          }}>
+            {spoke.label}
+          </div>
+          <div style={{
+            fontSize: '10px', fontWeight: 700, letterSpacing: '0.8px',
+            color: spoke.posture === 'attacking' ? '#e07050' : '#60a8d0',
+            opacity: 0.85,
+          }}>
+            {spoke.posture === 'attacking' ? '⚔ Attacking' : '🛡 Defending'}
+          </div>
         </div>
 
         {/* Decorative underline */}
