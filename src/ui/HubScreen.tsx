@@ -9,6 +9,7 @@ import { FACTION_COLORS } from '../game/commander';
 import { DecretumCard } from './DecretumRenderer';
 import { councilSlots, startSpokeFromCouncil, generateSpokeFromCouncil } from '../game/council-store';
 import { getCurrentTier } from '../game/advisor';
+import { ResourceExchangeModal } from './ResourceExchangeModal';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
@@ -64,6 +65,7 @@ if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
 const ROMAN: Record<1 | 2 | 3, string> = { 1: 'I', 2: 'II', 3: 'III' };
 
 const goldFlash = signal<string | null>(null);
+const exchangeOpen = signal(false);
 let flashTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function showGoldFlash(amount: number) {
@@ -347,16 +349,33 @@ export function HubScreen() {
             )}
           </div>
 
-          {/* Resource Exchange stub */}
+          {/* Resource Exchange */}
           <div style={PANEL}>
             <div style={{ ...PANEL_TITLE, marginBottom: '8px' }}>Resource Exchange</div>
-            <button disabled style={{ width: '100%', padding: '8px', background: 'rgba(30,28,48,0.5)', border: '1px solid rgba(180,160,100,0.1)', borderRadius: '4px', color: 'rgba(180,170,150,0.28)', fontFamily: 'inherit', fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', cursor: 'not-allowed' }}>
-              Exchange Resources (coming soon)
+            <button
+              class="hub-panel-btn"
+              onClick={() => { exchangeOpen.value = true; }}
+              style={{
+                width: '100%', padding: '9px',
+                background: 'rgba(30,28,48,0.7)',
+                border: '1px solid rgba(180,160,100,0.2)',
+                borderRadius: '4px',
+                color: 'rgba(220,200,160,0.65)',
+                fontFamily: 'inherit', fontSize: '11px', fontWeight: 600,
+                letterSpacing: '1px', textTransform: 'uppercase',
+              }}
+            >
+              ⇄ Exchange Resources
             </button>
           </div>
 
         </div>
       </div>
+
+      {/* Exchange modal */}
+      {exchangeOpen.value && (
+        <ResourceExchangeModal onClose={() => { exchangeOpen.value = false; }} />
+      )}
     </div>
   );
 }
