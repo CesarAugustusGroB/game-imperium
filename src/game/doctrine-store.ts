@@ -158,6 +158,29 @@ export function getActiveEffects(): DoctrineEffect[] {
   return effects;
 }
 
+// ── Typed effect helpers ──
+
+/** Sum of all revive hpPercent values from equipped doctrines. Returns 0 if none. */
+export function getReviveThreshold(): number {
+  return getActiveEffects()
+    .filter((e): e is Extract<DoctrineEffect, { type: 'revive' }> => e.type === 'revive')
+    .reduce((max, e) => Math.max(max, e.hpPercent), 0);
+}
+
+/** Total extra event choices granted by equipped doctrines. */
+export function getExtraEventChoices(): number {
+  return getActiveEffects()
+    .filter((e): e is Extract<DoctrineEffect, { type: 'extra-event-choices' }> => e.type === 'extra-event-choices')
+    .reduce((sum, e) => sum + e.count, 0);
+}
+
+/** Aggregate income-modifier multiplier for a given resource (additive). Returns 0 if none. */
+export function getIncomeModifier(resource: string): number {
+  return getActiveEffects()
+    .filter((e): e is Extract<DoctrineEffect, { type: 'income-modifier' }> => e.type === 'income-modifier' && e.resource === resource)
+    .reduce((sum, e) => sum + e.multiplier, 0);
+}
+
 // ── Reset ──
 
 /** Reset all doctrine state (called on run end / title screen return). */
