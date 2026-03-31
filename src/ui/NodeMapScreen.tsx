@@ -611,12 +611,9 @@ export function NodeMapScreen() {
         {/* Node chain */}
         <div
           class="node-chain-scroll"
-          style={{
-            display: 'flex', alignItems: 'center', gap: '0',
-            padding: '52px 32px 36px', width: '100%', overflowX: 'auto',
-            justifyContent: 'center',
-          }}
+          style={{ width: '100%', overflowX: 'auto', padding: '52px 0 36px' }}
         >
+          <div style={{ display: 'flex', alignItems: 'center', margin: '0 auto', padding: '0 32px', width: 'max-content', minWidth: '100%', justifyContent: 'center' }}>
             {spoke.nodes.map((node, i) => (
               <Fragment key={node.id}>
                 {i > 0 && (
@@ -634,6 +631,7 @@ export function NodeMapScreen() {
                 />
               </Fragment>
             ))}
+          </div>
         </div>
 
         {/* Dynamic hint text */}
