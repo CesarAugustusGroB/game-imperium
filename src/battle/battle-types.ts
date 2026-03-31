@@ -37,6 +37,9 @@ export interface BattleUnit {
   pinnedBy: number | null; // ID of the enemy that pinned this unit (null = free)
   // Semi-real-time action cooldown
   actionCooldown: number; // seconds until this unit can act again
+  // Doctrine: revive (unit revives once at threshold % HP)
+  reviveThreshold: number; // 0 = no revive, >0 = revive at this % of maxHp
+  hasRevived: boolean;
 }
 
 export interface FloatingText {

@@ -12,6 +12,14 @@ export function setWarProfiler(active: boolean): void {
   warProfilerActive = active;
 }
 
+// S4-11: Doctrine income-modifier — same pattern as warProfiler to avoid circular deps.
+// Caller pushes a getter that returns the additive multiplier for a resource type.
+let incomeModifierFn: ((type: ResourceType) => number) | null = null;
+
+export function setIncomeModifierFn(fn: ((type: ResourceType) => number) | null): void {
+  incomeModifierFn = fn;
+}
+
 export interface Resources {
   gold: number;
   faith: number;
@@ -53,6 +61,11 @@ export function addResource(type: ResourceType, amount: number, faction?: Factio
   // S3-11: Crassus War Profiteer — +50% gold from all sources
   if (type === 'gold' && warProfilerActive) {
     actual = Math.floor(actual * 1.5);
+  }
+  // S4-11: Doctrine income-modifier — additive % bonus per resource type
+  if (incomeModifierFn) {
+    const bonus = incomeModifierFn(type);
+    if (bonus > 0) actual = Math.floor(actual * (1 + bonus));
   }
   resourceSignals[type].value += actual;
   return actual;

@@ -6,6 +6,8 @@ import { initAbilityBar, updateAbilityBar, destroyAbilityBar, initDecretumBar, u
 import { selectedCommander, veteranStacks, allianceCount } from '../game/game-state';
 import { VETERAN_BONUS_PER_STACK } from './battle-config';
 import { offsetToAxial } from './hex';
+import { getActiveEffects } from '../game/doctrine-store';
+import type { DoctrineEffect } from '../game/doctrine';
 
 export class BattleMode {
   private canvas: HTMLCanvasElement;
@@ -62,6 +64,73 @@ export class BattleMode {
           const unit = this._state.addUnit('blue', hex, `Allied ${i + 1}`, 'reserve');
           unit.currentHp = Math.floor(unit.stats.hp * ALLY_HP_RATIO);
         }
+      }
+    }
+
+    // Apply Doctrine passive effects at battle start
+    const doctrineEffects: DoctrineEffect[] = getActiveEffects();
+    for (const effect of doctrineEffects) {
+      switch (effect.type) {
+        case 'stat-modifier': {
+          for (const unit of this._state.getFactionUnits('blue')) {
+            if (effect.stat === 'damage') unit.stats.atk = Math.floor(unit.stats.atk * (1 + effect.multiplier));
+            else if (effect.stat === 'armor') unit.stats.def = Math.floor(unit.stats.def * (1 + effect.multiplier));
+            else if (effect.stat === 'maxHp') {
+              unit.stats.hp = Math.floor(unit.stats.hp * (1 + effect.multiplier));
+              unit.currentHp = Math.min(unit.currentHp, unit.stats.hp);
+            }
+          }
+          break;
+        }
+        case 'heal-battle-start': {
+          for (const unit of this._state.getFactionUnits('blue')) {
+            if (effect.amount === 'full') {
+              unit.currentHp = unit.stats.hp;
+            } else {
+              unit.currentHp = Math.min(unit.stats.hp, unit.currentHp + effect.amount);
+            }
+          }
+          break;
+        }
+        case 'free-units': {
+          const freeRows = [2, 4, 6, 8, 10, 12];
+          let spawned = 0;
+          for (const row of freeRows) {
+            if (spawned >= effect.count) break;
+            const hex = offsetToAxial(3, row);
+            if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
+              const u = this._state.addUnit('blue', hex, `Militia ${spawned + 1}`, effect.unitRole);
+              u.currentHp = Math.floor(u.stats.hp * 0.7);
+              spawned++;
+            }
+          }
+          break;
+        }
+        case 'ally-units': {
+          const allyRows = [3, 7, 11];
+          let spawned = 0;
+          for (const row of allyRows) {
+            if (spawned >= effect.count) break;
+            const hex = offsetToAxial(4, row);
+            if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
+              const u = this._state.addUnit('blue', hex, `Allied ${spawned + 1}`, 'reserve');
+              u.currentHp = Math.floor(u.stats.hp * 0.85);
+              spawned++;
+            }
+          }
+          break;
+        }
+        case 'revive': {
+          // Set revive threshold on all blue units — highest threshold wins via max()
+          for (const unit of this._state.getFactionUnits('blue')) {
+            unit.reviveThreshold = Math.max(unit.reviveThreshold, effect.hpPercent);
+            unit.hasRevived = false;
+          }
+          break;
+        }
+        // Other effect types do not apply at battle-start
+        default:
+          break;
       }
     }
 

@@ -11,6 +11,7 @@ import { spendResource, canAfford } from '../game/resources';
 import { NodeModal } from './NodeModal';
 import { EVENTS } from '../data/events';
 import type { GameEvent, EventChoice } from '../data/events';
+import { getExtraEventChoices } from '../game/doctrine-store';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('node-map-styles')) {
@@ -291,7 +292,7 @@ function NodeCircle({ node, isCurrent, color, onActivate }: {
         fontSize: '9px',
         letterSpacing: '1px',
         textTransform: 'uppercase',
-        color: isCurrent ? typeStyle.color : node.resolved ? 'rgba(212, 168, 67, 0.4)' : `${typeStyle.color}50`,
+        color: isCurrent ? typeStyle.color : node.resolved ? 'rgba(212, 168, 67, 0.6)' : `${typeStyle.color}80`,
         whiteSpace: 'nowrap',
         fontWeight: isCurrent ? '600' : '400',
       }}>
@@ -409,7 +410,7 @@ export function NodeMapScreen() {
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
-        background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+        background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
         gap: '16px',
       }}>
         <div style={{ color: 'rgba(200, 190, 160, 0.5)', fontSize: '14px', letterSpacing: '1px' }}>
@@ -462,8 +463,25 @@ export function NodeMapScreen() {
   }
 
   function openEventModal() {
-    const event = EVENTS[nodeIdx % EVENTS.length];
-    activeEvent.value = event;
+    const base = EVENTS[nodeIdx % EVENTS.length];
+    // S4-11: Doctrine extra-event-choices — pull bonus choices from other events
+    const extraCount = getExtraEventChoices();
+    if (extraCount > 0) {
+      const bonusChoices: EventChoice[] = [];
+      for (let i = 1; bonusChoices.length < extraCount && i < EVENTS.length; i++) {
+        const other = EVENTS[(nodeIdx + i) % EVENTS.length];
+        for (const choice of other.choices) {
+          if (bonusChoices.length >= extraCount) break;
+          // Avoid duplicating choices already in the base event
+          if (!base.choices.some(c => c.text === choice.text)) {
+            bonusChoices.push(choice);
+          }
+        }
+      }
+      activeEvent.value = { ...base, choices: [...base.choices, ...bonusChoices] };
+    } else {
+      activeEvent.value = base;
+    }
     showEventModal.value = true;
   }
 
@@ -514,92 +532,106 @@ export function NodeMapScreen() {
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
-      background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+      background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
       paddingTop: '38px',
     }}>
-      {/* Spoke label */}
+      {/* Dark content panel */}
       <div style={{
-        fontSize: '18px', fontWeight: 600, color,
-        letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '4px',
-        textShadow: `0 2px 12px ${color}50, 0 0 24px ${color}20`,
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        background: 'rgba(12, 10, 24, 0.82)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderRadius: '12px',
+        border: '1px solid rgba(180, 160, 100, 0.15)',
+        padding: '28px 24px 24px',
+        maxWidth: '90%',
+        width: '860px',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
       }}>
-        {spoke.label}
-      </div>
-
-      {/* Decorative underline */}
-      <div style={{
-        width: '80px', height: '2px', marginBottom: '8px',
-        background: `linear-gradient(90deg, transparent, ${color}60, transparent)`,
-        borderRadius: '1px',
-      }} />
-
-      {/* Progress text */}
-      <div style={{
-        fontSize: '11px', color: 'rgba(180, 170, 150, 0.4)',
-        letterSpacing: '1px', marginBottom: '40px',
-      }}>
-        Node <span style={{ color: `${color}90`, fontWeight: 600 }}>{Math.min(nodeIdx + 1, spoke.nodes.length)}</span> of {spoke.nodes.length}
-      </div>
-
-      {/* Node chain */}
-      <div
-        class="node-chain-scroll"
-        style={{
-          display: 'flex', alignItems: 'center', gap: '0',
-          padding: '12px 32px', width: '100%', overflowX: 'auto',
-          justifyContent: 'center',
-        }}
-      >
-          {spoke.nodes.map((node, i) => (
-            <Fragment key={node.id}>
-              {i > 0 && (
-                <ConnectingLine
-                  resolved={spoke.nodes[i - 1].resolved}
-                  color={color}
-                  isNextActive={i === nodeIdx && spoke.nodes[i - 1].resolved}
-                />
-              )}
-              <NodeCircle
-                node={node}
-                isCurrent={i === nodeIdx}
-                color={color}
-                onActivate={() => handleNodeActivate(node)}
-              />
-            </Fragment>
-          ))}
-      </div>
-
-      {/* Dynamic hint text */}
-      {!spokeComplete && currentNode && (
+        {/* Spoke label */}
         <div style={{
-          marginTop: '32px', fontSize: '13px',
-          color: `${NODE_STYLES[currentNode.type].color}99`,
-          letterSpacing: '1px',
-          fontStyle: 'italic',
-          textShadow: `0 0 12px ${NODE_STYLES[currentNode.type].glow}`,
+          fontSize: '18px', fontWeight: 600, color,
+          letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '4px',
+          textShadow: `0 2px 12px ${color}50, 0 0 24px ${color}20`,
         }}>
-          {NODE_STYLES[currentNode.type].hint}
+          {spoke.label}
         </div>
-      )}
 
-      {/* Progress bar */}
-      <div style={{
-        marginTop: '16px',
-        width: '280px', maxWidth: '80%',
-        height: '3px',
-        background: 'rgba(40, 36, 60, 0.6)',
-        borderRadius: '2px',
-        overflow: 'hidden',
-        border: '1px solid rgba(80, 70, 50, 0.12)',
-      }}>
+        {/* Decorative underline */}
         <div style={{
-          width: `${progressPct}%`,
-          height: '100%',
-          background: `linear-gradient(90deg, ${color}, ${color}cc)`,
-          borderRadius: '2px',
-          transition: 'width 0.6s ease-out',
-          boxShadow: `0 0 8px ${color}40`,
+          width: '80px', height: '2px', marginBottom: '8px',
+          background: `linear-gradient(90deg, transparent, ${color}60, transparent)`,
+          borderRadius: '1px',
         }} />
+
+        {/* Progress text */}
+        <div style={{
+          fontSize: '11px', color: 'rgba(180, 170, 150, 0.5)',
+          letterSpacing: '1px', marginBottom: '12px',
+        }}>
+          Node <span style={{ color: `${color}90`, fontWeight: 600 }}>{Math.min(nodeIdx + 1, spoke.nodes.length)}</span> of {spoke.nodes.length}
+        </div>
+
+        {/* Node chain */}
+        <div
+          class="node-chain-scroll"
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0',
+            padding: '52px 32px 36px', width: '100%', overflowX: 'auto',
+            justifyContent: 'center',
+          }}
+        >
+            {spoke.nodes.map((node, i) => (
+              <Fragment key={node.id}>
+                {i > 0 && (
+                  <ConnectingLine
+                    resolved={spoke.nodes[i - 1].resolved}
+                    color={color}
+                    isNextActive={i === nodeIdx && spoke.nodes[i - 1].resolved}
+                  />
+                )}
+                <NodeCircle
+                  node={node}
+                  isCurrent={i === nodeIdx}
+                  color={color}
+                  onActivate={() => handleNodeActivate(node)}
+                />
+              </Fragment>
+            ))}
+        </div>
+
+        {/* Dynamic hint text */}
+        {!spokeComplete && currentNode && (
+          <div style={{
+            marginTop: '8px', fontSize: '13px',
+            color: `${NODE_STYLES[currentNode.type].color}`,
+            letterSpacing: '1px',
+            fontStyle: 'italic',
+            textShadow: `0 0 12px ${NODE_STYLES[currentNode.type].glow}`,
+          }}>
+            {NODE_STYLES[currentNode.type].hint}
+          </div>
+        )}
+
+        {/* Progress bar */}
+        <div style={{
+          marginTop: '16px',
+          width: '280px', maxWidth: '80%',
+          height: '3px',
+          background: 'rgba(60, 56, 80, 0.6)',
+          borderRadius: '2px',
+          overflow: 'hidden',
+          border: '1px solid rgba(80, 70, 50, 0.2)',
+        }}>
+          <div style={{
+            width: `${progressPct}%`,
+            height: '100%',
+            background: `linear-gradient(90deg, ${color}, ${color}cc)`,
+            borderRadius: '2px',
+            transition: 'width 0.6s ease-out',
+            boxShadow: `0 0 8px ${color}40`,
+          }} />
+        </div>
       </div>
 
       {/* Retreat button */}

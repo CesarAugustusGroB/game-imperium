@@ -104,6 +104,8 @@ export class BattleState {
       pinnedBy: null,
       actionCooldown: 0.1, // near-zero so all units move together from the start
       crackSeed: id * 7919, // prime for deterministic crack angles
+      reviveThreshold: 0,
+      hasRevived: false,
     };
     this.units.set(unit.id, unit);
     return unit;
@@ -387,10 +389,21 @@ export class BattleState {
 
     // Death check — defender only (no counter-attack)
     if (defender.currentHp <= 0) {
-      defender.currentHp = 0;
-      defender.isDying = true;
-      defender.deathProgress = 0;
-      if (this.selectedUnitId === defender.id) this.selectedUnitId = null;
+      // Doctrine revive: if unit hasn't revived yet and has a threshold, restore HP instead of dying
+      if (!defender.hasRevived && defender.reviveThreshold > 0) {
+        defender.currentHp = Math.max(1, Math.floor(defender.stats.hp * defender.reviveThreshold / 100));
+        defender.hasRevived = true;
+        defender.flashTimer = FLASH_DURATION;
+        this.floatingTexts.push({
+          text: 'REVIVED!', hex: { q: defender.hex.q, r: defender.hex.r },
+          color: '#44ff88', timer: FLOAT_TEXT_DURATION, duration: FLOAT_TEXT_DURATION,
+        });
+      } else {
+        defender.currentHp = 0;
+        defender.isDying = true;
+        defender.deathProgress = 0;
+        if (this.selectedUnitId === defender.id) this.selectedUnitId = null;
+      }
     }
   }
 

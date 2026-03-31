@@ -2,6 +2,7 @@ import { signal } from '@preact/signals';
 import type { Faction, ResourceType } from './commander';
 import { addResource } from './resources';
 import { veteranStacks, spokesSinceLastBattle, selectedCommander } from './game-state';
+import { getActiveEffects } from './doctrine-store';
 
 // ── Node types (S2-01) ──
 
@@ -135,5 +136,13 @@ export function startSpoke(): void {
   // S3-09: Deus Vult — Pope Innocent gains Faith at spoke start
   if (selectedCommander.value?.id === 'innocent') {
     grantSpokeResource('faith', 1, selectedCommander.value.faction);
+  }
+
+  // S4-11: Apply Doctrine spoke-start effects
+  const faction = selectedCommander.value?.faction;
+  for (const effect of getActiveEffects()) {
+    if (effect.type === 'resource-per-spoke') {
+      grantSpokeResource(effect.resource, effect.amount, faction);
+    }
   }
 }

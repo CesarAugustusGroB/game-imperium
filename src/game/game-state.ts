@@ -1,9 +1,11 @@
 import { signal } from '@preact/signals';
 import type { Commander } from './commander';
-import { initResources, setWarProfiler } from './resources';
+import { initResources, setWarProfiler, setIncomeModifierFn } from './resources';
 import { addDecretum, resetDecretumHand } from './decretum-store';
-import { resetDoctrineStore } from './doctrine-store';
+import { resetDoctrineStore, getIncomeModifier, addDoctrineToCollection } from './doctrine-store';
 import { STARTER_DECRETUM } from '../data/decretum-data';
+import { STARTER_DOCTRINES } from '../data/doctrine-data';
+import { isDoctrineEquippable } from './doctrine';
 
 // ── Core run state ──
 export const selectedCommander = signal<Commander | null>(null);
@@ -37,6 +39,7 @@ export function startNewRun(commander: Commander): void {
   selectedCommander.value = commander;
   initResources(commander.startingResources);
   setWarProfiler(commander.id === 'crassus');
+  setIncomeModifierFn(getIncomeModifier);
 
   completedSpokes.value = 0;
   threatLevel.value = 0;
@@ -55,6 +58,14 @@ export function startNewRun(commander: Commander): void {
       addDecretum(d);
     }
   }
+
+  // Give starter Doctrines matching commander color + white (fresh copies)
+  resetDoctrineStore();
+  for (const d of STARTER_DOCTRINES) {
+    if (isDoctrineEquippable(d, commander.faction)) {
+      addDoctrineToCollection({ ...d, currentLevel: 1 });
+    }
+  }
 }
 
 /**
@@ -65,6 +76,7 @@ export function resetRun(): void {
   selectedCommander.value = null;
   initResources({ gold: 0, faith: 0, influence: 0, momentum: 0 });
   setWarProfiler(false);
+  setIncomeModifierFn(null);
   resetDecretumHand();
   resetDoctrineStore();
 
