@@ -37,11 +37,16 @@
       #btn-coords:hover { background: rgba(20, 18, 36, 0.9); border-color: rgba(200, 180, 120, 0.6); color: #f0d080; }
       #btn-coords.active { border-color: #f0d080; color: #f0d080; background: rgba(240, 208, 128, 0.1); }
 
+      /* Bottom battle bar — holds ability + decretum side by side */
+      #battle-bottom-bar {
+        position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+        z-index: 10; display: flex; gap: 16px; align-items: flex-end;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        pointer-events: none;
+      }
       /* Ability bar */
       #ability-bar {
-        position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
-        z-index: 10; display: flex; gap: 8px; align-items: center;
-        font-family: 'Segoe UI', system-ui, sans-serif;
+        display: flex; gap: 8px; align-items: center;
         pointer-events: none;
       }
       #ability-bar .ability-btn {
@@ -82,22 +87,19 @@
         letter-spacing: 0.5px; margin-top: 2px;
       }
       #decretum-bar {
-        position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
-        z-index: 10; display: flex; gap: 6px; align-items: center;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-        pointer-events: none; max-width: 80%;
-        overflow-x: auto;
+        display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
+        pointer-events: none;
       }
       #decretum-bar .decretum-btn {
         pointer-events: auto;
         background: rgba(10, 10, 20, 0.85);
         border: 1px solid rgba(180, 160, 100, 0.3);
-        border-radius: 4px; padding: 4px 10px;
+        border-radius: 4px; padding: 6px 8px;
         color: rgba(200, 180, 140, 0.8);
-        font-family: inherit; font-size: 10px;
+        font-family: inherit; font-size: 9px;
         cursor: pointer; transition: all 0.2s ease;
-        min-width: 70px; text-align: center;
-        white-space: nowrap;
+        min-width: 0; width: 120px; text-align: center;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       }
       #decretum-bar .decretum-btn:hover:not(:disabled) {
         border-color: rgba(220, 190, 100, 0.6);
@@ -121,8 +123,10 @@
         <span class="battle-hint">Click unit to select &bull; Right-click to move &bull; ESC to restart</span>
       </div>
       <button id="btn-coords">COORDS</button>
-      <div id="ability-bar"></div>
-      <div id="decretum-bar"></div>
+      <div id="battle-bottom-bar">
+        <div id="ability-bar"></div>
+        <div id="decretum-bar"></div>
+      </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

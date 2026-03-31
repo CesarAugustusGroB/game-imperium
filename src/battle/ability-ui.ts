@@ -326,7 +326,10 @@ export function updateDecretumBar(): void {
  */
 export function destroyDecretumBar(): void {
   const bar = document.getElementById('decretum-bar');
-  if (bar) bar.innerHTML = '';
+  if (bar) {
+    bar.innerHTML = '';
+    delete bar.dataset.renderKey; // clear cache so next battle re-renders
+  }
   decretumState = null;
 }
 
