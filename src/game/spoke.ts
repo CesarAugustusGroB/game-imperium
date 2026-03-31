@@ -3,6 +3,7 @@ import type { Faction, ResourceType } from './commander';
 import { spendResource } from './resources';
 import { veteranStacks, spokesSinceLastBattle, selectedCommander, threatLevel } from './game-state';
 import { getActiveEffects } from './doctrine-store';
+import type { DoctrineEffect } from './doctrine';
 import type { Posture } from './advisor';
 import { addResource } from './resources';
 
@@ -164,8 +165,8 @@ export function tickSeason(): SeasonTickResult | null {
 
   // Compute upkeep reduction from doctrines
   const reductionPercent = getActiveEffects()
-    .filter(e => e.type === 'upkeep-reduction')
-    .reduce((sum, e) => sum + (e as { percent: number }).percent, 0);
+    .filter((e): e is Extract<DoctrineEffect, { type: 'upkeep-reduction'; percent: number }> => e.type === 'upkeep-reduction' && 'percent' in e)
+    .reduce((sum, e) => sum + e.percent, 0);
   const reductionMultiplier = Math.max(0, 1 - reductionPercent / 100);
 
   // Compute raw upkeep
