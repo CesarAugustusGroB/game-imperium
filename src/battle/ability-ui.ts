@@ -1,11 +1,13 @@
 import { selectedCommander } from '../game/game-state';
-import { canAfford, spendResource } from '../game/resources';
-import { RESOURCE_INFO } from '../game/commander';
+import { canAfford, spendResource, addResource } from '../game/resources';
+import { RESOURCE_INFO, FACTION_COLORS } from '../game/commander';
 import type { Commander, CommanderAbility } from '../game/commander';
 import type { BattleState } from './battle-state';
 import type { BattleUnit } from './battle-types';
 import { SHAKE_DURATION, FLASH_DURATION, ROLE_STATS } from './battle-config';
 import { hexToCol } from './battle-zones';
+import { getHandWithCastability, castDecretum } from '../game/decretum-store';
+import { getDecretumTargeting } from '../game/decretum';
 
 /** Abilities that fire immediately (no targeting needed). */
 const IMMEDIATE_ABILITIES = new Set(['Fury Charge']);
@@ -295,6 +297,130 @@ function executeBuyReinforcements(state: BattleState, hex: { q: number; r: numbe
     text: 'HIRED!', hex: { q: hex.q, r: hex.r },
     color: '#d4a843', timer: 0.8, duration: 0.8,
   });
+}
+
+// ── Decretum Bar ──
+
+let decretumState: BattleState | null = null;
+
+/**
+ * Initialize the decretum hand bar for the current battle.
+ * Renders a button for each scroll in the player's hand.
+ * Must be called once when a battle starts.
+ */
+export function initDecretumBar(state: BattleState): void {
+  decretumState = state;
+  renderDecretumBar();
+}
+
+/**
+ * Re-render the decretum bar each frame so castability stays in sync.
+ * Call alongside updateAbilityBar() from the update loop.
+ */
+export function updateDecretumBar(): void {
+  renderDecretumBar();
+}
+
+/**
+ * Tear down the decretum bar at the end of a battle.
+ */
+export function destroyDecretumBar(): void {
+  const bar = document.getElementById('decretum-bar');
+  if (bar) bar.innerHTML = '';
+  decretumState = null;
+}
+
+function renderDecretumBar(): void {
+  const bar = document.getElementById('decretum-bar');
+  if (!bar || !decretumState) return;
+
+  const hand = getHandWithCastability();
+
+  // Only re-render if the content has changed (compare by id list)
+  const newIds = hand.map(h => h.decretum.id + ':' + h.castable).join(',');
+  if (bar.dataset.renderKey === newIds) return;
+  bar.dataset.renderKey = newIds;
+
+  bar.innerHTML = '';
+
+  const state = decretumState;
+  const commander = selectedCommander.value;
+  const factionColor = commander ? FACTION_COLORS[commander.faction] : 'rgba(180, 160, 100, 0.5)';
+
+  for (const { decretum: d, castable } of hand) {
+    const btn = document.createElement('button');
+    btn.className = 'decretum-btn';
+    btn.title = d.description;
+
+    const rarityDot = d.rarity === 'legendary' ? '✦' : d.rarity === 'rare' ? '◆' : '·';
+    btn.textContent = `${rarityDot} ${d.name}`;
+
+    if (castable && state.phase === 'fighting') {
+      btn.style.borderColor = factionColor;
+      btn.style.color = factionColor;
+      btn.addEventListener('click', () => handleDecretumClick(d.id, state));
+    } else {
+      btn.disabled = true;
+      if (!castable) btn.classList.add('decretum-spoils');
+    }
+
+    bar.appendChild(btn);
+  }
+}
+
+function handleDecretumClick(decretumId: string, state: BattleState): void {
+  if (state.phase !== 'fighting') return;
+
+  // If already targeting this decretum, cancel
+  if (state.targetingAbility === `decretum:${decretumId}`) {
+    state.setTargeting(null);
+    renderDecretumBar();
+    return;
+  }
+
+  const hand = getHandWithCastability();
+  const entry = hand.find(h => h.decretum.id === decretumId);
+  if (!entry || !entry.castable) return;
+
+  const d = entry.decretum;
+  const targeting = getDecretumTargeting(d.effect);
+
+  if (targeting === 'immediate') {
+    // Handle resource-gain before applying battle effect
+    if (d.effect.type === 'resource-gain') {
+      addResource(d.effect.resource, d.effect.amount);
+    }
+    if (castDecretum(d.id)) {
+      state.applyDecretumEffect(d.effect);
+    }
+    renderDecretumBar();
+    return;
+  }
+
+  // Targeted effects: enter targeting mode and wire onAbilityExecute
+  state.setTargeting(`decretum:${d.id}`);
+  renderDecretumBar();
+
+  // Patch onAbilityExecute to intercept decretum targeting callbacks
+  const prevExecute = state.onAbilityExecute;
+  state.onAbilityExecute = (abilityId: string, targetHex) => {
+    if (abilityId.startsWith('decretum:')) {
+      const id = abilityId.slice('decretum:'.length);
+      const h = getHandWithCastability().find(e => e.decretum.id === id);
+      if (h && h.castable) {
+        if (castDecretum(id)) {
+          state.applyDecretumEffect(h.decretum.effect, targetHex);
+        }
+      }
+      state.setTargeting(null);
+      renderDecretumBar();
+      // Restore the previous handler
+      state.onAbilityExecute = prevExecute;
+      return;
+    }
+    // Fall through to commander ability handler
+    if (prevExecute) prevExecute(abilityId, targetHex);
+  };
 }
 
 // ── Turncoat (Augustus) ──

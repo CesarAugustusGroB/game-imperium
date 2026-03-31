@@ -11,6 +11,7 @@ import {
   RED_VANGUARD_ROWS, RED_VANGUARD_COL, RED_RESERVE_ROWS, RED_RESERVE_COL,
   RED_GUARD_ROWS, RED_GUARD_COL,
 } from './battle-config';
+import type { DecretumEffect } from '../game/decretum';
 
 // Re-export types for backward compatibility
 export type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder };
@@ -546,6 +547,88 @@ export class BattleState {
     }
 
     this.updateCapture(dt);
+  }
+
+  // ── Decretum Effects ──
+
+  applyDecretumEffect(effect: DecretumEffect, targetHex?: Hex): void {
+    switch (effect.type) {
+      case 'heal': {
+        if (effect.target === 'all') {
+          for (const unit of this.getFactionUnits('blue')) {
+            unit.currentHp = Math.min(unit.stats.hp, unit.currentHp + Math.floor(unit.stats.hp * effect.amount));
+            unit.flashTimer = FLASH_DURATION;
+          }
+        } else if (targetHex) {
+          const unit = this.getUnitAt(targetHex);
+          if (unit && unit.faction === 'blue') {
+            unit.currentHp = Math.min(unit.stats.hp, unit.currentHp + Math.floor(unit.stats.hp * effect.amount));
+            unit.flashTimer = FLASH_DURATION;
+          }
+        }
+        break;
+      }
+      case 'damage': {
+        if (effect.target === 'area') {
+          // Area damage hits ALL units (including friendly — the Riot)
+          for (const unit of this.units.values()) {
+            if (unit.isDying) continue;
+            unit.currentHp -= effect.amount;
+            unit.shakeTimer = SHAKE_DURATION;
+            unit.flashTimer = FLASH_DURATION;
+            if (unit.currentHp <= 0) { unit.currentHp = 0; unit.isDying = true; }
+          }
+        } else if (targetHex) {
+          const unit = this.getUnitAt(targetHex);
+          if (unit && unit.faction === 'red') {
+            unit.currentHp -= effect.amount;
+            unit.shakeTimer = SHAKE_DURATION;
+            unit.flashTimer = FLASH_DURATION;
+            if (unit.currentHp <= 0) { unit.currentHp = 0; unit.isDying = true; }
+          }
+        }
+        break;
+      }
+      case 'buff': {
+        for (const unit of this.getFactionUnits('blue')) {
+          if (effect.stat === 'atk') unit.stats.atk = Math.floor(unit.stats.atk * (1 + effect.multiplier));
+          else if (effect.stat === 'def') unit.stats.def = Math.floor(unit.stats.def * (1 + effect.multiplier));
+          else if (effect.stat === 'hp') unit.stats.hp = Math.floor(unit.stats.hp * (1 + effect.multiplier));
+          else if (effect.stat === 'agi') unit.stats.agi = Math.floor(unit.stats.agi * (1 + effect.multiplier));
+        }
+        this.floatingTexts.push({ text: 'BUFFED!', hex: { q: 5, r: 7 }, color: '#ffd700', timer: 0.8, duration: 0.8 });
+        break;
+      }
+      case 'spawn': {
+        // Spawn units at back row
+        const rows = [3, 5, 7, 9, 11];
+        let spawned = 0;
+        for (const row of rows) {
+          if (spawned >= effect.count) break;
+          const hex = offsetToAxial(2, row);
+          if (this.isValidHex(hex) && !this.getUnitAt(hex)) {
+            const unit = this.addUnit('blue', hex, `Militia ${spawned + 1}`, effect.unitRole);
+            unit.currentHp = Math.floor(unit.stats.hp * 0.6); // militia are weak
+            spawned++;
+          }
+        }
+        break;
+      }
+      case 'resource-gain': {
+        // Handled by decretum-store before applyDecretumEffect is called
+        break;
+      }
+      case 'prevent-death': {
+        // TODO: implement death prevention tracking
+        break;
+      }
+      case 'reveal':
+      case 'event-modifier':
+      case 'upkeep-reduction':
+      case 'debuff':
+        // These are non-battle effects or future implementations
+        break;
+    }
   }
 
   // ── Setup ──
