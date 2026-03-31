@@ -864,4 +864,10 @@ export class BattleRenderer {
     ctx.fillStyle = style;
     ctx.fill();
   }
+
+  destroy(): void {
+    this.shields.clear();
+    this.bgImage = null;
+    this.starImage = null;
+  }
 }
