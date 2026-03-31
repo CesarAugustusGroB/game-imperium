@@ -151,6 +151,11 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
       color: #f0d080 !important;
     }
     .empty-state-btn:active { transform: scale(0.97); }
+
+    @keyframes node-modal-fade {
+      from { opacity: 0; transform: scale(0.95) translateY(-4px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
   `;
   document.head.appendChild(el);
 }
@@ -613,7 +618,7 @@ export function NodeMapScreen() {
           class="node-chain-scroll"
           style={{ width: '100%', overflowX: 'auto', padding: '52px 0 36px' }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', margin: '0 auto', padding: '0 32px', width: 'max-content', minWidth: '100%', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', margin: '0 auto', padding: `0 clamp(12px, 5vw, 32px)`, width: 'max-content', minWidth: '100%', justifyContent: 'center' }}>
             {spoke.nodes.map((node, i) => (
               <Fragment key={node.id}>
                 {i > 0 && (
