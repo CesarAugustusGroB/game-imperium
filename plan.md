@@ -1,34 +1,33 @@
-# Plan: S5-08 — Implement advisor leveling (XP on spoke completion + tier-up notification)
+# Plan: S6-01 — Define Province type
 
 ## Task
-Move XP grants from spoke start to spoke completion, so advisors earn experience for finishing spokes rather than starting them. Show a tier-up notification banner at the Hub when any advisor levels up.
+Define the TypeScript Province type for the empire meta-layer. Conquered spokes become Provinces with a Ledger (Population, Income, Unrest, Expenses) and 5-color Investments.
 
 ## Approach
-1. Remove the XP-grant loop from `startSpokeFromCouncil()` in council-store.ts.
-2. In `handleReturnToHub()` in NodeMapScreen.tsx, loop over seated advisors, call `grantAdvisorXp()`, collect tier-up results.
-3. Store tier-up advisor names in a module-level signal; display a brief banner in HubScreen when that signal is non-empty.
+Create `src/game/province.ts` with the type definitions, constants, and pure helper functions. No signals or store yet — those come in later S6 tasks.
 
 ## Steps
-1. Remove XP grant from `startSpokeFromCouncil()` (council-store.ts lines 333-338)
-2. Add XP grant + tier-up collection in `handleReturnToHub()` (NodeMapScreen.tsx ~line 523)
-3. Export a `tierUpNotices` signal from council-store.ts (array of advisor names)
-4. In HubScreen, import `tierUpNotices` and render a dismissible banner when non-empty
+1. Define `InvestmentType` (6 investment structures across 5 colors)
+2. Define `Investment` interface (type + level 1-3)
+3. Define `Province` interface (id, name, population, income, unrest, expenses, investments, governorId)
+4. Export `INVESTMENT_DATA` — name, color, description, per-level effects
+5. Export `getProvinceIncome(province)` — sums base income + investment bonuses
+6. Export `getProvinceExpenses(province)` — base upkeep + investment costs
+7. Export `getUnrestModifier(province)` — net unrest per spoke from investments
+8. Export `createProvince(name)` — factory with sensible defaults
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `src/game/council-store.ts` | remove XP at start, add tierUpNotices signal | correctness + notification source |
-| `src/ui/NodeMapScreen.tsx` | grant XP at handleReturnToHub, populate tierUpNotices | spoke completion trigger |
-| `src/ui/HubScreen.tsx` | show tier-up banner if tierUpNotices non-empty | user feedback |
+| `src/game/province.ts` | create | Province type + helpers |
 
 ## Design decisions
-- **module-level signal in council-store**: keeps notification state co-located with advisor data; HubScreen just reads it
-- **clear on dismiss**: user clicks a close button or banner auto-clears on next navigate-to-hub
-
-## Test plan
-- Complete a spoke → advisors gain XP, Hub shows tier-up banner if threshold crossed
-- No banner if no tier-up (XP gained but no threshold crossed)
-- Banner dismisses on click
+- **InvestmentType** uses 5 colors: castrum (red), basilica (blue), pantheon (gold), market (purple), insula (white), aqueduct (purple)
+- **Income** typed as `Partial<Record<ResourceType, number>>` — provinces don't need to produce every resource
+- **Expenses** is always gold — simplest model
+- **No signals** — this task is types+logic only; the store/UI comes in S6-02+
 
 ## Out of scope
-- XP for partial spoke completion (only full completion)
+- Province store / signals
+- Governor type (separate S6 task)
+- UI
