@@ -195,7 +195,7 @@ export function CommanderSelectScreen() {
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       minHeight: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
-      background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+      background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
       padding: '40px 16px',
     }}>
       <div style={{

@@ -112,6 +112,12 @@
         border-color: rgba(80, 80, 80, 0.3);
         opacity: 0.4;
       }
+      @media (max-width: 600px) {
+        #battle-bottom-bar { gap: 8px; }
+        #ability-bar .ability-btn { min-width: 80px; padding: 6px 10px; font-size: 11px; }
+        #decretum-bar { grid-template-columns: 1fr 1fr 1fr; }
+        #decretum-bar .decretum-btn { width: auto; min-width: 60px; }
+      }
     </style>
   </head>
   <body>

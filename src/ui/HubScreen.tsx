@@ -350,9 +350,9 @@ export function HubScreen() {
                         const price = getDoctrineSellPrice(d);
                         const fColor = FACTION_COLORS[d.color];
                         return (
-                          <div key={d.id} style={{ width: '110px', padding: '8px', background: 'rgba(30,28,48,0.8)', border: '1px solid rgba(180,160,100,0.12)', borderTop: `3px solid ${fColor}`, borderRadius: '5px', opacity: 0.55 }}>
-                            <div style={{ fontSize: '8px', fontWeight: 700, color: fColor, letterSpacing: '0.8px', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>{d.name}</div>
-                            <div style={{ fontSize: '8px', color: 'rgba(200,190,160,0.38)', lineHeight: '1.4', marginBottom: '6px' }}>{d.levels[d.currentLevel - 1].description}</div>
+                          <div key={d.id} style={{ width: '110px', padding: '8px', background: 'rgba(30,28,48,0.45)', border: '1px solid rgba(180,160,100,0.06)', borderTop: `3px solid ${fColor}`, borderRadius: '5px' }}>
+                            <div style={{ fontSize: '8px', fontWeight: 700, color: `${fColor}88`, letterSpacing: '0.8px', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>{d.name}</div>
+                            <div style={{ fontSize: '8px', color: 'rgba(200,190,160,0.38)', lineHeight: '1.4', marginBottom: '6px', opacity: 0.45 }}>{d.levels[d.currentLevel - 1].description}</div>
                             <button class="merchant-sell-btn" onClick={() => handleSellDoctrine(d.id)} style={{ width: '100%', padding: '3px 0', background: 'rgba(80,60,20,0.5)', border: '1px solid rgba(240,208,128,0.22)', borderRadius: '3px', color: '#f0d080', fontSize: '8px', fontWeight: 600, letterSpacing: '0.8px', fontFamily: 'inherit' }}>
                               Sell ({price}g)
                             </button>

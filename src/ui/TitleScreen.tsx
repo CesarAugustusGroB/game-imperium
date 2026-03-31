@@ -95,7 +95,7 @@ export function TitleScreen() {
         </button>
       </div>
 
-      <div style={versionStyle}>v0.4.0 — Sprint 4</div>
+      <div style={versionStyle}>v0.5.0 — Sprint 5</div>
     </div>
   );
 }

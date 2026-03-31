@@ -213,10 +213,7 @@ function executeMiracle(state: BattleState, target: BattleUnit): void {
       color: '#ffd700', timer: 0.8, duration: 0.8,
     });
     // Death check
-    if (target.currentHp <= 0) {
-      target.currentHp = 0;
-      target.isDying = true;
-    }
+    state.applyDeathCheck(target);
   }
 }
 
@@ -258,10 +255,7 @@ function executeFuryCharge(state: BattleState): void {
             text: 'CHARGE!', hex: { q: occupant.hex.q, r: occupant.hex.r },
             color: '#ff4444', timer: 0.8, duration: 0.8,
           });
-          if (occupant.currentHp <= 0) {
-            occupant.currentHp = 0;
-            occupant.isDying = true;
-          }
+          state.applyDeathCheck(occupant);
         }
         break; // blocked by unit (friendly or enemy after impact)
       }

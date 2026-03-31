@@ -108,6 +108,7 @@ export function fireAdvisor(advisorId: string): number {
  * Returns true if the advisor tiered up.
  */
 export function grantAdvisorXp(advisorId: string, amount: number): boolean {
+  if (amount <= 0) return false;
   const slots = councilSlots.value.slice() as (Advisor | null)[];
   const pool = advisorPool.value.slice();
 
@@ -339,4 +340,5 @@ export function startSpokeFromCouncil(): void {
 export function resetCouncilStore(): void {
   councilSlots.value = [null, null, null];
   advisorPool.value = [];
+  tierUpNotices.value = [];
 }

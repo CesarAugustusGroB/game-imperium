@@ -7,6 +7,7 @@ import { STARTER_DECRETUM } from '../data/decretum-data';
 import { STARTER_DOCTRINES } from '../data/doctrine-data';
 import { isDoctrineEquippable } from './doctrine';
 import { resetCouncilStore, hireAdvisor } from './council-store';
+import { resetSpoke } from './spoke';
 import { STARTER_ADVISORS } from '../data/advisor-data';
 
 // ── Core run state ──
@@ -88,6 +89,7 @@ export function resetRun(): void {
   resetDecretumHand();
   resetDoctrineStore();
   resetCouncilStore();
+  resetSpoke();
 
   completedSpokes.value = 0;
   threatLevel.value = 0;

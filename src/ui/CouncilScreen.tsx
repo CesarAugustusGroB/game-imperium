@@ -360,7 +360,7 @@ export function CouncilScreen() {
                 No advisors available in pool
               </div>
             ) : (
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-start', paddingLeft: '4px' }}>
                 {pool.map(advisor => {
                   const fColor = FACTION_COLORS[advisor.color];
                   const tier = advisor.currentTier;

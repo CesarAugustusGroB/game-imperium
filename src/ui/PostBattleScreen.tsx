@@ -182,7 +182,7 @@ export function PostBattleScreen() {
         border: '1px solid rgba(180, 160, 100, 0.15)',
         padding: '36px 40px 32px',
         maxWidth: '90%',
-        width: '480px',
+        width: 'min(480px, 85vw)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
       }}>
         {/* Banner */}
