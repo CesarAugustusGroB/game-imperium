@@ -241,6 +241,18 @@ export function generateSpokeFromCouncil(): Spoke {
   }
   const posture = defendingVotes > attackingVotes ? 'defending' : 'attacking';
 
+  // ── Posture node bias ──
+  // Apply after weight summation so advisors' intent is preserved, then nudged by posture.
+  // Floor all weights at 1 to keep weightedPick() safe.
+  if (posture === 'attacking') {
+    summedWeights.battle = (summedWeights.battle ?? 0) + 2;
+    summedWeights.rest   = Math.max(1, (summedWeights.rest ?? 0) - 1);
+  } else {
+    summedWeights.rest   = (summedWeights.rest  ?? 0) + 2;
+    summedWeights.event  = (summedWeights.event ?? 0) + 1;
+    summedWeights.battle = Math.max(1, (summedWeights.battle ?? 0) - 1);
+  }
+
   // ── Label ──
   const labelPool = posture === 'attacking' ? ATTACKING_LABELS : DEFENDING_LABELS;
   const label = pickRandom(labelPool);
