@@ -1,31 +1,37 @@
-# Plan: S6-02 — Define Governor type (name, traits, color affinity, hire cost)
+# Plan: S6-03 — Build Province creation (conquered spoke becomes province)
 
 ## Task
-Define the Governor type system for province management. Governors are assignable to provinces (via `governorId` already on Province), have color affinity (Faction), tiered traits, and per-tier hire costs. Follows the Advisor/Doctrine pattern of discriminated unions + fixed 3-tier tuples.
+When a player completes a spoke (all nodes resolved, returns to hub), the spoke should become a Province. Need a province store (signals), creation trigger in the spoke-completion flow, and reset on run end.
 
 ## Approach
-Single file `src/game/governor.ts` containing all types, helpers, and a starter data set of ~6 governors (one per faction + one white universal). Mirrors `advisor.ts` structure exactly. No store or UI — those are separate tasks.
+1. Create `src/game/province-store.ts` with a `provinces` signal and management functions.
+2. Wire province creation into `handleReturnToHub()` in NodeMapScreen.tsx — the spoke's label becomes the province name, spokeGains become baseIncome.
+3. Add `resetProvinceStore()` to both `startNewRun()` and `resetRun()` in game-state.ts.
 
 ## Steps
-1. Create `src/game/governor.ts` with GovernorTrait union, GovernorTier, Governor interface, helpers
-2. Create `src/data/governor-data.ts` with ~6 starter governor definitions
-3. Type-check with `npx tsc --noEmit`
+1. Create `province-store.ts` — `provinces` signal, `addProvince()`, `resetProvinceStore()`
+2. In `handleReturnToHub()` — call `createProvince(spoke.label)` with spokeGains as baseIncome, add to store
+3. Wire `resetProvinceStore()` into game-state.ts `startNewRun()` and `resetRun()`
+4. Type-check
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `src/game/governor.ts` | create | Type definitions + helpers |
-| `src/data/governor-data.ts` | create | Starter governor data |
+| `src/game/province-store.ts` | create | Province signals + management |
+| `src/ui/NodeMapScreen.tsx` | modify | Trigger province creation in handleReturnToHub |
+| `src/game/game-state.ts` | modify | Wire resetProvinceStore into start/reset |
 
 ## Design decisions
-- **GovernorTrait as discriminated union**: matches DoctrineEffect pattern, allows multiple traits per tier
-- **hireCost on GovernorTier**: cost scales with tier (like Doctrine upgradeCost)
-- **color: Faction**: uses standard `isColorMatch()` rule (unlike advisors which are unrestricted)
-- **No XP/leveling on Governor**: Governors don't level — they're hired at their tier. Keeps them distinct from Advisors.
+- **baseIncome from spokeGains**: the resources earned during the spoke become the province's recurring income — makes spoke performance meaningful
+- **Scale spokeGains down**: raw spokeGains are one-time totals; divide by spoke duration to get per-spoke income rate
+- **unrest starts at 20**: newly conquered territory has some initial unrest (from createProvince defaults)
 
 ## Test plan
-- `npx tsc --noEmit` passes with zero errors
+- `npx tsc --noEmit` passes
+- Complete a spoke → province appears in store with spoke label as name
+- Start new run → provinces reset to empty
 
 ## Out of scope
-- Governor store (hire/assign/remove signals) — separate task
-- Governor UI (province screen, hire modal) — separate task
+- Province list UI in HubScreen (separate task)
+- Governor assignment UI
+- Investment building UI
