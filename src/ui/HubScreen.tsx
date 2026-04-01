@@ -7,7 +7,7 @@ import { doctrineCollection, equippedDoctrines, sellDoctrine } from '../game/doc
 import { isDoctrineEquippable, getDoctrineSellPrice } from '../game/doctrine';
 import { FACTION_COLORS } from '../game/commander';
 import { DecretumCard } from './DecretumRenderer';
-import { councilSlots, startSpokeFromCouncil, generateSpokeFromCouncil, tierUpNotices } from '../game/council-store';
+import { councilSlots, startSpokeFromCouncil, plannedSpoke, tierUpNotices } from '../game/council-store';
 import { getCurrentTier } from '../game/advisor';
 import { ResourceExchangeModal } from './ResourceExchangeModal';
 import { provinces } from '../game/province-store';
@@ -96,7 +96,7 @@ export function HubScreen() {
 
   const slots = councilSlots.value;
   const seatedCount = slots.filter(Boolean).length;
-  const spokePreview = seatedCount > 0 ? generateSpokeFromCouncil() : null;
+  const spokePreview = plannedSpoke.value;
 
   const equipped = equippedDoctrines.value;
   const equippedCount = equipped.filter(Boolean).length;

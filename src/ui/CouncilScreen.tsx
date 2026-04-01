@@ -11,7 +11,7 @@ import {
   seatAdvisor,
   unseatAdvisor,
   startSpokeFromCouncil,
-  generateSpokeFromCouncil,
+  plannedSpoke,
 } from '../game/council-store';
 
 // ── One-time CSS injection ──
@@ -105,7 +105,7 @@ export function CouncilScreen() {
   const targetSlot = equipTargetSlot.value;
 
   // Spoke preview — only compute when at least 1 advisor is seated
-  let spokePreview = seatedCount > 0 ? generateSpokeFromCouncil() : null;
+  let spokePreview = plannedSpoke.value;
 
   function handlePickAdvisor(advisor: Advisor) {
     if (targetSlot === null) return;
