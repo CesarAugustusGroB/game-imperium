@@ -11,6 +11,7 @@ import { resetSpoke } from './spoke';
 import { resetProvinceStore, conquerProvince, provinces, getMarketExchangeBonus } from './province-store';
 import { initGovernorStore, resetGovernorStore } from './governor-store';
 import { initProvinceMapStore, resetProvinceMapStore, claimTerritory } from './province-map-store';
+import { resetEventStore } from './event-store';
 import { STARTER_ADVISORS } from '../data/advisor-data';
 
 // ── Core run state ──
@@ -77,6 +78,7 @@ export function startNewRun(commander: Commander): void {
   // Give starter Advisors — all colors (UNRESTRICTED color rule)
   resetCouncilStore();
   resetProvinceStore();
+  resetEventStore();
   initGovernorStore();
 
   // Create the home province first (no territory claimed yet — topology not loaded)
@@ -109,6 +111,7 @@ export function resetRun(): void {
   resetProvinceStore();
   resetGovernorStore();
   resetProvinceMapStore();
+  resetEventStore();
   resetSpoke();
 
   completedSpokes.value = 0;
