@@ -1,10 +1,8 @@
-import { useRef, useEffect } from 'preact/hooks';
+import { useRef, useEffect, useCallback, useState } from 'preact/hooks';
 import { topologyData, territoryMap, claimedIndices, getAllTerritoryPositions } from '../game/province-map-store';
 import { provinces } from '../game/province-store';
 import { selectedCommander } from '../game/game-state';
 import { FACTION_COLORS } from '../game/commander';
-import { getGovernorTraits } from '../game/governor-store';
-import { getUnrestModifier } from '../game/province';
 
 // ── Props ──
 
@@ -42,18 +40,48 @@ const RADIUS_OWNED = 5;
 const RADIUS_UNCLAIMED = 3;
 const CLICK_HIT_RADIUS = 15;
 const LABEL_FONT = '9px "Segoe UI", system-ui, sans-serif';
+const CSS_HEIGHT = 200;
+/** Show a red unrest dot on the map when province unrest exceeds this value. */
+const UNREST_INDICATOR_THRESHOLD = 50;
 
 // ── Component ──
 
 export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [hoveringMarker, setHoveringMarker] = useState(false);
 
   // Store latest marker positions so click handler can use them without re-subscribing.
   const markersRef = useRef<Array<{ roguelikeId: string; x: number; y: number }>>([]);
 
+  // ── DPI-aware canvas sizing ──
+  const updateCanvasSize = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const newW = Math.round(rect.width * dpr);
+    const newH = Math.round(CSS_HEIGHT * dpr);
+
+    if (canvas.width !== newW || canvas.height !== newH) {
+      canvas.width = newW;
+      canvas.height = newH;
+    }
+  }, []);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    // Size canvas for DPI on mount and whenever the container resizes
+    updateCanvasSize();
+
+    const observer = new ResizeObserver(() => {
+      updateCanvasSize();
+      // Re-trigger draw after resize
+      drawCurrent();
+    });
+    observer.observe(canvas);
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -73,34 +101,43 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
     function draw(terrain: HTMLImageElement | null) {
       if (!canvas || !ctx) return;
 
+      const dpr = window.devicePixelRatio || 1;
       const W = canvas.width;
       const H = canvas.height;
 
-      ctx.clearRect(0, 0, W, H);
+      ctx.save();
+      ctx.scale(dpr, dpr);
+
+      // Use logical (CSS) dimensions for drawing coordinates
+      const lW = W / dpr;
+      const lH = H / dpr;
+
+      ctx.clearRect(0, 0, lW, lH);
 
       // ── Background ──
       ctx.fillStyle = 'rgba(12, 10, 24, 1)';
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(0, 0, lW, lH);
 
       if (terrain) {
         ctx.globalAlpha = 0.55;
-        ctx.drawImage(terrain, 0, 0, W, H);
+        ctx.drawImage(terrain, 0, 0, lW, lH);
         ctx.globalAlpha = 1;
       }
 
       // Subtle dark vignette overlay
-      const vignette = ctx.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.9);
+      const vignette = ctx.createRadialGradient(lW / 2, lH / 2, lH * 0.2, lW / 2, lH / 2, lH * 0.9);
       vignette.addColorStop(0, 'rgba(0,0,0,0)');
       vignette.addColorStop(1, 'rgba(0,0,0,0.5)');
       ctx.fillStyle = vignette;
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(0, 0, lW, lH);
 
       if (!topology) {
         // No topology yet — show placeholder text
         ctx.fillStyle = 'rgba(180, 170, 150, 0.3)';
         ctx.font = '10px "Segoe UI", system-ui, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Loading map…', W / 2, H / 2);
+        ctx.fillText('Loading map...', lW / 2, lH / 2);
+        ctx.restore();
         return;
       }
 
@@ -111,8 +148,8 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
         const idx = Number(indexStr);
         if (_claimedIndices.has(idx)) continue;
 
-        const x = uv[0] * W;
-        const y = uv[1] * H;
+        const x = uv[0] * lW;
+        const y = uv[1] * lH;
 
         ctx.beginPath();
         ctx.arc(x, y, RADIUS_UNCLAIMED, 0, Math.PI * 2);
@@ -125,8 +162,8 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
       const newMarkers: Array<{ roguelikeId: string; x: number; y: number }> = [];
 
       for (const { roguelikeId, uv } of positions) {
-        const x = uv[0] * W;
-        const y = uv[1] * H;
+        const x = uv[0] * lW;
+        const y = uv[1] * lH;
 
         newMarkers.push({ roguelikeId, x, y });
 
@@ -134,12 +171,8 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
         const isSelected = roguelikeId === selectedId;
         const radius = isSelected ? RADIUS_SELECTED : RADIUS_OWNED;
 
-        // Compute unrest for indicator
-        let unrest = 0;
-        if (province) {
-          const traits = getGovernorTraits(province.id);
-          unrest = province.unrest + getUnrestModifier(province, traits);
-        }
+        // Use the province's current unrest for the indicator (not projected)
+        const unrest = province?.unrest ?? 0;
 
         // Glow halo (semi-transparent, larger circle)
         const glowRadius = radius + 5;
@@ -186,8 +219,8 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
           ctx.fillText(label, x, labelY);
         }
 
-        // Unrest indicator — small red dot if unrest > 50
-        if (unrest > 50) {
+        // Unrest indicator — small red dot when unrest is high
+        if (unrest > UNREST_INDICATOR_THRESHOLD) {
           ctx.beginPath();
           ctx.arc(x + radius - 1, y - radius + 1, 3, 0, Math.PI * 2);
           ctx.fillStyle = '#e04040';
@@ -199,6 +232,11 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
       }
 
       markersRef.current = newMarkers;
+      ctx.restore();
+    }
+
+    function drawCurrent() {
+      draw(cachedTerrainImage);
     }
 
     // Start draw immediately with whatever terrain is available, then re-draw once loaded.
@@ -207,7 +245,32 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
     loadTerrainImage()
       .then(img => draw(img))
       .catch(() => draw(null));
+
+    return () => { observer.disconnect(); };
   });
+
+  // ── Mouse-move handler for cursor feedback ──
+
+  function handleMouseMove(e: MouseEvent) {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const cssX = e.clientX - rect.left;
+    const cssY = e.clientY - rect.top;
+
+    let hovering = false;
+    for (const { x, y } of markersRef.current) {
+      const dist = Math.sqrt((cssX - x) ** 2 + (cssY - y) ** 2);
+      if (dist <= CLICK_HIT_RADIUS) {
+        hovering = true;
+        break;
+      }
+    }
+    if (hovering !== hoveringMarker) {
+      setHoveringMarker(hovering);
+    }
+  }
 
   // ── Click handler ──
 
@@ -216,15 +279,13 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
     if (!canvas) return;
 
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const clickX = (e.clientX - rect.left) * scaleX;
-    const clickY = (e.clientY - rect.top) * scaleY;
+    const cssX = e.clientX - rect.left;
+    const cssY = e.clientY - rect.top;
 
     let nearest: { roguelikeId: string; dist: number } | null = null;
 
     for (const { roguelikeId, x, y } of markersRef.current) {
-      const dist = Math.sqrt((clickX - x) ** 2 + (clickY - y) ** 2);
+      const dist = Math.sqrt((cssX - x) ** 2 + (cssY - y) ** 2);
       if (dist <= CLICK_HIT_RADIUS) {
         if (!nearest || dist < nearest.dist) {
           nearest = { roguelikeId, dist };
@@ -240,16 +301,16 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
   return (
     <canvas
       ref={canvasRef}
-      width={800}
-      height={200}
       onClick={handleClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setHoveringMarker(false)}
       style={{
         width: '100%',
-        height: '200px',
+        height: `${CSS_HEIGHT}px`,
         display: 'block',
         borderRadius: '6px',
         border: '1px solid rgba(180, 160, 100, 0.15)',
-        cursor: 'crosshair',
+        cursor: hoveringMarker ? 'pointer' : 'crosshair',
         background: 'rgba(12, 10, 24, 0.9)',
       }}
     />

@@ -2,11 +2,12 @@ import { signal } from '@preact/signals';
 import type { Advisor } from './advisor';
 import { getCurrentSpokeTemplate, getTierForXp } from './advisor';
 import type { Spoke, SpokeNode, NodeType } from './spoke';
-import { currentSpoke, currentNodeIndex, spokeGains, grantSpokeResource } from './spoke';
+import { currentSpoke, currentNodeIndex, spokeGains, grantSpokeResource, ZERO_GAINS } from './spoke';
 import { selectedCommander, veteranStacks, spokesSinceLastBattle, threatLevel } from './game-state';
 import { getActiveEffects } from './doctrine-store';
 import { addResource } from './resources';
 import type { ResourceType } from './commander';
+import { resetSpokeEvents } from './event-store';
 
 // ── Council signals ──
 
@@ -308,8 +309,6 @@ export function generateSpokeFromCouncil(): Spoke {
   return { nodes, label, completed: false, duration, currentSeason: 1, posture };
 }
 
-const ZERO_GAINS: Record<ResourceType, number> = { gold: 0, faith: 0, influence: 0, momentum: 0 };
-
 /**
  * Recompute the planned spoke from current council composition.
  * Called after every advisor seat/unseat. Produces a stable preview.
@@ -319,15 +318,22 @@ export function regeneratePlannedSpoke(): void {
   plannedSpoke.value = seated > 0 ? generateSpokeFromCouncil() : null;
 }
 
+// ── Chaos mutation tuning ──
+
+/** Maximum percentage of non-boss nodes that chaos can mutate. */
+const MAX_CHAOS_PERCENT = 50;
+/** Chaos scales linearly: chaosPercent = min(MAX_CHAOS_PERCENT, threat * this). */
+const CHAOS_THREAT_MULTIPLIER = 5;
+/** Threat level above which spoke duration may shift by ±1. */
+const HIGH_THREAT_THRESHOLD = 6;
+
 /**
  * Apply threat-based chaos to a spoke.
  * Preserves boss node and posture. Mutates a % of non-boss nodes based on threatLevel.
- * chaosPercent = min(50, threatLevel * 5): threat 0 = 0%, threat 5 = 25%, threat 10 = 50% cap.
- * At threat > 6, duration may shift ±1.
  */
 function mutateSpoke(spoke: Spoke): Spoke {
   const threat = threatLevel.value;
-  const chaosPercent = Math.min(50, threat * 5);
+  const chaosPercent = Math.min(MAX_CHAOS_PERCENT, threat * CHAOS_THREAT_MULTIPLIER);
 
   // Clone nodes (skip last = boss)
   const nodes: SpokeNode[] = spoke.nodes.map((n, i) => {
@@ -344,7 +350,7 @@ function mutateSpoke(spoke: Spoke): Spoke {
 
   // Duration shift at high threat
   let duration = spoke.duration;
-  if (threat > 6) {
+  if (threat > HIGH_THREAT_THRESHOLD) {
     const shift = Math.random() < 0.5 ? -1 : 1;
     duration = Math.max(1, Math.min(4, duration + shift));
   }
@@ -370,6 +376,7 @@ export function startSpokeFromCouncil(): void {
   currentSpoke.value = spoke;
   currentNodeIndex.value = 0;
   spokeGains.value = { ...ZERO_GAINS };
+  resetSpokeEvents();
 
   // S3-09: Pope Innocent gains Faith at spoke start
   if (selectedCommander.value?.id === 'innocent') {
@@ -390,4 +397,5 @@ export function resetCouncilStore(): void {
   councilSlots.value = [null, null, null];
   advisorPool.value = [];
   tierUpNotices.value = [];
+  plannedSpoke.value = null;
 }

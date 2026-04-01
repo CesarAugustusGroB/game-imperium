@@ -11,6 +11,8 @@ import { resetSpoke } from './spoke';
 import { resetProvinceStore, conquerProvince, provinces, getMarketExchangeBonus } from './province-store';
 import { initGovernorStore, resetGovernorStore } from './governor-store';
 import { initProvinceMapStore, resetProvinceMapStore, claimTerritory } from './province-map-store';
+import { resetEventStore } from './event-store';
+import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyIds } from './npc-faction-store';
 import { STARTER_ADVISORS } from '../data/advisor-data';
 
 // ── Core run state ──
@@ -32,6 +34,13 @@ export const veteranStacks = signal(0);
 /** Known valid commander IDs. Used for runtime validation in startNewRun. */
 const KNOWN_COMMANDER_IDS = new Set(['innocent', 'boudicca', 'augustus', 'crassus']);
 
+/** Sync allianceCount / enemies / allies from NPC faction state. */
+export function syncFactionSignals(): void {
+  allianceCount.value = friendlyCount.value;
+  enemies.value = hostileIds.value;
+  allies.value = friendlyIds.value;
+}
+
 /**
  * Start a new run with the given commander.
  * Initializes all signals to fresh state.
@@ -52,9 +61,9 @@ export function startNewRun(commander: Commander): void {
   threatLevel.value = 0;
   spokesSinceLastBattle.value = 0;
 
-  allianceCount.value = commander.id === 'augustus' ? 2 : 0; // Augustus starts with 2 allies
-  enemies.value = [];
-  allies.value = [];
+  // NPC factions — derive alliance/enemy state
+  initNPCFactions();
+  syncFactionSignals();
 
   veteranStacks.value = 0;
 
@@ -77,15 +86,17 @@ export function startNewRun(commander: Commander): void {
   // Give starter Advisors — all colors (UNRESTRICTED color rule)
   resetCouncilStore();
   resetProvinceStore();
+  resetEventStore();
   initGovernorStore();
+
+  // Create the home province first (no territory claimed yet — topology not loaded)
+  conquerProvince('Roma', { gold: 2, faith: 1, influence: 1, momentum: 0 }, 1);
+
+  // Load topology, then retroactively claim territory for Roma
   initProvinceMapStore().then(() => {
-    // Claim territory for Roma once topology is loaded
     const roma = provinces.value.find(p => p.name === 'Roma');
     if (roma) claimTerritory(roma.id);
   });
-
-  // Start with one home province
-  conquerProvince('Roma', { gold: 2, faith: 1, influence: 1, momentum: 0 }, 1);
 
   for (const a of STARTER_ADVISORS) {
     hireAdvisor({ ...a, currentTier: 1, xp: 0 });
@@ -108,6 +119,8 @@ export function resetRun(): void {
   resetProvinceStore();
   resetGovernorStore();
   resetProvinceMapStore();
+  resetEventStore();
+  resetNPCFactions();
   resetSpoke();
 
   completedSpokes.value = 0;
@@ -117,6 +130,5 @@ export function resetRun(): void {
   allianceCount.value = 0;
   enemies.value = [];
   allies.value = [];
-
   veteranStacks.value = 0;
 }
