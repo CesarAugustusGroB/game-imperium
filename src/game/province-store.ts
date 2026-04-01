@@ -1,9 +1,9 @@
 import { signal } from '@preact/signals';
 import type { Province, InvestmentType } from './province';
-import { createProvince, INVESTMENT_DATA, getInvestmentDiscount, applyInvestmentDiscount } from './province';
+import { createProvince, INVESTMENT_DATA, getInvestmentDiscount, applyInvestmentDiscount, getProvinceIncome, getProvinceExpenses } from './province';
 import type { ResourceType } from './commander';
 import type { ResourceCost } from './doctrine';
-import { getResource, spendResource } from './resources';
+import { getResource, spendResource, addResource } from './resources';
 import { getGovernorTraits } from './governor-store';
 
 // ── Province signals ──
@@ -116,6 +116,57 @@ export function assignGovernor(provinceId: string, governorId: string | undefine
   arr[idx] = updated;
   provinces.value = arr;
   return true;
+}
+
+// ── Season income cycle ──
+
+export interface ProvinceIncomeResult {
+  incomeGained: { resource: ResourceType; amount: number }[];
+  expensesPaid: number;
+  expenseShortfall: number;
+}
+
+/**
+ * Collect income from all provinces and pay their expenses.
+ * Called once per season tick.
+ */
+export function collectProvinceIncome(): ProvinceIncomeResult {
+  const allProvinces = provinces.value;
+  const totals: Partial<Record<ResourceType, number>> = {};
+  let totalExpenses = 0;
+
+  for (const prov of allProvinces) {
+    const traits = getGovernorTraits(prov.id);
+    const income = getProvinceIncome(prov, traits);
+    const expenses = getProvinceExpenses(prov, traits);
+
+    for (const [res, amt] of Object.entries(income) as [ResourceType, number][]) {
+      if (amt > 0) totals[res] = (totals[res] ?? 0) + amt;
+    }
+    totalExpenses += expenses;
+  }
+
+  // Add income resources
+  const incomeGained: { resource: ResourceType; amount: number }[] = [];
+  for (const [res, amt] of Object.entries(totals) as [ResourceType, number][]) {
+    if (amt > 0) {
+      addResource(res, amt);
+      incomeGained.push({ resource: res, amount: amt });
+    }
+  }
+
+  // Pay expenses (gold)
+  let expensesPaid = 0;
+  let expenseShortfall = 0;
+  if (totalExpenses > 0) {
+    if (spendResource('gold', totalExpenses)) {
+      expensesPaid = totalExpenses;
+    } else {
+      expenseShortfall = totalExpenses;
+    }
+  }
+
+  return { incomeGained, expensesPaid, expenseShortfall };
 }
 
 /** Reset all province state (called on run end / new run). */

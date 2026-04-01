@@ -6,6 +6,7 @@ import { getActiveEffects } from './doctrine-store';
 import type { DoctrineEffect } from './doctrine';
 import type { Posture } from './advisor';
 import { addResource } from './resources';
+import { collectProvinceIncome, type ProvinceIncomeResult } from './province-store';
 
 // ── Node types (S2-01) ──
 
@@ -151,6 +152,7 @@ export interface SeasonTickResult {
   upkeepPaid: { resource: ResourceType; amount: number }[];
   upkeepShortfall: { resource: ResourceType; deficit: number }[];
   threatIncrease: number;
+  provinceIncome: ProvinceIncomeResult | null;
 }
 
 /**
@@ -194,10 +196,13 @@ export function tickSeason(): SeasonTickResult | null {
   // Increment threat
   threatLevel.value += THREAT_PER_SEASON;
 
+  // Collect province income
+  const provinceIncome = collectProvinceIncome();
+
   // Advance season
   currentSpoke.value = { ...spoke, currentSeason: newSeason };
 
-  return { season: newSeason, upkeepPaid, upkeepShortfall, threatIncrease: THREAT_PER_SEASON };
+  return { season: newSeason, upkeepPaid, upkeepShortfall, threatIncrease: THREAT_PER_SEASON, provinceIncome };
 }
 
 /** Return type for advanceNode. */
