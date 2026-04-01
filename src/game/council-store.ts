@@ -7,6 +7,7 @@ import { selectedCommander, veteranStacks, spokesSinceLastBattle, threatLevel } 
 import { getActiveEffects } from './doctrine-store';
 import { addResource } from './resources';
 import type { ResourceType } from './commander';
+import { resetSpokeEvents } from './event-store';
 
 // ── Council signals ──
 
@@ -375,6 +376,7 @@ export function startSpokeFromCouncil(): void {
   currentSpoke.value = spoke;
   currentNodeIndex.value = 0;
   spokeGains.value = { ...ZERO_GAINS };
+  resetSpokeEvents();
 
   // S3-09: Pope Innocent gains Faith at spoke start
   if (selectedCommander.value?.id === 'innocent') {
