@@ -829,6 +829,32 @@ export function NodeMapScreen() {
                 ))}
               </div>
             )}
+            {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.incomeGained.length > 0 && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: 'rgba(90, 160, 90, 0.7)', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Province Income</span>
+                {lastSeasonTick.value.provinceIncome.incomeGained.map((u, i) => (
+                  <div key={i} style={{ color: 'rgba(130, 200, 130, 0.8)' }}>
+                    {RESOURCE_INFO[u.resource].icon} +{u.amount} {RESOURCE_INFO[u.resource].label}
+                  </div>
+                ))}
+              </div>
+            )}
+            {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.expensesPaid > 0 && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: 'rgba(200, 160, 100, 0.6)', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Province Expenses</span>
+                <div style={{ color: 'rgba(200, 160, 100, 0.7)' }}>
+                  {RESOURCE_INFO.gold.icon} -{lastSeasonTick.value.provinceIncome.expensesPaid} Gold
+                </div>
+              </div>
+            )}
+            {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.expenseShortfall > 0 && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: '#c05050', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Province Expense Shortfall</span>
+                <div style={{ color: '#c05050' }}>
+                  {RESOURCE_INFO.gold.icon} Cannot afford {lastSeasonTick.value.provinceIncome.expenseShortfall} Gold upkeep
+                </div>
+              </div>
+            )}
             <div style={{ color: 'rgba(200, 160, 100, 0.7)' }}>
               Threat +{lastSeasonTick.value.threatIncrease}
             </div>
