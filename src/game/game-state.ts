@@ -23,6 +23,47 @@ export const completedSpokes = signal(0);
 export const threatLevel = signal(0);
 export const spokesSinceLastBattle = signal(0);
 
+// ── Season Clock ──
+
+/** Maximum seasons before the final invasion. */
+export const MAX_SEASONS = 24;
+
+/** Total seasons elapsed across all spokes in this run. */
+export const globalSeason = signal(0);
+
+/**
+ * Doom level (0–100). Derived from globalSeason / MAX_SEASONS.
+ * Drives escalating upkeep and ultimately the final battle.
+ */
+export function getDoomLevel(): number {
+  return Math.min(100, Math.floor((globalSeason.value / MAX_SEASONS) * 100));
+}
+
+/**
+ * Extra gold upkeep per season from doom progression.
+ * Doom 25 (season 6): +1g, Doom 50 (season 12): +2g, Doom 75 (season 18): +3g.
+ */
+export function getDoomUpkeep(): number {
+  const doom = getDoomLevel();
+  if (doom >= 75) return 3;
+  if (doom >= 50) return 2;
+  if (doom >= 25) return 1;
+  return 0;
+}
+
+/** Get narrative doom milestone text, or null if between milestones. */
+export function getDoomMilestone(): string | null {
+  const doom = getDoomLevel();
+  const season = globalSeason.value;
+  // Only show at exact threshold crossings (check if we just crossed)
+  if (season === 6) return 'The frontier grows restless. Barbarian scouts probe your borders.';
+  if (season === 12) return 'War drums echo from the north. The tribes are uniting.';
+  if (season === 18) return 'The horde assembles. Smoke rises on every horizon.';
+  if (season === 24) return 'THE INVASION BEGINS.';
+  if (doom >= 75) return null;
+  return null;
+}
+
 // ── Relationships ──
 export const allianceCount = signal(0);
 export const enemies = signal<string[]>([]);
@@ -60,6 +101,7 @@ export function startNewRun(commander: Commander): void {
   completedSpokes.value = 0;
   threatLevel.value = 0;
   spokesSinceLastBattle.value = 0;
+  globalSeason.value = 0;
 
   // NPC factions — derive alliance/enemy state
   initNPCFactions();
@@ -126,6 +168,7 @@ export function resetRun(): void {
   completedSpokes.value = 0;
   threatLevel.value = 0;
   spokesSinceLastBattle.value = 0;
+  globalSeason.value = 0;
 
   allianceCount.value = 0;
   enemies.value = [];
