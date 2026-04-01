@@ -8,10 +8,10 @@ import { selectedCommander, completedSpokes, threatLevel } from '../game/game-st
 import { conquerProvince, getProvinceEffects } from '../game/province-store';
 import { FACTION_COLORS, RESOURCE_INFO } from '../game/commander';
 import type { ResourceType } from '../game/commander';
-import { spendResource, canAfford } from '../game/resources';
+import { spendResource } from '../game/resources';
 import { NodeModal } from './NodeModal';
-import { EVENTS } from '../data/events';
-import type { GameEvent, EventChoice } from '../data/events';
+import type { GameEvent, EventChoice } from '../game/event-types';
+import { pickEvent, buildEventContext, applyEventChoice, canAffordEventChoice } from '../game/event-engine';
 import { getExtraEventChoices } from '../game/doctrine-store';
 import { councilSlots, grantAdvisorXp, tierUpNotices } from '../game/council-store';
 
@@ -476,40 +476,39 @@ export function NodeMapScreen() {
   }
 
   function openEventModal() {
-    const base = EVENTS[nodeIdx % EVENTS.length];
+    if (!commander) return;
+    const context = buildEventContext(commander.faction);
+    const event = pickEvent(context);
+
     // S4-11 + S6-10: Doctrine + Province (Basilica T3) extra-event-choices
     const provinceExtra = getProvinceEffects()
       .filter(e => e.type === 'extra-event-choices')
       .reduce((sum, e) => sum + ('count' in e ? e.count : 0), 0);
     const extraCount = getExtraEventChoices() + provinceExtra;
     if (extraCount > 0) {
+      // Pull bonus choices from other eligible events
+      const otherContext = { ...context, seenThisSpoke: new Set<string>() };
       const bonusChoices: EventChoice[] = [];
-      for (let i = 1; bonusChoices.length < extraCount && i < EVENTS.length; i++) {
-        const other = EVENTS[(nodeIdx + i) % EVENTS.length];
+      const allEvents = [pickEvent(otherContext), pickEvent(otherContext), pickEvent(otherContext)];
+      for (const other of allEvents) {
+        if (other.id === event.id) continue;
         for (const choice of other.choices) {
           if (bonusChoices.length >= extraCount) break;
-          // Avoid duplicating choices already in the base event
-          if (!base.choices.some(c => c.text === choice.text)) {
+          if (!event.choices.some(c => c.text === choice.text)) {
             bonusChoices.push(choice);
           }
         }
+        if (bonusChoices.length >= extraCount) break;
       }
-      activeEvent.value = { ...base, choices: [...base.choices, ...bonusChoices] };
+      activeEvent.value = { ...event, choices: [...event.choices, ...bonusChoices] };
     } else {
-      activeEvent.value = base;
+      activeEvent.value = event;
     }
     showEventModal.value = true;
   }
 
   function handleEventChoice(choice: EventChoice) {
-    const faction = commander?.faction;
-    for (const effect of choice.effects) {
-      if (effect.amount > 0) {
-        grantSpokeResource(effect.resource, effect.amount, faction);
-      } else if (effect.amount < 0) {
-        spendResource(effect.resource, Math.abs(effect.amount));
-      }
-    }
+    applyEventChoice(choice, grantSpokeResource, spendResource, commander?.faction);
     showEventModal.value = false;
     activeEvent.value = null;
     const result = advanceNode();
@@ -520,9 +519,7 @@ export function NodeMapScreen() {
   }
 
   function canAffordChoice(choice: EventChoice): boolean {
-    return choice.effects.every((e) =>
-      e.amount >= 0 || canAfford(e.resource, Math.abs(e.amount))
-    );
+    return canAffordEventChoice(choice);
   }
 
   // Show the spoke complete modal when all nodes are resolved
