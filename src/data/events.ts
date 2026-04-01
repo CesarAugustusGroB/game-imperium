@@ -1,4 +1,5 @@
 import type { GameEvent } from '../game/event-types';
+import { RED_EVENTS, BLUE_EVENTS, GOLD_EVENTS, PURPLE_EVENTS, WHITE_EVENTS } from './faction-events';
 
 // Re-export types so existing imports don't break
 export type { GameEvent, EventChoice, EventEffect } from '../game/event-types';
@@ -125,4 +126,11 @@ export const EVENTS: GameEvent[] = [
       { text: 'Walk away', effects: [{ resource: 'momentum', amount: 1 }] },
     ],
   },
+
+  // ── Faction-colored events (S7-04 through S7-08) ──
+  ...RED_EVENTS,
+  ...BLUE_EVENTS,
+  ...GOLD_EVENTS,
+  ...PURPLE_EVENTS,
+  ...WHITE_EVENTS,
 ];
