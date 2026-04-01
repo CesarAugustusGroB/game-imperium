@@ -855,6 +855,16 @@ export function NodeMapScreen() {
                 </div>
               </div>
             )}
+            {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.rebellions.length > 0 && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: '#c05050', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Rebellion!</span>
+                {lastSeasonTick.value.provinceIncome.rebellions.map((r, i) => (
+                  <div key={i} style={{ color: '#c05050' }}>
+                    {r.provinceName}: {r.lostInvestment ? `${r.lostInvestment} destroyed` : 'unrest critical'}
+                  </div>
+                ))}
+              </div>
+            )}
             <div style={{ color: 'rgba(200, 160, 100, 0.7)' }}>
               Threat +{lastSeasonTick.value.threatIncrease}
             </div>
