@@ -5,7 +5,7 @@ import { navigateTo } from './screens';
 import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../game/spoke';
 import type { SpokeNode, NodeType, SeasonTickResult } from '../game/spoke';
 import { selectedCommander, completedSpokes, threatLevel } from '../game/game-state';
-import { conquerProvince } from '../game/province-store';
+import { conquerProvince, getProvinceEffects } from '../game/province-store';
 import { FACTION_COLORS, RESOURCE_INFO } from '../game/commander';
 import type { ResourceType } from '../game/commander';
 import { spendResource, canAfford } from '../game/resources';
@@ -477,8 +477,11 @@ export function NodeMapScreen() {
 
   function openEventModal() {
     const base = EVENTS[nodeIdx % EVENTS.length];
-    // S4-11: Doctrine extra-event-choices — pull bonus choices from other events
-    const extraCount = getExtraEventChoices();
+    // S4-11 + S6-10: Doctrine + Province (Basilica T3) extra-event-choices
+    const provinceExtra = getProvinceEffects()
+      .filter(e => e.type === 'extra-event-choices')
+      .reduce((sum, e) => sum + ('count' in e ? e.count : 0), 0);
+    const extraCount = getExtraEventChoices() + provinceExtra;
     if (extraCount > 0) {
       const bonusChoices: EventChoice[] = [];
       for (let i = 1; bonusChoices.length < extraCount && i < EVENTS.length; i++) {

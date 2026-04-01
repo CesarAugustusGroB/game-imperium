@@ -169,8 +169,10 @@ export function getReviveThreshold(): number {
     .reduce((max, e) => Math.max(max, e.hpPercent), 0);
 }
 
-/** Total extra event choices granted by equipped doctrines. */
+/** Total extra event choices granted by equipped doctrines + province investments. */
 export function getExtraEventChoices(): number {
+  // Province effects are added by the caller (NodeMapScreen) to avoid circular deps.
+  // This function only counts doctrine effects.
   return getActiveEffects()
     .filter((e): e is Extract<DoctrineEffect, { type: 'extra-event-choices' }> => e.type === 'extra-event-choices')
     .reduce((sum, e) => sum + e.count, 0);
