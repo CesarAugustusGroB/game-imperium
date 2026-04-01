@@ -8,6 +8,7 @@ import { VETERAN_BONUS_PER_STACK } from './battle-config';
 import { offsetToAxial } from './hex';
 import { getActiveEffects } from '../game/doctrine-store';
 import type { DoctrineEffect } from '../game/doctrine';
+import { getProvinceEffects } from '../game/province-store';
 import { pauseMusic, resumeMusic } from '../ui/music';
 
 export class BattleMode {
@@ -69,8 +70,8 @@ export class BattleMode {
       }
     }
 
-    // Apply Doctrine passive effects at battle start
-    const doctrineEffects: DoctrineEffect[] = getActiveEffects();
+    // Apply Doctrine + Province passive effects at battle start
+    const doctrineEffects: DoctrineEffect[] = [...getActiveEffects(), ...getProvinceEffects()];
     for (const effect of doctrineEffects) {
       switch (effect.type) {
         case 'stat-modifier': {

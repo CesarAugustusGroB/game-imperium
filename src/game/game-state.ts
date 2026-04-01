@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Commander } from './commander';
-import { initResources, setWarProfiler, setIncomeModifierFn } from './resources';
+import { initResources, setWarProfiler, setIncomeModifierFn, setExchangeBonusFn } from './resources';
 import { addDecretum, resetDecretumHand } from './decretum-store';
 import { resetDoctrineStore, getIncomeModifier, addDoctrineToCollection } from './doctrine-store';
 import { STARTER_DECRETUM } from '../data/decretum-data';
@@ -8,7 +8,7 @@ import { STARTER_DOCTRINES } from '../data/doctrine-data';
 import { isDoctrineEquippable } from './doctrine';
 import { resetCouncilStore, hireAdvisor } from './council-store';
 import { resetSpoke } from './spoke';
-import { resetProvinceStore, conquerProvince, provinces } from './province-store';
+import { resetProvinceStore, conquerProvince, provinces, getMarketExchangeBonus } from './province-store';
 import { initGovernorStore, resetGovernorStore } from './governor-store';
 import { initProvinceMapStore, resetProvinceMapStore, claimTerritory } from './province-map-store';
 import { STARTER_ADVISORS } from '../data/advisor-data';
@@ -46,6 +46,7 @@ export function startNewRun(commander: Commander): void {
   initResources(commander.startingResources);
   setWarProfiler(commander.id === 'crassus');
   setIncomeModifierFn(getIncomeModifier);
+  setExchangeBonusFn(getMarketExchangeBonus);
 
   completedSpokes.value = 0;
   threatLevel.value = 0;
@@ -100,6 +101,7 @@ export function resetRun(): void {
   initResources({ gold: 0, faith: 0, influence: 0, momentum: 0 });
   setWarProfiler(false);
   setIncomeModifierFn(null);
+  setExchangeBonusFn(null);
   resetDecretumHand();
   resetDoctrineStore();
   resetCouncilStore();
