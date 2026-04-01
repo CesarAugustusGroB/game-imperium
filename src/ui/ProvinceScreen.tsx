@@ -15,6 +15,7 @@ import {
   getAssignedGovernor, getGovernorTraits,
   hireGovernor, dismissGovernor,
 } from '../game/governor-store';
+import { ProvinceMapView } from './ProvinceMapView';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('province-styles')) {
@@ -500,6 +501,16 @@ export function ProvinceScreen() {
           </button>
         </div>
         <div style={{ width: '60px', height: '1px', marginBottom: '20px', background: `linear-gradient(90deg, transparent, ${color}60, transparent)` }} />
+
+        {/* Map view */}
+        {allProvinces.length > 0 && (
+          <div style={{ marginBottom: '16px' }}>
+            <ProvinceMapView
+              selectedId={selected?.id ?? null}
+              onSelect={(id) => { selectedProvinceId.value = id; }}
+            />
+          </div>
+        )}
 
         {allProvinces.length === 0 ? (
           /* Empty state */

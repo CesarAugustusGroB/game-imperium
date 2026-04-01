@@ -8,8 +8,9 @@ import { STARTER_DOCTRINES } from '../data/doctrine-data';
 import { isDoctrineEquippable } from './doctrine';
 import { resetCouncilStore, hireAdvisor } from './council-store';
 import { resetSpoke } from './spoke';
-import { resetProvinceStore, conquerProvince } from './province-store';
+import { resetProvinceStore, conquerProvince, provinces } from './province-store';
 import { initGovernorStore, resetGovernorStore } from './governor-store';
+import { initProvinceMapStore, resetProvinceMapStore, claimTerritory } from './province-map-store';
 import { STARTER_ADVISORS } from '../data/advisor-data';
 
 // ── Core run state ──
@@ -76,6 +77,11 @@ export function startNewRun(commander: Commander): void {
   resetCouncilStore();
   resetProvinceStore();
   initGovernorStore();
+  initProvinceMapStore().then(() => {
+    // Claim territory for Roma once topology is loaded
+    const roma = provinces.value.find(p => p.name === 'Roma');
+    if (roma) claimTerritory(roma.id);
+  });
 
   // Start with one home province
   conquerProvince('Roma', { gold: 2, faith: 1, influence: 1, momentum: 0 }, 1);
@@ -99,6 +105,7 @@ export function resetRun(): void {
   resetCouncilStore();
   resetProvinceStore();
   resetGovernorStore();
+  resetProvinceMapStore();
   resetSpoke();
 
   completedSpokes.value = 0;

@@ -5,6 +5,7 @@ import type { ResourceType } from './commander';
 import type { ResourceCost } from './doctrine';
 import { getResource, spendResource, addResource } from './resources';
 import { getGovernorTraits } from './governor-store';
+import { claimTerritory } from './province-map-store';
 
 // ── Province signals ──
 
@@ -34,6 +35,10 @@ export function conquerProvince(
 
   const province = createProvince(name, { baseIncome });
   provinces.value = [...provinces.value, province];
+
+  // Claim a map territory for this province
+  claimTerritory(province.id);
+
   return province;
 }
 
