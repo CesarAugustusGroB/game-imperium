@@ -1,57 +1,45 @@
-# Plan: S6-04 — Build Province Management UI (Ledger + Investment Slots)
+# Plan: S6-06 — Implement Governor Hiring + Trait Effects
 
 ## Task
-Players need a way to view their conquered provinces and invest in them. This screen is the economic heart of the empire meta-layer: a ledger showing all provinces with their stats (population, income, expenses, unrest), and an investment panel where players build/upgrade the 6 investment types (Castrum, Basilica, Pantheon, Market, Aqueduct, Insula). Governor assignment slot is shown but hiring logic is deferred to S6-06.
+Players need to hire governors from a pool and assign them to provinces. Each governor has a faction color, 3-tier progression with escalating hire costs, and traits that modify province economics (income bonuses, expense reductions, unrest suppression, investment discounts, garrison strength, population growth). This task adds the governor store, hiring/dismissal logic, trait effect calculations, and the hiring UI in the ProvinceScreen.
 
 ## Approach
-Add a new `'provinces'` screen following the exact same pattern as CouncilScreen/DoctrineScreen: Preact functional component with signals, one-time CSS injection, inline styles with the established dark-panel + gold-accent theme. Extend `province-store.ts` with investment build/upgrade logic. Add investment build costs to `INVESTMENT_DATA` since they're currently missing.
-
-Two-panel layout:
-- **Left**: Province ledger (scrollable list of all provinces with key stats)
-- **Right**: Detail panel for selected province (investment grid + governor slot)
-
-This matches the Hub's two-column pattern and keeps information density manageable.
+Create `governor-store.ts` following the council-store pattern (pool signal + management functions). Extend `province.ts` helper functions to apply governor trait effects. Upgrade the existing governor slot in ProvinceScreen from read-only to interactive (hire picker + dismiss button). Governor tiers are fixed at hire time — tier upgrades are a future extension.
 
 ## Steps
-1. **Add investment build costs** to `province.ts` — extend `InvestmentLevelEffect` with a `buildCost: ResourceCost` field and populate for all 6 investments x 3 levels.
-2. **Add province-store functions** — `buildInvestment(provinceId, type)` and `assignGovernor(provinceId, governorId)` in `province-store.ts`.
-3. **Register 'provinces' screen** — add to `ScreenName` union in `screens.ts`, add `VALID_SCREENS` + `REQUIRES_RUN`, wire in `App.tsx`.
-4. **Build ProvinceScreen component** — new file `src/ui/ProvinceScreen.tsx` with:
-   - Province ledger (left panel): scrollable list, each row shows name, pop, unrest bar, net income, expenses
-   - Detail panel (right panel): selected province's 6 investment slots in a 2x3 grid, governor slot (read-only for now)
-   - Build/upgrade buttons with cost display and affordability check
-   - Empty state when no provinces exist
-5. **Add "Manage Provinces" button to HubScreen** — in the right sidebar, a panel similar to Doctrines/Merchant with province count and navigate button.
+1. **Create governor-store.ts** — `governorPool` signal (all 5 governors available at run start), `hireGovernor(governorId, provinceId, tier)` that pays cost and assigns, `dismissGovernor(provinceId)` that returns governor to pool, `getAssignedGovernorWithTier(provinceId)` lookup. Reset in game-state.ts.
+2. **Apply governor trait effects** — update `getProvinceIncome()`, `getProvinceExpenses()`, `getUnrestModifier()` in `province.ts` to accept optional governor+tier and factor in `income-bonus`, `expense-reduction`, `unrest-reduction` traits. Add `getInvestmentDiscount()` helper for `investment-discount` trait.
+3. **Wire governor effects into province-store** — `buildInvestment()` applies investment-discount from governor when calculating cost.
+4. **Upgrade ProvinceScreen governor slot** — replace read-only slot with interactive: "Hire" button opens inline governor picker (list of available governors with cost + traits), "Dismiss" button returns governor to pool. Show active governor tier + trait summary.
+5. **Wire reset into game-state.ts** — add `resetGovernorStore()` to `startNewRun()` and `resetRun()`.
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `src/game/province.ts` | modify | Add `buildCost` to InvestmentLevelEffect, populate costs |
-| `src/game/province-store.ts` | modify | Add `buildInvestment()`, `assignGovernor()` |
-| `src/ui/screens.ts` | modify | Add `'provinces'` to ScreenName union |
-| `src/ui/App.tsx` | modify | Import + render ProvinceScreen |
-| `src/ui/ProvinceScreen.tsx` | create | Main province management UI |
-| `src/ui/HubScreen.tsx` | modify | Add Provinces panel with navigate button |
+| `src/game/governor-store.ts` | create | Governor pool, hire/dismiss/assign functions |
+| `src/game/province.ts` | modify | Trait effects in income/expenses/unrest helpers |
+| `src/game/province-store.ts` | modify | Investment discount from governor |
+| `src/game/game-state.ts` | modify | Wire resetGovernorStore |
+| `src/ui/ProvinceScreen.tsx` | modify | Interactive governor slot with hire picker |
 
 ## Design decisions
-- **Pattern**: Follows existing Screen pattern (ScreenName -> App switch -> component). No new abstractions.
-- **State**: Selected province tracked via module-level signal in ProvinceScreen (same pattern as CouncilScreen's target slot).
-- **Investment costs**: Gold-primary with faction-resource secondary at higher tiers. Tier 1 = 5g, Tier 2 = 10g + faction resource, Tier 3 = 20g + more faction resource. Balanced against 2g/spoke base income.
-- **Immutable updates**: Province array updated via `provinces.value = [...provinces.value]` pattern for signal reactivity.
+- **Pool model**: All 5 governors available at run start. Hiring removes from pool, dismissing returns. One governor per province, each governor assigned to at most one province.
+- **Tier at hire**: Player chooses tier when hiring (tier 1/2/3 with escalating costs). No post-hire upgrades in this task.
+- **Trait application**: Governor traits are percentage-based modifiers applied after investment effects. `income-bonus` multiplies specific resource income, `expense-reduction` reduces gold upkeep, `unrest-reduction` is a flat modifier. `investment-discount` reduces build costs. `garrison-strength` and `population-growth` are stored but gameplay effects deferred to S6-08/S6-10.
+- **Stored state**: `governorAssignments` maps provinceId -> { governorId, tier }. Separate from Province.governorId to keep governor tier state.
 
 ## Test plan
-- Happy paths: Build investment in a province, upgrade to tier 2/3, verify resource deduction
-- Edge cases: No provinces (empty state), all 6 investments built, can't afford (button disabled), province already has that investment type
-- Error paths: N/A (UI guards via disabled states)
+- Happy paths: Hire governor at tier 1, verify cost paid and assignment shown. Dismiss governor, verify returned to pool.
+- Edge cases: Hire at tier 3 (expensive), dismiss and re-hire to different province, all governors assigned (pool empty)
+- Error paths: Can't afford → hire button disabled
 
 ## Risks
 | Risk | Mitigation |
 |------|------------|
-| Investment costs may need rebalancing | Costs defined as data, easy to tune later |
-| Screen feels empty with 0-1 provinces early game | Empty state message + auto-select first province |
+| Trait percentages may over/under-tune economy | All values in data, easy to adjust |
+| Governor slot UI gets crowded with picker | Inline collapsible picker, same pattern as council |
 
 ## Out of scope
-- Governor hiring flow (S6-06)
-- Province income/expense cycle per season (S6-07)
-- Province map visualization (S6-09)
-- Unrest mechanics (S6-08)
+- Post-hire tier upgrades (future enhancement)
+- garrison-strength and population-growth gameplay effects (S6-08, S6-10)
+- Governor-specific events or dialogue

@@ -4,11 +4,17 @@ import { selectedCommander } from '../game/game-state';
 import { provinces, buildInvestment, canAffordCost, getNextInvestmentLevel } from '../game/province-store';
 import {
   INVESTMENT_DATA, getProvinceIncome, getProvinceExpenses, getUnrestModifier,
+  getInvestmentDiscount, applyInvestmentDiscount,
   type InvestmentType, type Province,
 } from '../game/province';
 import { FACTION_COLORS, RESOURCE_INFO, type ResourceType } from '../game/commander';
 import { getResource } from '../game/resources';
-import { ALL_GOVERNORS } from '../data/governor-data';
+import { getHireCost } from '../game/governor';
+import {
+  governorPool, governorAssignments,
+  getAssignedGovernor, getGovernorTraits,
+  hireGovernor, dismissGovernor,
+} from '../game/governor-store';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('province-styles')) {
@@ -31,6 +37,14 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
     .prov-back-btn { transition: all 0.15s ease; cursor: pointer; }
     .prov-back-btn:hover { border-color: rgba(180, 160, 100, 0.45) !important; color: rgba(240, 220, 160, 0.9) !important; }
     .prov-back-btn:active { transform: scale(0.97); }
+    .gov-card { transition: all 0.15s ease; cursor: pointer; }
+    .gov-card:hover { border-color: rgba(180, 160, 100, 0.45) !important; transform: translateY(-1px); }
+    .gov-card:active { transform: scale(0.98); }
+    .gov-dismiss-btn { transition: all 0.15s ease; cursor: pointer; }
+    .gov-dismiss-btn:hover { background: rgba(180, 60, 40, 0.4) !important; border-color: rgba(200, 80, 60, 0.6) !important; }
+    .gov-tier-btn { transition: all 0.15s ease; cursor: pointer; }
+    .gov-tier-btn:hover:not(:disabled) { border-color: rgba(240, 208, 128, 0.6) !important; background: rgba(80, 60, 20, 0.6) !important; }
+    .gov-tier-btn:disabled { opacity: 0.35; cursor: not-allowed; }
     @keyframes prov-fade-in {
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
@@ -44,6 +58,7 @@ const ROMAN: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III' };
 const ALL_INVESTMENTS: InvestmentType[] = ['castrum', 'basilica', 'pantheon', 'market', 'aqueduct', 'insula'];
 
 const selectedProvinceId = signal<string | null>(null);
+const showGovernorPicker = signal(false);
 
 const PANEL = {
   background: 'rgba(20, 18, 36, 0.7)',
@@ -105,7 +120,12 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
 
   const nextEffect = nextLevel > 0 ? data.levels[nextLevel - 1] : null;
   const currentEffect = currentLevel > 0 ? data.levels[currentLevel - 1] : null;
-  const cost = nextEffect?.buildCost;
+  const baseCost = nextEffect?.buildCost;
+
+  // Apply governor investment-discount
+  const traits = getGovernorTraits(province.id);
+  const discount = getInvestmentDiscount(traits);
+  const cost = baseCost && discount > 0 ? applyInvestmentDiscount(baseCost, discount) : baseCost;
   const affordable = cost ? canAffordCost(cost) : false;
 
   // Force signal reads for reactivity on resource changes
@@ -191,9 +211,10 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
 }
 
 function ProvinceRow({ province, selected }: { province: Province; selected: boolean }) {
-  const income = getProvinceIncome(province);
-  const expenses = getProvinceExpenses(province);
-  const unrestMod = getUnrestModifier(province);
+  const traits = getGovernorTraits(province.id);
+  const income = getProvinceIncome(province, traits);
+  const expenses = getProvinceExpenses(province, traits);
+  const unrestMod = getUnrestModifier(province, traits);
   const invCount = province.investments.length;
 
   return (
@@ -234,13 +255,95 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
   );
 }
 
+function GovernorPicker({ provinceId }: { provinceId: string }) {
+  const pool = governorPool.value;
+
+  // Force signal reads for reactivity
+  getResource('gold');
+  getResource('faith');
+  getResource('influence');
+  getResource('momentum');
+
+  if (pool.length === 0) {
+    return (
+      <div style={{ padding: '12px', textAlign: 'center', fontSize: '10px', color: 'rgba(180, 170, 150, 0.35)', fontStyle: 'italic' }}>
+        All governors assigned to other provinces
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', animation: 'prov-fade-in 0.15s ease-out' }}>
+      {pool.map(gov => {
+        const fColor = FACTION_COLORS[gov.color];
+        return (
+          <div key={gov.id} class="gov-card" style={{
+            background: 'rgba(20, 18, 36, 0.6)',
+            border: `1px solid rgba(180, 160, 100, 0.1)`,
+            borderLeft: `3px solid ${fColor}`,
+            borderRadius: '6px', padding: '10px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <div style={{
+                width: '24px', height: '24px', borderRadius: '50%',
+                background: `${fColor}20`, border: `2px solid ${fColor}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '10px', fontWeight: 700, color: fColor,
+              }}>
+                {gov.name[0]}
+              </div>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: fColor }}>{gov.name}</div>
+            </div>
+            {/* Tier hire buttons */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {([1, 2, 3] as const).map(tier => {
+                const cost = getHireCost(gov, tier);
+                const affordable = canAffordCost(cost);
+                const tierData = gov.tiers[tier - 1];
+                return (
+                  <button
+                    key={tier}
+                    class="gov-tier-btn"
+                    disabled={!affordable}
+                    onClick={() => {
+                      hireGovernor(gov.id, provinceId, tier);
+                      showGovernorPicker.value = false;
+                    }}
+                    title={tierData.description}
+                    style={{
+                      flex: '1 1 0', minWidth: '80px',
+                      padding: '5px 6px', borderRadius: '4px',
+                      background: 'rgba(50, 42, 12, 0.5)',
+                      border: '1px solid rgba(240, 208, 128, 0.2)',
+                      color: '#f0d080', fontFamily: 'inherit',
+                      fontSize: '8px', fontWeight: 600, letterSpacing: '0.5px',
+                      textTransform: 'uppercase',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
+                    }}
+                  >
+                    <span>Tier {ROMAN[tier]}</span>
+                    <span style={{ fontSize: '7px', opacity: 0.7 }}>{formatCost(cost)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function ProvinceDetail({ province }: { province: Province }) {
-  const income = getProvinceIncome(province);
-  const expenses = getProvinceExpenses(province);
-  const unrestMod = getUnrestModifier(province);
-  const governor = province.governorId
-    ? ALL_GOVERNORS.find(g => g.id === province.governorId)
-    : null;
+  const traits = getGovernorTraits(province.id);
+  const income = getProvinceIncome(province, traits);
+  const expenses = getProvinceExpenses(province, traits);
+  const unrestMod = getUnrestModifier(province, traits);
+  const assigned = getAssignedGovernor(province.id);
+
+  // Read assignment signal for reactivity
+  void governorAssignments.value;
+  void governorPool.value;
 
   return (
     <div style={{ animation: 'prov-fade-in 0.2s ease-out' }}>
@@ -261,23 +364,71 @@ function ProvinceDetail({ province }: { province: Province }) {
 
       {/* Governor slot */}
       <div style={{ ...PANEL, marginBottom: '12px' }}>
-        <div style={PANEL_TITLE}>Governor</div>
-        {governor ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{
-              width: '28px', height: '28px', borderRadius: '50%',
-              background: `${FACTION_COLORS[governor.color]}20`,
-              border: `2px solid ${FACTION_COLORS[governor.color]}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '12px', fontWeight: 700, color: FACTION_COLORS[governor.color],
-            }}>
-              {governor.name[0]}
-            </div>
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 600, color: FACTION_COLORS[governor.color] }}>{governor.name}</div>
-              <div style={{ fontSize: '9px', color: 'rgba(180, 170, 150, 0.4)' }}>{governor.tiers[0].description}</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', ...PANEL_TITLE }}>
+          <span>Governor</span>
+          {assigned ? (
+            <button
+              class="gov-dismiss-btn"
+              onClick={() => { dismissGovernor(province.id); showGovernorPicker.value = false; }}
+              style={{
+                padding: '2px 8px', borderRadius: '3px',
+                background: 'rgba(120, 40, 30, 0.3)',
+                border: '1px solid rgba(180, 80, 60, 0.3)',
+                color: 'rgba(220, 120, 100, 0.7)',
+                fontFamily: 'inherit', fontSize: '8px', fontWeight: 600,
+                letterSpacing: '0.8px', textTransform: 'uppercase',
+              }}
+            >
+              Dismiss
+            </button>
+          ) : (
+            <button
+              class="gov-tier-btn"
+              onClick={() => { showGovernorPicker.value = !showGovernorPicker.value; }}
+              style={{
+                padding: '2px 8px', borderRadius: '3px',
+                background: 'transparent',
+                border: '1px solid rgba(180, 160, 100, 0.18)',
+                color: 'rgba(200, 190, 160, 0.42)',
+                fontFamily: 'inherit', fontSize: '8px', fontWeight: 600,
+                letterSpacing: '1px', textTransform: 'uppercase',
+              }}
+            >
+              {showGovernorPicker.value ? 'Cancel' : 'Hire →'}
+            </button>
+          )}
+        </div>
+        {assigned ? (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <div style={{
+                width: '28px', height: '28px', borderRadius: '50%',
+                background: `${FACTION_COLORS[assigned.governor.color]}20`,
+                border: `2px solid ${FACTION_COLORS[assigned.governor.color]}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '12px', fontWeight: 700, color: FACTION_COLORS[assigned.governor.color],
+              }}>
+                {assigned.governor.name[0]}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: FACTION_COLORS[assigned.governor.color] }}>{assigned.governor.name}</span>
+                  <span style={{
+                    padding: '1px 5px', borderRadius: '8px',
+                    background: 'rgba(50, 42, 12, 0.8)', border: '1px solid rgba(240, 208, 128, 0.3)',
+                    fontSize: '7px', fontWeight: 700, color: '#f0d080',
+                  }}>
+                    {ROMAN[assigned.tier]}
+                  </span>
+                </div>
+                <div style={{ fontSize: '9px', color: 'rgba(180, 170, 150, 0.5)', marginTop: '2px' }}>
+                  {assigned.governor.tiers[assigned.tier - 1].description}
+                </div>
+              </div>
             </div>
           </div>
+        ) : showGovernorPicker.value ? (
+          <GovernorPicker provinceId={province.id} />
         ) : (
           <div style={{ fontSize: '10px', color: 'rgba(180, 170, 150, 0.3)', fontStyle: 'italic' }}>
             No governor assigned
