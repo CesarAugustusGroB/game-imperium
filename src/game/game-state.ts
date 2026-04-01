@@ -8,6 +8,7 @@ import { STARTER_DOCTRINES } from '../data/doctrine-data';
 import { isDoctrineEquippable } from './doctrine';
 import { resetCouncilStore, hireAdvisor } from './council-store';
 import { resetSpoke } from './spoke';
+import { resetProvinceStore } from './province-store';
 import { STARTER_ADVISORS } from '../data/advisor-data';
 
 // ── Core run state ──
@@ -72,6 +73,7 @@ export function startNewRun(commander: Commander): void {
 
   // Give starter Advisors — all colors (UNRESTRICTED color rule)
   resetCouncilStore();
+  resetProvinceStore();
   for (const a of STARTER_ADVISORS) {
     hireAdvisor({ ...a, currentTier: 1, xp: 0 });
   }
@@ -89,6 +91,7 @@ export function resetRun(): void {
   resetDecretumHand();
   resetDoctrineStore();
   resetCouncilStore();
+  resetProvinceStore();
   resetSpoke();
 
   completedSpokes.value = 0;

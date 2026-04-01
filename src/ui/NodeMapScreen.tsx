@@ -5,6 +5,7 @@ import { navigateTo } from './screens';
 import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../game/spoke';
 import type { SpokeNode, NodeType, SeasonTickResult } from '../game/spoke';
 import { selectedCommander, completedSpokes, threatLevel } from '../game/game-state';
+import { conquerProvince } from '../game/province-store';
 import { FACTION_COLORS, RESOURCE_INFO } from '../game/commander';
 import type { ResourceType } from '../game/commander';
 import { spendResource, canAfford } from '../game/resources';
@@ -543,6 +544,11 @@ export function NodeMapScreen() {
       }
     }
     if (newTierUps.length > 0) tierUpNotices.value = newTierUps;
+
+    // Create a province from the completed spoke
+    if (spoke) {
+      conquerProvince(spoke.label, spokeGains.value, spoke.duration);
+    }
 
     showSpokeCompleteModal.value = false;
     completedSpokes.value += 1;
