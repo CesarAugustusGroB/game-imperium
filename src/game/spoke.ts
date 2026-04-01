@@ -54,7 +54,7 @@ export const currentNodeIndex = signal(0);
 
 // ── Spoke gains tracking (S2-09) ──
 
-const ZERO_GAINS: Record<ResourceType, number> = { gold: 0, faith: 0, influence: 0, momentum: 0 };
+export const ZERO_GAINS: Record<ResourceType, number> = { gold: 0, faith: 0, influence: 0, momentum: 0 };
 
 /** Cumulative resource gains during the current spoke. Read by spoke completion summary. */
 export const spokeGains = signal<Record<ResourceType, number>>({ ...ZERO_GAINS });

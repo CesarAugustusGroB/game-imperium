@@ -151,7 +151,7 @@ export function getProvinceIncome(
 
   // Apply governor income-bonus traits (percentage boost per resource)
   for (const trait of governorTraits) {
-    if (trait.type === 'income-bonus' && total[trait.resource]) {
+    if (trait.type === 'income-bonus' && total[trait.resource] != null) {
       total[trait.resource] = Math.floor(total[trait.resource]! * (1 + trait.percent / 100));
     }
   }

@@ -30,14 +30,6 @@ export interface Governor {
 
 // ── Helpers ──
 
-export function getGovernorTier(governor: Governor, tier: 1 | 2 | 3): GovernorTier {
-  return governor.tiers[tier - 1];
-}
-
-export function getTraitsAtTier(governor: Governor, tier: 1 | 2 | 3): GovernorTrait[] {
-  return governor.tiers[tier - 1].traits;
-}
-
 export function getHireCost(governor: Governor, tier: 1 | 2 | 3): ResourceCost {
   return governor.tiers[tier - 1].hireCost;
 }

@@ -4,7 +4,7 @@ import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
 import { initAbilityBar, updateAbilityBar, destroyAbilityBar, initDecretumBar, updateDecretumBar, destroyDecretumBar } from './ability-ui';
 import { selectedCommander, veteranStacks, allianceCount } from '../game/game-state';
-import { VETERAN_BONUS_PER_STACK } from './battle-config';
+import { VETERAN_BONUS_PER_STACK, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO } from './battle-config';
 import { offsetToAxial } from './hex';
 import { getActiveEffects } from '../game/doctrine-store';
 import type { DoctrineEffect } from '../game/doctrine';
@@ -57,7 +57,6 @@ export class BattleMode {
 
     // S3-10: Augustus — spawn extra allied units based on allianceCount
     if (selectedCommander.value?.id === 'augustus') {
-      const ALLY_HP_RATIO = 0.85;
       const extraUnits = Math.min(allianceCount.value, 4);
       for (let i = 0; i < extraUnits; i++) {
         // Spawn in blue reserve area (col 4, varied rows)
@@ -65,7 +64,7 @@ export class BattleMode {
         const hex = offsetToAxial(4, row);
         if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
           const unit = this._state.addUnit('blue', hex, `Allied ${i + 1}`, 'reserve');
-          unit.currentHp = Math.floor(unit.stats.hp * ALLY_HP_RATIO);
+          unit.currentHp = Math.floor(unit.stats.hp * ALLY_SPAWN_HP_RATIO);
         }
       }
     }
@@ -103,7 +102,7 @@ export class BattleMode {
             const hex = offsetToAxial(3, row);
             if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
               const u = this._state.addUnit('blue', hex, `Militia ${spawned + 1}`, effect.unitRole);
-              u.currentHp = Math.floor(u.stats.hp * 0.7);
+              u.currentHp = Math.floor(u.stats.hp * MILITIA_SPAWN_HP_RATIO);
               spawned++;
             }
           }
@@ -117,7 +116,7 @@ export class BattleMode {
             const hex = offsetToAxial(4, row);
             if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
               const u = this._state.addUnit('blue', hex, `Allied ${spawned + 1}`, 'reserve');
-              u.currentHp = Math.floor(u.stats.hp * 0.85);
+              u.currentHp = Math.floor(u.stats.hp * ALLY_SPAWN_HP_RATIO);
               spawned++;
             }
           }

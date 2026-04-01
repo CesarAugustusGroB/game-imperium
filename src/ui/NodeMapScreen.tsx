@@ -811,72 +811,111 @@ export function NodeMapScreen() {
       {/* Season tick modal */}
       {showSeasonModal.value && lastSeasonTick.value && (
         <NodeModal title={`Season ${lastSeasonTick.value.season} Begins`} onClose={() => { showSeasonModal.value = false; }}>
-          <div style={{ fontSize: '12px', color: 'rgba(200, 190, 160, 0.7)', lineHeight: '1.8' }}>
+          <div style={{ fontSize: '12px', color: 'rgba(200, 190, 160, 0.7)', lineHeight: '1.6', display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left' }}>
+            {/* Upkeep paid */}
             {lastSeasonTick.value.upkeepPaid.length > 0 && (
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ color: 'rgba(240, 208, 128, 0.6)', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Upkeep Paid</span>
+              <div style={{
+                padding: '8px 10px', borderRadius: '6px',
+                background: 'rgba(60, 50, 20, 0.2)',
+                border: '1px solid rgba(240, 208, 128, 0.1)',
+              }}>
+                <div style={{ color: 'rgba(240, 208, 128, 0.6)', letterSpacing: '1.5px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Upkeep Paid</div>
                 {lastSeasonTick.value.upkeepPaid.map((u, i) => (
-                  <div key={i} style={{ color: 'rgba(200, 130, 130, 0.8)' }}>
+                  <div key={i} style={{ color: 'rgba(200, 130, 130, 0.8)', fontSize: '11px' }}>
                     {RESOURCE_INFO[u.resource].icon} -{u.amount} {RESOURCE_INFO[u.resource].label}
                   </div>
                 ))}
               </div>
             )}
+            {/* Upkeep shortfall */}
             {lastSeasonTick.value.upkeepShortfall.length > 0 && (
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ color: '#c05050', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Shortfall</span>
+              <div style={{
+                padding: '8px 10px', borderRadius: '6px',
+                background: 'rgba(120, 40, 30, 0.15)',
+                border: '1px solid rgba(200, 80, 60, 0.2)',
+              }}>
+                <div style={{ color: '#c05050', letterSpacing: '1.5px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Shortfall</div>
                 {lastSeasonTick.value.upkeepShortfall.map((u, i) => (
-                  <div key={i} style={{ color: '#c05050' }}>
+                  <div key={i} style={{ color: '#c05050', fontSize: '11px' }}>
                     {RESOURCE_INFO[u.resource].icon} Cannot afford {u.deficit} {RESOURCE_INFO[u.resource].label}
                   </div>
                 ))}
               </div>
             )}
+            {/* Province income */}
             {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.incomeGained.length > 0 && (
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ color: 'rgba(90, 160, 90, 0.7)', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Province Income</span>
+              <div style={{
+                padding: '8px 10px', borderRadius: '6px',
+                background: 'rgba(30, 60, 30, 0.15)',
+                border: '1px solid rgba(90, 160, 90, 0.12)',
+              }}>
+                <div style={{ color: 'rgba(90, 160, 90, 0.7)', letterSpacing: '1.5px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Province Income</div>
                 {lastSeasonTick.value.provinceIncome.incomeGained.map((u, i) => (
-                  <div key={i} style={{ color: 'rgba(130, 200, 130, 0.8)' }}>
+                  <div key={i} style={{ color: 'rgba(130, 200, 130, 0.8)', fontSize: '11px' }}>
                     {RESOURCE_INFO[u.resource].icon} +{u.amount} {RESOURCE_INFO[u.resource].label}
                   </div>
                 ))}
               </div>
             )}
+            {/* Province expenses */}
             {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.expensesPaid > 0 && (
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ color: 'rgba(200, 160, 100, 0.6)', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Province Expenses</span>
-                <div style={{ color: 'rgba(200, 160, 100, 0.7)' }}>
+              <div style={{
+                padding: '8px 10px', borderRadius: '6px',
+                background: 'rgba(60, 50, 20, 0.15)',
+                border: '1px solid rgba(200, 160, 100, 0.1)',
+              }}>
+                <div style={{ color: 'rgba(200, 160, 100, 0.6)', letterSpacing: '1.5px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Province Expenses</div>
+                <div style={{ color: 'rgba(200, 160, 100, 0.7)', fontSize: '11px' }}>
                   {RESOURCE_INFO.gold.icon} -{lastSeasonTick.value.provinceIncome.expensesPaid} Gold
                 </div>
               </div>
             )}
+            {/* Province expense shortfall */}
             {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.expenseShortfall > 0 && (
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ color: '#c05050', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Province Expense Shortfall</span>
-                <div style={{ color: '#c05050' }}>
+              <div style={{
+                padding: '8px 10px', borderRadius: '6px',
+                background: 'rgba(120, 40, 30, 0.15)',
+                border: '1px solid rgba(200, 80, 60, 0.2)',
+              }}>
+                <div style={{ color: '#c05050', letterSpacing: '1.5px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Province Expense Shortfall</div>
+                <div style={{ color: '#c05050', fontSize: '11px' }}>
                   {RESOURCE_INFO.gold.icon} Cannot afford {lastSeasonTick.value.provinceIncome.expenseShortfall} Gold upkeep
                 </div>
               </div>
             )}
+            {/* Rebellion */}
             {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.rebellions.length > 0 && (
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ color: '#c05050', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Rebellion!</span>
+              <div style={{
+                padding: '8px 10px', borderRadius: '6px',
+                background: 'rgba(140, 30, 20, 0.2)',
+                border: '1px solid rgba(200, 60, 50, 0.3)',
+              }}>
+                <div style={{ color: '#e04040', letterSpacing: '1.5px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Rebellion!</div>
                 {lastSeasonTick.value.provinceIncome.rebellions.map((r, i) => (
-                  <div key={i} style={{ color: '#c05050' }}>
+                  <div key={i} style={{ color: '#e06050', fontSize: '11px', fontWeight: 600 }}>
                     {r.provinceName}: {r.lostInvestment ? `${r.lostInvestment} destroyed` : 'unrest critical'}
                   </div>
                 ))}
               </div>
             )}
-            <div style={{ color: 'rgba(200, 160, 100, 0.7)' }}>
-              Threat +{lastSeasonTick.value.threatIncrease}
+            {/* Threat */}
+            <div style={{
+              padding: '6px 10px', borderRadius: '6px',
+              background: 'rgba(60, 50, 20, 0.15)',
+              border: '1px solid rgba(200, 160, 100, 0.1)',
+              textAlign: 'center',
+            }}>
+              <span style={{ color: 'rgba(200, 160, 100, 0.7)', fontSize: '11px', fontWeight: 600 }}>
+                Threat +{lastSeasonTick.value.threatIncrease}
+              </span>
             </div>
           </div>
           <button class="modal-action-btn" onClick={() => { showSeasonModal.value = false; }} style={{
-            marginTop: '12px', padding: '8px 20px', borderRadius: '4px', cursor: 'pointer',
-            background: 'rgba(50, 42, 20, 0.7)', border: '1px solid rgba(220, 190, 100, 0.4)',
+            marginTop: '14px', padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
+            background: 'linear-gradient(135deg, rgba(80, 60, 20, 0.7), rgba(50, 40, 18, 0.9))',
+            border: '1px solid rgba(220, 190, 100, 0.4)',
             color: '#f0d080', fontFamily: 'inherit', fontSize: '12px', fontWeight: 600,
-            letterSpacing: '1px', textTransform: 'uppercase',
+            letterSpacing: '1.5px', textTransform: 'uppercase',
           }}>
             Continue
           </button>

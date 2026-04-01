@@ -11,6 +11,7 @@ import { councilSlots, startSpokeFromCouncil, plannedSpoke, tierUpNotices } from
 import { getCurrentTier } from '../game/advisor';
 import { ResourceExchangeModal } from './ResourceExchangeModal';
 import { provinces } from '../game/province-store';
+import { PANEL, PANEL_TITLE, ROMAN } from './ui-constants';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
@@ -63,8 +64,6 @@ if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
   document.head.appendChild(el);
 }
 
-const ROMAN: Record<1 | 2 | 3, string> = { 1: 'I', 2: 'II', 3: 'III' };
-
 const goldFlash = signal<string | null>(null);
 const exchangeOpen = signal(false);
 let flashTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -74,20 +73,6 @@ function showGoldFlash(amount: number) {
   if (flashTimeout) clearTimeout(flashTimeout);
   flashTimeout = setTimeout(() => { goldFlash.value = null; }, 1200);
 }
-
-const PANEL = {
-  background: 'rgba(20, 18, 36, 0.7)',
-  border: '1px solid rgba(180, 160, 100, 0.12)',
-  borderRadius: '8px',
-  padding: '14px 16px',
-} as const;
-
-const PANEL_TITLE = {
-  fontSize: '9px', fontWeight: 700 as const,
-  color: 'rgba(180, 170, 150, 0.5)',
-  letterSpacing: '2px', textTransform: 'uppercase' as const,
-  marginBottom: '10px',
-} as const;
 
 export function HubScreen() {
   const commander = selectedCommander.value;
@@ -383,12 +368,27 @@ export function HubScreen() {
               <div style={{ fontSize: '10px', color: 'rgba(180,170,150,0.28)', fontStyle: 'italic' }}>No provinces — complete spokes to conquer</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {provinces.value.map(p => (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ fontSize: '10px', color: 'rgba(220,210,185,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{p.name}</div>
-                    <div style={{ fontSize: '8px', color: 'rgba(180,170,150,0.32)', flexShrink: 0, marginLeft: '8px' }}>{p.investments.length}/6</div>
-                  </div>
-                ))}
+                {provinces.value.map(p => {
+                  const unrestColor = p.unrest > 70 ? '#c24a3a' : p.unrest > 40 ? '#d4a843' : 'rgba(180,170,150,0.32)';
+                  return (
+                    <div key={p.id} class="hub-panel-btn" onClick={() => navigateTo('provinces')} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '4px 6px', borderRadius: '4px',
+                      background: 'transparent', border: '1px solid transparent',
+                      fontFamily: 'inherit',
+                    }}>
+                      <div style={{ fontSize: '10px', color: 'rgba(220,210,185,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{p.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: '8px' }}>
+                        {p.unrest > 30 && (
+                          <div style={{ width: '24px', height: '3px', background: 'rgba(40,35,60,0.8)', borderRadius: '2px', overflow: 'hidden' }}>
+                            <div style={{ width: `${Math.min(100, p.unrest)}%`, height: '100%', background: unrestColor, borderRadius: '2px' }} />
+                          </div>
+                        )}
+                        <div style={{ fontSize: '8px', color: 'rgba(180,170,150,0.32)' }}>{p.investments.length}/6</div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

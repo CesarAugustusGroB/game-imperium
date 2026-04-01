@@ -2,9 +2,31 @@ import { signal } from '@preact/signals';
 import type { Governor, GovernorTrait } from './governor';
 import { getHireCost } from './governor';
 import type { ResourceType } from './commander';
+import type { ResourceCost } from './doctrine';
 import { ALL_GOVERNORS } from '../data/governor-data';
-import { canAffordCost } from './province-store';
-import { spendResource } from './resources';
+import { getResource, spendResource } from './resources';
+
+// ── Local cost check (avoids circular import with province-store) ──
+
+function canAffordCost(cost: ResourceCost): boolean {
+  for (const [res, amt] of Object.entries(cost) as [ResourceType, number][]) {
+    if (getResource(res) < amt) return false;
+  }
+  return true;
+}
+
+// ── Province sync callback (avoids circular import with province-store) ──
+// province-store registers itself at module init so governor-store can notify
+// when a governor is hired/dismissed, keeping Province.governorId in sync.
+
+let _syncGovernorToProvince: ((provinceId: string, governorId: string | undefined) => void) | null = null;
+
+/** Called by province-store at import time to register its sync callback. */
+export function registerProvinceSyncCallback(
+  fn: (provinceId: string, governorId: string | undefined) => void,
+): void {
+  _syncGovernorToProvince = fn;
+}
 
 // ── Types ──
 
@@ -88,6 +110,9 @@ export function hireGovernor(
     [provinceId]: { governorId, tier },
   };
 
+  // Sync Province.governorId (keep both stores consistent)
+  _syncGovernorToProvince?.(provinceId, governorId);
+
   return true;
 }
 
@@ -108,6 +133,9 @@ export function dismissGovernor(provinceId: string): boolean {
   const newAssignments = { ...governorAssignments.value };
   delete newAssignments[provinceId];
   governorAssignments.value = newAssignments;
+
+  // Sync Province.governorId (clear the field)
+  _syncGovernorToProvince?.(provinceId, undefined);
 
   return true;
 }
