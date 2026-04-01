@@ -8,7 +8,7 @@ import { STARTER_DOCTRINES } from '../data/doctrine-data';
 import { isDoctrineEquippable } from './doctrine';
 import { resetCouncilStore, hireAdvisor } from './council-store';
 import { resetSpoke } from './spoke';
-import { resetProvinceStore } from './province-store';
+import { resetProvinceStore, conquerProvince } from './province-store';
 import { STARTER_ADVISORS } from '../data/advisor-data';
 
 // ── Core run state ──
@@ -74,6 +74,10 @@ export function startNewRun(commander: Commander): void {
   // Give starter Advisors — all colors (UNRESTRICTED color rule)
   resetCouncilStore();
   resetProvinceStore();
+
+  // Start with one home province
+  conquerProvince('Roma', { gold: 2, faith: 1, influence: 1, momentum: 0 }, 1);
+
   for (const a of STARTER_ADVISORS) {
     hireAdvisor({ ...a, currentTier: 1, xp: 0 });
   }
