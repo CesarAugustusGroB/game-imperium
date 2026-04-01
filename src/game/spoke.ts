@@ -1,11 +1,10 @@
 import { signal } from '@preact/signals';
 import type { Faction, ResourceType } from './commander';
-import { spendResource } from './resources';
-import { veteranStacks, spokesSinceLastBattle, selectedCommander, threatLevel } from './game-state';
+import { spendResource, addResource } from './resources';
+import { threatLevel } from './game-state';
 import { getActiveEffects } from './doctrine-store';
 import type { DoctrineEffect } from './doctrine';
 import type { Posture } from './advisor';
-import { addResource } from './resources';
 import { collectProvinceIncome, type ProvinceIncomeResult } from './province-store';
 
 // ── Node types (S2-01) ──
@@ -211,42 +210,3 @@ export interface AdvanceNodeResult {
   seasonTicked: SeasonTickResult | null;
 }
 
-// ── Spoke generator (S2-03) ──
-
-/** Fixed introductory spoke for the MVP. Replaced by procedural gen in Sprint 6. */
-export function generateFixedSpoke(): Spoke {
-  const nodes: SpokeNode[] = [
-    { id: 'node-0', type: 'event',  position: 0, resolved: false, reward: null },
-    { id: 'node-1', type: 'battle', position: 1, resolved: false, reward: [{ resource: 'gold', amount: 2 }, { resource: 'momentum', amount: 3 }] },
-    { id: 'node-2', type: 'rest',   position: 2, resolved: false, reward: [{ resource: 'gold', amount: 1 }, { resource: 'faith', amount: 1 }, { resource: 'influence', amount: 1 }, { resource: 'momentum', amount: 1 }] },
-    { id: 'node-3', type: 'battle', position: 3, resolved: false, reward: [{ resource: 'gold', amount: 2 }, { resource: 'momentum', amount: 3 }] },
-    { id: 'node-4', type: 'event',  position: 4, resolved: false, reward: null },
-    { id: 'node-5', type: 'boss',   position: 5, resolved: false, reward: [{ resource: 'gold', amount: 4 }, { resource: 'faith', amount: 2 }, { resource: 'momentum', amount: 4 }] },
-  ];
-  return { nodes, label: 'The First March', completed: false, duration: 1, currentSeason: 1, posture: 'attacking' };
-}
-
-/** Create a new spoke and set it as active. */
-export function startSpoke(): void {
-  spokesSinceLastBattle.value += 1;
-  if (selectedCommander.value?.id === 'boudicca' && spokesSinceLastBattle.value >= 3) {
-    veteranStacks.value = 0;
-  }
-
-  currentSpoke.value = generateFixedSpoke();
-  currentNodeIndex.value = 0;
-  spokeGains.value = { ...ZERO_GAINS };
-
-  // S3-09: Deus Vult — Pope Innocent gains Faith at spoke start
-  if (selectedCommander.value?.id === 'innocent') {
-    grantSpokeResource('faith', 1, selectedCommander.value.faction);
-  }
-
-  // S4-11: Apply Doctrine spoke-start effects
-  const faction = selectedCommander.value?.faction;
-  for (const effect of getActiveEffects()) {
-    if (effect.type === 'resource-per-spoke') {
-      grantSpokeResource(effect.resource, effect.amount, faction);
-    }
-  }
-}

@@ -1,26 +1,34 @@
-# Plan: S6-10 — Wire Province bonuses into spoke and battle
+# Plan: S6-11 — Procedural spoke generator (Council-driven, preview + threat mutation)
 
 ## Task
-Investment tier 2/3 special bonuses are described in text but not wired into gameplay. This task connects them: Castrum free units in battle, Basilica extra event choices, Pantheon revive, Market exchange rate bonus, Aqueduct income +10%.
+The procedural spoke generator already exists (generateSpokeFromCouncil from S5) but the preview is unstable (re-randomized each render) and the actual spoke is identical to a fresh random roll with no connection to what was previewed. This task makes the preview deterministic (cached on advisor changes), makes embark use the cached plan with threat-based mutation (75% preserved, 25% randomized at base threat), and removes dead legacy code. Absorbs S6-13 scope.
 
 ## Approach
-Create `getProvinceEffects()` in province-store that scans all provinces for special investment bonuses and returns DoctrineEffect-compatible objects. Wire these into the existing effect consumption points (battle start, event choices, exchange rates, income calculation).
+1. Add `plannedSpoke` signal to council-store — recomputed only when advisors change
+2. Hub preview reads `plannedSpoke` (stable, no re-randomization)
+3. `startSpokeFromCouncil()` clones the planned spoke and applies a chaos pass based on threatLevel
+4. Remove dead `generateFixedSpoke()` and `startSpoke()` from spoke.ts
 
 ## Steps
-1. Add `getProvinceEffects()` to province-store — returns DoctrineEffect[] from investment specials
-2. Wire into battle: add province effects alongside doctrine effects at battle start
-3. Wire into events: add province extra-event-choices to getExtraEventChoices()
-4. Wire exchange rate bonus: Market T3 improves exchange rates
-5. Wire Aqueduct T3 income +10%: apply in collectProvinceIncome()
+1. **Add plannedSpoke signal** to council-store — computed by `regeneratePlannedSpoke()`, called from `seatAdvisor()` and `unseatAdvisor()`
+2. **Update HubScreen** — read `plannedSpoke` instead of calling `generateSpokeFromCouncil()` each render
+3. **Add `mutateSpoke()` chaos pass** — for each non-boss node, if `Math.random() < chaosPercent/100`, re-randomize node type. `chaosPercent = min(50, threatLevel * 5)`. Duration may shift ±1 at threat > 6.
+4. **Update startSpokeFromCouncil()** — clone plannedSpoke, apply mutateSpoke(), set as currentSpoke
+5. **Remove dead code** — delete `generateFixedSpoke()` and `startSpoke()` from spoke.ts
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `src/game/province-store.ts` | modify | Add getProvinceEffects() |
-| `src/game/doctrine-store.ts` | modify | getExtraEventChoices() includes province bonus |
-| `src/battle/index.ts` | modify | Apply province effects at battle start |
-| `src/game/resources.ts` | modify | Exchange rate bonus from Market T3 |
+| `src/game/council-store.ts` | modify | plannedSpoke signal, mutateSpoke, updated startSpokeFromCouncil |
+| `src/ui/HubScreen.tsx` | modify | Read plannedSpoke instead of calling generateSpokeFromCouncil() |
+| `src/game/spoke.ts` | modify | Remove generateFixedSpoke + startSpoke dead code |
+
+## Design decisions
+- **Chaos formula**: `chaosPercent = min(50, threatLevel * 5)` — at threat 0: 0% chaos (exact match), threat 5: 25%, threat 10: 50% cap
+- **Duration shift**: at threat > 6, ±1 season (random), clamped to 1-4
+- **Boss node**: never mutated (always last, always boss)
+- **Posture**: never mutated (council decision stands)
 
 ## Out of scope
-- Aqueduct population cap effect (no population growth system yet)
-- Province-specific battles (all bonuses are empire-wide aggregates)
+- UI highlighting of mutated nodes (cosmetic, can be added later)
+- Advisor-specific unique node types

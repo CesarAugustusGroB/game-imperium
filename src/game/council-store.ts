@@ -3,7 +3,7 @@ import type { Advisor } from './advisor';
 import { getCurrentSpokeTemplate, getTierForXp } from './advisor';
 import type { Spoke, SpokeNode, NodeType } from './spoke';
 import { currentSpoke, currentNodeIndex, spokeGains, grantSpokeResource } from './spoke';
-import { selectedCommander, veteranStacks, spokesSinceLastBattle } from './game-state';
+import { selectedCommander, veteranStacks, spokesSinceLastBattle, threatLevel } from './game-state';
 import { getActiveEffects } from './doctrine-store';
 import { addResource } from './resources';
 import type { ResourceType } from './commander';
@@ -18,6 +18,9 @@ export const advisorPool = signal<Advisor[]>([]);
 
 /** Names of advisors who tiered up at last spoke completion. Cleared when hub is shown. */
 export const tierUpNotices = signal<string[]>([]);
+
+/** Cached planned spoke — stable preview, recomputed only on advisor changes. */
+export const plannedSpoke = signal<Spoke | null>(null);
 
 // ── Slot management ──
 
@@ -50,6 +53,7 @@ export function seatAdvisor(slotIndex: number, advisor: Advisor): boolean {
   councilSlots.value = slots;
   advisorPool.value = pool;
 
+  regeneratePlannedSpoke();
   return true;
 }
 
@@ -70,6 +74,8 @@ export function unseatAdvisor(slotIndex: number): void {
 
   councilSlots.value = slots;
   advisorPool.value = pool;
+
+  regeneratePlannedSpoke();
 }
 
 /** Add an advisor to the pool (e.g. from hire/reward). */
@@ -305,9 +311,50 @@ export function generateSpokeFromCouncil(): Spoke {
 const ZERO_GAINS: Record<ResourceType, number> = { gold: 0, faith: 0, influence: 0, momentum: 0 };
 
 /**
- * Replaces the legacy startSpoke() flow.
- * Generates a council-driven spoke, applies commander/doctrine passives,
- * and grants 1 XP to each seated advisor.
+ * Recompute the planned spoke from current council composition.
+ * Called after every advisor seat/unseat. Produces a stable preview.
+ */
+export function regeneratePlannedSpoke(): void {
+  const seated = councilSlots.value.filter(Boolean).length;
+  plannedSpoke.value = seated > 0 ? generateSpokeFromCouncil() : null;
+}
+
+/**
+ * Apply threat-based chaos to a spoke.
+ * Preserves boss node and posture. Mutates a % of non-boss nodes based on threatLevel.
+ * chaosPercent = min(50, threatLevel * 5): threat 0 = 0%, threat 5 = 25%, threat 10 = 50% cap.
+ * At threat > 6, duration may shift ±1.
+ */
+function mutateSpoke(spoke: Spoke): Spoke {
+  const threat = threatLevel.value;
+  const chaosPercent = Math.min(50, threat * 5);
+
+  // Clone nodes (skip last = boss)
+  const nodes: SpokeNode[] = spoke.nodes.map((n, i) => {
+    // Never mutate boss (last node)
+    if (i === spoke.nodes.length - 1) return { ...n };
+
+    // Roll for mutation
+    if (Math.random() * 100 < chaosPercent) {
+      const newType = weightedPick(DEFAULT_WEIGHTS);
+      return { ...n, type: newType, reward: rewardForType(newType) };
+    }
+    return { ...n };
+  });
+
+  // Duration shift at high threat
+  let duration = spoke.duration;
+  if (threat > 6) {
+    const shift = Math.random() < 0.5 ? -1 : 1;
+    duration = Math.max(1, Math.min(4, duration + shift));
+  }
+
+  return { ...spoke, nodes, duration, completed: false, currentSeason: 1 };
+}
+
+/**
+ * Start a spoke from the planned spoke. Applies threat-based chaos mutation.
+ * Falls back to fresh generation if no planned spoke is cached.
  */
 export function startSpokeFromCouncil(): void {
   spokesSinceLastBattle.value += 1;
@@ -316,7 +363,10 @@ export function startSpokeFromCouncil(): void {
     veteranStacks.value = 0;
   }
 
-  const spoke = generateSpokeFromCouncil();
+  // Use planned spoke (stable preview) or generate fresh as fallback
+  const base = plannedSpoke.value ?? generateSpokeFromCouncil();
+  const spoke = mutateSpoke(base);
+
   currentSpoke.value = spoke;
   currentNodeIndex.value = 0;
   spokeGains.value = { ...ZERO_GAINS };
@@ -333,7 +383,6 @@ export function startSpokeFromCouncil(): void {
       grantSpokeResource(effect.resource, effect.amount, faction);
     }
   }
-
 }
 
 /** Reset all council state (called on run end / title screen return). */
