@@ -10,6 +10,7 @@ import { DecretumCard } from './DecretumRenderer';
 import { councilSlots, startSpokeFromCouncil, generateSpokeFromCouncil, tierUpNotices } from '../game/council-store';
 import { getCurrentTier } from '../game/advisor';
 import { ResourceExchangeModal } from './ResourceExchangeModal';
+import { provinces } from '../game/province-store';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
@@ -362,6 +363,32 @@ export function HubScreen() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* Provinces */}
+          <div style={PANEL}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <div style={{ ...PANEL_TITLE, marginBottom: 0 }}>
+                Provinces <span style={{ color: 'rgba(200,190,160,0.32)' }}>({provinces.value.length})</span>
+              </div>
+              {provinces.value.length > 0 && (
+                <button class="hub-panel-btn" onClick={() => navigateTo('provinces')} style={{ background: 'transparent', border: '1px solid rgba(180,160,100,0.18)', borderRadius: '3px', padding: '2px 8px', color: 'rgba(200,190,160,0.42)', fontFamily: 'inherit', fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                  Manage →
+                </button>
+              )}
+            </div>
+            {provinces.value.length === 0 ? (
+              <div style={{ fontSize: '10px', color: 'rgba(180,170,150,0.28)', fontStyle: 'italic' }}>No provinces — complete spokes to conquer</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {provinces.value.map(p => (
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ fontSize: '10px', color: 'rgba(220,210,185,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{p.name}</div>
+                    <div style={{ fontSize: '8px', color: 'rgba(180,170,150,0.32)', flexShrink: 0, marginLeft: '8px' }}>{p.investments.length}/6</div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

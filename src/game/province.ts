@@ -1,4 +1,5 @@
 import type { Faction, ResourceType } from './commander';
+import type { ResourceCost } from './doctrine';
 
 // ── Investment types ──
 
@@ -47,14 +48,15 @@ export interface Province {
 
 // ── Investment data ──
 
-interface InvestmentLevelEffect {
+export interface InvestmentLevelEffect {
   incomeBonus: Partial<Record<ResourceType, number>>;
   expensesBonus: number;   // additional gold upkeep
   unrestChange: number;    // negative = suppresses unrest per spoke
+  buildCost: ResourceCost; // resources to build / upgrade to this level
   description: string;
 }
 
-interface InvestmentData {
+export interface InvestmentData {
   type: InvestmentType;
   color: Faction;
   name: string;
@@ -69,9 +71,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Castrum',
     flavour: 'A fortified camp that garrisons a permanent legion detachment.',
     levels: [
-      { incomeBonus: {},                    expensesBonus: 1, unrestChange: -5,  description: 'Garrison deters minor raids. -5 Unrest/spoke.' },
-      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -10, description: 'Full cohort stationed. -10 Unrest/spoke. Free levy unit in defense battles.' },
-      { incomeBonus: { momentum: 1 },       expensesBonus: 3, unrestChange: -15, description: 'Veteran legion presence. -15 Unrest/spoke. +1 Momentum/spoke. Free veteran unit.' },
+      { incomeBonus: {},                    expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: 'Garrison deters minor raids. -5 Unrest/spoke.' },
+      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -10, buildCost: { gold: 10, momentum: 3 },          description: 'Full cohort stationed. -10 Unrest/spoke. Free levy unit in defense battles.' },
+      { incomeBonus: { momentum: 1 },       expensesBonus: 3, unrestChange: -15, buildCost: { gold: 20, momentum: 6 },          description: 'Veteran legion presence. -15 Unrest/spoke. +1 Momentum/spoke. Free veteran unit.' },
     ],
   },
   basilica: {
@@ -79,9 +81,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Basilica',
     flavour: 'A court of law that channels political loyalty upward.',
     levels: [
-      { incomeBonus: { influence: 1 },      expensesBonus: 1, unrestChange: 0,   description: '+1 Influence/spoke.' },
-      { incomeBonus: { influence: 2 },      expensesBonus: 1, unrestChange: -5,  description: '+2 Influence/spoke. -5 Unrest/spoke.' },
-      { incomeBonus: { influence: 3 },      expensesBonus: 2, unrestChange: -10, description: '+3 Influence/spoke. -10 Unrest/spoke. +1 extra event choice.' },
+      { incomeBonus: { influence: 1 },      expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+1 Influence/spoke.' },
+      { incomeBonus: { influence: 2 },      expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 10, influence: 3 },         description: '+2 Influence/spoke. -5 Unrest/spoke.' },
+      { incomeBonus: { influence: 3 },      expensesBonus: 2, unrestChange: -10, buildCost: { gold: 20, influence: 6 },         description: '+3 Influence/spoke. -10 Unrest/spoke. +1 extra event choice.' },
     ],
   },
   pantheon: {
@@ -89,9 +91,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Pantheon',
     flavour: 'Temples to the Roman gods maintain divine favour and civic morale.',
     levels: [
-      { incomeBonus: { faith: 1 },          expensesBonus: 1, unrestChange: -5,  description: '+1 Faith/spoke. -5 Unrest/spoke.' },
-      { incomeBonus: { faith: 2 },          expensesBonus: 1, unrestChange: -10, description: '+2 Faith/spoke. -10 Unrest/spoke.' },
-      { incomeBonus: { faith: 3 },          expensesBonus: 2, unrestChange: -15, description: '+3 Faith/spoke. -15 Unrest/spoke. Units in this province\'s battles revive once.' },
+      { incomeBonus: { faith: 1 },          expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: '+1 Faith/spoke. -5 Unrest/spoke.' },
+      { incomeBonus: { faith: 2 },          expensesBonus: 1, unrestChange: -10, buildCost: { gold: 10, faith: 3 },             description: '+2 Faith/spoke. -10 Unrest/spoke.' },
+      { incomeBonus: { faith: 3 },          expensesBonus: 2, unrestChange: -15, buildCost: { gold: 20, faith: 6 },             description: '+3 Faith/spoke. -15 Unrest/spoke. Units in this province\'s battles revive once.' },
     ],
   },
   market: {
@@ -99,9 +101,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Market',
     flavour: 'A bustling forum that taxes trade flowing through the province.',
     levels: [
-      { incomeBonus: { gold: 2 },           expensesBonus: 0, unrestChange: 0,   description: '+2 Gold/spoke.' },
-      { incomeBonus: { gold: 4 },           expensesBonus: 1, unrestChange: 0,   description: '+4 Gold/spoke.' },
-      { incomeBonus: { gold: 6 },           expensesBonus: 1, unrestChange: 0,   description: '+6 Gold/spoke. Resource exchange rates in this province improved by 1.' },
+      { incomeBonus: { gold: 2 },           expensesBonus: 0, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+2 Gold/spoke.' },
+      { incomeBonus: { gold: 4 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 12 },                      description: '+4 Gold/spoke.' },
+      { incomeBonus: { gold: 6 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 24 },                      description: '+6 Gold/spoke. Resource exchange rates in this province improved by 1.' },
     ],
   },
   aqueduct: {
@@ -109,9 +111,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Aqueduct',
     flavour: 'Running water feeds population growth and scales all income.',
     levels: [
-      { incomeBonus: { gold: 1 },           expensesBonus: 1, unrestChange: -5,  description: '+1 Gold/spoke. +1 Population cap. -5 Unrest/spoke.' },
-      { incomeBonus: { gold: 2 },           expensesBonus: 2, unrestChange: -5,  description: '+2 Gold/spoke. +2 Population cap. -5 Unrest/spoke.' },
-      { incomeBonus: { gold: 3 },           expensesBonus: 2, unrestChange: -10, description: '+3 Gold/spoke. +3 Population cap. -10 Unrest/spoke. All income +10%.' },
+      { incomeBonus: { gold: 1 },           expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 6 },                       description: '+1 Gold/spoke. +1 Population cap. -5 Unrest/spoke.' },
+      { incomeBonus: { gold: 2 },           expensesBonus: 2, unrestChange: -5,  buildCost: { gold: 14 },                      description: '+2 Gold/spoke. +2 Population cap. -5 Unrest/spoke.' },
+      { incomeBonus: { gold: 3 },           expensesBonus: 2, unrestChange: -10, buildCost: { gold: 26 },                      description: '+3 Gold/spoke. +3 Population cap. -10 Unrest/spoke. All income +10%.' },
     ],
   },
   insula: {
@@ -119,9 +121,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Insula & Arena',
     flavour: 'Bread, housing, and spectacles keep the masses content.',
     levels: [
-      { incomeBonus: {},                    expensesBonus: 1, unrestChange: -10, description: '-10 Unrest/spoke.' },
-      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -20, description: '-20 Unrest/spoke. Rebellion events suppressed at <50 Unrest.' },
-      { incomeBonus: { momentum: 1 },       expensesBonus: 2, unrestChange: -30, description: '-30 Unrest/spoke. +1 Momentum/spoke. Rebellion impossible below 70 Unrest.' },
+      { incomeBonus: {},                    expensesBonus: 1, unrestChange: -10, buildCost: { gold: 4 },                       description: '-10 Unrest/spoke.' },
+      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -20, buildCost: { gold: 10 },                      description: '-20 Unrest/spoke. Rebellion events suppressed at <50 Unrest.' },
+      { incomeBonus: { momentum: 1 },       expensesBonus: 2, unrestChange: -30, buildCost: { gold: 18 },                      description: '-30 Unrest/spoke. +1 Momentum/spoke. Rebellion impossible below 70 Unrest.' },
     ],
   },
 };
