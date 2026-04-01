@@ -78,14 +78,15 @@ export function startNewRun(commander: Commander): void {
   resetCouncilStore();
   resetProvinceStore();
   initGovernorStore();
+
+  // Create the home province first (no territory claimed yet — topology not loaded)
+  conquerProvince('Roma', { gold: 2, faith: 1, influence: 1, momentum: 0 }, 1);
+
+  // Load topology, then retroactively claim territory for Roma
   initProvinceMapStore().then(() => {
-    // Claim territory for Roma once topology is loaded
     const roma = provinces.value.find(p => p.name === 'Roma');
     if (roma) claimTerritory(roma.id);
   });
-
-  // Start with one home province
-  conquerProvince('Roma', { gold: 2, faith: 1, influence: 1, momentum: 0 }, 1);
 
   for (const a of STARTER_ADVISORS) {
     hireAdvisor({ ...a, currentTier: 1, xp: 0 });

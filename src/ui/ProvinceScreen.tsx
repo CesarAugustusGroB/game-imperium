@@ -16,6 +16,7 @@ import {
   hireGovernor, dismissGovernor,
 } from '../game/governor-store';
 import { ProvinceMapView } from './ProvinceMapView';
+import { PANEL, PANEL_TITLE, ROMAN, formatCost } from './ui-constants';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('province-styles')) {
@@ -24,6 +25,7 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
   el.textContent = `
     .prov-row { transition: all 0.15s ease; cursor: pointer; }
     .prov-row:hover { border-color: rgba(180, 160, 100, 0.45) !important; background: rgba(40, 35, 60, 0.5) !important; }
+    .prov-row:active { transform: scale(0.99); }
     .prov-row-selected { border-color: rgba(240, 208, 128, 0.5) !important; background: rgba(50, 42, 12, 0.4) !important; }
     .inv-slot { transition: all 0.15s ease; }
     .inv-slot:hover { border-color: rgba(180, 160, 100, 0.4) !important; }
@@ -39,13 +41,20 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
     .prov-back-btn:hover { border-color: rgba(180, 160, 100, 0.45) !important; color: rgba(240, 220, 160, 0.9) !important; }
     .prov-back-btn:active { transform: scale(0.97); }
     .gov-card { transition: all 0.15s ease; cursor: pointer; }
-    .gov-card:hover { border-color: rgba(180, 160, 100, 0.45) !important; transform: translateY(-1px); }
+    .gov-card:hover { border-color: rgba(180, 160, 100, 0.45) !important; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
     .gov-card:active { transform: scale(0.98); }
     .gov-dismiss-btn { transition: all 0.15s ease; cursor: pointer; }
-    .gov-dismiss-btn:hover { background: rgba(180, 60, 40, 0.4) !important; border-color: rgba(200, 80, 60, 0.6) !important; }
+    .gov-dismiss-btn:hover { background: rgba(180, 60, 40, 0.4) !important; border-color: rgba(200, 80, 60, 0.6) !important; color: #e8a0a0 !important; }
     .gov-tier-btn { transition: all 0.15s ease; cursor: pointer; }
-    .gov-tier-btn:hover:not(:disabled) { border-color: rgba(240, 208, 128, 0.6) !important; background: rgba(80, 60, 20, 0.6) !important; }
+    .gov-tier-btn:hover:not(:disabled) { border-color: rgba(240, 208, 128, 0.6) !important; background: rgba(80, 60, 20, 0.6) !important; color: #fff0c0 !important; }
     .gov-tier-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .gov-tier-btn:active:not(:disabled) { transform: scale(0.96); }
+    /* Styled scrollbar for province ledger */
+    .prov-ledger::-webkit-scrollbar { width: 4px; }
+    .prov-ledger::-webkit-scrollbar-track { background: rgba(20, 18, 36, 0.3); border-radius: 2px; }
+    .prov-ledger::-webkit-scrollbar-thumb { background: rgba(180, 160, 100, 0.2); border-radius: 2px; }
+    .prov-ledger::-webkit-scrollbar-thumb:hover { background: rgba(180, 160, 100, 0.35); }
+    .prov-ledger { scrollbar-width: thin; scrollbar-color: rgba(180,160,100,0.2) transparent; }
     @keyframes prov-fade-in {
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
@@ -54,35 +63,12 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
   document.head.appendChild(el);
 }
 
-const ROMAN: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III' };
-
 const ALL_INVESTMENTS: InvestmentType[] = ['castrum', 'basilica', 'pantheon', 'market', 'aqueduct', 'insula'];
 
 const selectedProvinceId = signal<string | null>(null);
 const showGovernorPicker = signal(false);
 
-const PANEL = {
-  background: 'rgba(20, 18, 36, 0.7)',
-  border: '1px solid rgba(180, 160, 100, 0.12)',
-  borderRadius: '8px',
-  padding: '14px 16px',
-} as const;
-
-const PANEL_TITLE = {
-  fontSize: '9px', fontWeight: 700 as const,
-  color: 'rgba(180, 170, 150, 0.5)',
-  letterSpacing: '2px', textTransform: 'uppercase' as const,
-  marginBottom: '10px',
-} as const;
-
 // ── Helpers ──
-
-function formatCost(cost: Partial<Record<ResourceType, number>>): string {
-  return (Object.entries(cost) as [ResourceType, number][])
-    .filter(([, amt]) => amt > 0)
-    .map(([res, amt]) => `${amt} ${RESOURCE_INFO[res].icon}`)
-    .join(' + ');
-}
 
 function formatIncome(income: Partial<Record<ResourceType, number>>): string {
   const parts = (Object.entries(income) as [ResourceType, number][])
@@ -180,22 +166,31 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
 
       {/* Build / Upgrade button */}
       {!maxed && cost && (
-        <button
-          class="inv-build-btn"
-          disabled={!affordable}
-          onClick={handleBuild}
-          style={{
-            marginTop: 'auto',
-            padding: '5px 8px', borderRadius: '4px',
-            background: 'rgba(50, 42, 12, 0.6)',
-            border: '1px solid rgba(240, 208, 128, 0.25)',
-            color: '#f0d080', fontFamily: 'inherit',
-            fontSize: '9px', fontWeight: 600, letterSpacing: '0.8px',
-            textTransform: 'uppercase',
-          }}
-        >
-          {currentLevel === 0 ? 'Build' : `Upgrade ${ROMAN[currentLevel]} \u2192 ${ROMAN[nextLevel]}`} &middot; {formatCost(cost)}
-        </button>
+        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          {discount > 0 && (
+            <div style={{
+              fontSize: '8px', color: 'rgba(90, 180, 90, 0.7)',
+              letterSpacing: '0.5px', textAlign: 'center',
+            }}>
+              -{discount}% governor discount
+            </div>
+          )}
+          <button
+            class="inv-build-btn"
+            disabled={!affordable}
+            onClick={handleBuild}
+            style={{
+              padding: '5px 8px', borderRadius: '4px',
+              background: 'rgba(50, 42, 12, 0.6)',
+              border: '1px solid rgba(240, 208, 128, 0.25)',
+              color: '#f0d080', fontFamily: 'inherit',
+              fontSize: '9px', fontWeight: 600, letterSpacing: '0.8px',
+              textTransform: 'uppercase',
+            }}
+          >
+            {currentLevel === 0 ? 'Build' : `Upgrade ${ROMAN[currentLevel]} \u2192 ${ROMAN[nextLevel]}`} &middot; {formatCost(cost)}
+          </button>
+        </div>
       )}
 
       {maxed && (
@@ -312,18 +307,29 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
                     }}
                     title={tierData.description}
                     style={{
-                      flex: '1 1 0', minWidth: '80px',
-                      padding: '5px 6px', borderRadius: '4px',
+                      flex: '1 1 0', minWidth: '90px',
+                      padding: '7px 8px', borderRadius: '4px',
                       background: 'rgba(50, 42, 12, 0.5)',
                       border: '1px solid rgba(240, 208, 128, 0.2)',
                       color: '#f0d080', fontFamily: 'inherit',
-                      fontSize: '8px', fontWeight: 600, letterSpacing: '0.5px',
+                      fontSize: '9px', fontWeight: 600, letterSpacing: '0.5px',
                       textTransform: 'uppercase',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
                     }}
                   >
-                    <span>Tier {ROMAN[tier]}</span>
-                    <span style={{ fontSize: '7px', opacity: 0.7 }}>{formatCost(cost)}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{
+                        width: '16px', height: '16px', borderRadius: '50%',
+                        background: 'rgba(50, 42, 12, 0.8)', border: '1px solid rgba(240, 208, 128, 0.3)',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '7px', fontWeight: 700, color: '#f0d080', flexShrink: 0,
+                      }}>{ROMAN[tier]}</span>
+                      Tier {ROMAN[tier]}
+                    </span>
+                    <span style={{ fontSize: '8px', opacity: 0.55, fontWeight: 400, textTransform: 'none', lineHeight: '1.3', textAlign: 'center' }}>
+                      {tierData.description.split(' ').slice(0, 6).join(' ')}
+                    </span>
+                    <span style={{ fontSize: '8px', opacity: 0.7, color: '#d4a843' }}>{formatCost(cost)}</span>
                   </button>
                 );
               })}
@@ -531,10 +537,11 @@ export function ProvinceScreen() {
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
 
             {/* Left: Ledger */}
-            <div style={{
+            <div class="prov-ledger" style={{
               flex: '0 0 260px', minWidth: '220px',
               display: 'flex', flexDirection: 'column', gap: '6px',
               maxHeight: 'calc(100vh - 200px)', overflowY: 'auto',
+              paddingRight: '4px',
             }}>
               <div style={PANEL_TITLE}>{allProvinces.length} Province{allProvinces.length !== 1 ? 's' : ''}</div>
               {allProvinces.map(p => (
@@ -543,7 +550,7 @@ export function ProvinceScreen() {
             </div>
 
             {/* Right: Detail */}
-            <div style={{ flex: '1 1 400px', minWidth: '300px' }}>
+            <div style={{ flex: '1 1 400px', minWidth: '0' }}>
               {selected ? (
                 <ProvinceDetail province={selected} />
               ) : (

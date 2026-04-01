@@ -13,6 +13,7 @@ import {
   startSpokeFromCouncil,
   plannedSpoke,
 } from '../game/council-store';
+import { ROMAN } from './ui-constants';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('council-screen-styles')) {
@@ -52,9 +53,6 @@ if (typeof document !== 'undefined' && !document.getElementById('council-screen-
 
 /** Which slot (0-2) is currently awaiting an advisor pick, or null. */
 const equipTargetSlot = signal<number | null>(null);
-
-// ── Roman numerals ──
-const ROMAN: Record<1 | 2 | 3, string> = { 1: 'I', 2: 'II', 3: 'III' };
 
 // ── Node type colors/icons for spoke preview ──
 const SPOKE_NODE_STYLES: Record<NodeType, { color: string; icon: string }> = {

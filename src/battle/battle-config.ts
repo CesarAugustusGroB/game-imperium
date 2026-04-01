@@ -10,6 +10,12 @@ export const DODGE_AGI_FACTOR = 0.5;      // dodgeChance = (defAGI - atkAGI) * f
 export const DODGE_MAX = 30;              // max dodge chance %
 export const DOUBLE_STRIKE_RATIO = 1.5;   // atk.agi >= def.agi * ratio → double strike
 
+// ── Spawn HP ratios (fraction of max HP for summoned/allied units) ──
+/** HP ratio for allied units (Augustus perk and doctrine ally-units). */
+export const ALLY_SPAWN_HP_RATIO = 0.85;
+/** HP ratio for free militia units (province Castrum / doctrine free-units). */
+export const MILITIA_SPAWN_HP_RATIO = 0.7;
+
 // ── Role Stats ──
 export const ROLE_STATS: Record<UnitRole, UnitStats> = {
   vanguard: { atk: 150, def: 40, hp: 1080, agi: 40 },
