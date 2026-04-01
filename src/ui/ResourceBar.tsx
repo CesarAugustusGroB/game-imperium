@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'preact/hooks';
 import type { Signal } from '@preact/signals';
 import { gold, faith, influence, momentum } from '../game/resources';
-import { selectedCommander } from '../game/game-state';
+import { selectedCommander, globalSeason, MAX_SEASONS, getDoomLevel } from '../game/game-state';
 import { FACTION_PRIMARY_RESOURCE, RESOURCE_INFO } from '../game/commander';
 import type { ResourceType } from '../game/commander';
 
@@ -75,12 +75,22 @@ function ResourceCounter({ type }: { type: ResourceType }) {
 export function ResourceBar() {
   if (!selectedCommander.value) return null;
 
+  const doom = getDoomLevel();
+  const seasonColor = doom >= 75 ? '#c24a3a' : doom >= 50 ? '#d4a843' : 'rgba(200, 190, 160, 0.5)';
+
   return (
     <div style={BAR_STYLE}>
       <ResourceCounter type="gold" />
       <ResourceCounter type="faith" />
       <ResourceCounter type="influence" />
       <ResourceCounter type="momentum" />
+      <div style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid rgba(180, 160, 100, 0.15)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <span style={{ fontSize: '11px', color: seasonColor, fontWeight: doom >= 50 ? '700' : '400', transition: 'color 0.3s' }}
+          title={`Season ${globalSeason.value} of ${MAX_SEASONS} — Doom ${doom}%`}
+        >
+          S{globalSeason.value}/{MAX_SEASONS}
+        </span>
+      </div>
     </div>
   );
 }

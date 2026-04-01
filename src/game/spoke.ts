@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import type { Faction, ResourceType } from './commander';
 import { spendResource, addResource } from './resources';
-import { threatLevel } from './game-state';
+import { threatLevel, globalSeason, getDoomUpkeep, getDoomMilestone } from './game-state';
 import { getActiveEffects } from './doctrine-store';
 import type { DoctrineEffect } from './doctrine';
 import type { Posture } from './advisor';
@@ -148,6 +148,9 @@ export const THREAT_PER_SEASON = 1;
 /** Result of a season tick, for the UI to display. */
 export interface SeasonTickResult {
   season: number;
+  globalSeason: number;
+  doomUpkeep: number;
+  doomMilestone: string | null;
   upkeepPaid: { resource: ResourceType; amount: number }[];
   upkeepShortfall: { resource: ResourceType; deficit: number }[];
   threatIncrease: number;
@@ -192,8 +195,22 @@ export function tickSeason(): SeasonTickResult | null {
     }
   }
 
+  // Doom escalation upkeep (extra gold drain)
+  const doomUpkeep = getDoomUpkeep();
+  if (doomUpkeep > 0) {
+    if (spendResource('gold', doomUpkeep)) {
+      upkeepPaid.push({ resource: 'gold', amount: doomUpkeep });
+    } else {
+      upkeepShortfall.push({ resource: 'gold', deficit: doomUpkeep });
+    }
+  }
+
   // Increment threat
   threatLevel.value += THREAT_PER_SEASON;
+
+  // Advance global season clock
+  globalSeason.value += 1;
+  const doomMilestone = getDoomMilestone();
 
   // Collect province income
   const provinceIncome = collectProvinceIncome();
@@ -201,7 +218,16 @@ export function tickSeason(): SeasonTickResult | null {
   // Advance season
   currentSpoke.value = { ...spoke, currentSeason: newSeason };
 
-  return { season: newSeason, upkeepPaid, upkeepShortfall, threatIncrease: THREAT_PER_SEASON, provinceIncome };
+  return {
+    season: newSeason,
+    globalSeason: globalSeason.value,
+    doomUpkeep,
+    doomMilestone,
+    upkeepPaid,
+    upkeepShortfall,
+    threatIncrease: THREAT_PER_SEASON,
+    provinceIncome,
+  };
 }
 
 /** Return type for advanceNode. */

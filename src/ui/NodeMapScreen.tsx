@@ -903,9 +903,26 @@ export function NodeMapScreen() {
               textAlign: 'center',
             }}>
               <span style={{ color: 'rgba(200, 160, 100, 0.7)', fontSize: '11px', fontWeight: 600 }}>
-                Threat +{lastSeasonTick.value.threatIncrease}
+                Threat +{lastSeasonTick.value.threatIncrease} &middot; Season {lastSeasonTick.value.globalSeason}/{24}
               </span>
+              {lastSeasonTick.value.doomUpkeep > 0 && (
+                <div style={{ fontSize: '9px', color: 'rgba(200, 130, 130, 0.7)', marginTop: '2px' }}>
+                  Doom drain: -{lastSeasonTick.value.doomUpkeep}g
+                </div>
+              )}
             </div>
+            {lastSeasonTick.value.doomMilestone && (
+              <div style={{
+                padding: '8px 12px', borderRadius: '6px',
+                background: 'rgba(140, 30, 20, 0.25)',
+                border: '1px solid rgba(200, 60, 50, 0.3)',
+                textAlign: 'center',
+              }}>
+                <span style={{ color: '#e06050', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>
+                  {lastSeasonTick.value.doomMilestone}
+                </span>
+              </div>
+            )}
           </div>
           <button class="modal-action-btn" onClick={() => { showSeasonModal.value = false; }} style={{
             marginTop: '14px', padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
