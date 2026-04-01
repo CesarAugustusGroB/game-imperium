@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Province, InvestmentType } from './province';
-import { createProvince, INVESTMENT_DATA, getInvestmentDiscount, applyInvestmentDiscount, getProvinceIncome, getProvinceExpenses } from './province';
+import { createProvince, INVESTMENT_DATA, getInvestmentDiscount, applyInvestmentDiscount, getProvinceIncome, getProvinceExpenses, getUnrestModifier } from './province';
 import type { ResourceType } from './commander';
 import type { ResourceCost } from './doctrine';
 import { getResource, spendResource, addResource } from './resources';
@@ -118,16 +118,43 @@ export function assignGovernor(provinceId: string, governorId: string | undefine
   return true;
 }
 
-// ── Season income cycle ──
+// ── Season income + unrest cycle ──
+
+/** Base unrest growth per season (constant pressure). */
+const BASE_UNREST_GROWTH = 5;
+
+/** Unrest penalty when province expenses can't be paid. */
+const EXPENSE_SHORTFALL_UNREST = 10;
+
+/** Unrest threshold that triggers a rebellion. */
+const REBELLION_THRESHOLD = 80;
+
+export interface RebellionEvent {
+  provinceName: string;
+  lostInvestment: string | null; // investment name lost, or null if no investments
+}
 
 export interface ProvinceIncomeResult {
   incomeGained: { resource: ResourceType; amount: number }[];
   expensesPaid: number;
   expenseShortfall: number;
+  rebellions: RebellionEvent[];
 }
 
 /**
- * Collect income from all provinces and pay their expenses.
+ * Get the Insula rebellion suppression threshold for a province.
+ * Returns 0 (no suppression), 50 (Insula T2), or 70 (Insula T3).
+ */
+function getInsulaSuppression(prov: Province): number {
+  const insula = prov.investments.find(i => i.type === 'insula');
+  if (!insula) return 0;
+  if (insula.level >= 3) return 70; // "Rebellion impossible below 70 Unrest"
+  if (insula.level >= 2) return 50; // "Rebellion events suppressed at <50 Unrest"
+  return 0;
+}
+
+/**
+ * Collect income, pay expenses, tick unrest, and check rebellions for all provinces.
  * Called once per season tick.
  */
 export function collectProvinceIncome(): ProvinceIncomeResult {
@@ -166,7 +193,43 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
     }
   }
 
-  return { incomeGained, expensesPaid, expenseShortfall };
+  // Tick unrest + check rebellions
+  const rebellions: RebellionEvent[] = [];
+  const updatedProvinces = allProvinces.map(prov => {
+    const traits = getGovernorTraits(prov.id);
+    const unrestMod = getUnrestModifier(prov, traits);
+
+    // Unrest change: base growth + investment/governor modifiers
+    let unrestDelta = BASE_UNREST_GROWTH + unrestMod;
+
+    // Penalty for expense shortfall
+    if (expenseShortfall > 0) {
+      unrestDelta += EXPENSE_SHORTFALL_UNREST;
+    }
+
+    const newUnrest = Math.max(0, Math.min(100, prov.unrest + unrestDelta));
+
+    // Rebellion check
+    let investments = prov.investments;
+    if (newUnrest >= REBELLION_THRESHOLD && investments.length > 0) {
+      const suppression = getInsulaSuppression(prov);
+      if (newUnrest >= suppression) {
+        // Rebellion! Lose a random investment
+        const lostIdx = Math.floor(Math.random() * investments.length);
+        const lostName = INVESTMENT_DATA[investments[lostIdx].type].name;
+        investments = investments.filter((_, i) => i !== lostIdx);
+        rebellions.push({ provinceName: prov.name, lostInvestment: lostName });
+      }
+    } else if (newUnrest >= REBELLION_THRESHOLD && investments.length === 0) {
+      rebellions.push({ provinceName: prov.name, lostInvestment: null });
+    }
+
+    return { ...prov, unrest: newUnrest, investments };
+  });
+
+  provinces.value = updatedProvinces;
+
+  return { incomeGained, expensesPaid, expenseShortfall, rebellions };
 }
 
 /** Reset all province state (called on run end / new run). */
