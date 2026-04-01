@@ -12,6 +12,7 @@ import { resetProvinceStore, conquerProvince, provinces, getMarketExchangeBonus 
 import { initGovernorStore, resetGovernorStore } from './governor-store';
 import { initProvinceMapStore, resetProvinceMapStore, claimTerritory } from './province-map-store';
 import { resetEventStore } from './event-store';
+import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyIds } from './npc-faction-store';
 import { STARTER_ADVISORS } from '../data/advisor-data';
 
 // ── Core run state ──
@@ -33,6 +34,13 @@ export const veteranStacks = signal(0);
 /** Known valid commander IDs. Used for runtime validation in startNewRun. */
 const KNOWN_COMMANDER_IDS = new Set(['innocent', 'boudicca', 'augustus', 'crassus']);
 
+/** Sync allianceCount / enemies / allies from NPC faction state. */
+export function syncFactionSignals(): void {
+  allianceCount.value = friendlyCount.value;
+  enemies.value = hostileIds.value;
+  allies.value = friendlyIds.value;
+}
+
 /**
  * Start a new run with the given commander.
  * Initializes all signals to fresh state.
@@ -53,9 +61,9 @@ export function startNewRun(commander: Commander): void {
   threatLevel.value = 0;
   spokesSinceLastBattle.value = 0;
 
-  allianceCount.value = commander.id === 'augustus' ? 2 : 0; // Augustus starts with 2 allies
-  enemies.value = [];
-  allies.value = [];
+  // NPC factions — derive alliance/enemy state
+  initNPCFactions();
+  syncFactionSignals();
 
   veteranStacks.value = 0;
 
@@ -112,6 +120,7 @@ export function resetRun(): void {
   resetGovernorStore();
   resetProvinceMapStore();
   resetEventStore();
+  resetNPCFactions();
   resetSpoke();
 
   completedSpokes.value = 0;
@@ -121,6 +130,5 @@ export function resetRun(): void {
   allianceCount.value = 0;
   enemies.value = [];
   allies.value = [];
-
   veteranStacks.value = 0;
 }
