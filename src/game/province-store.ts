@@ -1,9 +1,10 @@
 import { signal } from '@preact/signals';
 import type { Province, InvestmentType } from './province';
-import { createProvince, INVESTMENT_DATA } from './province';
+import { createProvince, INVESTMENT_DATA, getInvestmentDiscount, applyInvestmentDiscount } from './province';
 import type { ResourceType } from './commander';
 import type { ResourceCost } from './doctrine';
 import { getResource, spendResource } from './resources';
+import { getGovernorTraits } from './governor-store';
 
 // ── Province signals ──
 
@@ -69,6 +70,7 @@ export function getNextInvestmentLevel(province: Province, type: InvestmentType)
 
 /**
  * Build or upgrade an investment in a province.
+ * Applies governor investment-discount if present.
  * Returns true if successful (cost paid, province updated).
  */
 export function buildInvestment(provinceId: string, type: InvestmentType): boolean {
@@ -80,7 +82,13 @@ export function buildInvestment(provinceId: string, type: InvestmentType): boole
   if (nextLevel === 0) return false; // maxed
 
   const data = INVESTMENT_DATA[type];
-  const cost = data.levels[nextLevel - 1].buildCost;
+  const baseCost = data.levels[nextLevel - 1].buildCost;
+
+  // Apply governor investment-discount trait
+  const traits = getGovernorTraits(provinceId);
+  const discount = getInvestmentDiscount(traits);
+  const cost = discount > 0 ? applyInvestmentDiscount(baseCost, discount) : baseCost;
+
   if (!spendCost(cost)) return false;
 
   // Immutable update
