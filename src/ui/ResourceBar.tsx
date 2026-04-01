@@ -7,10 +7,11 @@ import type { ResourceType } from '../game/commander';
 
 const BAR_STYLE: Record<string, string> = {
   position: 'fixed', top: '0', left: '0', width: '100%', height: '38px',
-  background: 'rgba(8, 8, 18, 0.92)',
-  backdropFilter: 'blur(8px)',
-  WebkitBackdropFilter: 'blur(8px)',
-  borderBottom: '1px solid rgba(180, 160, 100, 0.15)',
+  background: 'rgba(12, 10, 24, 0.92)',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  borderBottom: '1px solid rgba(180, 160, 100, 0.2)',
+  boxShadow: '0 2px 12px rgba(0, 0, 0, 0.4)',
   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px',
   fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: '13px',
   zIndex: '100',

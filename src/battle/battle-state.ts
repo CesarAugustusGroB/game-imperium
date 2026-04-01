@@ -11,6 +11,7 @@ import {
   RED_VANGUARD_ROWS, RED_VANGUARD_COL, RED_RESERVE_ROWS, RED_RESERVE_COL,
   RED_GUARD_ROWS, RED_GUARD_COL,
 } from './battle-config';
+import type { DecretumEffect } from '../game/decretum';
 
 // Re-export types for backward compatibility
 export type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder };
@@ -36,6 +37,8 @@ export class BattleState {
   lieutenantOrder: LieutenantOrder = 'auto';
   /** Additive damage multiplier from Boudicca's veteran stacks. Each stack adds 0.05 (VETERAN_BONUS_PER_STACK), so e.g. 3 stacks = 0.15 = +15% damage for all blue units. */
   veteranBonus: number = 0;
+  /** Remaining prevent-death charges from Decretum Oracle — blue units survive at 1 HP instead of dying. */
+  preventDeathCount = 0;
   private startingStrength = new Map<Faction, number>();
 
   // Ability targeting state (S3-03)
@@ -103,6 +106,8 @@ export class BattleState {
       pinnedBy: null,
       actionCooldown: 0.1, // near-zero so all units move together from the start
       crackSeed: id * 7919, // prime for deterministic crack angles
+      reviveThreshold: 0,
+      hasRevived: false,
     };
     this.units.set(unit.id, unit);
     return unit;
@@ -385,11 +390,38 @@ export class BattleState {
     defender.flashTimer = FLASH_DURATION;
 
     // Death check — defender only (no counter-attack)
-    if (defender.currentHp <= 0) {
-      defender.currentHp = 0;
-      defender.isDying = true;
-      defender.deathProgress = 0;
-      if (this.selectedUnitId === defender.id) this.selectedUnitId = null;
+    this.applyDeathCheck(defender);
+  }
+
+  applyDeathCheck(unit: BattleUnit): void {
+    if (unit.currentHp <= 0) {
+      // Priority 1: prevent-death (Decretum Oracle) — blue units survive at 1 HP
+      if (this.preventDeathCount > 0 && unit.faction === 'blue') {
+        this.preventDeathCount--;
+        unit.currentHp = 1;
+        unit.flashTimer = FLASH_DURATION;
+        this.floatingTexts.push({
+          text: 'SAVED!', hex: { q: unit.hex.q, r: unit.hex.r },
+          color: '#ffd700', timer: FLOAT_TEXT_DURATION, duration: FLOAT_TEXT_DURATION,
+        });
+        return;
+      }
+      // Priority 2: revive (Doctrine Pantheon) — restore HP instead of dying
+      if (!unit.hasRevived && unit.reviveThreshold > 0) {
+        unit.currentHp = Math.max(1, Math.floor(unit.stats.hp * unit.reviveThreshold / 100));
+        unit.hasRevived = true;
+        unit.flashTimer = FLASH_DURATION;
+        this.floatingTexts.push({
+          text: 'REVIVED!', hex: { q: unit.hex.q, r: unit.hex.r },
+          color: '#44ff88', timer: FLOAT_TEXT_DURATION, duration: FLOAT_TEXT_DURATION,
+        });
+      } else {
+        // Priority 3: actual death
+        unit.currentHp = 0;
+        unit.isDying = true;
+        unit.deathProgress = 0;
+        if (this.selectedUnitId === unit.id) this.selectedUnitId = null;
+      }
     }
   }
 
@@ -546,6 +578,88 @@ export class BattleState {
     }
 
     this.updateCapture(dt);
+  }
+
+  // ── Decretum Effects ──
+
+  applyDecretumEffect(effect: DecretumEffect, targetHex?: Hex): void {
+    switch (effect.type) {
+      case 'heal': {
+        if (effect.target === 'all') {
+          for (const unit of this.getFactionUnits('blue')) {
+            unit.currentHp = Math.min(unit.stats.hp, unit.currentHp + Math.floor(unit.stats.hp * effect.amount));
+            unit.flashTimer = FLASH_DURATION;
+          }
+        } else if (targetHex) {
+          const unit = this.getUnitAt(targetHex);
+          if (unit && unit.faction === 'blue') {
+            unit.currentHp = Math.min(unit.stats.hp, unit.currentHp + Math.floor(unit.stats.hp * effect.amount));
+            unit.flashTimer = FLASH_DURATION;
+          }
+        }
+        break;
+      }
+      case 'damage': {
+        if (effect.target === 'area') {
+          // Area damage hits ALL units (including friendly — the Riot)
+          for (const unit of this.units.values()) {
+            if (unit.isDying) continue;
+            unit.currentHp -= effect.amount;
+            unit.shakeTimer = SHAKE_DURATION;
+            unit.flashTimer = FLASH_DURATION;
+            this.applyDeathCheck(unit);
+          }
+        } else if (targetHex) {
+          const unit = this.getUnitAt(targetHex);
+          if (unit && unit.faction === 'red') {
+            unit.currentHp -= effect.amount;
+            unit.shakeTimer = SHAKE_DURATION;
+            unit.flashTimer = FLASH_DURATION;
+            this.applyDeathCheck(unit);
+          }
+        }
+        break;
+      }
+      case 'buff': {
+        for (const unit of this.getFactionUnits('blue')) {
+          if (effect.stat === 'atk') unit.stats.atk = Math.floor(unit.stats.atk * (1 + effect.multiplier));
+          else if (effect.stat === 'def') unit.stats.def = Math.floor(unit.stats.def * (1 + effect.multiplier));
+          else if (effect.stat === 'hp') unit.stats.hp = Math.floor(unit.stats.hp * (1 + effect.multiplier));
+          else if (effect.stat === 'agi') unit.stats.agi = Math.floor(unit.stats.agi * (1 + effect.multiplier));
+        }
+        this.floatingTexts.push({ text: 'BUFFED!', hex: { q: 5, r: 7 }, color: '#ffd700', timer: 0.8, duration: 0.8 });
+        break;
+      }
+      case 'spawn': {
+        // Spawn units at back row
+        const rows = [3, 5, 7, 9, 11];
+        let spawned = 0;
+        for (const row of rows) {
+          if (spawned >= effect.count) break;
+          const hex = offsetToAxial(2, row);
+          if (this.isValidHex(hex) && !this.getUnitAt(hex)) {
+            const unit = this.addUnit('blue', hex, `Militia ${spawned + 1}`, effect.unitRole);
+            unit.currentHp = Math.floor(unit.stats.hp * 0.6); // militia are weak
+            spawned++;
+          }
+        }
+        break;
+      }
+      case 'resource-gain': {
+        // Handled by decretum-store before applyDecretumEffect is called
+        break;
+      }
+      case 'prevent-death': {
+        this.preventDeathCount += effect.count;
+        break;
+      }
+      case 'reveal':
+      case 'event-modifier':
+      case 'upkeep-reduction':
+      case 'debuff':
+        // These are non-battle effects or future implementations
+        break;
+    }
   }
 
   // ── Setup ──

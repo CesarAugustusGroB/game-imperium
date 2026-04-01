@@ -3,14 +3,17 @@ import { signal } from '@preact/signals';
 import { useEffect, useState } from 'preact/hooks';
 import { navigateTo } from './screens';
 import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../game/spoke';
-import type { SpokeNode, NodeType } from '../game/spoke';
-import { selectedCommander, completedSpokes } from '../game/game-state';
+import type { SpokeNode, NodeType, SeasonTickResult } from '../game/spoke';
+import { selectedCommander, completedSpokes, threatLevel } from '../game/game-state';
+import { conquerProvince, getProvinceEffects } from '../game/province-store';
 import { FACTION_COLORS, RESOURCE_INFO } from '../game/commander';
 import type { ResourceType } from '../game/commander';
 import { spendResource, canAfford } from '../game/resources';
 import { NodeModal } from './NodeModal';
 import { EVENTS } from '../data/events';
 import type { GameEvent, EventChoice } from '../data/events';
+import { getExtraEventChoices } from '../game/doctrine-store';
+import { councilSlots, grantAdvisorXp, tierUpNotices } from '../game/council-store';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('node-map-styles')) {
@@ -149,6 +152,11 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
       color: #f0d080 !important;
     }
     .empty-state-btn:active { transform: scale(0.97); }
+
+    @keyframes node-modal-fade {
+      from { opacity: 0; transform: scale(0.95) translateY(-4px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
   `;
   document.head.appendChild(el);
 }
@@ -186,6 +194,8 @@ const restGains = signal<{ type: ResourceType; actual: number }[]>([]);
 const showEventModal = signal(false);
 const activeEvent = signal<GameEvent | null>(null);
 const showSpokeCompleteModal = signal(false);
+const showSeasonModal = signal(false);
+const lastSeasonTick = signal<SeasonTickResult | null>(null);
 
 function NodeCircle({ node, isCurrent, color, onActivate }: {
   node: SpokeNode;
@@ -291,7 +301,7 @@ function NodeCircle({ node, isCurrent, color, onActivate }: {
         fontSize: '9px',
         letterSpacing: '1px',
         textTransform: 'uppercase',
-        color: isCurrent ? typeStyle.color : node.resolved ? 'rgba(212, 168, 67, 0.4)' : `${typeStyle.color}50`,
+        color: isCurrent ? typeStyle.color : node.resolved ? 'rgba(212, 168, 67, 0.6)' : `${typeStyle.color}80`,
         whiteSpace: 'nowrap',
         fontWeight: isCurrent ? '600' : '400',
       }}>
@@ -409,7 +419,7 @@ export function NodeMapScreen() {
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
-        background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+        background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
         gap: '16px',
       }}>
         <div style={{ color: 'rgba(200, 190, 160, 0.5)', fontSize: '14px', letterSpacing: '1px' }}>
@@ -430,7 +440,7 @@ export function NodeMapScreen() {
 
   function handleRetreat() {
     showRetreatConfirm.value = false;
-    // TODO S6: threatLevel.value += 1 — retreating should have consequences
+    threatLevel.value += 1;
     resetSpoke();
     navigateTo('hub');
   }
@@ -458,12 +468,36 @@ export function NodeMapScreen() {
 
   function handleRestContinue() {
     showRestModal.value = false;
-    advanceNode();
+    const result = advanceNode();
+    if (result.seasonTicked) {
+      lastSeasonTick.value = result.seasonTicked;
+      showSeasonModal.value = true;
+    }
   }
 
   function openEventModal() {
-    const event = EVENTS[nodeIdx % EVENTS.length];
-    activeEvent.value = event;
+    const base = EVENTS[nodeIdx % EVENTS.length];
+    // S4-11 + S6-10: Doctrine + Province (Basilica T3) extra-event-choices
+    const provinceExtra = getProvinceEffects()
+      .filter(e => e.type === 'extra-event-choices')
+      .reduce((sum, e) => sum + ('count' in e ? e.count : 0), 0);
+    const extraCount = getExtraEventChoices() + provinceExtra;
+    if (extraCount > 0) {
+      const bonusChoices: EventChoice[] = [];
+      for (let i = 1; bonusChoices.length < extraCount && i < EVENTS.length; i++) {
+        const other = EVENTS[(nodeIdx + i) % EVENTS.length];
+        for (const choice of other.choices) {
+          if (bonusChoices.length >= extraCount) break;
+          // Avoid duplicating choices already in the base event
+          if (!base.choices.some(c => c.text === choice.text)) {
+            bonusChoices.push(choice);
+          }
+        }
+      }
+      activeEvent.value = { ...base, choices: [...base.choices, ...bonusChoices] };
+    } else {
+      activeEvent.value = base;
+    }
     showEventModal.value = true;
   }
 
@@ -478,7 +512,11 @@ export function NodeMapScreen() {
     }
     showEventModal.value = false;
     activeEvent.value = null;
-    advanceNode();
+    const result = advanceNode();
+    if (result.seasonTicked) {
+      lastSeasonTick.value = result.seasonTicked;
+      showSeasonModal.value = true;
+    }
   }
 
   function canAffordChoice(choice: EventChoice): boolean {
@@ -499,6 +537,22 @@ export function NodeMapScreen() {
     grantSpokeResource('faith', 2, faction);
     grantSpokeResource('influence', 2, faction);
     grantSpokeResource('momentum', 2, faction);
+
+    // Grant XP to each seated advisor; collect names of those who tiered up
+    const newTierUps: string[] = [];
+    for (const advisor of councilSlots.value) {
+      if (advisor !== null) {
+        const tieredUp = grantAdvisorXp(advisor.id, 1);
+        if (tieredUp) newTierUps.push(advisor.name);
+      }
+    }
+    if (newTierUps.length > 0) tierUpNotices.value = newTierUps;
+
+    // Create a province from the completed spoke
+    if (spoke) {
+      conquerProvince(spoke.label, spokeGains.value, spoke.duration);
+    }
+
     showSpokeCompleteModal.value = false;
     completedSpokes.value += 1;
     completeSpoke();
@@ -514,92 +568,118 @@ export function NodeMapScreen() {
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
-      background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+      background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
       paddingTop: '38px',
     }}>
-      {/* Spoke label */}
+      {/* Dark content panel */}
       <div style={{
-        fontSize: '18px', fontWeight: 600, color,
-        letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '4px',
-        textShadow: `0 2px 12px ${color}50, 0 0 24px ${color}20`,
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        background: 'rgba(12, 10, 24, 0.82)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderRadius: '12px',
+        border: '1px solid rgba(180, 160, 100, 0.15)',
+        padding: '28px 24px 24px',
+        maxWidth: '90%',
+        width: '860px',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
       }}>
-        {spoke.label}
-      </div>
-
-      {/* Decorative underline */}
-      <div style={{
-        width: '80px', height: '2px', marginBottom: '8px',
-        background: `linear-gradient(90deg, transparent, ${color}60, transparent)`,
-        borderRadius: '1px',
-      }} />
-
-      {/* Progress text */}
-      <div style={{
-        fontSize: '11px', color: 'rgba(180, 170, 150, 0.4)',
-        letterSpacing: '1px', marginBottom: '40px',
-      }}>
-        Node <span style={{ color: `${color}90`, fontWeight: 600 }}>{Math.min(nodeIdx + 1, spoke.nodes.length)}</span> of {spoke.nodes.length}
-      </div>
-
-      {/* Node chain */}
-      <div
-        class="node-chain-scroll"
-        style={{
-          display: 'flex', alignItems: 'center', gap: '0',
-          padding: '12px 32px', width: '100%', overflowX: 'auto',
-          justifyContent: 'center',
-        }}
-      >
-          {spoke.nodes.map((node, i) => (
-            <Fragment key={node.id}>
-              {i > 0 && (
-                <ConnectingLine
-                  resolved={spoke.nodes[i - 1].resolved}
-                  color={color}
-                  isNextActive={i === nodeIdx && spoke.nodes[i - 1].resolved}
-                />
-              )}
-              <NodeCircle
-                node={node}
-                isCurrent={i === nodeIdx}
-                color={color}
-                onActivate={() => handleNodeActivate(node)}
-              />
-            </Fragment>
-          ))}
-      </div>
-
-      {/* Dynamic hint text */}
-      {!spokeComplete && currentNode && (
-        <div style={{
-          marginTop: '32px', fontSize: '13px',
-          color: `${NODE_STYLES[currentNode.type].color}99`,
-          letterSpacing: '1px',
-          fontStyle: 'italic',
-          textShadow: `0 0 12px ${NODE_STYLES[currentNode.type].glow}`,
-        }}>
-          {NODE_STYLES[currentNode.type].hint}
+        {/* Spoke label + posture badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+          <div style={{
+            fontSize: '18px', fontWeight: 600, color,
+            letterSpacing: '4px', textTransform: 'uppercase',
+            textShadow: `0 2px 12px ${color}50, 0 0 24px ${color}20`,
+          }}>
+            {spoke.label}
+          </div>
+          <div style={{
+            fontSize: '10px', fontWeight: 700, letterSpacing: '0.8px',
+            color: spoke.posture === 'attacking' ? '#e07050' : '#60a8d0',
+            opacity: 0.85,
+          }}>
+            {spoke.posture === 'attacking' ? '⚔ Attacking' : '🛡 Defending'}
+          </div>
         </div>
-      )}
 
-      {/* Progress bar */}
-      <div style={{
-        marginTop: '16px',
-        width: '280px', maxWidth: '80%',
-        height: '3px',
-        background: 'rgba(40, 36, 60, 0.6)',
-        borderRadius: '2px',
-        overflow: 'hidden',
-        border: '1px solid rgba(80, 70, 50, 0.12)',
-      }}>
+        {/* Decorative underline */}
         <div style={{
-          width: `${progressPct}%`,
-          height: '100%',
-          background: `linear-gradient(90deg, ${color}, ${color}cc)`,
-          borderRadius: '2px',
-          transition: 'width 0.6s ease-out',
-          boxShadow: `0 0 8px ${color}40`,
+          width: '80px', height: '2px', marginBottom: '8px',
+          background: `linear-gradient(90deg, transparent, ${color}60, transparent)`,
+          borderRadius: '1px',
         }} />
+
+        {/* Progress text */}
+        <div style={{
+          fontSize: '11px', color: 'rgba(180, 170, 150, 0.5)',
+          letterSpacing: '1px', marginBottom: '12px',
+        }}>
+          Node <span style={{ color: `${color}90`, fontWeight: 600 }}>{Math.min(nodeIdx + 1, spoke.nodes.length)}</span> of {spoke.nodes.length}
+          {spoke.duration > 1 && (
+            <span style={{ marginLeft: '12px', color: 'rgba(200, 160, 100, 0.5)' }}>
+              Season {spoke.currentSeason}/{spoke.duration}
+            </span>
+          )}
+        </div>
+
+        {/* Node chain */}
+        <div
+          class="node-chain-scroll"
+          style={{ width: '100%', overflowX: 'auto', padding: '52px 0 36px' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', margin: '0 auto', padding: `0 clamp(12px, 5vw, 32px)`, width: 'max-content', minWidth: '100%', justifyContent: 'center' }}>
+            {spoke.nodes.map((node, i) => (
+              <Fragment key={node.id}>
+                {i > 0 && (
+                  <ConnectingLine
+                    resolved={spoke.nodes[i - 1].resolved}
+                    color={color}
+                    isNextActive={i === nodeIdx && spoke.nodes[i - 1].resolved}
+                  />
+                )}
+                <NodeCircle
+                  node={node}
+                  isCurrent={i === nodeIdx}
+                  color={color}
+                  onActivate={() => handleNodeActivate(node)}
+                />
+              </Fragment>
+            ))}
+          </div>
+        </div>
+
+        {/* Dynamic hint text */}
+        {!spokeComplete && currentNode && (
+          <div style={{
+            marginTop: '8px', fontSize: '13px',
+            color: `${NODE_STYLES[currentNode.type].color}`,
+            letterSpacing: '1px',
+            fontStyle: 'italic',
+            textShadow: `0 0 12px ${NODE_STYLES[currentNode.type].glow}`,
+          }}>
+            {NODE_STYLES[currentNode.type].hint}
+          </div>
+        )}
+
+        {/* Progress bar */}
+        <div style={{
+          marginTop: '16px',
+          width: '280px', maxWidth: '80%',
+          height: '3px',
+          background: 'rgba(60, 56, 80, 0.6)',
+          borderRadius: '2px',
+          overflow: 'hidden',
+          border: '1px solid rgba(80, 70, 50, 0.2)',
+        }}>
+          <div style={{
+            width: `${progressPct}%`,
+            height: '100%',
+            background: `linear-gradient(90deg, ${color}, ${color}cc)`,
+            borderRadius: '2px',
+            transition: 'width 0.6s ease-out',
+            boxShadow: `0 0 8px ${color}40`,
+          }} />
+        </div>
       </div>
 
       {/* Retreat button */}
@@ -725,6 +805,81 @@ export function NodeMapScreen() {
               </>
             );
           })()}
+        </NodeModal>
+      )}
+
+      {/* Season tick modal */}
+      {showSeasonModal.value && lastSeasonTick.value && (
+        <NodeModal title={`Season ${lastSeasonTick.value.season} Begins`} onClose={() => { showSeasonModal.value = false; }}>
+          <div style={{ fontSize: '12px', color: 'rgba(200, 190, 160, 0.7)', lineHeight: '1.8' }}>
+            {lastSeasonTick.value.upkeepPaid.length > 0 && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: 'rgba(240, 208, 128, 0.6)', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Upkeep Paid</span>
+                {lastSeasonTick.value.upkeepPaid.map((u, i) => (
+                  <div key={i} style={{ color: 'rgba(200, 130, 130, 0.8)' }}>
+                    {RESOURCE_INFO[u.resource].icon} -{u.amount} {RESOURCE_INFO[u.resource].label}
+                  </div>
+                ))}
+              </div>
+            )}
+            {lastSeasonTick.value.upkeepShortfall.length > 0 && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: '#c05050', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Shortfall</span>
+                {lastSeasonTick.value.upkeepShortfall.map((u, i) => (
+                  <div key={i} style={{ color: '#c05050' }}>
+                    {RESOURCE_INFO[u.resource].icon} Cannot afford {u.deficit} {RESOURCE_INFO[u.resource].label}
+                  </div>
+                ))}
+              </div>
+            )}
+            {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.incomeGained.length > 0 && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: 'rgba(90, 160, 90, 0.7)', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Province Income</span>
+                {lastSeasonTick.value.provinceIncome.incomeGained.map((u, i) => (
+                  <div key={i} style={{ color: 'rgba(130, 200, 130, 0.8)' }}>
+                    {RESOURCE_INFO[u.resource].icon} +{u.amount} {RESOURCE_INFO[u.resource].label}
+                  </div>
+                ))}
+              </div>
+            )}
+            {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.expensesPaid > 0 && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: 'rgba(200, 160, 100, 0.6)', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Province Expenses</span>
+                <div style={{ color: 'rgba(200, 160, 100, 0.7)' }}>
+                  {RESOURCE_INFO.gold.icon} -{lastSeasonTick.value.provinceIncome.expensesPaid} Gold
+                </div>
+              </div>
+            )}
+            {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.expenseShortfall > 0 && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: '#c05050', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Province Expense Shortfall</span>
+                <div style={{ color: '#c05050' }}>
+                  {RESOURCE_INFO.gold.icon} Cannot afford {lastSeasonTick.value.provinceIncome.expenseShortfall} Gold upkeep
+                </div>
+              </div>
+            )}
+            {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.rebellions.length > 0 && (
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ color: '#c05050', letterSpacing: '1px', fontSize: '10px', textTransform: 'uppercase' }}>Rebellion!</span>
+                {lastSeasonTick.value.provinceIncome.rebellions.map((r, i) => (
+                  <div key={i} style={{ color: '#c05050' }}>
+                    {r.provinceName}: {r.lostInvestment ? `${r.lostInvestment} destroyed` : 'unrest critical'}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ color: 'rgba(200, 160, 100, 0.7)' }}>
+              Threat +{lastSeasonTick.value.threatIncrease}
+            </div>
+          </div>
+          <button class="modal-action-btn" onClick={() => { showSeasonModal.value = false; }} style={{
+            marginTop: '12px', padding: '8px 20px', borderRadius: '4px', cursor: 'pointer',
+            background: 'rgba(50, 42, 20, 0.7)', border: '1px solid rgba(220, 190, 100, 0.4)',
+            color: '#f0d080', fontFamily: 'inherit', fontSize: '12px', fontWeight: 600,
+            letterSpacing: '1px', textTransform: 'uppercase',
+          }}>
+            Continue
+          </button>
         </NodeModal>
       )}
 

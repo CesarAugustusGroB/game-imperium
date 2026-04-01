@@ -3,7 +3,7 @@ import { navigateTo } from './screens';
 const containerStyle: Record<string, string> = {
   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
   height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
-  background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+  background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
 };
 
 const shieldStyle: Record<string, string> = {
@@ -14,14 +14,14 @@ const shieldStyle: Record<string, string> = {
 
 const titleStyle: Record<string, string> = {
   fontSize: '52px', fontWeight: '700', letterSpacing: '6px', textTransform: 'uppercase',
-  color: '#f0d080',
-  textShadow: '0 2px 16px rgba(180, 140, 60, 0.6), 0 0 60px rgba(180, 140, 60, 0.15)',
+  color: '#5a3a1a',
+  textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
   marginBottom: '4px',
 };
 
 const subtitleStyle: Record<string, string> = {
   fontSize: '13px', letterSpacing: '8px', textTransform: 'uppercase',
-  color: 'rgba(180, 170, 140, 0.5)', marginBottom: '52px',
+  color: 'rgba(70, 55, 35, 0.6)', marginBottom: '52px',
 };
 
 const versionStyle: Record<string, string> = {
@@ -95,7 +95,7 @@ export function TitleScreen() {
         </button>
       </div>
 
-      <div style={versionStyle}>v0.2.0 — Sprint 2</div>
+      <div style={versionStyle}>v0.5.0 — Sprint 5</div>
     </div>
   );
 }

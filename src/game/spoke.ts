@@ -1,7 +1,11 @@
 import { signal } from '@preact/signals';
 import type { Faction, ResourceType } from './commander';
-import { addResource } from './resources';
-import { veteranStacks, spokesSinceLastBattle, selectedCommander } from './game-state';
+import { spendResource, addResource } from './resources';
+import { threatLevel } from './game-state';
+import { getActiveEffects } from './doctrine-store';
+import type { DoctrineEffect } from './doctrine';
+import type { Posture } from './advisor';
+import { collectProvinceIncome, type ProvinceIncomeResult } from './province-store';
 
 // ── Node types (S2-01) ──
 
@@ -30,6 +34,12 @@ export interface Spoke {
   nodes: SpokeNode[];
   label: string;
   completed: boolean;
+  /** Duration in seasons (1-4). Set at generation time. */
+  duration: number;
+  /** Current season (1-indexed). Advances as nodes are resolved. */
+  currentSeason: number;
+  /** Posture of this spoke. Affects upkeep costs. */
+  posture: Posture;
 }
 
 /** The active spoke, or null when the player is at the hub. */
@@ -74,17 +84,17 @@ export function resetSpoke(): void {
 }
 
 /** Mark the current node as resolved and advance to the next one.
- *  Returns true if the spoke is now complete.
+ *  Returns { spokeComplete, seasonTicked } — check seasonTicked for season boundary UI.
  *  Safe to call multiple times — resolved nodes are skipped. */
-export function advanceNode(): boolean {
+export function advanceNode(): AdvanceNodeResult {
   const spoke = currentSpoke.value;
-  if (!spoke) return false;
+  if (!spoke) return { spokeComplete: false, seasonTicked: null };
   const idx = currentNodeIndex.value;
   const node = spoke.nodes[idx];
-  if (!node) return true;
+  if (!node) return { spokeComplete: true, seasonTicked: null };
 
   // Guard: already resolved — don't double-advance
-  if (node.resolved) return idx + 1 >= spoke.nodes.length;
+  if (node.resolved) return { spokeComplete: idx + 1 >= spoke.nodes.length, seasonTicked: null };
 
   // Create new node object to avoid in-place mutation
   const updatedNodes = spoke.nodes.map((n, i) =>
@@ -93,7 +103,25 @@ export function advanceNode(): boolean {
   currentSpoke.value = { ...spoke, nodes: updatedNodes };
   const next = idx + 1;
   currentNodeIndex.value = next;
-  return next >= spoke.nodes.length;
+
+  const spokeComplete = next >= spoke.nodes.length;
+
+  // Check season boundary
+  let seasonTicked: SeasonTickResult | null = null;
+  const currentSp = currentSpoke.value;
+  if (currentSp && currentSp.currentSeason < currentSp.duration) {
+    const nodesPerSeason = Math.ceil(currentSp.nodes.length / currentSp.duration);
+    const resolvedCount = currentSp.nodes.filter(n => n.resolved).length;
+    const expectedSeason = Math.min(
+      Math.floor(resolvedCount / nodesPerSeason) + 1,
+      currentSp.duration,
+    );
+    if (expectedSeason > currentSp.currentSeason) {
+      seasonTicked = tickSeason();
+    }
+  }
+
+  return { spokeComplete, seasonTicked };
 }
 
 /** Mark the spoke as completed and reset. */
@@ -106,34 +134,79 @@ export function completeSpoke(): void {
   resetSpoke();
 }
 
-// ── Spoke generator (S2-03) ──
+// ── Season system (S5-03) ──
 
-/** Fixed introductory spoke for the MVP. Replaced by procedural gen in Sprint 6. */
-export function generateFixedSpoke(): Spoke {
-  const nodes: SpokeNode[] = [
-    { id: 'node-0', type: 'event',  position: 0, resolved: false, reward: null },
-    { id: 'node-1', type: 'battle', position: 1, resolved: false, reward: [{ resource: 'gold', amount: 2 }, { resource: 'momentum', amount: 3 }] },
-    { id: 'node-2', type: 'rest',   position: 2, resolved: false, reward: [{ resource: 'gold', amount: 1 }, { resource: 'faith', amount: 1 }, { resource: 'influence', amount: 1 }, { resource: 'momentum', amount: 1 }] },
-    { id: 'node-3', type: 'battle', position: 3, resolved: false, reward: [{ resource: 'gold', amount: 2 }, { resource: 'momentum', amount: 3 }] },
-    { id: 'node-4', type: 'event',  position: 4, resolved: false, reward: null },
-    { id: 'node-5', type: 'boss',   position: 5, resolved: false, reward: [{ resource: 'gold', amount: 4 }, { resource: 'faith', amount: 2 }, { resource: 'momentum', amount: 4 }] },
-  ];
-  return { nodes, label: 'The First March', completed: false };
+/** Base upkeep cost per season tick. */
+export const BASE_UPKEEP: Partial<Record<ResourceType, number>> = { gold: 2, faith: 1 };
+
+/** Additional upkeep for 'attacking' posture. */
+export const ATTACKING_UPKEEP_BONUS: Partial<Record<ResourceType, number>> = { gold: 1, momentum: 1 };
+
+/** Threat increase per season tick. */
+export const THREAT_PER_SEASON = 1;
+
+/** Result of a season tick, for the UI to display. */
+export interface SeasonTickResult {
+  season: number;
+  upkeepPaid: { resource: ResourceType; amount: number }[];
+  upkeepShortfall: { resource: ResourceType; deficit: number }[];
+  threatIncrease: number;
+  provinceIncome: ProvinceIncomeResult | null;
 }
 
-/** Create a new spoke and set it as active. */
-export function startSpoke(): void {
-  spokesSinceLastBattle.value += 1;
-  if (selectedCommander.value?.id === 'boudicca' && spokesSinceLastBattle.value >= 3) {
-    veteranStacks.value = 0;
+/**
+ * Advance to the next season within the current spoke.
+ * Drains upkeep resources (reduced by doctrine upkeep-reduction) and increments threat.
+ */
+export function tickSeason(): SeasonTickResult | null {
+  const spoke = currentSpoke.value;
+  if (!spoke || spoke.currentSeason >= spoke.duration) return null;
+
+  const newSeason = spoke.currentSeason + 1;
+
+  // Compute upkeep reduction from doctrines
+  const reductionPercent = getActiveEffects()
+    .filter((e): e is Extract<DoctrineEffect, { type: 'upkeep-reduction'; percent: number }> => e.type === 'upkeep-reduction' && 'percent' in e)
+    .reduce((sum, e) => sum + e.percent, 0);
+  const reductionMultiplier = Math.max(0, 1 - reductionPercent / 100);
+
+  // Compute raw upkeep
+  const rawUpkeep: Partial<Record<ResourceType, number>> = { ...BASE_UPKEEP };
+  if (spoke.posture === 'attacking') {
+    for (const [res, amt] of Object.entries(ATTACKING_UPKEEP_BONUS) as [ResourceType, number][]) {
+      rawUpkeep[res] = (rawUpkeep[res] ?? 0) + amt;
+    }
   }
 
-  currentSpoke.value = generateFixedSpoke();
-  currentNodeIndex.value = 0;
-  spokeGains.value = { ...ZERO_GAINS };
+  // Apply upkeep
+  const upkeepPaid: SeasonTickResult['upkeepPaid'] = [];
+  const upkeepShortfall: SeasonTickResult['upkeepShortfall'] = [];
 
-  // S3-09: Deus Vult — Pope Innocent gains Faith at spoke start
-  if (selectedCommander.value?.id === 'innocent') {
-    grantSpokeResource('faith', 1, selectedCommander.value.faction);
+  for (const [res, rawAmt] of Object.entries(rawUpkeep) as [ResourceType, number][]) {
+    const amount = Math.floor(rawAmt * reductionMultiplier);
+    if (amount <= 0) continue;
+    if (spendResource(res, amount)) {
+      upkeepPaid.push({ resource: res, amount });
+    } else {
+      upkeepShortfall.push({ resource: res, deficit: amount });
+    }
   }
+
+  // Increment threat
+  threatLevel.value += THREAT_PER_SEASON;
+
+  // Collect province income
+  const provinceIncome = collectProvinceIncome();
+
+  // Advance season
+  currentSpoke.value = { ...spoke, currentSeason: newSeason };
+
+  return { season: newSeason, upkeepPaid, upkeepShortfall, threatIncrease: THREAT_PER_SEASON, provinceIncome };
 }
+
+/** Return type for advanceNode. */
+export interface AdvanceNodeResult {
+  spokeComplete: boolean;
+  seasonTicked: SeasonTickResult | null;
+}
+

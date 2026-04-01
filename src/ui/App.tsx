@@ -7,6 +7,10 @@ import { CommanderSelectScreen } from './CommanderSelectScreen';
 import { HubScreen } from './HubScreen';
 import { NodeMapScreen } from './NodeMapScreen';
 import { PostBattleScreen } from './PostBattleScreen';
+import { DoctrineScreen } from './DoctrineScreen';
+import { CouncilScreen } from './CouncilScreen';
+import { ProvinceScreen } from './ProvinceScreen';
+import { toggleMute, musicMuted } from './music';
 
 // Inject screen transition CSS once
 if (typeof document !== 'undefined' && !document.getElementById('screen-transition-styles')) {
@@ -52,7 +56,7 @@ class ErrorBoundary extends Component<{ children: ComponentChildren }, EBState> 
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', height: '100vh',
           fontFamily: "'Segoe UI', system-ui, sans-serif",
-          background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+          background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
           color: 'rgba(220, 160, 100, 0.8)', gap: '16px',
         }}>
           <div style={{ fontSize: '18px', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase' }}>
@@ -89,6 +93,12 @@ function ScreenContent() {
       return <CommanderSelectScreen />;
     case 'hub':
       return <HubScreen />;
+    case 'doctrine':
+      return <DoctrineScreen />;
+    case 'council':
+      return <CouncilScreen />;
+    case 'provinces':
+      return <ProvinceScreen />;
     case 'node-map':
       return <NodeMapScreen />;
     case 'post-battle':
@@ -99,7 +109,7 @@ function ScreenContent() {
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           height: '100vh', color: 'rgba(200, 190, 160, 0.5)',
           fontFamily: "'Segoe UI', system-ui, sans-serif",
-          background: 'radial-gradient(ellipse at 50% 40%, rgba(30, 28, 50, 0.92), rgba(8, 8, 18, 0.97))',
+          background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
           gap: '16px',
         }}>
           <div style={{ fontSize: '14px', letterSpacing: '1px' }}>
@@ -125,14 +135,63 @@ export function App() {
   const screen = currentScreen.value;
   const showResourceBar = screen !== 'title' && screen !== 'commander-select' && screen !== 'battle';
 
+  const showCurtains = screen !== 'battle';
+
   return (
     <>
+      {showCurtains && (
+        <>
+          <img
+            src="/asset/cortina_izq.png"
+            alt=""
+            aria-hidden="true"
+            style={{
+              position: 'fixed', left: '0', top: '0',
+              height: '100vh', width: 'auto',
+              zIndex: '1', pointerEvents: 'none',
+              objectFit: 'cover',
+            }}
+          />
+          <img
+            src="/asset/cortina_izq.png"
+            alt=""
+            aria-hidden="true"
+            style={{
+              position: 'fixed', right: '0', top: '0',
+              height: '100vh', width: 'auto',
+              zIndex: '1', pointerEvents: 'none',
+              objectFit: 'cover',
+              transform: 'scaleX(-1)',
+            }}
+          />
+        </>
+      )}
       {showResourceBar && <ResourceBar />}
       <ErrorBoundary>
         <div class="screen-wrapper" key={screen}>
           <ScreenContent />
         </div>
       </ErrorBoundary>
+      {showCurtains && (
+        <button
+          onClick={toggleMute}
+          title={musicMuted.value ? 'Unmute music' : 'Mute music'}
+          aria-label={musicMuted.value ? 'Unmute music' : 'Mute music'}
+          style={{
+            position: 'fixed', bottom: '16px', right: '16px',
+            width: '36px', height: '36px', borderRadius: '50%',
+            background: 'rgba(12, 10, 24, 0.8)',
+            border: '1px solid rgba(180, 160, 100, 0.25)',
+            color: musicMuted.value ? 'rgba(180, 160, 140, 0.35)' : 'rgba(240, 208, 128, 0.8)',
+            fontSize: '16px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: '200', transition: 'all 0.2s ease',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          {musicMuted.value ? '\uD83D\uDD07' : '\uD83D\uDD0A'}
+        </button>
+      )}
     </>
   );
 }

@@ -12,6 +12,21 @@ export function setWarProfiler(active: boolean): void {
   warProfilerActive = active;
 }
 
+// S4-11: Doctrine income-modifier — same pattern as warProfiler to avoid circular deps.
+// Caller pushes a getter that returns the additive multiplier for a resource type.
+let incomeModifierFn: ((type: ResourceType) => number) | null = null;
+
+export function setIncomeModifierFn(fn: ((type: ResourceType) => number) | null): void {
+  incomeModifierFn = fn;
+}
+
+// S6-10: Market T3 exchange rate bonus — caller pushes a getter.
+let exchangeBonusFn: (() => number) | null = null;
+
+export function setExchangeBonusFn(fn: (() => number) | null): void {
+  exchangeBonusFn = fn;
+}
+
 export interface Resources {
   gold: number;
   faith: number;
@@ -49,11 +64,11 @@ export function getResource(type: ResourceType): number {
 export function addResource(type: ResourceType, amount: number, faction?: Faction): number {
   if (amount < 0) return 0;
   const factionMultiplier = faction && FACTION_PRIMARY_RESOURCE[faction] === type ? 2 : 1;
-  let actual = Math.floor(amount * factionMultiplier);
-  // S3-11: Crassus War Profiteer — +50% gold from all sources
-  if (type === 'gold' && warProfilerActive) {
-    actual = Math.floor(actual * 1.5);
-  }
+  // S3-11 + S4-11: Additive bonus pool — War Profiteer and doctrine income-modifier stack additively
+  let bonusMultiplier = 0;
+  if (type === 'gold' && warProfilerActive) bonusMultiplier += 0.5;
+  if (incomeModifierFn) bonusMultiplier += incomeModifierFn(type);
+  const actual = Math.floor(amount * factionMultiplier * (1 + bonusMultiplier));
   resourceSignals[type].value += actual;
   return actual;
 }
@@ -83,7 +98,8 @@ export function exchangeResources(
 ): number {
   if (amount <= 0) return 0;
   const isPrimary = FACTION_PRIMARY_RESOURCE[faction] === from;
-  const gained = isPrimary ? amount : Math.floor(amount * 2 / 3);
+  const bonus = exchangeBonusFn ? exchangeBonusFn() : 0;
+  const gained = (isPrimary ? amount : Math.floor(amount * 2 / 3)) + bonus;
   if (!spendResource(from, amount)) return 0;
   resourceSignals[to].value += gained;
   return gained;
@@ -97,8 +113,8 @@ export function getExchangePreview(
   from: ResourceType, amount: number, faction: Faction,
 ): { spend: number; gain: number } {
   const isPrimary = FACTION_PRIMARY_RESOURCE[faction] === from;
-  if (isPrimary) return { spend: amount, gain: amount }; // 2:2
-  // 3:2 ratio
-  const gain = Math.floor(amount * 2 / 3);
+  const bonus = exchangeBonusFn ? exchangeBonusFn() : 0;
+  if (isPrimary) return { spend: amount, gain: amount + bonus };
+  const gain = Math.floor(amount * 2 / 3) + bonus;
   return { spend: amount, gain };
 }
