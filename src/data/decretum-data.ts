@@ -24,9 +24,10 @@ export const DECRETUM_MARS: Decretum = {
   id: 'decretum_mars',
   name: 'Decretum of Mars',
   color: 'red',
-  description: 'Invoke the god of war. All units deal double damage this battle.',
-  effect: { type: 'buff', stat: 'atk', multiplier: 1.0, duration: 'battle' },
+  description: 'Invoke the god of war. All units deal +60% damage this battle.',
+  effect: { type: 'buff', stat: 'atk', multiplier: 0.6, duration: 'battle' },
   rarity: 'legendary',
+  castCost: { momentum: 2 },
 };
 
 // ── Blue (Diplomatic) — 3 scrolls ──
@@ -85,6 +86,7 @@ export const DECRETUM_ORACLE: Decretum = {
   description: 'Fate itself intervenes — prevent the next unit death this battle.',
   effect: { type: 'prevent-death', count: 1 },
   rarity: 'legendary',
+  castCost: { faith: 1 },
 };
 
 // ── Purple (Economic) — 3 scrolls ──
@@ -143,6 +145,7 @@ export const DECRETUM_RIOT: Decretum = {
   description: 'Unleash chaos on the battlefield. Deal 1500 area damage — beware friendly fire.',
   effect: { type: 'damage', amount: 1500, target: 'area' },
   rarity: 'legendary',
+  castCost: { momentum: 1 },
 };
 
 // ── Red (Military) — 3 additional scrolls ──
@@ -189,9 +192,11 @@ export const DECRETUM_LEGATUS: Decretum = {
   id: 'decretum_legatus',
   name: 'Mandatum Legati',
   color: 'blue',
-  description: 'Your legate secures favorable terms — force the next event to resolve well.',
+  description: 'Your legate secures favorable terms — force the next event to resolve well. The weakest enemy joins your side next battle.',
   effect: { type: 'event-modifier', outcome: 'favorable' },
-  rarity: 'rare',
+  rarity: 'legendary',
+  castCost: { influence: 1 },
+  extraEffects: [{ type: 'convert-enemy-next-battle', count: 1 }],
 };
 
 export const DECRETUM_EXPLORATOR: Decretum = {
@@ -256,9 +261,10 @@ export const DECRETUM_CURSUS: Decretum = {
   id: 'decretum_cursus',
   name: 'Cursus Honorum Aureus',
   color: 'purple',
-  description: 'Offices and coin flow freely — gain 8 Gold and the loyalty of the equites.',
-  effect: { type: 'resource-gain', resource: 'gold', amount: 8 },
+  description: 'Offices and coin flow freely — gain 10 Gold. Next province investment costs 50% less.',
+  effect: { type: 'resource-gain', resource: 'gold', amount: 10 },
   rarity: 'legendary',
+  extraEffects: [{ type: 'investment-discount', percent: 50 }],
 };
 
 // ── White (Populist) — 3 additional scrolls ──
@@ -288,6 +294,7 @@ export const DECRETUM_TRIUMPHUS: Decretum = {
   description: 'The triumph is declared — the crowd\'s frenzy grants all units +50% agility and prevents the next death.',
   effect: { type: 'prevent-death', count: 2 },
   rarity: 'legendary',
+  castCost: { faith: 2 },
 };
 
 // ── All starter Decretum ──

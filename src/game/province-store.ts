@@ -6,6 +6,7 @@ import type { ResourceCost, DoctrineEffect } from './doctrine';
 import { getResource, spendResource, addResource } from './resources';
 import { getGovernorTraits, registerProvinceSyncCallback } from './governor-store';
 import { claimTerritory } from './province-map-store';
+import { nextInvestmentDiscount } from './strategic-store';
 
 // ── Province signals ──
 
@@ -89,12 +90,15 @@ export function buildInvestment(provinceId: string, type: InvestmentType): boole
   const data = INVESTMENT_DATA[type];
   const baseCost = data.levels[nextLevel - 1].buildCost;
 
-  // Apply governor investment-discount trait
+  // Apply governor + scroll investment discounts
   const traits = getGovernorTraits(provinceId);
-  const discount = getInvestmentDiscount(traits);
-  const cost = discount > 0 ? applyInvestmentDiscount(baseCost, discount) : baseCost;
+  const governorDiscount = getInvestmentDiscount(traits);
+  const scrollDiscount = nextInvestmentDiscount.value;
+  const effectiveDiscount = Math.min(90, governorDiscount + scrollDiscount);
+  const cost = effectiveDiscount > 0 ? applyInvestmentDiscount(baseCost, effectiveDiscount) : baseCost;
 
   if (!spendCost(cost)) return false;
+  if (scrollDiscount > 0) nextInvestmentDiscount.value = 0; // consume one-time discount
 
   // Immutable update
   const existing = province.investments.find(i => i.type === type);

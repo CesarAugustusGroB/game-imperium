@@ -10,7 +10,7 @@ import { offsetToAxial } from './hex';
 import { getActiveEffects } from '../game/doctrine-store';
 import type { DoctrineEffect } from '../game/doctrine';
 import { getProvinceEffects, provinces } from '../game/province-store';
-import { consumeCrusadeBattle, warCryActive } from '../game/strategic-store';
+import { consumeCrusadeBattle, warCryActive, pendingEnemyConversions } from '../game/strategic-store';
 import { pauseMusic, resumeMusic } from '../ui/music';
 
 /** S7-11: True when the current battle is the final invasion (season >= MAX_SEASONS). */
@@ -160,6 +160,19 @@ export class BattleMode {
       warCryActive.value = false;
       for (const unit of this._state.getFactionUnits('blue')) {
         unit.stats.atk = Math.floor(unit.stats.atk * (1 + WAR_CRY_DAMAGE_BONUS));
+      }
+    }
+
+    // S9-03: Mandatum Legati — convert weakest red unit(s) to blue at 50% HP
+    const conversions = pendingEnemyConversions.value;
+    if (conversions > 0) {
+      pendingEnemyConversions.value = 0;
+      const redUnits = this._state.getFactionUnits('red').filter(u => !u.isDying);
+      for (let i = 0; i < Math.min(conversions, redUnits.length); i++) {
+        const weakest = redUnits.reduce((a, b) => a.stats.hp <= b.stats.hp ? a : b);
+        Object.assign(weakest, { faction: 'blue' as const });
+        weakest.currentHp = Math.floor(weakest.stats.hp * 0.5);
+        redUnits.splice(redUnits.indexOf(weakest), 1);
       }
     }
 
