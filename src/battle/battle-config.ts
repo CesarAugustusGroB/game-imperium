@@ -4,8 +4,12 @@ import { HEX_SIZE } from './hex';
 // ── Combat ──
 /** Fraction of starting HP below which a faction's morale breaks and they lose (morale victory mode). */
 export const MORALE_BREAK_THRESHOLD = 0.3;
-/** Damage multiplier added per Boudicca veteran stack (0.05 = +5% per stack). Applied in BattleState.veteranBonus. */
-export const VETERAN_BONUS_PER_STACK = 0.05;
+/** Damage multiplier per Boudicca veteran stack (0.04 = +4%/stack). S9-08: reduced from 0.05, soft-capped above 12. */
+export const VETERAN_BONUS_PER_STACK = 0.04;
+/** Stacks at which veteran bonus hits diminishing returns (+1%/stack above this). */
+export const VETERAN_SOFT_CAP_STACKS = 12;
+/** Reduced bonus per stack above the soft cap. */
+export const VETERAN_BONUS_ABOVE_CAP = 0.01;
 /** ATK multiplier applied to all blue units when Boudicca's War Cry is active (0.25 = +25% damage). */
 export const WAR_CRY_DAMAGE_BONUS = 0.25;
 /** ATK multiplier applied to all blue units during an active Crusade (0.3 = +30% damage). */

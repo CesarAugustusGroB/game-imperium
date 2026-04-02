@@ -5,7 +5,7 @@ import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
 import { initAbilityBar, updateAbilityBar, destroyAbilityBar, initDecretumBar, updateDecretumBar, destroyDecretumBar } from './ability-ui';
 import { selectedCommander, veteranStacks, allianceCount, threatLevel, globalSeason, MAX_SEASONS, battlesWon } from '../game/game-state';
-import { VETERAN_BONUS_PER_STACK, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO, RED_RESERVE_COL, RED_VANGUARD_COL, WAR_CRY_DAMAGE_BONUS } from './battle-config';
+import { VETERAN_BONUS_PER_STACK, VETERAN_SOFT_CAP_STACKS, VETERAN_BONUS_ABOVE_CAP, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO, RED_RESERVE_COL, RED_VANGUARD_COL, WAR_CRY_DAMAGE_BONUS } from './battle-config';
 import { offsetToAxial } from './hex';
 import { getActiveEffects } from '../game/doctrine-store';
 import type { DoctrineEffect } from '../game/doctrine';
@@ -61,7 +61,10 @@ export class BattleMode {
     this.applyThreatScaling();
 
     if (selectedCommander.value?.id === 'boudicca') {
-      this._state.veteranBonus = veteranStacks.value * VETERAN_BONUS_PER_STACK;
+      const stacks = veteranStacks.value;
+      const capped = Math.min(stacks, VETERAN_SOFT_CAP_STACKS);
+      const excess = Math.max(0, stacks - VETERAN_SOFT_CAP_STACKS);
+      this._state.veteranBonus = capped * VETERAN_BONUS_PER_STACK + excess * VETERAN_BONUS_ABOVE_CAP;
     }
 
     // S3-10: Augustus — spawn extra allied units based on allianceCount
