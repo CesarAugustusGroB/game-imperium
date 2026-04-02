@@ -92,8 +92,8 @@ export const DOCTRINE_PANTHEON: Doctrine = {
 export const DOCTRINE_TRADE: Doctrine = {
   id: 'doctrine_trade', name: 'Doctrine of Trade', color: 'purple', currentLevel: 1,
   levels: [
-    { description: '+15% gold income from all sources.', effects: [{ type: 'income-modifier', resource: 'gold', multiplier: 0.15 }], upgradeCost: { gold: 5 } },
-    { description: '+30% gold income from all sources.', effects: [{ type: 'income-modifier', resource: 'gold', multiplier: 0.30 }], upgradeCost: { gold: 10 } },
+    { description: '+15% gold income from all sources.', effects: [{ type: 'income-modifier', resource: 'gold', multiplier: 0.15 }], upgradeCost: { gold: 4 } },
+    { description: '+30% gold income from all sources.', effects: [{ type: 'income-modifier', resource: 'gold', multiplier: 0.30 }], upgradeCost: { gold: 8 } },
     { description: '+50% gold income from all sources.', effects: [{ type: 'income-modifier', resource: 'gold', multiplier: 0.50 }], upgradeCost: {} },
   ],
 };
@@ -101,8 +101,8 @@ export const DOCTRINE_TRADE: Doctrine = {
 export const DOCTRINE_INFRASTRUCTURE: Doctrine = {
   id: 'doctrine_infrastructure', name: 'Doctrine of Infrastructure', color: 'purple', currentLevel: 1,
   levels: [
-    { description: 'Province upkeep reduced by 10%.', effects: [{ type: 'upkeep-reduction', percent: 10 }], upgradeCost: { gold: 4 } },
-    { description: 'Province upkeep reduced by 20%.', effects: [{ type: 'upkeep-reduction', percent: 20 }], upgradeCost: { gold: 8 } },
+    { description: 'Province upkeep reduced by 10%.', effects: [{ type: 'upkeep-reduction', percent: 10 }], upgradeCost: { gold: 3 } },
+    { description: 'Province upkeep reduced by 20%.', effects: [{ type: 'upkeep-reduction', percent: 20 }], upgradeCost: { gold: 7 } },
     { description: 'Province upkeep reduced by 30%.', effects: [{ type: 'upkeep-reduction', percent: 30 }], upgradeCost: {} },
   ],
 };
@@ -111,7 +111,7 @@ export const DOCTRINE_MARKET: Doctrine = {
   id: 'doctrine_market', name: 'Doctrine of the Market', color: 'purple', currentLevel: 1,
   levels: [
     { description: 'Shop prices reduced by 10%.',    effects: [{ type: 'shop-discount', percent: 10 }], upgradeCost: { gold: 3 } },
-    { description: 'Shop prices reduced by 20%.',    effects: [{ type: 'shop-discount', percent: 20 }], upgradeCost: { gold: 7 } },
+    { description: 'Shop prices reduced by 20%.',    effects: [{ type: 'shop-discount', percent: 20 }], upgradeCost: { gold: 6 } },
     { description: 'Shop prices reduced by 30%.',    effects: [{ type: 'shop-discount', percent: 30 }], upgradeCost: {} },
   ],
 };
@@ -201,8 +201,8 @@ export const DOCTRINE_DIVINA_PROVIDENTIA: Doctrine = {
 export const DOCTRINE_ANNONA: Doctrine = {
   id: 'doctrine_annona', name: 'Annona', color: 'purple', currentLevel: 1,
   levels: [
-    { description: '+15% gold income + upkeep reduced by 10%.', effects: [{ type: 'income-modifier', resource: 'gold', multiplier: 0.15 }, { type: 'upkeep-reduction', percent: 10 }], upgradeCost: { gold: 6 } },
-    { description: '+30% gold income + upkeep reduced by 20%.', effects: [{ type: 'income-modifier', resource: 'gold', multiplier: 0.30 }, { type: 'upkeep-reduction', percent: 20 }], upgradeCost: { gold: 11 } },
+    { description: '+15% gold income + upkeep reduced by 10%.', effects: [{ type: 'income-modifier', resource: 'gold', multiplier: 0.15 }, { type: 'upkeep-reduction', percent: 10 }], upgradeCost: { gold: 5 } },
+    { description: '+30% gold income + upkeep reduced by 20%.', effects: [{ type: 'income-modifier', resource: 'gold', multiplier: 0.30 }, { type: 'upkeep-reduction', percent: 20 }], upgradeCost: { gold: 9 } },
     { description: '+50% gold income + upkeep reduced by 30%.', effects: [{ type: 'income-modifier', resource: 'gold', multiplier: 0.50 }, { type: 'upkeep-reduction', percent: 30 }], upgradeCost: {} },
   ],
 };
