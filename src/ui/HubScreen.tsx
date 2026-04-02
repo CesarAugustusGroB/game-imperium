@@ -11,6 +11,8 @@ import { councilSlots, startSpokeFromCouncil, plannedSpoke, tierUpNotices } from
 import { getCurrentTier } from '../game/advisor';
 import { ResourceExchangeModal } from './ResourceExchangeModal';
 import { provinces } from '../game/province-store';
+import { canUseStrategic, useStrategic, getStrategicStatus } from '../game/strategic-store';
+import { RESOURCE_INFO } from '../game/commander';
 import { PANEL, PANEL_TITLE, ROMAN } from './ui-constants';
 
 // ── One-time CSS injection ──
@@ -231,8 +233,36 @@ export function HubScreen() {
             </div>
           )}
 
-          {/* Buttons */}
+          {/* Strategic ability + Buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {commander?.strategicAbility && (() => {
+              const ability = commander.strategicAbility;
+              const available = canUseStrategic();
+              const status = getStrategicStatus();
+              const costText = ability.cost
+                ? `${ability.cost.amount} ${RESOURCE_INFO[ability.cost.resource].icon}`
+                : 'Free';
+              return (
+                <button
+                  class="hub-panel-btn"
+                  disabled={!available}
+                  onClick={() => { useStrategic(); }}
+                  title={ability.description}
+                  style={{
+                    padding: '10px 16px', borderRadius: '4px',
+                    background: available ? `rgba(${color === '#c24a3a' ? '120,40,30' : color === '#4a7cc2' ? '30,50,100' : color === '#8a5cc2' ? '60,30,90' : '80,60,20'},0.5)` : 'rgba(40,35,60,0.4)',
+                    border: `1px solid ${available ? `${color}50` : 'rgba(180,160,100,0.12)'}`,
+                    color: available ? color : 'rgba(180,170,150,0.35)',
+                    fontFamily: 'inherit', fontSize: '11px', fontWeight: 600,
+                    letterSpacing: '1px', textTransform: 'uppercase',
+                    opacity: available ? 1 : 0.5,
+                  }}
+                >
+                  {ability.name} &middot; {costText}
+                  {status && <span style={{ display: 'block', fontSize: '8px', fontWeight: 400, opacity: 0.6, marginTop: '2px' }}>{status}</span>}
+                </button>
+              );
+            })()}
             <button class="hub-btn hub-btn-primary" disabled={seatedCount === 0} onClick={handleEmbark} style={{ width: '100%' }}>
               Embark
             </button>

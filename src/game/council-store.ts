@@ -8,6 +8,7 @@ import { getActiveEffects } from './doctrine-store';
 import { addResource } from './resources';
 import type { ResourceType } from './commander';
 import { resetSpokeEvents } from './event-store';
+import { consumeGoldenOpportunity, resetStrategicSpoke } from './strategic-store';
 
 // ── Council signals ──
 
@@ -371,12 +372,34 @@ export function startSpokeFromCouncil(): void {
 
   // Use planned spoke (stable preview) or generate fresh as fallback
   const base = plannedSpoke.value ?? generateSpokeFromCouncil();
-  const spoke = mutateSpoke(base);
+  let spoke = mutateSpoke(base);
+
+  // S7-12: Golden Opportunity — inject extra rest nodes
+  const extraRest = consumeGoldenOpportunity();
+  if (extraRest > 0) {
+    const nonBoss = spoke.nodes.slice(0, -1);
+    const boss = spoke.nodes[spoke.nodes.length - 1];
+    for (let i = 0; i < extraRest; i++) {
+      const insertAt = Math.floor(Math.random() * nonBoss.length) + 1;
+      nonBoss.splice(insertAt, 0, {
+        id: `node-golden-${i}`,
+        type: 'rest',
+        position: insertAt,
+        resolved: false,
+        reward: rewardForType('rest'),
+      });
+    }
+    // Reindex positions
+    const allNodes = [...nonBoss, boss];
+    allNodes.forEach((n, idx) => { n.position = idx; });
+    spoke = { ...spoke, nodes: allNodes };
+  }
 
   currentSpoke.value = spoke;
   currentNodeIndex.value = 0;
   spokeGains.value = { ...ZERO_GAINS };
   resetSpokeEvents();
+  resetStrategicSpoke();
 
   // S3-09: Pope Innocent gains Faith at spoke start
   if (selectedCommander.value?.id === 'innocent') {

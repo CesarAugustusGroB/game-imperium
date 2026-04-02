@@ -13,6 +13,7 @@ import { NodeModal } from './NodeModal';
 import type { GameEvent, EventChoice } from '../game/event-types';
 import { pickEvent, buildEventContext, applyEventChoice, canAffordEventChoice } from '../game/event-engine';
 import { getExtraEventChoices } from '../game/doctrine-store';
+import { manipulateUsesLeft, consumeManipulateUse } from '../game/strategic-store';
 import { councilSlots, grantAdvisorXp, tierUpNotices } from '../game/council-store';
 
 // ── One-time CSS injection ──
@@ -755,6 +756,25 @@ export function NodeMapScreen() {
                 </button>
               );
             })}
+            {/* S7-12: Manipulate — Augustus event reroll */}
+            {manipulateUsesLeft.value > 0 && (
+              <button
+                class="hub-panel-btn"
+                onClick={() => {
+                  if (consumeManipulateUse()) openEventModal();
+                }}
+                style={{
+                  marginTop: '8px', padding: '8px 14px', borderRadius: '4px',
+                  background: 'rgba(30, 50, 100, 0.4)',
+                  border: '1px solid rgba(74, 124, 194, 0.4)',
+                  color: '#4a7cc2', fontFamily: 'inherit', fontSize: '11px',
+                  fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase',
+                  width: '100%', textAlign: 'center',
+                }}
+              >
+                Manipulate — Reroll Event ({manipulateUsesLeft.value} left)
+              </button>
+            )}
           </div>
         </NodeModal>
       )}
