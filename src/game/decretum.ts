@@ -18,7 +18,9 @@ export type DecretumEffect =
   | { type: 'reveal'; target: 'choices' | 'enemies'; count: number }
   | { type: 'prevent-death'; count: number }
   | { type: 'event-modifier'; outcome: 'favorable' }
-  | { type: 'upkeep-reduction'; seasons: number };
+  | { type: 'upkeep-reduction'; seasons: number }
+  | { type: 'convert-enemy-next-battle'; count: number }
+  | { type: 'investment-discount'; percent: number };
 
 // ── Targeting mode (derived from effect for UI) ──
 
@@ -40,6 +42,8 @@ export function getDecretumTargeting(effect: DecretumEffect): DecretumTargeting 
     case 'prevent-death':
     case 'event-modifier':
     case 'upkeep-reduction':
+    case 'convert-enemy-next-battle':
+    case 'investment-discount':
       return 'immediate';
   }
 }
@@ -53,6 +57,10 @@ export interface Decretum {
   description: string;
   effect: DecretumEffect;
   rarity: DecretumRarity;
+  /** Resource cost required to cast this scroll (in addition to discarding it). */
+  castCost?: Partial<Record<ResourceType, number>>;
+  /** Secondary effects applied after the primary effect. */
+  extraEffects?: DecretumEffect[];
 }
 
 // ── Color-lock rule ──

@@ -39,9 +39,9 @@ function effectSummary(decretum: Decretum): string {
     case 'damage':
       return `Deal ${e.amount} dmg${e.target === 'area' ? ' (area)' : ''}`;
     case 'buff':
-      return `+${Math.round((e.multiplier - 1) * 100)}% ${e.stat.toUpperCase()}`;
+      return `+${Math.round(e.multiplier * 100)}% ${e.stat.toUpperCase()}`;
     case 'debuff':
-      return `-${Math.round((1 - e.multiplier) * 100)}% ${e.stat.toUpperCase()} (foe)`;
+      return `-${Math.round(e.multiplier * 100)}% ${e.stat.toUpperCase()} (foe)`;
     case 'resource-gain':
       return `+${e.amount} ${e.resource}`;
     case 'spawn':
@@ -54,6 +54,12 @@ function effectSummary(decretum: Decretum): string {
       return `Favorable outcome`;
     case 'upkeep-reduction':
       return `–upkeep ${e.seasons}s`;
+    case 'convert-enemy-next-battle':
+      return `Convert ${e.count} enemy next battle`;
+    case 'investment-discount':
+      return `–${e.percent}% next investment`;
+    default:
+      return '—';
   }
 }
 

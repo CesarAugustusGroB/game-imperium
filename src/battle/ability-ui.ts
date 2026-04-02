@@ -8,6 +8,9 @@ import { SHAKE_DURATION, FLASH_DURATION, ROLE_STATS } from './battle-config';
 import { hexToCol } from './battle-zones';
 import { getHandWithCastability, castDecretum } from '../game/decretum-store';
 import { getDecretumTargeting } from '../game/decretum';
+import type { DecretumEffect } from '../game/decretum';
+import type { ResourceType } from '../game/commander';
+import { pendingEnemyConversions, nextInvestmentDiscount } from '../game/strategic-store';
 
 /** Abilities that fire immediately (no targeting needed). */
 const IMMEDIATE_ABILITIES = new Set(['Fury Charge']);
@@ -333,8 +336,11 @@ function renderDecretumBar(): void {
 
   const hand = getHandWithCastability();
 
-  // Only re-render if the content has changed (compare by id list)
-  const newIds = hand.map(h => h.decretum.id + ':' + h.castable).join(',');
+  // Only re-render if the content has changed (id + castable + cast cost affordability)
+  const newIds = hand.map(h => {
+    const costOk = !h.decretum.castCost || (Object.entries(h.decretum.castCost) as [ResourceType, number][]).every(([res, amt]) => canAfford(res, amt));
+    return h.decretum.id + ':' + h.castable + ':' + costOk;
+  }).join(',');
   if (bar.dataset.renderKey === newIds) return;
   bar.dataset.renderKey = newIds;
 
@@ -352,7 +358,8 @@ function renderDecretumBar(): void {
     const rarityDot = d.rarity === 'legendary' ? '✦' : d.rarity === 'rare' ? '◆' : '·';
     btn.textContent = `${rarityDot} ${d.name}`;
 
-    if (castable && state.phase === 'fighting') {
+    const castCostOk = !d.castCost || (Object.entries(d.castCost) as [ResourceType, number][]).every(([res, amt]) => canAfford(res, amt));
+    if (castable && castCostOk && state.phase === 'fighting') {
       btn.style.borderColor = factionColor;
       btn.style.color = factionColor;
       btn.addEventListener('click', () => handleDecretumClick(d.id, state));
@@ -362,6 +369,17 @@ function renderDecretumBar(): void {
     }
 
     bar.appendChild(btn);
+  }
+}
+
+/** Apply a secondary decretum effect — routes strategic effects to signals, battle effects to state. */
+function applyExtraEffect(effect: DecretumEffect, state: BattleState): void {
+  if (effect.type === 'convert-enemy-next-battle') {
+    pendingEnemyConversions.value += effect.count;
+  } else if (effect.type === 'investment-discount') {
+    nextInvestmentDiscount.value = Math.max(nextInvestmentDiscount.value, effect.percent);
+  } else {
+    state.applyDecretumEffect(effect);
   }
 }
 
@@ -380,6 +398,14 @@ function handleDecretumClick(decretumId: string, state: BattleState): void {
   if (!entry || !entry.castable) return;
 
   const d = entry.decretum;
+
+  // Check cast cost affordability
+  if (d.castCost) {
+    const canAffordAll = (Object.entries(d.castCost) as [ResourceType, number][])
+      .every(([res, amt]) => canAfford(res, amt));
+    if (!canAffordAll) return;
+  }
+
   const targeting = getDecretumTargeting(d.effect);
 
   if (targeting === 'immediate') {
@@ -387,8 +413,15 @@ function handleDecretumClick(decretumId: string, state: BattleState): void {
     if (d.effect.type === 'resource-gain') {
       addResource(d.effect.resource, d.effect.amount);
     }
+    // Spend cast cost
+    if (d.castCost) {
+      (Object.entries(d.castCost) as [ResourceType, number][]).forEach(([res, amt]) => spendResource(res, amt));
+    }
     if (castDecretum(d.id)) {
       state.applyDecretumEffect(d.effect);
+      for (const extra of d.extraEffects ?? []) {
+        applyExtraEffect(extra, state);
+      }
     }
     renderDecretumBar();
     return;
@@ -407,6 +440,9 @@ function handleDecretumClick(decretumId: string, state: BattleState): void {
       if (h && h.castable) {
         if (castDecretum(id)) {
           state.applyDecretumEffect(h.decretum.effect, targetHex);
+          for (const extra of h.decretum.extraEffects ?? []) {
+            applyExtraEffect(extra, state);
+          }
         }
       }
       state.setTargeting(null);

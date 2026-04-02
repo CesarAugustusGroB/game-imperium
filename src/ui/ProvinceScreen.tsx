@@ -15,6 +15,7 @@ import {
   getAssignedGovernor, getGovernorTraits,
   hireGovernor, dismissGovernor,
 } from '../game/governor-store';
+import { nextInvestmentDiscount } from '../game/strategic-store';
 import { ProvinceMapView } from './ProvinceMapView';
 import { PANEL, PANEL_TITLE, ROMAN, formatCost } from './ui-constants';
 
@@ -109,10 +110,12 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
   const currentEffect = currentLevel > 0 ? data.levels[currentLevel - 1] : null;
   const baseCost = nextEffect?.buildCost;
 
-  // Apply governor investment-discount
+  // Apply governor + scroll investment discounts for display
   const traits = getGovernorTraits(province.id);
-  const discount = getInvestmentDiscount(traits);
-  const cost = baseCost && discount > 0 ? applyInvestmentDiscount(baseCost, discount) : baseCost;
+  const governorDiscount = getInvestmentDiscount(traits);
+  const scrollDiscount = nextInvestmentDiscount.value;
+  const effectiveDiscount = Math.min(90, governorDiscount + scrollDiscount);
+  const cost = baseCost && effectiveDiscount > 0 ? applyInvestmentDiscount(baseCost, effectiveDiscount) : baseCost;
   const affordable = cost ? canAffordCost(cost) : false;
 
   // Force signal reads for reactivity on resource changes
@@ -167,12 +170,12 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
       {/* Build / Upgrade button */}
       {!maxed && cost && (
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-          {discount > 0 && (
+          {effectiveDiscount > 0 && (
             <div style={{
               fontSize: '8px', color: 'rgba(90, 180, 90, 0.7)',
               letterSpacing: '0.5px', textAlign: 'center',
             }}>
-              -{discount}% governor discount
+              -{effectiveDiscount}%{scrollDiscount > 0 ? ' (scroll)' : ' governor'} discount
             </div>
           )}
           <button

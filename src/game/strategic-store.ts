@@ -23,6 +23,12 @@ export const manipulateUsesLeft = signal(0);
 /** Golden Opportunity (Crassus): rest nodes to inject into next spoke. */
 export const goldenOpportunityPending = signal(0);
 
+/** Mandatum Legati: enemies to convert to blue at the start of the next battle. */
+export const pendingEnemyConversions = signal(0);
+
+/** Cursus Honorum Aureus: one-time % investment cost discount applied to next build. */
+export const nextInvestmentDiscount = signal(0);
+
 // ── Derived checks ──
 
 /**
@@ -164,4 +170,6 @@ export function resetStrategicStore(): void {
   warCryActive.value = false;
   manipulateUsesLeft.value = 0;
   goldenOpportunityPending.value = 0;
+  pendingEnemyConversions.value = 0;
+  nextInvestmentDiscount.value = 0;
 }
