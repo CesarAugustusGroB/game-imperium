@@ -1,7 +1,7 @@
 import type { Faction, ResourceType } from './commander';
 import type { GameEvent, EventChoice, EventRequirement } from './event-types';
 import type { InvestmentType } from './province';
-import { EVENTS } from '../data/events';
+import { EVENTS, FALLBACK_EVENT } from '../data/events';
 import { getResource } from './resources';
 import { provinces } from './province-store';
 import { threatLevel } from './game-state';
@@ -111,19 +111,6 @@ function weightedRandomPick<T>(items: { item: T; weight: number }[]): T | null {
   return items[items.length - 1].item;
 }
 
-// ── Fallback event ──
-
-const FALLBACK_EVENT: GameEvent = {
-  id: '__fallback_uneventful',
-  title: 'Uneventful March',
-  description: 'The road ahead is quiet. Your legions march undisturbed.',
-  color: 'neutral',
-  tier: 1,
-  choices: [
-    { text: 'Press onward', effects: [{ resource: 'momentum', amount: 1 }] },
-  ],
-};
-
 // ── Public API ──
 
 /**
@@ -153,8 +140,12 @@ export function pickEvent(context: EventContext): GameEvent {
   const picked = weightedRandomPick(weighted);
   if (!picked) return FALLBACK_EVENT;
 
-  // Mark as seen
-  markEventSeen(picked.id);
+  // Only persist the "seen" mark when the caller is using the real store set.
+  // If pickEvent was called with a fresh ephemeral Set (e.g. for bonus choice
+  // generation), we must NOT pollute the real store.
+  if (context.seenThisSpoke === seenEventsThisSpoke.value) {
+    markEventSeen(picked.id);
+  }
 
   return picked;
 }

@@ -62,6 +62,24 @@ if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
       from { opacity: 0; transform: translateX(-50%) translateY(4px); }
       to   { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
+    @keyframes strategic-activate {
+      0%   { box-shadow: 0 0 0 0 rgba(240, 208, 128, 0); }
+      40%  { box-shadow: 0 0 18px 4px rgba(240, 208, 128, 0.35); }
+      100% { box-shadow: 0 0 0 0 rgba(240, 208, 128, 0); }
+    }
+    .hub-strategic-btn { transition: all 0.2s ease; cursor: pointer; }
+    .hub-strategic-btn:not(:disabled):hover {
+      filter: brightness(1.2);
+      box-shadow: 0 0 16px rgba(240, 208, 128, 0.15);
+    }
+    .hub-strategic-btn:not(:disabled):active {
+      transform: scale(0.97);
+      animation: strategic-activate 0.35s ease-out;
+    }
+    .hub-strategic-btn:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+    }
   `;
   document.head.appendChild(el);
 }
@@ -244,7 +262,7 @@ export function HubScreen() {
                 : 'Free';
               return (
                 <button
-                  class="hub-panel-btn"
+                  class="hub-strategic-btn"
                   disabled={!available}
                   onClick={() => { useStrategic(); }}
                   title={ability.description}
@@ -255,11 +273,14 @@ export function HubScreen() {
                     color: available ? color : 'rgba(180,170,150,0.35)',
                     fontFamily: 'inherit', fontSize: '11px', fontWeight: 600,
                     letterSpacing: '1px', textTransform: 'uppercase',
-                    opacity: available ? 1 : 0.5,
+                    textAlign: 'left',
                   }}
                 >
-                  {ability.name} &middot; {costText}
-                  {status && <span style={{ display: 'block', fontSize: '8px', fontWeight: 400, opacity: 0.6, marginTop: '2px' }}>{status}</span>}
+                  <div>{ability.name} &middot; {costText}</div>
+                  <div style={{ fontSize: '9px', fontWeight: 400, letterSpacing: '0.4px', textTransform: 'none', opacity: 0.65, marginTop: '3px', lineHeight: '1.4', color: available ? 'rgba(220,200,170,0.75)' : 'rgba(160,150,130,0.45)' }}>
+                    {ability.description}
+                  </div>
+                  {status && <div style={{ fontSize: '8px', fontWeight: 400, opacity: 0.6, marginTop: '2px' }}>{status}</div>}
                 </button>
               );
             })()}

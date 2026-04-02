@@ -6,6 +6,10 @@ import { HEX_SIZE } from './hex';
 export const MORALE_BREAK_THRESHOLD = 0.3;
 /** Damage multiplier added per Boudicca veteran stack (0.05 = +5% per stack). Applied in BattleState.veteranBonus. */
 export const VETERAN_BONUS_PER_STACK = 0.05;
+/** ATK multiplier applied to all blue units when Boudicca's War Cry is active (0.25 = +25% damage). */
+export const WAR_CRY_DAMAGE_BONUS = 0.25;
+/** ATK multiplier applied to all blue units during an active Crusade (0.3 = +30% damage). */
+export const CRUSADE_DAMAGE_BONUS = 0.3;
 export const DODGE_AGI_FACTOR = 0.5;      // dodgeChance = (defAGI - atkAGI) * factor
 export const DODGE_MAX = 30;              // max dodge chance %
 export const DOUBLE_STRIKE_RATIO = 1.5;   // atk.agi >= def.agi * ratio → double strike

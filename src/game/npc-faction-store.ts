@@ -73,6 +73,20 @@ export const friendlyIds = computed(() =>
   npcFactions.value.filter(f => f.relation === 'friendly').map(f => f.id),
 );
 
+// ── Faction-signal sync callback ──
+// game-state registers its syncFactionSignals fn here so that npc-faction-store
+// can notify it when a relation changes, without creating a circular import.
+
+let _syncFactionSignals: (() => void) | null = null;
+
+/**
+ * Called by game-state at module init to register its syncFactionSignals callback.
+ * Avoids a circular dependency between npc-faction-store and game-state.
+ */
+export function registerFactionSyncCallback(fn: () => void): void {
+  _syncFactionSignals = fn;
+}
+
 // ── Queries ──
 
 /** Get a faction by ID. */
@@ -89,6 +103,7 @@ export function getFactionRelation(factionId: string): FactionRelation | undefin
 
 /**
  * Change a faction's relation. Immutable signal update.
+ * Also syncs the allianceCount/enemies/allies signals in game-state via callback.
  */
 export function setFactionRelation(factionId: string, relation: FactionRelation): void {
   const idx = npcFactions.value.findIndex(f => f.id === factionId);
@@ -98,6 +113,9 @@ export function setFactionRelation(factionId: string, relation: FactionRelation)
     i === idx ? { ...f, relation } : f,
   );
   npcFactions.value = arr;
+
+  // Notify game-state so allianceCount/enemies/allies stay in sync mid-run.
+  _syncFactionSignals?.();
 }
 
 /**
