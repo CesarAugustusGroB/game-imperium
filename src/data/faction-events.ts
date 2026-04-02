@@ -61,6 +61,18 @@ export const RED_EVENTS: GameEvent[] = [
       { text: 'Promise plunder', effects: [{ resource: 'gold', amount: -4 }, { resource: 'momentum', amount: 6 }] },
     ],
   },
+  {
+    id: 'red-war-spoils',
+    title: 'Division of Spoils',
+    description: 'Your centurions argue over the plunder from the last campaign. Left unchecked, it could fracture unit cohesion.',
+    color: 'red', tier: 2,
+    requirements: { minThreat: 3 },
+    choices: [
+      { text: 'Distribute equally', effects: [{ resource: 'momentum', amount: 3 }, { resource: 'influence', amount: 1 }] },
+      { text: 'Reward the bravest unit', effects: [{ resource: 'momentum', amount: 5 }, { resource: 'gold', amount: -2 }, { resource: 'faith', amount: -1 }] },
+      { text: 'Confiscate it all for the war chest', effects: [{ resource: 'gold', amount: 4 }, { resource: 'momentum', amount: -3 }] },
+    ],
+  },
 ];
 
 // ══════════════════════════════════════════════════════════════
@@ -124,6 +136,18 @@ export const BLUE_EVENTS: GameEvent[] = [
       { text: 'Refuse — Rome stands alone', effects: [{ resource: 'momentum', amount: 3 }, { resource: 'influence', amount: -2 }] },
     ],
   },
+  {
+    id: 'blue-gallic-request',
+    title: 'The Gauls Call Their Debt',
+    description: 'Your Gallic allies invoke the terms of your pact. They need Roman soldiers to help repel a Germanic incursion across the Rhine.',
+    color: 'blue', tier: 2,
+    requirements: { minThreat: 3, requiresFlag: 'gallic_alliance', blockedByFlag: 'gallic_debt_settled' },
+    choices: [
+      { text: 'Honor the pact — send troops', effects: [{ resource: 'influence', amount: 4 }, { resource: 'momentum', amount: -3 }], consequence: 'gallic_debt_settled' },
+      { text: 'Send gold instead', effects: [{ resource: 'gold', amount: -4 }, { resource: 'influence', amount: 2 }], consequence: 'gallic_debt_settled' },
+      { text: 'Refuse — the pact was informal', effects: [{ resource: 'momentum', amount: 2 }, { resource: 'influence', amount: -3 }], consequence: 'gallic_debt_settled' },
+    ],
+  },
 ];
 
 // ══════════════════════════════════════════════════════════════
@@ -185,6 +209,17 @@ export const GOLD_EVENTS: GameEvent[] = [
       { text: 'The Great Sacrifice', effects: [{ resource: 'gold', amount: -4 }, { resource: 'faith', amount: 8 }, { resource: 'momentum', amount: 3 }], consequence: 'divine_favor' },
       { text: 'Modest offering', effects: [{ resource: 'gold', amount: -2 }, { resource: 'faith', amount: 4 }] },
       { text: 'This is madness', effects: [{ resource: 'momentum', amount: 2 }, { resource: 'faith', amount: -3 }] },
+    ],
+  },
+  {
+    id: 'gold-cursed-ground',
+    title: 'Cursed Ground',
+    description: 'Priests warn that your chosen campsite sits on an ancient battlefield stained with impiety. The omens grow darker by the hour.',
+    color: 'gold', tier: 1,
+    choices: [
+      { text: 'Perform a full lustration rite', effects: [{ resource: 'gold', amount: -1 }, { resource: 'faith', amount: 3 }, { resource: 'momentum', amount: -1 }] },
+      { text: 'Break camp and relocate', effects: [{ resource: 'momentum', amount: -1 }, { resource: 'faith', amount: 1 }] },
+      { text: 'Dismiss the priests\' fears', effects: [{ resource: 'momentum', amount: 2 }, { resource: 'faith', amount: -2 }] },
     ],
   },
 ];
@@ -251,6 +286,18 @@ export const PURPLE_EVENTS: GameEvent[] = [
       { text: 'Pass — too much risk', effects: [{ resource: 'momentum', amount: 1 }] },
     ],
   },
+  {
+    id: 'purple-trade-dividends',
+    title: 'Trade Route Dividends',
+    description: 'The investment you made in the eastern trade route has paid off. A messenger arrives bearing a sealed chest from your trading partners.',
+    color: 'purple', tier: 2,
+    requirements: { minThreat: 3, requiresFlag: 'trade_route_invested', blockedByFlag: 'trade_dividends_collected' },
+    choices: [
+      { text: 'Collect the full dividend', effects: [{ resource: 'gold', amount: 5 }, { resource: 'influence', amount: 1 }], consequence: 'trade_dividends_collected' },
+      { text: 'Reinvest the profits', effects: [{ resource: 'gold', amount: 2 }, { resource: 'influence', amount: 3 }], consequence: 'trade_dividends_collected' },
+      { text: 'Demand more — renegotiate', effects: [{ resource: 'gold', amount: 3 }, { resource: 'influence', amount: -1 }, { resource: 'momentum', amount: 1 }], consequence: 'trade_dividends_collected' },
+    ],
+  },
 ];
 
 // ══════════════════════════════════════════════════════════════
@@ -313,6 +360,18 @@ export const WHITE_EVENTS: GameEvent[] = [
       { text: 'Declare it a miracle', effects: [{ resource: 'faith', amount: 5 }, { resource: 'influence', amount: 3 }, { resource: 'momentum', amount: 2 }], consequence: 'coliseum_miracle' },
       { text: 'Investigate quietly', effects: [{ resource: 'influence', amount: 2 }, { resource: 'gold', amount: 2 }] },
       { text: 'Exploit for recruitment', effects: [{ resource: 'momentum', amount: 5 }, { resource: 'faith', amount: -2 }] },
+    ],
+  },
+  {
+    id: 'white-populist-wave',
+    title: 'The Populist Wave',
+    description: 'Word of your generosity to the plebs has spread. A growing populist movement names you their champion — and now they want more.',
+    color: 'white', tier: 2,
+    requirements: { minProvinces: 2, requiresFlag: 'fed_the_mob', blockedByFlag: 'populist_satisfied' },
+    choices: [
+      { text: 'Embrace the movement', effects: [{ resource: 'influence', amount: 4 }, { resource: 'gold', amount: -3 }, { resource: 'momentum', amount: 1 }], consequence: 'populist_satisfied' },
+      { text: 'Acknowledge, then redirect', effects: [{ resource: 'influence', amount: 2 }, { resource: 'momentum', amount: 2 }], consequence: 'populist_satisfied' },
+      { text: 'Distance yourself', effects: [{ resource: 'influence', amount: -3 }, { resource: 'momentum', amount: 3 }], consequence: 'populist_satisfied' },
     ],
   },
 ];
