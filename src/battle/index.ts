@@ -97,6 +97,8 @@ export class BattleMode {
           for (const unit of this._state.getFactionUnits('blue')) {
             if (effect.amount === 'full') {
               unit.currentHp = unit.stats.hp;
+            } else if (typeof effect.amount === 'object') {
+              unit.currentHp = Math.min(unit.stats.hp, Math.floor(unit.stats.hp * effect.amount.percent));
             } else {
               unit.currentHp = Math.min(unit.stats.hp, unit.currentHp + effect.amount);
             }

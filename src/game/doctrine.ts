@@ -12,7 +12,7 @@ export type DoctrineEffect =
   | { type: 'resource-per-spoke'; resource: ResourceType; amount: number }
   | { type: 'heal-on-kill'; amount: number }
   | { type: 'revive'; hpPercent: number }
-  | { type: 'heal-battle-start'; amount: number | 'full' }
+  | { type: 'heal-battle-start'; amount: number | 'full' | { percent: number } }
   | { type: 'free-units'; unitRole: 'vanguard' | 'reserve' | 'guard'; count: number }
   | { type: 'extra-event-choices'; count: number }
   | { type: 'shop-discount'; percent: number }
