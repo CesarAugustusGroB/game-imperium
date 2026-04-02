@@ -13,6 +13,7 @@ import { initGovernorStore, resetGovernorStore } from './governor-store';
 import { initProvinceMapStore, resetProvinceMapStore, claimTerritory } from './province-map-store';
 import { resetEventStore } from './event-store';
 import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyIds } from './npc-faction-store';
+import { resetStrategicStore } from './strategic-store';
 import { STARTER_ADVISORS } from '../data/advisor-data';
 
 // ── Core run state ──
@@ -129,6 +130,7 @@ export function startNewRun(commander: Commander): void {
   resetCouncilStore();
   resetProvinceStore();
   resetEventStore();
+  resetStrategicStore();
   initGovernorStore();
 
   // Create the home province first (no territory claimed yet — topology not loaded)
@@ -162,6 +164,7 @@ export function resetRun(): void {
   resetGovernorStore();
   resetProvinceMapStore();
   resetEventStore();
+  resetStrategicStore();
   resetNPCFactions();
   resetSpoke();
 

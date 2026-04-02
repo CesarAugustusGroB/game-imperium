@@ -10,6 +10,7 @@ import { offsetToAxial } from './hex';
 import { getActiveEffects } from '../game/doctrine-store';
 import type { DoctrineEffect } from '../game/doctrine';
 import { getProvinceEffects } from '../game/province-store';
+import { consumeCrusadeBattle } from '../game/strategic-store';
 import { pauseMusic, resumeMusic } from '../ui/music';
 
 /** S7-11: True when the current battle is the final invasion (season >= MAX_SEASONS). */
@@ -187,6 +188,14 @@ export class BattleMode {
         // Other effect types do not apply at battle-start
         default:
           break;
+      }
+    }
+
+    // S7-12: Call Crusade — +30% damage for N battles
+    const crusadeBonus = consumeCrusadeBattle();
+    if (crusadeBonus > 0) {
+      for (const unit of this._state.getFactionUnits('blue')) {
+        unit.stats.atk = Math.floor(unit.stats.atk * (1 + crusadeBonus));
       }
     }
 
