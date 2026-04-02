@@ -9,7 +9,7 @@ import { VETERAN_BONUS_PER_STACK, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO, R
 import { offsetToAxial } from './hex';
 import { getActiveEffects } from '../game/doctrine-store';
 import type { DoctrineEffect } from '../game/doctrine';
-import { getProvinceEffects } from '../game/province-store';
+import { getProvinceEffects, provinces } from '../game/province-store';
 import { consumeCrusadeBattle, warCryActive } from '../game/strategic-store';
 import { pauseMusic, resumeMusic } from '../ui/music';
 
@@ -202,19 +202,32 @@ export class BattleMode {
       }
     }
 
-    // Final invasion: additional enemy wave + boss unit
+    // S8-02: Final invasion — scaled by provinces + alliances
     if (isFinalBattle.value) {
+      const provinceCount = provinces.value.length;
+      const allies = allianceCount.value;
+
+      // More provinces = stronger player → harder boss to compensate
+      // Fewer allies = weaker player → slightly easier (mercy scaling)
+      // Base: 1.5x. +5% per province, -5% per alliance. Clamped 1.3–2.5x.
+      const bossMultiplier = Math.max(1.3, Math.min(2.5,
+        1.5 + (provinceCount * 0.05) - (allies * 0.05),
+      ));
+
+      // Spawn count: 4 base + 1 per 3 provinces, capped at 6
+      const invasionCount = Math.min(6, 4 + Math.floor(provinceCount / 3));
+
       const invasionRows = [2, 4, 6, 8, 10, 12];
       let spawned = 0;
       for (const row of invasionRows) {
-        if (spawned >= 4) break;
+        if (spawned >= invasionCount) break;
         const hex = offsetToAxial(RED_VANGUARD_COL + 1, row);
         if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
           const unitName = spawned === 0 ? 'Barbarian Warlord' : `Invasion Wave ${spawned}`;
           const u = this._state.addUnit('red', hex, unitName, 'vanguard');
           u.stats = { ...u.stats };
-          u.stats.hp = Math.floor(u.stats.hp * 1.5);
-          u.stats.atk = Math.floor(u.stats.atk * 1.5);
+          u.stats.hp = Math.floor(u.stats.hp * bossMultiplier);
+          u.stats.atk = Math.floor(u.stats.atk * bossMultiplier);
           u.currentHp = u.stats.hp;
           spawned++;
         }
