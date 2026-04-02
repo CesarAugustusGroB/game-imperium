@@ -2,7 +2,7 @@ import { render } from 'preact';
 import { effect } from '@preact/signals';
 import { App } from './ui/App';
 import { currentScreen, navigateTo } from './ui/screens';
-import { BattleMode } from './battle/index';
+import { BattleMode, isFinalBattle } from './battle/index';
 import { currentSpoke, lastBattleResult } from './game/spoke';
 import { selectedCommander, veteranStacks, spokesSinceLastBattle } from './game/game-state';
 
@@ -26,6 +26,17 @@ const battleMode = new BattleMode(() => {
   if (lastBattleResult.value === 'victory' && selectedCommander.value?.id === 'boudicca') {
     veteranStacks.value += 1;
     spokesSinceLastBattle.value = 0;
+  }
+
+  // S7-11: Final invasion — route to victory/defeat screens instead of post-battle
+  if (isFinalBattle.value) {
+    isFinalBattle.value = false;
+    if (lastBattleResult.value === 'victory') {
+      navigateTo('victory');
+    } else {
+      navigateTo('defeat');
+    }
+    return;
   }
 
   if (currentSpoke.value) {
