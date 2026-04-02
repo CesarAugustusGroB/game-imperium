@@ -1,5 +1,5 @@
 import { navigateTo } from './screens';
-import { completedSpokes, globalSeason, resetRun, selectedCommander } from '../game/game-state';
+import { globalSeason, resetRun, selectedCommander, battlesWon } from '../game/game-state';
 import { provinces } from '../game/province-store';
 import { recordRunComplete, computeScore } from '../game/meta-save';
 
@@ -72,14 +72,14 @@ export function EndScreen({
   returnBtnStyle,
 }: EndScreenProps) {
   const commander = selectedCommander.value;
-  const spokes = completedSpokes.value;
+  const battles = battlesWon.value;
   const seasons = globalSeason.value;
   const provinceCount = provinces.value.length;
 
   function handleReturn() {
     // Record run before resetting state
     if (commander) {
-      recordRunComplete(commander.id, commander.name, outcome, spokes, seasons, provinceCount);
+      recordRunComplete(commander.id, commander.name, outcome, battles, seasons, provinceCount);
     }
     resetRun();
     navigateTo('title');
@@ -157,10 +157,10 @@ export function EndScreen({
           </div>
 
           {([
-            { label: 'Spokes Completed', value: spokes },
+            { label: 'Battles Won', value: battles },
             { label: 'Seasons Survived', value: seasons },
             { label: 'Provinces Conquered', value: provinceCount },
-            { label: 'Score', value: computeScore(outcome, spokes, seasons, provinceCount) },
+            { label: 'Score', value: computeScore(outcome, battles, seasons, provinceCount) },
           ] as const).map(({ label, value }) => (
             <div
               key={label}

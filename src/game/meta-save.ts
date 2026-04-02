@@ -11,8 +11,8 @@ export interface RunRecord {
   commanderName: string;
   /** 'victory' or 'defeat'. */
   outcome: 'victory' | 'defeat';
-  /** Total spokes completed. */
-  spokes: number;
+  /** Total battles won this run. */
+  battlesWon: number;
   /** Total seasons elapsed. */
   seasons: number;
   /** Provinces conquered. */
@@ -102,16 +102,16 @@ export function recordRunStart(): void {
 /** Compute score from run stats. */
 export function computeScore(
   outcome: 'victory' | 'defeat',
-  spokes: number,
+  battlesWon: number,
   seasons: number,
   provinces: number,
 ): number {
   const basePoints = outcome === 'victory' ? 1000 : 0;
-  const spokePoints = spokes * 100;
+  const battlePoints = battlesWon * 75;
   const provincePoints = provinces * 200;
-  // Bonus for finishing faster (fewer seasons used)
-  const speedBonus = outcome === 'victory' ? Math.max(0, (24 - seasons) * 50) : 0;
-  return basePoints + spokePoints + provincePoints + speedBonus;
+  // Bonus for finishing faster (fewer seasons used) — doubled in S9-06
+  const speedBonus = outcome === 'victory' ? Math.max(0, (24 - seasons) * 100) : 0;
+  return basePoints + battlePoints + provincePoints + speedBonus;
 }
 
 /**
@@ -121,18 +121,18 @@ export function recordRunComplete(
   commanderId: string,
   commanderName: string,
   outcome: 'victory' | 'defeat',
-  spokes: number,
+  battlesWon: number,
   seasons: number,
   provinces: number,
 ): void {
-  const score = computeScore(outcome, spokes, seasons, provinces);
+  const score = computeScore(outcome, battlesWon, seasons, provinces);
 
   const record: RunRecord = {
     date: new Date().toISOString(),
     commanderId,
     commanderName,
     outcome,
-    spokes,
+    battlesWon,
     seasons,
     provinces,
     score,
