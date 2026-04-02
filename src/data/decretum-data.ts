@@ -145,17 +145,167 @@ export const DECRETUM_RIOT: Decretum = {
   rarity: 'legendary',
 };
 
+// ── Red (Military) — 3 additional scrolls ──
+
+export const DECRETUM_GLADIUS: Decretum = {
+  id: 'decretum_gladius',
+  name: 'Lex Gladii',
+  color: 'red',
+  description: 'The law of the sword prevails. All units gain +15% attack this battle.',
+  effect: { type: 'buff', stat: 'atk', multiplier: 0.15, duration: 'battle' },
+  rarity: 'common',
+};
+
+export const DECRETUM_VANGUARD: Decretum = {
+  id: 'decretum_vanguard',
+  name: 'Edictum Principis',
+  color: 'red',
+  description: 'By imperial decree, the vanguard charges. Spawn 1 elite vanguard.',
+  effect: { type: 'spawn', unitRole: 'vanguard', count: 1 },
+  rarity: 'common',
+};
+
+export const DECRETUM_TESTUDO: Decretum = {
+  id: 'decretum_testudo',
+  name: 'Senatus Consultum de Testudine',
+  color: 'red',
+  description: 'Form the tortoise. All units gain +40% defense this battle.',
+  effect: { type: 'buff', stat: 'def', multiplier: 0.4, duration: 'battle' },
+  rarity: 'rare',
+};
+
+// ── Blue (Diplomatic) — 3 additional scrolls ──
+
+export const DECRETUM_FOEDUS: Decretum = {
+  id: 'decretum_foedus',
+  name: 'Foedus Amicitiae',
+  color: 'blue',
+  description: 'A treaty of friendship earns goodwill. Gain 2 Influence immediately.',
+  effect: { type: 'resource-gain', resource: 'influence', amount: 2 },
+  rarity: 'common',
+};
+
+export const DECRETUM_LEGATUS: Decretum = {
+  id: 'decretum_legatus',
+  name: 'Mandatum Legati',
+  color: 'blue',
+  description: 'Your legate secures favorable terms — force the next event to resolve well.',
+  effect: { type: 'event-modifier', outcome: 'favorable' },
+  rarity: 'rare',
+};
+
+export const DECRETUM_EXPLORATOR: Decretum = {
+  id: 'decretum_explorator',
+  name: 'Vox Exploratoris',
+  color: 'blue',
+  description: 'Scouts return with vital intelligence. Reveal all enemy units.',
+  effect: { type: 'reveal', target: 'enemies', count: 99 },
+  rarity: 'common',
+};
+
+// ── Gold (Religious) — 3 additional scrolls ──
+
+export const DECRETUM_PONTIFEX: Decretum = {
+  id: 'decretum_pontifex',
+  name: 'Decretum Pontificis',
+  color: 'gold',
+  description: 'The high priest blesses the wounded. Heal a single unit fully.',
+  effect: { type: 'heal', amount: 1.0, target: 'single' },
+  rarity: 'common',
+};
+
+export const DECRETUM_HARUSPEX: Decretum = {
+  id: 'decretum_haruspex',
+  name: 'Responsum Haruspicis',
+  color: 'gold',
+  description: 'The entrails speak of fortune ahead. Reveal the next 3 node choices.',
+  effect: { type: 'reveal', target: 'choices', count: 3 },
+  rarity: 'rare',
+};
+
+export const DECRETUM_PIETAS: Decretum = {
+  id: 'decretum_pietas',
+  name: 'Vow of Pietas',
+  color: 'gold',
+  description: 'Sacred devotion channels divine momentum. Gain 3 Momentum immediately.',
+  effect: { type: 'resource-gain', resource: 'momentum', amount: 3 },
+  rarity: 'common',
+};
+
+// ── Purple (Economic) — 3 additional scrolls ──
+
+export const DECRETUM_AERARIUM: Decretum = {
+  id: 'decretum_aerarium',
+  name: 'Edictum Aerarii',
+  color: 'purple',
+  description: 'Unlock the treasury reserves. Gain 4 Gold immediately.',
+  effect: { type: 'resource-gain', resource: 'gold', amount: 4 },
+  rarity: 'common',
+};
+
+export const DECRETUM_ANNONA: Decretum = {
+  id: 'decretum_annona',
+  name: 'Lex Annonae',
+  color: 'purple',
+  description: 'Streamline grain supply chains — reduce upkeep costs for 2 seasons.',
+  effect: { type: 'upkeep-reduction', seasons: 2 },
+  rarity: 'rare',
+};
+
+export const DECRETUM_CURSUS: Decretum = {
+  id: 'decretum_cursus',
+  name: 'Cursus Honorum Aureus',
+  color: 'purple',
+  description: 'Offices and coin flow freely — gain 8 Gold and the loyalty of the equites.',
+  effect: { type: 'resource-gain', resource: 'gold', amount: 8 },
+  rarity: 'legendary',
+};
+
+// ── White (Populist) — 3 additional scrolls ──
+
+export const DECRETUM_PLEBS: Decretum = {
+  id: 'decretum_plebs',
+  name: 'Vox Plebis',
+  color: 'white',
+  description: 'The voice of the people rallies reserves. Spawn 2 militia guards.',
+  effect: { type: 'spawn', unitRole: 'guard', count: 2 },
+  rarity: 'common',
+};
+
+export const DECRETUM_FRUMENTUM: Decretum = {
+  id: 'decretum_frumentum',
+  name: 'Lex Frumentaria',
+  color: 'white',
+  description: 'Distribute the grain dole — heal all units by 25%.',
+  effect: { type: 'heal', amount: 0.25, target: 'all' },
+  rarity: 'rare',
+};
+
+export const DECRETUM_TRIUMPHUS: Decretum = {
+  id: 'decretum_triumphus',
+  name: 'Decretum Triumphi',
+  color: 'white',
+  description: 'The triumph is declared — the crowd\'s frenzy grants all units +50% agility and prevents the next death.',
+  effect: { type: 'prevent-death', count: 2 },
+  rarity: 'legendary',
+};
+
 // ── All starter Decretum ──
 
 export const STARTER_DECRETUM: Decretum[] = [
   // Red
   DECRETUM_FORGE, DECRETUM_LEGION, DECRETUM_MARS,
+  DECRETUM_GLADIUS, DECRETUM_VANGUARD, DECRETUM_TESTUDO,
   // Blue
   DECRETUM_TRIBUNE, DECRETUM_SENATE, DECRETUM_SPY,
+  DECRETUM_FOEDUS, DECRETUM_LEGATUS, DECRETUM_EXPLORATOR,
   // Gold
   DECRETUM_AUGUR, DECRETUM_HEALING, DECRETUM_ORACLE,
+  DECRETUM_PONTIFEX, DECRETUM_HARUSPEX, DECRETUM_PIETAS,
   // Purple
   DECRETUM_MERCHANT, DECRETUM_TAX, DECRETUM_SUPPLY,
+  DECRETUM_AERARIUM, DECRETUM_ANNONA, DECRETUM_CURSUS,
   // White
   DECRETUM_BREAD, DECRETUM_MOB, DECRETUM_RIOT,
+  DECRETUM_PLEBS, DECRETUM_FRUMENTUM, DECRETUM_TRIUMPHUS,
 ];

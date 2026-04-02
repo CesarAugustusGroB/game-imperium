@@ -130,6 +130,69 @@ export const EVENTS: GameEvent[] = [
     ],
   },
 
+  // ── Consequence-chain events ──
+
+  {
+    id: 'refugees-gratitude',
+    title: 'Refugees Give Thanks',
+    description: 'The families you sheltered have rebuilt their lives. Their young men now seek to repay the debt — with service.',
+    color: 'neutral', tier: 1,
+    requirements: { requiresFlag: 'helped_refugees', blockedByFlag: 'refugees_repaid' },
+    choices: [
+      { text: 'Accept their service', effects: [{ resource: 'momentum', amount: 2 }, { resource: 'influence', amount: 1 }], consequence: 'refugees_repaid' },
+      { text: 'Accept a donation instead', effects: [{ resource: 'gold', amount: 2 }, { resource: 'faith', amount: 1 }], consequence: 'refugees_repaid' },
+      { text: 'Wish them well and move on', effects: [{ resource: 'faith', amount: 2 }], consequence: 'refugees_repaid' },
+    ],
+  },
+  {
+    id: 'senate-retaliation',
+    title: 'The Senate Strikes Back',
+    description: 'Your defiance has not gone forgotten. Senators hostile to your cause have frozen your supply contracts and dispatched an inspector.',
+    color: 'neutral', tier: 2,
+    requirements: { minThreat: 3, requiresFlag: 'defied_senate', blockedByFlag: 'senate_placated' },
+    choices: [
+      { text: 'Pay reparations', effects: [{ resource: 'gold', amount: -4 }, { resource: 'influence', amount: 3 }], consequence: 'senate_placated' },
+      { text: 'Bribe the inspector', effects: [{ resource: 'gold', amount: -3 }, { resource: 'momentum', amount: 2 }], consequence: 'senate_placated' },
+      { text: 'Defy again — openly', effects: [{ resource: 'momentum', amount: 4 }, { resource: 'influence', amount: -4 }] },
+    ],
+  },
+  {
+    id: 'stargazer-omen',
+    title: 'The Stargazer\'s Warning',
+    description: 'A wandering astronomer reads the night sky and warns of a convergence that has preceded every great empire\'s fall.',
+    color: 'neutral', tier: 2,
+    requirements: { minThreat: 3 },
+    choices: [
+      { text: 'Heed the warning — rest the legions', effects: [{ resource: 'faith', amount: 3 }, { resource: 'momentum', amount: -2 }] },
+      { text: 'Use it to inspire fear', effects: [{ resource: 'momentum', amount: 3 }, { resource: 'influence', amount: 1 }] },
+      { text: 'Imprison the alarmist', effects: [{ resource: 'gold', amount: 2 }, { resource: 'faith', amount: -2 }] },
+    ],
+  },
+  {
+    id: 'lost-legion-standards',
+    title: 'Lost Legion Standards',
+    description: 'A local shepherd claims to have found the golden standards of a legion lost two decades ago. Returning them to Rome would be a monumental act of prestige.',
+    color: 'neutral', tier: 3,
+    requirements: { minThreat: 6, minProvinces: 2 },
+    choices: [
+      { text: 'Return them to the Senate', effects: [{ resource: 'influence', amount: 6 }, { resource: 'faith', amount: 3 }], consequence: 'standards_returned' },
+      { text: 'Keep them as a trophy', effects: [{ resource: 'momentum', amount: 5 }, { resource: 'influence', amount: -2 }], consequence: 'kept_standards' },
+      { text: 'Melt them for gold', effects: [{ resource: 'gold', amount: 6 }, { resource: 'faith', amount: -4 }, { resource: 'influence', amount: -2 }] },
+    ],
+  },
+  {
+    id: 'night-of-assassins',
+    title: 'Night of Assassins',
+    description: 'Your guards intercept three armed men in your tent. One dies with a patrician ring on his finger. Someone in Rome wants you dead.',
+    color: 'neutral', tier: 3,
+    requirements: { minThreat: 6 },
+    choices: [
+      { text: 'Announce the attempt publicly', effects: [{ resource: 'influence', amount: 5 }, { resource: 'momentum', amount: 2 }], consequence: 'assassination_exposed' },
+      { text: 'Investigate quietly', effects: [{ resource: 'gold', amount: -2 }, { resource: 'influence', amount: 3 }] },
+      { text: 'Send the ring back — a warning', effects: [{ resource: 'momentum', amount: 3 }, { resource: 'faith', amount: -2 }] },
+    ],
+  },
+
   // ── Tier 3 — requires threat >= 6 ──
 
   {
