@@ -74,7 +74,7 @@ export const DOCTRINE_MIRACLES: Doctrine = {
   levels: [
     { description: 'Heal all units 200 HP at battle start.', effects: [{ type: 'heal-battle-start', amount: 200 }], upgradeCost: { faith: 4 } },
     { description: 'Heal all units 400 HP at battle start.', effects: [{ type: 'heal-battle-start', amount: 400 }], upgradeCost: { faith: 8 } },
-    { description: 'Heal all units to full at battle start.', effects: [{ type: 'heal-battle-start', amount: 'full' }], upgradeCost: {} },
+    { description: 'Heal all units to 60% HP at battle start.', effects: [{ type: 'heal-battle-start', amount: { percent: 0.60 } }], upgradeCost: {} },
   ],
 };
 
@@ -223,7 +223,7 @@ export const DOCTRINE_CONCORDIA: Doctrine = {
   levels: [
     { description: 'Heal 300 HP at battle start + 1 event choice.',   effects: [{ type: 'heal-battle-start', amount: 300 }, { type: 'extra-event-choices', count: 1 }], upgradeCost: { gold: 4, momentum: 2 } },
     { description: 'Heal 500 HP at battle start + 2 event choices.',  effects: [{ type: 'heal-battle-start', amount: 500 }, { type: 'extra-event-choices', count: 2 }], upgradeCost: { gold: 7, momentum: 4 } },
-    { description: 'Full heal at battle start + 3 event choices.',    effects: [{ type: 'heal-battle-start', amount: 'full' }, { type: 'extra-event-choices', count: 3 }], upgradeCost: {} },
+    { description: 'Heal to 40% HP at battle start + 2 event choices.', effects: [{ type: 'heal-battle-start', amount: { percent: 0.40 } }, { type: 'extra-event-choices', count: 2 }], upgradeCost: {} },
   ],
 };
 

@@ -89,9 +89,9 @@ function formatEffectDescription(doctrine: Doctrine): string {
     case 'revive':
       return `Revive at ${Math.round(effect.hpPercent * 100)}% HP`;
     case 'heal-battle-start':
-      return effect.amount === 'full'
-        ? 'Full heal at battle start'
-        : `Heal ${effect.amount} HP at start`;
+      if (effect.amount === 'full') return 'Full heal at battle start';
+      if (typeof effect.amount === 'object') return `Heal ${Math.round(effect.amount.percent * 100)}% HP at battle start`;
+      return `Heal ${effect.amount} HP at start`;
     case 'free-units':
       return `${effect.count} free ${effect.unitRole} unit${effect.count > 1 ? 's' : ''}`;
     case 'extra-event-choices':
