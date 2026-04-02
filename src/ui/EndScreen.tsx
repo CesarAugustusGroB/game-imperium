@@ -1,6 +1,7 @@
 import { navigateTo } from './screens';
-import { completedSpokes, globalSeason, resetRun } from '../game/game-state';
+import { completedSpokes, globalSeason, resetRun, selectedCommander } from '../game/game-state';
 import { provinces } from '../game/province-store';
+import { recordRunComplete, computeScore } from '../game/meta-save';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('end-screen-styles')) {
@@ -33,6 +34,7 @@ if (typeof document !== 'undefined' && !document.getElementById('end-screen-styl
 }
 
 interface EndScreenProps {
+  outcome: 'victory' | 'defeat';
   title: string;
   titleColor: string;
   dividerColor: string;
@@ -54,6 +56,7 @@ interface EndScreenProps {
 }
 
 export function EndScreen({
+  outcome,
   title,
   titleColor,
   dividerColor,
@@ -68,11 +71,16 @@ export function EndScreen({
   summaryLabelColor,
   returnBtnStyle,
 }: EndScreenProps) {
+  const commander = selectedCommander.value;
   const spokes = completedSpokes.value;
   const seasons = globalSeason.value;
   const provinceCount = provinces.value.length;
 
   function handleReturn() {
+    // Record run before resetting state
+    if (commander) {
+      recordRunComplete(commander.id, commander.name, outcome, spokes, seasons, provinceCount);
+    }
     resetRun();
     navigateTo('title');
   }
@@ -152,6 +160,7 @@ export function EndScreen({
             { label: 'Spokes Completed', value: spokes },
             { label: 'Seasons Survived', value: seasons },
             { label: 'Provinces Conquered', value: provinceCount },
+            { label: 'Score', value: computeScore(outcome, spokes, seasons, provinceCount) },
           ] as const).map(({ label, value }) => (
             <div
               key={label}

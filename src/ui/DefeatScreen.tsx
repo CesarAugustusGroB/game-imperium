@@ -3,6 +3,7 @@ import { EndScreen } from './EndScreen';
 export function DefeatScreen() {
   return (
     <EndScreen
+      outcome="defeat"
       title="DEFEAT"
       titleColor="#c24a3a"
       dividerColor="rgba(194, 74, 58, 0.7)"
