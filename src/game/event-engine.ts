@@ -25,7 +25,7 @@ const TIER_THREAT_GATE: Record<1 | 2 | 3, number> = {
 function getColorWeight(eventColor: Faction | 'neutral', commanderFaction: Faction): number {
   if (eventColor === 'neutral') return 1;
   if (eventColor === commanderFaction) return 3;
-  if (commanderFaction === 'white') return 2; // White gets moderate affinity to all
+  if (commanderFaction === 'white') return 1.5; // White gets mild affinity to all (S9-04: nerfed from 2.0)
   return 0.5; // off-color
 }
 
