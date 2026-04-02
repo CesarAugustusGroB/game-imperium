@@ -10,6 +10,8 @@ import { PostBattleScreen } from './PostBattleScreen';
 import { DoctrineScreen } from './DoctrineScreen';
 import { CouncilScreen } from './CouncilScreen';
 import { ProvinceScreen } from './ProvinceScreen';
+import { VictoryScreen } from './VictoryScreen';
+import { DefeatScreen } from './DefeatScreen';
 import { toggleMute, musicMuted } from './music';
 
 // Inject screen transition CSS once
@@ -103,6 +105,10 @@ function ScreenContent() {
       return <NodeMapScreen />;
     case 'post-battle':
       return <PostBattleScreen />;
+    case 'victory':
+      return <VictoryScreen />;
+    case 'defeat':
+      return <DefeatScreen />;
     default:
       return (
         <div style={{

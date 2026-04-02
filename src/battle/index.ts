@@ -1,15 +1,19 @@
+import { signal } from '@preact/signals';
 import { BattleState } from './battle-state';
 import { BattleRenderer } from './battle-renderer';
 import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
 import { initAbilityBar, updateAbilityBar, destroyAbilityBar, initDecretumBar, updateDecretumBar, destroyDecretumBar } from './ability-ui';
-import { selectedCommander, veteranStacks, allianceCount } from '../game/game-state';
-import { VETERAN_BONUS_PER_STACK, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO } from './battle-config';
+import { selectedCommander, veteranStacks, allianceCount, threatLevel, globalSeason, MAX_SEASONS } from '../game/game-state';
+import { VETERAN_BONUS_PER_STACK, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO, RED_RESERVE_COL, RED_VANGUARD_COL } from './battle-config';
 import { offsetToAxial } from './hex';
 import { getActiveEffects } from '../game/doctrine-store';
 import type { DoctrineEffect } from '../game/doctrine';
 import { getProvinceEffects } from '../game/province-store';
 import { pauseMusic, resumeMusic } from '../ui/music';
+
+/** S7-11: True when the current battle is the final invasion (season >= MAX_SEASONS). */
+export const isFinalBattle = signal(false);
 
 export class BattleMode {
   private canvas: HTMLCanvasElement;
@@ -50,6 +54,56 @@ export class BattleMode {
     this._state = new BattleState();
     this._state.generateGrid();
     this._state.placeStartingUnits();
+
+    // S7-11: Threat-based enemy scaling
+    const threat = threatLevel.value;
+    isFinalBattle.value = globalSeason.value >= MAX_SEASONS;
+
+    // Scale enemy stats: +5% per threat level
+    const statMultiplier = 1 + (threat * 0.05);
+    if (statMultiplier > 1) {
+      for (const unit of this._state.getFactionUnits('red')) {
+        unit.stats = { ...unit.stats };
+        unit.stats.hp = Math.floor(unit.stats.hp * statMultiplier);
+        unit.stats.atk = Math.floor(unit.stats.atk * statMultiplier);
+        unit.currentHp = unit.stats.hp;
+      }
+    }
+
+    // Extra enemy units at threat >= 5
+    if (threat >= 5) {
+      const extraCount = threat >= 8 ? 2 : 1;
+      const extraRows = [5, 9];
+      for (let i = 0; i < extraCount; i++) {
+        const hex = offsetToAxial(RED_RESERVE_COL, extraRows[i]);
+        if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
+          const u = this._state.addUnit('red', hex, `Barbarian Raider ${i + 1}`, 'reserve');
+          u.stats = { ...u.stats };
+          u.stats.hp = Math.floor(u.stats.hp * statMultiplier);
+          u.stats.atk = Math.floor(u.stats.atk * statMultiplier);
+          u.currentHp = u.stats.hp;
+        }
+      }
+    }
+
+    // Final invasion: additional enemy wave + boss unit
+    if (isFinalBattle.value) {
+      const invasionRows = [2, 4, 6, 8, 10, 12];
+      let spawned = 0;
+      for (const row of invasionRows) {
+        if (spawned >= 4) break;
+        const hex = offsetToAxial(RED_VANGUARD_COL + 1, row);
+        if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
+          const unitName = spawned === 0 ? 'Barbarian Warlord' : `Invasion Wave ${spawned}`;
+          const u = this._state.addUnit('red', hex, unitName, 'vanguard');
+          u.stats = { ...u.stats };
+          u.stats.hp = Math.floor(u.stats.hp * 1.5);
+          u.stats.atk = Math.floor(u.stats.atk * 1.5);
+          u.currentHp = u.stats.hp;
+          spawned++;
+        }
+      }
+    }
 
     if (selectedCommander.value?.id === 'boudicca') {
       this._state.veteranBonus = veteranStacks.value * VETERAN_BONUS_PER_STACK;
