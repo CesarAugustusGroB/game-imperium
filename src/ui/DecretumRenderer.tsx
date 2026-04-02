@@ -33,34 +33,54 @@ const RARITY_DOTS: Record<Decretum['rarity'], number> = {
 
 function effectSummary(decretum: Decretum): string {
   const e = decretum.effect;
+  let primary: string;
   switch (e.type) {
     case 'heal':
-      return `Heal ${e.amount}${e.target === 'all' ? ' (all)' : ''}`;
+      primary = `Heal ${e.amount}${e.target === 'all' ? ' (all)' : ''}`;
+      break;
     case 'damage':
-      return `Deal ${e.amount} dmg${e.target === 'area' ? ' (area)' : ''}`;
+      primary = `Deal ${e.amount} dmg${e.target === 'area' ? ' (area)' : ''}`;
+      break;
     case 'buff':
-      return `+${Math.round(e.multiplier * 100)}% ${e.stat.toUpperCase()}`;
+      primary = `+${Math.round(e.multiplier * 100)}% ${e.stat.toUpperCase()}`;
+      break;
     case 'debuff':
-      return `-${Math.round(e.multiplier * 100)}% ${e.stat.toUpperCase()} (foe)`;
+      primary = `-${Math.round(e.multiplier * 100)}% ${e.stat.toUpperCase()} (foe)`;
+      break;
     case 'resource-gain':
-      return `+${e.amount} ${e.resource}`;
+      primary = `+${e.amount} ${e.resource}`;
+      break;
     case 'spawn':
-      return `Spawn ${e.count} ${e.unitRole}`;
+      primary = `Spawn ${e.count} ${e.unitRole}`;
+      break;
     case 'reveal':
-      return `Reveal ${e.count} ${e.target}`;
+      primary = `Reveal ${e.count} ${e.target}`;
+      break;
     case 'prevent-death':
-      return `Prevent death ×${e.count}`;
+      primary = `Prevent death ×${e.count}`;
+      break;
     case 'event-modifier':
-      return `Favorable outcome`;
+      primary = `Favorable outcome`;
+      break;
     case 'upkeep-reduction':
-      return `–upkeep ${e.seasons}s`;
+      primary = `–upkeep ${e.seasons}s`;
+      break;
     case 'convert-enemy-next-battle':
-      return `Convert ${e.count} enemy next battle`;
+      primary = `Convert ${e.count} enemy next battle`;
+      break;
     case 'investment-discount':
-      return `–${e.percent}% next investment`;
+      primary = `–${e.percent}% next investment`;
+      break;
     default:
-      return '—';
+      primary = '—';
   }
+  // Append cast cost so players know legendary scrolls require extra resources
+  if (decretum.castCost) {
+    const costParts = (Object.entries(decretum.castCost) as [string, number][])
+      .map(([res, amt]) => `${amt} ${res.charAt(0).toUpperCase() + res.slice(1)}`);
+    if (costParts.length > 0) primary += ` · ${costParts.join('+')}`;
+  }
+  return primary;
 }
 
 // ── Props ──

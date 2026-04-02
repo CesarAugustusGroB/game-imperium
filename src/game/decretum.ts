@@ -34,7 +34,7 @@ export function getDecretumTargeting(effect: DecretumEffect): DecretumTargeting 
     case 'damage':
       return effect.target === 'single' ? 'single-unit' : 'immediate';
     case 'spawn':
-      return 'single-hex';
+      return 'immediate'; // placement is automatic (hardcoded rows), no hex pick needed
     case 'buff':
     case 'debuff':
     case 'resource-gain':

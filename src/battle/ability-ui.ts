@@ -7,7 +7,7 @@ import type { BattleUnit } from './battle-types';
 import { SHAKE_DURATION, FLASH_DURATION, ROLE_STATS } from './battle-config';
 import { hexToCol } from './battle-zones';
 import { getHandWithCastability, castDecretum } from '../game/decretum-store';
-import { getDecretumTargeting } from '../game/decretum';
+import { getDecretumTargeting, DECRETUM_SELL_PRICE } from '../game/decretum';
 import type { DecretumEffect } from '../game/decretum';
 import type { ResourceType } from '../game/commander';
 import { pendingEnemyConversions, nextInvestmentDiscount } from '../game/strategic-store';
@@ -335,18 +335,17 @@ function renderDecretumBar(): void {
   if (!bar || !decretumState) return;
 
   const hand = getHandWithCastability();
+  const state = decretumState;
 
-  // Only re-render if the content has changed (id + castable + cast cost affordability)
+  // Only re-render if the content has changed (id + castable + cast cost affordability + phase)
   const newIds = hand.map(h => {
     const costOk = !h.decretum.castCost || (Object.entries(h.decretum.castCost) as [ResourceType, number][]).every(([res, amt]) => canAfford(res, amt));
     return h.decretum.id + ':' + h.castable + ':' + costOk;
-  }).join(',');
+  }).join(',') + ':' + state.phase;
   if (bar.dataset.renderKey === newIds) return;
   bar.dataset.renderKey = newIds;
 
   bar.innerHTML = '';
-
-  const state = decretumState;
   const commander = selectedCommander.value;
   const factionColor = commander ? FACTION_COLORS[commander.faction] : 'rgba(180, 160, 100, 0.5)';
 
@@ -359,13 +358,25 @@ function renderDecretumBar(): void {
     btn.textContent = `${rarityDot} ${d.name}`;
 
     const castCostOk = !d.castCost || (Object.entries(d.castCost) as [ResourceType, number][]).every(([res, amt]) => canAfford(res, amt));
+    const rarityPrice = DECRETUM_SELL_PRICE[d.rarity];
     if (castable && castCostOk && state.phase === 'fighting') {
+      btn.title = d.description;
       btn.style.borderColor = factionColor;
       btn.style.color = factionColor;
       btn.addEventListener('click', () => handleDecretumClick(d.id, state));
     } else {
       btn.disabled = true;
-      if (!castable) btn.classList.add('decretum-spoils');
+      if (!castable) {
+        btn.classList.add('decretum-spoils');
+        btn.title = `${d.name} — Cannot cast (sell for ${rarityPrice}g)`;
+      } else if (!castCostOk) {
+        const costParts = (Object.entries(d.castCost!) as [ResourceType, number][])
+          .map(([res, amt]) => `${amt} ${RESOURCE_INFO[res].label}`)
+          .join(', ');
+        btn.title = `${d.name} — Needs ${costParts} to activate`;
+      } else {
+        btn.title = `${d.name} — Battle not in progress`;
+      }
     }
 
     bar.appendChild(btn);
@@ -409,15 +420,16 @@ function handleDecretumClick(decretumId: string, state: BattleState): void {
   const targeting = getDecretumTargeting(d.effect);
 
   if (targeting === 'immediate') {
-    // Handle resource-gain before applying battle effect
-    if (d.effect.type === 'resource-gain') {
-      addResource(d.effect.resource, d.effect.amount);
-    }
-    // Spend cast cost
+    // Spend cast cost first (verified affordable above)
     if (d.castCost) {
       (Object.entries(d.castCost) as [ResourceType, number][]).forEach(([res, amt]) => spendResource(res, amt));
     }
+    // castDecretum removes scroll from hand — only apply effects if scroll was successfully consumed
     if (castDecretum(d.id)) {
+      // resource-gain must be applied after cast succeeds to avoid granting resources on failure
+      if (d.effect.type === 'resource-gain') {
+        addResource(d.effect.resource, d.effect.amount);
+      }
       state.applyDecretumEffect(d.effect);
       for (const extra of d.extraEffects ?? []) {
         applyExtraEffect(extra, state);
@@ -438,6 +450,12 @@ function handleDecretumClick(decretumId: string, state: BattleState): void {
       const id = abilityId.slice('decretum:'.length);
       const h = getHandWithCastability().find(e => e.decretum.id === id);
       if (h && h.castable) {
+        // Verify and spend cast cost for targeted decretums
+        const tCastCostOk = !h.decretum.castCost || (Object.entries(h.decretum.castCost) as [ResourceType, number][]).every(([res, amt]) => canAfford(res, amt));
+        if (!tCastCostOk) { state.setTargeting(null); renderDecretumBar(); state.onAbilityExecute = prevExecute; return; }
+        if (h.decretum.castCost) {
+          (Object.entries(h.decretum.castCost) as [ResourceType, number][]).forEach(([res, amt]) => spendResource(res, amt));
+        }
         if (castDecretum(id)) {
           state.applyDecretumEffect(h.decretum.effect, targetHex);
           for (const extra of h.decretum.extraEffects ?? []) {
