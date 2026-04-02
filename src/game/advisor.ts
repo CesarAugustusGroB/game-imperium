@@ -61,10 +61,10 @@ export interface Advisor {
 
 // ── XP thresholds ──
 
-/** XP needed to reach Tier 2 (cumulative). */
-export const XP_TIER_2 = 3;
-/** XP needed to reach Tier 3 (cumulative). */
-export const XP_TIER_3 = 6;
+/** XP needed to reach Tier 2 (cumulative). S9-08: raised from 3. */
+export const XP_TIER_2 = 5;
+/** XP needed to reach Tier 3 (cumulative). S9-08: raised from 6. */
+export const XP_TIER_3 = 12;
 
 // ── Pure helpers ──
 
