@@ -4,7 +4,7 @@ import { BattleRenderer } from './battle-renderer';
 import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
 import { initAbilityBar, updateAbilityBar, destroyAbilityBar, initDecretumBar, updateDecretumBar, destroyDecretumBar } from './ability-ui';
-import { selectedCommander, veteranStacks, allianceCount, threatLevel, globalSeason, MAX_SEASONS } from '../game/game-state';
+import { selectedCommander, veteranStacks, allianceCount, threatLevel, globalSeason, MAX_SEASONS, battlesWon } from '../game/game-state';
 import { VETERAN_BONUS_PER_STACK, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO, RED_RESERVE_COL, RED_VANGUARD_COL, WAR_CRY_DAMAGE_BONUS } from './battle-config';
 import { offsetToAxial } from './hex';
 import { getActiveEffects } from '../game/doctrine-store';
@@ -209,9 +209,15 @@ export class BattleMode {
 
       // More provinces = stronger player → harder boss to compensate
       // Fewer allies = weaker player → slightly easier (mercy scaling)
-      // Base: 1.5x. +5% per province, -5% per alliance. Clamped 1.3–2.5x.
+      // More battles won = battle-hardened army → easier boss (S9-01)
+      // High threat (>15) = seasons dragged out → harder boss (S9-01)
+      // Base: 1.5x. Clamped 1.3–2.5x.
       const bossMultiplier = Math.max(1.3, Math.min(2.5,
-        1.5 + (provinceCount * 0.05) - (allies * 0.05),
+        1.5
+        + (provinceCount * 0.05)
+        - (allies * 0.05)
+        - (battlesWon.value * 0.03)
+        + (Math.max(0, threatLevel.value - 15) * 0.02),
       ));
 
       // Spawn count: 4 base + 1 per 3 provinces, capped at 6

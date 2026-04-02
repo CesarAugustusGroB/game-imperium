@@ -74,6 +74,10 @@ export const allies = signal<string[]>([]);
 // ── Boudicca-specific ──
 export const veteranStacks = signal(0);
 
+// ── Run stats ──
+/** Total battles won this run. Used in final boss scaling (S9-01). */
+export const battlesWon = signal(0);
+
 /** Known valid commander IDs. Used for runtime validation in startNewRun. */
 const KNOWN_COMMANDER_IDS = new Set(['innocent', 'boudicca', 'augustus', 'crassus']);
 
@@ -108,6 +112,7 @@ export function startNewRun(commander: Commander): void {
   threatLevel.value = 0;
   spokesSinceLastBattle.value = 0;
   globalSeason.value = 0;
+  battlesWon.value = 0;
 
   // NPC factions — derive alliance/enemy state
   initNPCFactions();
@@ -184,4 +189,5 @@ export function resetRun(): void {
   enemies.value = [];
   allies.value = [];
   veteranStacks.value = 0;
+  battlesWon.value = 0;
 }

@@ -1,34 +1,48 @@
-# Plan: S6-11 — Procedural spoke generator (Council-driven, preview + threat mutation)
+# Plan: Final Boss Battle-Readiness Scaling (S9-01)
 
 ## Task
-The procedural spoke generator already exists (generateSpokeFromCouncil from S5) but the preview is unstable (re-randomized each render) and the actual spoke is identical to a fresh random roll with no connection to what was previewed. This task makes the preview deterministic (cached on advisor changes), makes embark use the cached plan with threat-based mutation (75% preserved, 25% randomized at base threat), and removes dead legacy code. Absorbs S6-13 scope.
+Add a `battlesWon` signal that tracks how many battles the player has won during a run,
+and incorporate it into the final boss difficulty formula so aggressive spoke play
+meaningfully reduces boss difficulty. Also add a late-threat factor so dragging out
+seasons past 15 makes the boss harder.
 
 ## Approach
-1. Add `plannedSpoke` signal to council-store — recomputed only when advisors change
-2. Hub preview reads `plannedSpoke` (stable, no re-randomization)
-3. `startSpokeFromCouncil()` clones the planned spoke and applies a chaos pass based on threatLevel
-4. Remove dead `generateFixedSpoke()` and `startSpoke()` from spoke.ts
+Three-file change: add the signal to `game-state.ts`, increment it in `main.tsx` on
+victory, update the `bossMultiplier` formula in `src/battle/index.ts`. Sequential —
+each step builds on the previous one.
 
 ## Steps
-1. **Add plannedSpoke signal** to council-store — computed by `regeneratePlannedSpoke()`, called from `seatAdvisor()` and `unseatAdvisor()`
-2. **Update HubScreen** — read `plannedSpoke` instead of calling `generateSpokeFromCouncil()` each render
-3. **Add `mutateSpoke()` chaos pass** — for each non-boss node, if `Math.random() < chaosPercent/100`, re-randomize node type. `chaosPercent = min(50, threatLevel * 5)`. Duration may shift ±1 at threat > 6.
-4. **Update startSpokeFromCouncil()** — clone plannedSpoke, apply mutateSpoke(), set as currentSpoke
-5. **Remove dead code** — delete `generateFixedSpoke()` and `startSpoke()` from spoke.ts
+1. Add `battlesWon = signal(0)` to `game-state.ts`, zero it in `startNewRun()` and `resetRun()`
+2. Export `battlesWon` and import it in `main.tsx`; increment on battle victory
+3. Import `battlesWon` and `threatLevel` in `src/battle/index.ts`; update `bossMultiplier`
 
 ## Files to Change
 | File | Change | Reason |
 |------|--------|--------|
-| `src/game/council-store.ts` | modify | plannedSpoke signal, mutateSpoke, updated startSpokeFromCouncil |
-| `src/ui/HubScreen.tsx` | modify | Read plannedSpoke instead of calling generateSpokeFromCouncil() |
-| `src/game/spoke.ts` | modify | Remove generateFixedSpoke + startSpoke dead code |
+| `src/game/game-state.ts` | Add `battlesWon` signal; reset in `resetRun()`; zero in `startNewRun()` | New state |
+| `src/main.tsx` | Import `battlesWon`; increment on `lastBattleResult === 'victory'` | Increment site |
+| `src/battle/index.ts` | Import `battlesWon`; update `bossMultiplier` formula | Core formula |
 
 ## Design decisions
-- **Chaos formula**: `chaosPercent = min(50, threatLevel * 5)` — at threat 0: 0% chaos (exact match), threat 5: 25%, threat 10: 50% cap
-- **Duration shift**: at threat > 6, ±1 season (random), clamped to 1-4
-- **Boss node**: never mutated (always last, always boss)
-- **Posture**: never mutated (council decision stands)
+- **Pattern**: Extend existing signal pattern (same as `veteranStacks`, `completedSpokes`)
+- **Formula**: `1.5 + provinces*0.05 - alliances*0.05 - battlesWon*0.03 + max(0, threatLevel-15)*0.02`
+  - 10 battles won → -0.30 multiplier reduction (significant reward for aggression)
+  - Threat 20 → +0.10 (5 levels × 0.02 — punishes passive season drain)
+  - Still clamped 1.3–2.5
+- **DRY**: Increment site co-located with `veteranStacks` increment (same condition)
+
+## Test plan
+- Happy path: win 10 battles → bossMultiplier 0.30 lower than zero-battle run
+- Edge: 0 battles → formula unaffected (battlesWon=0 → no change)
+- Edge: threat 24 → +0.18 addition from threat factor (9 levels above 15 × 0.02)
+- Edge: clamp still holds — heavy province run + no battles doesn't exceed 2.5
+
+## Risks
+| Risk | Mitigation |
+|------|------------|
+| `battlesWon` not reset between runs | Zeroed in both `startNewRun()` and `resetRun()` |
+| Import loop (battle/index.ts ← game-state.ts) | Already imports `allianceCount`, `veteranStacks` — safe |
 
 ## Out of scope
-- UI highlighting of mutated nodes (cosmetic, can be added later)
-- Advisor-specific unique node types
+- Displaying `battlesWon` on EndScreen (S9-06 covers scoring rework)
+- Any changes to non-final battle scaling
