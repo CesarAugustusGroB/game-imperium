@@ -4,6 +4,24 @@ import { RED_EVENTS, BLUE_EVENTS, GOLD_EVENTS, PURPLE_EVENTS, WHITE_EVENTS } fro
 // Re-export types so existing imports don't break
 export type { GameEvent, EventChoice, EventEffect } from '../game/event-types';
 
+// ── Fallback event ──
+
+/**
+ * Shown when no other event qualifies (all events filtered out).
+ * Exported separately — NOT included in the EVENTS array to avoid
+ * it appearing in normal event selection.
+ */
+export const FALLBACK_EVENT: GameEvent = {
+  id: '__fallback_uneventful',
+  title: 'Uneventful March',
+  description: 'The road ahead is quiet. Your legions march undisturbed.',
+  color: 'neutral',
+  tier: 1,
+  choices: [
+    { text: 'Press onward', effects: [{ resource: 'momentum', amount: 1 }] },
+  ],
+};
+
 // ── Neutral events ──
 
 export const EVENTS: GameEvent[] = [

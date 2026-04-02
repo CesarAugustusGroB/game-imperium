@@ -12,7 +12,7 @@ import { resetProvinceStore, conquerProvince, provinces, getMarketExchangeBonus 
 import { initGovernorStore, resetGovernorStore } from './governor-store';
 import { initProvinceMapStore, resetProvinceMapStore, claimTerritory } from './province-map-store';
 import { resetEventStore } from './event-store';
-import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyIds } from './npc-faction-store';
+import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyIds, registerFactionSyncCallback } from './npc-faction-store';
 import { resetStrategicStore } from './strategic-store';
 import { STARTER_ADVISORS } from '../data/advisor-data';
 
@@ -82,6 +82,10 @@ export function syncFactionSignals(): void {
   enemies.value = hostileIds.value;
   allies.value = friendlyIds.value;
 }
+
+// Register sync callback so npc-faction-store can call syncFactionSignals
+// when setFactionRelation is called mid-run, without creating a circular import.
+registerFactionSyncCallback(syncFactionSignals);
 
 /**
  * Start a new run with the given commander.

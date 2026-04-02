@@ -84,12 +84,28 @@ export function ResourceBar() {
       <ResourceCounter type="faith" />
       <ResourceCounter type="influence" />
       <ResourceCounter type="momentum" />
-      <div style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid rgba(180, 160, 100, 0.15)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-        <span style={{ fontSize: '11px', color: seasonColor, fontWeight: doom >= 50 ? '700' : '400', transition: 'color 0.3s' }}
-          title={`Season ${globalSeason.value} of ${MAX_SEASONS} — Doom ${doom}%`}
-        >
+      <div
+        title={`Season ${globalSeason.value} of ${MAX_SEASONS} — Doom ${doom}%`}
+        aria-label={`Season ${globalSeason.value} of ${MAX_SEASONS}, doom level ${doom}%`}
+        style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid rgba(180, 160, 100, 0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px' }}
+      >
+        <span style={{ fontSize: '11px', color: seasonColor, fontWeight: doom >= 50 ? '700' : '400', transition: 'color 0.3s', lineHeight: '1' }}>
           S{globalSeason.value}/{MAX_SEASONS}
         </span>
+        {/* Doom bar — 3px strip below the season text */}
+        <div style={{
+          width: '36px', height: '3px',
+          background: 'rgba(60, 50, 70, 0.6)',
+          borderRadius: '2px', overflow: 'hidden',
+        }}>
+          <div style={{
+            width: `${doom}%`,
+            height: '100%',
+            background: doom >= 75 ? '#c24a3a' : doom >= 50 ? '#d4a843' : 'rgba(160, 140, 100, 0.5)',
+            borderRadius: '2px',
+            transition: 'width 0.4s ease-out, background 0.3s',
+          }} />
+        </div>
       </div>
     </div>
   );

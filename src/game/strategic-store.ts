@@ -10,6 +10,13 @@ export const crusadeBattlesLeft = signal(0);
 /** War Cry (Boudicca): available every 3 spokes. Tracks last spoke used. */
 export const warCryLastUsedSpoke = signal(-99);
 
+/**
+ * War Cry active flag (Boudicca): set true when the ability is used at the Hub,
+ * consumed (reset to false) at the start of the next battle.
+ * The battle agent reads this to apply the War Cry damage bonus.
+ */
+export const warCryActive = signal(false);
+
 /** Manipulate (Augustus): rerolls remaining this spoke. */
 export const manipulateUsesLeft = signal(0);
 
@@ -18,7 +25,11 @@ export const goldenOpportunityPending = signal(0);
 
 // ── Derived checks ──
 
-/** Can the current commander use their strategic ability right now? */
+/**
+ * Can the current commander use their strategic ability right now?
+ * NOTE: The commander ID literals below ('innocent', 'boudicca', 'augustus', 'crassus')
+ * MUST match the `id` field in the Commander objects defined in src/data/commanders.ts.
+ */
 export function canUseStrategic(): boolean {
   const commander = selectedCommander.value;
   if (!commander) return false;
@@ -40,7 +51,10 @@ export function canUseStrategic(): boolean {
   }
 }
 
-/** Get a human-readable status for the ability (cooldown, active, etc). */
+/**
+ * Get a human-readable status for the ability (cooldown, active, etc).
+ * NOTE: Commander ID literals MUST match src/data/commanders.ts.
+ */
 export function getStrategicStatus(): string | null {
   const commander = selectedCommander.value;
   if (!commander) return null;
@@ -67,7 +81,10 @@ export function getStrategicStatus(): string | null {
 
 // ── Actions ──
 
-/** Activate the current commander's strategic ability. Returns true on success. */
+/**
+ * Activate the current commander's strategic ability. Returns true on success.
+ * NOTE: Commander ID literals MUST match src/data/commanders.ts.
+ */
 export function useStrategic(): boolean {
   const commander = selectedCommander.value;
   if (!commander || !canUseStrategic()) return false;
@@ -83,6 +100,7 @@ export function useStrategic(): boolean {
       break;
     case 'boudicca':
       warCryLastUsedSpoke.value = completedSpokes.value;
+      warCryActive.value = true;
       break;
     case 'augustus':
       manipulateUsesLeft.value = 1; // 1 reroll per activation
@@ -102,6 +120,16 @@ export function consumeCrusadeBattle(): number {
   return 0.3; // +30% damage
 }
 
+/**
+ * Called when a battle starts — consume War Cry if active.
+ * Returns true if War Cry was active (battle agent should apply the bonus), false otherwise.
+ */
+export function consumeWarCry(): boolean {
+  if (!warCryActive.value) return false;
+  warCryActive.value = false;
+  return true;
+}
+
 /** Called when Manipulate reroll is used in an event. */
 export function consumeManipulateUse(): boolean {
   if (manipulateUsesLeft.value <= 0) return false;
@@ -118,15 +146,22 @@ export function consumeGoldenOpportunity(): number {
 
 // ── Lifecycle ──
 
-/** Reset per-spoke state. Called at spoke start. */
+/**
+ * Reset per-spoke state. Called at spoke start.
+ * NOTE: does NOT reset manipulateUsesLeft — Augustus can activate Manipulate at the Hub
+ * before embarking and the uses must survive into the spoke. Only resetStrategicStore
+ * (full run reset) clears manipulateUsesLeft.
+ */
 export function resetStrategicSpoke(): void {
-  manipulateUsesLeft.value = 0;
+  // Intentionally empty: no per-spoke state needs clearing here yet.
+  // warCryActive is NOT reset here — it is consumed at battle start via consumeWarCry().
 }
 
 /** Reset all strategic state. Called on new run / run end. */
 export function resetStrategicStore(): void {
   crusadeBattlesLeft.value = 0;
   warCryLastUsedSpoke.value = -99;
+  warCryActive.value = false;
   manipulateUsesLeft.value = 0;
   goldenOpportunityPending.value = 0;
 }

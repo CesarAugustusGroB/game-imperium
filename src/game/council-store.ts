@@ -377,8 +377,9 @@ export function startSpokeFromCouncil(): void {
   // S7-12: Golden Opportunity — inject extra rest nodes
   const extraRest = consumeGoldenOpportunity();
   if (extraRest > 0) {
-    const nonBoss = spoke.nodes.slice(0, -1);
-    const boss = spoke.nodes[spoke.nodes.length - 1];
+    // Deep-clone each existing node so the splice result shares no references with plannedSpoke.
+    const nonBoss = spoke.nodes.slice(0, -1).map(n => ({ ...n }));
+    const boss = { ...spoke.nodes[spoke.nodes.length - 1] };
     for (let i = 0; i < extraRest; i++) {
       const insertAt = Math.floor(Math.random() * nonBoss.length) + 1;
       nonBoss.splice(insertAt, 0, {

@@ -100,6 +100,15 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
       opacity: 0.5;
     }
 
+    /* Manipulate reroll button */
+    .manipulate-reroll-btn { transition: all 0.15s ease; cursor: pointer; }
+    .manipulate-reroll-btn:hover {
+      border-color: rgba(74, 124, 194, 0.7) !important;
+      color: #80b0e8 !important;
+      background: rgba(30, 60, 120, 0.55) !important;
+    }
+    .manipulate-reroll-btn:active { transform: scale(0.97); }
+
     /* Retreat button hover */
     .retreat-btn { transition: all 0.2s ease; }
     .retreat-btn:hover {
@@ -490,13 +499,16 @@ export function NodeMapScreen() {
       // Pull bonus choices from other eligible events
       const otherContext = { ...context, seenThisSpoke: new Set<string>() };
       const bonusChoices: EventChoice[] = [];
+      // Deduplicate: track all choice texts already seen (from base event + bonus picks so far)
+      const seenTexts = new Set(event.choices.map(c => c.text));
       const allEvents = [pickEvent(otherContext), pickEvent(otherContext), pickEvent(otherContext)];
       for (const other of allEvents) {
         if (other.id === event.id) continue;
         for (const choice of other.choices) {
           if (bonusChoices.length >= extraCount) break;
-          if (!event.choices.some(c => c.text === choice.text)) {
+          if (!seenTexts.has(choice.text)) {
             bonusChoices.push(choice);
+            seenTexts.add(choice.text);
           }
         }
         if (bonusChoices.length >= extraCount) break;
@@ -759,9 +771,13 @@ export function NodeMapScreen() {
             {/* S7-12: Manipulate — Augustus event reroll */}
             {manipulateUsesLeft.value > 0 && (
               <button
-                class="hub-panel-btn"
+                class="manipulate-reroll-btn"
                 onClick={() => {
-                  if (consumeManipulateUse()) openEventModal();
+                  if (consumeManipulateUse()) {
+                    // Tier 1 fix: clear stale event before re-picking so modal gets a clean state
+                    activeEvent.value = null;
+                    openEventModal();
+                  }
                 }}
                 style={{
                   marginTop: '8px', padding: '8px 14px', borderRadius: '4px',
