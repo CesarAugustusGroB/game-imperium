@@ -14,6 +14,7 @@ import { initProvinceMapStore, resetProvinceMapStore, claimTerritory } from './p
 import { resetEventStore } from './event-store';
 import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyIds, registerFactionSyncCallback } from './npc-faction-store';
 import { resetStrategicStore } from './strategic-store';
+import { recordRunStart } from './meta-save';
 import { STARTER_ADVISORS } from '../data/advisor-data';
 
 // ── Core run state ──
@@ -149,6 +150,8 @@ export function startNewRun(commander: Commander): void {
   for (const a of STARTER_ADVISORS) {
     hireAdvisor({ ...a, currentTier: 1, xp: 0 });
   }
+
+  recordRunStart();
 }
 
 /**

@@ -13,6 +13,10 @@ import { ProvinceScreen } from './ProvinceScreen';
 import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
 import { toggleMute, musicMuted } from './music';
+import { loadMetaSave } from '../game/meta-save';
+
+// Load meta-save from localStorage on startup
+loadMetaSave();
 
 // Inject screen transition CSS once
 if (typeof document !== 'undefined' && !document.getElementById('screen-transition-styles')) {
