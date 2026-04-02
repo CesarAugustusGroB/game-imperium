@@ -200,7 +200,7 @@ const NODE_SIZE_BOSS = 82;
 // ── Modal state ──
 const showRetreatConfirm = signal(false);
 const showRestModal = signal(false);
-const restGains = signal<{ type: ResourceType; actual: number }[]>([]);
+const restGains = signal<{ type: ResourceType; actual: number; isPrimary: boolean }[]>([]);
 const showEventModal = signal(false);
 const activeEvent = signal<GameEvent | null>(null);
 const showSpokeCompleteModal = signal(false);
@@ -469,19 +469,19 @@ export function NodeMapScreen() {
     const faction = commander?.faction;
     const allTypes: ResourceType[] = ['gold', 'faith', 'influence', 'momentum'];
     const primary = faction ? FACTION_PRIMARY_RESOURCE[faction] : null;
-    const gains: { type: ResourceType; actual: number }[] = [];
+    const gains: { type: ResourceType; actual: number; isPrimary: boolean }[] = [];
 
     if (primary) {
       // Non-white: +1 base primary (×2 faction multiplier = +2 effective) + 1 random secondary
-      gains.push({ type: primary, actual: grantSpokeResource(primary, 1, faction) });
+      gains.push({ type: primary, actual: grantSpokeResource(primary, 1, faction), isPrimary: true });
       const secondaries = allTypes.filter(t => t !== primary);
       const pick = secondaries[Math.floor(Math.random() * secondaries.length)];
-      gains.push({ type: pick, actual: grantSpokeResource(pick, 1, faction) });
+      gains.push({ type: pick, actual: grantSpokeResource(pick, 1, faction), isPrimary: false });
     } else {
       // White: no primary — +2 to one random, +1 to another random
       const shuffled = [...allTypes].sort(() => Math.random() - 0.5);
-      gains.push({ type: shuffled[0], actual: grantSpokeResource(shuffled[0], 2, faction) });
-      gains.push({ type: shuffled[1], actual: grantSpokeResource(shuffled[1], 1, faction) });
+      gains.push({ type: shuffled[0], actual: grantSpokeResource(shuffled[0], 2, faction), isPrimary: false });
+      gains.push({ type: shuffled[1], actual: grantSpokeResource(shuffled[1], 1, faction), isPrimary: false });
     }
 
     restGains.value = gains;
@@ -724,9 +724,16 @@ export function NodeMapScreen() {
           </div>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '20px' }}>
             {restGains.value.map((g) => (
-              <span key={g.type} style={{ fontSize: '13px', fontWeight: 600, color: RESOURCE_INFO[g.type].color }}>
-                {RESOURCE_INFO[g.type].icon} +{g.actual} {RESOURCE_INFO[g.type].label}
-              </span>
+              <div key={g.type} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: RESOURCE_INFO[g.type].color }}>
+                  {RESOURCE_INFO[g.type].icon} +{g.actual} {RESOURCE_INFO[g.type].label}
+                </span>
+                {g.isPrimary && (
+                  <span style={{ fontSize: '9px', color: 'rgba(180, 160, 100, 0.5)', letterSpacing: '0.5px' }}>
+                    (primary)
+                  </span>
+                )}
+              </div>
             ))}
           </div>
           <button class="modal-action-btn" onClick={handleRestContinue} style={{

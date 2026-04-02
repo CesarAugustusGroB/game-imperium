@@ -657,7 +657,9 @@ export class BattleState {
       case 'event-modifier':
       case 'upkeep-reduction':
       case 'debuff':
-        // These are non-battle effects or future implementations
+      case 'convert-enemy-next-battle':  // handled via applyExtraEffect in ability-ui.ts
+      case 'investment-discount':        // handled via applyExtraEffect in ability-ui.ts
+        // These are non-battle effects handled elsewhere
         break;
     }
   }
