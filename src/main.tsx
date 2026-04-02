@@ -4,7 +4,7 @@ import { App } from './ui/App';
 import { currentScreen, navigateTo } from './ui/screens';
 import { BattleMode, isFinalBattle } from './battle/index';
 import { currentSpoke, lastBattleResult } from './game/spoke';
-import { selectedCommander, veteranStacks, spokesSinceLastBattle } from './game/game-state';
+import { selectedCommander, veteranStacks, spokesSinceLastBattle, battlesWon } from './game/game-state';
 
 // Mount Preact UI
 const appRoot = document.getElementById('app-root');
@@ -23,9 +23,12 @@ const battleMode = new BattleMode(() => {
     lastBattleResult.value = 'defeat';
   }
 
-  if (lastBattleResult.value === 'victory' && selectedCommander.value?.id === 'boudicca') {
-    veteranStacks.value += 1;
-    spokesSinceLastBattle.value = 0;
+  if (lastBattleResult.value === 'victory') {
+    battlesWon.value += 1;
+    if (selectedCommander.value?.id === 'boudicca') {
+      veteranStacks.value += 1;
+      spokesSinceLastBattle.value = 0;
+    }
   }
 
   // S7-11: Final invasion — route to victory/defeat screens instead of post-battle
