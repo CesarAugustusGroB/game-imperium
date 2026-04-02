@@ -6,7 +6,7 @@ import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke,
 import type { SpokeNode, NodeType, SeasonTickResult } from '../game/spoke';
 import { selectedCommander, completedSpokes, threatLevel } from '../game/game-state';
 import { conquerProvince, getProvinceEffects } from '../game/province-store';
-import { FACTION_COLORS, RESOURCE_INFO } from '../game/commander';
+import { FACTION_COLORS, RESOURCE_INFO, FACTION_PRIMARY_RESOURCE } from '../game/commander';
 import type { ResourceType } from '../game/commander';
 import { spendResource } from '../game/resources';
 import { NodeModal } from './NodeModal';
@@ -467,11 +467,23 @@ export function NodeMapScreen() {
 
   function openRestModal() {
     const faction = commander?.faction;
-    const types: ResourceType[] = ['gold', 'faith', 'influence', 'momentum'];
-    const gains = types.map((type) => ({
-      type,
-      actual: grantSpokeResource(type, 1, faction),
-    }));
+    const allTypes: ResourceType[] = ['gold', 'faith', 'influence', 'momentum'];
+    const primary = faction ? FACTION_PRIMARY_RESOURCE[faction] : null;
+    const gains: { type: ResourceType; actual: number }[] = [];
+
+    if (primary) {
+      // Non-white: +1 base primary (×2 faction multiplier = +2 effective) + 1 random secondary
+      gains.push({ type: primary, actual: grantSpokeResource(primary, 1, faction) });
+      const secondaries = allTypes.filter(t => t !== primary);
+      const pick = secondaries[Math.floor(Math.random() * secondaries.length)];
+      gains.push({ type: pick, actual: grantSpokeResource(pick, 1, faction) });
+    } else {
+      // White: no primary — +2 to one random, +1 to another random
+      const shuffled = [...allTypes].sort(() => Math.random() - 0.5);
+      gains.push({ type: shuffled[0], actual: grantSpokeResource(shuffled[0], 2, faction) });
+      gains.push({ type: shuffled[1], actual: grantSpokeResource(shuffled[1], 1, faction) });
+    }
+
     restGains.value = gains;
     showRestModal.value = true;
   }
