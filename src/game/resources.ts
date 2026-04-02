@@ -68,6 +68,7 @@ export function addResource(type: ResourceType, amount: number, faction?: Factio
   let bonusMultiplier = 0;
   if (type === 'gold' && warProfilerActive) bonusMultiplier += 0.5;
   if (incomeModifierFn) bonusMultiplier += incomeModifierFn(type);
+  bonusMultiplier = Math.min(bonusMultiplier, 0.75); // S9-07: cap income modifiers at +75%
   const actual = Math.floor(amount * factionMultiplier * (1 + bonusMultiplier));
   resourceSignals[type].value += actual;
   return actual;

@@ -94,7 +94,7 @@ export const COMMANDERS: Commander[] = [
       name: 'Golden Opportunity',
       description: 'Unlock a bonus trade spoke — massive gold but attracts raiders.',
       type: 'strategic',
-      cost: { resource: 'gold', amount: 5 },
+      cost: { resource: 'gold', amount: 7 },
     },
     tacticalAbility: {
       name: 'Buy Reinforcements',
