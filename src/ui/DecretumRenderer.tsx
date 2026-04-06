@@ -19,6 +19,11 @@ if (typeof document !== 'undefined' && !document.getElementById('decretum-card-s
     .decretum-card.decretum-selected {
       transform: scale(1.05);
     }
+    @keyframes card-draw {
+      from { opacity: 0; transform: translateY(20px) scale(0.9); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .decretum-card-new { animation: card-draw 0.35s ease-out; }
   `;
   document.head.appendChild(el);
 }
@@ -89,13 +94,14 @@ interface DecretumCardProps {
   decretum: Decretum;
   castable: boolean;
   selected?: boolean;
+  isNew?: boolean;
   onCast?: () => void;
   onSell?: () => void;
 }
 
 // ── Component ──
 
-export function DecretumCard({ decretum, castable, selected, onCast, onSell }: DecretumCardProps) {
+export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSell }: DecretumCardProps) {
   const factionColor = FACTION_COLORS[decretum.color];
   const dots = RARITY_DOTS[decretum.rarity];
 
@@ -139,7 +145,7 @@ export function DecretumCard({ decretum, castable, selected, onCast, onSell }: D
   return (
     <div
       style={containerStyle}
-      class={`decretum-card${castable ? ' decretum-castable' : ''}${selected ? ' decretum-selected' : ''}`}
+      class={`decretum-card${castable ? ' decretum-castable' : ''}${selected ? ' decretum-selected' : ''}${isNew ? ' decretum-card-new' : ''}`}
       onClick={handleClick}
       title={castable ? `Cast: ${decretum.name}` : `Sell: ${decretum.name}`}
     >
