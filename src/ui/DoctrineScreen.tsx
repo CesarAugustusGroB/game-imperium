@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals';
 import { navigateTo } from './screens';
 import { selectedCommander } from '../game/game-state';
+import { playSfx } from './sfx';
 import { equippedDoctrines, doctrineCollection, equipDoctrine, unequipDoctrine, upgradeDoctrine, sellDoctrine } from '../game/doctrine-store';
 import { isDoctrineEquippable, getDoctrineSellPrice } from '../game/doctrine';
 import type { Doctrine } from '../game/doctrine';
@@ -71,6 +72,7 @@ export function DoctrineScreen() {
   const collection = doctrineCollection.value;
 
   function handleEquipToSlot(slotIndex: number, doctrine: Doctrine) {
+    playSfx('ui_equip');
     equipDoctrine(slotIndex, doctrine);
     equipTargetSlot.value = null;
     lastEquippedSlot.value = slotIndex;

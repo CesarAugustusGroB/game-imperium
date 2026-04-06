@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals';
 import { navigateTo } from './screens';
 import { selectedCommander } from '../game/game-state';
+import { playSfx } from './sfx';
 import { provinces, buildInvestment, canAffordCost, getNextInvestmentLevel } from '../game/province-store';
 import {
   INVESTMENT_DATA, getProvinceIncome, getProvinceExpenses, getUnrestModifier,
@@ -66,6 +67,10 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
       100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(240,208,128,0); }
     }
     .inv-slot-building { animation: inv-build-success 0.5s ease-out; }
+    @media (max-width: 600px) {
+      .prov-layout { flex-direction: column !important; }
+      .prov-ledger { flex: 1 1 auto !important; max-height: 200px !important; }
+    }
   `;
   document.head.appendChild(el);
 }
@@ -133,6 +138,7 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
 
   function handleBuild() {
     if (nextLevel > 0) {
+      playSfx('ui_click');
       buildInvestment(province.id, type);
       buildingSlotType.value = type;
       setTimeout(() => { buildingSlotType.value = null; }, 600);
@@ -546,7 +552,7 @@ export function ProvinceScreen() {
           </div>
         ) : (
           /* Two-column layout */
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          <div class="prov-layout" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
 
             {/* Left: Ledger */}
             <div class="prov-ledger" style={{

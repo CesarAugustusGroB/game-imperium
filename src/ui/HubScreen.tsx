@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals';
 import { navigateTo } from './screens';
 import { completedSpokes, selectedCommander } from '../game/game-state';
+import { playSfx } from './sfx';
 import { decretumHand, maxHandSize, sellDecretum } from '../game/decretum-store';
 import { isDecretumCastable, DECRETUM_SELL_PRICE } from '../game/decretum';
 import { doctrineCollection, equippedDoctrines, sellDoctrine } from '../game/doctrine-store';
@@ -64,6 +65,9 @@ if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @media (max-width: 600px) {
+      .hub-container { padding: 16px !important; }
+    }
   `;
   document.head.appendChild(el);
 }
@@ -108,7 +112,7 @@ export function HubScreen() {
     for (const d of offColorDoctrines) total += sellDoctrine(d.id);
     if (total > 0) showGoldFlash(total);
   }
-  function handleEmbark() { startSpokeFromCouncil(); navigateTo('node-map'); }
+  function handleEmbark() { playSfx('ui_click'); startSpokeFromCouncil(); navigateTo('node-map'); }
 
   return (
     <div style={{
@@ -148,7 +152,7 @@ export function HubScreen() {
       )}
 
       {/* Two-column layout */}
-      <div style={{
+      <div class="hub-container" style={{
         display: 'flex', flexDirection: 'row', flexWrap: 'wrap',
         alignItems: 'flex-start', gap: '16px',
         width: 'min(1000px, 92vw)',

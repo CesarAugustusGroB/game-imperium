@@ -1,6 +1,7 @@
 import { selectedCommander } from '../game/game-state';
 import { canAfford, spendResource, addResource } from '../game/resources';
 import { RESOURCE_INFO, FACTION_COLORS } from '../game/commander';
+import { playSfx } from '../ui/sfx';
 import type { Commander, CommanderAbility } from '../game/commander';
 import type { BattleState } from './battle-state';
 import type { BattleUnit } from './battle-types';
@@ -206,6 +207,7 @@ function executeMiracle(state: BattleState, target: BattleUnit): void {
       color: '#ffd700', timer: 0.8, duration: 0.8,
     });
     state.spawnParticles(target.hex, ABILITY_PARTICLE_COUNT, '#ffd700', Math.PI * 2, 25, 1.0);
+    playSfx('ability_heal');
   } else {
     // Smite enemy unit — deal 2000 damage
     const damage = 2000;
@@ -217,6 +219,7 @@ function executeMiracle(state: BattleState, target: BattleUnit): void {
       color: '#ffd700', timer: 0.8, duration: 0.8,
     });
     state.spawnParticles(target.hex, ABILITY_PARTICLE_COUNT, '#ffd700', Math.PI * 2, 50, 0.8);
+    playSfx('ability_fire');
     // Death check
     state.applyDeathCheck(target);
   }
@@ -283,6 +286,7 @@ function executeFuryCharge(state: BattleState): void {
     text: 'FURY CHARGE!', hex: centerHex,
     color: '#ff4444', timer: 1.0, duration: 1.0,
   });
+  playSfx('charge');
 }
 
 // ── Buy Reinforcements (Crassus) ──

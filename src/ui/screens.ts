@@ -1,5 +1,7 @@
 import { signal } from '@preact/signals';
 import { selectedCommander } from '../game/game-state';
+import { playSfx } from './sfx';
+import { switchTrackForScreen } from './music';
 
 export type ScreenName =
   | 'title'
@@ -47,6 +49,8 @@ window.addEventListener('hashchange', () => {
 });
 
 export function navigateTo(screen: ScreenName): void {
+  playSfx('ui_navigate');
+
   if (REQUIRES_RUN.includes(screen) && !selectedCommander.value) {
     screen = 'title';
   }
@@ -56,6 +60,7 @@ export function navigateTo(screen: ScreenName): void {
     currentScreen.value = screen;
     window.location.hash = screen;
     applyScreenDOM(screen);
+    switchTrackForScreen(screen);
     return;
   }
 
@@ -67,6 +72,7 @@ export function navigateTo(screen: ScreenName): void {
     currentScreen.value = screen;
     window.location.hash = screen;
     applyScreenDOM(screen);
+    switchTrackForScreen(screen);
     transitionState.value = 'entering';
     window.setTimeout(() => {
       transitionState.value = 'idle';

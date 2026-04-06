@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { navigateTo } from './screens';
 import { resetRun } from '../game/game-state';
+import { playSfx } from './sfx';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('end-screen-styles')) {
@@ -19,6 +20,10 @@ if (typeof document !== 'undefined' && !document.getElementById('end-screen-styl
     @keyframes endgame-fade-in {
       from { opacity: 0; transform: scale(0.95); }
       to { opacity: 1; transform: scale(1); }
+    }
+    @media (max-width: 600px) {
+      .end-screen-panel { padding: 32px 24px 28px !important; }
+      .end-screen-panel img { width: 200px !important; }
     }
   `;
   document.head.appendChild(el);
@@ -85,6 +90,10 @@ export function EndScreen({
 }: EndScreenProps) {
   const [revealIndex, setRevealIndex] = useState(-1);
   const [showButton, setShowButton] = useState(false);
+
+  useEffect(() => {
+    playSfx(outcome === 'victory' ? 'victory_fanfare' : 'defeat_sting');
+  }, []);
 
   useEffect(() => {
     const timers: number[] = [];
@@ -154,7 +163,7 @@ export function EndScreen({
         }} />
 
         {/* Stats panel */}
-        <div style={{
+        <div class="end-screen-panel" style={{
           background: 'rgba(12, 10, 24, 0.85)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',

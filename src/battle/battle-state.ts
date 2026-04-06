@@ -1,6 +1,7 @@
 import type { Hex, Point } from './hex';
 import { hexKey, hexNeighbors, hexDistance, offsetToAxial } from './hex';
 import type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder } from './battle-types';
+import { playSfx } from '../ui/sfx';
 import {
   DEFAULT_CONFIG, CAPTURE_DURATION, MOVE_RANGE, MOVE_ANIM_SPEED,
   MORALE_BREAK_THRESHOLD, SHAKE_DURATION, FLASH_DURATION,
@@ -400,6 +401,7 @@ export class BattleState {
         text: 'CRIT!!', hex: { q: attacker.hex.q, r: attacker.hex.r },
         color: '#ffdd00', timer: FLOAT_TEXT_DURATION, duration: FLOAT_TEXT_DURATION,
       });
+      playSfx('crit');
       this.performStrike(attacker, defender);
     }
   }
@@ -416,6 +418,7 @@ export class BattleState {
         text: 'DODGE!', hex: { q: defender.hex.q, r: defender.hex.r },
         color: '#44ddff', timer: FLOAT_TEXT_DURATION, duration: FLOAT_TEXT_DURATION,
       });
+      playSfx('dodge');
       return;
     }
 
@@ -433,6 +436,7 @@ export class BattleState {
     attacker.flashTimer = FLASH_DURATION;
     defender.shakeTimer = SHAKE_DURATION;
     defender.flashTimer = FLASH_DURATION;
+    playSfx('hit');
     this.spawnParticles(defender.hex, HIT_PARTICLE_COUNT, '#ffaa44', Math.PI * 2, 30, 0.5);
 
     // Death check — defender only (no counter-attack)
@@ -469,6 +473,7 @@ export class BattleState {
         if (this.selectedUnitId === unit.id) this.selectedUnitId = null;
         this.spawnParticles(unit.hex, DEATH_PARTICLE_COUNT, unit.faction === 'blue' ? '#5588dd' : '#dd5555', Math.PI * 2, 60, 1.2);
         this.screenShake = SCREEN_SHAKE_DURATION;
+        playSfx('death');
       }
     }
   }
