@@ -60,6 +60,12 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes inv-build-success {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(240,208,128,0); }
+      40% { transform: scale(1.05); box-shadow: 0 0 16px 4px rgba(240,208,128,0.4); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(240,208,128,0); }
+    }
+    .inv-slot-building { animation: inv-build-success 0.5s ease-out; }
   `;
   document.head.appendChild(el);
 }
@@ -68,6 +74,7 @@ const ALL_INVESTMENTS: InvestmentType[] = ['castrum', 'basilica', 'pantheon', 'm
 
 const selectedProvinceId = signal<string | null>(null);
 const showGovernorPicker = signal(false);
+const buildingSlotType = signal<string | null>(null);
 
 // ── Helpers ──
 
@@ -127,11 +134,13 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
   function handleBuild() {
     if (nextLevel > 0) {
       buildInvestment(province.id, type);
+      buildingSlotType.value = type;
+      setTimeout(() => { buildingSlotType.value = null; }, 600);
     }
   }
 
   return (
-    <div class="inv-slot" style={{
+    <div class={`inv-slot${buildingSlotType.value === type ? ' inv-slot-building' : ''}`} style={{
       background: 'rgba(20, 18, 36, 0.6)',
       border: `1px solid ${currentLevel > 0 ? `${fColor}30` : 'rgba(180, 160, 100, 0.08)'}`,
       borderTop: `3px solid ${currentLevel > 0 ? fColor : 'rgba(180, 160, 100, 0.1)'}`,
