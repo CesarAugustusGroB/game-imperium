@@ -24,6 +24,7 @@ function getInitialScreen(): ScreenName {
 }
 
 export const currentScreen = signal<ScreenName>(getInitialScreen());
+export const transitionState = signal<'idle' | 'exiting' | 'entering'>('idle');
 
 function applyScreenDOM(screen: ScreenName): void {
   const appRoot = document.getElementById('app-root');
@@ -50,7 +51,25 @@ export function navigateTo(screen: ScreenName): void {
     screen = 'title';
   }
 
-  currentScreen.value = screen;
-  window.location.hash = screen;
-  applyScreenDOM(screen);
+  // Battle uses DOM toggle — keep instant
+  if (screen === 'battle') {
+    currentScreen.value = screen;
+    window.location.hash = screen;
+    applyScreenDOM(screen);
+    return;
+  }
+
+  // Guard against double-navigation
+  if (transitionState.value !== 'idle') return;
+
+  transitionState.value = 'exiting';
+  window.setTimeout(() => {
+    currentScreen.value = screen;
+    window.location.hash = screen;
+    applyScreenDOM(screen);
+    transitionState.value = 'entering';
+    window.setTimeout(() => {
+      transitionState.value = 'idle';
+    }, 300);
+  }, 200);
 }
