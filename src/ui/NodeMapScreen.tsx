@@ -167,6 +167,11 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
       from { opacity: 0; transform: scale(0.95) translateY(-4px); }
       to   { opacity: 1; transform: scale(1) translateY(0); }
     }
+    @keyframes resolve-gold-flash {
+      0% { box-shadow: 0 0 24px 8px rgba(212,168,67,0.6); }
+      100% { box-shadow: 0 0 0 0 rgba(212,168,67,0); }
+    }
+    .node-resolving { animation: resolve-gold-flash 0.4s ease-out; }
   `;
   document.head.appendChild(el);
 }
@@ -206,6 +211,9 @@ const activeEvent = signal<GameEvent | null>(null);
 const showSpokeCompleteModal = signal(false);
 const showSeasonModal = signal(false);
 const lastSeasonTick = signal<SeasonTickResult | null>(null);
+
+/** Index of the node that just resolved (for gold flash animation). */
+const justResolvedIndex = signal<number | null>(null);
 
 function NodeCircle({ node, isCurrent, color, onActivate }: {
   node: SpokeNode;
@@ -490,6 +498,8 @@ export function NodeMapScreen() {
 
   function handleRestContinue() {
     showRestModal.value = false;
+    justResolvedIndex.value = nodeIdx;
+    setTimeout(() => { justResolvedIndex.value = null; }, 400);
     const result = advanceNode();
     if (result.seasonTicked) {
       lastSeasonTick.value = result.seasonTicked;
@@ -536,6 +546,8 @@ export function NodeMapScreen() {
     applyEventChoice(choice, grantSpokeResource, spendResource, commander?.faction);
     showEventModal.value = false;
     activeEvent.value = null;
+    justResolvedIndex.value = nodeIdx;
+    setTimeout(() => { justResolvedIndex.value = null; }, 400);
     const result = advanceNode();
     if (result.seasonTicked) {
       lastSeasonTick.value = result.seasonTicked;
@@ -659,12 +671,14 @@ export function NodeMapScreen() {
                     isNextActive={i === nodeIdx && spoke.nodes[i - 1].resolved}
                   />
                 )}
-                <NodeCircle
-                  node={node}
-                  isCurrent={i === nodeIdx}
-                  color={color}
-                  onActivate={() => handleNodeActivate(node)}
-                />
+                <div class={justResolvedIndex.value === i ? 'node-resolving' : undefined} style={{ borderRadius: '50%' }}>
+                  <NodeCircle
+                    node={node}
+                    isCurrent={i === nodeIdx}
+                    color={color}
+                    onActivate={() => handleNodeActivate(node)}
+                  />
+                </div>
               </Fragment>
             ))}
           </div>

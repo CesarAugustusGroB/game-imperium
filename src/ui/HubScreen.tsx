@@ -11,8 +11,6 @@ import { councilSlots, startSpokeFromCouncil, plannedSpoke, tierUpNotices } from
 import { getCurrentTier } from '../game/advisor';
 import { ResourceExchangeModal } from './ResourceExchangeModal';
 import { provinces } from '../game/province-store';
-import { canUseStrategic, useStrategic, getStrategicStatus } from '../game/strategic-store';
-import { RESOURCE_INFO } from '../game/commander';
 import { PANEL, PANEL_TITLE, ROMAN } from './ui-constants';
 
 // ── One-time CSS injection ──
@@ -62,23 +60,9 @@ if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
       from { opacity: 0; transform: translateX(-50%) translateY(4px); }
       to   { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
-    @keyframes strategic-activate {
-      0%   { box-shadow: 0 0 0 0 rgba(240, 208, 128, 0); }
-      40%  { box-shadow: 0 0 18px 4px rgba(240, 208, 128, 0.35); }
-      100% { box-shadow: 0 0 0 0 rgba(240, 208, 128, 0); }
-    }
-    .hub-strategic-btn { transition: all 0.2s ease; cursor: pointer; }
-    .hub-strategic-btn:not(:disabled):hover {
-      filter: brightness(1.2);
-      box-shadow: 0 0 16px rgba(240, 208, 128, 0.15);
-    }
-    .hub-strategic-btn:not(:disabled):active {
-      transform: scale(0.97);
-      animation: strategic-activate 0.35s ease-out;
-    }
-    .hub-strategic-btn:disabled {
-      opacity: 0.38;
-      cursor: not-allowed;
+    @keyframes panel-slide-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   `;
   document.head.appendChild(el);
@@ -251,39 +235,8 @@ export function HubScreen() {
             </div>
           )}
 
-          {/* Strategic ability + Buttons */}
+          {/* Buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {commander?.strategicAbility && (() => {
-              const ability = commander.strategicAbility;
-              const available = canUseStrategic();
-              const status = getStrategicStatus();
-              const costText = ability.cost
-                ? `${ability.cost.amount} ${RESOURCE_INFO[ability.cost.resource].icon}`
-                : 'Free';
-              return (
-                <button
-                  class="hub-strategic-btn"
-                  disabled={!available}
-                  onClick={() => { useStrategic(); }}
-                  title={ability.description}
-                  style={{
-                    padding: '10px 16px', borderRadius: '4px',
-                    background: available ? `rgba(${color === '#c24a3a' ? '120,40,30' : color === '#4a7cc2' ? '30,50,100' : color === '#8a5cc2' ? '60,30,90' : '80,60,20'},0.5)` : 'rgba(40,35,60,0.4)',
-                    border: `1px solid ${available ? `${color}50` : 'rgba(180,160,100,0.12)'}`,
-                    color: available ? color : 'rgba(180,170,150,0.35)',
-                    fontFamily: 'inherit', fontSize: '11px', fontWeight: 600,
-                    letterSpacing: '1px', textTransform: 'uppercase',
-                    textAlign: 'left',
-                  }}
-                >
-                  <div>{ability.name} &middot; {costText}</div>
-                  <div style={{ fontSize: '9px', fontWeight: 400, letterSpacing: '0.4px', textTransform: 'none', opacity: 0.65, marginTop: '3px', lineHeight: '1.4', color: available ? 'rgba(220,200,170,0.75)' : 'rgba(160,150,130,0.45)' }}>
-                    {ability.description}
-                  </div>
-                  {status && <div style={{ fontSize: '8px', fontWeight: 400, opacity: 0.6, marginTop: '2px' }}>{status}</div>}
-                </button>
-              );
-            })()}
             <button class="hub-btn hub-btn-primary" disabled={seatedCount === 0} onClick={handleEmbark} style={{ width: '100%' }}>
               Embark
             </button>
@@ -301,7 +254,7 @@ export function HubScreen() {
         <div style={{ flex: '0 1 300px', minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
           {/* Doctrines Summary */}
-          <div style={PANEL}>
+          <div style={{ ...PANEL, animation: 'panel-slide-in 0.3s ease-out both', animationDelay: '0s' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <div style={{ ...PANEL_TITLE, marginBottom: 0 }}>
                 Doctrines <span style={{ color: 'rgba(200,190,160,0.32)' }}>{equippedCount}/4</span>
@@ -330,7 +283,7 @@ export function HubScreen() {
           </div>
 
           {/* Decretum Hand */}
-          <div style={PANEL}>
+          <div style={{ ...PANEL, animation: 'panel-slide-in 0.3s ease-out both', animationDelay: '0.1s' }}>
             <div style={{ ...PANEL_TITLE, marginBottom: '8px' }}>
               Decretum Hand <span style={{ color: 'rgba(200,190,160,0.32)' }}>{hand.length}/{maxHand}</span>
             </div>
@@ -354,7 +307,7 @@ export function HubScreen() {
           </div>
 
           {/* Merchant */}
-          <div style={PANEL}>
+          <div style={{ ...PANEL, animation: 'panel-slide-in 0.3s ease-out both', animationDelay: '0.2s' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <div style={{ ...PANEL_TITLE, marginBottom: 0 }}>
                 Merchant {hasAnything && <span style={{ color: 'rgba(240,208,128,0.32)' }}>({totalMerchantGold}g)</span>}
@@ -404,7 +357,7 @@ export function HubScreen() {
           </div>
 
           {/* Provinces */}
-          <div style={PANEL}>
+          <div style={{ ...PANEL, animation: 'panel-slide-in 0.3s ease-out both', animationDelay: '0.3s' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <div style={{ ...PANEL_TITLE, marginBottom: 0 }}>
                 Provinces <span style={{ color: 'rgba(200,190,160,0.32)' }}>({provinces.value.length})</span>
