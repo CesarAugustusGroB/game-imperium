@@ -41,6 +41,15 @@ export const FLASH_DURATION = 0.35;    // seconds of impact flash
 export const LUNGE_DURATION = 0.4;     // seconds for lunge forward + snap back
 export const DEATH_DURATION = 2.5;     // seconds for full death animation
 
+// ── Particles ──
+export const SCREEN_SHAKE_DURATION = 0.3;
+export const SCREEN_SHAKE_INTENSITY = 4;
+export const DEATH_PARTICLE_COUNT = 12;
+export const HIT_PARTICLE_COUNT = 5;
+export const ABILITY_PARTICLE_COUNT = 8;
+export const PARTICLE_GRAVITY = 80;
+export const PARTICLE_BASE_SPEED = 60;
+
 // ── Capture ──
 export const CAPTURE_DURATION = 3.0;   // seconds a unit must stand on the star to capture it
 

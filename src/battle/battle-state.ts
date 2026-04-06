@@ -10,11 +10,25 @@ import {
   BLUE_GUARD_ROWS, BLUE_GUARD_COL,
   RED_VANGUARD_ROWS, RED_VANGUARD_COL, RED_RESERVE_ROWS, RED_RESERVE_COL,
   RED_GUARD_ROWS, RED_GUARD_COL,
+  SCREEN_SHAKE_DURATION, DEATH_PARTICLE_COUNT, HIT_PARTICLE_COUNT,
+  PARTICLE_GRAVITY,
 } from './battle-config';
 import type { DecretumEffect } from '../game/decretum';
 
 // Re-export types for backward compatibility
 export type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder };
+
+export interface Particle {
+  hex: { q: number; r: number };
+  offsetX: number;  // pixel offset from hex center
+  offsetY: number;
+  vx: number;       // velocity pixels/sec
+  vy: number;
+  life: number;     // remaining seconds
+  maxLife: number;
+  color: string;
+  size: number;
+}
 
 const FLOAT_TEXT_DURATION = 0.8; // seconds for floating text to live
 
@@ -48,6 +62,10 @@ export class BattleState {
 
   // Floating combat text (dodge, crit, etc.)
   readonly floatingTexts: FloatingText[] = [];
+
+  // Particle system
+  readonly particles: Particle[] = [];
+  screenShake: number = 0;
 
   // Capture-the-star state
   readonly stars = new Map<Faction, Hex>();          // each faction's star hex
@@ -199,6 +217,33 @@ export class BattleState {
 
   isAbilityOnCooldown(abilityId: string): boolean {
     return this.abilityCooldowns.has(abilityId);
+  }
+
+  // ── Particles ──
+
+  spawnParticles(
+    hex: { q: number; r: number },
+    count: number,
+    color: string,
+    spread: number,
+    speed: number,
+    lifetime: number,
+  ): void {
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.random() - 0.5) * spread;
+      const s = speed * (0.5 + Math.random() * 1.0);
+      this.particles.push({
+        hex: { q: hex.q, r: hex.r },
+        offsetX: 0,
+        offsetY: 0,
+        vx: Math.cos(angle) * s,
+        vy: Math.sin(angle) * s - speed * 0.3,
+        life: lifetime * (0.6 + Math.random() * 0.4),
+        maxLife: lifetime,
+        color,
+        size: 2 + Math.random() * 3,
+      });
+    }
   }
 
   // ── Selection ──
@@ -388,6 +433,7 @@ export class BattleState {
     attacker.flashTimer = FLASH_DURATION;
     defender.shakeTimer = SHAKE_DURATION;
     defender.flashTimer = FLASH_DURATION;
+    this.spawnParticles(defender.hex, HIT_PARTICLE_COUNT, '#ffaa44', Math.PI * 2, 30, 0.5);
 
     // Death check — defender only (no counter-attack)
     this.applyDeathCheck(defender);
@@ -421,6 +467,8 @@ export class BattleState {
         unit.isDying = true;
         unit.deathProgress = 0;
         if (this.selectedUnitId === unit.id) this.selectedUnitId = null;
+        this.spawnParticles(unit.hex, DEATH_PARTICLE_COUNT, unit.faction === 'blue' ? '#5588dd' : '#dd5555', Math.PI * 2, 60, 1.2);
+        this.screenShake = SCREEN_SHAKE_DURATION;
       }
     }
   }
@@ -576,6 +624,18 @@ export class BattleState {
       this.floatingTexts[i].timer -= dt;
       if (this.floatingTexts[i].timer <= 0) this.floatingTexts.splice(i, 1);
     }
+
+    // Tick particles
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.offsetX += p.vx * dt;
+      p.offsetY += p.vy * dt;
+      p.vy += PARTICLE_GRAVITY * dt;
+      p.life -= dt;
+      if (p.life <= 0) this.particles.splice(i, 1);
+    }
+    // Tick screen shake
+    if (this.screenShake > 0) this.screenShake = Math.max(0, this.screenShake - dt);
 
     this.updateCapture(dt);
   }

@@ -4,7 +4,7 @@ import { RESOURCE_INFO, FACTION_COLORS } from '../game/commander';
 import type { Commander, CommanderAbility } from '../game/commander';
 import type { BattleState } from './battle-state';
 import type { BattleUnit } from './battle-types';
-import { SHAKE_DURATION, FLASH_DURATION, ROLE_STATS } from './battle-config';
+import { SHAKE_DURATION, FLASH_DURATION, ROLE_STATS, ABILITY_PARTICLE_COUNT } from './battle-config';
 import { hexToCol } from './battle-zones';
 import { getHandWithCastability, castDecretum } from '../game/decretum-store';
 import { getDecretumTargeting, DECRETUM_SELL_PRICE } from '../game/decretum';
@@ -205,6 +205,7 @@ function executeMiracle(state: BattleState, target: BattleUnit): void {
       text: 'HEALED!', hex: { q: target.hex.q, r: target.hex.r },
       color: '#ffd700', timer: 0.8, duration: 0.8,
     });
+    state.spawnParticles(target.hex, ABILITY_PARTICLE_COUNT, '#ffd700', Math.PI * 2, 25, 1.0);
   } else {
     // Smite enemy unit — deal 2000 damage
     const damage = 2000;
@@ -215,6 +216,7 @@ function executeMiracle(state: BattleState, target: BattleUnit): void {
       text: 'SMITE!', hex: { q: target.hex.q, r: target.hex.r },
       color: '#ffd700', timer: 0.8, duration: 0.8,
     });
+    state.spawnParticles(target.hex, ABILITY_PARTICLE_COUNT, '#ffd700', Math.PI * 2, 50, 0.8);
     // Death check
     state.applyDeathCheck(target);
   }
@@ -259,6 +261,7 @@ function executeFuryCharge(state: BattleState): void {
             color: '#ff4444', timer: 0.8, duration: 0.8,
           });
           state.applyDeathCheck(occupant);
+          state.spawnParticles(occupant.hex, ABILITY_PARTICLE_COUNT, '#ff6633', Math.PI, 50, 0.8);
         }
         break; // blocked by unit (friendly or enemy after impact)
       }
@@ -492,4 +495,5 @@ function executeTurncoat(state: BattleState, target: BattleUnit): void {
     text: 'TURNCOAT!', hex: { q: target.hex.q, r: target.hex.r },
     color: '#4a7cc2', timer: 1.0, duration: 1.0,
   });
+  state.spawnParticles(target.hex, ABILITY_PARTICLE_COUNT, '#4a7cc2', Math.PI * 2, 30, 1.0);
 }
