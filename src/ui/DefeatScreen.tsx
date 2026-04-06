@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
 import { EndScreen } from './EndScreen';
-import { completedSpokes } from '../game/game-state';
-import { provinces } from '../game/province-store';
 
 export function DefeatScreen() {
   const [brightness, setBrightness] = useState(0.85);
@@ -13,10 +11,6 @@ export function DefeatScreen() {
     });
     return () => cancelAnimationFrame(frame);
   }, []);
-
-  const battles = completedSpokes.value;
-  const seasons = completedSpokes.value * 2;
-  const provinceCount = provinces.value.length;
 
   return (
     <div
@@ -33,9 +27,6 @@ export function DefeatScreen() {
         titleColor="#c05050"
         titleGlow="#b03030"
         backgroundTint="#180808"
-        battles={battles}
-        seasons={seasons}
-        provinceCount={provinceCount}
       />
     </div>
   );

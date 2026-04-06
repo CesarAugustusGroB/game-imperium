@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'preact/hooks';
 import { navigateTo } from './screens';
-import { resetRun } from '../game/game-state';
+import { globalSeason, resetRun, selectedCommander, battlesWon } from '../game/game-state';
+import { provinces } from '../game/province-store';
+import { recordRunComplete, computeScore } from '../game/meta-save';
 import { playSfx } from './sfx';
 
 // ── One-time CSS injection ──
@@ -29,21 +31,6 @@ if (typeof document !== 'undefined' && !document.getElementById('end-screen-styl
   document.head.appendChild(el);
 }
 
-// ── Score computation ──
-export type EndOutcome = 'victory' | 'defeat';
-
-export function computeScore(
-  outcome: EndOutcome,
-  battles: number,
-  seasons: number,
-  provinceCount: number,
-): number {
-  const base = provinceCount * 200 + battles * 100;
-  const seasonPenalty = Math.max(0, seasons - 4) * 20;
-  const outcomeBonus = outcome === 'victory' ? 500 : 0;
-  return Math.max(0, base + outcomeBonus - seasonPenalty);
-}
-
 // ── Animated counter hook ──
 function useCountUp(target: number, active: boolean, duration = 800): number {
   const [value, setValue] = useState(0);
@@ -66,14 +53,11 @@ function useCountUp(target: number, active: boolean, duration = 800): number {
 
 // ── EndScreen props ──
 export interface EndScreenProps {
-  outcome: EndOutcome;
+  outcome: 'victory' | 'defeat';
   title: string;
   titleColor: string;
   titleGlow: string;
   backgroundTint: string;
-  battles: number;
-  seasons: number;
-  provinceCount: number;
   children?: preact.ComponentChildren;
 }
 
@@ -83,11 +67,13 @@ export function EndScreen({
   titleColor,
   titleGlow,
   backgroundTint,
-  battles,
-  seasons,
-  provinceCount,
   children,
 }: EndScreenProps) {
+  // Read correct game state signals — NOT props from wrappers
+  const commander = selectedCommander.value;
+  const battles = battlesWon.value;
+  const seasons = globalSeason.value;
+  const provinceCount = provinces.value.length;
   const [revealIndex, setRevealIndex] = useState(-1);
   const [showButton, setShowButton] = useState(false);
 
@@ -122,6 +108,9 @@ export function EndScreen({
   ];
 
   function handleReturn() {
+    if (commander) {
+      recordRunComplete(commander.id, commander.name, outcome, battles, seasons, provinceCount);
+    }
     resetRun();
     navigateTo('title');
   }

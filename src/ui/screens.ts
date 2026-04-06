@@ -49,8 +49,6 @@ window.addEventListener('hashchange', () => {
 });
 
 export function navigateTo(screen: ScreenName): void {
-  playSfx('ui_navigate');
-
   if (REQUIRES_RUN.includes(screen) && !selectedCommander.value) {
     screen = 'title';
   }
@@ -61,11 +59,13 @@ export function navigateTo(screen: ScreenName): void {
     window.location.hash = screen;
     applyScreenDOM(screen);
     switchTrackForScreen(screen);
+    playSfx('ui_navigate');
     return;
   }
 
   // Guard against double-navigation
   if (transitionState.value !== 'idle') return;
+  playSfx('ui_navigate');
 
   transitionState.value = 'exiting';
   window.setTimeout(() => {

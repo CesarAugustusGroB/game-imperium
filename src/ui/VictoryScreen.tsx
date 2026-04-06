@@ -1,7 +1,5 @@
 import { useState } from 'preact/hooks';
 import { EndScreen } from './EndScreen';
-import { completedSpokes } from '../game/game-state';
-import { provinces } from '../game/province-store';
 
 // ── One-time CSS injection for gold particles ──
 if (typeof document !== 'undefined' && !document.getElementById('victory-screen-styles')) {
@@ -67,12 +65,6 @@ function GoldParticles() {
 }
 
 export function VictoryScreen() {
-  // Estimate battles from completedSpokes (each spoke has at least 1 battle node)
-  const battles = completedSpokes.value;
-  // Seasons = completedSpokes * average 2 seasons per spoke
-  const seasons = completedSpokes.value * 2;
-  const provinceCount = provinces.value.length;
-
   return (
     <EndScreen
       outcome="victory"
@@ -80,9 +72,6 @@ export function VictoryScreen() {
       titleColor="#f0d080"
       titleGlow="#f0c040"
       backgroundTint="#1a1608"
-      battles={battles}
-      seasons={seasons}
-      provinceCount={provinceCount}
     >
       <GoldParticles />
     </EndScreen>
