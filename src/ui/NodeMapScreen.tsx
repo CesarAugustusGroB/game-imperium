@@ -172,6 +172,9 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
       100% { box-shadow: 0 0 0 0 rgba(212,168,67,0); }
     }
     .node-resolving { animation: resolve-gold-flash 0.4s ease-out; }
+    @media (max-width: 600px) {
+      .node-circle { min-width: 56px !important; min-height: 56px !important; }
+    }
   `;
   document.head.appendChild(el);
 }

@@ -54,6 +54,13 @@ if (typeof document !== 'undefined' && !document.getElementById('screen-transiti
       background: rgba(240, 208, 128, 0.3);
       color: #f0d080;
     }
+    @media (max-width: 900px) {
+      .curtain-img { opacity: 0.3 !important; }
+    }
+    @media (max-width: 600px) {
+      .curtain-img { display: none !important; }
+      .screen-wrapper { padding-top: 42px !important; }
+    }
   `;
   document.head.appendChild(el);
 }
@@ -160,6 +167,7 @@ export function App() {
       {showCurtains && (
         <>
           <img
+            class="curtain-img"
             src="/asset/cortina_izq.png"
             alt=""
             aria-hidden="true"
@@ -171,6 +179,7 @@ export function App() {
             }}
           />
           <img
+            class="curtain-img"
             src="/asset/cortina_izq.png"
             alt=""
             aria-hidden="true"

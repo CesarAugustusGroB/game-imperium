@@ -18,6 +18,10 @@ if (typeof document !== 'undefined' && !document.getElementById('resource-bar-st
       0%, 100% { box-shadow: none; }
       50% { box-shadow: 0 0 6px 1px rgba(194,74,58,0.5); }
     }
+    @media (max-width: 600px) {
+      .resource-bar { gap: 12px !important; height: 34px !important; padding: 0 8px !important; }
+      .resource-bar .resource-counter { font-size: 11px !important; }
+    }
   `;
   document.head.appendChild(el);
 }
@@ -71,6 +75,7 @@ function ResourceCounter({ type }: { type: ResourceType }) {
 
   return (
     <div
+      class="resource-counter"
       title={info.label ?? type}
       aria-label={`${info.label ?? type}: ${sig.value}`}
       style={{
@@ -118,7 +123,7 @@ export function ResourceBar() {
   const seasonColor = doom >= 75 ? '#c24a3a' : doom >= 50 ? '#d4a843' : 'rgba(200, 190, 160, 0.5)';
 
   return (
-    <div style={BAR_STYLE}>
+    <div class="resource-bar" style={BAR_STYLE}>
       <ResourceCounter type="gold" />
       <ResourceCounter type="faith" />
       <ResourceCounter type="influence" />
