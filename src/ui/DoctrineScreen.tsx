@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals';
 import { navigateTo } from './screens';
 import { selectedCommander } from '../game/game-state';
+import { playSfx } from './sfx';
 import { equippedDoctrines, doctrineCollection, equipDoctrine, unequipDoctrine, upgradeDoctrine, sellDoctrine } from '../game/doctrine-store';
 import { isDoctrineEquippable, getDoctrineSellPrice } from '../game/doctrine';
 import type { Doctrine } from '../game/doctrine';
@@ -41,6 +42,12 @@ if (typeof document !== 'undefined' && !document.getElementById('doctrine-screen
     .doctrine-slot-drop.drag-over {
       box-shadow: 0 0 0 2px rgba(240, 208, 128, 0.7), 0 0 16px rgba(240, 208, 128, 0.2);
     }
+    @keyframes equip-flash {
+      0% { box-shadow: 0 0 0 0 rgba(240,208,128,0); }
+      30% { box-shadow: 0 0 20px 6px rgba(240,208,128,0.5); }
+      100% { box-shadow: 0 0 0 0 rgba(240,208,128,0); }
+    }
+    .doctrine-slot-equipped { animation: equip-flash 0.4s ease-out; }
   `;
   document.head.appendChild(el);
 }
@@ -54,6 +61,9 @@ const draggedId = signal<string | null>(null);
 /** Which equipped slot the drag is currently hovering over. */
 const dragOverSlot = signal<number | null>(null);
 
+/** Index of the slot that was most recently equipped (for flash animation). */
+const lastEquippedSlot = signal<number | null>(null);
+
 export function DoctrineScreen() {
   const commander = selectedCommander.value;
   const faction = commander?.faction;
@@ -62,8 +72,11 @@ export function DoctrineScreen() {
   const collection = doctrineCollection.value;
 
   function handleEquipToSlot(slotIndex: number, doctrine: Doctrine) {
+    playSfx('ui_equip');
     equipDoctrine(slotIndex, doctrine);
     equipTargetSlot.value = null;
+    lastEquippedSlot.value = slotIndex;
+    setTimeout(() => { lastEquippedSlot.value = null; }, 500);
   }
 
   function handleUnequip(slotIndex: number) {
@@ -113,6 +126,8 @@ export function DoctrineScreen() {
     if (faction && !isDoctrineEquippable(doctrine, faction)) return;
     equipDoctrine(slotIndex, doctrine);
     draggedId.value = null;
+    lastEquippedSlot.value = slotIndex;
+    setTimeout(() => { lastEquippedSlot.value = null; }, 500);
   }
 
   // Filter collection to equippable only (for the click-equip picker)
@@ -165,7 +180,7 @@ export function DoctrineScreen() {
           {slots.map((doctrine, i) => (
             <div
               key={i}
-              class={`doctrine-slot-drop${dragOverSlot.value === i ? ' drag-over' : ''}`}
+              class={`doctrine-slot-drop${dragOverSlot.value === i ? ' drag-over' : ''}${lastEquippedSlot.value === i ? ' doctrine-slot-equipped' : ''}`}
               onDragOver={(e) => handleSlotDragOver(e as unknown as DragEvent, i)}
               onDragLeave={handleSlotDragLeave}
               onDrop={(e) => handleSlotDrop(e as unknown as DragEvent, i)}

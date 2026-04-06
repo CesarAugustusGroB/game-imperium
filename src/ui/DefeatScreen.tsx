@@ -1,27 +1,42 @@
+import { useState, useEffect } from 'preact/hooks';
 import { EndScreen } from './EndScreen';
+import { completedSpokes } from '../game/game-state';
+import { provinces } from '../game/province-store';
 
 export function DefeatScreen() {
+  const [brightness, setBrightness] = useState(0.85);
+
+  // Transition from darker to normal over 2s
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      setBrightness(1);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const battles = completedSpokes.value;
+  const seasons = completedSpokes.value * 2;
+  const provinceCount = provinces.value.length;
+
   return (
-    <EndScreen
-      outcome="defeat"
-      title="DEFEAT"
-      titleColor="#c24a3a"
-      dividerColor="rgba(194, 74, 58, 0.7)"
-      subtitle="The empire has fallen. The barbarians rule the ashes."
-      image="/asset/defeat_label.png"
-      imageFilter="drop-shadow(0 4px 16px rgba(120, 40, 30, 0.6))"
-      panelBorder="1px solid rgba(180, 100, 80, 0.15)"
-      statRowBg="rgba(35, 28, 28, 0.6)"
-      statRowBorder="1px solid rgba(180, 100, 80, 0.1)"
-      statValueColor="#c24a3a"
-      statLabelColor="rgba(200, 175, 165, 0.65)"
-      summaryLabelColor="rgba(180, 120, 100, 0.45)"
-      returnBtnStyle={{
-        background: 'linear-gradient(135deg, rgba(60, 20, 20, 0.7), rgba(40, 18, 18, 0.9))',
-        border: '1px solid rgba(194, 74, 58, 0.45)',
-        color: '#c24a3a',
-        hoverClass: 'end-return-btn--defeat',
+    <div
+      style={{
+        filter: `brightness(${brightness})`,
+        transition: 'filter 2s ease-out',
+        width: '100%',
+        height: '100%',
       }}
-    />
+    >
+      <EndScreen
+        outcome="defeat"
+        title="Defeat"
+        titleColor="#c05050"
+        titleGlow="#b03030"
+        backgroundTint="#180808"
+        battles={battles}
+        seasons={seasons}
+        provinceCount={provinceCount}
+      />
+    </div>
   );
 }

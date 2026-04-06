@@ -1,6 +1,6 @@
 import { Component } from 'preact';
 import type { ComponentChildren } from 'preact';
-import { currentScreen, navigateTo } from './screens';
+import { currentScreen, navigateTo, transitionState } from './screens';
 import { ResourceBar } from './ResourceBar';
 import { TitleScreen } from './TitleScreen';
 import { CommanderSelectScreen } from './CommanderSelectScreen';
@@ -23,12 +23,19 @@ if (typeof document !== 'undefined' && !document.getElementById('screen-transiti
   const el = document.createElement('style');
   el.id = 'screen-transition-styles';
   el.textContent = `
-    @keyframes screen-fade-in {
-      from { opacity: 0; transform: translateY(4px); }
+    @keyframes screen-enter {
+      from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes screen-exit {
+      from { opacity: 1; transform: translateY(0); }
+      to { opacity: 0; transform: translateY(-6px); }
+    }
     .screen-wrapper {
-      animation: screen-fade-in 0.25s ease-out;
+      animation: screen-enter 0.3s ease-out;
+    }
+    .screen-wrapper.exiting {
+      animation: screen-exit 0.2s ease-in forwards;
     }
 
     /* Global focus-visible styles for keyboard accessibility */
@@ -46,6 +53,13 @@ if (typeof document !== 'undefined' && !document.getElementById('screen-transiti
     ::selection {
       background: rgba(240, 208, 128, 0.3);
       color: #f0d080;
+    }
+    @media (max-width: 900px) {
+      .curtain-img { opacity: 0.3 !important; }
+    }
+    @media (max-width: 600px) {
+      .curtain-img { display: none !important; }
+      .screen-wrapper { padding-top: 42px !important; }
     }
   `;
   document.head.appendChild(el);
@@ -143,6 +157,7 @@ function ScreenContent() {
 
 export function App() {
   const screen = currentScreen.value;
+  const exiting = transitionState.value === 'exiting';
   const showResourceBar = screen !== 'title' && screen !== 'commander-select' && screen !== 'battle';
 
   const showCurtains = screen !== 'battle';
@@ -152,6 +167,7 @@ export function App() {
       {showCurtains && (
         <>
           <img
+            class="curtain-img"
             src="/asset/cortina_izq.png"
             alt=""
             aria-hidden="true"
@@ -163,6 +179,7 @@ export function App() {
             }}
           />
           <img
+            class="curtain-img"
             src="/asset/cortina_izq.png"
             alt=""
             aria-hidden="true"
@@ -178,7 +195,7 @@ export function App() {
       )}
       {showResourceBar && <ResourceBar />}
       <ErrorBoundary>
-        <div class="screen-wrapper" key={screen}>
+        <div class={`screen-wrapper${exiting ? ' exiting' : ''}`} key={screen}>
           <ScreenContent />
         </div>
       </ErrorBoundary>

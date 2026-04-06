@@ -1,27 +1,90 @@
+import { useState } from 'preact/hooks';
 import { EndScreen } from './EndScreen';
+import { completedSpokes } from '../game/game-state';
+import { provinces } from '../game/province-store';
+
+// ── One-time CSS injection for gold particles ──
+if (typeof document !== 'undefined' && !document.getElementById('victory-screen-styles')) {
+  const el = document.createElement('style');
+  el.id = 'victory-screen-styles';
+  el.textContent = `
+    @keyframes particle-rise {
+      0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0.8; }
+      50%  { opacity: 0.6; }
+      100% { transform: translateY(-100vh) translateX(var(--drift)) scale(0.3); opacity: 0; }
+    }
+    .gold-particle {
+      position: fixed;
+      bottom: -8px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #f8e878, #d4a820);
+      box-shadow: 0 0 6px #f0c830;
+      pointer-events: none;
+      animation: particle-rise var(--duration) ease-in var(--delay) infinite;
+    }
+  `;
+  document.head.appendChild(el);
+}
+
+// ── Gold particle overlay ──
+interface Particle {
+  id: number;
+  left: number;
+  duration: number;
+  delay: number;
+  drift: number;
+}
+
+function GoldParticles() {
+  const [particles] = useState<Particle[]>(() =>
+    Array.from({ length: 24 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      duration: 3 + Math.random() * 4,
+      delay: Math.random() * 6,
+      drift: (Math.random() - 0.5) * 80,
+    })),
+  );
+
+  return (
+    <>
+      {particles.map(p => (
+        <div
+          key={p.id}
+          class="gold-particle"
+          style={{
+            left: `${p.left}%`,
+            '--duration': `${p.duration}s`,
+            '--delay': `${p.delay}s`,
+            '--drift': `${p.drift}px`,
+          } as preact.JSX.CSSProperties}
+        />
+      ))}
+    </>
+  );
+}
 
 export function VictoryScreen() {
+  // Estimate battles from completedSpokes (each spoke has at least 1 battle node)
+  const battles = completedSpokes.value;
+  // Seasons = completedSpokes * average 2 seasons per spoke
+  const seasons = completedSpokes.value * 2;
+  const provinceCount = provinces.value.length;
+
   return (
     <EndScreen
       outcome="victory"
-      title="VICTORY"
+      title="Victory"
       titleColor="#f0d080"
-      dividerColor="rgba(240, 208, 128, 0.7)"
-      subtitle="The barbarian horde is defeated. Rome endures."
-      image="/asset/victory_banner.png"
-      imageFilter="drop-shadow(0 4px 16px rgba(180, 140, 40, 0.5))"
-      panelBorder="1px solid rgba(180, 160, 100, 0.15)"
-      statRowBg="rgba(35, 32, 55, 0.6)"
-      statRowBorder="1px solid rgba(180, 160, 100, 0.1)"
-      statValueColor="#f0d080"
-      statLabelColor="rgba(200, 190, 165, 0.65)"
-      summaryLabelColor="rgba(180, 160, 100, 0.45)"
-      returnBtnStyle={{
-        background: 'linear-gradient(135deg, rgba(80, 60, 20, 0.7), rgba(50, 40, 18, 0.9))',
-        border: '1px solid rgba(220, 190, 100, 0.5)',
-        color: '#f0d080',
-        hoverClass: 'end-return-btn--victory',
-      }}
-    />
+      titleGlow="#f0c040"
+      backgroundTint="#1a1608"
+      battles={battles}
+      seasons={seasons}
+      provinceCount={provinceCount}
+    >
+      <GoldParticles />
+    </EndScreen>
   );
 }

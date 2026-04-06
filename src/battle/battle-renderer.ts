@@ -3,7 +3,7 @@ import type { BattleUnit, Faction, LieutenantOrder } from './battle-types';
 import type { Point } from './hex';
 import { hexToPixel, hexCorners } from './hex';
 import { hexToCol } from './battle-zones';
-import { CAPTURE_DURATION } from './battle-config';
+import { CAPTURE_DURATION, SCREEN_SHAKE_DURATION, SCREEN_SHAKE_INTENSITY } from './battle-config';
 
 export class BattleRenderer {
   private canvas: HTMLCanvasElement;
@@ -110,6 +110,13 @@ export class BattleRenderer {
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     ctx.clearRect(0, 0, this.w, this.h);
+    if (this.state.screenShake > 0) {
+      const intensity = this.state.screenShake * SCREEN_SHAKE_INTENSITY / SCREEN_SHAKE_DURATION;
+      const sx = (Math.random() - 0.5) * intensity * 2;
+      const sy = (Math.random() - 0.5) * intensity * 2;
+      ctx.save();
+      ctx.translate(sx, sy);
+    }
     this.drawBackground();
     this.drawGrid();
     this.drawTargetingHighlights();
@@ -121,9 +128,13 @@ export class BattleRenderer {
     this.drawPaths();
     this.drawUnits();
     this.drawFloatingTexts();
+    this.drawParticles();
     this.drawVictoryOverlay();
     this.drawOrderIndicator();
     this.drawVeteranIndicator();
+    if (this.state.screenShake > 0) {
+      ctx.restore();
+    }
   }
 
   // ── Layers ──
@@ -726,6 +737,24 @@ export class BattleRenderer {
       ctx.shadowBlur = 8;
       ctx.fillText(ft.text, 0, 0);
       ctx.restore();
+    }
+  }
+
+  private drawParticles(): void {
+    const { hexSize } = this.state.config;
+    const origin = this.state.getGridOrigin(this.w, this.h);
+    for (const p of this.state.particles) {
+      const center = hexToPixel(p.hex, hexSize, origin);
+      const x = center.x + p.offsetX;
+      const y = center.y + p.offsetY;
+      const alpha = Math.max(0, p.life / p.maxLife);
+      this.ctx.save();
+      this.ctx.globalAlpha = alpha;
+      this.ctx.fillStyle = p.color;
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, p.size * (0.5 + 0.5 * alpha), 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.restore();
     }
   }
 

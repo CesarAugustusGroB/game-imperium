@@ -78,8 +78,7 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
 
     const observer = new ResizeObserver(() => {
       updateCanvasSize();
-      // Re-trigger draw after resize
-      drawCurrent();
+      // Re-trigger draw after resize (animFrame will pick up next tick)
     });
     observer.observe(canvas);
 
@@ -98,7 +97,7 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
     // Build province lookup by roguelike ID for fast access
     const provinceById = new Map(allProvinces.map(p => [p.id, p]));
 
-    function draw(terrain: HTMLImageElement | null) {
+    function draw(terrain: HTMLImageElement | null, pulseTime: number) {
       if (!canvas || !ctx) return;
 
       const dpr = window.devicePixelRatio || 1;
@@ -174,18 +173,19 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
         // Use the province's current unrest for the indicator (not projected)
         const unrest = province?.unrest ?? 0;
 
-        // Glow halo (semi-transparent, larger circle)
+        // Glow halo (semi-transparent, larger circle) — pulse for selected
         const glowRadius = radius + 5;
+        const pulseGlow = isSelected ? glowRadius + 2 * Math.sin(pulseTime * 3) : glowRadius;
         const glowAlpha = isSelected ? 0.35 : 0.18;
         ctx.beginPath();
-        ctx.arc(x, y, glowRadius, 0, Math.PI * 2);
+        ctx.arc(x, y, pulseGlow, 0, Math.PI * 2);
         ctx.fillStyle = factionColor + Math.round(glowAlpha * 255).toString(16).padStart(2, '0');
         ctx.fill();
 
         if (isSelected) {
           // Second outer ring for selected
           ctx.beginPath();
-          ctx.arc(x, y, glowRadius + 4, 0, Math.PI * 2);
+          ctx.arc(x, y, pulseGlow + 4, 0, Math.PI * 2);
           ctx.strokeStyle = factionColor + '55';
           ctx.lineWidth = 1;
           ctx.stroke();
@@ -235,18 +235,27 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
       ctx.restore();
     }
 
-    function drawCurrent() {
-      draw(cachedTerrainImage);
+    // ── Animation loop ──
+    let animFrame: number;
+    let pulseTime = 0;
+
+    function animate() {
+      pulseTime = (Date.now() / 1000) % 100;
+      draw(cachedTerrainImage, pulseTime);
+      animFrame = requestAnimationFrame(animate);
     }
 
-    // Start draw immediately with whatever terrain is available, then re-draw once loaded.
-    draw(cachedTerrainImage);
+    // Start draw immediately with whatever terrain is available, then start loop once loaded.
+    draw(cachedTerrainImage, 0);
 
     loadTerrainImage()
-      .then(img => draw(img))
-      .catch(() => draw(null));
+      .then(_img => { animate(); })
+      .catch(() => { animate(); });
 
-    return () => { observer.disconnect(); };
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(animFrame);
+    };
   });
 
   // ── Mouse-move handler for cursor feedback ──

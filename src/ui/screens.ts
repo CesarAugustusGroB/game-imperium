@@ -1,5 +1,7 @@
 import { signal } from '@preact/signals';
 import { selectedCommander } from '../game/game-state';
+import { playSfx } from './sfx';
+import { switchTrackForScreen } from './music';
 
 export type ScreenName =
   | 'title'
@@ -24,6 +26,7 @@ function getInitialScreen(): ScreenName {
 }
 
 export const currentScreen = signal<ScreenName>(getInitialScreen());
+export const transitionState = signal<'idle' | 'exiting' | 'entering'>('idle');
 
 function applyScreenDOM(screen: ScreenName): void {
   const appRoot = document.getElementById('app-root');
@@ -46,11 +49,33 @@ window.addEventListener('hashchange', () => {
 });
 
 export function navigateTo(screen: ScreenName): void {
+  playSfx('ui_navigate');
+
   if (REQUIRES_RUN.includes(screen) && !selectedCommander.value) {
     screen = 'title';
   }
 
-  currentScreen.value = screen;
-  window.location.hash = screen;
-  applyScreenDOM(screen);
+  // Battle uses DOM toggle — keep instant
+  if (screen === 'battle') {
+    currentScreen.value = screen;
+    window.location.hash = screen;
+    applyScreenDOM(screen);
+    switchTrackForScreen(screen);
+    return;
+  }
+
+  // Guard against double-navigation
+  if (transitionState.value !== 'idle') return;
+
+  transitionState.value = 'exiting';
+  window.setTimeout(() => {
+    currentScreen.value = screen;
+    window.location.hash = screen;
+    applyScreenDOM(screen);
+    switchTrackForScreen(screen);
+    transitionState.value = 'entering';
+    window.setTimeout(() => {
+      transitionState.value = 'idle';
+    }, 300);
+  }, 200);
 }
