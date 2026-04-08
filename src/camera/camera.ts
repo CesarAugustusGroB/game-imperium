@@ -75,6 +75,25 @@ export class Camera {
     return [u, v];
   }
 
+  // Convert map UV coordinates to screen coordinates (inverse of screenToUV).
+  // V is flipped because topology stores V from the top.
+  uvToScreen(u: number, v: number, canvasWidth: number, canvasHeight: number): [number, number] {
+    const flippedV = 1.0 - v;
+
+    const sx = this.zoom / this.aspect;
+    const sy = this.zoom;
+    const tx = -(this.x * 2 - 1) * sx;
+    const ty = -(this.y * 2 - 1) * sy;
+
+    const ndcX = (u * 2 - 1) * sx + tx;
+    const ndcY = (flippedV * 2 - 1) * sy + ty;
+
+    const screenX = (ndcX + 1) * 0.5 * canvasWidth;
+    const screenY = (1 - ndcY) * 0.5 * canvasHeight;
+
+    return [screenX, screenY];
+  }
+
   private clampTarget(): void {
     this.targetX = clamp(this.targetX, 0, 1);
     this.targetY = clamp(this.targetY, 0, 1);

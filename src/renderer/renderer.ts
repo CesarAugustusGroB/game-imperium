@@ -1,9 +1,12 @@
 import type { MapTextures } from '../types/index';
 import type { QuadMesh } from './quad';
 import type { Camera } from '../camera/camera';
-import type { ProvinceRegistry } from '../game/provinces';
 import { getUniformLocation } from './shader';
 import { rgbToIndex, keyToRgb } from '../utils/color';
+
+export interface ProvinceColorSource {
+  getLUTTexture(): WebGLTexture;
+}
 
 export class MapRenderer {
   private gl: WebGL2RenderingContext;
@@ -11,7 +14,7 @@ export class MapRenderer {
   private quad: QuadMesh;
   private textures: MapTextures;
   private camera: Camera;
-  private registry: ProvinceRegistry;
+  private registry: ProvinceColorSource;
 
   // Uniform locations
   private uCameraMatrix: WebGLUniformLocation | null;
@@ -30,9 +33,27 @@ export class MapRenderer {
   private uResolution: WebGLUniformLocation | null;
   private uMapMode: WebGLUniformLocation | null;
 
+  private uTerrainGamma: WebGLUniformLocation | null;
+  private uTerrainBright: WebGLUniformLocation | null;
+  private uLightSoftening: WebGLUniformLocation | null;
+  private uBorderStrength: WebGLUniformLocation | null;
+  private uHoverBright: WebGLUniformLocation | null;
+  private uSelectBright: WebGLUniformLocation | null;
+
   private hoveredIndex: number = -1;
   private selectedIndex: number = -1;
   mapMode: number = 0;
+
+  // Visual tuning (exposed as public for runtime adjustment)
+  sunDirection: [number, number, number] = [0.5, 0.8, 0.6];
+  ambientStrength = 0.55;
+  politicalOpacity = 0.4;
+  terrainGamma = 0.75;
+  terrainBrightness = 1.3;
+  lightSoftening = 0.4;
+  borderStrength = 0.5;
+  hoverBrightness = 1.35;
+  selectBrightness = 1.5;
 
   constructor(
     gl: WebGL2RenderingContext,
@@ -40,7 +61,7 @@ export class MapRenderer {
     quad: QuadMesh,
     textures: MapTextures,
     camera: Camera,
-    registry: ProvinceRegistry,
+    registry: ProvinceColorSource,
   ) {
     this.gl = gl;
     this.program = program;
@@ -66,6 +87,12 @@ export class MapRenderer {
     this.uSelectedIndex = getUniformLocation(gl, program, 'uSelectedIndex');
     this.uResolution = getUniformLocation(gl, program, 'uResolution');
     this.uMapMode = getUniformLocation(gl, program, 'uMapMode');
+    this.uTerrainGamma = getUniformLocation(gl, program, 'uTerrainGamma');
+    this.uTerrainBright = getUniformLocation(gl, program, 'uTerrainBright');
+    this.uLightSoftening = getUniformLocation(gl, program, 'uLightSoftening');
+    this.uBorderStrength = getUniformLocation(gl, program, 'uBorderStrength');
+    this.uHoverBright = getUniformLocation(gl, program, 'uHoverBright');
+    this.uSelectBright = getUniformLocation(gl, program, 'uSelectBright');
 
     // Set texture unit bindings (these don't change)
     gl.uniform1i(this.uIdMap, 0);
@@ -104,9 +131,17 @@ export class MapRenderer {
     gl.uniformMatrix3fv(this.uCameraMatrix, false, this.camera.getMatrix());
 
     // Sun direction (normalized, from top-left)
-    gl.uniform3f(this.uSunDirection, 0.5, 0.8, 0.6);
-    gl.uniform1f(this.uAmbientStrength, 0.55);
-    gl.uniform1f(this.uPoliticalOpacity, 0.4);
+    gl.uniform3f(this.uSunDirection, this.sunDirection[0], this.sunDirection[1], this.sunDirection[2]);
+    gl.uniform1f(this.uAmbientStrength, this.ambientStrength);
+    gl.uniform1f(this.uPoliticalOpacity, this.politicalOpacity);
+
+    // Visual tuning
+    gl.uniform1f(this.uTerrainGamma, this.terrainGamma);
+    gl.uniform1f(this.uTerrainBright, this.terrainBrightness);
+    gl.uniform1f(this.uLightSoftening, this.lightSoftening);
+    gl.uniform1f(this.uBorderStrength, this.borderStrength);
+    gl.uniform1f(this.uHoverBright, this.hoverBrightness);
+    gl.uniform1f(this.uSelectBright, this.selectBrightness);
 
     // Texel size for border detection (dynamic from actual texture dimensions)
     gl.uniform2f(this.uTexelSize, 1.0 / this.textures.mapWidth, 1.0 / this.textures.mapHeight);
