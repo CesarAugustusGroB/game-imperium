@@ -1,6 +1,6 @@
 import type { Hex } from './hex';
 
-export type Faction = 'blue' | 'red';
+export type BattleFaction = 'blue' | 'red';
 export type BattlePhase = 'fighting' | 'victory' | 'draw';
 export type UnitRole = 'vanguard' | 'reserve' | 'guard';
 export type LieutenantOrder = 'auto' | 'attack' | 'defend' | 'skirmish' | 'mobile';
@@ -15,7 +15,7 @@ export interface UnitStats {
 
 export interface BattleUnit {
   id: number;
-  faction: Faction;
+  faction: BattleFaction;
   role: UnitRole;
   hex: Hex;
   stats: UnitStats;

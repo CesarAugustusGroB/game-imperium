@@ -1,5 +1,5 @@
 import type { Hex } from './hex';
-import type { Faction } from './battle-types';
+import type { BattleFaction } from './battle-types';
 
 export interface ZoneBounds {
   campEnd: number;     // last camp column (inclusive)
@@ -7,7 +7,7 @@ export interface ZoneBounds {
   // center = reserveEnd+1 to midfield
 }
 
-export function getZones(cols: number, faction: Faction): ZoneBounds {
+export function getZones(cols: number, faction: BattleFaction): ZoneBounds {
   const campCols = Math.round(cols * 0.2);     // 4 cols
   const reserveCols = Math.round(cols * 0.15);  // 3 cols
   if (faction === 'blue') {
@@ -21,12 +21,12 @@ export function getZones(cols: number, faction: Faction): ZoneBounds {
 }
 
 /** Check if an offset column is in the camp zone. */
-export function isInCamp(col: number, zones: ZoneBounds, faction: Faction): boolean {
+export function isInCamp(col: number, zones: ZoneBounds, faction: BattleFaction): boolean {
   return faction === 'blue' ? col <= zones.campEnd : col >= zones.campEnd;
 }
 
 /** Check if an offset column is in the reserve zone (or deeper). */
-export function isInReserveOrDeeper(col: number, zones: ZoneBounds, faction: Faction): boolean {
+export function isInReserveOrDeeper(col: number, zones: ZoneBounds, faction: BattleFaction): boolean {
   return faction === 'blue' ? col <= zones.reserveEnd : col >= zones.reserveEnd;
 }
 

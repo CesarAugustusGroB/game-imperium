@@ -1,9 +1,6 @@
 import type { Faction, ResourceType } from '../core/commander';
 import { isColorMatch } from '../core/commander';
-
-// ── Upgrade costs ──
-
-export type ResourceCost = Partial<Record<ResourceType, number>>;
+import type { Collectible, TierLevel, TierTuple, ResourceCost } from '../../types/index';
 
 // ── Effect types (discriminated union on `type`) ──
 
@@ -30,14 +27,11 @@ export interface DoctrineLevel {
 
 // ── Doctrine definition ──
 
-export interface Doctrine {
-  id: string;
-  name: string;
-  color: Faction;
+export interface Doctrine extends Collectible {
   /** Fixed 3-level structure: [Level I, Level II, Level III]. */
-  levels: [DoctrineLevel, DoctrineLevel, DoctrineLevel];
+  levels: TierTuple<DoctrineLevel>;
   /** 1-indexed current level (displays as I/II/III). */
-  currentLevel: 1 | 2 | 3;
+  currentLevel: TierLevel;
 }
 
 // ── Color-lock rule ──

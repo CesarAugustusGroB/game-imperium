@@ -2,7 +2,7 @@ import { signal } from '@preact/signals';
 import type { Governor, GovernorTrait } from './governor';
 import { getHireCost } from './governor';
 import type { ResourceType } from '../core/commander';
-import type { ResourceCost } from '../items/doctrine';
+import type { ResourceCost } from '../../types/index';
 import { ALL_GOVERNORS } from '../../data/governor-data';
 import { getResource, spendResource } from '../core/resources';
 

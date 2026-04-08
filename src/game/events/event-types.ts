@@ -1,5 +1,6 @@
 import type { Faction, ResourceType } from '../core/commander';
 import type { InvestmentType } from '../province/province';
+import type { ResourceCost } from '../../types/index';
 
 // ── Event effect ──
 
@@ -17,7 +18,7 @@ export interface EventRequirement {
   /** Minimum number of conquered provinces. */
   minProvinces?: number;
   /** Minimum resource values (all must be met). */
-  minResource?: Partial<Record<ResourceType, number>>;
+  minResource?: ResourceCost;
   /** Any province must have this investment built. */
   hasInvestment?: InvestmentType;
   /** Only available for this commander faction. */
@@ -36,7 +37,7 @@ export interface EventChoice {
   /** Optional consequence flag set when this choice is picked. */
   consequence?: string;
   /** Explicit resource floor — choice is unselectable if not met. */
-  requiresResource?: Partial<Record<ResourceType, number>>;
+  requiresResource?: ResourceCost;
 }
 
 // ── Event ──

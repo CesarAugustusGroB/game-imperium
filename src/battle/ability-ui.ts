@@ -238,7 +238,7 @@ function executeImmediate(state: BattleState, abilityId: string): void {
 // ── Fury Charge (Boudicca) ──
 
 function executeFuryCharge(state: BattleState): void {
-  const blueUnits = state.getFactionUnits('blue');
+  const blueUnits = state.getBattleFactionUnits('blue');
   const dir = 1; // blue advances right (+q)
 
   for (const unit of blueUnits) {

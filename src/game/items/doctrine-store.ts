@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
-import type { Doctrine, DoctrineEffect, ResourceCost } from './doctrine';
+import type { Doctrine, DoctrineEffect } from './doctrine';
+import type { ResourceCost } from '../../types/index';
 import { isDoctrineEquippable, getCurrentEffects, getUpgradeCost, getDoctrineSellPrice } from './doctrine';
 import { addResource, spendResource, canAfford } from '../core/resources';
 import { selectedCommander } from '../core/game-state';

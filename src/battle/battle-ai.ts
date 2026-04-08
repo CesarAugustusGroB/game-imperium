@@ -1,5 +1,5 @@
 import type { BattleState } from './battle-state';
-import type { Faction, BattleUnit } from './battle-types';
+import type { BattleFaction, BattleUnit } from './battle-types';
 import type { Hex } from './hex';
 import { hexDistance, hexNeighbors } from './hex';
 import { getZones, isInCamp, isInReserveOrDeeper, hexToCol, type ZoneBounds } from './battle-zones';
@@ -25,13 +25,13 @@ interface TickContext {
   enemyStar: Hex;
   zones: ZoneBounds;
   enemyZones: ZoneBounds;
-  enemyFaction: Faction;
+  enemyBattleFaction: BattleFaction;
   allEnemies: BattleUnit[];
 }
 
 // ── Entry point ──
 
-export function tickAI(state: BattleState, faction: Faction): void {
+export function tickAI(state: BattleState, faction: BattleFaction): void {
   if (state.config.victoryMode === 'capture') {
     tickCapture(state, faction);
   } else {
@@ -41,19 +41,19 @@ export function tickAI(state: BattleState, faction: Faction): void {
 
 // ── Capture Mode AI ──
 
-function tickCapture(state: BattleState, faction: Faction): void {
-  const units = state.getFactionUnits(faction);
+function tickCapture(state: BattleState, faction: BattleFaction): void {
+  const units = state.getBattleFactionUnits(faction);
   if (units.length === 0) return;
 
-  const enemyFaction: Faction = faction === 'blue' ? 'red' : 'blue';
+  const enemyBattleFaction: BattleFaction = faction === 'blue' ? 'red' : 'blue';
   const ctx: TickContext = {
     dir: faction === 'blue' ? 1 : -1,
     ownStar: state.stars.get(faction)!,
     enemyStar: state.getEnemyStar(faction)!,
     zones: getZones(state.config.cols, faction),
-    enemyZones: getZones(state.config.cols, enemyFaction),
-    enemyFaction,
-    allEnemies: state.getFactionUnits(enemyFaction),
+    enemyZones: getZones(state.config.cols, enemyBattleFaction),
+    enemyBattleFaction,
+    allEnemies: state.getBattleFactionUnits(enemyBattleFaction),
   };
 
   if (faction === 'blue' && state.lieutenantOrder !== 'auto') {
@@ -96,7 +96,7 @@ function tickVanguard(state: BattleState, units: BattleUnit[], ctx: TickContext)
     }
 
     // 2. In enemy camp → pathfind to star (bypass forward-only)
-    if (isInCamp(hexToCol(unit.hex), ctx.enemyZones, ctx.enemyFaction)) {
+    if (isInCamp(hexToCol(unit.hex), ctx.enemyZones, ctx.enemyBattleFaction)) {
       if (state.moveUnitAlongPath(unit.id, ctx.enemyStar)) {
         state.resetCooldown(unit);
         continue;
@@ -170,7 +170,7 @@ function findRetreatHex(state: BattleState, unit: BattleUnit, dir: number): Hex 
 // ── RESERVE: intercept with busy state, become vanguard when enemy vanguard dies ──
 
 function tickReserve(
-  state: BattleState, units: BattleUnit[], faction: Faction, ctx: TickContext,
+  state: BattleState, units: BattleUnit[], faction: BattleFaction, ctx: TickContext,
 ): void {
   const enemyVanguardAlive = ctx.allEnemies.filter(e => e.role === 'vanguard');
 
@@ -200,7 +200,7 @@ function tickReserve(
       busyTargets.delete(unit.id);
 
       // In enemy camp → pathfind to star
-      if (isInCamp(hexToCol(unit.hex), ctx.enemyZones, ctx.enemyFaction)) {
+      if (isInCamp(hexToCol(unit.hex), ctx.enemyZones, ctx.enemyBattleFaction)) {
         if (state.moveUnitAlongPath(unit.id, ctx.enemyStar)) {
           state.resetCooldown(unit);
           continue;
@@ -352,9 +352,9 @@ function findAdvanceTarget(
 
 // ── Legacy AI (morale / annihilation modes) ──
 
-function tickLegacy(state: BattleState, faction: Faction): void {
+function tickLegacy(state: BattleState, faction: BattleFaction): void {
   const dir = faction === 'blue' ? 1 : -1;
-  const units = state.getFactionUnits(faction);
+  const units = state.getBattleFactionUnits(faction);
   if (units.length === 0) return;
 
   const frontQ = units.reduce((best, u) =>
