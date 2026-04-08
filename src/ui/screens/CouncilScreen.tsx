@@ -21,25 +21,25 @@ if (typeof document !== 'undefined' && !document.getElementById('council-screen-
   el.id = 'council-screen-styles';
   el.textContent = `
     .council-advisor-card {
-      transition: all 0.2s ease;
+      transition: all var(--duration-normal) var(--ease-default);
       cursor: pointer;
     }
     .council-advisor-card:hover {
-      border-color: rgba(180, 160, 100, 0.5) !important;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      border-color: var(--color-border-strong) !important;
+      box-shadow: var(--shadow-md);
       transform: translateY(-1px);
     }
     .council-advisor-card:active { transform: scale(0.97); }
     .council-slot-empty {
-      transition: all 0.2s ease;
+      transition: all var(--duration-normal) var(--ease-default);
       cursor: pointer;
     }
     .council-slot-empty:hover {
-      border-color: rgba(180, 160, 100, 0.4) !important;
+      border-color: var(--color-border-default) !important;
       background: rgba(30, 26, 50, 0.6) !important;
     }
     .council-dismiss-btn {
-      transition: all 0.15s ease;
+      transition: all var(--duration-fast) var(--ease-default);
       cursor: pointer;
     }
     .council-dismiss-btn:hover {
@@ -123,27 +123,27 @@ export function CouncilScreen() {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      minHeight: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
+      minHeight: '100vh', fontFamily: 'var(--font-family)',
       background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
       paddingTop: '48px', paddingBottom: '32px',
     }}>
       {/* Dark content panel */}
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        background: 'rgba(12, 10, 24, 0.85)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderRadius: '12px',
-        border: '1px solid rgba(180, 160, 100, 0.15)',
+        background: 'var(--color-bg-primary)',
+        backdropFilter: `blur(var(--blur-panel))`,
+        WebkitBackdropFilter: `blur(var(--blur-panel))`,
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--color-border-subtle)',
         padding: '24px',
         maxWidth: '90%',
         width: 'min(800px, 90vw)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+        boxShadow: 'var(--shadow-lg)',
       }}>
 
         {/* Title */}
         <div style={{
-          fontSize: '20px', fontWeight: 600, color,
+          fontSize: 'var(--font-size-xl)', fontWeight: 600, color,
           letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '4px',
           textShadow: `0 2px 8px ${color}30`,
         }}>
@@ -156,7 +156,7 @@ export function CouncilScreen() {
 
         {/* Slot label */}
         <div style={{
-          fontSize: '10px', color: 'rgba(180, 170, 150, 0.5)',
+          fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)',
           letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px',
         }}>
           Advisors ({seatedCount}/3)
@@ -177,20 +177,20 @@ export function CouncilScreen() {
                   onClick={() => { equipTargetSlot.value = i; }}
                   style={{
                     width: '140px', height: '160px',
-                    border: '2px dashed rgba(180, 160, 100, 0.2)',
-                    borderRadius: '8px',
-                    background: 'rgba(20, 18, 36, 0.4)',
+                    border: '2px dashed var(--color-border-default)',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'var(--color-bg-primary)',
                     display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center',
                     gap: '8px',
                   }}
                 >
                   <div style={{
-                    fontSize: '24px', color: 'rgba(180, 160, 100, 0.3)',
+                    fontSize: '24px', color: 'var(--color-border-default)',
                     lineHeight: 1,
                   }}>+</div>
                   <div style={{
-                    fontSize: '10px', color: 'rgba(180, 160, 100, 0.3)',
+                    fontSize: 'var(--font-size-sm)', color: 'var(--color-border-default)',
                     letterSpacing: '1px', textTransform: 'uppercase',
                   }}>
                     Empty Slot
@@ -211,10 +211,10 @@ export function CouncilScreen() {
                 key={advisor.id}
                 style={{
                   width: '140px', minHeight: '160px',
-                  background: 'rgba(20, 18, 36, 0.85)',
-                  border: '1px solid rgba(180, 160, 100, 0.2)',
+                  background: 'var(--color-bg-primary)',
+                  border: '1px solid var(--color-border-default)',
                   borderTop: `4px solid ${fColor}`,
-                  borderRadius: '8px',
+                  borderRadius: 'var(--radius-md)',
                   padding: '10px',
                   display: 'flex', flexDirection: 'column',
                   position: 'relative',
@@ -232,7 +232,7 @@ export function CouncilScreen() {
                     border: '1px solid rgba(180, 100, 100, 0.2)',
                     borderRadius: '3px',
                     color: 'rgba(200, 160, 160, 0.6)',
-                    fontSize: '10px', fontWeight: 700,
+                    fontSize: 'var(--font-size-sm)', fontWeight: 700,
                     cursor: 'pointer', fontFamily: 'inherit',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     lineHeight: 1, padding: 0,
@@ -243,7 +243,7 @@ export function CouncilScreen() {
 
                 {/* Advisor name */}
                 <div style={{
-                  fontSize: '10px', fontWeight: 700, color: fColor,
+                  fontSize: 'var(--font-size-sm)', fontWeight: 700, color: fColor,
                   letterSpacing: '0.8px', textTransform: 'uppercase',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   marginBottom: '6px', paddingRight: '20px',
@@ -260,15 +260,15 @@ export function CouncilScreen() {
                     width: '22px', height: '22px',
                     borderRadius: '50%',
                     background: 'rgba(50, 42, 12, 0.8)',
-                    border: '1px solid rgba(240, 208, 128, 0.4)',
+                    border: '1px solid var(--color-border-strong)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '10px', fontWeight: 700, color: '#f0d080',
+                    fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-gold-primary)',
                     flexShrink: 0,
                   }}>
                     {ROMAN[tier as 1 | 2 | 3]}
                   </div>
                   <div style={{
-                    fontSize: '9px', color: 'rgba(180, 170, 150, 0.45)',
+                    fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)',
                     letterSpacing: '0.5px',
                   }}>
                     Tier {tier}
@@ -277,7 +277,7 @@ export function CouncilScreen() {
 
                 {/* Passive description */}
                 <div style={{
-                  fontSize: '9px', color: 'rgba(200, 190, 160, 0.6)',
+                  fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)',
                   lineHeight: '1.4', marginBottom: '8px', flexGrow: 1,
                 }}>
                   {tierData.description}
@@ -287,7 +287,7 @@ export function CouncilScreen() {
                 <div>
                   <div style={{
                     display: 'flex', justifyContent: 'space-between',
-                    fontSize: '8px', color: 'rgba(180, 170, 150, 0.4)',
+                    fontSize: '8px', color: 'var(--color-text-muted)',
                     marginBottom: '3px', letterSpacing: '0.5px',
                   }}>
                     <span>XP</span>
@@ -298,7 +298,7 @@ export function CouncilScreen() {
                   </div>
                   <div style={{
                     height: '3px',
-                    background: 'rgba(180, 160, 100, 0.12)',
+                    background: 'var(--color-border-subtle)',
                     borderRadius: '2px', overflow: 'hidden',
                   }}>
                     <div style={{
@@ -308,7 +308,7 @@ export function CouncilScreen() {
                         ? `linear-gradient(90deg, ${fColor}80, ${fColor})`
                         : `linear-gradient(90deg, rgba(240,208,128,0.4), rgba(240,208,128,0.8))`,
                       borderRadius: '2px',
-                      transition: 'width 0.3s ease',
+                      transition: `width var(--duration-slow) var(--ease-default)`,
                     }} />
                   </div>
                 </div>
@@ -321,9 +321,9 @@ export function CouncilScreen() {
         {targetSlot !== null && (
           <div style={{
             width: '100%', marginBottom: '20px',
-            background: 'rgba(40, 36, 60, 0.6)',
-            border: '1px solid rgba(180, 160, 100, 0.2)',
-            borderRadius: '8px',
+            background: 'var(--color-bg-tertiary)',
+            border: '1px solid var(--color-border-default)',
+            borderRadius: 'var(--radius-md)',
             padding: '14px',
           }}>
             <div style={{
@@ -331,7 +331,7 @@ export function CouncilScreen() {
               marginBottom: '10px',
             }}>
               <span style={{
-                fontSize: '10px', color: 'rgba(240, 208, 128, 0.7)',
+                fontSize: 'var(--font-size-sm)', color: 'var(--color-text-primary)',
                 letterSpacing: '1.5px', textTransform: 'uppercase',
               }}>
                 Choose for Slot #{targetSlot + 1}
@@ -339,9 +339,9 @@ export function CouncilScreen() {
               <button
                 onClick={() => { equipTargetSlot.value = null; }}
                 style={{
-                  background: 'transparent', border: '1px solid rgba(180, 160, 100, 0.2)',
-                  borderRadius: '3px', color: 'rgba(200, 190, 160, 0.5)',
-                  fontSize: '9px', letterSpacing: '1px', padding: '3px 8px',
+                  background: 'transparent', border: '1px solid var(--color-border-default)',
+                  borderRadius: '3px', color: 'var(--color-text-secondary)',
+                  fontSize: 'var(--font-size-xs)', letterSpacing: '1px', padding: '3px 8px',
                   cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >
@@ -352,7 +352,7 @@ export function CouncilScreen() {
             {pool.length === 0 ? (
               <div style={{
                 textAlign: 'center', padding: '16px',
-                color: 'rgba(180, 170, 150, 0.35)', fontSize: '11px',
+                color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)',
                 letterSpacing: '1px',
               }}>
                 No advisors available in pool
@@ -370,14 +370,14 @@ export function CouncilScreen() {
                       onClick={() => handlePickAdvisor(advisor)}
                       style={{
                         width: '120px', padding: '10px',
-                        background: 'rgba(30, 28, 48, 0.9)',
-                        border: '1px solid rgba(180, 160, 100, 0.2)',
+                        background: 'var(--color-bg-secondary)',
+                        border: '1px solid var(--color-border-default)',
                         borderTop: `3px solid ${fColor}`,
                         borderRadius: '5px',
                       }}
                     >
                       <div style={{
-                        fontSize: '9px', fontWeight: 700, color: fColor,
+                        fontSize: 'var(--font-size-xs)', fontWeight: 700, color: fColor,
                         letterSpacing: '0.8px', textTransform: 'uppercase',
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                         marginBottom: '4px',
@@ -391,18 +391,18 @@ export function CouncilScreen() {
                         <div style={{
                           width: '16px', height: '16px', borderRadius: '50%',
                           background: 'rgba(50, 42, 12, 0.8)',
-                          border: '1px solid rgba(240, 208, 128, 0.35)',
+                          border: '1px solid var(--color-border-strong)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '8px', fontWeight: 700, color: '#f0d080', flexShrink: 0,
+                          fontSize: '8px', fontWeight: 700, color: 'var(--color-gold-primary)', flexShrink: 0,
                         }}>
                           {ROMAN[tier as 1 | 2 | 3]}
                         </div>
-                        <div style={{ fontSize: '8px', color: 'rgba(180, 170, 150, 0.45)' }}>
+                        <div style={{ fontSize: '8px', color: 'var(--color-text-muted)' }}>
                           Tier {tier}
                         </div>
                       </div>
                       <div style={{
-                        fontSize: '9px', color: 'rgba(200, 190, 160, 0.5)', lineHeight: '1.4',
+                        fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: '1.4',
                       }}>
                         {describePassive(passive)}
                       </div>
@@ -417,12 +417,12 @@ export function CouncilScreen() {
         {/* ── Spoke Preview ── */}
         <div style={{
           width: '100%',
-          borderTop: '1px solid rgba(180, 160, 100, 0.1)',
+          borderTop: '1px solid var(--color-border-subtle)',
           paddingTop: '16px',
           marginBottom: '20px',
         }}>
           <div style={{
-            fontSize: '10px', color: 'rgba(180, 170, 150, 0.5)',
+            fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)',
             letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px',
             textAlign: 'center',
           }}>
@@ -432,7 +432,7 @@ export function CouncilScreen() {
           {seatedCount === 0 ? (
             <div style={{
               textAlign: 'center', padding: '16px',
-              color: 'rgba(180, 170, 150, 0.3)', fontSize: '12px',
+              color: 'var(--color-text-muted)', fontSize: 'var(--font-size-md)',
               fontStyle: 'italic',
             }}>
               Seat at least 1 advisor to preview
@@ -456,7 +456,7 @@ export function CouncilScreen() {
                           background: `${style.color}20`,
                           border: `1px solid ${style.color}60`,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '11px',
+                          fontSize: 'var(--font-size-sm)',
                         }}
                       >
                         {style.icon}
@@ -464,7 +464,7 @@ export function CouncilScreen() {
                       {idx < spokePreview!.nodes.length - 1 && (
                         <div style={{
                           width: '6px', height: '1px',
-                          background: 'rgba(180, 160, 100, 0.2)',
+                          background: 'var(--color-border-default)',
                         }} />
                       )}
                     </div>
@@ -473,10 +473,10 @@ export function CouncilScreen() {
               </div>
               <div style={{
                 display: 'flex', gap: '16px', alignItems: 'center',
-                fontSize: '10px', color: 'rgba(200, 190, 160, 0.5)',
+                fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)',
                 letterSpacing: '0.8px',
               }}>
-                <span style={{ fontWeight: 600, color: 'rgba(240, 208, 128, 0.6)' }}>
+                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
                   {spokePreview.label}
                 </span>
                 <span style={{
@@ -511,12 +511,12 @@ export function CouncilScreen() {
           style={{
             padding: '10px 28px',
             background: 'rgba(50, 42, 20, 0.7)',
-            border: '1px solid rgba(220, 190, 100, 0.4)',
-            borderRadius: '4px',
-            color: '#f0d080', fontFamily: 'inherit',
-            fontSize: '12px', fontWeight: 600,
+            border: '1px solid var(--color-border-strong)',
+            borderRadius: 'var(--radius-sm)',
+            color: 'var(--color-gold-primary)', fontFamily: 'inherit',
+            fontSize: 'var(--font-size-md)', fontWeight: 600,
             letterSpacing: '1.5px', textTransform: 'uppercase',
-            cursor: 'pointer', transition: 'all 0.2s ease',
+            cursor: 'pointer', transition: `all var(--duration-normal) var(--ease-default)`,
           }}
         >
           Back to Hub

@@ -7,7 +7,7 @@ if (typeof document !== 'undefined' && !document.getElementById('decretum-card-s
   el.id = 'decretum-card-styles';
   el.textContent = `
     .decretum-card {
-      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+      transition: transform var(--duration-fast) var(--ease-default), box-shadow var(--duration-fast) var(--ease-default), filter var(--duration-fast) var(--ease-default);
       cursor: default;
     }
     .decretum-card.decretum-castable {
@@ -107,7 +107,7 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
 
   // Box-shadow: selected = bright gold, castable = faction glow, otherwise none
   const boxShadow = selected
-    ? `0 0 0 2px #f0d080, 0 0 12px rgba(240, 208, 128, 0.6)`
+    ? `0 0 0 2px var(--color-gold-primary), 0 0 12px rgba(240, 208, 128, 0.6)`
     : castable
     ? `0 0 8px ${factionColor}66, inset 0 0 4px ${factionColor}22`
     : 'none';
@@ -117,10 +117,10 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
     position: 'relative' as const,
     width: '80px',
     height: '120px',
-    background: 'rgba(30, 28, 48, 0.97)',
-    borderRadius: '4px',
+    background: 'var(--color-bg-secondary)',
+    borderRadius: 'var(--radius-sm)',
     borderLeft: `4px solid ${factionColor}`,
-    outline: selected ? '2px solid #f0d080' : '1px solid rgba(180,160,100,0.18)',
+    outline: selected ? `2px solid var(--color-gold-primary)` : `1px solid var(--color-border-subtle)`,
     outlineOffset: selected ? '0px' : '-1px',
     boxShadow,
     opacity: castable ? 1 : 0.55,
@@ -130,7 +130,7 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
     boxSizing: 'border-box' as const,
     userSelect: 'none' as const,
     flexShrink: 0,
-    transition: 'transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease',
+    transition: 'transform var(--duration-fast) var(--ease-default), box-shadow var(--duration-fast) var(--ease-default), filter var(--duration-fast) var(--ease-default)',
     cursor: castable ? 'pointer' : 'default',
   };
 
@@ -160,7 +160,7 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
                 width: '5px',
                 height: '5px',
                 borderRadius: '50%',
-                background: '#f0d080',
+                background: 'var(--color-gold-primary)',
                 boxShadow: '0 0 3px rgba(240,208,128,0.7)',
               }}
             />
@@ -174,7 +174,7 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
               fontSize: '7px',
               fontFamily: 'serif',
               letterSpacing: '0.5px',
-              color: '#f0d080',
+              color: 'var(--color-gold-primary)',
               border: '1px solid rgba(240,208,128,0.5)',
               borderRadius: '2px',
               padding: '1px 3px',
@@ -189,8 +189,8 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
       {/* Scroll name */}
       <div
         style={{
-          fontSize: '11px',
-          fontFamily: "'Segoe UI', system-ui, sans-serif",
+          fontSize: 'var(--font-size-sm)',
+          fontFamily: 'var(--font-family)',
           letterSpacing: '0.8px',
           textTransform: 'uppercase',
           color: factionColor,
@@ -207,9 +207,9 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
       {/* Effect description */}
       <div
         style={{
-          fontSize: '9px',
-          fontFamily: "'Segoe UI', system-ui, sans-serif",
-          color: 'rgba(180,170,160,0.8)',
+          fontSize: 'var(--font-size-xs)',
+          fontFamily: 'var(--font-family)',
+          color: 'var(--color-text-secondary)',
           lineHeight: 1.3,
           overflowWrap: 'break-word',
           wordBreak: 'break-word',

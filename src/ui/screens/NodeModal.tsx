@@ -15,7 +15,7 @@ if (typeof document !== 'undefined' && !document.getElementById('node-modal-styl
       to   { opacity: 1; transform: translateY(0); }
     }
     .node-modal-backdrop {
-      animation: node-modal-fade 0.2s ease-out;
+      animation: node-modal-fade var(--duration-normal) ease-out;
     }
     .node-modal-panel {
       animation: node-modal-slide-up 0.25s ease-out;
@@ -60,19 +60,19 @@ export function NodeModal({ title, children, onClose }: {
         position: 'fixed', inset: '0', zIndex: '200',
         background: 'rgba(0, 0, 0, 0.7)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: "'Segoe UI', system-ui, sans-serif",
+        fontFamily: 'var(--font-family)',
         outline: 'none',
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div class="node-modal-panel" style={{
-        background: 'linear-gradient(135deg, rgba(30, 28, 48, 0.98), rgba(20, 18, 36, 0.99))',
-        border: '1px solid rgba(180, 160, 100, 0.25)',
-        borderRadius: '8px', padding: '28px 32px',
+        background: 'linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-primary))',
+        border: '1px solid var(--color-border-default)',
+        borderRadius: 'var(--radius-md)', padding: '28px 32px',
         maxWidth: '400px', width: '90%', textAlign: 'center',
       }}>
         <div style={{
-          fontSize: '16px', fontWeight: 600, color: '#f0d080',
+          fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-gold-primary)',
           letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '16px',
         }}>
           {title}

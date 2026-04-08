@@ -9,13 +9,13 @@ if (typeof document !== 'undefined' && !document.getElementById('doctrine-slot-s
   el.id = 'doctrine-slot-styles';
   el.textContent = `
     .doctrine-slot-card {
-      transition: box-shadow 0.2s ease, transform 0.15s ease;
+      transition: box-shadow var(--duration-normal) var(--ease-default), transform var(--duration-fast) var(--ease-default);
     }
     .doctrine-slot-card:hover {
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
     .doctrine-slot-empty {
-      transition: background 0.2s ease, border-color 0.2s ease;
+      transition: background var(--duration-normal) var(--ease-default), border-color var(--duration-normal) var(--ease-default);
       cursor: default;
     }
     .doctrine-slot-empty.doctrine-slot-clickable {
@@ -23,26 +23,26 @@ if (typeof document !== 'undefined' && !document.getElementById('doctrine-slot-s
     }
     .doctrine-slot-empty.doctrine-slot-clickable:hover {
       background: rgba(40, 36, 60, 0.9) !important;
-      border-color: rgba(180, 160, 100, 0.4) !important;
+      border-color: var(--color-border-strong) !important;
     }
     .doctrine-upgrade-btn {
-      transition: all 0.2s ease;
+      transition: all var(--duration-normal) var(--ease-default);
       cursor: pointer;
     }
     .doctrine-upgrade-btn:hover {
       filter: brightness(1.25);
-      box-shadow: 0 0 10px rgba(180, 160, 100, 0.2);
+      box-shadow: 0 0 10px var(--color-border-default);
     }
     .doctrine-upgrade-btn:active {
       transform: scale(0.96);
     }
     .doctrine-unequip-btn {
-      transition: color 0.2s ease, border-color 0.2s ease;
+      transition: color var(--duration-normal) var(--ease-default), border-color var(--duration-normal) var(--ease-default);
       cursor: pointer;
     }
     .doctrine-unequip-btn:hover {
       color: #e0d8b8 !important;
-      border-color: rgba(180, 160, 100, 0.4) !important;
+      border-color: var(--color-border-strong) !important;
     }
     .doctrine-unequip-btn:active {
       transform: scale(0.96);
@@ -134,9 +134,9 @@ export function DoctrineSlot({
         style={{
           width: '140px',
           height: '180px',
-          background: 'rgba(30, 28, 48, 0.7)',
-          border: '2px dashed rgba(180, 160, 100, 0.2)',
-          borderRadius: '6px',
+          background: 'var(--color-bg-secondary)',
+          border: '2px dashed var(--color-border-subtle)',
+          borderRadius: 'var(--radius-md)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -147,21 +147,21 @@ export function DoctrineSlot({
       >
         <span style={{
           fontSize: '28px',
-          color: 'rgba(180, 160, 100, 0.3)',
+          color: 'var(--color-text-muted)',
           lineHeight: 1,
           fontWeight: 300,
         }}>+</span>
         <span style={{
-          fontSize: '10px',
+          fontSize: 'var(--font-size-sm)',
           letterSpacing: '1.5px',
           textTransform: 'uppercase',
-          color: 'rgba(180, 160, 100, 0.35)',
+          color: 'var(--color-text-muted)',
         }}>
           Empty Slot
         </span>
         <span style={{
-          fontSize: '9px',
-          color: 'rgba(180, 160, 100, 0.2)',
+          fontSize: 'var(--font-size-xs)',
+          color: 'var(--color-border-subtle)',
           letterSpacing: '0.8px',
         }}>
           #{slot + 1}
@@ -185,16 +185,16 @@ export function DoctrineSlot({
       style={{
         width: '140px',
         height: '180px',
-        background: 'rgba(30, 28, 48, 0.95)',
-        borderRadius: '6px',
-        border: `1px solid ${isOffColor ? 'rgba(180,160,100,0.15)' : 'rgba(180,160,100,0.25)'}`,
+        background: 'var(--color-bg-secondary)',
+        borderRadius: 'var(--radius-md)',
+        border: `1px solid ${isOffColor ? 'var(--color-border-subtle)' : 'var(--color-border-default)'}`,
         borderTop: `4px solid ${factionColor}`,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         position: 'relative',
         opacity: isOffColor ? 0.55 : 1,
-        fontFamily: "'Segoe UI', system-ui, sans-serif",
+        fontFamily: 'var(--font-family)',
       }}
     >
       {/* Off-color sell price badge */}
@@ -203,9 +203,9 @@ export function DoctrineSlot({
           position: 'absolute',
           top: '8px',
           right: '6px',
-          background: 'rgba(212, 168, 67, 0.85)',
+          background: 'var(--color-gold-secondary)',
           color: '#1a1600',
-          fontSize: '9px',
+          fontSize: 'var(--font-size-xs)',
           fontWeight: 700,
           letterSpacing: '0.5px',
           padding: '2px 5px',
@@ -225,7 +225,7 @@ export function DoctrineSlot({
         gap: '4px',
       }}>
         <span style={{
-          fontSize: '10px',
+          fontSize: 'var(--font-size-sm)',
           fontWeight: 700,
           letterSpacing: '1px',
           textTransform: 'uppercase',
@@ -243,9 +243,9 @@ export function DoctrineSlot({
           width: '20px',
           height: '20px',
           borderRadius: '50%',
-          background: 'rgba(212, 168, 67, 0.9)',
+          background: 'var(--color-gold-secondary)',
           color: '#1a1600',
-          fontSize: '9px',
+          fontSize: 'var(--font-size-xs)',
           fontWeight: 700,
           display: 'flex',
           alignItems: 'center',
@@ -271,9 +271,9 @@ export function DoctrineSlot({
         alignItems: 'flex-start',
       }}>
         <span style={{
-          fontSize: '10px',
+          fontSize: 'var(--font-size-sm)',
           lineHeight: '1.5',
-          color: 'rgba(200, 190, 160, 0.65)',
+          color: 'var(--color-text-secondary)',
           letterSpacing: '0.3px',
         }}>
           {effectDesc}
@@ -291,12 +291,12 @@ export function DoctrineSlot({
         {isMaxLevel ? (
           <div style={{
             textAlign: 'center',
-            fontSize: '9px',
+            fontSize: 'var(--font-size-xs)',
             fontWeight: 700,
             letterSpacing: '1.5px',
-            color: '#f0d080',
-            background: 'rgba(212, 168, 67, 0.12)',
-            border: '1px solid rgba(212, 168, 67, 0.3)',
+            color: 'var(--color-gold-primary)',
+            background: 'var(--color-border-subtle)',
+            border: '1px solid var(--color-border-default)',
             borderRadius: '3px',
             padding: '3px 0',
           }}>
@@ -308,10 +308,10 @@ export function DoctrineSlot({
             onClick={onUpgrade}
             style={{
               background: 'rgba(50, 42, 20, 0.8)',
-              border: '1px solid rgba(212, 168, 67, 0.4)',
+              border: '1px solid var(--color-border-strong)',
               borderRadius: '3px',
-              color: '#f0d080',
-              fontSize: '9px',
+              color: 'var(--color-gold-primary)',
+              fontSize: 'var(--font-size-xs)',
               fontWeight: 700,
               letterSpacing: '1px',
               textTransform: 'uppercase',
@@ -326,8 +326,8 @@ export function DoctrineSlot({
         ) : (
           <div style={{
             textAlign: 'center',
-            fontSize: '9px',
-            color: 'rgba(180,160,100,0.25)',
+            fontSize: 'var(--font-size-xs)',
+            color: 'var(--color-border-default)',
             letterSpacing: '1px',
           }}>
             LVL {levelNumeral}
@@ -341,10 +341,10 @@ export function DoctrineSlot({
             onClick={onUnequip}
             style={{
               background: 'transparent',
-              border: '1px solid rgba(180, 160, 100, 0.18)',
+              border: '1px solid var(--color-border-subtle)',
               borderRadius: '3px',
-              color: 'rgba(200, 190, 160, 0.45)',
-              fontSize: '9px',
+              color: 'var(--color-text-muted)',
+              fontSize: 'var(--font-size-xs)',
               letterSpacing: '1px',
               textTransform: 'uppercase',
               padding: '2px 4px',

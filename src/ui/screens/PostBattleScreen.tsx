@@ -25,11 +25,11 @@ if (typeof document !== 'undefined' && !document.getElementById('post-battle-sty
     .battle-banner {
       animation: banner-entrance 0.4s ease-out;
     }
-    .reward-btn { transition: all 0.2s ease; }
+    .reward-btn { transition: all var(--duration-normal) var(--ease-default); }
     .reward-btn:not(:disabled):hover {
-      border-color: rgba(220, 190, 100, 0.6) !important;
+      border-color: var(--color-border-strong) !important;
       background: rgba(50, 45, 70, 0.95) !important;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 12px rgba(180, 160, 100, 0.1);
+      box-shadow: var(--shadow-md), 0 0 12px var(--color-border-subtle);
     }
     .reward-btn:not(:disabled):active { transform: scale(0.98); }
   `;
@@ -71,8 +71,8 @@ const STATIC_REWARDS: ResourceReward[] = [
 ];
 
 const BANNER: Record<BattleResult, { text: string; color: string }> = {
-  victory: { text: 'VICTORY', color: '#f0d080' },
-  defeat:  { text: 'DEFEAT',  color: '#c05050' },
+  victory: { text: 'VICTORY', color: 'var(--color-gold-primary)' },
+  defeat:  { text: 'DEFEAT',  color: 'var(--color-danger)' },
   draw:    { text: 'DRAW',    color: '#888888' },
 };
 
@@ -85,7 +85,7 @@ export function PostBattleScreen() {
 
   const result = lastBattleResult.value ?? 'defeat';
   const commander = selectedCommander.value;
-  const color = commander ? FACTION_COLORS[commander.faction] : '#f0d080';
+  const color = commander ? FACTION_COLORS[commander.faction] : 'var(--color-gold-primary)';
   const banner = BANNER[result];
   const isVictory = result === 'victory';
 
@@ -168,22 +168,22 @@ export function PostBattleScreen() {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
+      height: '100vh', fontFamily: 'var(--font-family)',
       background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
       paddingTop: '38px', padding: '38px 16px 0',
     }}>
       {/* Dark content panel */}
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        background: 'rgba(12, 10, 24, 0.85)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderRadius: '12px',
-        border: '1px solid rgba(180, 160, 100, 0.15)',
+        background: 'var(--color-bg-primary)',
+        backdropFilter: 'blur(var(--blur-panel))',
+        WebkitBackdropFilter: 'blur(var(--blur-panel))',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--color-border-subtle)',
         padding: '36px 40px 32px',
         maxWidth: '90%',
         width: 'min(480px, 85vw)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+        boxShadow: 'var(--shadow-lg)',
       }}>
         {/* Banner */}
         {result === 'victory' ? (
@@ -225,7 +225,7 @@ export function PostBattleScreen() {
         )}
 
         <div style={{
-          fontSize: '12px', color: 'rgba(200, 190, 160, 0.6)',
+          fontSize: 'var(--font-size-md)', color: 'var(--color-text-secondary)',
           letterSpacing: '1px', marginBottom: '24px',
         }}>
           Choose a reward
@@ -249,14 +249,14 @@ export function PostBattleScreen() {
                 onClick={() => handlePick(i)}
                 disabled={chosenIndex.value !== null}
                 style={{
-                  padding: '14px 18px', borderRadius: '6px',
+                  padding: '14px 18px', borderRadius: 'var(--radius-md)',
                   cursor: chosenIndex.value !== null ? 'default' : 'pointer',
                   background: isChosen
                     ? `linear-gradient(135deg, ${color}35, ${color}18)`
                     : 'rgba(35, 32, 55, 0.9)',
-                  border: `1px solid ${isChosen ? color : 'rgba(180, 160, 100, 0.3)'}`,
+                  border: `1px solid ${isChosen ? color : 'var(--color-border-default)'}`,
                   color: chosenIndex.value !== null && !isChosen ? 'rgba(120, 110, 100, 0.3)' : '#e8e0cc',
-                  fontFamily: 'inherit', fontSize: '13px',
+                  fontFamily: 'inherit', fontSize: 'var(--font-size-md)',
                   textAlign: 'left',
                   opacity: chosenIndex.value !== null && !isChosen ? 0.4 : 1,
                 }}
@@ -277,7 +277,7 @@ export function PostBattleScreen() {
                   })()}
                   {(reward.kind === 'doctrine' || reward.kind === 'decretum') && (
                     <span style={{
-                      fontSize: '11px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase',
+                      fontSize: 'var(--font-size-sm)', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase',
                       color: rewardAccentColor,
                       textShadow: `0 0 8px ${rewardAccentColor}60`,
                       opacity: 0.85,
@@ -286,12 +286,12 @@ export function PostBattleScreen() {
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: '11px', color: 'rgba(200, 190, 170, 0.6)' }}>
+                <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
                   {reward.kind === 'resource' ? (
                     <>
                       {reward.description}
                       {reward.resource === null && (
-                        <span style={{ marginLeft: '6px', color: 'rgba(180, 170, 150, 0.45)', fontStyle: 'italic' }}>
+                        <span style={{ marginLeft: '6px', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
                           (Army healing coming in future update)
                         </span>
                       )}

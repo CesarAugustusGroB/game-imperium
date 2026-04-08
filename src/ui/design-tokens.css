@@ -1,0 +1,57 @@
+:root {
+  /* === Colors === */
+  --color-gold-primary:    #f0d080;
+  --color-gold-secondary:  #d4a843;
+  --color-gold-dim:        rgba(180, 160, 100, 0.5);
+  --color-bg-primary:      rgba(20, 18, 36, 0.95);
+  --color-bg-secondary:    rgba(30, 28, 48, 0.90);
+  --color-bg-tertiary:     rgba(40, 36, 60, 0.85);
+  --color-border-subtle:   rgba(180, 160, 100, 0.12);
+  --color-border-default:  rgba(180, 160, 100, 0.25);
+  --color-border-strong:   rgba(220, 190, 100, 0.50);
+  --color-text-primary:    rgba(240, 208, 128, 0.9);
+  --color-text-secondary:  rgba(200, 190, 160, 0.7);
+  --color-text-muted:      rgba(180, 170, 150, 0.45);
+  --color-danger:          #c24a3a;
+  --color-success:         #5a8a4a;
+  --color-warning:         #d4a843;
+
+  /* === Typography === */
+  --font-family:           'Segoe UI', system-ui, sans-serif;
+  --font-size-xs:          9px;
+  --font-size-sm:          11px;
+  --font-size-md:          13px;
+  --font-size-lg:          16px;
+  --font-size-xl:          20px;
+  --font-size-display:     52px;
+
+  /* === Spacing === */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  12px;
+  --space-lg:  16px;
+  --space-xl:  24px;
+  --space-2xl: 32px;
+
+  /* === Borders === */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --border-width: 1px;
+
+  /* === Shadows === */
+  --shadow-sm:   0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md:   0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg:   0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 12px rgba(240, 208, 128, 0.3);
+
+  /* === Animation === */
+  --ease-default:    cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce:     cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast:   150ms;
+  --duration-normal: 200ms;
+  --duration-slow:   300ms;
+
+  /* === Blur === */
+  --blur-panel: 12px;
+}

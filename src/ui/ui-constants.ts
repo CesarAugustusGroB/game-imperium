@@ -6,17 +6,17 @@ import { RESOURCE_INFO } from '../game/core/commander';
 // standard dark-glass panel aesthetic.
 
 export const PANEL = {
-  background: 'rgba(20, 18, 36, 0.7)',
-  border: '1px solid rgba(180, 160, 100, 0.12)',
-  borderRadius: '8px',
+  background: 'var(--color-bg-primary)',
+  border: 'var(--border-width) solid var(--color-border-subtle)',
+  borderRadius: 'var(--radius-md)',
   padding: '14px 16px',
 } as const;
 
 export const PANEL_TITLE = {
-  fontSize: '9px', fontWeight: 700 as const,
-  color: 'rgba(180, 170, 150, 0.5)',
+  fontSize: 'var(--font-size-xs)', fontWeight: 700 as const,
+  color: 'var(--color-text-muted)',
   letterSpacing: '2px', textTransform: 'uppercase' as const,
-  marginBottom: '10px',
+  marginBottom: 'var(--space-md)',
 } as const;
 
 // ── Roman numeral map (1-3 tier display) ──

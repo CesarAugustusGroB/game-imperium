@@ -32,10 +32,10 @@ if (typeof document !== 'undefined' && !document.getElementById('screen-transiti
       to { opacity: 0; transform: translateY(-6px); }
     }
     .screen-wrapper {
-      animation: screen-enter 0.3s ease-out;
+      animation: screen-enter var(--duration-slow) var(--ease-default);
     }
     .screen-wrapper.exiting {
-      animation: screen-exit 0.2s ease-in forwards;
+      animation: screen-exit var(--duration-normal) ease-in forwards;
     }
 
     /* Global focus-visible styles for keyboard accessibility */
@@ -52,7 +52,7 @@ if (typeof document !== 'undefined' && !document.getElementById('screen-transiti
     /* Global selection color */
     ::selection {
       background: rgba(240, 208, 128, 0.3);
-      color: #f0d080;
+      color: var(--color-gold-primary);
     }
     @media (max-width: 900px) {
       .curtain-img { opacity: 0.3 !important; }
@@ -75,23 +75,23 @@ class ErrorBoundary extends Component<{ children: ComponentChildren }, EBState> 
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', height: '100vh',
-          fontFamily: "'Segoe UI', system-ui, sans-serif",
+          fontFamily: 'var(--font-family)',
           background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
           color: 'rgba(220, 160, 100, 0.8)', gap: '16px',
         }}>
-          <div style={{ fontSize: '18px', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase' }}>
             Something went wrong
           </div>
-          <div style={{ fontSize: '12px', color: 'rgba(180, 170, 150, 0.5)', maxWidth: '400px', textAlign: 'center', lineHeight: '1.5' }}>
+          <div style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-text-muted)', maxWidth: '400px', textAlign: 'center', lineHeight: '1.5' }}>
             {this.state.error.message}
           </div>
           <button
             onClick={() => { this.setState({ error: null }); window.location.hash = 'title'; window.location.reload(); }}
             style={{
-              marginTop: '8px', padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
-              background: 'rgba(60, 60, 80, 0.6)', border: '1px solid rgba(180, 160, 100, 0.25)',
-              color: '#d0c8a8', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
-              letterSpacing: '1px', transition: 'all 0.2s ease',
+              marginTop: '8px', padding: '10px 24px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+              background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border-default)',
+              color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600,
+              letterSpacing: '1px', transition: `all var(--duration-normal) var(--ease-default)`,
             }}
           >
             Return to Title
@@ -131,21 +131,21 @@ function ScreenContent() {
       return (
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          height: '100vh', color: 'rgba(200, 190, 160, 0.5)',
-          fontFamily: "'Segoe UI', system-ui, sans-serif",
+          height: '100vh', color: 'var(--color-text-secondary)',
+          fontFamily: 'var(--font-family)',
           background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
           gap: '16px',
         }}>
-          <div style={{ fontSize: '14px', letterSpacing: '1px' }}>
+          <div style={{ fontSize: 'var(--font-size-lg)', letterSpacing: '1px' }}>
             {screen} — coming soon
           </div>
           <button
             onClick={() => navigateTo('title')}
             style={{
-              padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
-              background: 'rgba(60, 60, 80, 0.6)', border: '1px solid rgba(180, 160, 100, 0.25)',
-              color: '#d0c8a8', fontFamily: 'inherit', fontSize: '13px',
-              fontWeight: 600, letterSpacing: '1px', transition: 'all 0.2s ease',
+              padding: '10px 24px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+              background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border-default)',
+              color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 'var(--font-size-md)',
+              fontWeight: 600, letterSpacing: '1px', transition: `all var(--duration-normal) var(--ease-default)`,
             }}
           >
             Return to Title
@@ -207,12 +207,12 @@ export function App() {
           style={{
             position: 'fixed', bottom: '16px', right: '16px',
             width: '36px', height: '36px', borderRadius: '50%',
-            background: 'rgba(12, 10, 24, 0.8)',
-            border: '1px solid rgba(180, 160, 100, 0.25)',
-            color: musicMuted.value ? 'rgba(180, 160, 140, 0.35)' : 'rgba(240, 208, 128, 0.8)',
-            fontSize: '16px', cursor: 'pointer',
+            background: 'var(--color-bg-primary)',
+            border: '1px solid var(--color-border-default)',
+            color: musicMuted.value ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
+            fontSize: 'var(--font-size-lg)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: '200', transition: 'all 0.2s ease',
+            zIndex: '200', transition: `all var(--duration-normal) var(--ease-default)`,
             backdropFilter: 'blur(8px)',
           }}
         >

@@ -2,31 +2,31 @@ import { navigateTo } from '../screens';
 
 const containerStyle: Record<string, string> = {
   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-  height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
+  height: '100vh', fontFamily: 'var(--font-family)',
   background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
 };
 
 const shieldStyle: Record<string, string> = {
   width: '120px', height: '120px', marginBottom: '12px',
-  filter: 'drop-shadow(0 0 24px rgba(180, 160, 100, 0.4))',
+  filter: 'drop-shadow(0 0 24px var(--color-border-strong))',
   animation: 'shield-float 3s ease-in-out infinite',
 };
 
 const titleStyle: Record<string, string> = {
-  fontSize: '52px', fontWeight: '700', letterSpacing: '6px', textTransform: 'uppercase',
+  fontSize: 'var(--font-size-display)', fontWeight: '700', letterSpacing: '6px', textTransform: 'uppercase',
   color: '#5a3a1a',
   textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
   marginBottom: '4px',
 };
 
 const subtitleStyle: Record<string, string> = {
-  fontSize: '13px', letterSpacing: '8px', textTransform: 'uppercase',
+  fontSize: 'var(--font-size-md)', letterSpacing: '8px', textTransform: 'uppercase',
   color: 'rgba(70, 55, 35, 0.6)', marginBottom: '52px',
 };
 
 const versionStyle: Record<string, string> = {
   position: 'fixed', bottom: '16px', right: '20px',
-  fontSize: '11px', color: 'rgba(140, 130, 110, 0.35)', letterSpacing: '1px',
+  fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', letterSpacing: '1px',
 };
 
 export function TitleScreen() {
@@ -39,29 +39,29 @@ export function TitleScreen() {
         }
         .title-btn {
           position: relative; padding: 14px 24px; width: 100%;
-          border-radius: 4px; cursor: pointer; overflow: hidden;
-          font-family: inherit; font-size: 16px; font-weight: 600; letter-spacing: 2px;
-          text-transform: uppercase; transition: all 0.2s ease;
+          border-radius: var(--radius-sm); cursor: pointer; overflow: hidden;
+          font-family: var(--font-family); font-size: var(--font-size-lg); font-weight: 600; letter-spacing: 2px;
+          text-transform: uppercase; transition: all var(--duration-normal) var(--ease-default);
         }
         .title-btn:active { transform: scale(0.97); }
         .title-btn-primary {
           background: linear-gradient(135deg, rgba(80, 60, 20, 0.7), rgba(50, 40, 18, 0.9));
-          border: 1px solid rgba(220, 190, 100, 0.5); color: #f0d080;
+          border: 1px solid var(--color-border-strong); color: var(--color-gold-primary);
         }
         .title-btn-primary:hover {
           border-color: rgba(255, 220, 120, 0.8); color: #fff0c0;
-          box-shadow: 0 0 24px rgba(180, 160, 100, 0.2), inset 0 0 20px rgba(180, 160, 100, 0.06);
+          box-shadow: 0 0 24px var(--color-border-default), inset 0 0 20px var(--color-border-subtle);
         }
         .title-btn-secondary {
-          background: linear-gradient(135deg, rgba(40, 36, 60, 0.9), rgba(28, 26, 48, 0.95));
-          border: 1px solid rgba(180, 160, 100, 0.25); color: #d0c8a8;
+          background: linear-gradient(135deg, var(--color-bg-tertiary), var(--color-bg-secondary));
+          border: 1px solid var(--color-border-default); color: #d0c8a8;
         }
         .title-btn-secondary:hover {
-          border-color: rgba(220, 190, 100, 0.5); color: #f0e0b0;
-          box-shadow: 0 0 16px rgba(180, 160, 100, 0.12);
+          border-color: var(--color-border-strong); color: #f0e0b0;
+          box-shadow: 0 0 16px var(--color-border-subtle);
         }
         .title-btn-disabled {
-          background: linear-gradient(135deg, rgba(40, 36, 60, 0.9), rgba(28, 26, 48, 0.95));
+          background: linear-gradient(135deg, var(--color-bg-tertiary), var(--color-bg-secondary));
           border: 1px solid rgba(100, 100, 100, 0.2); color: #d0c8a8;
           opacity: 0.35; cursor: default;
         }

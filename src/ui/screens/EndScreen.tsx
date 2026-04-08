@@ -119,7 +119,7 @@ export function EndScreen({
     <div
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
+        height: '100vh', fontFamily: 'var(--font-family)',
         background: `${backgroundTint} url(/asset/marbel_background.png) center / contain no-repeat`,
         overflow: 'hidden',
         animation: 'ken-burns 8s ease-in-out infinite alternate',
@@ -153,14 +153,14 @@ export function EndScreen({
 
         {/* Stats panel */}
         <div class="end-screen-panel" style={{
-          background: 'rgba(12, 10, 24, 0.85)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderRadius: '12px',
-          border: '1px solid rgba(180, 160, 100, 0.15)',
+          background: 'var(--color-bg-primary)',
+          backdropFilter: 'blur(var(--blur-panel))',
+          WebkitBackdropFilter: 'blur(var(--blur-panel))',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--color-border-subtle)',
           padding: '32px 48px',
           minWidth: '320px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+          boxShadow: 'var(--shadow-lg)',
           display: 'flex', flexDirection: 'column', gap: '0',
         }}>
           {stats.map((stat, i) => (
@@ -169,13 +169,13 @@ export function EndScreen({
               style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 padding: '12px 0',
-                borderBottom: i < stats.length - 1 ? '1px solid rgba(180, 160, 100, 0.1)' : 'none',
+                borderBottom: i < stats.length - 1 ? '1px solid var(--color-border-subtle)' : 'none',
                 opacity: revealIndex >= i ? 1 : 0,
                 transform: `translateY(${revealIndex >= i ? 0 : 8}px)`,
                 transition: 'opacity 0.4s ease-out, transform 0.4s ease-out',
               }}
             >
-              <span style={{ fontSize: '13px', letterSpacing: '1px', color: 'rgba(200, 190, 160, 0.65)', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: 'var(--font-size-md)', letterSpacing: '1px', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>
                 {stat.label}
               </span>
               <span style={{
@@ -192,15 +192,15 @@ export function EndScreen({
           <button
             onClick={handleReturn}
             style={{
-              marginTop: '28px', padding: '12px 32px', borderRadius: '6px',
-              cursor: 'pointer', fontFamily: 'inherit', fontSize: '13px',
+              marginTop: '28px', padding: '12px 32px', borderRadius: 'var(--radius-md)',
+              cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-size-md)',
               fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase',
               background: `linear-gradient(135deg, ${titleColor}25, ${titleColor}10)`,
               border: `1px solid ${titleColor}60`,
               color: titleColor,
               textShadow: `0 0 8px ${titleGlow}40`,
               boxShadow: `0 0 16px ${titleGlow}20`,
-              transition: 'opacity 0.4s ease-out, transform 0.4s ease-out, all 0.2s ease',
+              transition: `opacity 0.4s ease-out, transform 0.4s ease-out, all var(--duration-normal) var(--ease-default)`,
               opacity: showButton ? 1 : 0,
               transform: `translateY(${showButton ? 0 : 8}px)`,
               pointerEvents: showButton ? 'auto' : 'none',

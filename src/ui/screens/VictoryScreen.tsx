@@ -69,7 +69,7 @@ export function VictoryScreen() {
     <EndScreen
       outcome="victory"
       title="Victory"
-      titleColor="#f0d080"
+      titleColor="var(--color-gold-primary)"
       titleGlow="#f0c040"
       backgroundTint="#1a1608"
     >
