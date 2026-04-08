@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
 import { navigateTo } from '../screens';
+import { Button } from '../components/Button';
 import { selectedCommander } from '../../game/core/game-state';
 import { FACTION_COLORS } from '../../game/core/commander';
 import { getCurrentTier, getCurrentPassive, getXpToNextTier, XP_TIER_2, XP_TIER_3 } from '../../game/council/advisor';
@@ -336,17 +337,13 @@ export function CouncilScreen() {
               }}>
                 Choose for Slot #{targetSlot + 1}
               </span>
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => { equipTargetSlot.value = null; }}
-                style={{
-                  background: 'transparent', border: '1px solid var(--color-border-default)',
-                  borderRadius: '3px', color: 'var(--color-text-secondary)',
-                  fontSize: 'var(--font-size-xs)', letterSpacing: '1px', padding: '3px 8px',
-                  cursor: 'pointer', fontFamily: 'inherit',
-                }}
+                style={{ fontSize: 'var(--font-size-xs)', padding: '3px 8px' }}
               >
                 Cancel
-              </button>
+              </Button>
             </div>
 
             {pool.length === 0 ? (
@@ -506,21 +503,12 @@ export function CouncilScreen() {
         </button>
 
         {/* Back button */}
-        <button
+        <Button
+          variant="primary"
           onClick={() => { equipTargetSlot.value = null; navigateTo('hub'); }}
-          style={{
-            padding: '10px 28px',
-            background: 'rgba(50, 42, 20, 0.7)',
-            border: '1px solid var(--color-border-strong)',
-            borderRadius: 'var(--radius-sm)',
-            color: 'var(--color-gold-primary)', fontFamily: 'inherit',
-            fontSize: 'var(--font-size-md)', fontWeight: 600,
-            letterSpacing: '1.5px', textTransform: 'uppercase',
-            cursor: 'pointer', transition: `all var(--duration-normal) var(--ease-default)`,
-          }}
         >
           Back to Hub
-        </button>
+        </Button>
       </div>
     </div>
   );

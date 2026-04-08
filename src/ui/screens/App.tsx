@@ -40,7 +40,7 @@ if (typeof document !== 'undefined' && !document.getElementById('screen-transiti
 
     /* Global focus-visible styles for keyboard accessibility */
     *:focus-visible {
-      outline: 2px solid rgba(240, 208, 128, 0.6);
+      outline: 2px solid var(--color-gold-primary);
       outline-offset: 2px;
     }
 
@@ -51,7 +51,7 @@ if (typeof document !== 'undefined' && !document.getElementById('screen-transiti
 
     /* Global selection color */
     ::selection {
-      background: rgba(240, 208, 128, 0.3);
+      background: var(--color-border-subtle);
       color: var(--color-gold-primary);
     }
     @media (max-width: 900px) {

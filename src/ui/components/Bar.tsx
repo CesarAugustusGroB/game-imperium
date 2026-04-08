@@ -55,7 +55,7 @@ export function Bar({
   const trackStyle: JSX.CSSProperties = {
     flex: 1,
     height: `${resolvedHeight}px`,
-    background: 'rgba(20, 18, 36, 0.5)',
+    background: 'var(--color-bg-primary)',
     borderRadius: 'var(--radius-sm)',
     overflow: 'hidden',
     position: 'relative',

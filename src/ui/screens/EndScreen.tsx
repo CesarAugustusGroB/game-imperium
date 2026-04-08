@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
 import { navigateTo } from '../screens';
+import { Button } from '../components/Button';
 import { globalSeason, resetRun, selectedCommander, battlesWon } from '../../game/core/game-state';
 import { provinces } from '../../game/province/province-store';
 import { recordRunComplete, computeScore } from '../../game/core/meta-save';
@@ -189,25 +190,19 @@ export function EndScreen({
           ))}
 
           {/* Return button */}
-          <button
+          <Button
+            variant="primary"
             onClick={handleReturn}
             style={{
-              marginTop: '28px', padding: '12px 32px', borderRadius: 'var(--radius-md)',
-              cursor: 'pointer', fontFamily: 'inherit', fontSize: 'var(--font-size-md)',
-              fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase',
-              background: `linear-gradient(135deg, ${titleColor}25, ${titleColor}10)`,
-              border: `1px solid ${titleColor}60`,
-              color: titleColor,
-              textShadow: `0 0 8px ${titleGlow}40`,
-              boxShadow: `0 0 16px ${titleGlow}20`,
-              transition: `opacity 0.4s ease-out, transform 0.4s ease-out, all var(--duration-normal) var(--ease-default)`,
+              marginTop: '28px',
+              transition: `opacity 0.4s ease-out, transform 0.4s ease-out`,
               opacity: showButton ? 1 : 0,
               transform: `translateY(${showButton ? 0 : 8}px)`,
               pointerEvents: showButton ? 'auto' : 'none',
             }}
           >
             Return to Title
-          </button>
+          </Button>
         </div>
       </div>
     </div>
