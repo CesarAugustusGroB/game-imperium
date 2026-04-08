@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
-import { selectedCommander } from '../game/game-state';
-import { playSfx } from './sfx';
-import { switchTrackForScreen } from './music';
+import { selectedCommander } from '../game/core/game-state';
+import { playSfx } from './sound/sfx';
+import { switchTrackForScreen } from './sound/music';
 
 export type ScreenName =
   | 'title'

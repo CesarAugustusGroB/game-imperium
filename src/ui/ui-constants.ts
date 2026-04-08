@@ -1,5 +1,5 @@
-import type { ResourceType } from '../game/commander';
-import { RESOURCE_INFO } from '../game/commander';
+import type { ResourceType } from '../game/core/commander';
+import { RESOURCE_INFO } from '../game/core/commander';
 
 // ── Shared panel style tokens ──
 // Used by HubScreen, ProvinceScreen, and any future screens that use the

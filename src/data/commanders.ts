@@ -1,4 +1,4 @@
-import type { Commander } from '../game/commander';
+import type { Commander } from '../game/core/commander';
 
 export const COMMANDERS: Commander[] = [
   {

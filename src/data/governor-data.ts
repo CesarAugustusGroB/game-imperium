@@ -1,4 +1,4 @@
-import type { Governor } from '../game/governor';
+import type { Governor } from '../game/province/governor';
 
 // ── One governor per faction + one white (universal) ──
 

@@ -1,4 +1,4 @@
-import type { Advisor } from '../game/advisor';
+import type { Advisor } from '../game/council/advisor';
 
 // ── Red (Military) — battle-heavy, short spokes, attacking ──
 

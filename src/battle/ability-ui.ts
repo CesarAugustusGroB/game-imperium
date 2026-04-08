@@ -1,17 +1,17 @@
-import { selectedCommander } from '../game/game-state';
-import { canAfford, spendResource, addResource } from '../game/resources';
-import { RESOURCE_INFO, FACTION_COLORS } from '../game/commander';
-import { playSfx } from '../ui/sfx';
-import type { Commander, CommanderAbility } from '../game/commander';
+import { selectedCommander } from '../game/core/game-state';
+import { canAfford, spendResource, addResource } from '../game/core/resources';
+import { RESOURCE_INFO, FACTION_COLORS } from '../game/core/commander';
+import { playSfx } from '../ui/sound/sfx';
+import type { Commander, CommanderAbility } from '../game/core/commander';
 import type { BattleState } from './battle-state';
 import type { BattleUnit } from './battle-types';
 import { SHAKE_DURATION, FLASH_DURATION, ROLE_STATS, ABILITY_PARTICLE_COUNT } from './battle-config';
 import { hexToCol } from './battle-zones';
-import { getHandWithCastability, castDecretum } from '../game/decretum-store';
-import { getDecretumTargeting, DECRETUM_SELL_PRICE } from '../game/decretum';
-import type { DecretumEffect } from '../game/decretum';
-import type { ResourceType } from '../game/commander';
-import { pendingEnemyConversions, nextInvestmentDiscount } from '../game/strategic-store';
+import { getHandWithCastability, castDecretum } from '../game/items/decretum-store';
+import { getDecretumTargeting, DECRETUM_SELL_PRICE } from '../game/items/decretum';
+import type { DecretumEffect } from '../game/items/decretum';
+import type { ResourceType } from '../game/core/commander';
+import { pendingEnemyConversions, nextInvestmentDiscount } from '../game/progression/strategic-store';
 
 /** Abilities that fire immediately (no targeting needed). */
 const IMMEDIATE_ABILITIES = new Set(['Fury Charge']);

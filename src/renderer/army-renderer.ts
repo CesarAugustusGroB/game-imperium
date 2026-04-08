@@ -1,5 +1,5 @@
 import type { Camera } from '../camera/camera';
-import type { ArmyManager } from '../game/army';
+import type { ArmyManager } from '../game/map/army';
 import type { ArmyData } from '../types/index';
 
 export class ArmyRenderer {

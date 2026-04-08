@@ -1,8 +1,8 @@
-import type { GameEvent } from '../game/event-types';
+import type { GameEvent } from '../game/events/event-types';
 import { RED_EVENTS, BLUE_EVENTS, GOLD_EVENTS, PURPLE_EVENTS, WHITE_EVENTS } from './faction-events';
 
 // Re-export types so existing imports don't break
-export type { GameEvent, EventChoice, EventEffect } from '../game/event-types';
+export type { GameEvent, EventChoice, EventEffect } from '../game/events/event-types';
 
 // ── Fallback event ──
 
