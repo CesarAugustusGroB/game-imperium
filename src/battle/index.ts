@@ -4,14 +4,14 @@ import { BattleRenderer } from './battle-renderer';
 import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
 import { initAbilityBar, updateAbilityBar, destroyAbilityBar, initDecretumBar, updateDecretumBar, destroyDecretumBar } from './ability-ui';
-import { selectedCommander, veteranStacks, allianceCount, threatLevel, globalSeason, MAX_SEASONS, battlesWon } from '../game/game-state';
+import { selectedCommander, veteranStacks, allianceCount, threatLevel, globalSeason, MAX_SEASONS, battlesWon } from '../game/core/game-state';
 import { VETERAN_BONUS_PER_STACK, VETERAN_SOFT_CAP_STACKS, VETERAN_BONUS_ABOVE_CAP, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO, RED_RESERVE_COL, RED_VANGUARD_COL, WAR_CRY_DAMAGE_BONUS } from './battle-config';
 import { offsetToAxial } from './hex';
-import { getActiveEffects } from '../game/doctrine-store';
-import type { DoctrineEffect } from '../game/doctrine';
-import { getProvinceEffects, provinces } from '../game/province-store';
-import { consumeCrusadeBattle, warCryActive, pendingEnemyConversions } from '../game/strategic-store';
-import { pauseMusic, resumeMusic } from '../ui/music';
+import { getActiveEffects } from '../game/items/doctrine-store';
+import type { DoctrineEffect } from '../game/items/doctrine';
+import { getProvinceEffects, provinces } from '../game/province/province-store';
+import { consumeCrusadeBattle, warCryActive, pendingEnemyConversions } from '../game/progression/strategic-store';
+import { pauseMusic, resumeMusic } from '../ui/sound/music';
 
 /** S7-11: True when the current battle is the final invasion (season >= MAX_SEASONS). */
 export const isFinalBattle = signal(false);

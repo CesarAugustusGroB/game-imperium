@@ -1,4 +1,4 @@
-import type { GameEvent } from '../game/event-types';
+import type { GameEvent } from '../game/events/event-types';
 
 // ══════════════════════════════════════════════════════════════
 // S7-04: Red (Military) events — Momentum trade-offs

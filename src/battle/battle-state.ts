@@ -1,7 +1,7 @@
 import type { Hex, Point } from './hex';
 import { hexKey, hexNeighbors, hexDistance, offsetToAxial } from './hex';
 import type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder } from './battle-types';
-import { playSfx } from '../ui/sfx';
+import { playSfx } from '../ui/sound/sfx';
 import {
   DEFAULT_CONFIG, CAPTURE_DURATION, MOVE_RANGE, MOVE_ANIM_SPEED,
   MORALE_BREAK_THRESHOLD, SHAKE_DURATION, FLASH_DURATION,
@@ -14,7 +14,7 @@ import {
   SCREEN_SHAKE_DURATION, DEATH_PARTICLE_COUNT, HIT_PARTICLE_COUNT,
   PARTICLE_GRAVITY,
 } from './battle-config';
-import type { DecretumEffect } from '../game/decretum';
+import type { DecretumEffect } from '../game/items/decretum';
 
 // Re-export types for backward compatibility
 export type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder };

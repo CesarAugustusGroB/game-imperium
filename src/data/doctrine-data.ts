@@ -1,4 +1,4 @@
-import type { Doctrine } from '../game/doctrine';
+import type { Doctrine } from '../game/items/doctrine';
 
 // ── Red (Military) — 3 Doctrines ──
 

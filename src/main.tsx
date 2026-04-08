@@ -1,10 +1,10 @@
 import { render } from 'preact';
 import { effect } from '@preact/signals';
-import { App } from './ui/App';
+import { App } from './ui/screens/App';
 import { currentScreen, navigateTo } from './ui/screens';
 import { BattleMode, isFinalBattle } from './battle/index';
-import { currentSpoke, lastBattleResult } from './game/spoke';
-import { selectedCommander, veteranStacks, spokesSinceLastBattle, battlesWon } from './game/game-state';
+import { currentSpoke, lastBattleResult } from './game/progression/spoke';
+import { selectedCommander, veteranStacks, spokesSinceLastBattle, battlesWon } from './game/core/game-state';
 
 // Mount Preact UI
 const appRoot = document.getElementById('app-root');

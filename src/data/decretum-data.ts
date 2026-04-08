@@ -1,4 +1,4 @@
-import type { Decretum } from '../game/decretum';
+import type { Decretum } from '../game/items/decretum';
 
 // ── Red (Military) — 3 scrolls ──
 

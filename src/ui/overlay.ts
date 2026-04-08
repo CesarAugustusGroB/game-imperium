@@ -1,5 +1,5 @@
-import type { GameState } from '../game/state';
-import type { ProvinceRegistry } from '../game/provinces';
+import type { GameState } from '../game/core/state';
+import type { ProvinceRegistry } from '../game/province/provinces';
 
 export class Overlay {
   private tooltip: HTMLElement;
