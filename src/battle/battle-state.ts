@@ -1,6 +1,6 @@
 import type { Hex, Point } from './hex';
 import { hexKey, hexNeighbors, hexDistance, offsetToAxial } from './hex';
-import type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder } from './battle-types';
+import type { BattleFaction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder } from './battle-types';
 import { playSfx } from '../ui/sound/sfx';
 import {
   DEFAULT_CONFIG, CAPTURE_DURATION, MOVE_RANGE, MOVE_ANIM_SPEED,
@@ -17,7 +17,7 @@ import {
 import type { DecretumEffect } from '../game/items/decretum';
 
 // Re-export types for backward compatibility
-export type { Faction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder };
+export type { BattleFaction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder };
 
 export interface Particle {
   hex: { q: number; r: number };
@@ -47,14 +47,14 @@ export class BattleState {
 
   // Combat state
   phase: BattlePhase = 'fighting';
-  winner: Faction | null = null;
+  winner: BattleFaction | null = null;
   roundCount = 0;
   lieutenantOrder: LieutenantOrder = 'auto';
   /** Additive damage multiplier from Boudicca's veteran stacks. Each stack adds 0.05 (VETERAN_BONUS_PER_STACK), so e.g. 3 stacks = 0.15 = +15% damage for all blue units. */
   veteranBonus: number = 0;
   /** Remaining prevent-death charges from Decretum Oracle — blue units survive at 1 HP instead of dying. */
   preventDeathCount = 0;
-  private startingStrength = new Map<Faction, number>();
+  private startingStrength = new Map<BattleFaction, number>();
 
   // Ability targeting state (S3-03)
   targetingAbility: string | null = null;
@@ -69,8 +69,8 @@ export class BattleState {
   screenShake: number = 0;
 
   // Capture-the-star state
-  readonly stars = new Map<Faction, Hex>();          // each faction's star hex
-  readonly captureProgress = new Map<Faction, number>(); // seconds enemy has stood on star
+  readonly stars = new Map<BattleFaction, Hex>();          // each faction's star hex
+  readonly captureProgress = new Map<BattleFaction, number>(); // seconds enemy has stood on star
 
   constructor(config?: Partial<BattleConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -113,7 +113,7 @@ export class BattleState {
 
   // ── Units ──
 
-  addUnit(faction: Faction, hex: Hex, name: string, role: UnitRole = 'vanguard', stats?: UnitStats): BattleUnit {
+  addUnit(faction: BattleFaction, hex: Hex, name: string, role: UnitRole = 'vanguard', stats?: UnitStats): BattleUnit {
     const id = this.nextId++;
     const unitStats = stats ?? ROLE_STATS[role];
     const unit: BattleUnit = {
@@ -343,7 +343,7 @@ export class BattleState {
     return enemies;
   }
 
-  getFactionUnits(faction: Faction): BattleUnit[] {
+  getBattleFactionUnits(faction: BattleFaction): BattleUnit[] {
     const result: BattleUnit[] = [];
     for (const u of this.units.values()) {
       if (u.isDying) continue;
@@ -352,7 +352,7 @@ export class BattleState {
     return result;
   }
 
-  getFactionStrength(faction: Faction): number {
+  getBattleFactionStrength(faction: BattleFaction): number {
     let total = 0;
     for (const u of this.units.values()) {
       if (u.isDying) continue;
@@ -493,8 +493,8 @@ export class BattleState {
   }
 
   private checkAnnihilation(): void {
-    for (const faction of ['blue', 'red'] as Faction[]) {
-      const alive = this.getFactionUnits(faction);
+    for (const faction of ['blue', 'red'] as BattleFaction[]) {
+      const alive = this.getBattleFactionUnits(faction);
       if (alive.length === 0) {
         this.phase = 'victory';
         this.winner = faction === 'blue' ? 'red' : 'blue';
@@ -505,15 +505,15 @@ export class BattleState {
 
   private checkCapture(): void {
     // Also check annihilation — if all units of a faction are dead, the other wins
-    for (const faction of ['blue', 'red'] as Faction[]) {
-      if (this.getFactionUnits(faction).length === 0) {
+    for (const faction of ['blue', 'red'] as BattleFaction[]) {
+      if (this.getBattleFactionUnits(faction).length === 0) {
         this.phase = 'victory';
         this.winner = faction === 'blue' ? 'red' : 'blue';
         return;
       }
     }
     // Check if any star has been fully captured
-    for (const faction of ['blue', 'red'] as Faction[]) {
+    for (const faction of ['blue', 'red'] as BattleFaction[]) {
       if ((this.captureProgress.get(faction) ?? 0) >= CAPTURE_DURATION) {
         this.phase = 'victory';
         this.winner = faction === 'blue' ? 'red' : 'blue'; // enemy of the star's owner wins
@@ -529,8 +529,8 @@ export class BattleState {
     }
 
     // Draw: if both sides only have Guards left, nobody can attack
-    const blueUnits = this.getFactionUnits('blue');
-    const redUnits = this.getFactionUnits('red');
+    const blueUnits = this.getBattleFactionUnits('blue');
+    const redUnits = this.getBattleFactionUnits('red');
     const blueOnlyGuards = blueUnits.length > 0 && blueUnits.every(u => u.role === 'guard');
     const redOnlyGuards = redUnits.length > 0 && redUnits.every(u => u.role === 'guard');
     if (blueOnlyGuards && redOnlyGuards) {
@@ -541,7 +541,7 @@ export class BattleState {
   /** Tick capture progress — call each frame from updateAnimations. */
   updateCapture(dt: number): void {
     if (this.config.victoryMode !== 'capture') return;
-    for (const faction of ['blue', 'red'] as Faction[]) {
+    for (const faction of ['blue', 'red'] as BattleFaction[]) {
       const star = this.stars.get(faction);
       if (!star) continue;
       const occupant = this.getUnitAt(star);
@@ -556,14 +556,14 @@ export class BattleState {
   }
 
   /** Get the enemy faction's star hex (the star this faction wants to capture). */
-  getEnemyStar(faction: Faction): Hex | null {
-    const enemy: Faction = faction === 'blue' ? 'red' : 'blue';
+  getEnemyStar(faction: BattleFaction): Hex | null {
+    const enemy: BattleFaction = faction === 'blue' ? 'red' : 'blue';
     return this.stars.get(enemy) ?? null;
   }
 
   private checkMorale(): void {
-    for (const faction of ['blue', 'red'] as Faction[]) {
-      const current = this.getFactionStrength(faction);
+    for (const faction of ['blue', 'red'] as BattleFaction[]) {
+      const current = this.getBattleFactionStrength(faction);
       const starting = this.startingStrength.get(faction) ?? 1;
       if (current <= 0 || current / starting < MORALE_BREAK_THRESHOLD) {
         this.phase = 'victory';
@@ -651,7 +651,7 @@ export class BattleState {
     switch (effect.type) {
       case 'heal': {
         if (effect.target === 'all') {
-          for (const unit of this.getFactionUnits('blue')) {
+          for (const unit of this.getBattleFactionUnits('blue')) {
             unit.currentHp = Math.min(unit.stats.hp, unit.currentHp + Math.floor(unit.stats.hp * effect.amount));
             unit.flashTimer = FLASH_DURATION;
           }
@@ -686,7 +686,7 @@ export class BattleState {
         break;
       }
       case 'buff': {
-        for (const unit of this.getFactionUnits('blue')) {
+        for (const unit of this.getBattleFactionUnits('blue')) {
           if (effect.stat === 'atk') unit.stats.atk = Math.floor(unit.stats.atk * (1 + effect.multiplier));
           else if (effect.stat === 'def') unit.stats.def = Math.floor(unit.stats.def * (1 + effect.multiplier));
           else if (effect.stat === 'hp') unit.stats.hp = Math.floor(unit.stats.hp * (1 + effect.multiplier));
@@ -755,8 +755,8 @@ export class BattleState {
     });
 
     // Record starting strengths for morale check
-    this.startingStrength.set('blue', this.getFactionStrength('blue'));
-    this.startingStrength.set('red', this.getFactionStrength('red'));
+    this.startingStrength.set('blue', this.getBattleFactionStrength('blue'));
+    this.startingStrength.set('red', this.getBattleFactionStrength('red'));
 
     // Place capture stars at the back-center of each side
     const midRow = Math.floor(this.config.rows / 2);

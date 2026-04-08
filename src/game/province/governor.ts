@@ -1,5 +1,5 @@
-import type { Faction, ResourceType } from '../core/commander';
-import type { ResourceCost } from '../items/doctrine';
+import type { ResourceType } from '../core/commander';
+import type { GameEntity, FactionAffiliated, TierTuple, ResourceCost } from '../../types/index';
 
 // ── Governor traits (discriminated union on `type`) ──
 
@@ -21,11 +21,8 @@ export interface GovernorTier {
 
 // ── Governor ──
 
-export interface Governor {
-  id: string;
-  name: string;
-  color: Faction;
-  tiers: [GovernorTier, GovernorTier, GovernorTier];
+export interface Governor extends GameEntity, FactionAffiliated {
+  tiers: TierTuple<GovernorTier>;
 }
 
 // ── Helpers ──

@@ -1,5 +1,5 @@
 import type { Faction, ResourceType } from '../core/commander';
-import type { ResourceCost } from '../items/doctrine';
+import type { ResourceCost, TierTuple } from '../../types/index';
 import type { GovernorTrait } from './governor';
 
 // ── Investment types ──
@@ -63,7 +63,7 @@ export interface InvestmentData {
   name: string;
   /** Short flavour text. */
   flavour: string;
-  levels: [InvestmentLevelEffect, InvestmentLevelEffect, InvestmentLevelEffect];
+  levels: TierTuple<InvestmentLevelEffect>;
 }
 
 export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {

@@ -86,7 +86,7 @@ export class BattleMode {
     for (const effect of doctrineEffects) {
       switch (effect.type) {
         case 'stat-modifier': {
-          for (const unit of this._state.getFactionUnits('blue')) {
+          for (const unit of this._state.getBattleFactionUnits('blue')) {
             if (effect.stat === 'damage') unit.stats.atk = Math.floor(unit.stats.atk * (1 + effect.multiplier));
             else if (effect.stat === 'armor') unit.stats.def = Math.floor(unit.stats.def * (1 + effect.multiplier));
             else if (effect.stat === 'maxHp') {
@@ -97,7 +97,7 @@ export class BattleMode {
           break;
         }
         case 'heal-battle-start': {
-          for (const unit of this._state.getFactionUnits('blue')) {
+          for (const unit of this._state.getBattleFactionUnits('blue')) {
             if (effect.amount === 'full') {
               unit.currentHp = unit.stats.hp;
             } else if (typeof effect.amount === 'object') {
@@ -138,7 +138,7 @@ export class BattleMode {
         }
         case 'revive': {
           // Set revive threshold on all blue units — highest threshold wins via max()
-          for (const unit of this._state.getFactionUnits('blue')) {
+          for (const unit of this._state.getBattleFactionUnits('blue')) {
             unit.reviveThreshold = Math.max(unit.reviveThreshold, effect.hpPercent);
             unit.hasRevived = false;
           }
@@ -153,7 +153,7 @@ export class BattleMode {
     // S7-12: Call Crusade — +30% damage for N battles
     const crusadeBonus = consumeCrusadeBattle();
     if (crusadeBonus > 0) {
-      for (const unit of this._state.getFactionUnits('blue')) {
+      for (const unit of this._state.getBattleFactionUnits('blue')) {
         unit.stats.atk = Math.floor(unit.stats.atk * (1 + crusadeBonus));
       }
     }
@@ -161,7 +161,7 @@ export class BattleMode {
     // S7-13: Boudicca's War Cry — +25% ATK to all blue units (first-strike advantage)
     if (warCryActive.value) {
       warCryActive.value = false;
-      for (const unit of this._state.getFactionUnits('blue')) {
+      for (const unit of this._state.getBattleFactionUnits('blue')) {
         unit.stats.atk = Math.floor(unit.stats.atk * (1 + WAR_CRY_DAMAGE_BONUS));
       }
     }
@@ -170,7 +170,7 @@ export class BattleMode {
     const conversions = pendingEnemyConversions.value;
     if (conversions > 0) {
       pendingEnemyConversions.value = 0;
-      const redUnits = this._state.getFactionUnits('red').filter(u => !u.isDying);
+      const redUnits = this._state.getBattleFactionUnits('red').filter(u => !u.isDying);
       for (let i = 0; i < Math.min(conversions, redUnits.length); i++) {
         const weakest = redUnits.reduce((a, b) => a.stats.hp <= b.stats.hp ? a : b);
         Object.assign(weakest, { faction: 'blue' as const });
@@ -196,7 +196,7 @@ export class BattleMode {
     // Scale enemy stats: +5% per threat level
     const statMultiplier = 1 + (threat * 0.05);
     if (statMultiplier > 1) {
-      for (const unit of this._state.getFactionUnits('red')) {
+      for (const unit of this._state.getBattleFactionUnits('red')) {
         unit.stats = { ...unit.stats };
         unit.stats.hp = Math.floor(unit.stats.hp * statMultiplier);
         unit.stats.atk = Math.floor(unit.stats.atk * statMultiplier);

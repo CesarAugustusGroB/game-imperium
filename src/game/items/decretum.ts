@@ -1,6 +1,6 @@
-import type { Faction } from '../core/commander';
-import type { ResourceType } from '../core/commander';
+import type { Faction, ResourceType } from '../core/commander';
 import { isColorMatch } from '../core/commander';
+import type { Collectible, ResourceCost } from '../../types/index';
 
 // ── Rarity ──
 
@@ -50,15 +50,12 @@ export function getDecretumTargeting(effect: DecretumEffect): DecretumTargeting 
 
 // ── Decretum definition ──
 
-export interface Decretum {
-  id: string;
-  name: string;
-  color: Faction;
+export interface Decretum extends Collectible {
   description: string;
   effect: DecretumEffect;
   rarity: DecretumRarity;
   /** Resource cost required to cast this scroll (in addition to discarding it). */
-  castCost?: Partial<Record<ResourceType, number>>;
+  castCost?: ResourceCost;
   /** Secondary effects applied after the primary effect. */
   extraEffects?: DecretumEffect[];
 }

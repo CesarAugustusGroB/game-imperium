@@ -1,5 +1,6 @@
-import type { Faction, ResourceType } from '../core/commander';
+import type { ResourceType } from '../core/commander';
 import type { NodeType } from '../progression/spoke';
+import type { GameEntity, FactionAffiliated, TierLevel, TierTuple } from '../../types/index';
 
 // ── Posture ──
 
@@ -46,17 +47,13 @@ export interface AdvisorTier {
  * Color is UNRESTRICTED — any commander can hire any color advisor.
  * This is a deliberate design break from Doctrines/Decretum.
  */
-export interface Advisor {
-  id: string;
-  name: string;
-  /** Thematic color. Does NOT restrict hiring (UNRESTRICTED color rule). */
-  color: Faction;
+export interface Advisor extends GameEntity, FactionAffiliated {
   /** Current tier: 1, 2, or 3. Levels up with use. */
-  currentTier: 1 | 2 | 3;
+  currentTier: TierLevel;
   /** XP accumulated toward next tier. */
   xp: number;
   /** Fixed 3-tier structure: [Tier I, Tier II, Tier III]. */
-  tiers: [AdvisorTier, AdvisorTier, AdvisorTier];
+  tiers: TierTuple<AdvisorTier>;
 }
 
 // ── XP thresholds ──

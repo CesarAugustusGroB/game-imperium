@@ -1,5 +1,5 @@
 import type { BattleState } from './battle-state';
-import type { BattleUnit, Faction, LieutenantOrder } from './battle-types';
+import type { BattleUnit, BattleFaction, LieutenantOrder } from './battle-types';
 import type { Point } from './hex';
 import { hexToPixel, hexCorners } from './hex';
 import { hexToCol } from './battle-zones';
@@ -297,7 +297,7 @@ export class BattleRenderer {
     const origin = this.state.getGridOrigin(this.w, this.h);
     const size = this.state.config.hexSize;
 
-    for (const faction of ['blue', 'red'] as Faction[]) {
+    for (const faction of ['blue', 'red'] as BattleFaction[]) {
       const star = this.state.stars.get(faction);
       if (!star) continue;
       const center = hexToPixel(star, size, origin);
