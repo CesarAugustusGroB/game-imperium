@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
 import { navigateTo } from '../screens';
+import { Button } from '../components/Button';
 import { selectedCommander } from '../../game/core/game-state';
 import { playSfx } from '../sound/sfx';
 import { provinces, buildInvestment, canAffordCost, getNextInvestmentLevel } from '../../game/province/province-store';
@@ -26,11 +27,11 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
   el.id = 'province-styles';
   el.textContent = `
     .prov-row { transition: all var(--duration-fast) var(--ease-default); cursor: pointer; }
-    .prov-row:hover { border-color: rgba(180, 160, 100, 0.45) !important; background: rgba(40, 35, 60, 0.5) !important; }
+    .prov-row:hover { border-color: var(--color-border-strong) !important; background: rgba(40, 35, 60, 0.5) !important; }
     .prov-row:active { transform: scale(0.99); }
-    .prov-row-selected { border-color: rgba(240, 208, 128, 0.5) !important; background: rgba(50, 42, 12, 0.4) !important; }
+    .prov-row-selected { border-color: var(--color-border-strong) !important; background: rgba(50, 42, 12, 0.4) !important; }
     .inv-slot { transition: all var(--duration-fast) var(--ease-default); }
-    .inv-slot:hover { border-color: rgba(180, 160, 100, 0.4) !important; }
+    .inv-slot:hover { border-color: var(--color-border-strong) !important; }
     .inv-build-btn { transition: all var(--duration-fast) var(--ease-default); cursor: pointer; }
     .inv-build-btn:hover:not(:disabled) {
       border-color: rgba(240, 208, 128, 0.6) !important;
@@ -509,20 +510,13 @@ export function ProvinceScreen() {
           <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 600, color, letterSpacing: '4px', textTransform: 'uppercase', textShadow: `0 2px 8px ${color}30` }}>
             Provinces
           </div>
-          <button
-            class="prov-back-btn"
+          <Button
+            variant="ghost"
             onClick={() => navigateTo('hub')}
-            style={{
-              padding: '8px 16px', borderRadius: 'var(--radius-sm)',
-              background: 'var(--color-bg-tertiary)',
-              border: '1px solid var(--color-border-default)',
-              color: 'var(--color-text-secondary)',
-              fontFamily: 'inherit', fontSize: 'var(--font-size-sm)', fontWeight: 600,
-              letterSpacing: '1px', textTransform: 'uppercase',
-            }}
+            style={{ fontSize: 'var(--font-size-sm)', padding: '8px 16px' }}
           >
             &larr; Hub
-          </button>
+          </Button>
         </div>
         <div style={{ width: '60px', height: '1px', marginBottom: '20px', background: `linear-gradient(90deg, transparent, ${color}60, transparent)` }} />
 

@@ -199,7 +199,7 @@ export function ResourceExchangeModal({ onClose }: Props) {
                   style={{
                     flex: 1, padding: '8px 4px',
                     background: isSel ? 'rgba(60, 50, 20, 0.7)' : 'var(--color-bg-secondary)',
-                    border: `1px solid ${isSel ? 'rgba(240, 208, 128, 0.7)' : 'var(--color-border-default)'}`,
+                    border: `1px solid ${isSel ? 'var(--color-gold-primary)' : 'var(--color-border-default)'}`,
                     borderRadius: 'var(--radius-md)',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
                     fontFamily: 'inherit',
