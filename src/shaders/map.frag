@@ -18,6 +18,12 @@ uniform float uHoveredIndex;
 uniform float uSelectedIndex;
 uniform vec2  uResolution;
 uniform int   uMapMode;  // 0=full, 1=terrain, 2=idmap, 3=normals, 4=heightmap, 5=borders
+uniform float uTerrainGamma;     // default 0.75
+uniform float uTerrainBright;    // default 1.3
+uniform float uLightSoftening;   // default 0.4 (controls lighting * (1-x) + x blend)
+uniform float uBorderStrength;   // default 0.5
+uniform float uHoverBright;      // default 1.35
+uniform float uSelectBright;     // default 1.5
 
 in vec2 vTexCoord;
 out vec4 fragColor;
@@ -47,7 +53,7 @@ void main() {
 
     // 3. Sample terrain and boost brightness
     vec3 terrain = texture(uTerrain, vTexCoord).rgb;
-    terrain = pow(terrain, vec3(0.75)) * 1.3; // gamma lift + brightness boost
+    terrain = pow(terrain, vec3(uTerrainGamma)) * uTerrainBright; // gamma lift + brightness boost
 
     // 4. Blend terrain with political color (additive tint to preserve brightness)
     vec3 nationTint = nationColor.rgb / 255.0;
@@ -58,7 +64,7 @@ void main() {
     vec3 lighting = computeLighting(normalSample, uSunDirection, uAmbientStrength);
 
     // 6. Apply lighting (softened to avoid over-darkening)
-    vec3 lit = politicalBlend * (lighting * 0.6 + 0.4);
+    vec3 lit = politicalBlend * (lighting * (1.0 - uLightSoftening) + uLightSoftening);
 
     // 7. Border detection from ID map
     float border = detectBorder(uIdMap, vTexCoord, uTexelSize);
@@ -69,15 +75,15 @@ void main() {
 
     // Subtle borders (less darkening)
     vec3 borderColor = vec3(0.25, 0.22, 0.18);
-    lit = mix(lit, borderColor, border * 0.5);
+    lit = mix(lit, borderColor, border * uBorderStrength);
 
     // 8. Hover highlight
     float hoveredMask = step(0.5, 1.0 - abs(provinceIndex - uHoveredIndex));
-    lit = mix(lit, lit * 1.35, hoveredMask * 0.4);
+    lit = mix(lit, lit * uHoverBright, hoveredMask * 0.4);
 
     // 9. Selection highlight (brighter glow)
     float selectedMask = step(0.5, 1.0 - abs(provinceIndex - uSelectedIndex));
-    lit = mix(lit, lit * 1.5 + vec3(0.05, 0.04, 0.02), selectedMask * 0.3);
+    lit = mix(lit, lit * uSelectBright + vec3(0.05, 0.04, 0.02), selectedMask * 0.3);
 
     fragColor = vec4(lit, 1.0);
 }

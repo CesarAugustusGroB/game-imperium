@@ -1,6 +1,5 @@
 import type { Camera } from '../camera/camera';
 import type { ArmyManager } from '../game/army';
-import type { GameState } from '../game/state';
 import type { ArmyData } from '../types/index';
 
 export class ArmyRenderer {
@@ -8,7 +7,7 @@ export class ArmyRenderer {
   private canvas: HTMLCanvasElement;
   private camera: Camera;
   private armyManager: ArmyManager;
-  private gameState: GameState;
+  private getNationColor: (ownerId: string) => number[];
   private shieldImage: HTMLCanvasElement | null = null;
   private tintedShields: Map<string, HTMLCanvasElement> = new Map();
   private static readonly CACHE_SIZE = 256; // pre-render resolution for crisp scaling
@@ -18,7 +17,7 @@ export class ArmyRenderer {
     overlayCanvas: HTMLCanvasElement,
     camera: Camera,
     armyManager: ArmyManager,
-    gameState: GameState,
+    getNationColor: (ownerId: string) => number[],
   ) {
     this.canvas = overlayCanvas;
     const ctx = overlayCanvas.getContext('2d');
@@ -26,7 +25,7 @@ export class ArmyRenderer {
     this.ctx = ctx;
     this.camera = camera;
     this.armyManager = armyManager;
-    this.gameState = gameState;
+    this.getNationColor = getNationColor;
     this.loadShieldImage();
   }
 
@@ -91,7 +90,7 @@ export class ArmyRenderer {
 
     for (const [, army] of this.armyManager.armies) {
       const [u, v] = this.armyManager.getArmyPosition(army);
-      const [sx, sy] = this.uvToScreen(u, v);
+      const [sx, sy] = this.camera.uvToScreen(u, v, canvas.width, canvas.height);
 
       if (sx < -50 || sx > canvas.width + 50 || sy < -50 || sy > canvas.height + 50) continue;
 
@@ -110,8 +109,7 @@ export class ArmyRenderer {
 
   private drawArmy(army: ArmyData, sx: number, sy: number): void {
     const { ctx } = this;
-    const nation = this.gameState.getNation(army.owner);
-    const color = nation ? nation.color : [150, 150, 150];
+    const color = this.getNationColor(army.owner);
     const isSelected = army.id === this.selectedArmyId;
     const isMoving = army.targetProvinceIndex !== null;
 
@@ -233,7 +231,7 @@ export class ArmyRenderer {
     const path: number[] = [];
 
     const [cu, cv] = this.armyManager.getArmyPosition(army);
-    const [csx, csy] = this.uvToScreen(cu, cv);
+    const [csx, csy] = this.camera.uvToScreen(cu, cv, this.canvas.width, this.canvas.height);
 
     if (army.targetProvinceIndex !== null) {
       path.push(army.targetProvinceIndex);
@@ -253,7 +251,7 @@ export class ArmyRenderer {
     for (const provinceIdx of path) {
       const center = this.armyManager.topology.centers[String(provinceIdx)];
       if (!center) continue;
-      const [sx2, sy2] = this.uvToScreen(center[0], center[1]);
+      const [sx2, sy2] = this.camera.uvToScreen(center[0], center[1], this.canvas.width, this.canvas.height);
       ctx.lineTo(sx2, sy2);
     }
 
@@ -263,7 +261,7 @@ export class ArmyRenderer {
       const lastIdx = path[path.length - 1];
       const lastCenter = this.armyManager.topology.centers[String(lastIdx)];
       if (lastCenter) {
-        const [dx, dy] = this.uvToScreen(lastCenter[0], lastCenter[1]);
+        const [dx, dy] = this.camera.uvToScreen(lastCenter[0], lastCenter[1], this.canvas.width, this.canvas.height);
         ctx.beginPath();
         ctx.arc(dx, dy, 6, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
@@ -312,24 +310,6 @@ export class ArmyRenderer {
     ctx.restore();
   }
 
-  private uvToScreen(u: number, v: number): [number, number] {
-    const flippedV = 1.0 - v;
-
-    const cam = this.camera;
-    const sx = cam.zoom / cam.aspect;
-    const sy = cam.zoom;
-    const tx = -(cam.x * 2 - 1) * sx;
-    const ty = -(cam.y * 2 - 1) * sy;
-
-    const ndcX = (u * 2 - 1) * sx + tx;
-    const ndcY = (flippedV * 2 - 1) * sy + ty;
-
-    const screenX = (ndcX + 1) * 0.5 * this.canvas.width;
-    const screenY = (1 - ndcY) * 0.5 * this.canvas.height;
-
-    return [screenX, screenY];
-  }
-
   hitTest(screenX: number, screenY: number): number | null {
     const hitRadius = 25;
     let closestId: number | null = null;
@@ -337,7 +317,7 @@ export class ArmyRenderer {
 
     for (const [, army] of this.armyManager.armies) {
       const [u, v] = this.armyManager.getArmyPosition(army);
-      const [sx, sy] = this.uvToScreen(u, v);
+      const [sx, sy] = this.camera.uvToScreen(u, v, this.canvas.width, this.canvas.height);
       const dx = screenX - sx;
       const dy = screenY - sy;
       const dist = Math.sqrt(dx * dx + dy * dy);
