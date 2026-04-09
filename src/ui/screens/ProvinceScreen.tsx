@@ -529,8 +529,6 @@ function ProvinceDetail({ province }: { province: Province }) {
               </div>
             </div>
           </div>
-        ) : showGovernorPicker.value ? (
-          <GovernorPicker provinceId={province.id} />
         ) : (
           <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
             No governor assigned
@@ -650,6 +648,57 @@ export function ProvinceScreen() {
           </div>
         )}
       </div>
+
+      {/* ── Governor Picker Modal ── */}
+      {showGovernorPicker.value && selected && (
+        <div
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.65)',
+            zIndex: 200,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+          onClick={() => { showGovernorPicker.value = false; }}
+        >
+          <div
+            style={{
+              background: 'var(--color-bg-primary)',
+              border: '1px solid var(--color-border-default)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '20px',
+              width: 'min(560px, 92vw)',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+            onClick={(e: MouseEvent) => e.stopPropagation()}
+          >
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              marginBottom: '14px',
+            }}>
+              <span style={{
+                fontSize: 'var(--font-size-sm)', color: 'var(--color-text-primary)',
+                letterSpacing: '1.5px', textTransform: 'uppercase',
+              }}>
+                Hire Governor for {selected.name}
+              </span>
+              <button
+                onClick={() => { showGovernorPicker.value = false; }}
+                style={{
+                  background: 'transparent', border: '1px solid var(--color-border-default)',
+                  borderRadius: '3px', color: 'var(--color-text-secondary)',
+                  fontSize: 'var(--font-size-xs)', letterSpacing: '1px', padding: '3px 8px',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+            <GovernorPicker provinceId={selected.id} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
