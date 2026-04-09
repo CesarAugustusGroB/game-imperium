@@ -636,7 +636,7 @@ export function ProvinceScreen() {
             </div>
 
             {/* Right: Detail */}
-            <div style={{ flex: '1 1 400px', minWidth: '0' }}>
+            <div style={{ flex: '1 1 400px', minWidth: '0', maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
               {selected ? (
                 <ProvinceDetail province={selected} />
               ) : (
