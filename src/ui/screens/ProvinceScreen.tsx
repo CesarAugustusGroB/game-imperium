@@ -21,6 +21,7 @@ import { nextInvestmentDiscount } from '../../game/progression/strategic-store';
 import { ProvinceMapView } from './ProvinceMapView';
 import { PANEL, PANEL_TITLE, ROMAN, formatCost } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
+import { Tooltip } from '../components/Tooltip';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('province-styles')) {
@@ -147,7 +148,52 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
     }
   }
 
+  const incomeBonus = currentEffect?.incomeBonus ?? {};
+  const unrestChange = currentEffect?.unrestChange ?? 0;
+
+  const investmentTooltip = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)' }}>
+        {data.name}{currentLevel > 0 ? ` Lv.${currentLevel}` : ''}
+      </div>
+      {currentLevel === 0 ? (
+        <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+          {data.flavour}
+        </div>
+      ) : (
+        <div>
+          <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+            {currentEffect!.description}
+          </div>
+          {(Object.entries(incomeBonus) as [ResourceType, number][]).map(([res, amt]) => (
+            amt > 0 ? (
+              <div key={res} style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
+                +{amt} {RESOURCE_INFO[res].icon} per spoke
+              </div>
+            ) : null
+          ))}
+          {unrestChange < 0 && (
+            <div style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
+              {unrestChange} unrest per spoke
+            </div>
+          )}
+        </div>
+      )}
+      {nextLevel > 0 && cost && (
+        <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
+          Upgrade to Lv.{nextLevel}: {formatCost(cost)}
+        </div>
+      )}
+      {currentLevel === 0 && cost && (
+        <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
+          Build: {formatCost(cost)}
+        </div>
+      )}
+    </div>
+  );
+
   return (
+    <Tooltip content={investmentTooltip} variant="rich" position="above">
     <div class={`inv-slot${buildingSlotType.value === type ? ' inv-slot-building' : ''}`} style={{
       background: 'var(--color-bg-primary)',
       border: `1px solid ${currentLevel > 0 ? `${fColor}30` : 'rgba(180, 160, 100, 0.08)'}`,
@@ -223,6 +269,7 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
         </div>
       )}
     </div>
+    </Tooltip>
   );
 }
 
@@ -233,40 +280,70 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
   const unrestMod = getUnrestModifier(province, traits);
   const invCount = province.investments.length;
 
-  return (
-    <div
-      class={`prov-row${selected ? ' prov-row-selected' : ''}`}
-      onClick={() => { selectedProvinceId.value = province.id; }}
-      style={{
-        padding: '10px 12px', borderRadius: 'var(--radius-md)',
-        background: selected ? 'rgba(50, 42, 12, 0.4)' : 'var(--color-bg-primary)',
-        border: `1px solid ${selected ? 'rgba(240, 208, 128, 0.5)' : 'rgba(180, 160, 100, 0.08)'}`,
-        display: 'flex', flexDirection: 'column', gap: '6px',
-      }}
-    >
-      {/* Row header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'rgba(240, 220, 160, 0.85)', letterSpacing: '0.5px' }}>
-          {province.name}
-        </div>
-        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-          {invCount}/6
-        </div>
-      </div>
+  const unrestColor =
+    province.unrest < 40
+      ? 'var(--color-success)'
+      : province.unrest < 70
+      ? 'var(--color-warning)'
+      : 'var(--color-danger)';
 
-      {/* Stats row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-          Pop {province.population}
-        </div>
-        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-          {formatIncome(income)}
-        </div>
-        <div style={{ fontSize: 'var(--font-size-xs)', color: 'rgba(200, 160, 100, 0.45)' }}>
-          -{expenses}g
-        </div>
-        <UnrestBar unrest={province.unrest} modifier={unrestMod} />
+  const rowTooltip = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+      <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)', marginBottom: '2px' }}>
+        {province.name}
       </div>
+      <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
+        Population: {province.population}
+      </div>
+      <div style={{ color: unrestColor, fontSize: 'var(--font-size-sm)' }}>
+        Unrest: {province.unrest}/100
+      </div>
+      {invCount > 0 && (
+        <div style={{ marginTop: '4px', color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
+          {province.investments.map(inv => `${INVESTMENT_DATA[inv.type].name} Lv.${inv.level}`).join(', ')}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div style={{ display: 'contents' }}>
+      <Tooltip content={rowTooltip} variant="rich" position="right">
+        <div
+          class={`prov-row${selected ? ' prov-row-selected' : ''}`}
+          onClick={() => { selectedProvinceId.value = province.id; }}
+          style={{
+            padding: '10px 12px', borderRadius: 'var(--radius-md)',
+            background: selected ? 'rgba(50, 42, 12, 0.4)' : 'var(--color-bg-primary)',
+            border: `1px solid ${selected ? 'rgba(240, 208, 128, 0.5)' : 'rgba(180, 160, 100, 0.08)'}`,
+            display: 'flex', flexDirection: 'column', gap: '6px',
+          }}
+        >
+          {/* Row header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'rgba(240, 220, 160, 0.85)', letterSpacing: '0.5px' }}>
+              {province.name}
+            </div>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+              {invCount}/6
+            </div>
+          </div>
+
+          {/* Stats row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+              Pop {province.population}
+            </div>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+              {formatIncome(income)}
+            </div>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'rgba(200, 160, 100, 0.45)' }}>
+              -{expenses}g
+            </div>
+            <UnrestBar unrest={province.unrest} modifier={unrestMod} />
+          </div>
+        </div>
+      </Tooltip>
     </div>
   );
 }
