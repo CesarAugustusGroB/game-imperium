@@ -9,10 +9,18 @@ import { isDoctrineEquippable, getDoctrineSellPrice } from '../../game/items/doc
 import { FACTION_COLORS } from '../../game/core/commander';
 import { DecretumCard } from '../components/DecretumRenderer';
 import { councilSlots, startSpokeFromCouncil, plannedSpoke, tierUpNotices } from '../../game/council/council-store';
-import { getCurrentTier } from '../../game/council/advisor';
 import { ResourceExchangeModal } from '../components/ResourceExchangeModal';
 import { provinces } from '../../game/province/province-store';
-import { PANEL, PANEL_TITLE, ROMAN } from '../ui-constants';
+import { PANEL, PANEL_TITLE } from '../ui-constants';
+import { Portrait } from '../components/Portrait';
+import type { NodeType } from '../../game/progression/spoke';
+
+const SPOKE_NODE_STYLES: Record<NodeType, { color: string; icon: string }> = {
+  battle: { color: '#e06040', icon: '\u2694\uFE0F' },
+  rest:   { color: '#40b868', icon: '\uD83C\uDFD5\uFE0F' },
+  event:  { color: '#d4a843', icon: '\uD83D\uDCDC' },
+  boss:   { color: '#c05050', icon: '\uD83D\uDC80' },
+};
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
@@ -151,111 +159,112 @@ export function HubScreen() {
         </div>
       )}
 
-      {/* Two-column layout */}
-      <div class="hub-container" style={{
-        display: 'flex', flexDirection: 'row', flexWrap: 'wrap',
-        alignItems: 'flex-start', gap: '16px',
-        width: 'min(1000px, 92vw)',
-      }}>
-
-        {/* ── LEFT: Council command panel ── */}
-        <div style={{
-          flex: '1 1 340px',
-          background: 'var(--color-bg-primary)',
-          backdropFilter: 'blur(var(--blur-panel))', WebkitBackdropFilter: 'blur(var(--blur-panel))',
-          borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)',
-          padding: '24px', boxShadow: 'var(--shadow-lg)',
-        }}>
-          {/* Commander + spokes */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      {/* Hub title */}
+      <div style={{ width: 'min(680px, 92vw)', marginBottom: '4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 600, color, letterSpacing: '4px', textTransform: 'uppercase', textShadow: `0 2px 8px ${color}30` }}>
+            Hub
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', letterSpacing: '2px', textTransform: 'uppercase' }}>
               {commander?.name ?? 'No Commander'}
             </div>
             {completedSpokes.value > 0 && (
               <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', letterSpacing: '1px' }}>
-                {completedSpokes.value} spoke{completedSpokes.value !== 1 ? 's' : ''} completed
+                {completedSpokes.value} spoke{completedSpokes.value !== 1 ? 's' : ''}
+              </div>
+            )}
+          </div>
+        </div>
+        <div style={{ width: '60px', height: '1px', marginBottom: '12px', background: `linear-gradient(90deg, transparent, ${color}60, transparent)` }} />
+      </div>
+
+      {/* Two-column layout */}
+      <div class="hub-container" style={{
+        display: 'flex', flexDirection: 'row', flexWrap: 'wrap',
+        alignItems: 'flex-start', gap: '16px',
+        width: 'min(680px, 92vw)',
+      }}>
+
+        {/* ── LEFT: Council + Embark ── */}
+        <div style={{ flex: '1 1 0', minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+          {/* Council panel */}
+          <div style={{ ...PANEL, animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <div style={{ ...PANEL_TITLE, marginBottom: 0 }}>
+                Council <span style={{ color: 'var(--color-text-muted)' }}>{seatedCount}/3</span>
+              </div>
+              <button class="hub-panel-btn" onClick={() => navigateTo('council')} style={{ background: 'transparent', border: '1px solid var(--color-border-subtle)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                Manage →
+              </button>
+            </div>
+
+            {/* Advisor portraits */}
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '10px' }}>
+              {slots.map((advisor, i) => {
+                if (!advisor) {
+                  return (
+                    <Portrait key={i} alt="Empty slot" size="small" style={{ opacity: 0.35 }} />
+                  );
+                }
+                const fColor = FACTION_COLORS[advisor.color];
+                return (
+                  <Portrait
+                    key={advisor.id}
+                    alt={advisor.name}
+                    size="small"
+                    factionColor={fColor}
+                    tier={advisor.currentTier as 1 | 2 | 3}
+                  />
+                );
+              })}
+            </div>
+
+            {/* Spoke preview chain */}
+            {spokePreview ? (
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '6px' }}>
+                  {spokePreview.nodes.map((node, idx) => {
+                    const ns = SPOKE_NODE_STYLES[node.type];
+                    return (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                        <div title={node.type} style={{
+                          width: '18px', height: '18px', borderRadius: '50%',
+                          background: `${ns.color}20`, border: `1px solid ${ns.color}60`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '10px',
+                        }}>
+                          {ns.icon}
+                        </div>
+                        {idx < spokePreview!.nodes.length - 1 && (
+                          <div style={{ width: '4px', height: '1px', background: 'var(--color-border-default)' }} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, letterSpacing: '0.8px', textAlign: 'center', color: spokePreview.posture === 'attacking' ? '#e07050' : '#60a8d0' }}>
+                  {spokePreview.posture === 'attacking' ? '\u2694 Attacking' : '\uD83D\uDEE1 Defending'} \u00b7 {spokePreview.nodes.length} nodes
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic', textAlign: 'center' }}>
+                No advisors seated
               </div>
             )}
           </div>
 
-          <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 600, color, letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '4px', textShadow: `0 2px 8px ${color}30` }}>
-            Hub
-          </div>
-          <div style={{ width: '60px', height: '1px', marginBottom: '20px', background: `linear-gradient(90deg, transparent, ${color}60, transparent)` }} />
-
-          <div style={PANEL_TITLE}>Council ({seatedCount}/3)</div>
-
-          {/* Advisor slots */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
-            {slots.map((advisor, i) => {
-              if (!advisor) {
-                return (
-                  <div key={i} style={{
-                    flex: '1 1 80px', minHeight: '52px',
-                    border: '2px dashed var(--color-border-subtle)', borderRadius: 'var(--radius-md)',
-                    background: 'var(--color-bg-primary)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 'var(--font-size-xl)', color: 'var(--color-border-subtle)',
-                  }}>+</div>
-                );
-              }
-              const fColor = FACTION_COLORS[advisor.color];
-              const tier = advisor.currentTier;
-              const tierData = getCurrentTier(advisor);
-              const shortDesc = tierData.description.split(' ').slice(0, 5).join(' ');
-              return (
-                <div key={advisor.id} style={{
-                  flex: '1 1 80px',
-                  background: 'var(--color-bg-primary)',
-                  border: '1px solid var(--color-border-subtle)',
-                  borderTop: `3px solid ${fColor}`,
-                  borderRadius: 'var(--radius-md)', padding: '8px',
-                  display: 'flex', flexDirection: 'column', gap: '4px',
-                }}>
-                  <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: fColor, letterSpacing: '0.8px', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {advisor.name}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'rgba(50,42,12,0.8)', border: '1px solid rgba(240,208,128,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '7px', fontWeight: 700, color: 'var(--color-gold-primary)', flexShrink: 0 }}>
-                      {ROMAN[tier as 1 | 2 | 3]}
-                    </div>
-                    <div style={{ fontSize: '8px', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {shortDesc}…
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Posture / hint */}
-          {spokePreview ? (
-            <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, letterSpacing: '0.8px', color: spokePreview.posture === 'attacking' ? '#e07050' : '#60a8d0', marginBottom: '16px' }}>
-              {spokePreview.posture === 'attacking' ? '⚔ Attacking Campaign' : '🛡 Defending Campaign'}
-            </div>
-          ) : (
-            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic', marginBottom: '16px' }}>
-              No advisors seated — visit Council to assign.
-            </div>
-          )}
-
-          {/* Buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* Embark */}
+          <div style={{ ...PANEL, animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0.05s' }}>
             <button class="hub-btn hub-btn-primary" disabled={seatedCount === 0} onClick={handleEmbark} style={{ width: '100%' }}>
               Embark
-            </button>
-            <button
-              class="hub-panel-btn"
-              onClick={() => navigateTo('council')}
-              style={{ padding: '10px 16px', borderRadius: 'var(--radius-sm)', background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border-default)', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}
-            >
-              Manage Council
             </button>
           </div>
         </div>
 
         {/* ── RIGHT: Sidebar panels ── */}
-        <div style={{ flex: '0 1 300px', minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ flex: '1 1 0', minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
           {/* Doctrines Summary */}
           <div style={{ ...PANEL, animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0s' }}>
