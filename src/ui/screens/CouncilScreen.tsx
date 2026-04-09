@@ -16,6 +16,7 @@ import {
 } from '../../game/council/council-store';
 import { ROMAN } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
+import { Tooltip } from '../components/Tooltip';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('council-screen-styles')) {
@@ -207,6 +208,30 @@ export function CouncilScreen() {
             const xpToNext = getXpToNextTier(advisor);
             const progress = xpProgress(advisor);
             const tierData = getCurrentTier(advisor);
+            const nextTierData = advisor.currentTier < 3 ? advisor.tiers[advisor.currentTier as 1 | 2] : null;
+
+            const advisorTooltip = (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ fontWeight: 700, color: fColor, marginBottom: '2px' }}>
+                  {advisor.name}
+                  <span style={{ color: 'var(--color-text-muted)', fontWeight: 400, marginLeft: '6px' }}>
+                    Tier {advisor.currentTier === 1 ? 'I' : advisor.currentTier === 2 ? 'II' : 'III'}
+                  </span>
+                </div>
+                <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: '1.4' }}>
+                  {tierData.description}
+                </div>
+                <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
+                  XP: {advisor.xp} / {advisor.currentTier === 1 ? XP_TIER_2 : XP_TIER_3}
+                  {xpToNext !== null ? ` (${xpToNext} to Tier ${advisor.currentTier + 1})` : ' — Max Tier'}
+                </div>
+                {nextTierData && (
+                  <div style={{ marginTop: '2px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', fontStyle: 'italic' }}>
+                    Next: {nextTierData.description}
+                  </div>
+                )}
+              </div>
+            );
 
             return (
               <div
@@ -244,14 +269,16 @@ export function CouncilScreen() {
                 </button>
 
                 {/* Portrait */}
-                <Portrait
-                  alt={advisor.name}
-                  size="small"
-                  factionColor={fColor}
-                  tier={advisor.currentTier as 1 | 2 | 3}
-                  tierUpAvailable={advisor.currentTier < 3 && advisor.xp >= (advisor.currentTier === 1 ? XP_TIER_2 : XP_TIER_3)}
-                  style={{ margin: '0 auto var(--space-xs)' }}
-                />
+                <Tooltip content={advisorTooltip} variant="rich" position="right">
+                  <Portrait
+                    alt={advisor.name}
+                    size="small"
+                    factionColor={fColor}
+                    tier={advisor.currentTier as 1 | 2 | 3}
+                    tierUpAvailable={advisor.currentTier < 3 && advisor.xp >= (advisor.currentTier === 1 ? XP_TIER_2 : XP_TIER_3)}
+                    style={{ margin: '0 auto var(--space-xs)' }}
+                  />
+                </Tooltip>
 
                 {/* Advisor name */}
                 <div style={{
