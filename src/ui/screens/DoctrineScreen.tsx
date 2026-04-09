@@ -197,81 +197,6 @@ export function DoctrineScreen() {
           ))}
         </div>
 
-        {/* ── Equip picker (shown when a slot is selected via click) ── */}
-        {equipTargetSlot.value !== null && (
-          <div style={{
-            width: '100%', marginBottom: '20px',
-            background: 'var(--color-bg-tertiary)',
-            border: '1px solid var(--color-border-default)',
-            borderRadius: 'var(--radius-md)',
-            padding: '14px',
-          }}>
-            <div style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              marginBottom: '10px',
-            }}>
-              <span style={{
-                fontSize: 'var(--font-size-sm)', color: 'var(--color-text-primary)',
-                letterSpacing: '1.5px', textTransform: 'uppercase',
-              }}>
-                Choose for Slot #{(equipTargetSlot.value ?? 0) + 1}
-              </span>
-              <button
-                onClick={() => { equipTargetSlot.value = null; }}
-                style={{
-                  background: 'transparent', border: '1px solid var(--color-border-default)',
-                  borderRadius: '3px', color: 'var(--color-text-secondary)',
-                  fontSize: 'var(--font-size-xs)', letterSpacing: '1px', padding: '3px 8px',
-                  cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-
-            {equippable.length === 0 ? (
-              <div style={{
-                textAlign: 'center', padding: '16px',
-                color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)',
-                letterSpacing: '1px',
-              }}>
-                No equippable doctrines in collection
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                {equippable.map(d => (
-                  <div
-                    key={d.id}
-                    class="doctrine-coll-card"
-                    onClick={() => handleEquipToSlot(equipTargetSlot.value!, d)}
-                    style={{
-                      width: '120px', padding: '10px',
-                      background: 'var(--color-bg-secondary)',
-                      border: '1px solid var(--color-border-default)',
-                      borderTop: `3px solid ${FACTION_COLORS[d.color]}`,
-                      borderRadius: '5px',
-                    }}
-                  >
-                    <div style={{
-                      fontSize: 'var(--font-size-xs)', fontWeight: 700, color: FACTION_COLORS[d.color],
-                      letterSpacing: '0.8px', textTransform: 'uppercase',
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      marginBottom: '4px',
-                    }}>
-                      {d.name}
-                    </div>
-                    <div style={{
-                      fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: '1.4',
-                    }}>
-                      {d.levels[d.currentLevel - 1].description}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* ── Collection ── */}
         <div style={{
           width: '100%',
@@ -375,6 +300,97 @@ export function DoctrineScreen() {
           Back to Hub
         </button>
       </div>
+
+      {/* ── Doctrine Picker Modal ── */}
+      {equipTargetSlot.value !== null && (
+        <div
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.65)',
+            zIndex: 200,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+          onClick={() => { equipTargetSlot.value = null; }}
+        >
+          <div
+            style={{
+              background: 'var(--color-bg-primary)',
+              border: '1px solid var(--color-border-default)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '20px',
+              width: 'min(560px, 92vw)',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+            onClick={(e: MouseEvent) => e.stopPropagation()}
+          >
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              marginBottom: '14px',
+            }}>
+              <span style={{
+                fontSize: 'var(--font-size-sm)', color: 'var(--color-text-primary)',
+                letterSpacing: '1.5px', textTransform: 'uppercase',
+              }}>
+                Choose for Slot #{(equipTargetSlot.value ?? 0) + 1}
+              </span>
+              <button
+                onClick={() => { equipTargetSlot.value = null; }}
+                style={{
+                  background: 'transparent', border: '1px solid var(--color-border-default)',
+                  borderRadius: '3px', color: 'var(--color-text-secondary)',
+                  fontSize: 'var(--font-size-xs)', letterSpacing: '1px', padding: '3px 8px',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+
+            {equippable.length === 0 ? (
+              <div style={{
+                textAlign: 'center', padding: '16px',
+                color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)',
+                letterSpacing: '1px',
+              }}>
+                No equippable doctrines in collection
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                {equippable.map(d => (
+                  <div
+                    key={d.id}
+                    class="doctrine-coll-card"
+                    onClick={() => handleEquipToSlot(equipTargetSlot.value!, d)}
+                    style={{
+                      width: '120px', padding: '10px',
+                      background: 'var(--color-bg-secondary)',
+                      border: '1px solid var(--color-border-default)',
+                      borderTop: `3px solid ${FACTION_COLORS[d.color]}`,
+                      borderRadius: '5px',
+                    }}
+                  >
+                    <div style={{
+                      fontSize: 'var(--font-size-xs)', fontWeight: 700, color: FACTION_COLORS[d.color],
+                      letterSpacing: '0.8px', textTransform: 'uppercase',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      marginBottom: '4px',
+                    }}>
+                      {d.name}
+                    </div>
+                    <div style={{
+                      fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: '1.4',
+                    }}>
+                      {d.levels[d.currentLevel - 1].description}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

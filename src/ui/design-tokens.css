@@ -54,4 +54,8 @@
 
   /* === Blur === */
   --blur-panel: 12px;
+
+  /* Panel slot heights */
+  --slot-height-council: 160px;
+  --slot-height-spoke-preview: 72px;
 }
