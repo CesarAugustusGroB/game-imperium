@@ -1,5 +1,6 @@
 import type { EventChoice } from '../../game/events/event-types';
 import type { ResourceType } from '../../game/core/commander';
+import { RESOURCE_INFO } from '../../game/core/commander';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('choice-btn-styles')) {
@@ -17,14 +18,6 @@ if (typeof document !== 'undefined' && !document.getElementById('choice-btn-styl
   `;
   document.head.appendChild(el);
 }
-
-// ── Resource icon map ──
-const RESOURCE_ICONS: Record<ResourceType, string> = {
-  gold: '💰',
-  faith: '⭐',
-  influence: '👑',
-  momentum: '🔥',
-};
 
 // ── Props ──
 
@@ -71,7 +64,7 @@ function EffectPill({ resource, amount }: { resource: ResourceType; amount: numb
 
   return (
     <span style={pillStyle}>
-      <span>{RESOURCE_ICONS[resource]}</span>
+      <span>{RESOURCE_INFO[resource].icon}</span>
       <span>{positive ? `+${amount}` : `${amount}`}</span>
     </span>
   );
@@ -159,7 +152,7 @@ export function ChoiceButton({
         <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)', marginTop: '2px' }}>
           {(Object.keys(choice.requiresResource) as ResourceType[])
             .filter(r => (choice.requiresResource![r] ?? 0) > (currentResources?.[r] ?? 0))
-            .map(r => `Requires ${choice.requiresResource![r]} ${RESOURCE_ICONS[r]}`)
+            .map(r => `Requires ${choice.requiresResource![r]} ${RESOURCE_INFO[r].icon}`)
             .join('  ')}
         </div>
       )}

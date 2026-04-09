@@ -28,6 +28,9 @@ if (typeof document !== 'undefined' && !document.getElementById('notif-styles'))
 
 function NotifCard({ notif }: { notif: Notification }): JSX.Element {
   const accentColor = notif.color ?? 'var(--color-gold-primary)';
+  const borderColor = notif.color
+    ? `${notif.color}4d`   // hex color + '4d' = ~30% opacity in hex
+    : 'var(--color-border-subtle)';
 
   return (
     <div
@@ -37,7 +40,7 @@ function NotifCard({ notif }: { notif: Notification }): JSX.Element {
         background: 'var(--color-bg-primary)',
         backdropFilter: 'blur(var(--blur-panel))',
         WebkitBackdropFilter: 'blur(var(--blur-panel))',
-        border: `1px solid color-mix(in srgb, ${accentColor} 30%, transparent)`,
+        border: `1px solid ${borderColor}`,
         borderRadius: 'var(--radius-sm)',
         padding: '10px 12px',
         display: 'flex',

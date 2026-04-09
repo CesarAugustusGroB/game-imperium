@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import type { JSX } from 'preact/jsx-runtime';
 
 // ── CSS injection (once) ──
@@ -60,16 +60,25 @@ export function Portrait({
 }: PortraitProps) {
   const [imgFailed, setImgFailed] = useState(false);
 
+  useEffect(() => {
+    setImgFailed(false);
+  }, [src]);
+
   const { width, height } = SIZE_MAP[size];
   const showPlaceholder = !src || imgFailed;
   const borderColor = factionColor ?? 'var(--color-border-default)';
-  const iconFontSize = `${Math.round(parseInt(height) * 0.4)}px`;
+  const iconFontSize = `${Math.min(Math.round(parseInt(height) * 0.4), 48)}px`;
 
   const containerStyle: JSX.CSSProperties = {
+    // Layout (caller may override via style prop)
     position: 'relative',
     width,
     height,
     overflow: 'hidden',
+    flexShrink: 0,
+    cursor: onClick ? 'pointer' : 'default',
+    ...style,
+    // Visual (always enforced — not overridable by callers)
     border: showPlaceholder
       ? `2px dashed var(--color-border-subtle)`
       : `2px solid ${borderColor}`,
@@ -77,10 +86,7 @@ export function Portrait({
     boxShadow: selected
       ? `0 0 0 3px var(--color-gold-primary), 0 0 16px rgba(240, 208, 128, 0.3)`
       : undefined,
-    cursor: onClick ? 'pointer' : 'default',
     transition: `box-shadow var(--duration-normal) var(--ease-default), border-color var(--duration-normal) var(--ease-default)`,
-    flexShrink: 0,
-    ...style,
   };
 
   const placeholderStyle: JSX.CSSProperties = {

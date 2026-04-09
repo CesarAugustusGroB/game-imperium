@@ -782,13 +782,14 @@ export function NodeMapScreen() {
             <div
               style={{
                 position: 'fixed',
-                bottom: 'calc(50% - 280px)',
+                top: 'calc(50% + 240px)',   // below the ~480px tall modal card
                 left: '50%',
                 transform: 'translateX(-50%)',
-                zIndex: '210',
+                zIndex: 210,
                 width: '100%',
                 maxWidth: '520px',
                 padding: '0 16px',
+                boxSizing: 'border-box' as const,
               }}
             >
               <button
