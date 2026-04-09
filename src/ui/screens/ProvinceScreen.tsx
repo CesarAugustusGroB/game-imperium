@@ -18,7 +18,6 @@ import {
   hireGovernor, dismissGovernor,
 } from '../../game/province/governor-store';
 import { nextInvestmentDiscount } from '../../game/progression/strategic-store';
-import { ProvinceMapView } from './ProvinceMapView';
 import { PANEL, PANEL_TITLE, ROMAN, formatCost } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
 import { Tooltip } from '../components/Tooltip';
@@ -593,16 +592,6 @@ export function ProvinceScreen() {
           </Button>
         </div>
         <div style={{ width: '60px', height: '1px', marginBottom: '20px', background: `linear-gradient(90deg, transparent, ${color}60, transparent)` }} />
-
-        {/* Map view */}
-        {allProvinces.length > 0 && (
-          <div style={{ marginBottom: '16px' }}>
-            <ProvinceMapView
-              selectedId={selected?.id ?? null}
-              onSelect={(id) => { selectedProvinceId.value = id; }}
-            />
-          </div>
-        )}
 
         {allProvinces.length === 0 ? (
           /* Empty state */
