@@ -1,5 +1,5 @@
 import type { GameEvent } from '../../game/events/event-types';
-import type { ResourceType } from '../../game/core/commander';
+import type { Faction, ResourceType } from '../../game/core/commander';
 import { FACTION_COLORS } from '../../game/core/commander';
 import { ChoiceButton } from './ChoiceButton';
 
@@ -19,6 +19,16 @@ if (typeof document !== 'undefined' && !document.getElementById('event-modal-sty
   document.head.appendChild(el);
 }
 
+// ── Faction symbol map ──
+const FACTION_SYMBOLS: Record<string, string> = {
+  gold:    '✝',
+  red:     '⚔',
+  blue:    '🕊',
+  purple:  '💎',
+  white:   '⚖',
+  neutral: '📜',
+};
+
 // ── Banner gradient helpers ──
 function getBannerGradient(event: GameEvent): string {
   if (event.color === 'neutral') {
@@ -30,6 +40,12 @@ function getBannerGradient(event: GameEvent): string {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `linear-gradient(135deg, rgba(${r},${g},${b},0.45), rgba(${r},${g},${b},0.2))`;
+}
+
+function getFactionColor(event: GameEvent): string {
+  return event.color !== 'neutral'
+    ? FACTION_COLORS[event.color as Faction]
+    : 'var(--color-border-default)';
 }
 
 // ── Props ──
@@ -70,7 +86,10 @@ export function EventModal({
           maxWidth: '520px',
           width: '100%',
           background: 'var(--color-bg-primary)',
-          border: '1px solid var(--color-border-default)',
+          borderTop: `3px solid ${getFactionColor(event)}`,
+          borderRight: '1px solid var(--color-border-default)',
+          borderBottom: '1px solid var(--color-border-default)',
+          borderLeft: '1px solid var(--color-border-default)',
           borderRadius: 'var(--radius-md)',
           overflow: 'hidden',
           boxShadow: 'var(--shadow-lg)',
@@ -87,21 +106,34 @@ export function EventModal({
             justifyContent: 'center',
           }}
         >
-          {/* Tier badge */}
-          <span
-            style={{
-              padding: '6px 14px',
-              border: '2px solid var(--color-gold-primary)',
-              borderRadius: 'var(--radius-sm)',
-              color: 'var(--color-gold-primary)',
-              fontSize: 'var(--font-size-lg)',
-              fontWeight: '700',
-              letterSpacing: '0.08em',
-              background: 'rgba(0,0,0,0.4)',
-            }}
-          >
-            {`T${event.tier}`}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            {/* Faction symbol */}
+            <span
+              style={{
+                fontSize: '36px',
+                opacity: 0.55,
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
+                color: event.color !== 'neutral' ? FACTION_COLORS[event.color as Faction] : '#fff',
+              }}
+            >
+              {FACTION_SYMBOLS[event.color] ?? FACTION_SYMBOLS['neutral']}
+            </span>
+            {/* Tier badge */}
+            <span
+              style={{
+                padding: '6px 14px',
+                border: '2px solid var(--color-gold-primary)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--color-gold-primary)',
+                fontSize: 'var(--font-size-lg)',
+                fontWeight: '700',
+                letterSpacing: '0.08em',
+                background: 'rgba(0,0,0,0.4)',
+              }}
+            >
+              {`T${event.tier}`}
+            </span>
+          </div>
         </div>
 
         {/* Content area */}
