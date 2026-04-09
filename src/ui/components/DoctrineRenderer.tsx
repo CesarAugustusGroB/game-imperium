@@ -1,7 +1,8 @@
-import type { Doctrine } from '../../game/items/doctrine';
+import type { Doctrine, DoctrineEffect } from '../../game/items/doctrine';
 import { getCurrentEffects, getUpgradeCost, getDoctrineSellPrice } from '../../game/items/doctrine';
-import { FACTION_COLORS } from '../../game/core/commander';
+import { FACTION_COLORS, RESOURCE_INFO } from '../../game/core/commander';
 import type { ResourceType } from '../../game/core/commander';
+import { Tooltip } from './Tooltip';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('doctrine-slot-styles')) {
@@ -115,6 +116,47 @@ function formatCost(cost: Partial<Record<ResourceType, number>>): string {
     .join(', ');
 }
 
+function formatDoctrineEffect(effect: DoctrineEffect): string {
+  switch (effect.type) {
+    case 'stat-modifier': {
+      const pct = Math.round((effect.multiplier - 1) * 100);
+      return `${pct >= 0 ? '+' : ''}${pct}% ${effect.stat} modifier`;
+    }
+    case 'resource-per-spoke':
+      return `+${effect.amount} ${RESOURCE_LABELS[effect.resource]} per spoke`;
+    case 'heal-on-kill':
+      return `Heal ${effect.amount} HP on kill`;
+    case 'revive':
+      return `Revive at ${Math.round(effect.hpPercent * 100)}% HP`;
+    case 'heal-battle-start':
+      if (effect.amount === 'full') return 'Full heal at battle start';
+      if (typeof effect.amount === 'object') return `Heal ${Math.round(effect.amount.percent * 100)}% HP at battle start`;
+      return `Heal ${effect.amount} HP at battle start`;
+    case 'free-units':
+      return `${effect.count} free ${effect.unitRole} unit${effect.count > 1 ? 's' : ''}`;
+    case 'extra-event-choices':
+      return `+${effect.count} event choice${effect.count > 1 ? 's' : ''}`;
+    case 'shop-discount':
+      return `${effect.percent}% shop discount`;
+    case 'income-modifier': {
+      const pct = Math.round((effect.multiplier - 1) * 100);
+      return `${pct >= 0 ? '+' : ''}${pct}% ${RESOURCE_LABELS[effect.resource]} income`;
+    }
+    case 'ally-units':
+      return `+${effect.count} ally unit${effect.count > 1 ? 's' : ''}`;
+    case 'upkeep-reduction':
+      return `${effect.percent}% upkeep reduction`;
+    default:
+      return '—';
+  }
+}
+
+function formatResourceCost(cost: Partial<Record<ResourceType, number>>): string {
+  return Object.entries(cost)
+    .map(([r, n]) => `${n}${RESOURCE_INFO[r as ResourceType].icon}`)
+    .join(' ');
+}
+
 // ── Component ──
 
 export function DoctrineSlot({
@@ -179,7 +221,26 @@ export function DoctrineSlot({
   const sellPrice = getDoctrineSellPrice(doctrine);
   const effectDesc = formatEffectDescription(doctrine);
 
+  const doctrineTooltip = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)', marginBottom: '2px' }}>
+        {doctrine.name} — Tier {doctrine.currentLevel}
+      </div>
+      {getCurrentEffects(doctrine).map((eff, i) => (
+        <div key={i} style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+          {formatDoctrineEffect(eff)}
+        </div>
+      ))}
+      {getUpgradeCost(doctrine) && (
+        <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
+          Upgrade: {formatResourceCost(getUpgradeCost(doctrine)!)}
+        </div>
+      )}
+    </div>
+  );
+
   return (
+    <Tooltip content={doctrineTooltip} variant="rich" position="above">
     <div
       class="doctrine-slot-card"
       style={{
@@ -358,5 +419,6 @@ export function DoctrineSlot({
         )}
       </div>
     </div>
+    </Tooltip>
   );
 }

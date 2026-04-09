@@ -4,6 +4,7 @@ import { gold, faith, influence, momentum } from '../../game/core/resources';
 import { selectedCommander, globalSeason, MAX_SEASONS, getDoomLevel } from '../../game/core/game-state';
 import { FACTION_PRIMARY_RESOURCE, RESOURCE_INFO } from '../../game/core/commander';
 import type { ResourceType } from '../../game/core/commander';
+import { Tooltip } from './Tooltip';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('resource-bar-styles')) {
@@ -42,6 +43,13 @@ const resourceSignals: Record<ResourceType, Signal<number>> = {
   gold, faith, influence, momentum,
 };
 
+const RESOURCE_TOOLTIP: Record<ResourceType, string> = {
+  gold: 'Primary income for all factions. Used for upkeep and investments.',
+  faith: 'Primary resource of the Gold (Religious) faction. Drives crusade and miracle abilities.',
+  influence: 'Primary resource of the Blue (Diplomat) faction. Powers negotiation and manipulation.',
+  momentum: 'Primary resource of the Red (Warlord) faction. Fuels aggressive tactics and berserk stances.',
+};
+
 function ResourceCounter({ type }: { type: ResourceType }) {
   const sig = resourceSignals[type];
   const info = RESOURCE_INFO[type];
@@ -74,45 +82,50 @@ function ResourceCounter({ type }: { type: ResourceType }) {
   }, [sig.value]);
 
   return (
-    <div
-      class="resource-counter"
-      title={info.label ?? type}
-      aria-label={`${info.label ?? type}: ${sig.value}`}
-      style={{
-        display: 'flex', alignItems: 'center', gap: '4px',
-        opacity: isPrimary ? 1 : 0.7,
-        position: 'relative',
-      }}
+    <Tooltip
+      content={<div>{RESOURCE_TOOLTIP[type]}</div>}
+      variant="rich"
+      position="below"
     >
-      <span style={{ fontSize: 'var(--font-size-lg)' }}>{info.icon}</span>
-      <span
-        ref={ref}
+      <div
+        class="resource-counter"
+        aria-label={`${info.label ?? type}: ${sig.value}`}
         style={{
-          color: isPrimary ? info.color : 'var(--color-text-secondary)',
-          fontWeight: isPrimary ? '700' : '400',
-          transition: `color var(--duration-slow) var(--ease-default), transform var(--duration-normal) var(--ease-default)`,
-          textShadow: isPrimary ? `0 0 8px ${info.color}40` : 'none',
+          display: 'flex', alignItems: 'center', gap: '4px',
+          opacity: isPrimary ? 1 : 0.7,
+          position: 'relative',
         }}
       >
-        {sig.value}
-      </span>
-      {delta !== null && delta !== 0 && (
-        <span style={{
-          position: 'absolute',
-          top: '-14px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          fontSize: 'var(--font-size-sm)',
-          fontWeight: 700,
-          color: delta > 0 ? '#6c6' : '#c66',
-          pointerEvents: 'none',
-          whiteSpace: 'nowrap',
-          animation: 'resource-delta 0.8s ease-out forwards',
-        }}>
-          {delta > 0 ? `+${delta}` : `${delta}`}
+        <span style={{ fontSize: 'var(--font-size-lg)' }}>{info.icon}</span>
+        <span
+          ref={ref}
+          style={{
+            color: isPrimary ? info.color : 'var(--color-text-secondary)',
+            fontWeight: isPrimary ? '700' : '400',
+            transition: `color var(--duration-slow) var(--ease-default), transform var(--duration-normal) var(--ease-default)`,
+            textShadow: isPrimary ? `0 0 8px ${info.color}40` : 'none',
+          }}
+        >
+          {sig.value}
         </span>
-      )}
-    </div>
+        {delta !== null && delta !== 0 && (
+          <span style={{
+            position: 'absolute',
+            top: '-14px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontSize: 'var(--font-size-sm)',
+            fontWeight: 700,
+            color: delta > 0 ? '#6c6' : '#c66',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+            animation: 'resource-delta 0.8s ease-out forwards',
+          }}>
+            {delta > 0 ? `+${delta}` : `${delta}`}
+          </span>
+        )}
+      </div>
+    </Tooltip>
   );
 }
 
@@ -128,29 +141,34 @@ export function ResourceBar() {
       <ResourceCounter type="faith" />
       <ResourceCounter type="influence" />
       <ResourceCounter type="momentum" />
-      <div
-        title={`Season ${globalSeason.value} of ${MAX_SEASONS} — Doom ${doom}%`}
-        aria-label={`Season ${globalSeason.value} of ${MAX_SEASONS}, doom level ${doom}%`}
-        style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid var(--color-border-subtle)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px' }}
+      <Tooltip
+        content={<div>{`Season ${globalSeason.value}. Doom ${doom}% — at 75% all unit upgrades cost double gold.`}</div>}
+        variant="rich"
+        position="below"
       >
-        <span style={{ fontSize: 'var(--font-size-sm)', color: seasonColor, fontWeight: doom >= 50 ? '700' : '400', transition: `color var(--duration-slow) var(--ease-default)`, lineHeight: '1' }}>
-          S{globalSeason.value}/{MAX_SEASONS}
-        </span>
-        {/* Doom bar — 3px strip below the season text */}
-        <div style={{
-          width: '36px', height: '3px',
-          background: 'rgba(60, 50, 70, 0.6)',
-          borderRadius: 'var(--radius-sm)', overflow: 'hidden',
-        }}>
+        <div
+          aria-label={`Season ${globalSeason.value} of ${MAX_SEASONS}, doom level ${doom}%`}
+          style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid var(--color-border-subtle)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px' }}
+        >
+          <span style={{ fontSize: 'var(--font-size-sm)', color: seasonColor, fontWeight: doom >= 50 ? '700' : '400', transition: `color var(--duration-slow) var(--ease-default)`, lineHeight: '1' }}>
+            S{globalSeason.value}/{MAX_SEASONS}
+          </span>
+          {/* Doom bar — 3px strip below the season text */}
           <div style={{
-            width: `${doom}%`,
-            height: '100%',
-            background: doom >= 75 ? 'var(--color-danger)' : doom >= 50 ? 'var(--color-gold-secondary)' : 'rgba(160, 140, 100, 0.5)',
-            borderRadius: 'var(--radius-sm)',
-            transition: `width 0.4s var(--ease-default), background var(--duration-slow) var(--ease-default)`,
-          }} />
+            width: '36px', height: '3px',
+            background: 'rgba(60, 50, 70, 0.6)',
+            borderRadius: 'var(--radius-sm)', overflow: 'hidden',
+          }}>
+            <div style={{
+              width: `${doom}%`,
+              height: '100%',
+              background: doom >= 75 ? 'var(--color-danger)' : doom >= 50 ? 'var(--color-gold-secondary)' : 'rgba(160, 140, 100, 0.5)',
+              borderRadius: 'var(--radius-sm)',
+              transition: `width 0.4s var(--ease-default), background var(--duration-slow) var(--ease-default)`,
+            }} />
+          </div>
         </div>
-      </div>
+      </Tooltip>
     </div>
   );
 }
