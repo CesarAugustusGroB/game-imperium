@@ -1,6 +1,6 @@
-import type { GameEvent } from '../../game/event-types';
-import type { ResourceType } from '../../game/commander';
-import { FACTION_COLORS } from '../../game/commander';
+import type { GameEvent } from '../../game/events/event-types';
+import type { ResourceType } from '../../game/core/commander';
+import { FACTION_COLORS } from '../../game/core/commander';
 import { ChoiceButton } from './ChoiceButton';
 
 // ── One-time CSS injection ──

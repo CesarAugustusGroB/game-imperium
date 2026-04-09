@@ -1,5 +1,5 @@
-import type { EventChoice } from '../../game/event-types';
-import type { ResourceType } from '../../game/commander';
+import type { EventChoice } from '../../game/events/event-types';
+import type { ResourceType } from '../../game/core/commander';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('choice-btn-styles')) {
