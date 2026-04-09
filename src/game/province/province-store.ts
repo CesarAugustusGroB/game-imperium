@@ -8,6 +8,7 @@ import { getResource, spendResource, addResource } from '../core/resources';
 import { getGovernorTraits, registerProvinceSyncCallback } from './governor-store';
 import { claimTerritory } from './province-map-store';
 import { nextInvestmentDiscount } from '../progression/strategic-store';
+import { addNotification } from '../../ui/notifications/notification-store';
 
 // ── Province signals ──
 
@@ -216,6 +217,13 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
       expensesPaid = totalExpenses;
     } else {
       expenseShortfall = totalExpenses;
+      addNotification({
+        kind: 'pinned',
+        icon: '⚠',
+        title: 'Upkeep Shortfall',
+        message: `Can't cover all upkeep. Provinces gaining +10 unrest.`,
+        color: '#d4a843',
+      });
     }
   }
 
@@ -247,8 +255,24 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
       const lostName = INVESTMENT_DATA[investments[lostIdx].type].name;
       investments = investments.filter((_, i) => i !== lostIdx);
       rebellions.push({ provinceName: prov.name, lostInvestment: lostName });
+      addNotification({
+        kind: 'alert',
+        icon: '⚔',
+        title: 'Rebellion',
+        message: `${prov.name} has rebelled! ${lostName} lost.`,
+        color: '#c24a3a',
+        duration: 4000,
+      });
     } else if (newUnrest >= effectiveThreshold && investments.length === 0) {
       rebellions.push({ provinceName: prov.name, lostInvestment: null });
+      addNotification({
+        kind: 'alert',
+        icon: '⚔',
+        title: 'Rebellion',
+        message: `${prov.name} has rebelled!`,
+        color: '#c24a3a',
+        duration: 4000,
+      });
     }
 
     return { ...prov, unrest: newUnrest, investments };
