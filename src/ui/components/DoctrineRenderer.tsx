@@ -1,8 +1,9 @@
 import type { Doctrine, DoctrineEffect } from '../../game/items/doctrine';
 import { getCurrentEffects, getUpgradeCost, getDoctrineSellPrice } from '../../game/items/doctrine';
-import { FACTION_COLORS, RESOURCE_INFO } from '../../game/core/commander';
+import { FACTION_COLORS } from '../../game/core/commander';
 import type { ResourceType } from '../../game/core/commander';
 import { Tooltip } from './Tooltip';
+import { formatCost } from '../ui-constants';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('doctrine-slot-styles')) {
@@ -110,12 +111,6 @@ function formatEffectDescription(doctrine: Doctrine): string {
   }
 }
 
-function formatCost(cost: Partial<Record<ResourceType, number>>): string {
-  return Object.entries(cost)
-    .map(([res, amount]) => `${amount} ${RESOURCE_LABELS[res as ResourceType]}`)
-    .join(', ');
-}
-
 function formatDoctrineEffect(effect: DoctrineEffect): string {
   switch (effect.type) {
     case 'stat-modifier': {
@@ -149,12 +144,6 @@ function formatDoctrineEffect(effect: DoctrineEffect): string {
     default:
       return '—';
   }
-}
-
-function formatResourceCost(cost: Partial<Record<ResourceType, number>>): string {
-  return Object.entries(cost)
-    .map(([r, n]) => `${n}${RESOURCE_INFO[r as ResourceType].icon}`)
-    .join(' ');
 }
 
 // ── Component ──
@@ -233,7 +222,7 @@ export function DoctrineSlot({
       ))}
       {getUpgradeCost(doctrine) && (
         <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-          Upgrade: {formatResourceCost(getUpgradeCost(doctrine)!)}
+          Upgrade: {formatCost(getUpgradeCost(doctrine)!)}
         </div>
       )}
     </div>

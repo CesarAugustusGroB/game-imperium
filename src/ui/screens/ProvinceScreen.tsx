@@ -163,7 +163,7 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
       ) : (
         <div>
           <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-            {currentEffect!.description}
+            {currentEffect?.description ?? ''}
           </div>
           {(Object.entries(incomeBonus) as [ResourceType, number][]).map(([res, amt]) => (
             amt > 0 ? (
