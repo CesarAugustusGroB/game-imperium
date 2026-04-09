@@ -28,13 +28,13 @@ if (typeof document !== 'undefined' && !document.getElementById('resource-bar-st
 
 const BAR_STYLE: Record<string, string> = {
   position: 'fixed', top: '0', left: '0', width: '100%', height: '38px',
-  background: 'rgba(12, 10, 24, 0.92)',
-  backdropFilter: 'blur(12px)',
-  WebkitBackdropFilter: 'blur(12px)',
-  borderBottom: '1px solid rgba(180, 160, 100, 0.2)',
+  background: 'var(--color-bg-primary)',
+  backdropFilter: 'blur(var(--blur-panel))',
+  WebkitBackdropFilter: 'blur(var(--blur-panel))',
+  borderBottom: '1px solid var(--color-border-default)',
   boxShadow: '0 2px 12px rgba(0, 0, 0, 0.4)',
   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '24px',
-  fontFamily: "'Segoe UI', system-ui, sans-serif", fontSize: '13px',
+  fontFamily: 'var(--font-family)', fontSize: 'var(--font-size-md)',
   zIndex: '100',
 };
 
@@ -65,7 +65,7 @@ function ResourceCounter({ type }: { type: ResourceType }) {
     setDelta(diff);
     prevValue.current = sig.value;
     const timer = setTimeout(() => {
-      el.style.color = isPrimary ? info.color : 'rgba(200, 190, 160, 0.7)';
+      el.style.color = isPrimary ? info.color : 'var(--color-text-secondary)';
       el.style.transform = 'scale(1)';
     }, 400);
     // Remove delta after animation
@@ -84,13 +84,13 @@ function ResourceCounter({ type }: { type: ResourceType }) {
         position: 'relative',
       }}
     >
-      <span style={{ fontSize: '14px' }}>{info.icon}</span>
+      <span style={{ fontSize: 'var(--font-size-lg)' }}>{info.icon}</span>
       <span
         ref={ref}
         style={{
-          color: isPrimary ? info.color : 'rgba(200, 190, 160, 0.7)',
+          color: isPrimary ? info.color : 'var(--color-text-secondary)',
           fontWeight: isPrimary ? '700' : '400',
-          transition: 'color 0.3s, transform 0.2s',
+          transition: `color var(--duration-slow) var(--ease-default), transform var(--duration-normal) var(--ease-default)`,
           textShadow: isPrimary ? `0 0 8px ${info.color}40` : 'none',
         }}
       >
@@ -102,7 +102,7 @@ function ResourceCounter({ type }: { type: ResourceType }) {
           top: '-14px',
           left: '50%',
           transform: 'translateX(-50%)',
-          fontSize: '11px',
+          fontSize: 'var(--font-size-sm)',
           fontWeight: 700,
           color: delta > 0 ? '#6c6' : '#c66',
           pointerEvents: 'none',
@@ -120,7 +120,7 @@ export function ResourceBar() {
   if (!selectedCommander.value) return null;
 
   const doom = getDoomLevel();
-  const seasonColor = doom >= 75 ? '#c24a3a' : doom >= 50 ? '#d4a843' : 'rgba(200, 190, 160, 0.5)';
+  const seasonColor = doom >= 75 ? 'var(--color-danger)' : doom >= 50 ? 'var(--color-gold-secondary)' : 'var(--color-text-secondary)';
 
   return (
     <div class="resource-bar" style={BAR_STYLE}>
@@ -131,23 +131,23 @@ export function ResourceBar() {
       <div
         title={`Season ${globalSeason.value} of ${MAX_SEASONS} — Doom ${doom}%`}
         aria-label={`Season ${globalSeason.value} of ${MAX_SEASONS}, doom level ${doom}%`}
-        style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid rgba(180, 160, 100, 0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px' }}
+        style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid var(--color-border-subtle)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px' }}
       >
-        <span style={{ fontSize: '11px', color: seasonColor, fontWeight: doom >= 50 ? '700' : '400', transition: 'color 0.3s', lineHeight: '1' }}>
+        <span style={{ fontSize: 'var(--font-size-sm)', color: seasonColor, fontWeight: doom >= 50 ? '700' : '400', transition: `color var(--duration-slow) var(--ease-default)`, lineHeight: '1' }}>
           S{globalSeason.value}/{MAX_SEASONS}
         </span>
         {/* Doom bar — 3px strip below the season text */}
         <div style={{
           width: '36px', height: '3px',
           background: 'rgba(60, 50, 70, 0.6)',
-          borderRadius: '2px', overflow: 'hidden',
+          borderRadius: 'var(--radius-sm)', overflow: 'hidden',
         }}>
           <div style={{
             width: `${doom}%`,
             height: '100%',
-            background: doom >= 75 ? '#c24a3a' : doom >= 50 ? '#d4a843' : 'rgba(160, 140, 100, 0.5)',
-            borderRadius: '2px',
-            transition: 'width 0.4s ease-out, background 0.3s',
+            background: doom >= 75 ? 'var(--color-danger)' : doom >= 50 ? 'var(--color-gold-secondary)' : 'rgba(160, 140, 100, 0.5)',
+            borderRadius: 'var(--radius-sm)',
+            transition: `width 0.4s var(--ease-default), background var(--duration-slow) var(--ease-default)`,
           }} />
         </div>
       </div>

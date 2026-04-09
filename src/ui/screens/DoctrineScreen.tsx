@@ -14,12 +14,12 @@ if (typeof document !== 'undefined' && !document.getElementById('doctrine-screen
   el.id = 'doctrine-screen-styles';
   el.textContent = `
     .doctrine-coll-card {
-      transition: all 0.2s ease;
+      transition: all var(--duration-normal) var(--ease-default);
       cursor: grab;
     }
     .doctrine-coll-card:hover {
-      border-color: rgba(180, 160, 100, 0.5) !important;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      border-color: var(--color-border-strong) !important;
+      box-shadow: var(--shadow-md);
     }
     .doctrine-coll-card:active { cursor: grabbing; }
     .doctrine-coll-card.dragging {
@@ -27,7 +27,7 @@ if (typeof document !== 'undefined' && !document.getElementById('doctrine-screen
       transform: scale(0.95);
     }
     .doctrine-sell-btn {
-      transition: all 0.15s ease;
+      transition: all var(--duration-fast) var(--ease-default);
       cursor: pointer;
     }
     .doctrine-sell-btn:hover {
@@ -36,8 +36,8 @@ if (typeof document !== 'undefined' && !document.getElementById('doctrine-screen
       color: #e8a0a0 !important;
     }
     .doctrine-slot-drop {
-      border-radius: 8px;
-      transition: box-shadow 0.15s ease;
+      border-radius: var(--radius-md);
+      transition: box-shadow var(--duration-fast) var(--ease-default);
     }
     .doctrine-slot-drop.drag-over {
       box-shadow: 0 0 0 2px rgba(240, 208, 128, 0.7), 0 0 16px rgba(240, 208, 128, 0.2);
@@ -136,26 +136,26 @@ export function DoctrineScreen() {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      minHeight: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
+      minHeight: '100vh', fontFamily: 'var(--font-family)',
       background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
       paddingTop: '48px', paddingBottom: '32px',
     }}>
       {/* Dark content panel */}
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        background: 'rgba(12, 10, 24, 0.85)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderRadius: '12px',
-        border: '1px solid rgba(180, 160, 100, 0.15)',
+        background: 'var(--color-bg-primary)',
+        backdropFilter: `blur(var(--blur-panel))`,
+        WebkitBackdropFilter: `blur(var(--blur-panel))`,
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--color-border-subtle)',
         padding: '24px',
         maxWidth: '90%',
         width: 'min(680px, 90vw)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+        boxShadow: 'var(--shadow-lg)',
       }}>
         {/* Title */}
         <div style={{
-          fontSize: '20px', fontWeight: 600, color,
+          fontSize: 'var(--font-size-xl)', fontWeight: 600, color,
           letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '4px',
         }}>
           Doctrines
@@ -167,7 +167,7 @@ export function DoctrineScreen() {
 
         {/* ── Equipped Slots ── */}
         <div style={{
-          fontSize: '10px', color: 'rgba(180, 170, 150, 0.5)',
+          fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)',
           letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px',
         }}>
           Equipped ({slots.filter(Boolean).length}/4)
@@ -201,9 +201,9 @@ export function DoctrineScreen() {
         {equipTargetSlot.value !== null && (
           <div style={{
             width: '100%', marginBottom: '20px',
-            background: 'rgba(40, 36, 60, 0.6)',
-            border: '1px solid rgba(180, 160, 100, 0.2)',
-            borderRadius: '8px',
+            background: 'var(--color-bg-tertiary)',
+            border: '1px solid var(--color-border-default)',
+            borderRadius: 'var(--radius-md)',
             padding: '14px',
           }}>
             <div style={{
@@ -211,7 +211,7 @@ export function DoctrineScreen() {
               marginBottom: '10px',
             }}>
               <span style={{
-                fontSize: '10px', color: 'rgba(240, 208, 128, 0.7)',
+                fontSize: 'var(--font-size-sm)', color: 'var(--color-text-primary)',
                 letterSpacing: '1.5px', textTransform: 'uppercase',
               }}>
                 Choose for Slot #{(equipTargetSlot.value ?? 0) + 1}
@@ -219,9 +219,9 @@ export function DoctrineScreen() {
               <button
                 onClick={() => { equipTargetSlot.value = null; }}
                 style={{
-                  background: 'transparent', border: '1px solid rgba(180, 160, 100, 0.2)',
-                  borderRadius: '3px', color: 'rgba(200, 190, 160, 0.5)',
-                  fontSize: '9px', letterSpacing: '1px', padding: '3px 8px',
+                  background: 'transparent', border: '1px solid var(--color-border-default)',
+                  borderRadius: '3px', color: 'var(--color-text-secondary)',
+                  fontSize: 'var(--font-size-xs)', letterSpacing: '1px', padding: '3px 8px',
                   cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >
@@ -232,7 +232,7 @@ export function DoctrineScreen() {
             {equippable.length === 0 ? (
               <div style={{
                 textAlign: 'center', padding: '16px',
-                color: 'rgba(180, 170, 150, 0.35)', fontSize: '11px',
+                color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)',
                 letterSpacing: '1px',
               }}>
                 No equippable doctrines in collection
@@ -246,14 +246,14 @@ export function DoctrineScreen() {
                     onClick={() => handleEquipToSlot(equipTargetSlot.value!, d)}
                     style={{
                       width: '120px', padding: '10px',
-                      background: 'rgba(30, 28, 48, 0.9)',
-                      border: '1px solid rgba(180, 160, 100, 0.2)',
+                      background: 'var(--color-bg-secondary)',
+                      border: '1px solid var(--color-border-default)',
                       borderTop: `3px solid ${FACTION_COLORS[d.color]}`,
                       borderRadius: '5px',
                     }}
                   >
                     <div style={{
-                      fontSize: '9px', fontWeight: 700, color: FACTION_COLORS[d.color],
+                      fontSize: 'var(--font-size-xs)', fontWeight: 700, color: FACTION_COLORS[d.color],
                       letterSpacing: '0.8px', textTransform: 'uppercase',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       marginBottom: '4px',
@@ -261,7 +261,7 @@ export function DoctrineScreen() {
                       {d.name}
                     </div>
                     <div style={{
-                      fontSize: '9px', color: 'rgba(200, 190, 160, 0.5)', lineHeight: '1.4',
+                      fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: '1.4',
                     }}>
                       {d.levels[d.currentLevel - 1].description}
                     </div>
@@ -275,18 +275,18 @@ export function DoctrineScreen() {
         {/* ── Collection ── */}
         <div style={{
           width: '100%',
-          borderTop: '1px solid rgba(180, 160, 100, 0.1)',
+          borderTop: '1px solid var(--color-border-subtle)',
           paddingTop: '16px',
         }}>
           <div style={{
-            fontSize: '10px', color: 'rgba(180, 170, 150, 0.5)',
+            fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)',
             letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '6px',
             textAlign: 'center',
           }}>
             Collection ({collection.length})
           </div>
           <div style={{
-            fontSize: '9px', color: 'rgba(180, 170, 150, 0.3)',
+            fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)',
             textAlign: 'center', marginBottom: '10px', fontStyle: 'italic',
           }}>
             Drag a doctrine onto a slot to equip it
@@ -295,7 +295,7 @@ export function DoctrineScreen() {
           {collection.length === 0 ? (
             <div style={{
               textAlign: 'center', padding: '20px',
-              color: 'rgba(180, 170, 150, 0.3)', fontSize: '12px',
+              color: 'var(--color-text-muted)', fontSize: 'var(--font-size-md)',
               fontStyle: 'italic',
             }}>
               No doctrines in collection. Acquire them from events or rewards.
@@ -322,7 +322,7 @@ export function DoctrineScreen() {
                     }}
                   >
                     <div style={{
-                      fontSize: '9px', fontWeight: 700, color: canEquip ? FACTION_COLORS[d.color] : `${FACTION_COLORS[d.color]}88`,
+                      fontSize: 'var(--font-size-xs)', fontWeight: 700, color: canEquip ? FACTION_COLORS[d.color] : `${FACTION_COLORS[d.color]}88`,
                       letterSpacing: '0.8px', textTransform: 'uppercase',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       marginBottom: '4px',
@@ -330,7 +330,7 @@ export function DoctrineScreen() {
                       {d.name}
                     </div>
                     <div style={{
-                      fontSize: '9px', color: 'rgba(200, 190, 160, 0.5)', lineHeight: '1.4',
+                      fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: '1.4',
                       marginBottom: '8px',
                       opacity: canEquip ? 1 : 0.45,
                     }}>
@@ -345,7 +345,7 @@ export function DoctrineScreen() {
                         border: '1px solid rgba(180, 100, 100, 0.2)',
                         borderRadius: '3px',
                         color: 'rgba(200, 160, 160, 0.6)',
-                        fontSize: '9px', fontWeight: 600,
+                        fontSize: 'var(--font-size-xs)', fontWeight: 600,
                         letterSpacing: '0.8px', fontFamily: 'inherit',
                       }}
                     >
@@ -364,12 +364,12 @@ export function DoctrineScreen() {
           style={{
             marginTop: '20px', padding: '10px 28px',
             background: 'rgba(50, 42, 20, 0.7)',
-            border: '1px solid rgba(220, 190, 100, 0.4)',
-            borderRadius: '4px',
-            color: '#f0d080', fontFamily: 'inherit',
-            fontSize: '12px', fontWeight: 600,
+            border: '1px solid var(--color-border-strong)',
+            borderRadius: 'var(--radius-sm)',
+            color: 'var(--color-gold-primary)', fontFamily: 'inherit',
+            fontSize: 'var(--font-size-md)', fontWeight: 600,
             letterSpacing: '1.5px', textTransform: 'uppercase',
-            cursor: 'pointer', transition: 'all 0.2s ease',
+            cursor: 'pointer', transition: `all var(--duration-normal) var(--ease-default)`,
           }}
         >
           Back to Hub

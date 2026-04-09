@@ -8,10 +8,11 @@ import { selectedCommander, completedSpokes, threatLevel } from '../../game/core
 import { conquerProvince, getProvinceEffects } from '../../game/province/province-store';
 import { FACTION_COLORS, RESOURCE_INFO, FACTION_PRIMARY_RESOURCE } from '../../game/core/commander';
 import type { ResourceType } from '../../game/core/commander';
-import { spendResource } from '../../game/core/resources';
+import { spendResource, getResource } from '../../game/core/resources';
 import { NodeModal } from './NodeModal';
+import { EventModal } from '../components/EventModal';
 import type { GameEvent, EventChoice } from '../../game/events/event-types';
-import { pickEvent, buildEventContext, applyEventChoice, canAffordEventChoice } from '../../game/events/event-engine';
+import { pickEvent, buildEventContext, applyEventChoice } from '../../game/events/event-engine';
 import { getExtraEventChoices } from '../../game/items/doctrine-store';
 import { manipulateUsesLeft, consumeManipulateUse } from '../../game/progression/strategic-store';
 import { councilSlots, grantAdvisorXp, tierUpNotices } from '../../game/council/council-store';
@@ -48,7 +49,7 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
       to   { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 
-    .node-circle { transition: all 0.25s ease; }
+    .node-circle { transition: all 0.25s var(--ease-default); }
     .node-circle:hover { filter: brightness(1.2); }
     .node-current { animation: node-pulse 2.5s ease-in-out infinite; cursor: pointer; }
     .node-current:hover { transform: scale(1.15) !important; }
@@ -65,16 +66,16 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
       bottom: calc(100% + 14px);
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(16, 14, 28, 0.95);
-      border: 1px solid rgba(180, 160, 100, 0.3);
-      border-radius: 4px;
+      background: var(--color-bg-primary);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-sm);
       padding: 6px 12px;
       white-space: nowrap;
-      font-size: 11px;
+      font-size: var(--font-size-sm);
       letter-spacing: 0.5px;
       pointer-events: none;
       z-index: 50;
-      animation: tooltip-in 0.15s ease-out;
+      animation: tooltip-in var(--duration-fast) ease-out;
     }
     .node-tooltip::after {
       content: '';
@@ -83,7 +84,7 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
       left: 50%;
       transform: translateX(-50%);
       border: 5px solid transparent;
-      border-top-color: rgba(180, 160, 100, 0.3);
+      border-top-color: var(--color-border-default);
     }
 
     .line-next-active {
@@ -101,7 +102,7 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
     }
 
     /* Manipulate reroll button */
-    .manipulate-reroll-btn { transition: all 0.15s ease; cursor: pointer; }
+    .manipulate-reroll-btn { transition: all var(--duration-fast) var(--ease-default); cursor: pointer; }
     .manipulate-reroll-btn:hover {
       border-color: rgba(74, 124, 194, 0.7) !important;
       color: #80b0e8 !important;
@@ -110,7 +111,7 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
     .manipulate-reroll-btn:active { transform: scale(0.97); }
 
     /* Retreat button hover */
-    .retreat-btn { transition: all 0.2s ease; }
+    .retreat-btn { transition: all var(--duration-normal) var(--ease-default); }
     .retreat-btn:hover {
       border-color: rgba(200, 80, 80, 0.4) !important;
       color: rgba(220, 180, 140, 0.7) !important;
@@ -119,47 +120,47 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
     .retreat-btn:active { transform: scale(0.97); }
 
     /* Event choice hover */
-    .event-choice-btn { transition: all 0.2s ease; }
+    .event-choice-btn { transition: all var(--duration-normal) var(--ease-default); }
     .event-choice-btn:not(:disabled):hover {
-      border-color: rgba(220, 190, 100, 0.5) !important;
+      border-color: var(--color-border-strong) !important;
       background: rgba(70, 70, 95, 0.7) !important;
     }
     .event-choice-btn:not(:disabled):active { transform: scale(0.98); }
 
     /* Modal action buttons */
-    .modal-action-btn { transition: all 0.2s ease; }
+    .modal-action-btn { transition: all var(--duration-normal) var(--ease-default); }
     .modal-action-btn:hover {
       filter: brightness(1.2);
-      box-shadow: 0 0 12px rgba(180, 160, 100, 0.15);
+      box-shadow: 0 0 12px var(--color-border-subtle);
     }
     .modal-action-btn:active { transform: scale(0.97); }
 
     /* Retreat confirm buttons */
-    .retreat-confirm-btn { transition: all 0.2s ease; }
+    .retreat-confirm-btn { transition: all var(--duration-normal) var(--ease-default); }
     .retreat-confirm-btn:hover {
       border-color: rgba(220, 100, 100, 0.7) !important;
       background: rgba(200, 60, 60, 0.4) !important;
     }
     .retreat-confirm-btn:active { transform: scale(0.97); }
 
-    .retreat-cancel-btn { transition: all 0.2s ease; }
+    .retreat-cancel-btn { transition: all var(--duration-normal) var(--ease-default); }
     .retreat-cancel-btn:hover {
-      border-color: rgba(220, 190, 100, 0.4) !important;
-      color: #e0d8b8 !important;
+      border-color: var(--color-border-strong) !important;
+      color: var(--color-text-secondary) !important;
     }
     .retreat-cancel-btn:active { transform: scale(0.97); }
 
     /* Thin scrollbar for node chain */
     .node-chain-scroll::-webkit-scrollbar { height: 4px; }
-    .node-chain-scroll::-webkit-scrollbar-track { background: rgba(20, 18, 36, 0.5); border-radius: 2px; }
-    .node-chain-scroll::-webkit-scrollbar-thumb { background: rgba(180, 160, 100, 0.2); border-radius: 2px; }
-    .node-chain-scroll::-webkit-scrollbar-thumb:hover { background: rgba(180, 160, 100, 0.35); }
+    .node-chain-scroll::-webkit-scrollbar-track { background: var(--color-bg-primary); border-radius: 2px; }
+    .node-chain-scroll::-webkit-scrollbar-thumb { background: var(--color-border-subtle); border-radius: 2px; }
+    .node-chain-scroll::-webkit-scrollbar-thumb:hover { background: var(--color-border-default); }
 
     /* Empty state link */
-    .empty-state-btn { transition: all 0.2s ease; }
+    .empty-state-btn { transition: all var(--duration-normal) var(--ease-default); }
     .empty-state-btn:hover {
-      border-color: rgba(220, 190, 100, 0.5) !important;
-      color: #f0d080 !important;
+      border-color: var(--color-border-strong) !important;
+      color: var(--color-gold-primary) !important;
     }
     .empty-state-btn:active { transform: scale(0.97); }
 
@@ -297,9 +298,9 @@ function NodeCircle({ node, isCurrent, color, onActivate }: {
           </span>
           <span class="checkmark-overlay" style={{
             position: 'absolute',
-            fontSize: '16px',
+            fontSize: 'var(--font-size-lg)',
             lineHeight: '1',
-            color: '#d4a843',
+            color: 'var(--color-gold-secondary)',
             textShadow: '0 0 8px rgba(212, 168, 67, 0.5)',
           }}>
             {'\u2714'}
@@ -319,7 +320,7 @@ function NodeCircle({ node, isCurrent, color, onActivate }: {
       <div style={{
         position: 'absolute',
         bottom: '-22px',
-        fontSize: '9px',
+        fontSize: 'var(--font-size-xs)',
         letterSpacing: '1px',
         textTransform: 'uppercase',
         color: isCurrent ? typeStyle.color : node.resolved ? 'rgba(212, 168, 67, 0.6)' : `${typeStyle.color}80`,
@@ -332,7 +333,7 @@ function NodeCircle({ node, isCurrent, color, onActivate }: {
       {/* Tooltip on hover */}
       {hovered && (
         <div class="node-tooltip" style={{
-          color: node.resolved ? '#d4a843' : isCurrent ? typeStyle.color : 'rgba(200, 190, 160, 0.7)',
+          color: node.resolved ? 'var(--color-gold-secondary)' : isCurrent ? typeStyle.color : 'var(--color-text-secondary)',
         }}>
           {tooltipText}
         </div>
@@ -384,41 +385,41 @@ function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; o
         position: 'fixed', inset: '0', zIndex: '200',
         background: 'rgba(0, 0, 0, 0.7)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: "'Segoe UI', system-ui, sans-serif",
-        animation: 'node-modal-fade 0.2s ease-out',
+        fontFamily: 'var(--font-family)',
+        animation: 'node-modal-fade var(--duration-normal) ease-out',
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
     >
       <div style={{
-        background: 'linear-gradient(135deg, rgba(30, 28, 48, 0.98), rgba(20, 18, 36, 0.99))',
-        border: '1px solid rgba(180, 160, 100, 0.25)',
-        borderRadius: '8px', padding: '28px 32px',
+        background: 'linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-primary))',
+        border: '1px solid var(--color-border-default)',
+        borderRadius: 'var(--radius-md)', padding: '28px 32px',
         maxWidth: '360px', width: '90%', textAlign: 'center',
       }}>
         <div style={{
-          fontSize: '16px', fontWeight: 600, color: '#f0d080',
+          fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-gold-primary)',
           letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px',
         }}>
           Retreat?
         </div>
         <div style={{
-          fontSize: '13px', color: 'rgba(200, 190, 160, 0.6)',
+          fontSize: 'var(--font-size-md)', color: 'var(--color-text-muted)',
           lineHeight: '1.5', marginBottom: '20px',
         }}>
           You'll keep your army and resources, but forfeit all remaining spoke rewards.
         </div>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
           <button class="retreat-confirm-btn" onClick={onConfirm} style={{
-            padding: '10px 20px', borderRadius: '4px', cursor: 'pointer',
+            padding: '10px 20px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
             background: 'rgba(180, 60, 60, 0.3)', border: '1px solid rgba(200, 80, 80, 0.5)',
-            color: '#e0a0a0', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, letterSpacing: '1px',
+            color: '#e0a0a0', fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600, letterSpacing: '1px',
           }}>
             Confirm Retreat
           </button>
           <button class="retreat-cancel-btn" onClick={onCancel} style={{
-            padding: '10px 20px', borderRadius: '4px', cursor: 'pointer',
-            background: 'rgba(60, 60, 80, 0.6)', border: '1px solid rgba(180, 160, 100, 0.25)',
-            color: '#d0c8a8', fontFamily: 'inherit', fontSize: '13px', letterSpacing: '1px',
+            padding: '10px 20px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+            background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border-default)',
+            color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 'var(--font-size-md)', letterSpacing: '1px',
           }}>
             Cancel
           </button>
@@ -439,17 +440,17 @@ export function NodeMapScreen() {
     return (
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
+        height: '100vh', fontFamily: 'var(--font-family)',
         background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
         gap: '16px',
       }}>
-        <div style={{ color: 'rgba(200, 190, 160, 0.5)', fontSize: '14px', letterSpacing: '1px' }}>
+        <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-lg)', letterSpacing: '1px' }}>
           No active spoke
         </div>
         <button class="empty-state-btn" onClick={() => navigateTo('hub')} style={{
-          padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
-          background: 'rgba(60, 60, 80, 0.6)', border: '1px solid rgba(180, 160, 100, 0.25)',
-          color: '#d0c8a8', fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, letterSpacing: '1px',
+          padding: '10px 24px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+          background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border-default)',
+          color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600, letterSpacing: '1px',
         }}>
           Return to Hub
         </button>
@@ -558,10 +559,6 @@ export function NodeMapScreen() {
     }
   }
 
-  function canAffordChoice(choice: EventChoice): boolean {
-    return canAffordEventChoice(choice);
-  }
-
   // Show the spoke complete modal when all nodes are resolved
   if (spokeComplete && !showSpokeCompleteModal.value) {
     showSpokeCompleteModal.value = true;
@@ -604,34 +601,34 @@ export function NodeMapScreen() {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      height: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
+      height: '100vh', fontFamily: 'var(--font-family)',
       background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
       paddingTop: '38px',
     }}>
       {/* Dark content panel */}
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        background: 'rgba(12, 10, 24, 0.82)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderRadius: '12px',
-        border: '1px solid rgba(180, 160, 100, 0.15)',
+        background: 'var(--color-bg-primary)',
+        backdropFilter: 'blur(var(--blur-panel))',
+        WebkitBackdropFilter: 'blur(var(--blur-panel))',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--color-border-subtle)',
         padding: '28px 24px 24px',
         maxWidth: '90%',
         width: '860px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+        boxShadow: 'var(--shadow-lg)',
       }}>
         {/* Spoke label + posture badge */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
           <div style={{
-            fontSize: '18px', fontWeight: 600, color,
+            fontSize: 'var(--font-size-xl)', fontWeight: 600, color,
             letterSpacing: '4px', textTransform: 'uppercase',
             textShadow: `0 2px 12px ${color}50, 0 0 24px ${color}20`,
           }}>
             {spoke.label}
           </div>
           <div style={{
-            fontSize: '10px', fontWeight: 700, letterSpacing: '0.8px',
+            fontSize: 'var(--font-size-sm)', fontWeight: 700, letterSpacing: '0.8px',
             color: spoke.posture === 'attacking' ? '#e07050' : '#60a8d0',
             opacity: 0.85,
           }}>
@@ -648,7 +645,7 @@ export function NodeMapScreen() {
 
         {/* Progress text */}
         <div style={{
-          fontSize: '11px', color: 'rgba(180, 170, 150, 0.5)',
+          fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)',
           letterSpacing: '1px', marginBottom: '12px',
         }}>
           Node <span style={{ color: `${color}90`, fontWeight: 600 }}>{Math.min(nodeIdx + 1, spoke.nodes.length)}</span> of {spoke.nodes.length}
@@ -690,7 +687,7 @@ export function NodeMapScreen() {
         {/* Dynamic hint text */}
         {!spokeComplete && currentNode && (
           <div style={{
-            marginTop: '8px', fontSize: '13px',
+            marginTop: '8px', fontSize: 'var(--font-size-md)',
             color: `${NODE_STYLES[currentNode.type].color}`,
             letterSpacing: '1px',
             fontStyle: 'italic',
@@ -724,11 +721,11 @@ export function NodeMapScreen() {
       {/* Retreat button */}
       <button class="retreat-btn" onClick={() => { showRetreatConfirm.value = true; }} style={{
         position: 'fixed', bottom: '20px', left: '20px',
-        padding: '10px 18px', borderRadius: '4px', cursor: 'pointer',
-        background: 'rgba(40, 36, 60, 0.9)',
-        border: '1px solid rgba(180, 160, 100, 0.2)',
-        color: 'rgba(200, 180, 140, 0.5)',
-        fontFamily: 'inherit', fontSize: '12px', letterSpacing: '1px',
+        padding: '10px 18px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+        background: 'var(--color-bg-tertiary)',
+        border: '1px solid var(--color-border-subtle)',
+        color: 'var(--color-text-muted)',
+        fontFamily: 'inherit', fontSize: 'var(--font-size-md)', letterSpacing: '1px',
       }}>
         Retreat
       </button>
@@ -736,17 +733,17 @@ export function NodeMapScreen() {
       {/* Rest modal */}
       {showRestModal.value && (
         <NodeModal title="Your Army Rests" onClose={handleRestContinue}>
-          <div style={{ fontSize: '13px', color: 'rgba(200, 190, 160, 0.6)', lineHeight: '1.5', marginBottom: '16px' }}>
+          <div style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-text-muted)', lineHeight: '1.5', marginBottom: '16px' }}>
             Your forces recover their strength.
           </div>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '20px' }}>
             {restGains.value.map((g) => (
               <div key={g.type} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: RESOURCE_INFO[g.type].color }}>
+                <span style={{ fontSize: 'var(--font-size-md)', fontWeight: 600, color: RESOURCE_INFO[g.type].color }}>
                   {RESOURCE_INFO[g.type].icon} +{g.actual} {RESOURCE_INFO[g.type].label}
                 </span>
                 {g.isPrimary && (
-                  <span style={{ fontSize: '9px', color: 'rgba(180, 160, 100, 0.5)', letterSpacing: '0.5px' }}>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-dim)', letterSpacing: '0.5px' }}>
                     (primary)
                   </span>
                 )}
@@ -754,10 +751,10 @@ export function NodeMapScreen() {
             ))}
           </div>
           <button class="modal-action-btn" onClick={handleRestContinue} style={{
-            padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
+            padding: '10px 24px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
             background: `linear-gradient(135deg, ${color}30, ${color}15)`,
             border: `1px solid ${color}60`,
-            color, fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, letterSpacing: '1px',
+            color, fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600, letterSpacing: '1px',
           }}>
             Continue
           </button>
@@ -766,46 +763,35 @@ export function NodeMapScreen() {
 
       {/* Event modal */}
       {showEventModal.value && activeEvent.value && (
-        <NodeModal title={activeEvent.value.title} onClose={() => { /* no-op: force a choice */ }}>
-          <div style={{ fontSize: '13px', color: 'rgba(200, 190, 160, 0.6)', lineHeight: '1.5', marginBottom: '20px' }}>
-            {activeEvent.value.description}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {activeEvent.value.choices.map((choice, i) => {
-              const affordable = canAffordChoice(choice);
-              return (
-                <button class="event-choice-btn" key={i}
-                  onClick={() => affordable && handleEventChoice(choice)}
-                  disabled={!affordable}
-                  style={{
-                    padding: '10px 16px', borderRadius: '4px',
-                    cursor: affordable ? 'pointer' : 'default',
-                    background: affordable ? 'rgba(60, 60, 80, 0.6)' : 'rgba(30, 30, 40, 0.4)',
-                    border: `1px solid ${affordable ? 'rgba(180, 160, 100, 0.3)' : 'rgba(80, 80, 80, 0.2)'}`,
-                    color: affordable ? '#d0c8a8' : 'rgba(120, 110, 100, 0.4)',
-                    fontFamily: 'inherit', fontSize: '13px', textAlign: 'left',
-                    opacity: affordable ? 1 : 0.5,
-                  }}
-                >
-                  <div style={{ fontWeight: 600, marginBottom: choice.effects.length ? '4px' : '0' }}>
-                    {choice.text}
-                  </div>
-                  {choice.effects.length > 0 && (
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: '11px' }}>
-                      {choice.effects.map((e, j) => (
-                        <span key={j} style={{
-                          color: e.amount > 0 ? RESOURCE_INFO[e.resource].color : '#c66', fontWeight: 600,
-                        }}>
-                          {RESOURCE_INFO[e.resource].icon} {e.amount > 0 ? '+' : ''}{e.amount} {RESOURCE_INFO[e.resource].label}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-            {/* S7-12: Manipulate — Augustus event reroll */}
-            {manipulateUsesLeft.value > 0 && (
+        <>
+          <EventModal
+            event={activeEvent.value}
+            onChoice={(index) => {
+              const choice = activeEvent.value!.choices[index];
+              handleEventChoice(choice);
+            }}
+            currentResources={{
+              gold: getResource('gold'),
+              faith: getResource('faith'),
+              influence: getResource('influence'),
+              momentum: getResource('momentum'),
+            }}
+          />
+          {/* S7-12: Manipulate — Augustus event reroll, rendered as fixed overlay */}
+          {manipulateUsesLeft.value > 0 && (
+            <div
+              style={{
+                position: 'fixed',
+                top: 'calc(50% + 240px)',   // below the ~480px tall modal card
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 210,
+                width: '100%',
+                maxWidth: '520px',
+                padding: '0 16px',
+                boxSizing: 'border-box' as const,
+              }}
+            >
               <button
                 class="manipulate-reroll-btn"
                 onClick={() => {
@@ -816,19 +802,19 @@ export function NodeMapScreen() {
                   }
                 }}
                 style={{
-                  marginTop: '8px', padding: '8px 14px', borderRadius: '4px',
+                  padding: '8px 14px', borderRadius: 'var(--radius-sm)',
                   background: 'rgba(30, 50, 100, 0.4)',
                   border: '1px solid rgba(74, 124, 194, 0.4)',
-                  color: '#4a7cc2', fontFamily: 'inherit', fontSize: '11px',
+                  color: '#4a7cc2', fontFamily: 'inherit', fontSize: 'var(--font-size-sm)',
                   fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase',
                   width: '100%', textAlign: 'center',
                 }}
               >
                 Manipulate — Reroll Event ({manipulateUsesLeft.value} left)
               </button>
-            )}
-          </div>
-        </NodeModal>
+            </div>
+          )}
+        </>
       )}
 
       {/* Spoke completion summary modal */}
@@ -842,14 +828,14 @@ export function NodeMapScreen() {
               <>
                 <div style={{
                   display: 'flex', gap: '16px', justifyContent: 'center',
-                  marginBottom: '16px', fontSize: '12px', color: 'rgba(180, 170, 150, 0.5)',
+                  marginBottom: '16px', fontSize: 'var(--font-size-md)', color: 'var(--color-text-muted)',
                 }}>
                   <span>{spoke.nodes.length} nodes resolved</span>
                   <span>{battlesWon} battles won</span>
                 </div>
                 <div style={{
-                  fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase',
-                  color: 'rgba(180, 170, 150, 0.35)', marginBottom: '8px',
+                  fontSize: 'var(--font-size-sm)', letterSpacing: '1px', textTransform: 'uppercase',
+                  color: 'var(--color-text-muted)', marginBottom: '8px',
                 }}>
                   Total Gains
                 </div>
@@ -858,16 +844,16 @@ export function NodeMapScreen() {
                   flexWrap: 'wrap', marginBottom: '20px',
                 }}>
                   {allTypes.filter(t => gains[t] > 0).map(t => (
-                    <span key={t} style={{ fontSize: '13px', fontWeight: 600, color: RESOURCE_INFO[t].color }}>
+                    <span key={t} style={{ fontSize: 'var(--font-size-md)', fontWeight: 600, color: RESOURCE_INFO[t].color }}>
                       {RESOURCE_INFO[t].icon} +{gains[t]} {RESOURCE_INFO[t].label}
                     </span>
                   ))}
                 </div>
                 <button class="modal-action-btn" onClick={handleReturnToHub} style={{
-                  padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
+                  padding: '10px 24px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
                   background: `linear-gradient(135deg, ${color}30, ${color}15)`,
                   border: `1px solid ${color}60`,
-                  color, fontFamily: 'inherit', fontSize: '13px', fontWeight: 600, letterSpacing: '1px',
+                  color, fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600, letterSpacing: '1px',
                 }}>
                   Return to Hub
                 </button>
@@ -880,17 +866,17 @@ export function NodeMapScreen() {
       {/* Season tick modal */}
       {showSeasonModal.value && lastSeasonTick.value && (
         <NodeModal title={`Season ${lastSeasonTick.value.season} Begins`} onClose={() => { showSeasonModal.value = false; }}>
-          <div style={{ fontSize: '12px', color: 'rgba(200, 190, 160, 0.7)', lineHeight: '1.6', display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left' }}>
+          <div style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-text-secondary)', lineHeight: '1.6', display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left' }}>
             {/* Upkeep paid */}
             {lastSeasonTick.value.upkeepPaid.length > 0 && (
               <div style={{
-                padding: '8px 10px', borderRadius: '6px',
+                padding: '8px 10px', borderRadius: 'var(--radius-md)',
                 background: 'rgba(60, 50, 20, 0.2)',
-                border: '1px solid rgba(240, 208, 128, 0.1)',
+                border: '1px solid var(--color-border-subtle)',
               }}>
-                <div style={{ color: 'rgba(240, 208, 128, 0.6)', letterSpacing: '1.5px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Upkeep Paid</div>
+                <div style={{ color: 'var(--color-text-primary)', letterSpacing: '1.5px', fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Upkeep Paid</div>
                 {lastSeasonTick.value.upkeepPaid.map((u, i) => (
-                  <div key={i} style={{ color: 'rgba(200, 130, 130, 0.8)', fontSize: '11px' }}>
+                  <div key={i} style={{ color: 'rgba(200, 130, 130, 0.8)', fontSize: 'var(--font-size-sm)' }}>
                     {RESOURCE_INFO[u.resource].icon} -{u.amount} {RESOURCE_INFO[u.resource].label}
                   </div>
                 ))}
@@ -899,13 +885,13 @@ export function NodeMapScreen() {
             {/* Upkeep shortfall */}
             {lastSeasonTick.value.upkeepShortfall.length > 0 && (
               <div style={{
-                padding: '8px 10px', borderRadius: '6px',
+                padding: '8px 10px', borderRadius: 'var(--radius-md)',
                 background: 'rgba(120, 40, 30, 0.15)',
                 border: '1px solid rgba(200, 80, 60, 0.2)',
               }}>
-                <div style={{ color: '#c05050', letterSpacing: '1.5px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Shortfall</div>
+                <div style={{ color: '#c05050', letterSpacing: '1.5px', fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Shortfall</div>
                 {lastSeasonTick.value.upkeepShortfall.map((u, i) => (
-                  <div key={i} style={{ color: '#c05050', fontSize: '11px' }}>
+                  <div key={i} style={{ color: '#c05050', fontSize: 'var(--font-size-sm)' }}>
                     {RESOURCE_INFO[u.resource].icon} Cannot afford {u.deficit} {RESOURCE_INFO[u.resource].label}
                   </div>
                 ))}
@@ -914,13 +900,13 @@ export function NodeMapScreen() {
             {/* Province income */}
             {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.incomeGained.length > 0 && (
               <div style={{
-                padding: '8px 10px', borderRadius: '6px',
+                padding: '8px 10px', borderRadius: 'var(--radius-md)',
                 background: 'rgba(30, 60, 30, 0.15)',
                 border: '1px solid rgba(90, 160, 90, 0.12)',
               }}>
-                <div style={{ color: 'rgba(90, 160, 90, 0.7)', letterSpacing: '1.5px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Province Income</div>
+                <div style={{ color: 'rgba(90, 160, 90, 0.7)', letterSpacing: '1.5px', fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Province Income</div>
                 {lastSeasonTick.value.provinceIncome.incomeGained.map((u, i) => (
-                  <div key={i} style={{ color: 'rgba(130, 200, 130, 0.8)', fontSize: '11px' }}>
+                  <div key={i} style={{ color: 'rgba(130, 200, 130, 0.8)', fontSize: 'var(--font-size-sm)' }}>
                     {RESOURCE_INFO[u.resource].icon} +{u.amount} {RESOURCE_INFO[u.resource].label}
                   </div>
                 ))}
@@ -929,12 +915,12 @@ export function NodeMapScreen() {
             {/* Province expenses */}
             {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.expensesPaid > 0 && (
               <div style={{
-                padding: '8px 10px', borderRadius: '6px',
+                padding: '8px 10px', borderRadius: 'var(--radius-md)',
                 background: 'rgba(60, 50, 20, 0.15)',
-                border: '1px solid rgba(200, 160, 100, 0.1)',
+                border: '1px solid var(--color-border-subtle)',
               }}>
-                <div style={{ color: 'rgba(200, 160, 100, 0.6)', letterSpacing: '1.5px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Province Expenses</div>
-                <div style={{ color: 'rgba(200, 160, 100, 0.7)', fontSize: '11px' }}>
+                <div style={{ color: 'rgba(200, 160, 100, 0.6)', letterSpacing: '1.5px', fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Province Expenses</div>
+                <div style={{ color: 'rgba(200, 160, 100, 0.7)', fontSize: 'var(--font-size-sm)' }}>
                   {RESOURCE_INFO.gold.icon} -{lastSeasonTick.value.provinceIncome.expensesPaid} Gold
                 </div>
               </div>
@@ -942,12 +928,12 @@ export function NodeMapScreen() {
             {/* Province expense shortfall */}
             {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.expenseShortfall > 0 && (
               <div style={{
-                padding: '8px 10px', borderRadius: '6px',
+                padding: '8px 10px', borderRadius: 'var(--radius-md)',
                 background: 'rgba(120, 40, 30, 0.15)',
                 border: '1px solid rgba(200, 80, 60, 0.2)',
               }}>
-                <div style={{ color: '#c05050', letterSpacing: '1.5px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Province Expense Shortfall</div>
-                <div style={{ color: '#c05050', fontSize: '11px' }}>
+                <div style={{ color: '#c05050', letterSpacing: '1.5px', fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Province Expense Shortfall</div>
+                <div style={{ color: '#c05050', fontSize: 'var(--font-size-sm)' }}>
                   {RESOURCE_INFO.gold.icon} Cannot afford {lastSeasonTick.value.provinceIncome.expenseShortfall} Gold upkeep
                 </div>
               </div>
@@ -955,13 +941,13 @@ export function NodeMapScreen() {
             {/* Rebellion */}
             {lastSeasonTick.value.provinceIncome && lastSeasonTick.value.provinceIncome.rebellions.length > 0 && (
               <div style={{
-                padding: '8px 10px', borderRadius: '6px',
+                padding: '8px 10px', borderRadius: 'var(--radius-md)',
                 background: 'rgba(140, 30, 20, 0.2)',
                 border: '1px solid rgba(200, 60, 50, 0.3)',
               }}>
-                <div style={{ color: '#e04040', letterSpacing: '1.5px', fontSize: '9px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Rebellion!</div>
+                <div style={{ color: '#e04040', letterSpacing: '1.5px', fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Rebellion!</div>
                 {lastSeasonTick.value.provinceIncome.rebellions.map((r, i) => (
-                  <div key={i} style={{ color: '#e06050', fontSize: '11px', fontWeight: 600 }}>
+                  <div key={i} style={{ color: '#e06050', fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
                     {r.provinceName}: {r.lostInvestment ? `${r.lostInvestment} destroyed` : 'unrest critical'}
                   </div>
                 ))}
@@ -969,38 +955,38 @@ export function NodeMapScreen() {
             )}
             {/* Threat */}
             <div style={{
-              padding: '6px 10px', borderRadius: '6px',
+              padding: '6px 10px', borderRadius: 'var(--radius-md)',
               background: 'rgba(60, 50, 20, 0.15)',
-              border: '1px solid rgba(200, 160, 100, 0.1)',
+              border: '1px solid var(--color-border-subtle)',
               textAlign: 'center',
             }}>
-              <span style={{ color: 'rgba(200, 160, 100, 0.7)', fontSize: '11px', fontWeight: 600 }}>
+              <span style={{ color: 'rgba(200, 160, 100, 0.7)', fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
                 Threat +{lastSeasonTick.value.threatIncrease} &middot; Season {lastSeasonTick.value.globalSeason}/{24}
               </span>
               {lastSeasonTick.value.doomUpkeep > 0 && (
-                <div style={{ fontSize: '9px', color: 'rgba(200, 130, 130, 0.7)', marginTop: '2px' }}>
+                <div style={{ fontSize: 'var(--font-size-xs)', color: 'rgba(200, 130, 130, 0.7)', marginTop: '2px' }}>
                   Doom drain: -{lastSeasonTick.value.doomUpkeep}g
                 </div>
               )}
             </div>
             {lastSeasonTick.value.doomMilestone && (
               <div style={{
-                padding: '8px 12px', borderRadius: '6px',
+                padding: '8px 12px', borderRadius: 'var(--radius-md)',
                 background: 'rgba(140, 30, 20, 0.25)',
                 border: '1px solid rgba(200, 60, 50, 0.3)',
                 textAlign: 'center',
               }}>
-                <span style={{ color: '#e06050', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>
+                <span style={{ color: '#e06050', fontSize: 'var(--font-size-sm)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>
                   {lastSeasonTick.value.doomMilestone}
                 </span>
               </div>
             )}
           </div>
           <button class="modal-action-btn" onClick={() => { showSeasonModal.value = false; }} style={{
-            marginTop: '14px', padding: '10px 24px', borderRadius: '4px', cursor: 'pointer',
+            marginTop: '14px', padding: '10px 24px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
             background: 'linear-gradient(135deg, rgba(80, 60, 20, 0.7), rgba(50, 40, 18, 0.9))',
-            border: '1px solid rgba(220, 190, 100, 0.4)',
-            color: '#f0d080', fontFamily: 'inherit', fontSize: '12px', fontWeight: 600,
+            border: '1px solid var(--color-border-strong)',
+            color: 'var(--color-gold-primary)', fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600,
             letterSpacing: '1.5px', textTransform: 'uppercase',
           }}>
             Continue

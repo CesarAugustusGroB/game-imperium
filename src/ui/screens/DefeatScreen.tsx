@@ -24,7 +24,7 @@ export function DefeatScreen() {
       <EndScreen
         outcome="defeat"
         title="Defeat"
-        titleColor="#c05050"
+        titleColor="var(--color-danger)"
         titleGlow="#b03030"
         backgroundTint="#180808"
       />

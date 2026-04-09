@@ -12,16 +12,16 @@ if (typeof document !== 'undefined' && !document.getElementById('exchange-modal-
   el.id = 'exchange-modal-styles';
   el.textContent = `
     .exchange-res-btn {
-      transition: all 0.15s ease;
+      transition: all var(--duration-fast) var(--ease-default);
       cursor: pointer;
     }
     .exchange-res-btn:not(:disabled):hover {
-      border-color: rgba(220, 190, 100, 0.5) !important;
+      border-color: var(--color-border-strong) !important;
       background: rgba(50, 45, 70, 0.9) !important;
     }
     .exchange-res-btn:disabled { cursor: not-allowed; opacity: 0.3; }
     .exchange-res-btn.selected {
-      border-color: rgba(240, 208, 128, 0.7) !important;
+      border-color: var(--color-gold-primary) !important;
       background: rgba(60, 50, 20, 0.7) !important;
     }
     /* Range input styling */
@@ -39,14 +39,14 @@ if (typeof document !== 'undefined' && !document.getElementById('exchange-modal-
       appearance: none;
       width: 16px; height: 16px;
       border-radius: 50%;
-      background: #f0d080;
+      background: var(--color-gold-primary);
       cursor: pointer;
       box-shadow: 0 0 6px rgba(240, 208, 128, 0.4);
     }
     .exchange-slider::-moz-range-thumb {
       width: 16px; height: 16px;
       border-radius: 50%;
-      background: #f0d080;
+      background: var(--color-gold-primary);
       cursor: pointer;
       border: none;
       box-shadow: 0 0 6px rgba(240, 208, 128, 0.4);
@@ -132,15 +132,15 @@ export function ResourceExchangeModal({ onClose }: Props) {
         backdropFilter: 'blur(4px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 500,
-        fontFamily: "'Segoe UI', system-ui, sans-serif",
+        fontFamily: 'var(--font-family)',
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'rgba(14, 12, 26, 0.96)',
-          border: '1px solid rgba(180, 160, 100, 0.2)',
-          borderRadius: '12px',
+          background: 'var(--color-bg-primary)',
+          border: '1px solid var(--color-border-default)',
+          borderRadius: 'var(--radius-lg)',
           padding: '28px 24px 24px',
           width: 'min(440px, 92vw)',
           boxShadow: '0 12px 48px rgba(0, 0, 0, 0.6)',
@@ -152,7 +152,7 @@ export function ResourceExchangeModal({ onClose }: Props) {
           marginBottom: '20px',
         }}>
           <div style={{
-            fontSize: '14px', fontWeight: 700, color: '#f0d080',
+            fontSize: 'var(--font-size-lg)', fontWeight: 700, color: 'var(--color-gold-primary)',
             letterSpacing: '3px', textTransform: 'uppercase',
           }}>
             Resource Exchange
@@ -160,9 +160,9 @@ export function ResourceExchangeModal({ onClose }: Props) {
           <button
             onClick={handleClose}
             style={{
-              background: 'transparent', border: '1px solid rgba(180, 160, 100, 0.2)',
-              borderRadius: '4px', color: 'rgba(200, 190, 160, 0.5)',
-              fontSize: '13px', padding: '3px 8px', cursor: 'pointer',
+              background: 'transparent', border: '1px solid var(--color-border-default)',
+              borderRadius: 'var(--radius-sm)', color: 'var(--color-text-secondary)',
+              fontSize: 'var(--font-size-md)', padding: '3px 8px', cursor: 'pointer',
               fontFamily: 'inherit',
             }}
           >
@@ -173,11 +173,11 @@ export function ResourceExchangeModal({ onClose }: Props) {
         {/* FROM selector */}
         <div style={{ marginBottom: '16px' }}>
           <div style={{
-            fontSize: '9px', fontWeight: 700, color: 'rgba(180, 170, 150, 0.5)',
+            fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-text-muted)',
             letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px',
           }}>
             From
-            {from && <span style={{ color: 'rgba(200, 190, 160, 0.35)', marginLeft: '6px', letterSpacing: '1px' }}>
+            {from && <span style={{ color: 'var(--color-text-secondary)', marginLeft: '6px', letterSpacing: '1px' }}>
               {rateLabel}
             </span>}
           </div>
@@ -198,16 +198,16 @@ export function ResourceExchangeModal({ onClose }: Props) {
                   }}
                   style={{
                     flex: 1, padding: '8px 4px',
-                    background: isSel ? 'rgba(60, 50, 20, 0.7)' : 'rgba(30, 28, 48, 0.8)',
-                    border: `1px solid ${isSel ? 'rgba(240, 208, 128, 0.7)' : 'rgba(180, 160, 100, 0.2)'}`,
-                    borderRadius: '6px',
+                    background: isSel ? 'rgba(60, 50, 20, 0.7)' : 'var(--color-bg-secondary)',
+                    border: `1px solid ${isSel ? 'var(--color-gold-primary)' : 'var(--color-border-default)'}`,
+                    borderRadius: 'var(--radius-md)',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
                     fontFamily: 'inherit',
                   }}
                 >
-                  <span style={{ fontSize: '16px' }}>{info.icon}</span>
+                  <span style={{ fontSize: 'var(--font-size-lg)' }}>{info.icon}</span>
                   <span style={{ fontSize: '8px', color: info.color, fontWeight: 700, letterSpacing: '0.5px' }}>{info.label}</span>
-                  <span style={{ fontSize: '9px', color: 'rgba(200, 190, 160, 0.6)' }}>{bal}</span>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>{bal}</span>
                 </button>
               );
             })}
@@ -217,7 +217,7 @@ export function ResourceExchangeModal({ onClose }: Props) {
         {/* TO selector */}
         <div style={{ marginBottom: '20px' }}>
           <div style={{
-            fontSize: '9px', fontWeight: 700, color: 'rgba(180, 170, 150, 0.5)',
+            fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-text-muted)',
             letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px',
           }}>
             To
@@ -236,16 +236,16 @@ export function ResourceExchangeModal({ onClose }: Props) {
                   onClick={() => { selectedTo.value = res; }}
                   style={{
                     flex: 1, padding: '8px 4px',
-                    background: isSel ? 'rgba(20, 50, 30, 0.7)' : 'rgba(30, 28, 48, 0.8)',
-                    border: `1px solid ${isSel ? 'rgba(100, 200, 128, 0.6)' : 'rgba(180, 160, 100, 0.2)'}`,
-                    borderRadius: '6px',
+                    background: isSel ? 'rgba(20, 50, 30, 0.7)' : 'var(--color-bg-secondary)',
+                    border: `1px solid ${isSel ? 'rgba(100, 200, 128, 0.6)' : 'var(--color-border-default)'}`,
+                    borderRadius: 'var(--radius-md)',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
                     fontFamily: 'inherit',
                   }}
                 >
-                  <span style={{ fontSize: '16px' }}>{info.icon}</span>
+                  <span style={{ fontSize: 'var(--font-size-lg)' }}>{info.icon}</span>
                   <span style={{ fontSize: '8px', color: info.color, fontWeight: 700, letterSpacing: '0.5px' }}>{info.label}</span>
-                  <span style={{ fontSize: '9px', color: 'rgba(200, 190, 160, 0.6)' }}>{bal}</span>
+                  <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>{bal}</span>
                 </button>
               );
             })}
@@ -260,12 +260,12 @@ export function ResourceExchangeModal({ onClose }: Props) {
               marginBottom: '8px',
             }}>
               <div style={{
-                fontSize: '9px', fontWeight: 700, color: 'rgba(180, 170, 150, 0.5)',
+                fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-text-muted)',
                 letterSpacing: '2px', textTransform: 'uppercase',
               }}>
                 Amount
               </div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#f0d080' }}>
+              <div style={{ fontSize: 'var(--font-size-md)', fontWeight: 700, color: 'var(--color-gold-primary)' }}>
                 {amount}
               </div>
             </div>
@@ -279,7 +279,7 @@ export function ResourceExchangeModal({ onClose }: Props) {
             />
             <div style={{
               display: 'flex', justifyContent: 'space-between',
-              fontSize: '8px', color: 'rgba(180, 170, 150, 0.3)',
+              fontSize: '8px', color: 'var(--color-text-muted)',
               marginTop: '4px', letterSpacing: '0.5px',
             }}>
               <span>1</span>
@@ -292,24 +292,24 @@ export function ResourceExchangeModal({ onClose }: Props) {
         <div style={{
           minHeight: '36px', marginBottom: '20px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(20, 18, 36, 0.6)',
-          border: '1px solid rgba(180, 160, 100, 0.1)',
-          borderRadius: '6px', padding: '10px 16px',
+          background: 'var(--color-bg-primary)',
+          border: '1px solid var(--color-border-subtle)',
+          borderRadius: 'var(--radius-md)', padding: '10px 16px',
         }}>
           {!from || !to ? (
-            <span style={{ fontSize: '11px', color: 'rgba(180, 170, 150, 0.3)', fontStyle: 'italic' }}>
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
               Select source and target resources
             </span>
           ) : gainIsZero ? (
-            <span style={{ fontSize: '11px', color: 'rgba(200, 100, 100, 0.7)', fontStyle: 'italic' }}>
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'rgba(200, 100, 100, 0.7)', fontStyle: 'italic' }}>
               Amount too small — minimum {isPrimary ? 1 : 2} to gain 1
             </span>
           ) : preview ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: 'var(--font-size-md)' }}>
               <span style={{ color: '#e07060', fontWeight: 700 }}>
                 {RESOURCE_INFO[from].icon} -{preview.spend}
               </span>
-              <span style={{ color: 'rgba(180, 170, 150, 0.4)', fontSize: '16px' }}>→</span>
+              <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-lg)' }}>→</span>
               <span style={{ color: '#60c880', fontWeight: 700 }}>
                 {RESOURCE_INFO[to].icon} +{preview.gain}
               </span>
@@ -326,14 +326,14 @@ export function ResourceExchangeModal({ onClose }: Props) {
               flex: 2, padding: '12px',
               background: canExchange
                 ? 'linear-gradient(135deg, rgba(80, 60, 20, 0.8), rgba(50, 40, 18, 0.95))'
-                : 'rgba(40, 36, 60, 0.5)',
-              border: `1px solid ${canExchange ? 'rgba(220, 190, 100, 0.5)' : 'rgba(180, 160, 100, 0.15)'}`,
-              borderRadius: '4px',
-              color: canExchange ? '#f0d080' : 'rgba(180, 170, 150, 0.3)',
-              fontFamily: 'inherit', fontSize: '13px', fontWeight: 600,
+                : 'var(--color-bg-tertiary)',
+              border: `1px solid ${canExchange ? 'var(--color-border-strong)' : 'var(--color-border-subtle)'}`,
+              borderRadius: 'var(--radius-sm)',
+              color: canExchange ? 'var(--color-gold-primary)' : 'var(--color-text-muted)',
+              fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600,
               letterSpacing: '1px', textTransform: 'uppercase',
               cursor: canExchange ? 'pointer' : 'not-allowed',
-              transition: 'all 0.2s ease',
+              transition: `all var(--duration-normal) var(--ease-default)`,
             }}
           >
             Exchange
@@ -342,13 +342,13 @@ export function ResourceExchangeModal({ onClose }: Props) {
             onClick={handleClose}
             style={{
               flex: 1, padding: '12px',
-              background: 'rgba(30, 28, 48, 0.7)',
-              border: '1px solid rgba(180, 160, 100, 0.15)',
-              borderRadius: '4px',
-              color: 'rgba(200, 190, 160, 0.5)',
-              fontFamily: 'inherit', fontSize: '12px', fontWeight: 600,
+              background: 'var(--color-bg-secondary)',
+              border: '1px solid var(--color-border-subtle)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--color-text-secondary)',
+              fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600,
               letterSpacing: '1px', textTransform: 'uppercase',
-              cursor: 'pointer', transition: 'all 0.2s ease',
+              cursor: 'pointer', transition: `all var(--duration-normal) var(--ease-default)`,
             }}
           >
             Cancel

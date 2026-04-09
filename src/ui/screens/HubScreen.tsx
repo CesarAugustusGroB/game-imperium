@@ -21,37 +21,37 @@ if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
   el.textContent = `
     .hub-btn {
       padding: 12px 24px;
-      border-radius: 4px; cursor: pointer;
-      font-family: inherit; font-size: 14px; font-weight: 600;
+      border-radius: var(--radius-sm); cursor: pointer;
+      font-family: var(--font-family); font-size: var(--font-size-lg); font-weight: 600;
       letter-spacing: 1px; text-transform: uppercase;
-      transition: all 0.2s ease;
+      transition: all var(--duration-normal) var(--ease-default);
     }
     .hub-btn:active { transform: scale(0.97); }
     .hub-btn-primary {
       background: linear-gradient(135deg, rgba(80, 60, 20, 0.7), rgba(50, 40, 18, 0.9));
-      border: 1px solid rgba(220, 190, 100, 0.5); color: #f0d080;
+      border: 1px solid var(--color-border-strong); color: var(--color-gold-primary);
     }
     .hub-btn-primary:hover {
       border-color: rgba(255, 220, 120, 0.8); color: #fff0c0;
-      box-shadow: 0 0 24px rgba(180, 160, 100, 0.2), inset 0 0 20px rgba(180, 160, 100, 0.06);
+      box-shadow: 0 0 24px var(--color-border-subtle), inset 0 0 20px var(--color-border-subtle);
     }
     .hub-btn-primary:disabled {
       opacity: 0.35; cursor: not-allowed;
     }
-    .merchant-sell-btn { transition: all 0.15s ease; cursor: pointer; }
+    .merchant-sell-btn { transition: all var(--duration-fast) var(--ease-default); cursor: pointer; }
     .merchant-sell-btn:hover {
       background: rgba(180, 140, 40, 0.5) !important;
       border-color: rgba(240, 208, 128, 0.6) !important;
     }
     .merchant-sell-btn:active { transform: scale(0.96); }
-    .merchant-sell-all { transition: all 0.2s ease; cursor: pointer; }
+    .merchant-sell-all { transition: all var(--duration-normal) var(--ease-default); cursor: pointer; }
     .merchant-sell-all:hover {
       background: rgba(180, 140, 40, 0.5) !important;
       border-color: rgba(240, 208, 128, 0.6) !important;
       color: #fff0c0 !important;
     }
     .merchant-sell-all:active { transform: scale(0.97); }
-    .hub-panel-btn { transition: all 0.15s ease; cursor: pointer; }
+    .hub-panel-btn { transition: all var(--duration-fast) var(--ease-default); cursor: pointer; }
     .hub-panel-btn:hover {
       border-color: rgba(180, 160, 100, 0.45) !important;
       color: rgba(240, 220, 160, 0.9) !important;
@@ -117,7 +117,7 @@ export function HubScreen() {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      minHeight: '100vh', fontFamily: "'Segoe UI', system-ui, sans-serif",
+      minHeight: '100vh', fontFamily: 'var(--font-family)',
       background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
       paddingTop: '48px', paddingBottom: '32px',
     }}>
@@ -125,10 +125,10 @@ export function HubScreen() {
         <div style={{
           position: 'fixed', top: '52px', left: '50%', transform: 'translateX(-50%)',
           background: 'rgba(50, 42, 12, 0.95)', border: '1px solid rgba(240, 208, 128, 0.6)',
-          borderRadius: '6px', padding: '6px 16px',
-          color: '#f0d080', fontSize: '14px', fontWeight: 700,
+          borderRadius: 'var(--radius-md)', padding: '6px 16px',
+          color: 'var(--color-gold-primary)', fontSize: 'var(--font-size-lg)', fontWeight: 700,
           letterSpacing: '1px', zIndex: 300,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.4)', animation: 'gold-flash 0.2s ease-out',
+          boxShadow: 'var(--shadow-md)', animation: 'gold-flash var(--duration-normal) var(--ease-default)',
         }}>
           {goldFlash.value}
         </div>
@@ -140,11 +140,11 @@ export function HubScreen() {
           style={{
             position: 'fixed', top: '92px', left: '50%', transform: 'translateX(-50%)',
             background: 'rgba(20, 40, 60, 0.97)', border: '1px solid rgba(100, 160, 220, 0.6)',
-            borderRadius: '6px', padding: '8px 20px',
-            color: '#80c8f0', fontSize: '12px', fontWeight: 700,
+            borderRadius: 'var(--radius-md)', padding: '8px 20px',
+            color: '#80c8f0', fontSize: 'var(--font-size-md)', fontWeight: 700,
             letterSpacing: '1.5px', textTransform: 'uppercase',
             zIndex: 300, cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+            boxShadow: 'var(--shadow-md)',
           }}
         >
           {tierUpNotices.value.map(n => `${n} leveled up!`).join(' · ')} &nbsp;✕
@@ -161,24 +161,24 @@ export function HubScreen() {
         {/* ── LEFT: Council command panel ── */}
         <div style={{
           flex: '1 1 340px',
-          background: 'rgba(12, 10, 24, 0.85)',
-          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-          borderRadius: '12px', border: '1px solid rgba(180, 160, 100, 0.15)',
-          padding: '24px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          background: 'var(--color-bg-primary)',
+          backdropFilter: 'blur(var(--blur-panel))', WebkitBackdropFilter: 'blur(var(--blur-panel))',
+          borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-default)',
+          padding: '24px', boxShadow: 'var(--shadow-lg)',
         }}>
           {/* Commander + spokes */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ fontSize: '11px', color: 'rgba(200,190,160,0.5)', letterSpacing: '2px', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', letterSpacing: '2px', textTransform: 'uppercase' }}>
               {commander?.name ?? 'No Commander'}
             </div>
             {completedSpokes.value > 0 && (
-              <div style={{ fontSize: '10px', color: 'rgba(180,170,150,0.35)', letterSpacing: '1px' }}>
+              <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', letterSpacing: '1px' }}>
                 {completedSpokes.value} spoke{completedSpokes.value !== 1 ? 's' : ''} completed
               </div>
             )}
           </div>
 
-          <div style={{ fontSize: '22px', fontWeight: 600, color, letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '4px', textShadow: `0 2px 8px ${color}30` }}>
+          <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 600, color, letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '4px', textShadow: `0 2px 8px ${color}30` }}>
             Hub
           </div>
           <div style={{ width: '60px', height: '1px', marginBottom: '20px', background: `linear-gradient(90deg, transparent, ${color}60, transparent)` }} />
@@ -192,10 +192,10 @@ export function HubScreen() {
                 return (
                   <div key={i} style={{
                     flex: '1 1 80px', minHeight: '52px',
-                    border: '2px dashed rgba(180,160,100,0.14)', borderRadius: '6px',
-                    background: 'rgba(20,18,36,0.3)',
+                    border: '2px dashed var(--color-border-subtle)', borderRadius: 'var(--radius-md)',
+                    background: 'var(--color-bg-primary)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '18px', color: 'rgba(180,160,100,0.14)',
+                    fontSize: 'var(--font-size-xl)', color: 'var(--color-border-subtle)',
                   }}>+</div>
                 );
               }
@@ -206,20 +206,20 @@ export function HubScreen() {
               return (
                 <div key={advisor.id} style={{
                   flex: '1 1 80px',
-                  background: 'rgba(20,18,36,0.7)',
-                  border: '1px solid rgba(180,160,100,0.14)',
+                  background: 'var(--color-bg-primary)',
+                  border: '1px solid var(--color-border-subtle)',
                   borderTop: `3px solid ${fColor}`,
-                  borderRadius: '6px', padding: '8px',
+                  borderRadius: 'var(--radius-md)', padding: '8px',
                   display: 'flex', flexDirection: 'column', gap: '4px',
                 }}>
-                  <div style={{ fontSize: '9px', fontWeight: 700, color: fColor, letterSpacing: '0.8px', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: fColor, letterSpacing: '0.8px', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {advisor.name}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'rgba(50,42,12,0.8)', border: '1px solid rgba(240,208,128,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '7px', fontWeight: 700, color: '#f0d080', flexShrink: 0 }}>
+                    <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: 'rgba(50,42,12,0.8)', border: '1px solid rgba(240,208,128,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '7px', fontWeight: 700, color: 'var(--color-gold-primary)', flexShrink: 0 }}>
                       {ROMAN[tier as 1 | 2 | 3]}
                     </div>
-                    <div style={{ fontSize: '8px', color: 'rgba(180,170,150,0.38)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: '8px', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {shortDesc}…
                     </div>
                   </div>
@@ -230,11 +230,11 @@ export function HubScreen() {
 
           {/* Posture / hint */}
           {spokePreview ? (
-            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.8px', color: spokePreview.posture === 'attacking' ? '#e07050' : '#60a8d0', marginBottom: '16px' }}>
+            <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, letterSpacing: '0.8px', color: spokePreview.posture === 'attacking' ? '#e07050' : '#60a8d0', marginBottom: '16px' }}>
               {spokePreview.posture === 'attacking' ? '⚔ Attacking Campaign' : '🛡 Defending Campaign'}
             </div>
           ) : (
-            <div style={{ fontSize: '10px', color: 'rgba(180,170,150,0.3)', fontStyle: 'italic', marginBottom: '16px' }}>
+            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic', marginBottom: '16px' }}>
               No advisors seated — visit Council to assign.
             </div>
           )}
@@ -247,7 +247,7 @@ export function HubScreen() {
             <button
               class="hub-panel-btn"
               onClick={() => navigateTo('council')}
-              style={{ padding: '10px 16px', borderRadius: '4px', background: 'rgba(40,35,60,0.6)', border: '1px solid rgba(180,160,100,0.2)', color: 'rgba(220,200,160,0.65)', fontFamily: 'inherit', fontSize: '12px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}
+              style={{ padding: '10px 16px', borderRadius: 'var(--radius-sm)', background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border-default)', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase' }}
             >
               Manage Council
             </button>
@@ -258,17 +258,17 @@ export function HubScreen() {
         <div style={{ flex: '0 1 300px', minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
           {/* Doctrines Summary */}
-          <div style={{ ...PANEL, animation: 'panel-slide-in 0.3s ease-out both', animationDelay: '0s' }}>
+          <div style={{ ...PANEL, animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0s' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <div style={{ ...PANEL_TITLE, marginBottom: 0 }}>
-                Doctrines <span style={{ color: 'rgba(200,190,160,0.32)' }}>{equippedCount}/4</span>
+                Doctrines <span style={{ color: 'var(--color-text-muted)' }}>{equippedCount}/4</span>
               </div>
-              <button class="hub-panel-btn" onClick={() => navigateTo('doctrine')} style={{ background: 'transparent', border: '1px solid rgba(180,160,100,0.18)', borderRadius: '3px', padding: '2px 8px', color: 'rgba(200,190,160,0.42)', fontFamily: 'inherit', fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              <button class="hub-panel-btn" onClick={() => navigateTo('doctrine')} style={{ background: 'transparent', border: '1px solid var(--color-border-subtle)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>
                 Manage →
               </button>
             </div>
             {equippedCount === 0 ? (
-              <div style={{ fontSize: '10px', color: 'rgba(180,170,150,0.28)', fontStyle: 'italic' }}>No doctrines equipped</div>
+              <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>No doctrines equipped</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 {equipped.map(d => {
@@ -277,8 +277,8 @@ export function HubScreen() {
                   return (
                     <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: fColor, flexShrink: 0, boxShadow: `0 0 4px ${fColor}60` }} />
-                      <div style={{ fontSize: '10px', color: 'rgba(220,210,185,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{d.name}</div>
-                      <div style={{ fontSize: '8px', color: 'rgba(180,170,150,0.32)', flexShrink: 0 }}>Lv{d.currentLevel}</div>
+                      <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{d.name}</div>
+                      <div style={{ fontSize: '8px', color: 'var(--color-text-muted)', flexShrink: 0 }}>Lv{d.currentLevel}</div>
                     </div>
                   );
                 })}
@@ -287,12 +287,12 @@ export function HubScreen() {
           </div>
 
           {/* Decretum Hand */}
-          <div style={{ ...PANEL, animation: 'panel-slide-in 0.3s ease-out both', animationDelay: '0.1s' }}>
+          <div style={{ ...PANEL, animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0.1s' }}>
             <div style={{ ...PANEL_TITLE, marginBottom: '8px' }}>
-              Decretum Hand <span style={{ color: 'rgba(200,190,160,0.32)' }}>{hand.length}/{maxHand}</span>
+              Decretum Hand <span style={{ color: 'var(--color-text-muted)' }}>{hand.length}/{maxHand}</span>
             </div>
             {hand.length === 0 ? (
-              <div style={{ fontSize: '10px', color: 'rgba(180,170,150,0.28)', fontStyle: 'italic' }}>No scrolls in hand</div>
+              <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>No scrolls in hand</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {hand.map(d => {
@@ -301,8 +301,8 @@ export function HubScreen() {
                   return (
                     <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: castable ? 1 : 0.42 }}>
                       <div style={{ width: '6px', height: '6px', borderRadius: '2px', background: fColor, flexShrink: 0 }} />
-                      <div style={{ fontSize: '10px', color: 'rgba(220,210,185,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{d.name}</div>
-                      <div style={{ fontSize: '8px', color: 'rgba(180,170,150,0.3)', flexShrink: 0, textTransform: 'capitalize' }}>{d.rarity}</div>
+                      <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{d.name}</div>
+                      <div style={{ fontSize: '8px', color: 'var(--color-text-muted)', flexShrink: 0, textTransform: 'capitalize' }}>{d.rarity}</div>
                     </div>
                   );
                 })}
@@ -311,26 +311,26 @@ export function HubScreen() {
           </div>
 
           {/* Merchant */}
-          <div style={{ ...PANEL, animation: 'panel-slide-in 0.3s ease-out both', animationDelay: '0.2s' }}>
+          <div style={{ ...PANEL, animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0.2s' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <div style={{ ...PANEL_TITLE, marginBottom: 0 }}>
-                Merchant {hasAnything && <span style={{ color: 'rgba(240,208,128,0.32)' }}>({totalMerchantGold}g)</span>}
+                Merchant {hasAnything && <span style={{ color: 'var(--color-text-muted)' }}>({totalMerchantGold}g)</span>}
               </div>
               {hasAnything && (
-                <button class="merchant-sell-all" onClick={handleSellAll} style={{ background: 'rgba(80,60,20,0.6)', border: '1px solid rgba(240,208,128,0.3)', borderRadius: '4px', padding: '3px 10px', color: '#f0d080', fontSize: '9px', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', fontFamily: 'inherit' }}>
+                <button class="merchant-sell-all" onClick={handleSellAll} style={{ background: 'rgba(80,60,20,0.6)', border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-sm)', padding: '3px 10px', color: 'var(--color-gold-primary)', fontSize: 'var(--font-size-xs)', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', fontFamily: 'inherit' }}>
                   Sell All ({totalMerchantGold}g)
                 </button>
               )}
             </div>
             {!hasAnything ? (
-              <div style={{ padding: '10px 0', textAlign: 'center', color: 'rgba(180,170,150,0.28)', fontSize: '10px', fontStyle: 'italic' }}>
+              <div style={{ padding: '10px 0', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)', fontStyle: 'italic' }}>
                 Nothing to sell — only off-color items appear here.
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {offColorScrolls.length > 0 && (
                   <div>
-                    <div style={{ fontSize: '8px', color: 'rgba(180,170,150,0.38)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '6px' }}>Spoil Scrolls ({offColorScrolls.length})</div>
+                    <div style={{ fontSize: '8px', color: 'var(--color-text-muted)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '6px' }}>Spoil Scrolls ({offColorScrolls.length})</div>
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                       {offColorScrolls.map(d => <DecretumCard key={d.id} decretum={d} castable={false} onSell={() => handleSellScroll(d.id)} />)}
                     </div>
@@ -338,16 +338,16 @@ export function HubScreen() {
                 )}
                 {offColorDoctrines.length > 0 && (
                   <div>
-                    <div style={{ fontSize: '8px', color: 'rgba(180,170,150,0.38)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '6px' }}>Off-Color Doctrines ({offColorDoctrines.length})</div>
+                    <div style={{ fontSize: '8px', color: 'var(--color-text-muted)', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '6px' }}>Off-Color Doctrines ({offColorDoctrines.length})</div>
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                       {offColorDoctrines.map(d => {
                         const price = getDoctrineSellPrice(d);
                         const fColor = FACTION_COLORS[d.color];
                         return (
-                          <div key={d.id} style={{ width: '110px', padding: '8px', background: 'rgba(30,28,48,0.45)', border: '1px solid rgba(180,160,100,0.06)', borderTop: `3px solid ${fColor}`, borderRadius: '5px' }}>
+                          <div key={d.id} style={{ width: '110px', padding: '8px', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-subtle)', borderTop: `3px solid ${fColor}`, borderRadius: 'var(--radius-sm)' }}>
                             <div style={{ fontSize: '8px', fontWeight: 700, color: `${fColor}88`, letterSpacing: '0.8px', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '4px' }}>{d.name}</div>
-                            <div style={{ fontSize: '8px', color: 'rgba(200,190,160,0.38)', lineHeight: '1.4', marginBottom: '6px', opacity: 0.45 }}>{d.levels[d.currentLevel - 1].description}</div>
-                            <button class="merchant-sell-btn" onClick={() => handleSellDoctrine(d.id)} style={{ width: '100%', padding: '3px 0', background: 'rgba(80,60,20,0.5)', border: '1px solid rgba(240,208,128,0.22)', borderRadius: '3px', color: '#f0d080', fontSize: '8px', fontWeight: 600, letterSpacing: '0.8px', fontFamily: 'inherit' }}>
+                            <div style={{ fontSize: '8px', color: 'var(--color-text-muted)', lineHeight: '1.4', marginBottom: '6px', opacity: 0.45 }}>{d.levels[d.currentLevel - 1].description}</div>
+                            <button class="merchant-sell-btn" onClick={() => handleSellDoctrine(d.id)} style={{ width: '100%', padding: '3px 0', background: 'rgba(80,60,20,0.5)', border: '1px solid rgba(240,208,128,0.22)', borderRadius: 'var(--radius-sm)', color: 'var(--color-gold-primary)', fontSize: '8px', fontWeight: 600, letterSpacing: '0.8px', fontFamily: 'inherit' }}>
                               Sell ({price}g)
                             </button>
                           </div>
@@ -361,38 +361,38 @@ export function HubScreen() {
           </div>
 
           {/* Provinces */}
-          <div style={{ ...PANEL, animation: 'panel-slide-in 0.3s ease-out both', animationDelay: '0.3s' }}>
+          <div style={{ ...PANEL, animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0.3s' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <div style={{ ...PANEL_TITLE, marginBottom: 0 }}>
-                Provinces <span style={{ color: 'rgba(200,190,160,0.32)' }}>({provinces.value.length})</span>
+                Provinces <span style={{ color: 'var(--color-text-muted)' }}>({provinces.value.length})</span>
               </div>
               {provinces.value.length > 0 && (
-                <button class="hub-panel-btn" onClick={() => navigateTo('provinces')} style={{ background: 'transparent', border: '1px solid rgba(180,160,100,0.18)', borderRadius: '3px', padding: '2px 8px', color: 'rgba(200,190,160,0.42)', fontFamily: 'inherit', fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                <button class="hub-panel-btn" onClick={() => navigateTo('provinces')} style={{ background: 'transparent', border: '1px solid var(--color-border-subtle)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>
                   Manage →
                 </button>
               )}
             </div>
             {provinces.value.length === 0 ? (
-              <div style={{ fontSize: '10px', color: 'rgba(180,170,150,0.28)', fontStyle: 'italic' }}>No provinces — complete spokes to conquer</div>
+              <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>No provinces — complete spokes to conquer</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {provinces.value.map(p => {
-                  const unrestColor = p.unrest > 70 ? '#c24a3a' : p.unrest > 40 ? '#d4a843' : 'rgba(180,170,150,0.32)';
+                  const unrestColor = p.unrest > 70 ? 'var(--color-danger)' : p.unrest > 40 ? 'var(--color-gold-secondary)' : 'var(--color-text-muted)';
                   return (
                     <div key={p.id} class="hub-panel-btn" onClick={() => navigateTo('provinces')} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '4px 6px', borderRadius: '4px',
+                      padding: '4px 6px', borderRadius: 'var(--radius-sm)',
                       background: 'transparent', border: '1px solid transparent',
                       fontFamily: 'inherit',
                     }}>
-                      <div style={{ fontSize: '10px', color: 'rgba(220,210,185,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{p.name}</div>
+                      <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{p.name}</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: '8px' }}>
                         {p.unrest > 30 && (
                           <div style={{ width: '24px', height: '3px', background: 'rgba(40,35,60,0.8)', borderRadius: '2px', overflow: 'hidden' }}>
                             <div style={{ width: `${Math.min(100, p.unrest)}%`, height: '100%', background: unrestColor, borderRadius: '2px' }} />
                           </div>
                         )}
-                        <div style={{ fontSize: '8px', color: 'rgba(180,170,150,0.32)' }}>{p.investments.length}/6</div>
+                        <div style={{ fontSize: '8px', color: 'var(--color-text-muted)' }}>{p.investments.length}/6</div>
                       </div>
                     </div>
                   );
@@ -409,11 +409,11 @@ export function HubScreen() {
               onClick={() => { exchangeOpen.value = true; }}
               style={{
                 width: '100%', padding: '9px',
-                background: 'rgba(30,28,48,0.7)',
-                border: '1px solid rgba(180,160,100,0.2)',
-                borderRadius: '4px',
-                color: 'rgba(220,200,160,0.65)',
-                fontFamily: 'inherit', fontSize: '11px', fontWeight: 600,
+                background: 'var(--color-bg-secondary)',
+                border: '1px solid var(--color-border-default)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--color-text-secondary)',
+                fontFamily: 'inherit', fontSize: 'var(--font-size-sm)', fontWeight: 600,
                 letterSpacing: '1px', textTransform: 'uppercase',
               }}
             >

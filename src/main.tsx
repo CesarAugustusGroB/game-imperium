@@ -1,3 +1,4 @@
+import './ui/design-tokens.css';
 import { render } from 'preact';
 import { effect } from '@preact/signals';
 import { App } from './ui/screens/App';
