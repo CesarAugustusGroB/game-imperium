@@ -15,6 +15,7 @@ import {
   plannedSpoke,
 } from '../../game/council/council-store';
 import { ROMAN } from '../ui-constants';
+import { Portrait } from '../components/Portrait';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('council-screen-styles')) {
@@ -241,6 +242,16 @@ export function CouncilScreen() {
                 >
                   ×
                 </button>
+
+                {/* Portrait */}
+                <Portrait
+                  alt={advisor.name}
+                  size="small"
+                  factionColor={fColor}
+                  tier={advisor.currentTier as 1 | 2 | 3}
+                  tierUpAvailable={advisor.currentTier < 3 && advisor.xp >= (advisor.currentTier === 1 ? XP_TIER_2 : XP_TIER_3)}
+                  style={{ margin: '0 auto var(--space-xs)' }}
+                />
 
                 {/* Advisor name */}
                 <div style={{

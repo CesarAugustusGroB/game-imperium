@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
+import { Portrait } from '../components/Portrait';
 import { COMMANDERS } from '../../data/commanders';
 import { FACTION_COLORS } from '../../game/core/commander';
 import type { Commander } from '../../game/core/commander';
@@ -65,16 +66,12 @@ function CommanderCard({ commander }: { commander: Commander }) {
         gap: '10px',
       }}
     >
-      {/* Portrait — name is baked into the image */}
-      <img
+      <Portrait
         src={commander.portrait}
         alt={commander.name}
-        style={{
-          width: '188px', height: '210px',
-          objectFit: 'contain', objectPosition: 'center top',
-          filter: `drop-shadow(0 0 12px ${color}50)`,
-          transition: `filter 0.25s var(--ease-default)`,
-        }}
+        size="large"
+        factionColor={color}
+        selected={isSelected}
       />
 
       {/* Culture */}

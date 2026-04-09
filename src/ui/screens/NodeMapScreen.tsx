@@ -8,10 +8,11 @@ import { selectedCommander, completedSpokes, threatLevel } from '../../game/core
 import { conquerProvince, getProvinceEffects } from '../../game/province/province-store';
 import { FACTION_COLORS, RESOURCE_INFO, FACTION_PRIMARY_RESOURCE } from '../../game/core/commander';
 import type { ResourceType } from '../../game/core/commander';
-import { spendResource } from '../../game/core/resources';
+import { spendResource, getResource } from '../../game/core/resources';
 import { NodeModal } from './NodeModal';
+import { EventModal } from '../components/EventModal';
 import type { GameEvent, EventChoice } from '../../game/events/event-types';
-import { pickEvent, buildEventContext, applyEventChoice, canAffordEventChoice } from '../../game/events/event-engine';
+import { pickEvent, buildEventContext, applyEventChoice } from '../../game/events/event-engine';
 import { getExtraEventChoices } from '../../game/items/doctrine-store';
 import { manipulateUsesLeft, consumeManipulateUse } from '../../game/progression/strategic-store';
 import { councilSlots, grantAdvisorXp, tierUpNotices } from '../../game/council/council-store';
@@ -558,10 +559,6 @@ export function NodeMapScreen() {
     }
   }
 
-  function canAffordChoice(choice: EventChoice): boolean {
-    return canAffordEventChoice(choice);
-  }
-
   // Show the spoke complete modal when all nodes are resolved
   if (spokeComplete && !showSpokeCompleteModal.value) {
     showSpokeCompleteModal.value = true;
@@ -766,46 +763,35 @@ export function NodeMapScreen() {
 
       {/* Event modal */}
       {showEventModal.value && activeEvent.value && (
-        <NodeModal title={activeEvent.value.title} onClose={() => { /* no-op: force a choice */ }}>
-          <div style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-text-muted)', lineHeight: '1.5', marginBottom: '20px' }}>
-            {activeEvent.value.description}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {activeEvent.value.choices.map((choice, i) => {
-              const affordable = canAffordChoice(choice);
-              return (
-                <button class="event-choice-btn" key={i}
-                  onClick={() => affordable && handleEventChoice(choice)}
-                  disabled={!affordable}
-                  style={{
-                    padding: '10px 16px', borderRadius: 'var(--radius-sm)',
-                    cursor: affordable ? 'pointer' : 'default',
-                    background: affordable ? 'var(--color-bg-tertiary)' : 'var(--color-bg-secondary)',
-                    border: `1px solid ${affordable ? 'var(--color-border-default)' : 'rgba(80, 80, 80, 0.2)'}`,
-                    color: affordable ? 'var(--color-text-secondary)' : 'rgba(120, 110, 100, 0.4)',
-                    fontFamily: 'inherit', fontSize: 'var(--font-size-md)', textAlign: 'left',
-                    opacity: affordable ? 1 : 0.5,
-                  }}
-                >
-                  <div style={{ fontWeight: 600, marginBottom: choice.effects.length ? '4px' : '0' }}>
-                    {choice.text}
-                  </div>
-                  {choice.effects.length > 0 && (
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', fontSize: 'var(--font-size-sm)' }}>
-                      {choice.effects.map((e, j) => (
-                        <span key={j} style={{
-                          color: e.amount > 0 ? RESOURCE_INFO[e.resource].color : '#c66', fontWeight: 600,
-                        }}>
-                          {RESOURCE_INFO[e.resource].icon} {e.amount > 0 ? '+' : ''}{e.amount} {RESOURCE_INFO[e.resource].label}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-            {/* S7-12: Manipulate — Augustus event reroll */}
-            {manipulateUsesLeft.value > 0 && (
+        <>
+          <EventModal
+            event={activeEvent.value}
+            onChoice={(index) => {
+              const choice = activeEvent.value!.choices[index];
+              handleEventChoice(choice);
+            }}
+            currentResources={{
+              gold: getResource('gold'),
+              faith: getResource('faith'),
+              influence: getResource('influence'),
+              momentum: getResource('momentum'),
+            }}
+          />
+          {/* S7-12: Manipulate — Augustus event reroll, rendered as fixed overlay */}
+          {manipulateUsesLeft.value > 0 && (
+            <div
+              style={{
+                position: 'fixed',
+                top: 'calc(50% + 240px)',   // below the ~480px tall modal card
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 210,
+                width: '100%',
+                maxWidth: '520px',
+                padding: '0 16px',
+                boxSizing: 'border-box' as const,
+              }}
+            >
               <button
                 class="manipulate-reroll-btn"
                 onClick={() => {
@@ -816,7 +802,7 @@ export function NodeMapScreen() {
                   }
                 }}
                 style={{
-                  marginTop: '8px', padding: '8px 14px', borderRadius: 'var(--radius-sm)',
+                  padding: '8px 14px', borderRadius: 'var(--radius-sm)',
                   background: 'rgba(30, 50, 100, 0.4)',
                   border: '1px solid rgba(74, 124, 194, 0.4)',
                   color: '#4a7cc2', fontFamily: 'inherit', fontSize: 'var(--font-size-sm)',
@@ -826,9 +812,9 @@ export function NodeMapScreen() {
               >
                 Manipulate — Reroll Event ({manipulateUsesLeft.value} left)
               </button>
-            )}
-          </div>
-        </NodeModal>
+            </div>
+          )}
+        </>
       )}
 
       {/* Spoke completion summary modal */}

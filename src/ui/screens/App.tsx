@@ -13,6 +13,7 @@ import { ProvinceScreen } from './ProvinceScreen';
 import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
 import { toggleMute, musicMuted } from '../sound/music';
+import { NotificationFeed } from '../components/NotificationFeed';
 import { loadMetaSave } from '../../game/core/meta-save';
 
 // Load meta-save from localStorage on startup
@@ -219,6 +220,7 @@ export function App() {
           {musicMuted.value ? '\uD83D\uDD07' : '\uD83D\uDD0A'}
         </button>
       )}
+      <NotificationFeed />
     </>
   );
 }

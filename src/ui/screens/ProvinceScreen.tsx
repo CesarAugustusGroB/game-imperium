@@ -20,6 +20,7 @@ import {
 import { nextInvestmentDiscount } from '../../game/progression/strategic-store';
 import { ProvinceMapView } from './ProvinceMapView';
 import { PANEL, PANEL_TITLE, ROMAN, formatCost } from '../ui-constants';
+import { Portrait } from '../components/Portrait';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('province-styles')) {
@@ -427,15 +428,13 @@ function ProvinceDetail({ province }: { province: Province }) {
         {assigned ? (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-              <div style={{
-                width: '28px', height: '28px', borderRadius: '50%',
-                background: `${FACTION_COLORS[assigned.governor.color]}20`,
-                border: `2px solid ${FACTION_COLORS[assigned.governor.color]}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 'var(--font-size-md)', fontWeight: 700, color: FACTION_COLORS[assigned.governor.color],
-              }}>
-                {assigned.governor.name[0]}
-              </div>
+              <Portrait
+                alt={assigned.governor.name}
+                size="small"
+                factionColor={FACTION_COLORS[assigned.governor.color]}
+                tier={assigned.tier as 1 | 2 | 3}
+                style={{ margin: '0 auto 6px' }}
+              />
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: FACTION_COLORS[assigned.governor.color] }}>{assigned.governor.name}</span>
