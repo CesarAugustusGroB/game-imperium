@@ -1,5 +1,8 @@
 import type { Decretum } from '../../game/items/decretum';
+import { DECRETUM_SELL_PRICE } from '../../game/items/decretum';
 import { FACTION_COLORS } from '../../game/core/commander';
+import { Tooltip } from './Tooltip';
+import { formatCost } from '../ui-constants';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('decretum-card-styles')) {
@@ -142,12 +145,34 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
     }
   };
 
+  const decretumTooltip = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)', marginBottom: '2px' }}>
+        {decretum.name}
+        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginLeft: '6px' }}>
+          [{decretum.rarity}]
+        </span>
+      </div>
+      <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: '1.4' }}>
+        {decretum.description}
+      </div>
+      {decretum.castCost && Object.keys(decretum.castCost).length > 0 && (
+        <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
+          Cast cost: {formatCost(decretum.castCost)}
+        </div>
+      )}
+      <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
+        Sell: {DECRETUM_SELL_PRICE[decretum.rarity]}💰
+      </div>
+    </div>
+  );
+
   return (
+    <Tooltip content={decretumTooltip} variant="rich" position="above">
     <div
       style={containerStyle}
       class={`decretum-card${castable ? ' decretum-castable' : ''}${selected ? ' decretum-selected' : ''}${isNew ? ' decretum-card-new' : ''}`}
       onClick={handleClick}
-      title={castable ? `Cast: ${decretum.name}` : `Sell: ${decretum.name}`}
     >
       {/* Top row: rarity dots + optional SELL tag */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
@@ -218,5 +243,6 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
         {effectSummary(decretum)}
       </div>
     </div>
+    </Tooltip>
   );
 }

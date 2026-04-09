@@ -9,6 +9,7 @@ import { addResource } from '../core/resources';
 import type { ResourceType } from '../core/commander';
 import { resetSpokeEvents } from '../events/event-store';
 import { consumeGoldenOpportunity, resetStrategicSpoke } from '../progression/strategic-store';
+import { addNotification } from '../../ui/notifications/notification-store';
 
 // ── Council signals ──
 
@@ -153,6 +154,23 @@ export function grantAdvisorXp(advisorId: string, amount: number): boolean {
 
   councilSlots.value = slots;
   advisorPool.value = pool;
+
+  if (tieredUp) {
+    // Find the advisor's updated tier from slots or pool
+    const updated =
+      slots.find(a => a?.id === advisorId) ??
+      pool.find(a => a.id === advisorId);
+    if (updated) {
+      const newTierRoman = (['I', 'II', 'III'] as const)[updated.currentTier - 1] ?? 'III';
+      addNotification({
+        kind: 'toast',
+        icon: '⭐',
+        title: 'Advisor Promoted',
+        message: `${updated.name} advanced to Tier ${newTierRoman}`,
+        color: '#d4a843',
+      });
+    }
+  }
 
   return tieredUp;
 }
