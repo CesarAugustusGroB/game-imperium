@@ -83,7 +83,16 @@ function ResourceCounter({ type }: { type: ResourceType }) {
 
   return (
     <Tooltip
-      content={<div>{RESOURCE_TOOLTIP[type]}</div>}
+      content={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ fontWeight: 700, color: info.color }}>
+            {info.icon} {info.label}
+          </div>
+          <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+            {RESOURCE_TOOLTIP[type]}
+          </div>
+        </div>
+      }
       variant="rich"
       position="below"
     >

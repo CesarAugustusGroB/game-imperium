@@ -1,8 +1,8 @@
 import type { Decretum } from '../../game/items/decretum';
 import { DECRETUM_SELL_PRICE } from '../../game/items/decretum';
-import { FACTION_COLORS, RESOURCE_INFO } from '../../game/core/commander';
-import type { ResourceType } from '../../game/core/commander';
+import { FACTION_COLORS } from '../../game/core/commander';
 import { Tooltip } from './Tooltip';
+import { formatCost } from '../ui-constants';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('decretum-card-styles')) {
@@ -91,12 +91,6 @@ function effectSummary(decretum: Decretum): string {
   return primary;
 }
 
-function formatResourceCost(cost: Partial<Record<ResourceType, number>>): string {
-  return Object.entries(cost)
-    .map(([r, n]) => `${n}${RESOURCE_INFO[r as ResourceType].icon}`)
-    .join(' ');
-}
-
 // ── Props ──
 
 interface DecretumCardProps {
@@ -164,7 +158,7 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
       </div>
       {decretum.castCost && Object.keys(decretum.castCost).length > 0 && (
         <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-          Cast cost: {formatResourceCost(decretum.castCost)}
+          Cast cost: {formatCost(decretum.castCost)}
         </div>
       )}
       <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
