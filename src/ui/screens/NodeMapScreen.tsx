@@ -2,6 +2,7 @@ import { Fragment } from 'preact';
 import { signal } from '@preact/signals';
 import { useEffect, useState } from 'preact/hooks';
 import { navigateTo } from '../screens';
+import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../../game/progression/spoke';
 import type { SpokeNode, NodeType, SeasonTickResult } from '../../game/progression/spoke';
 import { selectedCommander, completedSpokes, threatLevel } from '../../game/core/game-state';
@@ -447,10 +448,8 @@ export function NodeMapScreen() {
         <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-lg)', letterSpacing: '1px' }}>
           No active spoke
         </div>
-        <button class="empty-state-btn" onClick={() => navigateTo('hub')} style={{
-          padding: '10px 24px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-          background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border-default)',
-          color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600, letterSpacing: '1px',
+        <button class="empty-state-btn ornate-btn-ghost" onClick={() => navigateTo('hub')} style={{
+          padding: '10px 24px',
         }}>
           Return to Hub
         </button>
@@ -605,56 +604,32 @@ export function NodeMapScreen() {
       background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
       paddingTop: '38px',
     }}>
-      {/* Dark content panel */}
-      <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        background: 'var(--color-bg-primary)',
-        backdropFilter: 'blur(var(--blur-panel))',
-        WebkitBackdropFilter: 'blur(var(--blur-panel))',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--color-border-subtle)',
-        padding: '28px 24px 24px',
-        maxWidth: '90%',
-        width: '860px',
-        boxShadow: 'var(--shadow-lg)',
-      }}>
-        {/* Spoke label + posture badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-          <div style={{
-            fontSize: 'var(--font-size-xl)', fontWeight: 600, color,
-            letterSpacing: '4px', textTransform: 'uppercase',
-            textShadow: `0 2px 12px ${color}50, 0 0 24px ${color}20`,
-          }}>
-            {spoke.label}
-          </div>
-          <div style={{
-            fontSize: 'var(--font-size-sm)', fontWeight: 700, letterSpacing: '0.8px',
-            color: spoke.posture === 'attacking' ? '#e07050' : '#60a8d0',
-            opacity: 0.85,
-          }}>
-            {spoke.posture === 'attacking' ? '⚔ Attacking' : '🛡 Defending'}
-          </div>
-        </div>
-
-        {/* Decorative underline */}
-        <div style={{
-          width: '80px', height: '2px', marginBottom: '8px',
-          background: `linear-gradient(90deg, transparent, ${color}60, transparent)`,
-          borderRadius: '1px',
-        }} />
-
-        {/* Progress text */}
-        <div style={{
-          fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)',
-          letterSpacing: '1px', marginBottom: '12px',
-        }}>
-          Node <span style={{ color: `${color}90`, fontWeight: 600 }}>{Math.min(nodeIdx + 1, spoke.nodes.length)}</span> of {spoke.nodes.length}
-          {spoke.duration > 1 && (
-            <span style={{ marginLeft: '12px', color: 'rgba(200, 160, 100, 0.5)' }}>
-              Season {spoke.currentSeason}/{spoke.duration}
-            </span>
+      <OrnateFrame width="min(1100px, 94vw)">
+        <OrnateHeader
+          eyebrow="Spoke"
+          title={spoke.label}
+          titleSize="md"
+          rightSlot={(
+            <>
+              <span class="ornate-stat-chip" title="Posture" style={{ color: spoke.posture === 'attacking' ? '#e07050' : '#60a8d0' }}>
+                {spoke.posture === 'attacking' ? '⚔' : '🛡'} <strong>{spoke.posture === 'attacking' ? 'Attacking' : 'Defending'}</strong>
+              </span>
+              <span class="ornate-stat-chip" title="Progress">
+                🚩 <strong>{resolvedCount}/{spoke.nodes.length}</strong>
+              </span>
+              {spoke.duration > 1 && (
+                <span class="ornate-stat-chip" title="Season">
+                  🌿 <strong>S{spoke.currentSeason}/{spoke.duration}</strong>
+                </span>
+              )}
+            </>
           )}
-        </div>
+          onClose={() => navigateTo('hub')}
+          accentColor={color}
+        />
+
+        {/* Node map body */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
         {/* Node chain */}
         <div
@@ -716,19 +691,18 @@ export function NodeMapScreen() {
             boxShadow: `0 0 8px ${color}40`,
           }} />
         </div>
-      </div>
 
-      {/* Retreat button */}
-      <button class="retreat-btn" onClick={() => { showRetreatConfirm.value = true; }} style={{
-        position: 'fixed', bottom: '20px', left: '20px',
-        padding: '10px 18px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-        background: 'var(--color-bg-tertiary)',
-        border: '1px solid var(--color-border-subtle)',
-        color: 'var(--color-text-muted)',
-        fontFamily: 'inherit', fontSize: 'var(--font-size-md)', letterSpacing: '1px',
-      }}>
-        Retreat
-      </button>
+        {/* Retreat button — bottom of frame */}
+        <div style={{ marginTop: '20px', alignSelf: 'flex-start' }}>
+          <button class="retreat-btn ornate-btn-ghost" onClick={() => { showRetreatConfirm.value = true; }} style={{
+            padding: '8px 18px',
+          }}>
+            Retreat
+          </button>
+        </div>
+
+        </div>{/* end node map body */}
+      </OrnateFrame>
 
       {/* Rest modal */}
       {showRestModal.value && (
@@ -750,11 +724,8 @@ export function NodeMapScreen() {
               </div>
             ))}
           </div>
-          <button class="modal-action-btn" onClick={handleRestContinue} style={{
-            padding: '10px 24px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-            background: `linear-gradient(135deg, ${color}30, ${color}15)`,
-            border: `1px solid ${color}60`,
-            color, fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600, letterSpacing: '1px',
+          <button class="modal-action-btn ornate-btn" onClick={handleRestContinue} style={{
+            padding: '10px 24px',
           }}>
             Continue
           </button>
@@ -849,11 +820,8 @@ export function NodeMapScreen() {
                     </span>
                   ))}
                 </div>
-                <button class="modal-action-btn" onClick={handleReturnToHub} style={{
-                  padding: '10px 24px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                  background: `linear-gradient(135deg, ${color}30, ${color}15)`,
-                  border: `1px solid ${color}60`,
-                  color, fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600, letterSpacing: '1px',
+                <button class="modal-action-btn ornate-btn" onClick={handleReturnToHub} style={{
+                  padding: '10px 24px',
                 }}>
                   Return to Hub
                 </button>
@@ -982,12 +950,8 @@ export function NodeMapScreen() {
               </div>
             )}
           </div>
-          <button class="modal-action-btn" onClick={() => { showSeasonModal.value = false; }} style={{
-            marginTop: '14px', padding: '10px 24px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-            background: 'linear-gradient(135deg, rgba(80, 60, 20, 0.7), rgba(50, 40, 18, 0.9))',
-            border: '1px solid var(--color-border-strong)',
-            color: 'var(--color-gold-primary)', fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600,
-            letterSpacing: '1.5px', textTransform: 'uppercase',
+          <button class="modal-action-btn ornate-btn" onClick={() => { showSeasonModal.value = false; }} style={{
+            marginTop: '14px', padding: '10px 24px',
           }}>
             Continue
           </button>

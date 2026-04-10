@@ -12,6 +12,7 @@ import { isDoctrineEquippable } from '../../game/items/doctrine';
 import { isDecretumCastable } from '../../game/items/decretum';
 import { addDoctrineToCollection } from '../../game/items/doctrine-store';
 import { addDecretum } from '../../game/items/decretum-store';
+import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('post-battle-styles')) {
@@ -25,13 +26,6 @@ if (typeof document !== 'undefined' && !document.getElementById('post-battle-sty
     .battle-banner {
       animation: banner-entrance 0.4s ease-out;
     }
-    .reward-btn { transition: all var(--duration-normal) var(--ease-default); }
-    .reward-btn:not(:disabled):hover {
-      border-color: var(--color-border-strong) !important;
-      background: rgba(50, 45, 70, 0.95) !important;
-      box-shadow: var(--shadow-md), 0 0 12px var(--color-border-subtle);
-    }
-    .reward-btn:not(:disabled):active { transform: scale(0.98); }
   `;
   document.head.appendChild(el);
 }
@@ -170,22 +164,16 @@ export function PostBattleScreen() {
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       height: '100vh', fontFamily: 'var(--font-family)',
       background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
-      paddingTop: '38px', padding: '38px 16px 0',
+      padding: '38px 16px',
     }}>
-      {/* Dark content panel */}
-      <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        background: 'var(--color-bg-primary)',
-        backdropFilter: 'blur(var(--blur-panel))',
-        WebkitBackdropFilter: 'blur(var(--blur-panel))',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--color-border-subtle)',
-        padding: '36px 40px 32px',
-        maxWidth: '90%',
-        width: 'min(480px, 85vw)',
-        boxShadow: 'var(--shadow-lg)',
-      }}>
-        {/* Banner */}
+      <OrnateFrame width="min(900px, 94vw)" padding="default" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <OrnateHeader
+          eyebrow="Spoils of war"
+          title={result === 'victory' ? 'VICTORY' : result === 'defeat' ? 'DEFEAT' : 'STALEMATE'}
+          accentColor={result === 'victory' ? 'var(--color-gold-primary)' : result === 'defeat' ? 'var(--color-danger)' : 'var(--color-gold-secondary)'}
+        />
+
+        {/* Banner — decorative image flourish; kept as visual accent below the header */}
         {result === 'victory' ? (
           <img
             class="battle-banner"
@@ -209,19 +197,11 @@ export function PostBattleScreen() {
             }}
           />
         ) : (
-          <>
-            <div class="battle-banner" style={{
-              fontSize: '32px', fontWeight: 700, color: banner.color,
-              letterSpacing: '6px', textTransform: 'uppercase', marginBottom: '4px',
-              textShadow: `0 2px 16px ${banner.color}60, 0 0 40px ${banner.color}30`,
-            }}>
-              {banner.text}
-            </div>
-            <div style={{
-              width: '80px', height: '2px', marginBottom: '8px',
-              background: `linear-gradient(90deg, transparent, ${banner.color}70, transparent)`,
-            }} />
-          </>
+          /* Draw has no image asset — decorative divider line as visual flourish */
+          <div class="battle-banner" style={{
+            width: '80px', height: '2px', marginBottom: '16px',
+            background: `linear-gradient(90deg, transparent, ${banner.color}70, transparent)`,
+          }} />
         )}
 
         <div style={{
@@ -244,7 +224,7 @@ export function PostBattleScreen() {
 
             return (
               <button
-                class="reward-btn"
+                class="ornate-btn"
                 key={reward.label + i}
                 onClick={() => handlePick(i)}
                 disabled={chosenIndex.value !== null}
@@ -259,6 +239,9 @@ export function PostBattleScreen() {
                   fontFamily: 'inherit', fontSize: 'var(--font-size-md)',
                   textAlign: 'left',
                   opacity: chosenIndex.value !== null && !isChosen ? 0.4 : 1,
+                  textTransform: 'none',
+                  letterSpacing: 'normal',
+                  fontWeight: 'normal',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
@@ -310,7 +293,7 @@ export function PostBattleScreen() {
             );
           })}
         </div>
-      </div>
+      </OrnateFrame>
     </div>
   );
 }

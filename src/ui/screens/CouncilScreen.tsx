@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { navigateTo } from '../screens';
 import { Button } from '../components/Button';
-import { selectedCommander } from '../../game/core/game-state';
+import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { FACTION_COLORS } from '../../game/core/commander';
 import { getCurrentTier, getCurrentPassive, getXpToNextTier, XP_TIER_2, XP_TIER_3 } from '../../game/council/advisor';
 import type { Advisor, AdvisorPassive } from '../../game/council/advisor';
@@ -28,7 +28,7 @@ if (typeof document !== 'undefined' && !document.getElementById('council-screen-
       cursor: pointer;
     }
     .council-advisor-card:hover {
-      border-color: var(--color-border-strong) !important;
+      border-color: var(--color-gold-primary) !important;
       box-shadow: var(--shadow-md);
       transform: translateY(-1px);
     }
@@ -96,10 +96,6 @@ function xpProgress(advisor: Advisor): number {
 }
 
 export function CouncilScreen() {
-  const commander = selectedCommander.value;
-  const faction = commander?.faction;
-  const color = faction ? FACTION_COLORS[faction] : '#d4a843';
-
   const slots = councilSlots.value;
   const pool = advisorPool.value;
   const seatedCount = slots.filter(Boolean).length;
@@ -131,39 +127,18 @@ export function CouncilScreen() {
       paddingTop: '48px', paddingBottom: '32px',
     }}>
       {/* Dark content panel */}
-      <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        background: 'var(--color-bg-primary)',
-        backdropFilter: `blur(var(--blur-panel))`,
-        WebkitBackdropFilter: `blur(var(--blur-panel))`,
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--color-border-subtle)',
-        padding: '24px',
-        maxWidth: '90%',
-        width: 'min(800px, 90vw)',
-        boxShadow: 'var(--shadow-lg)',
-      }}>
+      <OrnateFrame width="min(1100px, 94vw)">
+        <OrnateHeader
+          eyebrow="The Council"
+          title="ADVISORS"
+          rightSlot={<>
+            <span class="ornate-stat-chip" title="Seated">SEATED <strong>{seatedCount}/3</strong></span>
+            <span class="ornate-stat-chip" title="Available">POOL <strong>{pool.length}</strong></span>
+          </>}
+          onClose={() => navigateTo('hub')}
+        />
 
-        {/* Title */}
-        <div style={{
-          fontSize: 'var(--font-size-xl)', fontWeight: 600, color,
-          letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '4px',
-          textShadow: `0 2px 8px ${color}30`,
-        }}>
-          Council
-        </div>
-        <div style={{
-          width: '60px', height: '1px', marginBottom: '20px',
-          background: `linear-gradient(90deg, transparent, ${color}60, transparent)`,
-        }} />
-
-        {/* Slot label */}
-        <div style={{
-          fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)',
-          letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px',
-        }}>
-          Advisors ({seatedCount}/3)
-        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
         {/* ── 3 Advisor Slots ── */}
         <div style={{
@@ -237,7 +212,7 @@ export function CouncilScreen() {
               <div
                 key={advisor.id}
                 style={{
-                  width: '140px', minHeight: '160px',
+                  width: '140px', height: 'var(--slot-height-council)',
                   background: 'var(--color-bg-primary)',
                   border: '1px solid var(--color-border-default)',
                   borderTop: `4px solid ${fColor}`,
@@ -356,18 +331,141 @@ export function CouncilScreen() {
           })}
         </div>
 
-        {/* ── Advisor Picker ── */}
-        {targetSlot !== null && (
+        {/* ── Spoke Preview ── */}
+        <div style={{
+          width: '100%',
+          borderTop: '1px solid var(--color-border-subtle)',
+          paddingTop: '16px',
+          marginBottom: '20px',
+        }}>
           <div style={{
-            width: '100%', marginBottom: '20px',
-            background: 'var(--color-bg-tertiary)',
-            border: '1px solid var(--color-border-default)',
-            borderRadius: 'var(--radius-md)',
-            padding: '14px',
+            fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)',
+            letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px',
+            textAlign: 'center',
           }}>
+            Spoke Preview
+          </div>
+
+          <div style={{ minHeight: 'var(--slot-height-spoke-preview)', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            {seatedCount === 0 ? (
+              <div style={{
+                textAlign: 'center', padding: '16px',
+                color: 'var(--color-text-muted)', fontSize: 'var(--font-size-md)',
+                fontStyle: 'italic',
+              }}>
+                Seat at least 1 advisor to preview
+              </div>
+            ) : spokePreview ? (
+              <div style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+              }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap',
+                  justifyContent: 'center',
+                }}>
+                  {spokePreview.nodes.map((node, idx) => {
+                    const style = SPOKE_NODE_STYLES[node.type];
+                    return (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                        <div
+                          title={node.type}
+                          style={{
+                            width: '24px', height: '24px', borderRadius: '50%',
+                            background: `${style.color}20`,
+                            border: `1px solid ${style.color}60`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 'var(--font-size-sm)',
+                          }}
+                        >
+                          {style.icon}
+                        </div>
+                        {idx < spokePreview!.nodes.length - 1 && (
+                          <div style={{
+                            width: '6px', height: '1px',
+                            background: 'var(--color-border-default)',
+                          }} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{
+                  display: 'flex', gap: '16px', alignItems: 'center',
+                  fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)',
+                  letterSpacing: '0.8px',
+                }}>
+                  <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
+                    {spokePreview.label}
+                  </span>
+                  <span style={{
+                    fontWeight: 700, letterSpacing: '0.5px',
+                    color: spokePreview.posture === 'attacking' ? '#e07050' : '#60a8d0',
+                  }}>
+                    {spokePreview.posture === 'attacking' ? '⚔ Attacking' : '🛡 Defending'}
+                  </span>
+                  <span>~{spokePreview.nodes.length} nodes</span>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* ── Embark Button ── */}
+        <button
+          class="ornate-btn"
+          disabled={seatedCount === 0}
+          onClick={handleEmbark}
+          style={{
+            width: '240px', marginBottom: '12px',
+            padding: '12px 24px',
+            fontSize: 'var(--font-size-lg)',
+            fontWeight: 600,
+            letterSpacing: '1px',
+            opacity: seatedCount === 0 ? 0.4 : 1,
+            cursor: seatedCount === 0 ? 'not-allowed' : 'pointer',
+          }}
+        >
+          Embark
+        </button>
+
+        {/* Back button */}
+        <Button
+          variant="primary"
+          onClick={() => { equipTargetSlot.value = null; navigateTo('hub'); }}
+        >
+          Back to Hub
+        </Button>
+        </div>
+      </OrnateFrame>
+
+      {/* ── Advisor Picker Modal ── */}
+      {targetSlot !== null && (
+        <div
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.65)',
+            zIndex: 200,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+          onClick={() => { equipTargetSlot.value = null; }}
+          onKeyDown={(e: KeyboardEvent) => { if (e.key === 'Escape') equipTargetSlot.value = null; }}
+        >
+          <div
+            style={{
+              background: 'var(--color-bg-primary)',
+              border: '1px solid var(--color-border-default)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '20px',
+              width: 'min(560px, 92vw)',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+            onClick={(e: MouseEvent) => e.stopPropagation()}
+          >
             <div style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              marginBottom: '10px',
+              marginBottom: '14px',
             }}>
               <span style={{
                 fontSize: 'var(--font-size-sm)', color: 'var(--color-text-primary)',
@@ -447,107 +545,8 @@ export function CouncilScreen() {
               </div>
             )}
           </div>
-        )}
-
-        {/* ── Spoke Preview ── */}
-        <div style={{
-          width: '100%',
-          borderTop: '1px solid var(--color-border-subtle)',
-          paddingTop: '16px',
-          marginBottom: '20px',
-        }}>
-          <div style={{
-            fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)',
-            letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px',
-            textAlign: 'center',
-          }}>
-            Spoke Preview
-          </div>
-
-          {seatedCount === 0 ? (
-            <div style={{
-              textAlign: 'center', padding: '16px',
-              color: 'var(--color-text-muted)', fontSize: 'var(--font-size-md)',
-              fontStyle: 'italic',
-            }}>
-              Seat at least 1 advisor to preview
-            </div>
-          ) : spokePreview ? (
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
-            }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap',
-                justifyContent: 'center',
-              }}>
-                {spokePreview.nodes.map((node, idx) => {
-                  const style = SPOKE_NODE_STYLES[node.type];
-                  return (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                      <div
-                        title={node.type}
-                        style={{
-                          width: '24px', height: '24px', borderRadius: '50%',
-                          background: `${style.color}20`,
-                          border: `1px solid ${style.color}60`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 'var(--font-size-sm)',
-                        }}
-                      >
-                        {style.icon}
-                      </div>
-                      {idx < spokePreview!.nodes.length - 1 && (
-                        <div style={{
-                          width: '6px', height: '1px',
-                          background: 'var(--color-border-default)',
-                        }} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{
-                display: 'flex', gap: '16px', alignItems: 'center',
-                fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)',
-                letterSpacing: '0.8px',
-              }}>
-                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                  {spokePreview.label}
-                </span>
-                <span style={{
-                  fontWeight: 700, letterSpacing: '0.5px',
-                  color: spokePreview.posture === 'attacking' ? '#e07050' : '#60a8d0',
-                }}>
-                  {spokePreview.posture === 'attacking' ? '⚔ Attacking' : '🛡 Defending'}
-                </span>
-                <span>~{spokePreview.nodes.length} nodes</span>
-              </div>
-            </div>
-          ) : null}
         </div>
-
-        {/* ── Embark Button ── */}
-        <button
-          class="hub-btn hub-btn-primary"
-          disabled={seatedCount === 0}
-          onClick={handleEmbark}
-          style={{
-            width: '240px', marginBottom: '12px',
-            opacity: seatedCount === 0 ? 0.4 : 1,
-            cursor: seatedCount === 0 ? 'not-allowed' : 'pointer',
-          }}
-        >
-          Embark
-        </button>
-
-        {/* Back button */}
-        <Button
-          variant="primary"
-          onClick={() => { equipTargetSlot.value = null; navigateTo('hub'); }}
-        >
-          Back to Hub
-        </Button>
-      </div>
+      )}
     </div>
   );
 }

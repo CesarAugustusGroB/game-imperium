@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { Portrait } from '../components/Portrait';
+import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { COMMANDERS } from '../../data/commanders';
 import { FACTION_COLORS } from '../../game/core/commander';
 import type { Commander } from '../../game/core/commander';
@@ -18,12 +19,10 @@ if (typeof document !== 'undefined' && !document.getElementById('cmdr-styles')) 
   el.textContent = `
     @keyframes fade-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     .cmdr-grid { animation: fade-in 0.4s ease-out; }
-    .cmdr-back-btn { transition: all var(--duration-normal) var(--ease-default); }
-    .cmdr-back-btn:hover {
-      border-color: var(--color-border-strong) !important;
-      color: var(--color-text-secondary) !important;
+    .cmdr-card:hover {
+      outline: 1px solid var(--color-gold-primary);
+      outline-offset: 2px;
     }
-    .cmdr-back-btn:active { transform: scale(0.97); }
   `;
   document.head.appendChild(el);
 }
@@ -43,6 +42,7 @@ function CommanderCard({ commander }: { commander: Commander }) {
 
   return (
     <div
+      class="cmdr-card"
       onMouseEnter={() => { hoveredId.value = commander.id; }}
       onMouseLeave={() => { hoveredId.value = null; }}
       onClick={() => selectCommander(commander)}
@@ -195,49 +195,39 @@ export function CommanderSelectScreen() {
       background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
       padding: '40px 16px',
     }}>
-      <div style={{
-        fontSize: 'var(--font-size-xl)', fontWeight: 600, color: 'var(--color-gold-primary)',
-        letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px',
-        textShadow: '0 2px 8px rgba(180, 140, 60, 0.3)',
-      }}>
-        Choose Your Commander
-      </div>
+      <OrnateFrame width="min(1100px, 94vw)">
+        <OrnateHeader
+          eyebrow="Choose your"
+          title="COMMANDER"
+          onClose={() => navigateTo('title')}
+        />
 
-      {/* Decorative divider */}
-      <div style={{
-        width: '60px', height: '1px', marginBottom: '32px',
-        background: `linear-gradient(90deg, transparent, var(--color-gold-primary), transparent)`,
-      }} />
+        <div class="cmdr-grid" style={{
+          display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center',
+          padding: '0 16px',
+        }}>
+          {COMMANDERS.map(c => <CommanderCard key={c.id} commander={c} />)}
+        </div>
 
-      <div class="cmdr-grid" style={{
-        display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center',
-        maxWidth: '960px', padding: '0 16px',
-      }}>
-        {COMMANDERS.map(c => <CommanderCard key={c.id} commander={c} />)}
-      </div>
+        <div style={{
+          marginTop: '32px', textAlign: 'center',
+          fontSize: 'var(--font-size-md)', color: 'var(--color-text-muted)',
+          letterSpacing: '1px',
+        }}>
+          Click to select
+        </div>
 
-      <div style={{
-        marginTop: '32px', fontSize: 'var(--font-size-md)', color: 'var(--color-text-muted)',
-        letterSpacing: '1px',
-      }}>
-        Click to select
-      </div>
-
-      {/* Back button */}
-      <button
-        class="cmdr-back-btn"
-        onClick={() => navigateTo('title')}
-        style={{
-          position: 'fixed', bottom: '20px', left: '20px',
-          padding: '10px 18px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-          background: 'var(--color-bg-tertiary)',
-          border: `1px solid var(--color-border-default)`,
-          color: 'var(--color-text-secondary)',
-          fontFamily: 'inherit', fontSize: 'var(--font-size-md)', letterSpacing: '1px',
-        }}
-      >
-        Back
-      </button>
+        {/* Back button */}
+        <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '24px' }}>
+          <button
+            class="ornate-btn-ghost"
+            onClick={() => navigateTo('title')}
+            style={{ padding: '10px 18px', fontSize: 'var(--font-size-md)' }}
+          >
+            ← Back
+          </button>
+        </div>
+      </OrnateFrame>
     </div>
   );
 }
