@@ -8,7 +8,13 @@ import { getActiveEffects } from '../items/doctrine-store';
 import { addResource } from '../core/resources';
 import type { ResourceType } from '../core/commander';
 import { resetSpokeEvents } from '../events/event-store';
-import { consumeGoldenOpportunity, resetStrategicSpoke } from '../progression/strategic-store';
+import {
+  consumeGoldenOpportunity,
+  resetStrategicSpoke,
+  preparedArmy,
+  preparedLegate,
+  armyEmbarkCount,
+} from '../progression/strategic-store';
 import { addNotification } from '../../ui/notifications/notification-store';
 
 // ── Council signals ──
@@ -414,11 +420,27 @@ export function startSpokeFromCouncil(): void {
     spoke = { ...spoke, nodes: allNodes };
   }
 
+  // S14-06: snapshot the player's prepared army + Legate into the spoke.
+  // The shallow clone freezes the cohort list at embark time so subsequent
+  // mutations to `preparedArmy` (e.g. between runs) don't leak into this run.
+  const armyForRun = preparedArmy.value;
+  const legateForRun = preparedLegate.value;
+  spoke = {
+    ...spoke,
+    boundArmy: armyForRun ? { ...armyForRun, cohorts: [...armyForRun.cohorts] } : null,
+    boundLegate: legateForRun,
+  };
+
   currentSpoke.value = spoke;
   currentNodeIndex.value = 0;
   spokeGains.value = { ...ZERO_GAINS };
   resetSpokeEvents();
   resetStrategicSpoke();
+
+  // S14-06: tick the army.embark observable when an army is bound to this run
+  if (armyForRun) {
+    armyEmbarkCount.value++;
+  }
 
   // S3-09: Pope Innocent gains Faith at spoke start
   if (selectedCommander.value?.id === 'innocent') {

@@ -1,6 +1,8 @@
 import { signal } from '@preact/signals';
 import { selectedCommander, completedSpokes } from '../core/game-state';
 import { spendResource, canAfford } from '../core/resources';
+import type { ArmyData } from '../../types/index';
+import type { Legate } from '../army/legate';
 
 // ── State signals ──
 
@@ -28,6 +30,31 @@ export const pendingEnemyConversions = signal(0);
 
 /** Cursus Honorum Aureus: one-time % investment cost discount applied to next build. */
 export const nextInvestmentDiscount = signal(0);
+
+// ── S14-06: Player army at the Hub ──
+
+/**
+ * The player's currently-prepared army at the Hub. Mutated by the
+ * S14-07 Recruitment Screen as cohorts are added/removed. Snapshotted into
+ * `Spoke.boundArmy` at embark time by `startSpokeFromCouncil`.
+ *
+ * `null` while no army has been composed yet.
+ */
+export const preparedArmy = signal<ArmyData | null>(null);
+
+/**
+ * The Legate currently attached to the prepared army. Set by the S14-08
+ * Hiring Screen. Snapshotted into `Spoke.boundLegate` at embark time.
+ */
+export const preparedLegate = signal<Legate | null>(null);
+
+/**
+ * Monotonic counter that ticks every time a spoke is embarked with a
+ * bound army. Acts as the `army.embark` observable in lieu of a proper
+ * event bus — subscribers can react via:
+ *   `effect(() => { armyEmbarkCount.value; ... })`
+ */
+export const armyEmbarkCount = signal(0);
 
 // ── Derived checks ──
 

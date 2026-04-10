@@ -5,6 +5,7 @@ import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
 import { initAbilityBar, updateAbilityBar, destroyAbilityBar, initDecretumBar, updateDecretumBar, destroyDecretumBar } from './ability-ui';
 import { selectedCommander, veteranStacks, allianceCount, threatLevel, globalSeason, MAX_SEASONS, battlesWon } from '../game/core/game-state';
+import { currentSpoke } from '../game/progression/spoke';
 import { VETERAN_BONUS_PER_STACK, VETERAN_SOFT_CAP_STACKS, VETERAN_BONUS_ABOVE_CAP, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO, RED_RESERVE_COL, RED_VANGUARD_COL, WAR_CRY_DAMAGE_BONUS } from './battle-config';
 import { offsetToAxial } from './hex';
 import { getActiveEffects } from '../game/items/doctrine-store';
@@ -54,7 +55,14 @@ export class BattleMode {
 
     this._state = new BattleState();
     this._state.generateGrid();
-    this._state.placeStartingUnits();
+    // S14-06: pull the army+Legate bound to this spoke run (if any) into the
+    // battle. When `boundArmy` is null/undefined, placeStartingUnits falls
+    // back to the canonical hardcoded blue formation. Red always uses the
+    // canonical formation today — enemy army composition is a future sprint.
+    const spoke = currentSpoke.value;
+    const blueArmy = spoke?.boundArmy ?? undefined;
+    const blueLegate = spoke?.boundLegate ?? undefined;
+    this._state.placeStartingUnits(blueArmy, undefined, blueLegate);
 
     // S7-11: Threat-based enemy scaling
     isFinalBattle.value = globalSeason.value >= MAX_SEASONS;
