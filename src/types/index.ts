@@ -1,9 +1,10 @@
 import type { Faction, ResourceType } from '../game/core/commander';
 
 // ── Army ──────────────────────────────────────────────────
-// Cohort is defined in the army domain module; re-export here so it's
-// importable project-wide from 'src/types'.
-export type { Cohort } from '../game/army/cohort';
+// Cohort is defined in the army domain module. Imported here for use in
+// ArmyData and re-exported so it's importable project-wide from 'src/types'.
+import type { Cohort } from '../game/army/cohort';
+export type { Cohort };
 
 export interface ProvinceData {
   index: number;
@@ -35,7 +36,24 @@ export interface ArmyData {
   id: number;
   owner: string;
   name: string;
+  /**
+   * Current effective size (troop count). On creation, initialized as the
+   * sum of cohort HP via `computeArmySize`. Legacy strategic-map combat
+   * (src/game/map/army.ts) subtracts damage directly from this field;
+   * cohort-level HP tracking is deferred to a future sprint.
+   */
   size: number;
+  /**
+   * Cohort roster — source of truth for army composition. Consumed by the
+   * cohort→BattleUnit mapper (S14-04) when an army is deployed to a Pitched
+   * Battle. May be an empty array for armies created without cohort data.
+   */
+  cohorts: Cohort[];
+  /**
+   * Attached Legate id, or `null` if none. Resolved through the hiring pool
+   * in `src/game/army/legate-pool.ts` (S14-02).
+   */
+  legateId: string | null;
   provinceIndex: number;       // Current province (or origin during movement)
   targetProvinceIndex: number | null;  // Destination province during movement
   progress: number;            // 0-1 interpolation during movement

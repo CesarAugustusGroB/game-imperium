@@ -24,3 +24,11 @@ export interface Cohort {
   /** Flavor description shown in the Recruitment Screen. */
   description: string;
 }
+
+/**
+ * Sum of all cohort HP in a roster. Used as the initial `size` value on
+ * ArmyData when an army is created with cohorts (S14-03).
+ */
+export function computeArmySize(cohorts: readonly Cohort[]): number {
+  return cohorts.reduce((sum, c) => sum + c.stats.hp, 0);
+}

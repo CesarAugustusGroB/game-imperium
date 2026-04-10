@@ -1,6 +1,8 @@
 import type { ArmyData, BattleEvent, TopologyData } from '../../types/index';
 import type { GameState } from '../core/state';
 import type { ProvinceRegistry } from '../province/provinces';
+import type { Cohort } from '../army/cohort';
+import { computeArmySize } from '../army/cohort';
 import { lerp } from '../../utils/math';
 import { rgbToKey } from '../../utils/color';
 
@@ -29,12 +31,26 @@ export class ArmyManager {
     this.registry = registry;
   }
 
-  createArmy(owner: string, name: string, size: number, provinceIndex: number): ArmyData {
+  /**
+   * Create a new army. Size is derived from the cohort roster's total HP
+   * (see `computeArmySize`). S14-03 breaking change: the old signature
+   * took a `size: number` arg; the new shape makes cohorts the source of
+   * truth. No existing call sites consumed the old signature.
+   */
+  createArmy(
+    owner: string,
+    name: string,
+    provinceIndex: number,
+    cohorts: Cohort[] = [],
+    legateId: string | null = null,
+  ): ArmyData {
     const army: ArmyData = {
       id: this.nextId++,
       owner,
       name,
-      size,
+      size: computeArmySize(cohorts),
+      cohorts,
+      legateId,
       provinceIndex,
       targetProvinceIndex: null,
       progress: 0,
