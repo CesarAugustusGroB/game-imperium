@@ -1,5 +1,10 @@
 import type { Faction, ResourceType } from '../game/core/commander';
 
+// ── Army ──────────────────────────────────────────────────
+// Cohort is defined in the army domain module; re-export here so it's
+// importable project-wide from 'src/types'.
+export type { Cohort } from '../game/army/cohort';
+
 export interface ProvinceData {
   index: number;
   color: [number, number, number];
