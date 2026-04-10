@@ -15,9 +15,12 @@
   --color-danger:          #c24a3a;
   --color-success:         #5a8a4a;
   --color-warning:         #d4a843;
+  --color-bronze:          #8a6a2a;
+  --color-marble-dark:     rgba(28, 24, 40, 0.96);
 
   /* === Typography === */
   --font-family:           'Segoe UI', system-ui, sans-serif;
+  --font-display:          'Cinzel', Georgia, 'Times New Roman', serif;
   --font-size-xs:          9px;
   --font-size-sm:          11px;
   --font-size-md:          13px;
@@ -44,6 +47,11 @@
   --shadow-md:   0 4px 16px rgba(0, 0, 0, 0.3);
   --shadow-lg:   0 8px 32px rgba(0, 0, 0, 0.4);
   --shadow-glow: 0 0 12px rgba(240, 208, 128, 0.3);
+  --shadow-ornate:
+    0 0 0 1px rgba(180, 160, 100, 0.5) inset,
+    0 0 32px rgba(240, 208, 128, 0.06) inset,
+    0 16px 48px rgba(0, 0, 0, 0.6);
+  --gradient-gold-frame: linear-gradient(135deg, #f0d080 0%, #8a6a2a 50%, #f0d080 100%);
 
   /* === Animation === */
   --ease-default:    cubic-bezier(0.4, 0, 0.2, 1);

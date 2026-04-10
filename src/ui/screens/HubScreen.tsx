@@ -7,12 +7,14 @@ import { isDecretumCastable, DECRETUM_SELL_PRICE } from '../../game/items/decret
 import { doctrineCollection, equippedDoctrines, sellDoctrine } from '../../game/items/doctrine-store';
 import { isDoctrineEquippable, getDoctrineSellPrice } from '../../game/items/doctrine';
 import { FACTION_COLORS } from '../../game/core/commander';
+import { getResource } from '../../game/core/resources';
 import { DecretumCard } from '../components/DecretumRenderer';
 import { councilSlots, startSpokeFromCouncil, plannedSpoke, tierUpNotices } from '../../game/council/council-store';
 import { ResourceExchangeModal } from '../components/ResourceExchangeModal';
 import { provinces } from '../../game/province/province-store';
 import { PANEL, PANEL_TITLE } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
+import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import type { NodeType } from '../../game/progression/spoke';
 
 const SPOKE_NODE_STYLES: Record<NodeType, { color: string; icon: string }> = {
@@ -27,25 +29,6 @@ if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
   const el = document.createElement('style');
   el.id = 'hub-styles';
   el.textContent = `
-    .hub-btn {
-      padding: 12px 24px;
-      border-radius: var(--radius-sm); cursor: pointer;
-      font-family: var(--font-family); font-size: var(--font-size-lg); font-weight: 600;
-      letter-spacing: 1px; text-transform: uppercase;
-      transition: all var(--duration-normal) var(--ease-default);
-    }
-    .hub-btn:active { transform: scale(0.97); }
-    .hub-btn-primary {
-      background: linear-gradient(135deg, rgba(80, 60, 20, 0.7), rgba(50, 40, 18, 0.9));
-      border: 1px solid var(--color-border-strong); color: var(--color-gold-primary);
-    }
-    .hub-btn-primary:hover {
-      border-color: rgba(255, 220, 120, 0.8); color: #fff0c0;
-      box-shadow: 0 0 24px var(--color-border-subtle), inset 0 0 20px var(--color-border-subtle);
-    }
-    .hub-btn-primary:disabled {
-      opacity: 0.35; cursor: not-allowed;
-    }
     .merchant-sell-btn { transition: all var(--duration-fast) var(--ease-default); cursor: pointer; }
     .merchant-sell-btn:hover {
       background: rgba(180, 140, 40, 0.5) !important;
@@ -105,6 +88,12 @@ export function HubScreen() {
   const hand = decretumHand.value;
   const maxHand = maxHandSize.value;
 
+  // Force signal reads for resource reactivity
+  const gold = getResource('gold');
+  const faith = getResource('faith');
+  const influence = getResource('influence');
+  const momentum = getResource('momentum');
+
   const offColorScrolls = faction ? hand.filter(d => !isDecretumCastable(d, faction)) : [];
   const offColorDoctrines = faction ? doctrineCollection.value.filter(d => !isDoctrineEquippable(d, faction)) : [];
   const totalScrollGold = offColorScrolls.reduce((sum, d) => sum + DECRETUM_SELL_PRICE[d.rarity], 0);
@@ -160,32 +149,21 @@ export function HubScreen() {
       )}
 
       {/* ── Father panel ── */}
-      <div style={{
-        background: 'var(--color-bg-primary)',
-        backdropFilter: 'blur(var(--blur-panel))', WebkitBackdropFilter: 'blur(var(--blur-panel))',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--color-border-subtle)',
-        padding: '24px',
-        width: 'min(740px, 92vw)',
-        boxShadow: 'var(--shadow-lg)',
-      }}>
-        {/* Hub title */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-          <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 600, color, letterSpacing: '4px', textTransform: 'uppercase', textShadow: `0 2px 8px ${color}30` }}>
-            Hub
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', letterSpacing: '2px', textTransform: 'uppercase' }}>
-              {commander?.name ?? 'No Commander'}
-            </div>
+      <OrnateFrame width="min(1100px, 94vw)">
+        <OrnateHeader
+          eyebrow="Strategic Hub"
+          title={(commander?.name ?? 'IMPERIUM').toUpperCase()}
+          rightSlot={<>
+            <span class="ornate-stat-chip" title="Gold">⚜ <strong>{gold}</strong></span>
+            <span class="ornate-stat-chip" title="Faith">✦ <strong>{faith}</strong></span>
+            <span class="ornate-stat-chip" title="Influence">◈ <strong>{influence}</strong></span>
+            <span class="ornate-stat-chip" title="Momentum">⚡ <strong>{momentum}</strong></span>
             {completedSpokes.value > 0 && (
-              <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', letterSpacing: '1px' }}>
-                {completedSpokes.value} spoke{completedSpokes.value !== 1 ? 's' : ''}
-              </div>
+              <span class="ornate-stat-chip" title="Completed spokes">🗺 <strong>{completedSpokes.value}</strong></span>
             )}
-          </div>
-        </div>
-        <div style={{ width: '60px', height: '1px', marginBottom: '16px', background: `linear-gradient(90deg, transparent, ${color}60, transparent)` }} />
+          </>}
+          accentColor={faction ? color : undefined}
+        />
 
         {/* Two-column layout */}
         <div class="hub-container" style={{
@@ -264,7 +242,7 @@ export function HubScreen() {
 
             {/* Embark */}
             <div style={{ ...PANEL, background: 'var(--color-bg-secondary)', animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0.05s' }}>
-              <button class="hub-btn hub-btn-primary" disabled={seatedCount === 0} onClick={handleEmbark} style={{ width: '100%' }}>
+              <button class="ornate-btn" disabled={seatedCount === 0} onClick={handleEmbark} style={{ width: '100%', padding: '12px 24px', fontSize: 'var(--font-size-lg)', fontWeight: 600, letterSpacing: '1px' }}>
                 Embark
               </button>
             </div>
@@ -439,7 +417,7 @@ export function HubScreen() {
 
           </div>
         </div>
-      </div>
+      </OrnateFrame>
 
       {/* Exchange modal */}
       {exchangeOpen.value && (

@@ -2,6 +2,7 @@ import type { GameEvent } from '../../game/events/event-types';
 import type { Faction, ResourceType } from '../../game/core/commander';
 import { FACTION_COLORS } from '../../game/core/commander';
 import { ChoiceButton } from './ChoiceButton';
+import { OrnateFrame, OrnateHeader, OrnateDivider } from './OrnateFrame';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('event-modal-styles')) {
@@ -48,6 +49,14 @@ function getFactionColor(event: GameEvent): string {
     : 'var(--color-border-default)';
 }
 
+// ── Eyebrow helper ──
+function getEyebrow(event: GameEvent): string {
+  const faction = event.color !== 'neutral'
+    ? event.color.charAt(0).toUpperCase() + event.color.slice(1)
+    : 'Event';
+  return `T${event.tier} · ${faction}`;
+}
+
 // ── Props ──
 
 export interface EventModalProps {
@@ -79,27 +88,21 @@ export function EventModal({
         padding: '16px',
       }}
     >
-      {/* Modal card */}
-      <div
-        class="event-modal-card"
-        style={{
-          maxWidth: '520px',
-          width: '100%',
-          background: 'var(--color-bg-primary)',
-          borderTop: `3px solid ${getFactionColor(event)}`,
-          borderRight: '1px solid var(--color-border-default)',
-          borderBottom: '1px solid var(--color-border-default)',
-          borderLeft: '1px solid var(--color-border-default)',
-          borderRadius: 'var(--radius-md)',
-          overflow: 'hidden',
-          boxShadow: 'var(--shadow-lg)',
-        }}
+      <OrnateFrame
+        className="event-modal-card"
+        width="min(580px, 92vw)"
+        padding="compact"
+        style={{ maxHeight: '85vh', overflowY: 'auto' }}
+        onClick={(e: MouseEvent) => e.stopPropagation()}
       >
         {/* Illustration banner */}
         <div
           style={{
             height: '160px',
-            width: '100%',
+            width: 'calc(100% + 48px)',
+            marginLeft: '-24px',
+            marginTop: '-20px',
+            marginBottom: '0',
             background: getBannerGradient(event),
             display: 'flex',
             alignItems: 'center',
@@ -136,79 +139,45 @@ export function EventModal({
           </div>
         </div>
 
-        {/* Content area */}
-        <div style={{ padding: '16px 20px 20px' }}>
-          {/* Title row */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '10px',
-            }}
-          >
-            <h2
-              style={{
-                margin: '0',
-                fontSize: 'var(--font-size-lg)',
-                color: 'var(--color-gold-primary)',
-                fontWeight: '600',
-              }}
-            >
-              {event.title}
-            </h2>
-            <span
-              style={{
-                padding: '2px 8px',
-                border: '1px solid var(--color-gold-primary)',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: 'var(--font-size-xs)',
-                color: 'var(--color-text-muted)',
-                background: 'rgba(240,208,128,0.08)',
-                flexShrink: '0',
-                marginLeft: '10px',
-              }}
-            >
-              {`T${event.tier}`}
-            </span>
-          </div>
-
-          {/* Description */}
-          <p
-            style={{
-              margin: '0 0 var(--space-md) 0',
-              fontSize: 'var(--font-size-md)',
-              color: 'var(--color-text-secondary)',
-              lineHeight: '1.5',
-            }}
-          >
-            {event.description}
-          </p>
-
-          {/* Divider */}
-          <div
-            style={{
-              height: '1px',
-              background: 'var(--color-border-subtle)',
-              marginBottom: 'var(--space-md)',
-            }}
+        {/* Header */}
+        <div style={{ marginTop: '16px' }}>
+          <OrnateHeader
+            titleSize="md"
+            eyebrow={getEyebrow(event)}
+            title={event.title}
+            accentColor={getFactionColor(event)}
           />
-
-          {/* Choices */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
-            {event.choices.map((choice, i) => (
-              <ChoiceButton
-                key={i}
-                choice={choice}
-                index={i}
-                onSelect={onChoice}
-                currentResources={currentResources}
-                isBonus={bonusChoiceIndex === i}
-              />
-            ))}
-          </div>
         </div>
-      </div>
+
+        {/* Description */}
+        <p
+          style={{
+            margin: '0 0 var(--space-md) 0',
+            fontSize: 'var(--font-size-md)',
+            color: 'var(--color-text-secondary)',
+            lineHeight: '1.5',
+          }}
+        >
+          {event.description}
+        </p>
+
+        {/* Divider */}
+        <OrnateDivider />
+
+        {/* Choices */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+          {event.choices.map((choice, i) => (
+            <ChoiceButton
+              key={i}
+              choice={choice}
+              index={i}
+              onSelect={onChoice}
+              currentResources={currentResources}
+              isBonus={bonusChoiceIndex === i}
+            />
+          ))}
+        </div>
+      </OrnateFrame>
     </div>
   );
 }

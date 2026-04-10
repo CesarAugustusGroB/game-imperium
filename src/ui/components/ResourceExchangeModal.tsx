@@ -5,6 +5,7 @@ import { FACTION_PRIMARY_RESOURCE, RESOURCE_INFO } from '../../game/core/command
 import type { ResourceType } from '../../game/core/commander';
 import { exchangeResources, getExchangePreview } from '../../game/core/resources';
 import { gold, faith, influence, momentum } from '../../game/core/resources';
+import { OrnateFrame, OrnateHeader } from './OrnateFrame';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('exchange-modal-styles')) {
@@ -135,40 +136,18 @@ export function ResourceExchangeModal({ onClose }: Props) {
         fontFamily: 'var(--font-family)',
       }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'var(--color-bg-primary)',
-          border: '1px solid var(--color-border-default)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '28px 24px 24px',
-          width: 'min(440px, 92vw)',
-          boxShadow: '0 12px 48px rgba(0, 0, 0, 0.6)',
-        }}
+      <OrnateFrame
+        width="min(560px, 92vw)"
+        padding="compact"
+        style={{ maxHeight: '85vh', overflowY: 'auto' }}
+        onClick={(e: MouseEvent) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginBottom: '20px',
-        }}>
-          <div style={{
-            fontSize: 'var(--font-size-lg)', fontWeight: 700, color: 'var(--color-gold-primary)',
-            letterSpacing: '3px', textTransform: 'uppercase',
-          }}>
-            Resource Exchange
-          </div>
-          <button
-            onClick={handleClose}
-            style={{
-              background: 'transparent', border: '1px solid var(--color-border-default)',
-              borderRadius: 'var(--radius-sm)', color: 'var(--color-text-secondary)',
-              fontSize: 'var(--font-size-md)', padding: '3px 8px', cursor: 'pointer',
-              fontFamily: 'inherit',
-            }}
-          >
-            ✕
-          </button>
-        </div>
+        <OrnateHeader
+          titleSize="md"
+          eyebrow="Exchange"
+          title="MARKET"
+          onClose={handleClose}
+        />
 
         {/* FROM selector */}
         <div style={{ marginBottom: '16px' }}>
@@ -320,41 +299,22 @@ export function ResourceExchangeModal({ onClose }: Props) {
         {/* Buttons */}
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
+            class="ornate-btn"
             onClick={handleConfirm}
             disabled={!canExchange}
-            style={{
-              flex: 2, padding: '12px',
-              background: canExchange
-                ? 'linear-gradient(135deg, rgba(80, 60, 20, 0.8), rgba(50, 40, 18, 0.95))'
-                : 'var(--color-bg-tertiary)',
-              border: `1px solid ${canExchange ? 'var(--color-border-strong)' : 'var(--color-border-subtle)'}`,
-              borderRadius: 'var(--radius-sm)',
-              color: canExchange ? 'var(--color-gold-primary)' : 'var(--color-text-muted)',
-              fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600,
-              letterSpacing: '1px', textTransform: 'uppercase',
-              cursor: canExchange ? 'pointer' : 'not-allowed',
-              transition: `all var(--duration-normal) var(--ease-default)`,
-            }}
+            style={{ flex: 2, padding: '12px' }}
           >
             Exchange
           </button>
           <button
+            class="ornate-btn-ghost"
             onClick={handleClose}
-            style={{
-              flex: 1, padding: '12px',
-              background: 'var(--color-bg-secondary)',
-              border: '1px solid var(--color-border-subtle)',
-              borderRadius: 'var(--radius-sm)',
-              color: 'var(--color-text-secondary)',
-              fontFamily: 'inherit', fontSize: 'var(--font-size-md)', fontWeight: 600,
-              letterSpacing: '1px', textTransform: 'uppercase',
-              cursor: 'pointer', transition: `all var(--duration-normal) var(--ease-default)`,
-            }}
+            style={{ flex: 1, padding: '12px' }}
           >
             Cancel
           </button>
         </div>
-      </div>
+      </OrnateFrame>
     </div>
   );
 }

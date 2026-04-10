@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'preact/hooks';
 import { navigateTo } from '../screens';
 import { Button } from '../components/Button';
+import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { globalSeason, resetRun, selectedCommander, battlesWon } from '../../game/core/game-state';
 import { provinces } from '../../game/province/province-store';
 import { recordRunComplete, computeScore } from '../../game/core/meta-save';
@@ -25,8 +26,7 @@ if (typeof document !== 'undefined' && !document.getElementById('end-screen-styl
       to { opacity: 1; transform: scale(1); }
     }
     @media (max-width: 600px) {
-      .end-screen-panel { padding: 32px 24px 28px !important; }
-      .end-screen-panel img { width: 200px !important; }
+      .ornate-frame { padding: 28px 20px 24px !important; }
     }
   `;
   document.head.appendChild(el);
@@ -64,7 +64,7 @@ export interface EndScreenProps {
 
 export function EndScreen({
   outcome,
-  title,
+  title: _title,   // kept in interface for wrapper compat; OrnateHeader generates title from outcome
   titleColor,
   titleGlow,
   backgroundTint,
@@ -135,35 +135,17 @@ export function EndScreen({
         {/* Extra overlay slot (particles, etc.) */}
         {children}
 
-        {/* Title */}
-        <div style={{
-          fontSize: '42px', fontWeight: 800, letterSpacing: '6px',
-          textTransform: 'uppercase', color: titleColor,
-          textShadow: `0 2px 24px ${titleGlow}, 0 0 60px ${titleGlow}50`,
-          marginBottom: '8px',
-          animation: 'end-title-enter 0.8s ease-out forwards',
-        }}>
-          {title}
-        </div>
+        {/* Stats panel — ornate frame with header */}
+        <OrnateFrame padding="hero" width="min(640px, 92vw)">
+          {/* Header with end-title-enter entrance animation */}
+          <div style={{ animation: 'end-title-enter 0.8s ease-out forwards' }}>
+            <OrnateHeader
+              eyebrow={`Season ${seasons}`}
+              title={outcome === 'victory' ? 'CAMPAIGN COMPLETE' : 'CAMPAIGN ENDED'}
+              accentColor={outcome === 'victory' ? 'var(--color-gold-primary)' : 'var(--color-danger)'}
+            />
+          </div>
 
-        {/* Divider */}
-        <div style={{
-          width: '120px', height: '2px', marginBottom: '32px',
-          background: `linear-gradient(90deg, transparent, ${titleGlow}, transparent)`,
-        }} />
-
-        {/* Stats panel */}
-        <div class="end-screen-panel" style={{
-          background: 'var(--color-bg-primary)',
-          backdropFilter: 'blur(var(--blur-panel))',
-          WebkitBackdropFilter: 'blur(var(--blur-panel))',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--color-border-subtle)',
-          padding: '32px 48px',
-          minWidth: '320px',
-          boxShadow: 'var(--shadow-lg)',
-          display: 'flex', flexDirection: 'column', gap: '0',
-        }}>
           {stats.map((stat, i) => (
             <div
               key={stat.label}
@@ -203,7 +185,7 @@ export function EndScreen({
           >
             Return to Title
           </Button>
-        </div>
+        </OrnateFrame>
       </div>
     </div>
   );

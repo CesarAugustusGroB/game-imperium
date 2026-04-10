@@ -7,6 +7,7 @@ import { isDoctrineEquippable, getDoctrineSellPrice } from '../../game/items/doc
 import type { Doctrine } from '../../game/items/doctrine';
 import { DoctrineSlot } from '../components/DoctrineRenderer';
 import { FACTION_COLORS } from '../../game/core/commander';
+import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('doctrine-screen-styles')) {
@@ -18,7 +19,7 @@ if (typeof document !== 'undefined' && !document.getElementById('doctrine-screen
       cursor: grab;
     }
     .doctrine-coll-card:hover {
-      border-color: var(--color-border-strong) !important;
+      border-color: var(--color-gold-primary) !important;
       box-shadow: var(--shadow-md);
     }
     .doctrine-coll-card:active { cursor: grabbing; }
@@ -37,6 +38,7 @@ if (typeof document !== 'undefined' && !document.getElementById('doctrine-screen
     }
     .doctrine-slot-drop {
       border-radius: var(--radius-md);
+      border: 1px solid var(--color-gold-secondary);
       transition: box-shadow var(--duration-fast) var(--ease-default);
     }
     .doctrine-slot-drop.drag-over {
@@ -67,7 +69,6 @@ const lastEquippedSlot = signal<number | null>(null);
 export function DoctrineScreen() {
   const commander = selectedCommander.value;
   const faction = commander?.faction;
-  const color = faction ? FACTION_COLORS[faction] : '#d4a843';
   const slots = equippedDoctrines.value;
   const collection = doctrineCollection.value;
 
@@ -140,39 +141,18 @@ export function DoctrineScreen() {
       background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
       paddingTop: '48px', paddingBottom: '32px',
     }}>
-      {/* Dark content panel */}
-      <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        background: 'var(--color-bg-primary)',
-        backdropFilter: `blur(var(--blur-panel))`,
-        WebkitBackdropFilter: `blur(var(--blur-panel))`,
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--color-border-subtle)',
-        padding: '24px',
-        maxWidth: '90%',
-        width: 'min(680px, 90vw)',
-        boxShadow: 'var(--shadow-lg)',
-      }}>
-        {/* Title */}
-        <div style={{
-          fontSize: 'var(--font-size-xl)', fontWeight: 600, color,
-          letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '4px',
-        }}>
-          Doctrines
-        </div>
-        <div style={{
-          width: '60px', height: '1px', marginBottom: '20px',
-          background: `linear-gradient(90deg, transparent, ${color}60, transparent)`,
-        }} />
+      {/* Ornate content panel */}
+      <OrnateFrame width="min(720px, 94vw)" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <OrnateHeader
+          eyebrow="Doctrines"
+          title="STRATAGEMS"
+          rightSlot={
+            <span class="ornate-stat-chip" title="Equipped">EQUIPPED <strong>{slots.filter(Boolean).length}/4</strong></span>
+          }
+          onClose={() => { equipTargetSlot.value = null; navigateTo('hub'); }}
+        />
 
         {/* ── Equipped Slots ── */}
-        <div style={{
-          fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)',
-          letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '10px',
-        }}>
-          Equipped ({slots.filter(Boolean).length}/4)
-        </div>
-
         <div style={{
           display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center',
           marginBottom: '24px',
@@ -285,21 +265,13 @@ export function DoctrineScreen() {
 
         {/* Back button */}
         <button
+          class="ornate-btn"
           onClick={() => { equipTargetSlot.value = null; navigateTo('hub'); }}
-          style={{
-            marginTop: '20px', padding: '10px 28px',
-            background: 'rgba(50, 42, 20, 0.7)',
-            border: '1px solid var(--color-border-strong)',
-            borderRadius: 'var(--radius-sm)',
-            color: 'var(--color-gold-primary)', fontFamily: 'inherit',
-            fontSize: 'var(--font-size-md)', fontWeight: 600,
-            letterSpacing: '1.5px', textTransform: 'uppercase',
-            cursor: 'pointer', transition: `all var(--duration-normal) var(--ease-default)`,
-          }}
+          style={{ marginTop: '20px', padding: '10px 28px', fontSize: 'var(--font-size-md)' }}
         >
           Back to Hub
         </button>
-      </div>
+      </OrnateFrame>
 
       {/* ── Doctrine Picker Modal ── */}
       {equipTargetSlot.value !== null && (

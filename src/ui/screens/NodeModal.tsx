@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
+import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('node-modal-styles')) {
@@ -10,15 +11,8 @@ if (typeof document !== 'undefined' && !document.getElementById('node-modal-styl
       from { opacity: 0; }
       to   { opacity: 1; }
     }
-    @keyframes node-modal-slide-up {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
     .node-modal-backdrop {
       animation: node-modal-fade var(--duration-normal) ease-out;
-    }
-    .node-modal-panel {
-      animation: node-modal-slide-up 0.25s ease-out;
     }
   `;
   document.head.appendChild(el);
@@ -60,25 +54,25 @@ export function NodeModal({ title, children, onClose }: {
         position: 'fixed', inset: '0', zIndex: '200',
         background: 'rgba(0, 0, 0, 0.7)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px',
         fontFamily: 'var(--font-family)',
         outline: 'none',
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div class="node-modal-panel" style={{
-        background: 'linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-primary))',
-        border: '1px solid var(--color-border-default)',
-        borderRadius: 'var(--radius-md)', padding: '28px 32px',
-        maxWidth: '400px', width: '90%', textAlign: 'center',
-      }}>
-        <div style={{
-          fontSize: 'var(--font-size-lg)', fontWeight: 600, color: 'var(--color-gold-primary)',
-          letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '16px',
-        }}>
-          {title}
-        </div>
+      <OrnateFrame
+        width="min(520px, 92vw)"
+        padding="compact"
+        style={{ maxHeight: '85vh', overflowY: 'auto' }}
+        onClick={(e: MouseEvent) => e.stopPropagation()}
+      >
+        <OrnateHeader
+          titleSize="md"
+          title={title}
+          onClose={onClose}
+        />
         {children}
-      </div>
+      </OrnateFrame>
     </div>
   );
 }

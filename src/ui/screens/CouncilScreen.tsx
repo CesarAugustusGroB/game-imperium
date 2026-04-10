@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { navigateTo } from '../screens';
 import { Button } from '../components/Button';
-import { selectedCommander } from '../../game/core/game-state';
+import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { FACTION_COLORS } from '../../game/core/commander';
 import { getCurrentTier, getCurrentPassive, getXpToNextTier, XP_TIER_2, XP_TIER_3 } from '../../game/council/advisor';
 import type { Advisor, AdvisorPassive } from '../../game/council/advisor';
@@ -28,7 +28,7 @@ if (typeof document !== 'undefined' && !document.getElementById('council-screen-
       cursor: pointer;
     }
     .council-advisor-card:hover {
-      border-color: var(--color-border-strong) !important;
+      border-color: var(--color-gold-primary) !important;
       box-shadow: var(--shadow-md);
       transform: translateY(-1px);
     }
@@ -96,10 +96,6 @@ function xpProgress(advisor: Advisor): number {
 }
 
 export function CouncilScreen() {
-  const commander = selectedCommander.value;
-  const faction = commander?.faction;
-  const color = faction ? FACTION_COLORS[faction] : '#d4a843';
-
   const slots = councilSlots.value;
   const pool = advisorPool.value;
   const seatedCount = slots.filter(Boolean).length;
@@ -131,39 +127,18 @@ export function CouncilScreen() {
       paddingTop: '48px', paddingBottom: '32px',
     }}>
       {/* Dark content panel */}
-      <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        background: 'var(--color-bg-primary)',
-        backdropFilter: `blur(var(--blur-panel))`,
-        WebkitBackdropFilter: `blur(var(--blur-panel))`,
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--color-border-subtle)',
-        padding: '24px',
-        maxWidth: '90%',
-        width: 'min(800px, 90vw)',
-        boxShadow: 'var(--shadow-lg)',
-      }}>
+      <OrnateFrame width="min(1100px, 94vw)">
+        <OrnateHeader
+          eyebrow="The Council"
+          title="ADVISORS"
+          rightSlot={<>
+            <span class="ornate-stat-chip" title="Seated">SEATED <strong>{seatedCount}/3</strong></span>
+            <span class="ornate-stat-chip" title="Available">POOL <strong>{pool.length}</strong></span>
+          </>}
+          onClose={() => navigateTo('hub')}
+        />
 
-        {/* Title */}
-        <div style={{
-          fontSize: 'var(--font-size-xl)', fontWeight: 600, color,
-          letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '4px',
-          textShadow: `0 2px 8px ${color}30`,
-        }}>
-          Council
-        </div>
-        <div style={{
-          width: '60px', height: '1px', marginBottom: '20px',
-          background: `linear-gradient(90deg, transparent, ${color}60, transparent)`,
-        }} />
-
-        {/* Slot label */}
-        <div style={{
-          fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)',
-          letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '12px',
-        }}>
-          Advisors ({seatedCount}/3)
-        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
         {/* ── 3 Advisor Slots ── */}
         <div style={{
@@ -437,11 +412,15 @@ export function CouncilScreen() {
 
         {/* ── Embark Button ── */}
         <button
-          class="hub-btn hub-btn-primary"
+          class="ornate-btn"
           disabled={seatedCount === 0}
           onClick={handleEmbark}
           style={{
             width: '240px', marginBottom: '12px',
+            padding: '12px 24px',
+            fontSize: 'var(--font-size-lg)',
+            fontWeight: 600,
+            letterSpacing: '1px',
             opacity: seatedCount === 0 ? 0.4 : 1,
             cursor: seatedCount === 0 ? 'not-allowed' : 'pointer',
           }}
@@ -456,7 +435,8 @@ export function CouncilScreen() {
         >
           Back to Hub
         </Button>
-      </div>
+        </div>
+      </OrnateFrame>
 
       {/* ── Advisor Picker Modal ── */}
       {targetSlot !== null && (
