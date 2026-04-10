@@ -15,6 +15,8 @@ import {
   PARTICLE_GRAVITY,
 } from './battle-config';
 import type { DecretumEffect } from '../game/items/decretum';
+import type { ArmyData } from '../types/index';
+import { mapArmyToBattleUnits } from '../game/army/cohort-to-battle-unit';
 
 // Re-export types for backward compatibility
 export type { BattleFaction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder };
@@ -731,28 +733,18 @@ export class BattleState {
 
   // ── Setup ──
 
-  placeStartingUnits(): void {
-    // ── Blue ──
-    BLUE_VANGUARD_ROWS.forEach((row, i) => {
-      this.addUnit('blue', offsetToAxial(BLUE_VANGUARD_COL, row), `${i + 1}st Blue Vanguard`, 'vanguard');
-    });
-    BLUE_RESERVE_ROWS.forEach((row, i) => {
-      this.addUnit('blue', offsetToAxial(BLUE_RESERVE_COL, row), `${i + 1}st Blue Reserve`, 'reserve');
-    });
-    BLUE_GUARD_ROWS.forEach((row, i) => {
-      this.addUnit('blue', offsetToAxial(BLUE_GUARD_COL, row), `${i + 1}st Blue Guard`, 'guard');
-    });
-
-    // ── Red ──
-    RED_VANGUARD_ROWS.forEach((row, i) => {
-      this.addUnit('red', offsetToAxial(RED_VANGUARD_COL, row), `${i + 1}st Red Vanguard`, 'vanguard');
-    });
-    RED_RESERVE_ROWS.forEach((row, i) => {
-      this.addUnit('red', offsetToAxial(RED_RESERVE_COL, row), `${i + 1}st Red Reserve`, 'reserve');
-    });
-    RED_GUARD_ROWS.forEach((row, i) => {
-      this.addUnit('red', offsetToAxial(RED_GUARD_COL, row), `${i + 1}st Red Guard`, 'guard');
-    });
+  /**
+   * Populate the grid with starting units for both factions.
+   *
+   * S14-04: when an army is provided, the cohort roster is mapped to
+   * BattleUnits via the cohort→BattleUnit mapper. When no army is provided
+   * (or the roster is empty), the canonical hardcoded formation runs — this
+   * preserves all existing call sites and the legacy battle balance
+   * (NFR-5, AC-10).
+   */
+  placeStartingUnits(blueArmy?: ArmyData, redArmy?: ArmyData): void {
+    this.placeFactionUnits('blue', blueArmy);
+    this.placeFactionUnits('red', redArmy);
 
     // Record starting strengths for morale check
     this.startingStrength.set('blue', this.getBattleFactionStrength('blue'));
@@ -764,5 +756,47 @@ export class BattleState {
     this.stars.set('red', offsetToAxial(this.config.cols - 1, midRow));
     this.captureProgress.set('blue', 0);
     this.captureProgress.set('red', 0);
+  }
+
+  /**
+   * Place one faction's starting units. Branches between cohort-driven
+   * spawning (when an army with at least one cohort is bound) and the
+   * canonical hardcoded formation (legacy fallback).
+   */
+  private placeFactionUnits(faction: BattleFaction, army: ArmyData | undefined): void {
+    if (army && army.cohorts.length > 0) {
+      const specs = mapArmyToBattleUnits(army, faction);
+      for (const spec of specs) {
+        this.addUnit(spec.faction, spec.hex, spec.name, spec.role, spec.stats);
+      }
+      return;
+    }
+    this.placeCanonicalFormation(faction);
+  }
+
+  /**
+   * Hardcoded vanguard / reserve / guard formation from `battle-config.ts`.
+   * Identical to the pre-S14-04 layout — kept verbatim so existing battle
+   * tuning is preserved when no army is bound.
+   */
+  private placeCanonicalFormation(faction: BattleFaction): void {
+    const isBlue = faction === 'blue';
+    const vanguardCol  = isBlue ? BLUE_VANGUARD_COL  : RED_VANGUARD_COL;
+    const vanguardRows = isBlue ? BLUE_VANGUARD_ROWS : RED_VANGUARD_ROWS;
+    const reserveCol   = isBlue ? BLUE_RESERVE_COL   : RED_RESERVE_COL;
+    const reserveRows  = isBlue ? BLUE_RESERVE_ROWS  : RED_RESERVE_ROWS;
+    const guardCol     = isBlue ? BLUE_GUARD_COL     : RED_GUARD_COL;
+    const guardRows    = isBlue ? BLUE_GUARD_ROWS    : RED_GUARD_ROWS;
+    const label        = isBlue ? 'Blue' : 'Red';
+
+    vanguardRows.forEach((row, i) => {
+      this.addUnit(faction, offsetToAxial(vanguardCol, row), `${i + 1}st ${label} Vanguard`, 'vanguard');
+    });
+    reserveRows.forEach((row, i) => {
+      this.addUnit(faction, offsetToAxial(reserveCol, row), `${i + 1}st ${label} Reserve`, 'reserve');
+    });
+    guardRows.forEach((row, i) => {
+      this.addUnit(faction, offsetToAxial(guardCol, row), `${i + 1}st ${label} Guard`, 'guard');
+    });
   }
 }
