@@ -6,6 +6,8 @@ import { getActiveEffects } from '../items/doctrine-store';
 import type { DoctrineEffect } from '../items/doctrine';
 import type { Posture } from '../council/advisor';
 import { collectProvinceIncome, type ProvinceIncomeResult } from '../province/province-store';
+import type { ArmyData } from '../../types/index';
+import type { Legate } from '../army/legate';
 
 // ── Node types (S2-01) ──
 
@@ -40,6 +42,18 @@ export interface Spoke {
   currentSeason: number;
   /** Posture of this spoke. Affects upkeep costs. */
   posture: Posture;
+  /**
+   * S14-06: Army snapshotted from `preparedArmy` at embark time. Read by
+   * the battle layer in `src/battle/index.ts` to populate the player
+   * faction's units in pitched battles. Optional so legacy spoke
+   * construction sites compile unchanged.
+   */
+  boundArmy?: ArmyData | null;
+  /**
+   * S14-06: Legate snapshotted from `preparedLegate` at embark time. Drives
+   * the trait pass in `BattleState.placeStartingUnits` (see S14-05).
+   */
+  boundLegate?: Legate | null;
 }
 
 /** The active spoke, or null when the player is at the hub. */
