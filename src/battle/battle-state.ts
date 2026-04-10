@@ -17,6 +17,8 @@ import {
 import type { DecretumEffect } from '../game/items/decretum';
 import type { ArmyData } from '../types/index';
 import { mapArmyToBattleUnits } from '../game/army/cohort-to-battle-unit';
+import type { Legate, LegateEffect } from '../game/army/legate';
+import { getLegateTraitById } from '../game/army/legate-traits';
 
 // Re-export types for backward compatibility
 export type { BattleFaction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder };
@@ -734,17 +736,29 @@ export class BattleState {
   // ── Setup ──
 
   /**
-   * Populate the grid with starting units for both factions.
+   * Populate the grid with starting units for both factions and apply any
+   * Legate trait passes.
    *
    * S14-04: when an army is provided, the cohort roster is mapped to
    * BattleUnits via the cohort→BattleUnit mapper. When no army is provided
    * (or the roster is empty), the canonical hardcoded formation runs — this
    * preserves all existing call sites and the legacy battle balance
    * (NFR-5, AC-10).
+   *
+   * S14-05: when an army has an attached Legate, the Legate's traits are
+   * applied as a stat-bonus / lieutenant-preset / random-rally pass right
+   * after that faction's units are spawned. The caller is responsible for
+   * resolving `legateId → Legate` and passing the resolved object — keeping
+   * BattleState free of Legate registry coupling.
    */
-  placeStartingUnits(blueArmy?: ArmyData, redArmy?: ArmyData): void {
-    this.placeFactionUnits('blue', blueArmy);
-    this.placeFactionUnits('red', redArmy);
+  placeStartingUnits(
+    blueArmy?: ArmyData,
+    redArmy?: ArmyData,
+    blueLegate?: Legate | null,
+    redLegate?: Legate | null,
+  ): void {
+    this.placeFactionUnits('blue', blueArmy, blueLegate);
+    this.placeFactionUnits('red', redArmy, redLegate);
 
     // Record starting strengths for morale check
     this.startingStrength.set('blue', this.getBattleFactionStrength('blue'));
@@ -759,19 +773,84 @@ export class BattleState {
   }
 
   /**
-   * Place one faction's starting units. Branches between cohort-driven
-   * spawning (when an army with at least one cohort is bound) and the
-   * canonical hardcoded formation (legacy fallback).
+   * Place one faction's starting units, then apply the attached Legate's
+   * trait pass (if any). Branches between cohort-driven spawning and the
+   * canonical hardcoded formation; Legate traits apply to either path so
+   * long as a Legate is provided.
    */
-  private placeFactionUnits(faction: BattleFaction, army: ArmyData | undefined): void {
+  private placeFactionUnits(
+    faction: BattleFaction,
+    army: ArmyData | undefined,
+    legate: Legate | null | undefined,
+  ): void {
     if (army && army.cohorts.length > 0) {
       const specs = mapArmyToBattleUnits(army, faction);
       for (const spec of specs) {
         this.addUnit(spec.faction, spec.hex, spec.name, spec.role, spec.stats);
       }
-      return;
+    } else {
+      this.placeCanonicalFormation(faction);
     }
-    this.placeCanonicalFormation(faction);
+    if (legate) {
+      this.applyLegateTraits(faction, legate);
+    }
+  }
+
+  /**
+   * Apply every trait on a Legate to the faction's freshly-spawned units.
+   * Looks up each `traitId` in the catalog and dispatches its effect through
+   * `applyLegateEffect`.
+   */
+  private applyLegateTraits(faction: BattleFaction, legate: Legate): void {
+    for (const traitId of legate.traitIds) {
+      const trait = getLegateTraitById(traitId);
+      if (!trait) continue;
+      this.applyLegateEffect(faction, trait.effect);
+    }
+  }
+
+  /**
+   * Dispatch a single Legate effect onto the battle. The switch dispatches
+   * per *effect type*, not per trait — adding new traits with existing
+   * effect shapes requires zero changes here (S14 NFR-2).
+   */
+  private applyLegateEffect(faction: BattleFaction, effect: LegateEffect): void {
+    switch (effect.type) {
+      case 'stat-bonus': {
+        const units = this.getBattleFactionUnits(faction);
+        for (const unit of units) {
+          if (effect.target !== 'all' && unit.role !== effect.target) continue;
+          const old = unit.stats[effect.stat];
+          const next = Math.max(1, Math.floor(old * (1 + effect.multiplier)));
+          unit.stats[effect.stat] = next;
+          if (effect.stat === 'hp') {
+            // Raise current HP in lockstep so the bonus is visible immediately
+            unit.currentHp = next;
+          }
+        }
+        return;
+      }
+      case 'lieutenant-preset': {
+        // Lieutenant orders only govern the player faction (blue). Red Legates
+        // with this trait are no-ops — there is no concept of a red lieutenant
+        // order in the current battle model.
+        if (faction === 'blue') {
+          this.setLieutenantOrder(effect.order);
+        }
+        return;
+      }
+      case 'random-rally': {
+        const units = this.getBattleFactionUnits(faction);
+        if (units.length === 0) return;
+        const pick = units[Math.floor(Math.random() * units.length)];
+        pick.stats.atk = Math.max(1, Math.floor(pick.stats.atk * (1 + effect.multiplier)));
+        pick.stats.def = Math.max(0, Math.floor(pick.stats.def * (1 + effect.multiplier)));
+        pick.stats.hp  = Math.max(1, Math.floor(pick.stats.hp  * (1 + effect.multiplier)));
+        pick.stats.agi = Math.max(1, Math.floor(pick.stats.agi * (1 + effect.multiplier)));
+        pick.currentHp = pick.stats.hp;
+        return;
+      }
+    }
   }
 
   /**
