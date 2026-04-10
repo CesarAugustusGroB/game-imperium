@@ -1,0 +1,58 @@
+import type { UnitRole, UnitStats, LieutenantOrder } from '../../battle/battle-types';
+
+/**
+ * LegateEffect — discriminated union of every effect shape a Legate trait can
+ * produce. Applied by the Legate trait pipeline in S14-05 via a single
+ * dispatch on the `type` discriminant (NFR-2: no per-trait switch cases).
+ */
+export type LegateEffect =
+  /**
+   * Multiplicative stat bonus on matching units.
+   * `target` — `'all'` or a specific UnitRole.
+   * `multiplier` — fraction applied as `newStat = oldStat * (1 + multiplier)`
+   * (e.g. `0.15` = +15%).
+   */
+  | {
+      type: 'stat-bonus';
+      target: 'all' | UnitRole;
+      stat: keyof UnitStats;
+      multiplier: number;
+    }
+  /** Preset the player's initial lieutenant order at battle start. */
+  | {
+      type: 'lieutenant-preset';
+      order: LieutenantOrder;
+    }
+  /**
+   * Pick one random friendly unit at battle start and buff all four stats
+   * by the given multiplier.
+   */
+  | {
+      type: 'random-rally';
+      multiplier: number;
+    };
+
+/**
+ * LegateTrait — a named, data-driven passive. Traits live in
+ * `legate-traits.ts` and are referenced by id from Legate instances.
+ */
+export interface LegateTrait {
+  id: string;
+  name: string;
+  description: string;
+  effect: LegateEffect;
+}
+
+/**
+ * Legate — a commander that can be attached to an army via
+ * `ArmyData.legateId` (added in S14-03). Separate from the player `Commander`
+ * (strategic layer) — Legates are purely army-level assets.
+ */
+export interface Legate {
+  /** Unique instance id, e.g. `"legate_0001"`. */
+  id: string;
+  /** Display name, Roman tria nomina style (e.g. `"Marcus Aurelius Tullius"`). */
+  name: string;
+  /** Trait references into `LEGATE_TRAITS`. Typically 1–3 per Legate. */
+  traitIds: string[];
+}
