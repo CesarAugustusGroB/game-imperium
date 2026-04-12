@@ -16,6 +16,12 @@ function warlord(): Cohort     { return COHORT_MAP.get('barbarian-warlord')!; }
 
 // ── Scaling helpers ─────────────────────────────────────────────────────────
 
+// Tuning constants — adjust here for balance
+const REGULAR_SEASON_MULTIPLIER = 1.8;   // baseCount = 1 + floor(season × this)
+const REGULAR_BASE_CAP = 10;             // max base count for regular battles
+const BOSS_SEASON_MULTIPLIER = 2.0;      // bossBase = 2 + floor(season × this)
+const BOSS_BASE_CAP = 12;                // max base count for boss battles
+
 /**
  * effectiveThreat uses spoke count as a floor so players who complete many
  * spokes quickly don't face trivially easy enemies even at low threatLevel.
@@ -38,56 +44,95 @@ function computeExtraUnits(effectiveThreat: number): number {
   return Math.min(6, Math.floor(effectiveThreat / 3));
 }
 
+/**
+ * Dynamic base count for regular battles.
+ * Starts at 1, reaches 10 by season 5, capped at REGULAR_BASE_CAP.
+ */
+function computeBaseCount(globalSeason: number): number {
+  return Math.min(REGULAR_BASE_CAP, 1 + Math.floor(globalSeason * REGULAR_SEASON_MULTIPLIER));
+}
+
+/**
+ * Dynamic base count for boss battles.
+ * Starts at 2, reaches 12 by season 5, capped at BOSS_BASE_CAP.
+ */
+function computeBossBaseCount(globalSeason: number): number {
+  return Math.min(BOSS_BASE_CAP, 2 + Math.floor(globalSeason * BOSS_SEASON_MULTIPLIER));
+}
+
 // ── Army builders ───────────────────────────────────────────────────────────
 
-function buildRegularArmy(effectiveThreat: number): Cohort[] {
-  const eliteRatio = computeEliteRatio(effectiveThreat);
+/**
+ * Build a regular enemy army with proportional role distribution.
+ *
+ * Role allocation at any size:
+ *   vanguard ≈ 60%, reserve ≈ 20%, guard ≈ 20%  (rounded, min 0 for reserve/guard)
+ *   guard slots only appear at size ≥ 4
+ *   reserve slots only appear at size ≥ 2
+ */
+function buildRegularArmy(effectiveThreat: number, globalSeason: number): Cohort[] {
+  const baseCount = computeBaseCount(globalSeason);
   const extraUnits = computeExtraUnits(effectiveThreat);
+  const totalCount = baseCount + extraUnits;
+  const eliteRatio = computeEliteRatio(effectiveThreat);
+
+  // Proportional role split
+  const guardCount = totalCount >= 4 ? Math.max(1, Math.floor(totalCount * 0.2)) : 0;
+  const reserveCount = totalCount >= 2 ? Math.max(1, Math.floor(totalCount * 0.2)) : 0;
+  const vanguardCount = totalCount - reserveCount - guardCount;
 
   const cohorts: Cohort[] = [];
 
-  // Vanguard slot: 6 base
-  const champCount = Math.ceil(6 * eliteRatio);
+  // Vanguard: champions based on elite ratio, rest warriors
+  const champCount = Math.ceil(vanguardCount * eliteRatio);
   for (let i = 0; i < champCount; i++) cohorts.push(champion());
-  for (let i = champCount; i < 6; i++) cohorts.push(warrior());
+  for (let i = champCount; i < vanguardCount; i++) cohorts.push(warrior());
 
-  // Reserve slot: 2 base Raiders
-  cohorts.push(raider(), raider());
+  // Reserve: raiders
+  for (let i = 0; i < reserveCount; i++) cohorts.push(raider());
 
-  // Guard slot: 2 base — Chieftains once ratio reaches 30%, else Shieldbearers
+  // Guard: chieftains at high elite ratio, else shieldbearers
   const guardUnit = eliteRatio >= 0.3 ? chieftain() : shieldbearer();
-  cohorts.push(guardUnit, guardUnit);
-
-  // Extra units: alternate vanguard/reserve fills
-  for (let i = 0; i < extraUnits; i++) {
-    cohorts.push(i % 2 === 0 ? warrior() : raider());
-  }
+  for (let i = 0; i < guardCount; i++) cohorts.push(guardUnit);
 
   return cohorts;
 }
 
-function buildBossArmy(effectiveThreat: number, isFinalBattle: boolean): Cohort[] {
+/**
+ * Build a boss enemy army. Separate scaling curve — always stronger than
+ * regular at the same progression point.
+ */
+function buildBossArmy(effectiveThreat: number, globalSeason: number, isFinalBattle: boolean): Cohort[] {
   const extraUnits = Math.min(4, computeExtraUnits(effectiveThreat));
+
+  // Final invasion always gets max army; regular boss uses dynamic scaling
+  const bossBase = isFinalBattle
+    ? BOSS_BASE_CAP + 2  // 14 for final invasion
+    : computeBossBaseCount(globalSeason);
+
+  const totalCount = bossBase + extraUnits;
+
+  // Role split: reserve + guard get fixed 2 each (if room), rest is vanguard
+  const guardCount = Math.min(2, Math.max(0, totalCount - 1));
+  const reserveCount = Math.min(2, Math.max(0, totalCount - guardCount - 1));
+  const vanguardCount = totalCount - reserveCount - guardCount;
 
   const cohorts: Cohort[] = [];
 
-  // Vanguard: final invasion gets 10 slots, regular boss gets 8
-  const vanguardBase = isFinalBattle ? 10 : 8;
-  cohorts.push(warlord());                                         // always 1 warlord
-  const champCount = Math.ceil((vanguardBase - 1) * 0.5);         // ~half champions
-  for (let i = 0; i < champCount; i++) cohorts.push(champion());
-  for (let i = champCount + 1; i < vanguardBase; i++) cohorts.push(warrior());
-
-  // Reserve: 2 Raiders
-  cohorts.push(raider(), raider());
-
-  // Guard: 2 Chieftains
-  cohorts.push(chieftain(), chieftain());
-
-  // Extra: additional Champions/Raiders
-  for (let i = 0; i < extraUnits; i++) {
-    cohorts.push(i % 2 === 0 ? champion() : raider());
+  // Vanguard: warlord only when army is 6+, otherwise champion leads
+  const hasWarlord = vanguardCount >= 4;
+  if (vanguardCount >= 1) cohorts.push(hasWarlord ? warlord() : champion());
+  if (vanguardCount > 1) {
+    const champCount = Math.ceil((vanguardCount - 1) * 0.5);
+    for (let i = 0; i < champCount; i++) cohorts.push(champion());
+    for (let i = champCount + 1; i < vanguardCount; i++) cohorts.push(warrior());
   }
+
+  // Reserve: raiders
+  for (let i = 0; i < reserveCount; i++) cohorts.push(raider());
+
+  // Guard: chieftains for boss
+  for (let i = 0; i < guardCount; i++) cohorts.push(chieftain());
 
   return cohorts;
 }
@@ -95,26 +140,30 @@ function buildBossArmy(effectiveThreat: number, isFinalBattle: boolean): Cohort[
 // ── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Generate a data-driven enemy ArmyData scaled by the current threat level.
+ * Generate a data-driven enemy ArmyData scaled by progression.
  *
+ * Army size starts at 1 (season 0) and grows between spokes, reaching
+ * ~10 by season 5. Boss nodes follow a separate, steeper curve.
  * Base stats only — the post-spawn +5%/threatLevel stat multiplier in
  * `applyThreatScaling()` is applied after this army is placed on the grid.
  *
  * @param threatLevel      Current global threat level (season ticks)
  * @param completedSpokes  Number of spokes completed (used as scaling floor)
+ * @param globalSeason     Current season (drives army size growth)
  * @param isBoss           True when current node type is 'boss'
  * @param isFinalBattle    True when globalSeason >= MAX_SEASONS
  */
 export function generateEnemyArmy(
   threatLevel: number,
   completedSpokes: number,
+  globalSeason: number,
   isBoss: boolean,
   isFinalBattle: boolean,
 ): ArmyData {
   const effectiveThreat = computeEffectiveThreat(threatLevel, completedSpokes);
   const cohorts = (isBoss || isFinalBattle)
-    ? buildBossArmy(effectiveThreat, isFinalBattle)
-    : buildRegularArmy(effectiveThreat);
+    ? buildBossArmy(effectiveThreat, globalSeason, isFinalBattle)
+    : buildRegularArmy(effectiveThreat, globalSeason);
 
   const name = (isBoss || isFinalBattle) ? 'Barbarian War Host' : 'Barbarian Horde';
 
