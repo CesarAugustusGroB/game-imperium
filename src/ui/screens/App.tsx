@@ -12,6 +12,7 @@ import { CouncilScreen } from './CouncilScreen';
 import { ProvinceScreen } from './ProvinceScreen';
 import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
+import { ArmyRecruitmentScreen } from './ArmyRecruitmentScreen';
 import { toggleMute, musicMuted } from '../sound/music';
 import { NotificationFeed } from '../components/NotificationFeed';
 import { loadMetaSave } from '../../game/core/meta-save';
@@ -77,7 +78,7 @@ class ErrorBoundary extends Component<{ children: ComponentChildren }, EBState> 
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', height: '100vh',
           fontFamily: 'var(--font-family)',
-          background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
+          background: 'var(--color-bg-primary)',
           color: 'rgba(220, 160, 100, 0.8)', gap: '16px',
         }}>
           <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase' }}>
@@ -120,6 +121,8 @@ function ScreenContent() {
       return <CouncilScreen />;
     case 'provinces':
       return <ProvinceScreen />;
+    case 'army-recruitment':
+      return <ArmyRecruitmentScreen />;
     case 'node-map':
       return <NodeMapScreen />;
     case 'post-battle':
@@ -134,7 +137,7 @@ function ScreenContent() {
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           height: '100vh', color: 'var(--color-text-secondary)',
           fontFamily: 'var(--font-family)',
-          background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
+          background: 'var(--color-bg-primary)',
           gap: '16px',
         }}>
           <div style={{ fontSize: 'var(--font-size-lg)', letterSpacing: '1px' }}>
@@ -161,7 +164,7 @@ export function App() {
   const exiting = transitionState.value === 'exiting';
   const showResourceBar = screen !== 'title' && screen !== 'commander-select' && screen !== 'battle';
 
-  const showCurtains = screen !== 'battle';
+  const showCurtains = false;
 
   return (
     <>

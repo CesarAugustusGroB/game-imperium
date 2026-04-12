@@ -4,7 +4,7 @@ import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 const containerStyle: Record<string, string> = {
   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
   height: '100vh', fontFamily: 'var(--font-family)',
-  background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
+  background: 'var(--color-bg-primary)',
 };
 
 const shieldStyle: Record<string, string> = {

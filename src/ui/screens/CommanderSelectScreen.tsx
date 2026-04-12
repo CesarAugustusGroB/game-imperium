@@ -192,7 +192,7 @@ export function CommanderSelectScreen() {
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       minHeight: '100vh', fontFamily: 'var(--font-family)',
-      background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
+      background: 'var(--color-bg-primary)',
       padding: '40px 16px',
     }}>
       <OrnateFrame width="min(1100px, 94vw)">

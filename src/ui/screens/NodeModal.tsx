@@ -63,7 +63,7 @@ export function NodeModal({ title, children, onClose }: {
       <OrnateFrame
         width="min(520px, 92vw)"
         padding="compact"
-        style={{ maxHeight: '85vh', overflowY: 'auto' }}
+        style={{ maxHeight: '85vh', overflow: 'hidden' }}
         onClick={(e: MouseEvent) => e.stopPropagation()}
       >
         <OrnateHeader

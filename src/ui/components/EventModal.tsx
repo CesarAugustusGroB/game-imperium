@@ -92,7 +92,7 @@ export function EventModal({
         className="event-modal-card"
         width="min(580px, 92vw)"
         padding="compact"
-        style={{ maxHeight: '85vh', overflowY: 'auto' }}
+        style={{ maxHeight: '85vh', overflow: 'hidden' }}
         onClick={(e: MouseEvent) => e.stopPropagation()}
       >
         {/* Illustration banner */}
