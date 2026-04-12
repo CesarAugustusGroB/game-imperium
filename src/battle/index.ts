@@ -74,7 +74,8 @@ export class BattleMode {
     isFinalBattle.value = globalSeason.value >= MAX_SEASONS;
 
     const redArmy = generateEnemyArmy(
-      threatLevel.value, completedSpokes.value, isBoss, isFinalBattle.value,
+      threatLevel.value, completedSpokes.value, globalSeason.value,
+      isBoss, isFinalBattle.value,
     );
     lastEnemyArmy.value = redArmy;
     this._state.placeStartingUnits(blueArmy, redArmy, blueLegate, null);
