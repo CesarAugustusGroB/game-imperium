@@ -13,6 +13,7 @@ import { ProvinceScreen } from './ProvinceScreen';
 import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
 import { ArmyRecruitmentScreen } from './ArmyRecruitmentScreen';
+import { LegateHiringScreen } from './LegateHiringScreen';
 import { toggleMute, musicMuted } from '../sound/music';
 import { NotificationFeed } from '../components/NotificationFeed';
 import { loadMetaSave } from '../../game/core/meta-save';
@@ -123,6 +124,8 @@ function ScreenContent() {
       return <ProvinceScreen />;
     case 'army-recruitment':
       return <ArmyRecruitmentScreen />;
+    case 'legate-hiring':
+      return <LegateHiringScreen />;
     case 'node-map':
       return <NodeMapScreen />;
     case 'post-battle':

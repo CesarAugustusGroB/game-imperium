@@ -5,6 +5,7 @@ import type { ArmyData } from '../../types/index';
 import type { Legate } from '../army/legate';
 import { getCohortById } from '../army/cohort-data';
 import { computeArmySize } from '../army/cohort';
+import { rollHiringPool, rollLegateCandidate } from '../army/legate-pool';
 
 // ── State signals ──
 
@@ -57,6 +58,14 @@ export const preparedLegate = signal<Legate | null>(null);
  *   `effect(() => { armyEmbarkCount.value; ... })`
  */
 export const armyEmbarkCount = signal(0);
+
+/**
+ * Pool of Legate candidates available for hire at the Hub. Initialized lazily
+ * on first visit to the Legate Hiring Screen. Persists across Hub visits within
+ * a run so candidates don't re-roll on every navigation.
+ * Reset to [] by resetStrategicStore (new run).
+ */
+export const legateHiringPool = signal<Legate[]>([]);
 
 // ── Derived checks ──
 
@@ -231,6 +240,54 @@ export function removeCohort(cohortId: string): void {
   preparedArmy.value = { ...army, cohorts, size: computeArmySize(cohorts) };
 }
 
+// ── S14-08: Legate actions ──
+
+/**
+ * Assign a Legate to the prepared army. Sets `preparedLegate` and syncs
+ * `legateId` on the army shell.
+ */
+export function assignLegate(legate: Legate): void {
+  preparedLegate.value = legate;
+  const army = preparedArmy.value;
+  if (army) preparedArmy.value = { ...army, legateId: legate.id };
+}
+
+/**
+ * Dismiss the current Legate (no refund). Clears `preparedLegate` and
+ * `legateId` on the army shell.
+ */
+export function dismissLegate(): void {
+  preparedLegate.value = null;
+  const army = preparedArmy.value;
+  if (army) preparedArmy.value = { ...army, legateId: null };
+}
+
+/**
+ * Ensure the hiring pool has candidates. Call on screen mount.
+ * Does nothing if pool already has entries (persists across Hub visits).
+ */
+export function ensureLegatePool(): void {
+  if (legateHiringPool.value.length === 0) {
+    legateHiringPool.value = rollHiringPool(4);
+  }
+}
+
+/**
+ * Hire a Legate from the pool by id. Deducts `cost` gold, assigns the Legate,
+ * removes them from pool, and adds a fresh candidate. Returns true on success.
+ */
+export function hireLegate(legateId: string, cost: number): boolean {
+  const pool = legateHiringPool.value;
+  const idx = pool.findIndex(l => l.id === legateId);
+  if (idx === -1) return false;
+  if (!spendResource('gold', cost)) return false;
+  assignLegate(pool[idx]);
+  const newPool = [...pool];
+  newPool.splice(idx, 1, rollLegateCandidate());
+  legateHiringPool.value = newPool;
+  return true;
+}
+
 // ── Lifecycle ──
 
 /**
@@ -255,4 +312,5 @@ export function resetStrategicStore(): void {
   nextInvestmentDiscount.value = 0;
   preparedArmy.value = null;
   preparedLegate.value = null;
+  legateHiringPool.value = [];
 }
