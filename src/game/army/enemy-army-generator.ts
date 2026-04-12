@@ -3,14 +3,16 @@ import { computeArmySize } from './cohort';
 import type { Cohort } from './cohort';
 import type { ArmyData } from '../../types/index';
 
-// ── Cohort type references ──────────────────────────────────────────────────
+// ── Cohort type references (static map — built once at module load) ─────────
 
-function warrior(): Cohort    { return ENEMY_COHORTS.find(c => c.id === 'barbarian-warrior')!; }
-function raider(): Cohort     { return ENEMY_COHORTS.find(c => c.id === 'barbarian-raider')!; }
-function shieldbearer(): Cohort { return ENEMY_COHORTS.find(c => c.id === 'barbarian-shieldbearer')!; }
-function champion(): Cohort   { return ENEMY_COHORTS.find(c => c.id === 'barbarian-champion')!; }
-function chieftain(): Cohort  { return ENEMY_COHORTS.find(c => c.id === 'barbarian-chieftain')!; }
-function warlord(): Cohort    { return ENEMY_COHORTS.find(c => c.id === 'barbarian-warlord')!; }
+const COHORT_MAP = new Map<string, Cohort>(ENEMY_COHORTS.map(c => [c.id, c]));
+
+function warrior(): Cohort     { return COHORT_MAP.get('barbarian-warrior')!; }
+function raider(): Cohort      { return COHORT_MAP.get('barbarian-raider')!; }
+function shieldbearer(): Cohort { return COHORT_MAP.get('barbarian-shieldbearer')!; }
+function champion(): Cohort    { return COHORT_MAP.get('barbarian-champion')!; }
+function chieftain(): Cohort   { return COHORT_MAP.get('barbarian-chieftain')!; }
+function warlord(): Cohort     { return COHORT_MAP.get('barbarian-warlord')!; }
 
 // ── Scaling helpers ─────────────────────────────────────────────────────────
 
