@@ -104,6 +104,9 @@ export function HubScreen() {
   const cohortCount = armyCohorts.length;
   const legate = preparedLegate.value;
 
+  // ── S15-01: Embark gate — require at least one cohort ──
+  const canEmbark = seatedCount > 0 && cohortCount > 0;
+
   // Group cohorts by type for the summary row
   const cohortGroups = new Map<string, { name: string; role: UnitRole; count: number }>();
   for (const c of armyCohorts) {
@@ -312,9 +315,14 @@ export function HubScreen() {
 
             {/* Embark */}
             <div style={{ ...PANEL, background: 'var(--color-bg-secondary)', animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0.15s' }}>
-              <button class="ornate-btn" disabled={seatedCount === 0} onClick={handleEmbark} style={{ width: '100%', padding: '12px 24px', fontSize: 'var(--font-size-lg)', fontWeight: 600, letterSpacing: '1px' }}>
+              <button class="ornate-btn" disabled={!canEmbark} onClick={handleEmbark} style={{ width: '100%', padding: '12px 24px', fontSize: 'var(--font-size-lg)', fontWeight: 600, letterSpacing: '1px' }}>
                 Embark
               </button>
+              {seatedCount > 0 && cohortCount === 0 && (
+                <div style={{ fontSize: '8px', color: 'var(--color-text-muted)', textAlign: 'center', marginTop: '4px' }}>
+                  Recruit at least one cohort to embark
+                </div>
+              )}
             </div>
 
             {/* Provinces */}
