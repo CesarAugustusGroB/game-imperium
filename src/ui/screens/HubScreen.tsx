@@ -16,6 +16,8 @@ import { PANEL, PANEL_TITLE } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import type { NodeType } from '../../game/progression/spoke';
+import { preparedArmy, preparedLegate } from '../../game/progression/strategic-store';
+import type { UnitRole } from '../../battle/battle-types';
 
 const SPOKE_NODE_STYLES: Record<NodeType, { color: string; icon: string }> = {
   battle: { color: '#e06040', icon: '\u2694\uFE0F' },
@@ -93,6 +95,20 @@ export function HubScreen() {
   const faith = getResource('faith');
   const influence = getResource('influence');
   const momentum = getResource('momentum');
+
+  // ── S14-10: Army + Legate summary ──
+  const army = preparedArmy.value;
+  const armyCohorts = army?.cohorts ?? [];
+  const cohortCount = armyCohorts.length;
+  const legate = preparedLegate.value;
+
+  // Group cohorts by type for the summary row
+  const cohortGroups = new Map<string, { name: string; role: UnitRole; count: number }>();
+  for (const c of armyCohorts) {
+    const g = cohortGroups.get(c.id);
+    if (g) g.count++;
+    else cohortGroups.set(c.id, { name: c.name, role: c.role, count: 1 });
+  }
 
   const offColorScrolls = faction ? hand.filter(d => !isDecretumCastable(d, faction)) : [];
   const offColorDoctrines = faction ? doctrineCollection.value.filter(d => !isDoctrineEquippable(d, faction)) : [];
@@ -240,15 +256,60 @@ export function HubScreen() {
               )}
             </div>
 
-            {/* Embark */}
+            {/* Army */}
             <div style={{ ...PANEL, background: 'var(--color-bg-secondary)', animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0.05s' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <div style={{ ...PANEL_TITLE, marginBottom: 0 }}>
+                  Army {cohortCount > 0 && <span style={{ color: 'var(--color-text-muted)' }}>({cohortCount})</span>}
+                </div>
+                <button class="hub-panel-btn" onClick={() => navigateTo('army-recruitment')} style={{ background: 'transparent', border: '1px solid var(--color-border-subtle)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                  Manage →
+                </button>
+              </div>
+              {cohortCount === 0 ? (
+                <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>No cohorts recruited</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  {Array.from(cohortGroups.entries()).map(([id, g]) => (
+                    <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</div>
+                      <div style={{ fontSize: '8px', color: 'var(--color-text-muted)', flexShrink: 0 }}>×{g.count}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Legate */}
+            <div style={{ ...PANEL, background: 'var(--color-bg-secondary)', animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0.1s' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <div style={{ ...PANEL_TITLE, marginBottom: 0 }}>Legate</div>
+                <button class="hub-panel-btn" onClick={() => navigateTo('legate-hiring')} style={{ background: 'transparent', border: '1px solid var(--color-border-subtle)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                  Manage →
+                </button>
+              </div>
+              {legate ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Portrait alt={legate.name} size="small" style={{ opacity: 0.85 }} />
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{legate.name}</div>
+                    <div style={{ fontSize: '8px', color: 'var(--color-text-muted)' }}>{legate.traitIds.length} trait{legate.traitIds.length !== 1 ? 's' : ''}</div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>No legate assigned</div>
+              )}
+            </div>
+
+            {/* Embark */}
+            <div style={{ ...PANEL, background: 'var(--color-bg-secondary)', animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0.15s' }}>
               <button class="ornate-btn" disabled={seatedCount === 0} onClick={handleEmbark} style={{ width: '100%', padding: '12px 24px', fontSize: 'var(--font-size-lg)', fontWeight: 600, letterSpacing: '1px' }}>
                 Embark
               </button>
             </div>
 
             {/* Provinces */}
-            <div style={{ ...PANEL, background: 'var(--color-bg-secondary)', animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0.1s' }}>
+            <div style={{ ...PANEL, background: 'var(--color-bg-secondary)', animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0.2s' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                 <div style={{ ...PANEL_TITLE, marginBottom: 0 }}>
                   Provinces <span style={{ color: 'var(--color-text-muted)' }}>({provinces.value.length})</span>
