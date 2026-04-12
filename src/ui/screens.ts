@@ -11,14 +11,15 @@ export type ScreenName =
   | 'council'
   | 'provinces'
   | 'army-recruitment'
+  | 'legate-hiring'
   | 'node-map'
   | 'battle'
   | 'post-battle'
   | 'victory'
   | 'defeat';
 
-const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'node-map', 'battle', 'post-battle', 'victory', 'defeat'];
-const REQUIRES_RUN: ScreenName[] = ['hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'node-map', 'post-battle', 'victory', 'defeat'];
+const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'node-map', 'battle', 'post-battle', 'victory', 'defeat'];
+const REQUIRES_RUN: ScreenName[] = ['hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'node-map', 'post-battle', 'victory', 'defeat'];
 
 // Read initial screen from URL hash (e.g., #battle, #hub, #node-map)
 function getInitialScreen(): ScreenName {
