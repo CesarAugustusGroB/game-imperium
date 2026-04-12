@@ -13,7 +13,9 @@ import { initGovernorStore, resetGovernorStore } from '../province/governor-stor
 import { initProvinceMapStore, resetProvinceMapStore, claimTerritory } from '../province/province-map-store';
 import { resetEventStore } from '../events/event-store';
 import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyIds, registerFactionSyncCallback } from '../progression/npc-faction-store';
-import { resetStrategicStore } from '../progression/strategic-store';
+import { resetStrategicStore, ensurePreparedArmy, preparedArmy } from '../progression/strategic-store';
+import { getCohortById } from '../army/cohort-data';
+import { computeArmySize } from '../army/cohort';
 import { recordRunStart } from './meta-save';
 import { STARTER_ADVISORS } from '../../data/advisor-data';
 
@@ -141,6 +143,16 @@ export function startNewRun(commander: Commander): void {
   resetProvinceStore();
   resetEventStore();
   resetStrategicStore();
+
+  // Starting army: 2 Hastati (free — no gold cost)
+  const startingArmy = ensurePreparedArmy();
+  const hastati = getCohortById('hastati');
+  if (hastati) {
+    startingArmy.cohorts = [{ ...hastati }, { ...hastati }];
+    startingArmy.size = computeArmySize(startingArmy.cohorts);
+    preparedArmy.value = { ...startingArmy };
+  }
+
   initGovernorStore();
 
   // Create the home province first (no territory claimed yet — topology not loaded)
