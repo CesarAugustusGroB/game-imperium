@@ -158,6 +158,7 @@ export function PostBattleScreen() {
     // Season ticks are handled by NodeMapScreen when it renders
     advanceNode();
     lastBattleResult.value = null;
+    lastEnemyArmy.value = null;
     navigateTo('node-map');
   }
 
