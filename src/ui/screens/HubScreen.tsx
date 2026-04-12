@@ -11,6 +11,7 @@ import { getResource } from '../../game/core/resources';
 import { DecretumCard } from '../components/DecretumRenderer';
 import { councilSlots, startSpokeFromCouncil, plannedSpoke, tierUpNotices } from '../../game/council/council-store';
 import { ResourceExchangeModal } from '../components/ResourceExchangeModal';
+import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 import { provinces } from '../../game/province/province-store';
 import { PANEL, PANEL_TITLE } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
@@ -67,6 +68,7 @@ if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
 
 const goldFlash = signal<string | null>(null);
 const exchangeOpen = signal(false);
+const showArmyHUD = signal(false);
 let flashTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function showGoldFlash(amount: number) {
@@ -262,9 +264,16 @@ export function HubScreen() {
                 <div style={{ ...PANEL_TITLE, marginBottom: 0 }}>
                   Army {cohortCount > 0 && <span style={{ color: 'var(--color-text-muted)' }}>({cohortCount})</span>}
                 </div>
-                <button class="hub-panel-btn" onClick={() => navigateTo('army-recruitment')} style={{ background: 'transparent', border: '1px solid var(--color-border-subtle)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                  Manage →
-                </button>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  {cohortCount > 0 && army && (
+                    <button class="hub-panel-btn" onClick={() => { showArmyHUD.value = true; }} style={{ background: 'transparent', border: '1px solid var(--color-border-subtle)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                      View
+                    </button>
+                  )}
+                  <button class="hub-panel-btn" onClick={() => navigateTo('army-recruitment')} style={{ background: 'transparent', border: '1px solid var(--color-border-subtle)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', color: 'var(--color-text-secondary)', fontFamily: 'inherit', fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    Manage →
+                  </button>
+                </div>
               </div>
               {cohortCount === 0 ? (
                 <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>No cohorts recruited</div>
@@ -483,6 +492,15 @@ export function HubScreen() {
       {/* Exchange modal */}
       {exchangeOpen.value && (
         <ResourceExchangeModal onClose={() => { exchangeOpen.value = false; }} />
+      )}
+
+      {/* Army Detail HUD */}
+      {showArmyHUD.value && army && (
+        <ArmyDetailHUD
+          army={army}
+          legate={legate}
+          onClose={() => { showArmyHUD.value = false; }}
+        />
       )}
     </div>
   );
