@@ -1,8 +1,10 @@
 import { signal } from '@preact/signals';
 import { selectedCommander, completedSpokes } from '../core/game-state';
-import { spendResource, canAfford } from '../core/resources';
+import { spendResource, addResource, canAfford } from '../core/resources';
 import type { ArmyData } from '../../types/index';
 import type { Legate } from '../army/legate';
+import { getCohortById } from '../army/cohort-data';
+import { computeArmySize } from '../army/cohort';
 
 // ── State signals ──
 
@@ -177,6 +179,58 @@ export function consumeGoldenOpportunity(): number {
   return pending;
 }
 
+// ── S14-07/08: Army preparation actions ──
+
+/**
+ * Lazy-initialize the prepared army if it is null. Should be called on mount
+ * of the Recruitment Screen to ensure a shell army exists to append cohorts to.
+ */
+export function ensurePreparedArmy(): ArmyData {
+  if (preparedArmy.value) return preparedArmy.value;
+  const owner = selectedCommander.value?.faction ?? 'rome';
+  const shell: ArmyData = {
+    id: 0, owner, name: 'Legio I', size: 0, cohorts: [], legateId: null,
+    provinceIndex: 0, targetProvinceIndex: null, progress: 0, path: [],
+    inCombat: false, combatTarget: null, lastRoll: 0,
+  };
+  preparedArmy.value = shell;
+  return shell;
+}
+
+/**
+ * Recruit one cohort by id into the prepared army.
+ * Deducts the cohort's aurumCost from gold. Returns true on success.
+ */
+export function recruitCohort(cohortId: string): boolean {
+  const cohort = getCohortById(cohortId);
+  if (!cohort) return false;
+  if (!canAfford('gold', cohort.aurumCost)) return false;
+  if (!spendResource('gold', cohort.aurumCost)) return false;
+  const army = ensurePreparedArmy();
+  const updated: ArmyData = {
+    ...army,
+    cohorts: [...army.cohorts, { ...cohort }],
+  };
+  updated.size = computeArmySize(updated.cohorts);
+  preparedArmy.value = updated;
+  return true;
+}
+
+/**
+ * Remove the last cohort of the given type from the prepared army.
+ * Refunds the cohort's aurumCost to gold.
+ */
+export function removeCohort(cohortId: string): void {
+  const army = preparedArmy.value;
+  if (!army) return;
+  const cohorts = [...army.cohorts];
+  const lastIdx = cohorts.map(c => c.id).lastIndexOf(cohortId);
+  if (lastIdx === -1) return;
+  const [removed] = cohorts.splice(lastIdx, 1);
+  addResource('gold', removed.aurumCost);
+  preparedArmy.value = { ...army, cohorts, size: computeArmySize(cohorts) };
+}
+
 // ── Lifecycle ──
 
 /**
@@ -199,4 +253,6 @@ export function resetStrategicStore(): void {
   goldenOpportunityPending.value = 0;
   pendingEnemyConversions.value = 0;
   nextInvestmentDiscount.value = 0;
+  preparedArmy.value = null;
+  preparedLegate.value = null;
 }

@@ -12,6 +12,7 @@ import { CouncilScreen } from './CouncilScreen';
 import { ProvinceScreen } from './ProvinceScreen';
 import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
+import { ArmyRecruitmentScreen } from './ArmyRecruitmentScreen';
 import { toggleMute, musicMuted } from '../sound/music';
 import { NotificationFeed } from '../components/NotificationFeed';
 import { loadMetaSave } from '../../game/core/meta-save';
@@ -120,6 +121,8 @@ function ScreenContent() {
       return <CouncilScreen />;
     case 'provinces':
       return <ProvinceScreen />;
+    case 'army-recruitment':
+      return <ArmyRecruitmentScreen />;
     case 'node-map':
       return <NodeMapScreen />;
     case 'post-battle':
