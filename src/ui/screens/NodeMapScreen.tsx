@@ -17,6 +17,7 @@ import { pickEvent, buildEventContext, applyEventChoice } from '../../game/event
 import { getExtraEventChoices } from '../../game/items/doctrine-store';
 import { manipulateUsesLeft, consumeManipulateUse } from '../../game/progression/strategic-store';
 import { councilSlots, grantAdvisorXp, tierUpNotices } from '../../game/council/council-store';
+import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('node-map-styles')) {
@@ -219,6 +220,9 @@ const lastSeasonTick = signal<SeasonTickResult | null>(null);
 
 /** Index of the node that just resolved (for gold flash animation). */
 const justResolvedIndex = signal<number | null>(null);
+
+/** Army Detail HUD visibility on the node map. */
+const showArmyHUDOnMap = signal(false);
 
 function NodeCircle({ node, isCurrent, color, onActivate }: {
   node: SpokeNode;
@@ -692,6 +696,27 @@ export function NodeMapScreen() {
           }} />
         </div>
 
+        {/* Army bar — shown when spoke has a bound army */}
+        {spoke.boundArmy && spoke.boundArmy.cohorts.length > 0 && (
+          <button
+            class="hub-panel-btn"
+            onClick={() => { showArmyHUDOnMap.value = true; }}
+            style={{
+              marginTop: '12px',
+              padding: '5px 14px',
+              background: 'rgba(30, 28, 48, 0.7)',
+              border: '1px solid var(--color-border-subtle)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--color-text-secondary)',
+              fontFamily: 'inherit', fontSize: 'var(--font-size-xs)',
+              letterSpacing: '1px',
+            }}
+          >
+            ⚔ {spoke.boundArmy.cohorts.length} cohort{spoke.boundArmy.cohorts.length !== 1 ? 's' : ''}
+            {spoke.boundLegate ? ` · ${spoke.boundLegate.name.split(' ')[0]}` : ''}
+          </button>
+        )}
+
         {/* Retreat button — bottom of frame */}
         <div style={{ marginTop: '20px', alignSelf: 'flex-start' }}>
           <button class="retreat-btn ornate-btn-ghost" onClick={() => { showRetreatConfirm.value = true; }} style={{
@@ -963,6 +988,15 @@ export function NodeMapScreen() {
         <RetreatConfirmModal
           onConfirm={handleRetreat}
           onCancel={() => { showRetreatConfirm.value = false; }}
+        />
+      )}
+
+      {/* Army Detail HUD — triggered from the army bar */}
+      {showArmyHUDOnMap.value && spoke.boundArmy && (
+        <ArmyDetailHUD
+          army={spoke.boundArmy}
+          legate={spoke.boundLegate ?? null}
+          onClose={() => { showArmyHUDOnMap.value = false; }}
         />
       )}
     </div>
