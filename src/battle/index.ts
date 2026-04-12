@@ -4,9 +4,10 @@ import { BattleRenderer } from './battle-renderer';
 import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
 import { initAbilityBar, updateAbilityBar, destroyAbilityBar, initDecretumBar, updateDecretumBar, destroyDecretumBar } from './ability-ui';
-import { selectedCommander, veteranStacks, allianceCount, threatLevel, globalSeason, MAX_SEASONS, battlesWon } from '../game/core/game-state';
-import { currentSpoke } from '../game/progression/spoke';
-import { VETERAN_BONUS_PER_STACK, VETERAN_SOFT_CAP_STACKS, VETERAN_BONUS_ABOVE_CAP, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO, RED_RESERVE_COL, RED_VANGUARD_COL, WAR_CRY_DAMAGE_BONUS } from './battle-config';
+import { selectedCommander, veteranStacks, allianceCount, threatLevel, globalSeason, MAX_SEASONS, battlesWon, completedSpokes } from '../game/core/game-state';
+import { currentSpoke, currentNodeIndex } from '../game/progression/spoke';
+import { generateEnemyArmy } from '../game/army/enemy-army-generator';
+import { VETERAN_BONUS_PER_STACK, VETERAN_SOFT_CAP_STACKS, VETERAN_BONUS_ABOVE_CAP, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO, WAR_CRY_DAMAGE_BONUS } from './battle-config';
 import { offsetToAxial } from './hex';
 import { getActiveEffects } from '../game/items/doctrine-store';
 import type { DoctrineEffect } from '../game/items/doctrine';
@@ -55,17 +56,24 @@ export class BattleMode {
 
     this._state = new BattleState();
     this._state.generateGrid();
-    // S14-06: pull the army+Legate bound to this spoke run (if any) into the
-    // battle. When `boundArmy` is null/undefined, placeStartingUnits falls
-    // back to the canonical hardcoded blue formation. Red always uses the
-    // canonical formation today — enemy army composition is a future sprint.
+
+    // S14-06 / S15-04: pull the player army + Legate from the spoke; generate
+    // an enemy army scaled by threat. Blue with no cohorts spawns nothing
+    // (embark gate in S15-01 prevents this). Red always gets a generated army.
     const spoke = currentSpoke.value;
     const blueArmy = spoke?.boundArmy ?? undefined;
     const blueLegate = spoke?.boundLegate ?? undefined;
-    this._state.placeStartingUnits(blueArmy, undefined, blueLegate);
 
-    // S7-11: Threat-based enemy scaling
+    const nodeType = spoke?.nodes[currentNodeIndex.value]?.type ?? 'battle';
+    const isBoss = nodeType === 'boss';
     isFinalBattle.value = globalSeason.value >= MAX_SEASONS;
+
+    const redArmy = generateEnemyArmy(
+      threatLevel.value, completedSpokes.value, isBoss, isFinalBattle.value,
+    );
+    this._state.placeStartingUnits(blueArmy, redArmy, blueLegate, null);
+
+    // S15-04: stat scaling only — composition is handled by the generator
     this.applyThreatScaling();
 
     if (selectedCommander.value?.id === 'boudicca') {
@@ -197,7 +205,12 @@ export class BattleMode {
     document.getElementById('btn-coords')?.addEventListener('click', this.boundToggleCoords);
   }
 
-  /** S7-11: Scale enemy stats, spawn extra raiders, and apply final-invasion wave based on threat level. */
+  /**
+   * S15-04: Post-spawn stat scaling only. Enemy army composition is now
+   * handled by `generateEnemyArmy()` — this method only applies:
+   *   1. +5%/threatLevel HP+ATK to all red units
+   *   2. Final-invasion boss multiplier (provinces/allies/battlesWon formula)
+   */
   private applyThreatScaling(): void {
     const threat = threatLevel.value;
 
@@ -212,57 +225,21 @@ export class BattleMode {
       }
     }
 
-    // Extra enemy units at threat >= 5
-    if (threat >= 5) {
-      const extraCount = threat >= 8 ? 2 : 1;
-      const extraRows = [5, 9];
-      for (let i = 0; i < extraCount; i++) {
-        const hex = offsetToAxial(RED_RESERVE_COL, extraRows[i]);
-        if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
-          const u = this._state.addUnit('red', hex, `Barbarian Raider ${i + 1}`, 'reserve');
-          u.stats = { ...u.stats };
-          u.stats.hp = Math.floor(u.stats.hp * statMultiplier);
-          u.stats.atk = Math.floor(u.stats.atk * statMultiplier);
-          u.currentHp = u.stats.hp;
-        }
-      }
-    }
-
-    // S8-02: Final invasion — scaled by provinces + alliances
+    // Final invasion boss multiplier (provinces/allies/battlesWon scaling)
     if (isFinalBattle.value) {
       const provinceCount = provinces.value.length;
       const allies = allianceCount.value;
-
-      // More provinces = stronger player → harder boss to compensate
-      // Fewer allies = weaker player → slightly easier (mercy scaling)
-      // More battles won = battle-hardened army → easier boss (S9-01)
-      // High threat (>15) = seasons dragged out → harder boss (S9-01)
-      // Base: 1.5x. Clamped 1.3–2.5x.
       const bossMultiplier = Math.max(1.3, Math.min(2.5,
         1.5
         + (provinceCount * 0.05)
         - (allies * 0.05)
         - (battlesWon.value * 0.03)
-        + (Math.max(0, threatLevel.value - 15) * 0.02),
+        + (Math.max(0, threat - 15) * 0.02),
       ));
-
-      // Spawn count: 4 base + 1 per 3 provinces, capped at 6
-      const invasionCount = Math.min(6, 4 + Math.floor(provinceCount / 3));
-
-      const invasionRows = [2, 4, 6, 8, 10, 12];
-      let spawned = 0;
-      for (const row of invasionRows) {
-        if (spawned >= invasionCount) break;
-        const hex = offsetToAxial(RED_VANGUARD_COL + 1, row);
-        if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
-          const unitName = spawned === 0 ? 'Barbarian Warlord' : `Invasion Wave ${spawned}`;
-          const u = this._state.addUnit('red', hex, unitName, 'vanguard');
-          u.stats = { ...u.stats };
-          u.stats.hp = Math.floor(u.stats.hp * bossMultiplier);
-          u.stats.atk = Math.floor(u.stats.atk * bossMultiplier);
-          u.currentHp = u.stats.hp;
-          spawned++;
-        }
+      for (const unit of this._state.getBattleFactionUnits('red')) {
+        unit.stats.hp = Math.floor(unit.stats.hp * bossMultiplier);
+        unit.stats.atk = Math.floor(unit.stats.atk * bossMultiplier);
+        unit.currentHp = unit.stats.hp;
       }
     }
   }

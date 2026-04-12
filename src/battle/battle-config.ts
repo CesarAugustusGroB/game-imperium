@@ -75,3 +75,10 @@ export const RED_RESERVE_ROWS = [4, 10];
 export const RED_RESERVE_COL = 15;
 export const RED_GUARD_ROWS = [5, 9];
 export const RED_GUARD_COL = 18;
+
+// S15-04: Overflow rows — filled after primary rows are exhausted.
+// Extends red capacity from 10 to 18 (12 vanguard + 4 reserve + 2 guard).
+export const RED_VANGUARD_ROWS_2 = [2, 4, 6, 8, 10, 12];
+export const RED_VANGUARD_COL_2 = 14;
+export const RED_RESERVE_ROWS_2 = [5, 9];
+export const RED_RESERVE_COL_2 = 16;
