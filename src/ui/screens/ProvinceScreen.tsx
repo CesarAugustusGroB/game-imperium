@@ -661,7 +661,7 @@ export function ProvinceScreen() {
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       minHeight: '100vh', fontFamily: 'var(--font-family)',
-      background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
+      background: 'var(--color-bg-primary)',
       paddingTop: '40px', paddingBottom: '40px',
     }}>
       <OrnateFrame width="min(1180px, 94vw)">

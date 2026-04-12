@@ -442,7 +442,7 @@ export function NodeMapScreen() {
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         height: '100vh', fontFamily: 'var(--font-family)',
-        background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
+        background: 'var(--color-bg-primary)',
         gap: '16px',
       }}>
         <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-lg)', letterSpacing: '1px' }}>
@@ -601,7 +601,7 @@ export function NodeMapScreen() {
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       height: '100vh', fontFamily: 'var(--font-family)',
-      background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
+      background: 'var(--color-bg-primary)',
       paddingTop: '38px',
     }}>
       <OrnateFrame width="min(1100px, 94vw)">

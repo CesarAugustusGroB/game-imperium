@@ -139,7 +139,7 @@ export function ResourceExchangeModal({ onClose }: Props) {
       <OrnateFrame
         width="min(560px, 92vw)"
         padding="compact"
-        style={{ maxHeight: '85vh', overflowY: 'auto' }}
+        style={{ maxHeight: '85vh', overflow: 'hidden' }}
         onClick={(e: MouseEvent) => e.stopPropagation()}
       >
         <OrnateHeader

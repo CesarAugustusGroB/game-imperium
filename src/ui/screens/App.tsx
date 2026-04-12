@@ -77,7 +77,7 @@ class ErrorBoundary extends Component<{ children: ComponentChildren }, EBState> 
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', height: '100vh',
           fontFamily: 'var(--font-family)',
-          background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
+          background: 'var(--color-bg-primary)',
           color: 'rgba(220, 160, 100, 0.8)', gap: '16px',
         }}>
           <div style={{ fontSize: 'var(--font-size-xl)', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase' }}>
@@ -134,7 +134,7 @@ function ScreenContent() {
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           height: '100vh', color: 'var(--color-text-secondary)',
           fontFamily: 'var(--font-family)',
-          background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
+          background: 'var(--color-bg-primary)',
           gap: '16px',
         }}>
           <div style={{ fontSize: 'var(--font-size-lg)', letterSpacing: '1px' }}>
@@ -161,7 +161,7 @@ export function App() {
   const exiting = transitionState.value === 'exiting';
   const showResourceBar = screen !== 'title' && screen !== 'commander-select' && screen !== 'battle';
 
-  const showCurtains = screen !== 'battle';
+  const showCurtains = false;
 
   return (
     <>

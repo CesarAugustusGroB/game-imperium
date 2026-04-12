@@ -123,7 +123,7 @@ export function CouncilScreen() {
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       minHeight: '100vh', fontFamily: 'var(--font-family)',
-      background: '#d8d0c8 url(/asset/marbel_background.png) center / contain no-repeat',
+      background: 'var(--color-bg-primary)',
       paddingTop: '48px', paddingBottom: '32px',
     }}>
       {/* Dark content panel */}

@@ -121,7 +121,7 @@ export function EndScreen({
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         height: '100vh', fontFamily: 'var(--font-family)',
-        background: `${backgroundTint} url(/asset/marbel_background.png) center / contain no-repeat`,
+        background: backgroundTint,
         overflow: 'hidden',
         animation: 'ken-burns 8s ease-in-out infinite alternate',
       }}
