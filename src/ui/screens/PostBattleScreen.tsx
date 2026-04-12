@@ -13,6 +13,8 @@ import { isDecretumCastable } from '../../game/items/decretum';
 import { addDoctrineToCollection } from '../../game/items/doctrine-store';
 import { addDecretum } from '../../game/items/decretum-store';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
+import { lastEnemyArmy } from '../../battle/index';
+import { threatLevel } from '../../game/core/game-state';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('post-battle-styles')) {
@@ -203,6 +205,52 @@ export function PostBattleScreen() {
             background: `linear-gradient(90deg, transparent, ${banner.color}70, transparent)`,
           }} />
         )}
+
+        {/* S15-05: Enemy Force Summary */}
+        {lastEnemyArmy.value && (() => {
+          const enemy = lastEnemyArmy.value!;
+          const groups = new Map<string, { name: string; count: number }>();
+          for (const c of enemy.cohorts) {
+            const g = groups.get(c.id);
+            if (g) g.count++;
+            else groups.set(c.id, { name: c.name, count: 1 });
+          }
+          const threat = threatLevel.value;
+          return (
+            <div style={{
+              width: '100%', marginBottom: '16px', padding: '10px 14px',
+              background: 'rgba(60, 30, 30, 0.25)',
+              border: '1px solid rgba(180, 80, 60, 0.2)',
+              borderRadius: 'var(--radius-md)',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <span style={{
+                  fontSize: 'var(--font-size-xs)', fontWeight: 700,
+                  color: 'var(--color-text-muted)', letterSpacing: '2px', textTransform: 'uppercase',
+                }}>
+                  Enemy Force
+                </span>
+                <span style={{
+                  fontSize: '8px', color: 'var(--color-text-muted)', letterSpacing: '1px',
+                }}>
+                  Threat {threat}
+                </span>
+              </div>
+              <div style={{
+                fontSize: 'var(--font-size-sm)', fontWeight: 700,
+                color: 'rgba(220, 120, 100, 0.85)', fontFamily: 'var(--font-display)',
+                letterSpacing: '0.8px', marginBottom: '4px',
+              }}>
+                {enemy.name}
+              </div>
+              <div style={{
+                fontSize: '8px', color: 'var(--color-text-muted)', lineHeight: '1.5',
+              }}>
+                {Array.from(groups.values()).map(g => `${g.count} ${g.name}${g.count > 1 ? 's' : ''}`).join(' · ')}
+              </div>
+            </div>
+          );
+        })()}
 
         <div style={{
           fontSize: 'var(--font-size-md)', color: 'var(--color-text-secondary)',

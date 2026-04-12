@@ -15,8 +15,13 @@ import { getProvinceEffects, provinces } from '../game/province/province-store';
 import { consumeCrusadeBattle, warCryActive, pendingEnemyConversions } from '../game/progression/strategic-store';
 import { pauseMusic, resumeMusic } from '../ui/sound/music';
 
+import type { ArmyData } from '../types/index';
+
 /** S7-11: True when the current battle is the final invasion (season >= MAX_SEASONS). */
 export const isFinalBattle = signal(false);
+
+/** S15-05: Snapshot of the generated enemy army for PostBattleScreen display. */
+export const lastEnemyArmy = signal<ArmyData | null>(null);
 
 export class BattleMode {
   private canvas: HTMLCanvasElement;
@@ -71,6 +76,7 @@ export class BattleMode {
     const redArmy = generateEnemyArmy(
       threatLevel.value, completedSpokes.value, isBoss, isFinalBattle.value,
     );
+    lastEnemyArmy.value = redArmy;
     this._state.placeStartingUnits(blueArmy, redArmy, blueLegate, null);
 
     // S15-04: stat scaling only — composition is handled by the generator
