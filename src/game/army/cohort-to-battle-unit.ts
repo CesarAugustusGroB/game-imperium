@@ -9,6 +9,8 @@ import {
   RED_VANGUARD_COL,  RED_VANGUARD_ROWS,
   RED_RESERVE_COL,   RED_RESERVE_ROWS,
   RED_GUARD_COL,     RED_GUARD_ROWS,
+  RED_VANGUARD_COL_2, RED_VANGUARD_ROWS_2,
+  RED_RESERVE_COL_2,  RED_RESERVE_ROWS_2,
 } from '../../battle/battle-config';
 
 /**
@@ -36,6 +38,11 @@ interface SlotTemplate {
   reserveRows: readonly number[];
   guardCol: number;
   guardRows: readonly number[];
+  // S15-04: Overflow — filled after primary rows exhausted
+  vanguardCol2?: number;
+  vanguardRows2?: readonly number[];
+  reserveCol2?: number;
+  reserveRows2?: readonly number[];
 }
 
 const BLUE_SLOTS: SlotTemplate = {
@@ -48,18 +55,42 @@ const RED_SLOTS: SlotTemplate = {
   vanguardCol: RED_VANGUARD_COL, vanguardRows: RED_VANGUARD_ROWS,
   reserveCol:  RED_RESERVE_COL,  reserveRows:  RED_RESERVE_ROWS,
   guardCol:    RED_GUARD_COL,    guardRows:    RED_GUARD_ROWS,
+  // S15-04: overflow slots for armies larger than 10
+  vanguardCol2: RED_VANGUARD_COL_2, vanguardRows2: RED_VANGUARD_ROWS_2,
+  reserveCol2:  RED_RESERVE_COL_2,  reserveRows2:  RED_RESERVE_ROWS_2,
 };
 
-function colForRole(slots: SlotTemplate, role: UnitRole): number {
-  return role === 'vanguard' ? slots.vanguardCol
-       : role === 'reserve'  ? slots.reserveCol
-       :                       slots.guardCol;
-}
+/** Resolve column + row for a given role and slot index, falling through to overflow when primary is full. */
+function resolveSlot(
+  slots: SlotTemplate,
+  role: UnitRole,
+  slotIdx: number,
+): { col: number; row: number } | null {
+  const primaryRows = role === 'vanguard' ? slots.vanguardRows
+                    : role === 'reserve'  ? slots.reserveRows
+                    :                       slots.guardRows;
+  const primaryCol  = role === 'vanguard' ? slots.vanguardCol
+                    : role === 'reserve'  ? slots.reserveCol
+                    :                       slots.guardCol;
 
-function rowsForRole(slots: SlotTemplate, role: UnitRole): readonly number[] {
-  return role === 'vanguard' ? slots.vanguardRows
-       : role === 'reserve'  ? slots.reserveRows
-       :                       slots.guardRows;
+  if (slotIdx < primaryRows.length) {
+    return { col: primaryCol, row: primaryRows[slotIdx] };
+  }
+
+  // Overflow
+  const overflowIdx = slotIdx - primaryRows.length;
+  const overflowRows = role === 'vanguard' ? slots.vanguardRows2
+                     : role === 'reserve'  ? slots.reserveRows2
+                     :                       undefined;
+  const overflowCol  = role === 'vanguard' ? slots.vanguardCol2
+                     : role === 'reserve'  ? slots.reserveCol2
+                     :                       undefined;
+
+  if (overflowRows && overflowCol != null && overflowIdx < overflowRows.length) {
+    return { col: overflowCol, row: overflowRows[overflowIdx] };
+  }
+
+  return null; // no slot available — drop silently
 }
 
 /**
@@ -91,15 +122,12 @@ export function mapArmyToBattleUnits(
     const slotIdx = counters[cohort.role];
     counters[cohort.role]++;
 
-    const rows = rowsForRole(slots, cohort.role);
-    if (slotIdx >= rows.length) continue; // overflow — drop silently
-
-    const col = colForRole(slots, cohort.role);
-    const row = rows[slotIdx];
+    const slot = resolveSlot(slots, cohort.role, slotIdx);
+    if (!slot) continue; // no slot available — drop silently
 
     specs.push({
       faction,
-      hex: offsetToAxial(col, row),
+      hex: offsetToAxial(slot.col, slot.row),
       name: `${slotIdx + 1}st ${cohort.name}`,
       role: cohort.role,
       stats: { ...cohort.stats }, // shallow copy — trait passes mutate freely
