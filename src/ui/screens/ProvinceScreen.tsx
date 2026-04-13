@@ -10,7 +10,7 @@ import {
   getUpperTaxUnrest, calculateEffectiveGrowth, calculateNetWealthChange,
   getWealthTier, getWealthMultiplier, getWealthLabel, getActiveSynergies,
   getEffectiveMaxPop, getSettlementLabel, getBuildingSlots, calculateGrowthThreshold,
-  calculateUnrestDelta, getRebelThreshold,
+  calculateUnrestDelta, getRebelThreshold, getAvailableBuildings, SYNERGY_DATA,
   type InvestmentType, type Province,
 } from '../../game/province/province';
 import type { TaxLevel, WealthTier } from '../../types/index';
@@ -23,7 +23,7 @@ import {
   hireGovernor, dismissGovernor, getGovernorSalary,
 } from '../../game/province/governor-store';
 import { TRADE_GOOD_DATA } from '../../data/trade-goods';
-import { TERRAIN_DATA } from '../../data/terrain-data';
+import { TERRAIN_DATA, TERRAIN_AVAILABLE_BUILDINGS } from '../../data/terrain-data';
 import { nextInvestmentDiscount } from '../../game/progression/strategic-store';
 import { ROMAN, formatCost } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
@@ -403,11 +403,119 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
     .ledger-divider-strong {
       height: 1px; background: rgba(180, 160, 100, 0.25); margin: 4px 0;
     }
+
+    /* ── Building grid header ── */
+    .inv-grid-header {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .inv-slots-label {
+      font-family: var(--font-display);
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .inv-slots-value { color: var(--color-text-primary); font-weight: 700; }
+    .inv-slots-full { color: var(--color-warning) !important; }
+
+    /* ── Rubble banner ── */
+    .inv-rubble-banner {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px;
+      background: rgba(140, 60, 20, 0.18);
+      border: 1px solid rgba(200, 80, 40, 0.3);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-sm);
+      color: rgba(230, 140, 90, 0.9);
+    }
+
+    /* ── Synergy badges ── */
+    .inv-synergies {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      padding: 0 10px 8px;
+    }
+    .inv-syn-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 6px; border-radius: var(--radius-sm);
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .inv-syn-active {
+      background: rgba(80, 160, 70, 0.22);
+      border: 1px solid rgba(100, 180, 80, 0.4);
+      color: rgba(140, 220, 110, 0.9);
+    }
+    .inv-syn-potential {
+      background: rgba(140, 120, 40, 0.1);
+      border: 1px solid rgba(160, 140, 60, 0.2);
+      color: rgba(160, 140, 80, 0.48);
+    }
+
+    /* ── Terrain-locked cards ── */
+    .inv-terrain-locked {
+      opacity: 0.37; filter: grayscale(0.75); cursor: default;
+    }
+    .inv-terrain-locked:hover {
+      transform: none !important;
+      border-color: var(--color-border-default) !important;
+      box-shadow: none !important;
+    }
+    .inv-lock-reason {
+      padding: 0 10px 8px;
+      font-size: 9px;
+      color: rgba(160, 140, 80, 0.5);
+      text-align: center;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    /* ── Slot-capped cards ── */
+    .inv-slot-capped .ornate-btn {
+      opacity: 0.35; pointer-events: none; cursor: not-allowed;
+    }
   `;
   document.head.appendChild(el);
 }
 
-const ALL_INVESTMENTS: InvestmentType[] = ['castrum', 'basilica', 'pantheon', 'market', 'aqueduct', 'insula'];
+// ── Synergy badge helpers (S18-07) ──
+
+interface SynergyBadge {
+  label: string;
+  active: boolean;
+  partnerName: string;
+}
+
+function _toTitle(slug: string): string {
+  return slug.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+}
+
+/**
+ * Returns synergy badges relevant to a building card:
+ * - Active badges (both buildings built) — shown bright
+ * - Potential badges (this building is built, partner is not) — shown dim
+ */
+function getBuildingSynergies(type: string, province: Province): SynergyBadge[] {
+  const builtTypes = new Set(province.investments.map(i => i.type as string));
+  const isBuilt = builtTypes.has(type);
+  return SYNERGY_DATA
+    .filter(s => s.buildingA === type || s.buildingB === type)
+    .flatMap(s => {
+      const partnerSlug = s.buildingA === type ? s.buildingB : s.buildingA;
+      const partnerData = INVESTMENT_DATA[partnerSlug as InvestmentType];
+      const partnerName = partnerData ? partnerData.name : _toTitle(partnerSlug);
+      const active = builtTypes.has(s.buildingA) && builtTypes.has(s.buildingB);
+      const partnerBuilt = builtTypes.has(partnerSlug);
+      if (active || (isBuilt && !partnerBuilt)) {
+        return [{ label: s.label, active, partnerName }];
+      }
+      return [];
+    });
+}
+
+/** Returns terrain names that offer a given building slug. */
+function getTerrainsForBuilding(building: string): string[] {
+  return (Object.entries(TERRAIN_AVAILABLE_BUILDINGS) as [string, string[]][])
+    .filter(([, buildings]) => buildings.includes(building))
+    .map(([terrain]) => TERRAIN_DATA[terrain as keyof typeof TERRAIN_DATA]?.name ?? _toTitle(terrain));
+}
 
 const TAX_LEVEL_COLORS: Record<TaxLevel, string> = {
   1: 'var(--color-success)',
@@ -463,7 +571,12 @@ function UnrestBar({ unrest, modifier, width = 60 }: { unrest: number; modifier:
 
 // ── Investment hero card ──
 
-function InvestmentSlot({ province, type }: { province: Province; type: InvestmentType }) {
+function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
+  province: Province;
+  type: InvestmentType;
+  isSlotLocked?: boolean;
+  synergyBadges?: SynergyBadge[];
+}) {
   const data = INVESTMENT_DATA[type];
   const existing = province.investments.find(i => i.type === type);
   const currentLevel = existing?.level ?? 0;
@@ -481,7 +594,9 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
   const scrollDiscount = nextInvestmentDiscount.value;
   const effectiveDiscount = Math.min(90, governorDiscount + scrollDiscount);
   const cost = baseCost && effectiveDiscount > 0 ? applyInvestmentDiscount(baseCost, effectiveDiscount) : baseCost;
-  const affordable = cost ? canAffordCost(cost) : false;
+  // Rubble blocks construction; slot-lock blocks new builds (not upgrades)
+  const rubbleBlocked = province.rubbleTimer > 0 && currentLevel === 0;
+  const affordable = cost ? canAffordCost(cost) && !rubbleBlocked && !isSlotLocked : false;
 
   // Force signal reads for reactivity on resource changes
   getResource('gold');
@@ -500,6 +615,13 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
 
   const incomeBonus = currentEffect?.incomeBonus ?? {};
   const unrestChange = currentEffect?.unrestChange ?? 0;
+
+  // Gold formula: only for built buildings that produce gold
+  const rawGold = (incomeBonus as Record<string, number>).gold ?? 0;
+  const showGoldFormula = currentLevel > 0 && rawGold > 0;
+  const wealthMult = getWealthMultiplier(getWealthTier(province.wealth));
+  const taxMult = getTaxMultiplier(province.lowerTax, province.upperTax);
+  const effectiveGold = showGoldFormula ? Math.round(rawGold * wealthMult * taxMult) : 0;
 
   const investmentTooltip = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -527,11 +649,21 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
               {unrestChange} unrest per spoke
             </div>
           )}
+          {showGoldFormula && (
+            <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', marginTop: '2px', fontFamily: 'var(--font-mono, monospace)' }}>
+              {data.name} {ROMAN[currentLevel]}: {rawGold}g × {wealthMult.toFixed(2)} × {taxMult.toFixed(2)} = {effectiveGold}g
+            </div>
+          )}
         </div>
       )}
       {nextLevel > 0 && cost && (
         <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
           {currentLevel === 0 ? 'Build' : `Upgrade to Lv.${nextLevel}`}: {formatCost(cost)}
+        </div>
+      )}
+      {isSlotLocked && (
+        <div style={{ marginTop: '4px', color: 'var(--color-warning)', fontSize: 'var(--font-size-xs)' }}>
+          ⚠ Building slots full — grow population to unlock more
         </div>
       )}
     </div>
@@ -541,10 +673,12 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
     ? `radial-gradient(ellipse at center, ${fColor}28 0%, transparent 70%), linear-gradient(180deg, rgba(40, 32, 60, 0.7), rgba(18, 14, 32, 0.95))`
     : `linear-gradient(180deg, rgba(40, 32, 60, 0.5), rgba(18, 14, 32, 0.85))`;
 
+  const slotCapped = isSlotLocked && currentLevel === 0;
+
   return (
     <Tooltip content={investmentTooltip} variant="rich" position="above">
       <div
-        class={`inv-card${currentLevel === 0 ? ' inv-locked' : ''}${buildingSlotType.value === type ? ' inv-slot-building' : ''}`}
+        class={`inv-card${currentLevel === 0 ? ' inv-locked' : ''}${buildingSlotType.value === type ? ' inv-slot-building' : ''}${slotCapped ? ' inv-slot-capped' : ''}`}
         style={{ borderTop: `2px solid ${currentLevel > 0 ? fColor : 'rgba(180, 160, 100, 0.18)'}` }}
       >
         <div class="inv-hero" style={{ background: heroBg }}>
@@ -557,6 +691,15 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
         <div class="inv-desc">
           {currentEffect ? currentEffect.description : <em style={{ opacity: 0.7 }}>{data.flavour}</em>}
         </div>
+        {synergyBadges && synergyBadges.length > 0 && (
+          <div class="inv-synergies">
+            {synergyBadges.map(b => (
+              <span key={b.label} class={`inv-syn-badge ${b.active ? 'inv-syn-active' : 'inv-syn-potential'}`}>
+                {b.active ? '⚡' : '○'} {b.label}{!b.active ? ` (+${b.partnerName})` : ''}
+              </span>
+            ))}
+          </div>
+        )}
         {!maxed && cost && (
           <button class="ornate-btn" disabled={!affordable} onClick={handleBuild}>
             {currentLevel === 0 ? 'Build' : `${ROMAN[currentLevel]} → ${ROMAN[nextLevel]}`} · {formatCost(cost)}
@@ -565,6 +708,110 @@ function InvestmentSlot({ province, type }: { province: Province; type: Investme
         {maxed && <div class="inv-maxed">Max Level</div>}
       </div>
     </Tooltip>
+  );
+}
+
+// ── Terrain-locked building card (S18-07) ──
+
+function LockedBuildingCard({ building }: { building: InvestmentType }) {
+  const data = INVESTMENT_DATA[building];
+  const fColor = FACTION_COLORS[data.color];
+  const terrainNames = getTerrainsForBuilding(building).join(' / ') || '—';
+
+  const tooltip = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)' }}>{data.name}</div>
+      <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+        {data.flavour}
+      </div>
+      <div style={{ color: 'rgba(200, 160, 80, 0.7)', fontSize: 'var(--font-size-xs)', marginTop: '4px' }}>
+        🔒 Requires {terrainNames} terrain
+      </div>
+    </div>
+  );
+
+  return (
+    <Tooltip content={tooltip} variant="rich" position="above">
+      <div
+        class="inv-card inv-locked inv-terrain-locked"
+        style={{ borderTop: `2px solid rgba(180, 160, 100, 0.08)` }}
+      >
+        <div class="inv-hero" style={{ background: 'linear-gradient(180deg, rgba(30, 24, 48, 0.35), rgba(14, 10, 24, 0.65))' }}>
+          <BuildingIcon type={building} size={64} color={`${fColor}40`} />
+        </div>
+        <div class="inv-nameplate" style={{ color: 'rgba(180, 160, 100, 0.4)' }}>
+          {data.name}
+        </div>
+        <div class="inv-lock-reason">🔒 {terrainNames}</div>
+      </div>
+    </Tooltip>
+  );
+}
+
+// ── Building grid with terrain gates + synergies (S18-07) ──
+
+function BuildingGrid({ province }: { province: Province }) {
+  const available = getAvailableBuildings(province);
+  const slotMax = getBuildingSlots(province.population);
+  const slotsUsed = province.investments.length;
+  const slotsFull = slotsUsed >= slotMax;
+
+  // Terrain-locked: all INVESTMENT_DATA buildings not in available
+  const allBuildings = Object.keys(INVESTMENT_DATA) as InvestmentType[];
+  const lockedBuildings = allBuildings.filter(b => !available.includes(b));
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {/* Rubble banner */}
+      {province.rubbleTimer > 0 && (
+        <div class="inv-rubble-banner">
+          🔥 Construction blocked — rubble clearing ({province.rubbleTimer} season{province.rubbleTimer !== 1 ? 's' : ''} remaining)
+        </div>
+      )}
+
+      {/* Slot count header */}
+      <div class="inv-grid-header">
+        <span class="inv-slots-label">
+          Building Slots:&nbsp;
+          <span class={`inv-slots-value${slotsFull ? ' inv-slots-full' : ''}`}>
+            {slotsUsed}/{slotMax}
+          </span>
+          {slotsFull && slotsUsed < 6 && (
+            <span style={{ color: 'var(--color-text-muted)', marginLeft: '6px', fontSize: 'var(--font-size-xs)', textTransform: 'none', letterSpacing: 0 }}>
+              — grow to unlock more
+            </span>
+          )}
+        </span>
+      </div>
+
+      {/* Available buildings */}
+      <div class="inv-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+        {available.map(type => (
+          <InvestmentSlot
+            key={type}
+            province={province}
+            type={type}
+            isSlotLocked={slotsFull && !province.investments.find(i => i.type === type)}
+            synergyBadges={getBuildingSynergies(type, province)}
+          />
+        ))}
+      </div>
+
+      {/* Terrain-locked section */}
+      {lockedBuildings.length > 0 && (
+        <>
+          <div style={{ height: '1px', background: 'var(--color-border-subtle)' }} />
+          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+            🔒 Terrain-Locked
+          </div>
+          <div class="inv-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+            {lockedBuildings.map(type => (
+              <LockedBuildingCard key={type} building={type} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -2016,19 +2263,8 @@ function ProvinceDetail({ province }: { province: Province }) {
       {/* Income Ledger (S18-04) */}
       <IncomeLedger province={province} />
 
-      {/* Building hero grid */}
-      <div
-        class="inv-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '12px',
-        }}
-      >
-        {ALL_INVESTMENTS.map(type => (
-          <InvestmentSlot key={type} province={province} type={type} />
-        ))}
-      </div>
+      {/* Building grid — terrain gates + synergies (S18-07) */}
+      <BuildingGrid province={province} />
     </div>
   );
 }
