@@ -9,6 +9,7 @@ import {
   getTaxLabel, getTaxMultiplier, getLowerTaxUnrest,
   getUpperTaxUnrest, calculateEffectiveGrowth, calculateNetWealthChange,
   getWealthTier, getWealthMultiplier, getWealthLabel, getActiveSynergies,
+  getEffectiveMaxPop, getSettlementLabel, getBuildingSlots, calculateGrowthThreshold,
   type InvestmentType, type Province,
 } from '../../game/province/province';
 import type { TaxLevel, WealthTier } from '../../types/index';
@@ -276,6 +277,31 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
       transform: translateX(-50%);
       pointer-events: none;
       transition: left var(--duration-slow) var(--ease-default);
+    }
+
+    /* ── Population bar ── */
+    .pop-section {
+      display: flex; flex-direction: column; gap: 8px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+    .pop-bar {
+      position: relative; height: 10px;
+      background: rgba(40, 35, 60, 0.8);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .pop-fill {
+      height: 100%;
+      border-radius: var(--radius-sm);
+      transition: width var(--duration-slow) var(--ease-default);
+    }
+    .pop-accumulator {
+      position: absolute; top: 0; height: 100%;
+      background: rgba(255, 255, 255, 0.2);
+      pointer-events: none;
+      transition: left var(--duration-slow) var(--ease-default),
+                  width var(--duration-slow) var(--ease-default);
     }
   `;
   document.head.appendChild(el);
@@ -630,6 +656,131 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
         );
       })}
     </div>
+  );
+}
+
+// ── Settlement color by pop ──
+
+function getSettlementColor(pop: number): string {
+  if (pop <= 2)  return 'var(--color-text-secondary)';
+  if (pop <= 4)  return '#68a860';
+  if (pop <= 6)  return 'var(--color-success)';
+  if (pop <= 8)  return 'var(--color-gold-secondary)';
+  if (pop <= 10) return 'var(--color-gold-primary)';
+  return 'var(--color-warning)'; // Metropolis
+}
+
+// ── Population bar ──
+
+function PopBar({ province }: { province: Province }) {
+  const traits = getGovernorTraits(province.id);
+  const maxPop = getEffectiveMaxPop(province);
+  const atCap = province.population >= maxPop;
+  const settlementLabel = getSettlementLabel(province.population);
+  const slotMax = getBuildingSlots(province.population);
+  const builtCount = province.investments.length;
+
+  const effectiveGrowth = calculateEffectiveGrowth(province, province.terrain, traits);
+  const threshold = calculateGrowthThreshold(province.population);
+  const accum = Math.min(province.growthAccumulator, threshold);
+  const accumPct = threshold > 0 ? accum / threshold : 0;
+
+  // Seasons until next pop point
+  const remaining = threshold - accum;
+  const seasonsToNext = (!atCap && effectiveGrowth > 0)
+    ? Math.ceil(remaining / effectiveGrowth)
+    : null;
+
+  // Bar geometry
+  const popFillPct = maxPop > 0 ? Math.min(province.population / maxPop, 1) * 100 : 0;
+  // Accumulator: one pop-point = 1/maxPop of bar. Scale by accumPct.
+  const accumWidthPct = maxPop > 0 ? (accumPct / maxPop) * 100 : 0;
+
+  const settlementColor = getSettlementColor(province.population);
+
+  const tooltipContent = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ fontWeight: 700, color: settlementColor }}>
+        {settlementLabel} — Pop {province.population}/{maxPop}
+      </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+        Growth threshold: {threshold} ({accum.toFixed(1)} accumulated)
+      </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+        Building slots: {builtCount}/{slotMax} used
+      </div>
+      {atCap && (
+        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-primary)', marginTop: '2px' }}>
+          Max population reached
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <Tooltip content={tooltipContent} variant="rich" position="above">
+      <div class="pop-section">
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'var(--font-size-xs)',
+              fontWeight: 600,
+              color: 'var(--color-gold-secondary)',
+              letterSpacing: '3px',
+              textTransform: 'uppercase',
+            }}>
+              Population
+            </span>
+            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: settlementColor }}>
+              {settlementLabel}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+            <span>Pop <strong style={{ color: settlementColor }}>{province.population}</strong>/{maxPop}</span>
+            <span style={{ color: 'var(--color-text-muted)' }}>{builtCount}/{slotMax} slots</span>
+          </div>
+        </div>
+
+        {/* Fill bar with accumulator overlay */}
+        <div class="pop-bar">
+          <div
+            class="pop-fill"
+            style={{ width: `${popFillPct}%`, background: settlementColor }}
+          />
+          {!atCap && accumWidthPct > 0 && (
+            <div
+              class="pop-accumulator"
+              style={{ left: `${popFillPct}%`, width: `${accumWidthPct}%` }}
+            />
+          )}
+        </div>
+
+        {/* Growth projection */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)' }}>
+          {atCap ? (
+            <span style={{ color: 'var(--color-gold-primary)', fontWeight: 600 }}>
+              Max population reached
+            </span>
+          ) : (
+            <>
+              <span style={{ color: 'var(--color-text-secondary)' }}>
+                Growth:{' '}
+                <strong style={{ color: effectiveGrowth > 0 ? 'var(--color-success)' : 'var(--color-text-muted)' }}>
+                  {effectiveGrowth >= 0 ? '+' : ''}{effectiveGrowth.toFixed(1)}/season
+                </strong>
+              </span>
+              <span style={{ color: seasonsToNext !== null ? 'var(--color-text-muted)' : 'var(--color-warning)' }}>
+                {seasonsToNext !== null
+                  ? `Next pop in ${seasonsToNext}s`
+                  : 'No growth'}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    </Tooltip>
   );
 }
 
@@ -1166,6 +1317,9 @@ function ProvinceDetail({ province }: { province: Province }) {
 
       {/* Wealth Tier Bar (S18-02) */}
       <WealthBar province={province} />
+
+      {/* Population Bar (S18-03) */}
+      <PopBar province={province} />
 
       {/* Building hero grid */}
       <div
