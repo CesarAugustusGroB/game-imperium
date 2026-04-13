@@ -479,3 +479,85 @@ export function getSettlementLabel(pop: number): string {
   if (pop <= 10) return 'Major City';
   return 'Metropolis';
 }
+
+// ── Population growth accumulator ──
+
+/** Terrain growth contribution (plains/unknown = 1, coast = 2, desert = 0). */
+const TERRAIN_GROWTH: Record<string, number> = {
+  plains: 1, hills: 1, forest: 1, coast: 2, desert: 0,
+};
+
+/** Aqueduct growth-rate bonus per level (each level adds +1 growth/season). */
+const AQUEDUCT_GROWTH: Record<number, number> = { 1: 1, 2: 1, 3: 1 };
+
+/** Growth threshold to gain 1 population point: `8 + current_pop × 2`. */
+export function calculateGrowthThreshold(currentPop: number): number {
+  return 8 + currentPop * 2;
+}
+
+/**
+ * Raw growth per season = terrain + aqueduct + governor pop-growth traits.
+ * Trade goods and features not yet implemented; they contribute 0.
+ */
+export function calculateRawGrowth(
+  province: Province,
+  terrain?: string,
+  governorTraits: GovernorTrait[] = [],
+): number {
+  let raw = terrain ? (TERRAIN_GROWTH[terrain.toLowerCase()] ?? 1) : 1;
+
+  for (const inv of province.investments) {
+    if (inv.type === 'aqueduct') raw += AQUEDUCT_GROWTH[inv.level] ?? 0;
+  }
+
+  for (const trait of governorTraits) {
+    if (trait.type === 'population-growth') raw += trait.amount;
+  }
+
+  return raw;
+}
+
+/**
+ * Effective growth after penalties:
+ *   effective = raw × (1 − lower_tax_penalty) × (1 − devastation_penalty)
+ * Lower tax penalty: 0 / 0.10 / 0.25 / 0.45 / 0.70.
+ * Devastation penalty: 0.50 while devastationTimer > 0.
+ */
+export function calculateEffectiveGrowth(
+  province: Province,
+  terrain?: string,
+  governorTraits: GovernorTrait[] = [],
+): number {
+  const raw = calculateRawGrowth(province, terrain, governorTraits);
+  const taxPenalty = Math.abs(getLowerTaxGrowthPenalty(province.lowerTax)) / 100;
+  const devastationPenalty = province.devastationTimer > 0 ? 0.5 : 0;
+  return raw * (1 - taxPenalty) * (1 - devastationPenalty);
+}
+
+/**
+ * Advance one season of population growth.
+ * Adds effective growth to growthAccumulator; when threshold is reached,
+ * increments population by 1 (capped at maxPopulation) and resets accumulator
+ * by subtracting the threshold (preserving overflow).
+ * Returns an updated Province — does NOT mutate the input.
+ */
+export function tickPopulationGrowth(
+  province: Province,
+  terrain?: string,
+  governorTraits: GovernorTrait[] = [],
+): Province {
+  if (province.population >= province.maxPopulation) {
+    return province; // already at cap
+  }
+
+  const growth = calculateEffectiveGrowth(province, terrain, governorTraits);
+  const newAccumulator = province.growthAccumulator + growth;
+  const threshold = calculateGrowthThreshold(province.population);
+
+  if (newAccumulator >= threshold) {
+    const newPop = Math.min(province.population + 1, province.maxPopulation);
+    return { ...province, population: newPop, growthAccumulator: newAccumulator - threshold };
+  }
+
+  return { ...province, growthAccumulator: newAccumulator };
+}
