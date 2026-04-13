@@ -19,8 +19,9 @@ import { getHireCost } from '../../game/province/governor';
 import {
   governorPool, governorAssignments,
   getAssignedGovernor, getGovernorTraits,
-  hireGovernor, dismissGovernor,
+  hireGovernor, dismissGovernor, getGovernorSalary,
 } from '../../game/province/governor-store';
+import { TRADE_GOOD_DATA } from '../../data/trade-goods';
 import { nextInvestmentDiscount } from '../../game/progression/strategic-store';
 import { ROMAN, formatCost } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
@@ -302,6 +303,32 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
       pointer-events: none;
       transition: left var(--duration-slow) var(--ease-default),
                   width var(--duration-slow) var(--ease-default);
+    }
+
+    /* ── Income ledger ── */
+    .ledger-section {
+      display: flex; flex-direction: column; gap: 5px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+    .ledger-header {
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; user-select: none; padding: 2px 0;
+    }
+    .ledger-header:hover .ledger-toggle { color: var(--color-text-primary) !important; }
+    .ledger-body {
+      display: flex; flex-direction: column; gap: 3px;
+      padding: 6px 10px 4px;
+      background: rgba(16, 12, 28, 0.45);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-sm);
+      animation: prov-fade-in var(--duration-fast) var(--ease-default);
+    }
+    .ledger-divider {
+      height: 1px; background: var(--color-border-subtle); margin: 3px 0;
+    }
+    .ledger-divider-strong {
+      height: 1px; background: rgba(180, 160, 100, 0.25); margin: 4px 0;
     }
   `;
   document.head.appendChild(el);
@@ -1221,6 +1248,259 @@ function TaxSliders({ province }: { province: Province }) {
   );
 }
 
+// ── Income ledger ──
+
+function LedgerRow({
+  label, value, detail, badge, positive = false, negative = false, bold = false,
+}: {
+  label: string; value: string; detail?: string; badge?: 'trade' | 'gov';
+  positive?: boolean; negative?: boolean; bold?: boolean;
+}) {
+  const valueColor = positive
+    ? 'var(--color-success)'
+    : negative
+    ? 'var(--color-text-secondary)'
+    : 'var(--color-text-secondary)';
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--font-size-xs)', minHeight: '17px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flex: 1, minWidth: 0 }}>
+        {badge === 'trade' && (
+          <span style={{
+            fontSize: '7px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase',
+            padding: '1px 4px', borderRadius: '3px',
+            background: 'rgba(100, 70, 150, 0.4)', color: '#c0a0f0',
+            border: '1px solid rgba(150, 100, 220, 0.3)',
+          }}>
+            trade
+          </span>
+        )}
+        {badge === 'gov' && (
+          <span style={{
+            fontSize: '7px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase',
+            padding: '1px 4px', borderRadius: '3px',
+            background: 'rgba(60, 80, 140, 0.4)', color: '#90a8e0',
+            border: '1px solid rgba(80, 110, 200, 0.3)',
+          }}>
+            gov
+          </span>
+        )}
+        <span style={{
+          color: bold ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+          fontWeight: bold ? 700 : 400,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {label}
+        </span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: '8px' }}>
+        {detail && (
+          <span style={{ fontSize: '8px', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
+            {detail}
+          </span>
+        )}
+        <span style={{
+          fontWeight: bold ? 700 : 500,
+          color: bold ? (positive ? 'var(--color-success)' : negative ? 'var(--color-text-secondary)' : 'var(--color-text-primary)') : valueColor,
+          whiteSpace: 'nowrap',
+        }}>
+          {value}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function IncomeLedger({ province }: { province: Province }) {
+  const isExpanded = useSignal(false);
+  const traits = getGovernorTraits(province.id);
+
+  const wealthMult = getWealthMultiplier(getWealthTier(province.wealth));
+  const taxMult   = getTaxMultiplier(province.lowerTax, province.upperTax);
+
+  // ── Building income breakdown ──
+  interface BldLine { name: string; tier: number; rawGold: number; isSynergy: boolean }
+  const bldLines: BldLine[] = [];
+  let rawBuildingGold = 0;
+  const nonGoldRaw: Partial<Record<ResourceType, number>> = {};
+
+  for (const inv of province.investments) {
+    const data   = INVESTMENT_DATA[inv.type];
+    const effect = data.levels[inv.level - 1];
+    for (const [res, amt] of Object.entries(effect.incomeBonus) as [ResourceType, number][]) {
+      if (res === 'gold') {
+        bldLines.push({ name: data.name, tier: inv.level, rawGold: amt, isSynergy: false });
+        rawBuildingGold += amt;
+      } else {
+        nonGoldRaw[res] = (nonGoldRaw[res] ?? 0) + amt;
+      }
+    }
+  }
+
+  for (const syn of getActiveSynergies(province)) {
+    if (syn.bonus.type === 'gold') {
+      const amt = (syn.bonus as { type: 'gold'; amount: number }).amount;
+      bldLines.push({ name: syn.label, tier: 0, rawGold: amt, isSynergy: true });
+      rawBuildingGold += amt;
+    }
+  }
+
+  const buildingGoldResult = Math.round(rawBuildingGold * wealthMult * taxMult);
+  const subsistence = 1;
+  const tradeGoodGold     = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood].flatGold     : 0;
+  const tradeGoodFaith    = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood].flatFaith    : 0;
+  const tradeGoodMomentum = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood].flatMomentum : 0;
+
+  // Non-gold income (building × wealthMult + trade good flat)
+  const nonGoldIncome: Partial<Record<ResourceType, number>> = {};
+  for (const [res, amt] of Object.entries(nonGoldRaw) as [ResourceType, number][]) {
+    nonGoldIncome[res] = Math.round(amt * wealthMult);
+  }
+  if (tradeGoodFaith    > 0) nonGoldIncome.faith    = (nonGoldIncome.faith    ?? 0) + tradeGoodFaith;
+  if (tradeGoodMomentum > 0) nonGoldIncome.momentum = (nonGoldIncome.momentum ?? 0) + tradeGoodMomentum;
+
+  // Governor bonus on non-gold
+  for (const trait of traits) {
+    if (trait.type === 'income-bonus' && trait.resource !== 'gold') {
+      const base = nonGoldIncome[trait.resource] ?? 0;
+      if (base > 0) nonGoldIncome[trait.resource] = Math.floor(base * (1 + trait.percent / 100));
+    }
+  }
+
+  // Gold total: apply governor income-bonus last
+  let goldTotal = buildingGoldResult + subsistence + tradeGoodGold;
+  const goldPreGov = goldTotal;
+  for (const trait of traits) {
+    if (trait.type === 'income-bonus' && trait.resource === 'gold') {
+      goldTotal = Math.floor(goldTotal * (1 + trait.percent / 100));
+    }
+  }
+  const govGoldBonus = goldTotal - goldPreGov;
+
+  // ── Expenses breakdown ──
+  let buildingUpkeep = 0;
+  for (const inv of province.investments) {
+    buildingUpkeep += INVESTMENT_DATA[inv.type].levels[inv.level - 1].expensesBonus;
+  }
+  const rawUpkeep     = province.baseExpenses + buildingUpkeep;
+  const reducedUpkeep = getProvinceExpenses(province, traits);
+  const govExpSaving  = rawUpkeep - reducedUpkeep; // positive = amount saved
+  const govSalary     = getGovernorSalary(province.id);
+  const totalExpenses = reducedUpkeep + govSalary;
+
+  const net      = goldTotal - totalExpenses;
+  const netColor = net >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+
+  const nonGoldEntries = (Object.entries(nonGoldIncome) as [ResourceType, number][]).filter(([, v]) => v > 0);
+
+  return (
+    <div class="ledger-section">
+      {/* Summary header — always visible */}
+      <div class="ledger-header" onClick={() => { isExpanded.value = !isExpanded.value; }}>
+        <span style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 'var(--font-size-xs)',
+          fontWeight: 600,
+          color: 'var(--color-gold-secondary)',
+          letterSpacing: '3px',
+          textTransform: 'uppercase',
+        }}>
+          Income
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: netColor }}>
+            NET {net >= 0 ? '+' : ''}{net}g/season
+          </span>
+          {nonGoldEntries.map(([res, amt]) => (
+            <span key={res} style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+              {RESOURCE_INFO[res].icon}+{amt}
+            </span>
+          ))}
+          <span class="ledger-toggle" style={{ fontSize: '10px', color: 'var(--color-text-muted)', transition: 'color var(--duration-fast)' }}>
+            {isExpanded.value ? '▲' : '▼'}
+          </span>
+        </div>
+      </div>
+
+      {/* Expanded breakdown */}
+      {isExpanded.value && (
+        <div class="ledger-body">
+          {/* Building gold lines */}
+          {bldLines.map((l, i) => (
+            <LedgerRow
+              key={i}
+              label={l.isSynergy ? `${l.name} (synergy)` : `${l.name} ${ROMAN[l.tier]}`}
+              detail={`${l.rawGold}g × ${wealthMult.toFixed(2)} × ${taxMult.toFixed(2)}`}
+              value={`+${Math.round(l.rawGold * wealthMult * taxMult)}g`}
+              positive
+            />
+          ))}
+          {bldLines.length === 0 && (
+            <LedgerRow label="No buildings" value="" />
+          )}
+
+          {/* Subsistence */}
+          <LedgerRow label="Subsistence" value="+1g" positive />
+
+          {/* Trade good gold */}
+          {tradeGoodGold > 0 && province.tradeGood && (
+            <LedgerRow
+              label={TRADE_GOOD_DATA[province.tradeGood].name}
+              badge="trade"
+              value={`+${tradeGoodGold}g`}
+              positive
+            />
+          )}
+
+          {/* Governor gold bonus */}
+          {govGoldBonus > 0 && (
+            <LedgerRow label="Governor (income bonus)" badge="gov" value={`+${govGoldBonus}g`} positive />
+          )}
+
+          {/* Non-gold resources */}
+          {nonGoldEntries.map(([res, amt]) => (
+            <LedgerRow key={res} label={RESOURCE_INFO[res].label} value={`+${amt} ${RESOURCE_INFO[res].icon}`} positive />
+          ))}
+
+          {/* Total income */}
+          <div class="ledger-divider" />
+          <LedgerRow label="Total Income" value={`+${goldTotal}g`} positive bold />
+
+          {/* Expense lines */}
+          <LedgerRow label="Pop upkeep" value={`-${province.baseExpenses}g`} negative />
+          {buildingUpkeep > 0 && (
+            <LedgerRow label="Building upkeep" value={`-${buildingUpkeep}g`} negative />
+          )}
+          {govExpSaving > 0 && (
+            <LedgerRow label="Gov. discount" badge="gov" value={`+${govExpSaving}g`} positive />
+          )}
+          {govSalary > 0 && (
+            <LedgerRow label="Governor salary" value={`-${govSalary}g`} negative />
+          )}
+
+          {/* Total expenses */}
+          <div class="ledger-divider" />
+          <LedgerRow label="Total Expenses" value={`-${totalExpenses}g`} negative bold />
+
+          {/* NET */}
+          <div class="ledger-divider-strong" />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 0' }}>
+            <span style={{
+              fontSize: 'var(--font-size-xs)', fontWeight: 700,
+              color: 'var(--color-text-primary)', letterSpacing: '2px', textTransform: 'uppercase',
+            }}>
+              Net
+            </span>
+            <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: netColor }}>
+              {net >= 0 ? '+' : ''}{net}g/season
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Province detail (right panel: governor strip + building grid) ──
 
 function ProvinceDetail({ province }: { province: Province }) {
@@ -1320,6 +1600,9 @@ function ProvinceDetail({ province }: { province: Province }) {
 
       {/* Population Bar (S18-03) */}
       <PopBar province={province} />
+
+      {/* Income Ledger (S18-04) */}
+      <IncomeLedger province={province} />
 
       {/* Building hero grid */}
       <div
