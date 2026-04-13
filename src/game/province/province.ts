@@ -395,3 +395,56 @@ export function getUpperTaxUnrest(level: TaxLevel): number {
   };
   return UNREST[level];
 }
+
+// ── Wealth generation (NWG / PWG) ──
+
+/** PWG bonus from terrain type (Hills +1, Coast +1, Desert +2; others +0). */
+const TERRAIN_PWG: Record<string, number> = { hills: 1, coast: 1, desert: 2 };
+
+/** PWG bonus contributed by a Market investment, by level. */
+const MARKET_PWG: Record<number, number> = { 1: 2, 2: 3, 3: 4 };
+
+/** NWG formula coefficients [flat, multiplier] per upperTax level. */
+const NWG_PARAMS: Record<TaxLevel, [number, number]> = {
+  1: [0.5,  0.05],
+  2: [1.0,  0.10],
+  3: [1.5,  0.20],
+  4: [3.0,  0.50],
+  5: [5.0,  1.00],
+};
+
+/**
+ * Positive Wealth Generation per season.
+ * Sources: base 2 + terrain bonus + Market investment level.
+ * Pass terrain string (e.g. "hills", "coast") for terrain-aware callers;
+ * omit or pass undefined for terrain-agnostic contexts.
+ */
+export function calculatePWG(province: Province, terrain?: string): number {
+  let pwg = 2;
+  if (terrain) pwg += TERRAIN_PWG[terrain.toLowerCase()] ?? 0;
+  for (const inv of province.investments) {
+    if (inv.type === 'market') pwg += MARKET_PWG[inv.level] ?? 0;
+  }
+  return pwg;
+}
+
+/**
+ * Negative Wealth Generation per season (ETW-adapted).
+ * Upper class tax extracts a flat drain plus a fraction of PWG.
+ * Result is always negative.
+ */
+export function calculateNWG(pwg: number, upperTax: TaxLevel): number {
+  const [flat, mult] = NWG_PARAMS[upperTax];
+  return -(flat + mult * pwg);
+}
+
+/**
+ * Net wealth change per season = PWG + NWG − devastation drain.
+ * Devastation drain is −2/season while devastationTimer > 0.
+ */
+export function calculateNetWealthChange(province: Province, terrain?: string): number {
+  const pwg = calculatePWG(province, terrain);
+  const nwg = calculateNWG(pwg, province.upperTax);
+  const devastationDrain = province.devastationTimer > 0 ? -2 : 0;
+  return pwg + nwg + devastationDrain;
+}
