@@ -14,8 +14,10 @@ export type TerrainType =
 
 /**
  * Terrain-specific building slugs — not yet in InvestmentType.
- * Will be merged into InvestmentType in S17-05 when INVESTMENT_DATA entries
- * are added for each building.
+ * 10 of 16 were promoted to InvestmentType in S17-05 (port, fishery, villa, stables,
+ * lumber_camp, mountain_pass, oasis_market, caravan_post, oracle_shrine, reed_harvest).
+ * Remaining 6 (granary, mine, forge, sacred_grove, training_ground, watchtower)
+ * are pending future tasks.
  */
 export type TerrainBuildingType =
   | 'granary'
@@ -171,7 +173,9 @@ export const UNIVERSAL_BUILDINGS: InvestmentType[] = [
  * some buildings are available in multiple terrains (e.g. Sacred Grove / Lumber Camp
  * are buildable in both Forest AND Marsh per the S17-04 spec).
  *
- * These will become InvestmentType values after S17-05 adds their INVESTMENT_DATA entries.
+ * 10 of 16 buildings have been promoted to InvestmentType in S17-05.
+ * The remaining 6 (granary, mine, forge, sacred_grove, training_ground, watchtower)
+ * will be added in future tasks.
  */
 export const TERRAIN_AVAILABLE_BUILDINGS: Record<TerrainType, TerrainBuildingType[]> = {
   farmland:  ['granary', 'villa'],
