@@ -1,5 +1,5 @@
 import type { Faction, ResourceType } from '../core/commander';
-import type { ResourceCost, TaxLevel, TierTuple } from '../../types/index';
+import type { ResourceCost, TaxLevel, TierTuple, WealthTier } from '../../types/index';
 import type { GovernorTrait } from './governor';
 
 // ── Investment types ──
@@ -269,4 +269,49 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
     growthAccumulator: 0,
     ...overrides,
   };
+}
+
+// ── Wealth tier system ──
+
+/**
+ * Map a raw wealth value to a WealthTier (1–5).
+ * Wealth is floored at 0 before lookup.
+ *
+ * Tiers:  0–15 → 1 (Destitute)
+ *        16–35 → 2 (Poor)
+ *        36–55 → 3 (Growing)
+ *        56–80 → 4 (Prosperous)
+ *          81+ → 5 (Wealthy)
+ */
+export function getWealthTier(wealth: number): WealthTier {
+  const w = Math.max(0, wealth);
+  if (w <= 15) return 1;
+  if (w <= 35) return 2;
+  if (w <= 55) return 3;
+  if (w <= 80) return 4;
+  return 5;
+}
+
+/** Income multiplier for a given wealth tier (0.50x – 1.50x). */
+export function getWealthMultiplier(tier: WealthTier): number {
+  const MULTIPLIERS: Record<WealthTier, number> = {
+    1: 0.50,
+    2: 0.75,
+    3: 1.00,
+    4: 1.25,
+    5: 1.50,
+  };
+  return MULTIPLIERS[tier];
+}
+
+/** Display label for a given wealth tier. */
+export function getWealthLabel(tier: WealthTier): string {
+  const LABELS: Record<WealthTier, string> = {
+    1: 'Destitute',
+    2: 'Poor',
+    3: 'Growing',
+    4: 'Prosperous',
+    5: 'Wealthy',
+  };
+  return LABELS[tier];
 }
