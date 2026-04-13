@@ -315,3 +315,83 @@ export function getWealthLabel(tier: WealthTier): string {
   };
   return LABELS[tier];
 }
+
+// ── Tax multiplier system ──
+
+/** Display label for a TaxLevel (1=Minimal … 5=Oppressive). */
+export function getTaxLabel(level: TaxLevel): string {
+  const LABELS: Record<TaxLevel, string> = {
+    1: 'Minimal',
+    2: 'Low',
+    3: 'Normal',
+    4: 'High',
+    5: 'Oppressive',
+  };
+  return LABELS[level];
+}
+
+/**
+ * Gold income multiplier from the dual tax sliders.
+ * Combined = lowerTax + upperTax (range 2–10).
+ * Anchor points: 2→0.50, 4→0.70, 6→1.00, 8→1.30, 10→1.60.
+ * Odd combined values are midpoints between adjacent anchors.
+ */
+export function getTaxMultiplier(lowerTax: TaxLevel, upperTax: TaxLevel): number {
+  const MULTIPLIERS: Record<number, number> = {
+    2: 0.50,
+    3: 0.60,
+    4: 0.70,
+    5: 0.85,
+    6: 1.00,
+    7: 1.15,
+    8: 1.30,
+    9: 1.45,
+    10: 1.60,
+  };
+  return MULTIPLIERS[lowerTax + upperTax];
+}
+
+/**
+ * Pop growth penalty (%) applied by lower-class tax level.
+ * Returns a negative percentage (0 = no penalty, -70 = severe penalty).
+ */
+export function getLowerTaxGrowthPenalty(level: TaxLevel): number {
+  const PENALTIES: Record<TaxLevel, number> = {
+    1: 0,
+    2: -10,
+    3: -25,
+    4: -45,
+    5: -70,
+  };
+  return PENALTIES[level];
+}
+
+/**
+ * Unrest change per season from the lower-class tax level.
+ * Negative suppresses unrest; positive increases it.
+ */
+export function getLowerTaxUnrest(level: TaxLevel): number {
+  const UNREST: Record<TaxLevel, number> = {
+    1: -3,
+    2: -1,
+    3: 0,
+    4: 3,
+    5: 8,
+  };
+  return UNREST[level];
+}
+
+/**
+ * Unrest change per season from the upper-class tax level.
+ * Negative suppresses unrest; positive increases it.
+ */
+export function getUpperTaxUnrest(level: TaxLevel): number {
+  const UNREST: Record<TaxLevel, number> = {
+    1: -2,
+    2: 0,
+    3: 0,
+    4: 3,
+    5: 8,
+  };
+  return UNREST[level];
+}
