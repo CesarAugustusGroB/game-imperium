@@ -69,7 +69,7 @@ export const TRADE_GOOD_DATA: Record<TradeGoodType, TradeGoodData> = {
   },
   silk: {
     id: 'silk', name: 'Silk',
-    flatGold: 3, flatGrowth: 0, flatFaith: 0, flatMomentum: 0, wealthGrowthBonus: 0,
+    flatGold: 3, flatGrowth: 0, flatFaith: 0, flatMomentum: 0, wealthGrowthBonus: 2,
     special: null,
     validTerrains: ['coast', 'desert'],
   },
@@ -105,7 +105,7 @@ export const TRADE_GOOD_DATA: Record<TradeGoodType, TradeGoodData> = {
   },
   gold_ore: {
     id: 'gold_ore', name: 'Gold Ore',
-    flatGold: 4, flatGrowth: 0, flatFaith: 0, flatMomentum: 0, wealthGrowthBonus: 0,
+    flatGold: 4, flatGrowth: 0, flatFaith: 0, flatMomentum: 0, wealthGrowthBonus: 2,
     special: null,
     validTerrains: ['hills', 'desert'],
   },
@@ -117,7 +117,7 @@ export const TRADE_GOOD_DATA: Record<TradeGoodType, TradeGoodData> = {
   },
   salt: {
     id: 'salt', name: 'Salt',
-    flatGold: 2, flatGrowth: 1, flatFaith: 0, flatMomentum: 0, wealthGrowthBonus: 0,
+    flatGold: 2, flatGrowth: 1, flatFaith: 0, flatMomentum: 0, wealthGrowthBonus: 1,
     special: null,
     validTerrains: ['coast', 'marsh'],
   },

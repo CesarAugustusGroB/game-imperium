@@ -641,6 +641,10 @@ export function calculatePWG(province: Province, terrain?: string): number {
   for (const syn of getActiveSynergies(province)) {
     if (syn.bonus.type === 'pwg') pwg += syn.bonus.amount;
   }
+  // Trade good wealth growth bonus — Silk +2, Gold Ore +2, Salt +1
+  if (province.tradeGood) {
+    pwg += TRADE_GOOD_DATA[province.tradeGood].wealthGrowthBonus;
+  }
   return pwg;
 }
 
@@ -760,6 +764,11 @@ export function calculateRawGrowth(
 
   for (const syn of getActiveSynergies(province)) {
     if (syn.bonus.type === 'growth') raw += syn.bonus.amount;
+  }
+
+  // Trade good growth bonus — Grain +3, Fish +1, Salt +1, Olives +1
+  if (province.tradeGood) {
+    raw += TRADE_GOOD_DATA[province.tradeGood].flatGrowth;
   }
 
   return raw;
