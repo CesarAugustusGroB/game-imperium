@@ -1,6 +1,7 @@
 import type { Faction, ResourceType } from '../core/commander';
 import type { ResourceCost, TaxLevel, TierTuple, WealthTier } from '../../types/index';
 import type { GovernorTrait } from './governor';
+import type { TerrainType } from '../../data/terrain-data';
 
 // ── Investment types ──
 
@@ -66,6 +67,8 @@ export interface Province {
    * 0 = no rubble. Set to 2 after the 1st/2nd rebellion, 8 after Ruined.
    */
   rubbleTimer: number;
+  /** Terrain type — drives modifiers, exclusive buildings, and trade-good assignment (S17). */
+  terrain: TerrainType;
 }
 
 // ── Investment data ──
@@ -280,6 +283,7 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
     upperTax: 3,
     growthAccumulator: 0,
     rubbleTimer: 0,
+    terrain: 'plains',
     ...overrides,
   };
 }
