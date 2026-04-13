@@ -8,10 +8,10 @@ import {
   getInvestmentDiscount, applyInvestmentDiscount,
   getTaxLabel, getTaxMultiplier, getLowerTaxUnrest,
   getUpperTaxUnrest, calculateEffectiveGrowth, calculateNetWealthChange,
-  getWealthTier, getWealthMultiplier, getActiveSynergies,
+  getWealthTier, getWealthMultiplier, getWealthLabel, getActiveSynergies,
   type InvestmentType, type Province,
 } from '../../game/province/province';
-import type { TaxLevel } from '../../types/index';
+import type { TaxLevel, WealthTier } from '../../types/index';
 import { FACTION_COLORS, RESOURCE_INFO, type ResourceType } from '../../game/core/commander';
 import { getResource } from '../../game/core/resources';
 import { getHireCost } from '../../game/province/governor';
@@ -256,6 +256,27 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
       background: none; border: none; padding: 0;
     }
     .tax-reset-btn:hover { color: var(--color-text-primary) !important; }
+
+    /* ── Wealth tier bar ── */
+    .wealth-section {
+      display: flex; flex-direction: column; gap: 8px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+    .wealth-zones {
+      position: relative; height: 10px;
+      border-radius: var(--radius-sm); overflow: hidden;
+      display: flex; cursor: default;
+    }
+    .wealth-marker {
+      position: absolute; top: -3px; bottom: -3px; width: 3px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 2px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.8), 0 0 2px rgba(255, 255, 255, 0.6);
+      transform: translateX(-50%);
+      pointer-events: none;
+      transition: left var(--duration-slow) var(--ease-default);
+    }
   `;
   document.head.appendChild(el);
 }
@@ -269,6 +290,19 @@ const TAX_LEVEL_COLORS: Record<TaxLevel, string> = {
   4: 'var(--color-warning)',
   5: 'var(--color-danger)',
 };
+
+// Wealth tier zone definitions for the segmented bar.
+// Bar display range: 0–100 (wealth > 100 clamps marker to right edge).
+// Segment widths are proportional to each tier's value range.
+const WEALTH_TIER_ZONES: ReadonlyArray<{
+  tier: WealthTier; end: number; color: string; label: string;
+}> = [
+  { tier: 1, end: 15,  color: 'var(--color-danger)',       label: 'Destitute'  },
+  { tier: 2, end: 35,  color: '#d47a30',                   label: 'Poor'       },
+  { tier: 3, end: 55,  color: 'var(--color-warning)',      label: 'Growing'    },
+  { tier: 4, end: 80,  color: 'var(--color-success)',      label: 'Prosperous' },
+  { tier: 5, end: 100, color: 'var(--color-gold-primary)', label: 'Wealthy'    },
+];
 
 const selectedProvinceId = signal<string | null>(null);
 const showGovernorPicker = signal(false);
@@ -596,6 +630,142 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
         );
       })}
     </div>
+  );
+}
+
+// ── Wealth tier bar ──
+
+function WealthBar({ province }: { province: Province }) {
+  const tier = getWealthTier(province.wealth);
+  const mult = getWealthMultiplier(tier);
+  const label = getWealthLabel(tier);
+  const netChange = calculateNetWealthChange(province, province.terrain);
+
+  // Marker: clamp wealth to display range 0–100
+  const markerPct = Math.min(province.wealth / 100, 1) * 100;
+
+  // Trend arrow
+  const isGrowing  = netChange >  0.5;
+  const isShrinking = netChange < -0.5;
+  const trendArrow = isGrowing ? '↑' : isShrinking ? '↓' : '→';
+  const trendColor = isGrowing
+    ? 'var(--color-success)'
+    : isShrinking
+    ? 'var(--color-danger)'
+    : 'var(--color-text-muted)';
+
+  // Current tier color
+  const tierColor = WEALTH_TIER_ZONES[tier - 1].color;
+
+  // Next tier threshold for tooltip
+  const nextThresholds: Record<WealthTier, string> = {
+    1: 'Next tier at 16',
+    2: 'Next tier at 36',
+    3: 'Next tier at 56',
+    4: 'Next tier at 81',
+    5: 'Max tier reached',
+  };
+
+  const tooltipContent = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ fontWeight: 700, color: tierColor }}>
+        {label} ({mult.toFixed(2)}×)
+      </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+        All building gold income is multiplied by{' '}
+        <strong style={{ color: tierColor }}>{mult.toFixed(2)}×</strong>
+      </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+        Wealth: {province.wealth} · {nextThresholds[tier]}
+      </div>
+    </div>
+  );
+
+  return (
+    <Tooltip content={tooltipContent} variant="rich" position="above">
+      <div class="wealth-section">
+        {/* Header row */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'var(--font-size-xs)',
+              fontWeight: 600,
+              color: 'var(--color-gold-secondary)',
+              letterSpacing: '3px',
+              textTransform: 'uppercase',
+            }}>
+              Wealth
+            </span>
+            <span style={{
+              fontSize: 'var(--font-size-xs)',
+              fontWeight: 700,
+              color: tierColor,
+            }}>
+              {label}
+            </span>
+            <span style={{
+              fontSize: 'var(--font-size-xs)',
+              color: 'var(--color-text-muted)',
+            }}>
+              {mult.toFixed(2)}×
+            </span>
+          </div>
+          <div style={{
+            fontSize: 'var(--font-size-xs)',
+            color: trendColor,
+            fontWeight: 600,
+          }}>
+            {netChange >= 0 ? '+' : ''}{netChange.toFixed(1)}/season{' '}
+            <span style={{ fontSize: '11px' }}>{trendArrow}</span>
+          </div>
+        </div>
+
+        {/* Segmented bar with marker */}
+        <div class="wealth-zones">
+          {WEALTH_TIER_ZONES.map((zone, i) => {
+            const prevEnd = i === 0 ? 0 : WEALTH_TIER_ZONES[i - 1].end;
+            const width = zone.end - prevEnd; // out of 100
+            const isActive = zone.tier <= tier;
+            const isCurrent = zone.tier === tier;
+            return (
+              <div
+                key={zone.tier}
+                style={{
+                  width: `${width}%`,
+                  background: zone.color,
+                  opacity: isActive ? 1 : 0.18,
+                  borderRight: i < WEALTH_TIER_ZONES.length - 1
+                    ? '1px solid rgba(10, 8, 20, 0.6)'
+                    : 'none',
+                  boxShadow: isCurrent ? `inset 0 0 8px ${zone.color}55` : 'none',
+                  transition: 'opacity var(--duration-normal)',
+                }}
+              />
+            );
+          })}
+          {/* Current wealth marker */}
+          <div
+            class="wealth-marker"
+            style={{ left: `${markerPct}%` }}
+          />
+        </div>
+
+        {/* Wealth value row */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between',
+          fontSize: '8px', color: 'var(--color-text-muted)',
+        }}>
+          <span>0</span>
+          <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
+            {province.wealth}
+          </span>
+          <span>100+</span>
+        </div>
+      </div>
+    </Tooltip>
   );
 }
 
@@ -993,6 +1163,9 @@ function ProvinceDetail({ province }: { province: Province }) {
 
       {/* Tax Policy (S18-01) */}
       <TaxSliders key={province.id} province={province} />
+
+      {/* Wealth Tier Bar (S18-02) */}
+      <WealthBar province={province} />
 
       {/* Building hero grid */}
       <div
