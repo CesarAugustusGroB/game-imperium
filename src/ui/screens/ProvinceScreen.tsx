@@ -10,6 +10,7 @@ import {
   getUpperTaxUnrest, calculateEffectiveGrowth, calculateNetWealthChange,
   getWealthTier, getWealthMultiplier, getWealthLabel, getActiveSynergies,
   getEffectiveMaxPop, getSettlementLabel, getBuildingSlots, calculateGrowthThreshold,
+  calculateUnrestDelta, getRebelThreshold,
   type InvestmentType, type Province,
 } from '../../game/province/province';
 import type { TaxLevel, WealthTier } from '../../types/index';
@@ -303,6 +304,43 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
       pointer-events: none;
       transition: left var(--duration-slow) var(--ease-default),
                   width var(--duration-slow) var(--ease-default);
+    }
+
+    /* ── Unrest section ── */
+    .unrest-section {
+      display: flex; flex-direction: column; gap: 8px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+    .unrest-bar {
+      position: relative; height: 10px;
+    }
+    .unrest-bar-track {
+      position: absolute; inset: 0;
+      background: rgba(40, 35, 60, 0.8);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .unrest-fill {
+      height: 100%;
+      border-radius: var(--radius-sm);
+      transition: width var(--duration-slow) var(--ease-default),
+                  background var(--duration-normal) var(--ease-default);
+    }
+    .unrest-threshold-marker {
+      position: absolute; top: -3px; bottom: -3px; width: 2px;
+      background: rgba(255, 200, 80, 0.8);
+      border-radius: 1px;
+      box-shadow: 0 0 5px rgba(255, 180, 40, 0.6);
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    @keyframes unrest-flash {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.35; }
+    }
+    .unrest-fill-critical {
+      animation: unrest-flash 1.1s ease-in-out infinite;
     }
 
     /* ── Income ledger ── */
@@ -1248,6 +1286,182 @@ function TaxSliders({ province }: { province: Province }) {
   );
 }
 
+// ── Unrest section ──
+
+function UnrestSection({ province }: { province: Province }) {
+  const traits = getGovernorTraits(province.id);
+  const delta         = calculateUnrestDelta(province, traits, 0);
+  const rebelThreshold = getRebelThreshold(province);
+
+  // Zone states
+  const isCritical = province.unrest >= 70;
+  const isWarning  = province.unrest >= 60;
+
+  // Bar fill color by zone
+  const barColor = province.unrest > 60
+    ? 'var(--color-danger)'
+    : province.unrest > 30
+    ? 'var(--color-warning)'
+    : 'var(--color-success)';
+
+  // Geometry — bar spans 0–100
+  const fillPct      = Math.min(province.unrest / 100, 1) * 100;
+  const thresholdPct = Math.min(rebelThreshold / 100, 1) * 100;
+  const showMarker   = rebelThreshold <= 100;
+
+  // Trend
+  const isRising  = delta > 0.3;
+  const isFalling = delta < -0.3;
+  const trendArrow = isRising ? '↑' : isFalling ? '↓' : '→';
+  const trendColor = isRising
+    ? 'var(--color-danger)'
+    : isFalling
+    ? 'var(--color-success)'
+    : 'var(--color-text-muted)';
+
+  // Seasons projection
+  const remaining = rebelThreshold - province.unrest;
+  const seasonsToRebel = showMarker && delta > 0.1 && remaining > 0
+    ? Math.ceil(remaining / delta)
+    : null;
+
+  // Tooltip: unrest source breakdown
+  const taxUnrest   = getLowerTaxUnrest(province.lowerTax) + getUpperTaxUnrest(province.upperTax);
+  const bldGovMod   = getUnrestModifier(province, traits); // negative = suppresses
+  const naturalDecay = -2;
+  const accel        = province.unrest > 60 ? (province.unrest - 60) * 0.25 : 0;
+
+  function fmtSrc(n: number): string {
+    return (n >= 0 ? '+' : '') + n.toFixed(n % 1 === 0 ? 0 : 1) + '/s';
+  }
+  function srcColor(n: number): string {
+    return n > 0 ? 'var(--color-danger)' : n < 0 ? 'var(--color-success)' : 'var(--color-text-muted)';
+  }
+
+  const tooltipContent = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ fontWeight: 700, color: barColor, marginBottom: '2px' }}>
+        Unrest {province.unrest} / {rebelThreshold >= 101 ? '—' : rebelThreshold}
+      </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+        <strong>Sources</strong>
+      </div>
+      {taxUnrest !== 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', fontSize: 'var(--font-size-xs)' }}>
+          <span style={{ color: 'var(--color-text-muted)' }}>Tax pressure</span>
+          <span style={{ color: srcColor(taxUnrest) }}>{fmtSrc(taxUnrest)}</span>
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', fontSize: 'var(--font-size-xs)' }}>
+        <span style={{ color: 'var(--color-text-muted)' }}>Natural decay</span>
+        <span style={{ color: srcColor(naturalDecay) }}>{fmtSrc(naturalDecay)}</span>
+      </div>
+      {bldGovMod !== 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', fontSize: 'var(--font-size-xs)' }}>
+          <span style={{ color: 'var(--color-text-muted)' }}>Buildings / Governor</span>
+          <span style={{ color: srcColor(bldGovMod) }}>{fmtSrc(bldGovMod)}</span>
+        </div>
+      )}
+      {accel > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', fontSize: 'var(--font-size-xs)' }}>
+          <span style={{ color: 'var(--color-danger)' }}>⚡ Acceleration</span>
+          <span style={{ color: 'var(--color-danger)' }}>+{accel.toFixed(1)}/s</span>
+        </div>
+      )}
+      <div style={{ height: '1px', background: 'var(--color-border-subtle)', margin: '2px 0' }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', fontSize: 'var(--font-size-xs)' }}>
+        <span style={{ color: 'var(--color-text-secondary)', fontWeight: 700 }}>Net Δ/season</span>
+        <span style={{ color: trendColor, fontWeight: 700 }}>{fmtSrc(delta)}</span>
+      </div>
+      {rebelThreshold >= 101 && (
+        <div style={{ marginTop: '2px', fontSize: 'var(--font-size-xs)', color: 'var(--color-success)' }}>
+          Insula III: rebellion impossible
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <Tooltip content={tooltipContent} variant="rich" position="above">
+      <div class="unrest-section">
+        {/* Header row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'var(--font-size-xs)',
+              fontWeight: 600,
+              color: 'var(--color-gold-secondary)',
+              letterSpacing: '3px',
+              textTransform: 'uppercase',
+            }}>
+              Unrest
+            </span>
+            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: barColor }}>
+              {province.unrest}
+            </span>
+            {isCritical && (
+              <span
+                style={{ fontSize: '11px', animation: 'unrest-flash 0.8s ease-in-out infinite' }}
+                title="Critical — rebellion imminent!"
+              >
+                🔴
+              </span>
+            )}
+            {!isCritical && isWarning && (
+              <span style={{ fontSize: '11px' }} title="Acceleration zone — unrest rising faster">⚠</span>
+            )}
+          </div>
+          <div style={{
+            fontSize: 'var(--font-size-xs)',
+            color: trendColor,
+            fontWeight: 600,
+          }}>
+            {delta >= 0 ? '+' : ''}{delta.toFixed(1)}/season{' '}
+            <span style={{ fontSize: '11px' }}>{trendArrow}</span>
+          </div>
+        </div>
+
+        {/* Fill bar */}
+        <div class="unrest-bar">
+          <div class="unrest-bar-track">
+            <div
+              class={`unrest-fill${isCritical ? ' unrest-fill-critical' : ''}`}
+              style={{ width: `${fillPct}%`, background: barColor }}
+            />
+          </div>
+          {showMarker && (
+            <div
+              class="unrest-threshold-marker"
+              style={{ left: `${thresholdPct}%` }}
+            />
+          )}
+        </div>
+
+        {/* Projection row */}
+        <div style={{
+          display: 'flex', justifyContent: 'space-between',
+          fontSize: '8px', color: 'var(--color-text-muted)',
+        }}>
+          <span>0</span>
+          <span style={{ color: 'var(--color-text-muted)' }}>
+            {rebelThreshold >= 101
+              ? 'Rebellion suppressed (Insula III)'
+              : seasonsToRebel !== null
+              ? <span style={{ color: isCritical ? 'var(--color-danger)' : 'var(--color-text-muted)' }}>
+                  Rebels in {seasonsToRebel}s
+                </span>
+              : isFalling
+              ? 'Unrest falling'
+              : 'Stable'}
+          </span>
+          <span>{showMarker ? `Rebel at ${rebelThreshold}` : '—'}</span>
+        </div>
+      </div>
+    </Tooltip>
+  );
+}
+
 // ── Income ledger ──
 
 function LedgerRow({
@@ -1600,6 +1814,9 @@ function ProvinceDetail({ province }: { province: Province }) {
 
       {/* Population Bar (S18-03) */}
       <PopBar province={province} />
+
+      {/* Unrest Trajectory (S18-05) */}
+      <UnrestSection province={province} />
 
       {/* Income Ledger (S18-04) */}
       <IncomeLedger province={province} />
