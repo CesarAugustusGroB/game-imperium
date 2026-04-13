@@ -89,6 +89,9 @@ export function buildInvestment(provinceId: string, type: InvestmentType): boole
   const nextLevel = getNextInvestmentLevel(province, type);
   if (nextLevel === 0) return false; // maxed
 
+  // Rubble gate: rebuilding is blocked while rubbleTimer is active
+  if (province.rubbleTimer > 0) return false;
+
   // Slot gate: new buildings consume a slot; upgrades do not
   const isNew = !province.investments.some(i => i.type === type);
   if (isNew && province.investments.length >= getBuildingSlots(province.population)) return false;

@@ -61,6 +61,11 @@ export interface Province {
   upperTax: TaxLevel;
   /** Fractional population growth banked toward the next full population point. */
   growthAccumulator: number;
+  /**
+   * Seasons remaining during which rebuilding is blocked (post-rebellion rubble).
+   * 0 = no rubble. Set to 2 after the 1st/2nd rebellion, 8 after Ruined.
+   */
+  rubbleTimer: number;
 }
 
 // ── Investment data ──
@@ -267,6 +272,7 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
     lowerTax: 3,
     upperTax: 3,
     growthAccumulator: 0,
+    rubbleTimer: 0,
     ...overrides,
   };
 }
@@ -560,4 +566,107 @@ export function tickPopulationGrowth(
   }
 
   return { ...province, growthAccumulator: newAccumulator };
+}
+
+// ── Unrest + rebellion system ──
+
+/**
+ * Net unrest change per season.
+ *   base  = tax_unrest + doom − 2 (natural decay) + investment/governor modifier
+ *   accel = (unrest > 60) ? (unrest − 60) × 0.25 : 0
+ *   total = base + accel
+ *
+ * `doom` is an external event pressure (default 0).
+ * `getUnrestModifier()` is negative when buildings/governor suppress unrest.
+ */
+export function calculateUnrestDelta(
+  province: Province,
+  governorTraits: GovernorTrait[] = [],
+  doom: number = 0,
+): number {
+  const taxUnrest = getLowerTaxUnrest(province.lowerTax) + getUpperTaxUnrest(province.upperTax);
+  const mod = getUnrestModifier(province, governorTraits); // negative = suppresses unrest
+  const base = taxUnrest + doom - 2 + mod;
+  const accel = province.unrest > 60 ? (province.unrest - 60) * 0.25 : 0;
+  return base + accel;
+}
+
+/**
+ * Unrest threshold at which a rebellion fires.
+ * Default 80. Insula level 3 suppresses event-driven triggers below 70,
+ * but the structural threshold remains 80.
+ */
+export function getRebelThreshold(_province: Province): number {
+  return 80;
+}
+
+// ── Rebellion helpers ──
+
+/** Numeric "value" of a built investment — used to weight destruction. */
+function investmentCostValue(inv: Investment): number {
+  const cost = INVESTMENT_DATA[inv.type].levels[inv.level - 1].buildCost;
+  // Gold + resource costs (other resources treated as 2× gold equivalent)
+  return (cost.gold ?? 0)
+    + (cost.momentum ?? 0) * 2
+    + (cost.influence ?? 0) * 2
+    + (cost.faith ?? 0) * 2;
+}
+
+/**
+ * Destroy the `count` most expensive investments.
+ * Returns the surviving investments (immutable).
+ */
+function destroyMostExpensive(investments: Investment[], count: number): Investment[] {
+  if (count >= investments.length) return [];
+  const sorted = [...investments].sort((a, b) => investmentCostValue(b) - investmentCostValue(a));
+  return sorted.slice(count);
+}
+
+/**
+ * Apply rebellion consequences to a province. Returns a new Province object.
+ *
+ * rebellionCount 0 → 1st rebellion: destroy 1–2 buildings, −1 max pop,
+ *   unrest→40, devastation 4 seasons, rubble 2 seasons.
+ * rebellionCount 1 → 2nd rebellion: destroy 2 buildings, −2 max pop,
+ *   same devastation + rubble.
+ * rebellionCount 2 → 3rd rebellion (Ruined): all buildings gone, pop→1,
+ *   wealth→0, 8-season devastation + rubble.
+ *
+ * `rng` defaults to Math.random — injectable for deterministic tests.
+ */
+export function applyRebellion(
+  province: Province,
+  rng: () => number = Math.random,
+): Province {
+  const n = province.rebellionCount;
+
+  if (n >= 3) return province; // already Ruined, no further effect
+
+  // ── 3rd rebellion: Ruined ──
+  if (n === 2) {
+    return {
+      ...province,
+      investments: [],
+      population: 1,
+      wealth: 0,
+      unrest: 40,
+      devastationTimer: 8,
+      rubbleTimer: 8,
+      rebellionCount: 3,
+    };
+  }
+
+  // ── 1st or 2nd rebellion ──
+  const destroyCount = n === 0 ? (rng() < 0.5 ? 1 : 2) : 2;
+  const maxPopReduction = n === 0 ? 1 : 2;
+
+  return {
+    ...province,
+    investments: destroyMostExpensive(province.investments, destroyCount),
+    maxPopulation: Math.max(1, province.maxPopulation - maxPopReduction),
+    unrest: 40,
+    devastationTimer: 4,
+    rubbleTimer: 2,
+    rebellionCount: n + 1,
+  };
 }
