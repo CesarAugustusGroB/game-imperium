@@ -448,3 +448,34 @@ export function calculateNetWealthChange(province: Province, terrain?: string): 
   const devastationDrain = province.devastationTimer > 0 ? -2 : 0;
   return pwg + nwg + devastationDrain;
 }
+
+// ── Population → building slots ──
+
+/**
+ * Number of building slots available at a given population.
+ *
+ * Pop 1–2 → 1  (Settlement)
+ * Pop 3–4 → 2  (Village)
+ * Pop 5–6 → 3  (Town)
+ * Pop 7–8 → 4  (City)
+ * Pop 9–10 → 5 (Major City)
+ * Pop 11+  → 6 (Metropolis)
+ */
+export function getBuildingSlots(pop: number): number {
+  if (pop <= 2)  return 1;
+  if (pop <= 4)  return 2;
+  if (pop <= 6)  return 3;
+  if (pop <= 8)  return 4;
+  if (pop <= 10) return 5;
+  return 6;
+}
+
+/** Settlement size label for a given population. */
+export function getSettlementLabel(pop: number): string {
+  if (pop <= 2)  return 'Settlement';
+  if (pop <= 4)  return 'Village';
+  if (pop <= 6)  return 'Town';
+  if (pop <= 8)  return 'City';
+  if (pop <= 10) return 'Major City';
+  return 'Metropolis';
+}

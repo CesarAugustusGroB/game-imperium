@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Province, InvestmentType } from './province';
-import { createProvince, INVESTMENT_DATA, getInvestmentDiscount, applyInvestmentDiscount, getProvinceIncome, getProvinceExpenses, getUnrestModifier } from './province';
+import { createProvince, INVESTMENT_DATA, getInvestmentDiscount, applyInvestmentDiscount, getProvinceIncome, getProvinceExpenses, getUnrestModifier, getBuildingSlots } from './province';
 import type { ResourceType } from '../core/commander';
 import type { DoctrineEffect } from '../items/doctrine';
 import type { ResourceCost } from '../../types/index';
@@ -88,6 +88,10 @@ export function buildInvestment(provinceId: string, type: InvestmentType): boole
   const province = provinces.value[idx];
   const nextLevel = getNextInvestmentLevel(province, type);
   if (nextLevel === 0) return false; // maxed
+
+  // Slot gate: new buildings consume a slot; upgrades do not
+  const isNew = !province.investments.some(i => i.type === type);
+  if (isNew && province.investments.length >= getBuildingSlots(province.population)) return false;
 
   const data = INVESTMENT_DATA[type];
   const baseCost = data.levels[nextLevel - 1].buildCost;
