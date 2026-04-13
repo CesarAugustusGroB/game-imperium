@@ -9,7 +9,7 @@ import {
   calculateNetWealthChange,
   tickPopulationGrowth,
   calculateUnrestDelta, getRebelThreshold, applyRebellion,
-  getAvailableBuildings,
+  getAvailableBuildings, getActiveSynergies,
 } from './province';
 import type { ResourceType } from '../core/commander';
 import type { DoctrineEffect } from '../items/doctrine';
@@ -232,6 +232,11 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
         if (res === 'gold') buildingGold += amt;
         else nonGold[res] = (nonGold[res] ?? 0) + amt;
       }
+    }
+
+    // Synergy gold bonus — treated as building income (× wealth × tax per spec)
+    for (const syn of getActiveSynergies(prov)) {
+      if (syn.bonus.type === 'gold') buildingGold += syn.bonus.amount;
     }
 
     // Gold: building gold × wealth × tax, plus 1 subsistence always

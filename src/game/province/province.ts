@@ -269,6 +269,62 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
   },
 };
 
+// ── Building synergies ──
+
+/**
+ * Discriminated union of synergy bonus effects.
+ * 'unit-cost-discount' is noted but applied by the battle system (deferred).
+ */
+export type SynergyBonus =
+  | { type: 'pwg'; amount: number }                  // +X Wealth Growth per season
+  | { type: 'growth'; amount: number }               // +X Pop Growth per season
+  | { type: 'gold'; amount: number }                 // +X gold (× wealth tier × tax, as building income)
+  | { type: 'unrest'; amount: number }               // −X Unrest per season (amount is the reduction)
+  | { type: 'pop-cap'; amount: number }              // +X max population
+  | { type: 'unit-cost-discount'; percent: number }; // −X% unit recruit cost (battle system)
+
+export interface SynergyData {
+  /**
+   * Building slugs — string typed for forward-compatibility with buildings not yet
+   * in InvestmentType (forge, granary, mine, sacred_grove — added in future tasks).
+   */
+  buildingA: string;
+  buildingB: string;
+  bonus: SynergyBonus;
+  label: string;
+}
+
+export const SYNERGY_DATA: SynergyData[] = [
+  { buildingA: 'market',   buildingB: 'port',         bonus: { type: 'pwg',                amount: 2  }, label: 'Trade Hub' },
+  { buildingA: 'castrum',  buildingB: 'forge',        bonus: { type: 'unit-cost-discount', percent: 10 }, label: 'Military-Industrial' },
+  { buildingA: 'aqueduct', buildingB: 'granary',      bonus: { type: 'growth',             amount: 2  }, label: 'Irrigated Farms' },
+  { buildingA: 'basilica', buildingB: 'sacred_grove', bonus: { type: 'unrest',             amount: 5  }, label: 'Religious Harmony' },
+  { buildingA: 'insula',   buildingB: 'aqueduct',     bonus: { type: 'pop-cap',            amount: 1  }, label: 'Public Works' },
+  { buildingA: 'market',   buildingB: 'mine',         bonus: { type: 'gold',               amount: 1  }, label: 'Resource Commerce' },
+];
+
+/**
+ * Return the active synergies for a province — those where both buildings are present
+ * at any level.
+ */
+export function getActiveSynergies(province: Province): SynergyData[] {
+  const types = new Set(province.investments.map(i => i.type as string));
+  return SYNERGY_DATA.filter(s => types.has(s.buildingA) && types.has(s.buildingB));
+}
+
+/**
+ * Effective maximum population for a province, including synergy bonuses.
+ * Base: province.maxPopulation.
+ * Synergy: Insula + Aqueduct → +1 pop cap (Public Works).
+ */
+export function getEffectiveMaxPop(province: Province): number {
+  let max = province.maxPopulation;
+  for (const syn of getActiveSynergies(province)) {
+    if (syn.bonus.type === 'pop-cap') max += syn.bonus.amount;
+  }
+  return max;
+}
+
 // ── Helpers ──
 
 /**
@@ -347,6 +403,11 @@ export function getUnrestModifier(
     if (trait.type === 'unrest-reduction') {
       mod -= trait.flat;
     }
+  }
+
+  // Synergy unrest reduction (amount is positive = reduces unrest)
+  for (const syn of getActiveSynergies(province)) {
+    if (syn.bonus.type === 'unrest') mod -= syn.bonus.amount;
   }
 
   return mod;
@@ -564,6 +625,9 @@ export function calculatePWG(province: Province, terrain?: string): number {
   for (const inv of province.investments) {
     pwg += BUILDING_PWG[inv.type]?.[inv.level] ?? 0;
   }
+  for (const syn of getActiveSynergies(province)) {
+    if (syn.bonus.type === 'pwg') pwg += syn.bonus.amount;
+  }
   return pwg;
 }
 
@@ -681,6 +745,10 @@ export function calculateRawGrowth(
     if (trait.type === 'population-growth') raw += trait.amount;
   }
 
+  for (const syn of getActiveSynergies(province)) {
+    if (syn.bonus.type === 'growth') raw += syn.bonus.amount;
+  }
+
   return raw;
 }
 
@@ -713,7 +781,8 @@ export function tickPopulationGrowth(
   terrain?: string,
   governorTraits: GovernorTrait[] = [],
 ): Province {
-  if (province.population >= province.maxPopulation) {
+  const maxPop = getEffectiveMaxPop(province);
+  if (province.population >= maxPop) {
     return province; // already at cap
   }
 
@@ -722,7 +791,7 @@ export function tickPopulationGrowth(
   const threshold = calculateGrowthThreshold(province.population);
 
   if (newAccumulator >= threshold) {
-    const newPop = Math.min(province.population + 1, province.maxPopulation);
+    const newPop = Math.min(province.population + 1, maxPop);
     return { ...province, population: newPop, growthAccumulator: newAccumulator - threshold };
   }
 
