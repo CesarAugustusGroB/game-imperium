@@ -212,8 +212,10 @@ export function getUnrestModifier(
   governorTraits: GovernorTrait[] = [],
 ): number {
   // garrison-strength multiplies Castrum's unrest reduction (×1.15 / ×1.25 / ×1.35)
-  const garrisonTrait = governorTraits.find(t => t.type === 'garrison-strength');
-  const garrisonMult = garrisonTrait ? 1 + (garrisonTrait as { type: 'garrison-strength'; percent: number }).percent / 100 : 1;
+  const garrisonTrait = governorTraits.find(
+    (t): t is Extract<GovernorTrait, { type: 'garrison-strength' }> => t.type === 'garrison-strength',
+  );
+  const garrisonMult = garrisonTrait ? 1 + garrisonTrait.percent / 100 : 1;
 
   let mod = 0;
   for (const inv of province.investments) {
@@ -598,10 +600,12 @@ export function calculateUnrestDelta(
 
 /**
  * Unrest threshold at which a rebellion fires.
- * Default 80. Insula level 3 suppresses event-driven triggers below 70,
- * but the structural threshold remains 80.
+ * Base 80. Insula T2 raises to 90; Insula T3 makes rebellion impossible (101 > unrest cap).
  */
-export function getRebelThreshold(_province: Province): number {
+export function getRebelThreshold(province: Province): number {
+  const insula = province.investments.find(i => i.type === 'insula');
+  if (insula && insula.level >= 3) return 101;
+  if (insula && insula.level >= 2) return 90;
   return 80;
 }
 
@@ -664,11 +668,13 @@ export function applyRebellion(
   // ── 1st or 2nd rebellion ──
   const destroyCount = n === 0 ? (rng() < 0.5 ? 1 : 2) : 2;
   const maxPopReduction = n === 0 ? 1 : 2;
+  const newMaxPop = Math.max(1, province.maxPopulation - maxPopReduction);
 
   return {
     ...province,
     investments: destroyMostExpensive(province.investments, destroyCount),
-    maxPopulation: Math.max(1, province.maxPopulation - maxPopReduction),
+    maxPopulation: newMaxPop,
+    population: Math.min(province.population, newMaxPop),
     unrest: 40,
     devastationTimer: 4,
     rubbleTimer: 2,

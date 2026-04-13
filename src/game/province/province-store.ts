@@ -167,18 +167,6 @@ export interface ProvinceIncomeResult {
 }
 
 /**
- * Insula-based rebellion suppression.
- * Returns 0 (none), 90 (T2 raises bar), or 101 (T3 = immune, since unrest caps at 100).
- */
-function getInsulaSuppression(prov: Province): number {
-  const insula = prov.investments.find(i => i.type === 'insula');
-  if (!insula) return 0;
-  if (insula.level >= 3) return 101;
-  if (insula.level >= 2) return 90;
-  return 0;
-}
-
-/**
  * Rewritten season tick — wires all S16 sub-systems in spec order.
  *
  * Per-season tick order (per spec):
@@ -294,9 +282,8 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
     }
     p = { ...p, unrest: Math.max(0, Math.min(100, p.unrest + unrestDelta)) };
 
-    // 8. Rebellion check
-    const effectiveThreshold = Math.max(getRebelThreshold(p), getInsulaSuppression(p));
-    if (p.unrest >= effectiveThreshold) {
+    // 8. Rebellion check (threshold includes Insula suppression)
+    if (p.unrest >= getRebelThreshold(p)) {
       const beforeInvestments = p.investments;
       const beforeCount = p.rebellionCount;
       p = applyRebellion(p);
