@@ -2,6 +2,7 @@ import type { Faction, ResourceType } from '../core/commander';
 import type { ResourceCost, TaxLevel, TierTuple, WealthTier } from '../../types/index';
 import type { GovernorTrait } from './governor';
 import type { TerrainType } from '../../data/terrain-data';
+import { UNIVERSAL_BUILDINGS, TERRAIN_AVAILABLE_BUILDINGS } from '../../data/terrain-data';
 import type { TradeGoodType } from '../../data/trade-goods';
 
 // ── Investment types ──
@@ -499,6 +500,29 @@ export function getSettlementLabel(pop: number): string {
   if (pop <= 8)  return 'City';
   if (pop <= 10) return 'Major City';
   return 'Metropolis';
+}
+
+/**
+ * Buildings currently available in a province.
+ * Returns all universal buildings plus any terrain-exclusive buildings whose
+ * InvestmentType values are registered (i.e. have INVESTMENT_DATA entries).
+ *
+ * Terrain-exclusive building types are promoted to InvestmentType in S17-05.
+ * Until then, TERRAIN_AVAILABLE_BUILDINGS entries are TerrainBuildingType strings
+ * and do not appear in InvestmentType, so only UNIVERSAL_BUILDINGS are returned.
+ */
+export function getAvailableBuildings(province: Province): InvestmentType[] {
+  const universals: InvestmentType[] = [...UNIVERSAL_BUILDINGS];
+  // Terrain-gated buildings: include any exclusive building whose slug already
+  // exists as an InvestmentType value. This is a no-op until S17-05 adds them.
+  const terrainBuildings = TERRAIN_AVAILABLE_BUILDINGS[province.terrain] as string[];
+  const investmentSlugs = Object.keys(INVESTMENT_DATA) as string[];
+  for (const slug of terrainBuildings) {
+    if (investmentSlugs.includes(slug)) {
+      universals.push(slug as InvestmentType);
+    }
+  }
+  return universals;
 }
 
 // ── Population growth accumulator ──

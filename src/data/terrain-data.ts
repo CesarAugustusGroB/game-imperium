@@ -164,3 +164,22 @@ export const UNIVERSAL_BUILDINGS: InvestmentType[] = [
   'aqueduct',
   'insula',
 ];
+
+/**
+ * Authoritative terrain → available terrain buildings map (S17-04).
+ * This differs from TerrainData.exclusiveBuildings (which is flavor/association data):
+ * some buildings are available in multiple terrains (e.g. Sacred Grove / Lumber Camp
+ * are buildable in both Forest AND Marsh per the S17-04 spec).
+ *
+ * These will become InvestmentType values after S17-05 adds their INVESTMENT_DATA entries.
+ */
+export const TERRAIN_AVAILABLE_BUILDINGS: Record<TerrainType, TerrainBuildingType[]> = {
+  farmland:  ['granary', 'villa'],
+  hills:     ['mine', 'forge'],
+  coast:     ['port', 'fishery'],
+  forest:    ['sacred_grove', 'lumber_camp'],
+  plains:    ['training_ground', 'stables'],
+  mountains: ['watchtower', 'mountain_pass'],
+  marsh:     ['oracle_shrine', 'reed_harvest', 'sacred_grove', 'lumber_camp'],
+  desert:    ['oasis_market', 'caravan_post'],
+};

@@ -9,6 +9,7 @@ import {
   calculateNetWealthChange,
   tickPopulationGrowth,
   calculateUnrestDelta, getRebelThreshold, applyRebellion,
+  getAvailableBuildings,
 } from './province';
 import type { ResourceType } from '../core/commander';
 import type { DoctrineEffect } from '../items/doctrine';
@@ -123,6 +124,12 @@ export function buildInvestment(provinceId: string, type: InvestmentType): boole
 
   // Rubble gate: rebuilding is blocked while rubbleTimer is active
   if (province.rubbleTimer > 0) return false;
+
+  // Terrain gate: building must be available for this province's terrain
+  if (!getAvailableBuildings(province).includes(type)) return false;
+
+  // Forge gate: Forge also requires the Iron trade good (Hills terrain implied by terrain gate)
+  if ((type as string) === 'forge' && province.tradeGood !== 'iron') return false;
 
   // Slot gate: new buildings consume a slot; upgrades do not
   const isNew = !province.investments.some(i => i.type === type);
