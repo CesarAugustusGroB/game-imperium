@@ -13,7 +13,7 @@ import {
 } from './province';
 import type { ResourceType } from '../core/commander';
 import type { DoctrineEffect } from '../items/doctrine';
-import type { ResourceCost } from '../../types/index';
+import type { ResourceCost, TaxLevel } from '../../types/index';
 import { getResource, spendResource, addResource } from '../core/resources';
 import { getGovernorTraits, getGovernorSalary, registerProvinceSyncCallback } from './governor-store';
 import { claimTerritory } from './province-map-store';
@@ -163,6 +163,18 @@ export function buildInvestment(provinceId: string, type: InvestmentType): boole
   const updated = { ...province, investments: newInvestments };
   const arr = [...provinces.value];
   arr[idx] = updated;
+  provinces.value = arr;
+  return true;
+}
+
+/**
+ * Update the tax levels for a province. Changes take effect on the next season tick.
+ */
+export function setProvinceTax(provinceId: string, lowerTax: TaxLevel, upperTax: TaxLevel): boolean {
+  const idx = provinces.value.findIndex(p => p.id === provinceId);
+  if (idx === -1) return false;
+  const arr = [...provinces.value];
+  arr[idx] = { ...arr[idx], lowerTax, upperTax };
   provinces.value = arr;
   return true;
 }

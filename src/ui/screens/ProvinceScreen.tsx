@@ -1,13 +1,17 @@
-import { signal } from '@preact/signals';
+import { signal, useSignal } from '@preact/signals';
 import { navigateTo } from '../screens';
 import { selectedCommander } from '../../game/core/game-state';
 import { playSfx } from '../sound/sfx';
-import { provinces, buildInvestment, canAffordCost, getNextInvestmentLevel } from '../../game/province/province-store';
+import { provinces, buildInvestment, canAffordCost, getNextInvestmentLevel, setProvinceTax } from '../../game/province/province-store';
 import {
   INVESTMENT_DATA, getProvinceIncome, getProvinceExpenses, getUnrestModifier,
   getInvestmentDiscount, applyInvestmentDiscount,
+  getTaxLabel, getTaxMultiplier, getLowerTaxUnrest,
+  getUpperTaxUnrest, calculateEffectiveGrowth, calculateNetWealthChange,
+  getWealthTier, getWealthMultiplier, getActiveSynergies,
   type InvestmentType, type Province,
 } from '../../game/province/province';
+import type { TaxLevel } from '../../types/index';
 import { FACTION_COLORS, RESOURCE_INFO, type ResourceType } from '../../game/core/commander';
 import { getResource } from '../../game/core/resources';
 import { getHireCost } from '../../game/province/governor';
@@ -193,11 +197,78 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
       .prov-ledger { flex: 1 1 auto !important; max-height: 200px !important; }
       .inv-grid { grid-template-columns: repeat(2, 1fr) !important; }
     }
+
+    /* ── Tax sliders ── */
+    .tax-section {
+      display: flex; flex-direction: column; gap: 12px;
+      padding: 14px 0;
+      border-top: 1px solid var(--color-border-subtle);
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+    input[type=range].tax-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%; height: 4px;
+      background: rgba(180, 160, 100, 0.18);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range].tax-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--color-gold-primary);
+      border: 2px solid rgba(20, 18, 36, 0.9);
+      box-shadow: 0 0 6px rgba(240, 208, 128, 0.4);
+      cursor: pointer;
+      transition: transform var(--duration-fast) var(--ease-default),
+                  box-shadow var(--duration-fast) var(--ease-default);
+    }
+    input[type=range].tax-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 10px rgba(240, 208, 128, 0.6);
+    }
+    input[type=range].tax-slider::-moz-range-thumb {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--color-gold-primary);
+      border: 2px solid rgba(20, 18, 36, 0.9);
+      cursor: pointer;
+    }
+    input[type=range].tax-slider:focus-visible {
+      outline: 2px solid var(--color-gold-primary);
+      outline-offset: 4px;
+      border-radius: 2px;
+    }
+    .tax-preview { animation: prov-fade-in var(--duration-fast) var(--ease-default); }
+    .tax-apply-btn {
+      transition: all var(--duration-fast) var(--ease-default); cursor: pointer;
+    }
+    .tax-apply-btn:hover {
+      border-color: var(--color-gold-primary) !important;
+      background: rgba(80, 60, 20, 0.55) !important;
+      color: var(--color-gold-primary) !important;
+    }
+    .tax-apply-btn:active { transform: scale(0.97); }
+    .tax-reset-btn {
+      transition: color var(--duration-fast) var(--ease-default); cursor: pointer;
+      background: none; border: none; padding: 0;
+    }
+    .tax-reset-btn:hover { color: var(--color-text-primary) !important; }
   `;
   document.head.appendChild(el);
 }
 
 const ALL_INVESTMENTS: InvestmentType[] = ['castrum', 'basilica', 'pantheon', 'market', 'aqueduct', 'insula'];
+
+const TAX_LEVEL_COLORS: Record<TaxLevel, string> = {
+  1: 'var(--color-success)',
+  2: '#68a860',
+  3: 'var(--color-text-secondary)',
+  4: 'var(--color-warning)',
+  5: 'var(--color-danger)',
+};
 
 const selectedProvinceId = signal<string | null>(null);
 const showGovernorPicker = signal(false);
@@ -528,6 +599,307 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
   );
 }
 
+// ── Tax slider components ──
+
+function TaxSlider({
+  label, value, onChange,
+}: {
+  label: string;
+  value: TaxLevel;
+  onChange: (v: TaxLevel) => void;
+}) {
+  const color = TAX_LEVEL_COLORS[value];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+      {/* Label row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{
+          fontSize: 'var(--font-size-xs)',
+          color: 'var(--color-text-secondary)',
+          textTransform: 'uppercase',
+          letterSpacing: '1.5px',
+        }}>
+          {label}
+        </span>
+        <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color }}>
+          {getTaxLabel(value)}
+        </span>
+      </div>
+      {/* Range input */}
+      <input
+        type="range"
+        class="tax-slider"
+        min={1} max={5} step={1}
+        value={value}
+        onInput={(e) => onChange(Number((e.target as HTMLInputElement).value) as TaxLevel)}
+      />
+      {/* Stop labels */}
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        {([1, 2, 3, 4, 5] as TaxLevel[]).map(l => (
+          <span
+            key={l}
+            style={{
+              fontSize: '8px',
+              color: l === value ? TAX_LEVEL_COLORS[l] : 'var(--color-text-muted)',
+              fontWeight: l === value ? 700 : 400,
+              transition: 'color var(--duration-fast)',
+            }}
+          >
+            {getTaxLabel(l)}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TaxSliders({ province }: { province: Province }) {
+  const pendingLower = useSignal<TaxLevel>(province.lowerTax);
+  const pendingUpper = useSignal<TaxLevel>(province.upperTax);
+
+  const traits = getGovernorTraits(province.id);
+  const isDirty = pendingLower.value !== province.lowerTax
+    || pendingUpper.value !== province.upperTax;
+
+  // Preview province — only lowerTax/upperTax differ
+  const previewProv: Province = {
+    ...province,
+    lowerTax: pendingLower.value,
+    upperTax: pendingUpper.value,
+  };
+
+  // Gold preview: raw building gold × wealth mult × tax mult + 1
+  let buildingGold = 0;
+  for (const inv of province.investments) {
+    buildingGold += INVESTMENT_DATA[inv.type].levels[inv.level - 1].incomeBonus.gold ?? 0;
+  }
+  for (const syn of getActiveSynergies(province)) {
+    if (syn.bonus.type === 'gold') buildingGold += syn.bonus.amount;
+  }
+  const wealthMult = getWealthMultiplier(getWealthTier(province.wealth));
+  const currentGold = Math.round(buildingGold * wealthMult
+    * getTaxMultiplier(province.lowerTax, province.upperTax)) + 1;
+  const previewGold = Math.round(buildingGold * wealthMult
+    * getTaxMultiplier(pendingLower.value, pendingUpper.value)) + 1;
+  const goldDelta = previewGold - currentGold;
+
+  // Growth preview
+  const currentGrowth = calculateEffectiveGrowth(province, province.terrain, traits);
+  const previewGrowth = calculateEffectiveGrowth(previewProv, province.terrain, traits);
+  const growthDelta = previewGrowth - currentGrowth;
+
+  // Wealth delta preview
+  const currentWealthDelta = calculateNetWealthChange(province, province.terrain);
+  const previewWealthDelta = calculateNetWealthChange(previewProv, province.terrain);
+  const wealthDeltaDiff = previewWealthDelta - currentWealthDelta;
+
+  // Unrest delta (tax portion only)
+  const currentTaxUnrest = getLowerTaxUnrest(province.lowerTax)
+    + getUpperTaxUnrest(province.upperTax);
+  const previewTaxUnrest = getLowerTaxUnrest(pendingLower.value)
+    + getUpperTaxUnrest(pendingUpper.value);
+  const unrestDiff = previewTaxUnrest - currentTaxUnrest;
+
+  const previewMult = getTaxMultiplier(pendingLower.value, pendingUpper.value);
+  const currentMult = getTaxMultiplier(province.lowerTax, province.upperTax);
+
+  function handleApply() {
+    playSfx('ui_click');
+    setProvinceTax(province.id, pendingLower.value, pendingUpper.value);
+  }
+
+  function handleReset() {
+    pendingLower.value = province.lowerTax;
+    pendingUpper.value = province.upperTax;
+  }
+
+  function fmtDelta(n: number, decimals = 0): string {
+    const v = decimals > 0 ? n.toFixed(decimals) : String(Math.round(n));
+    return n > 0 ? `+${v}` : v;
+  }
+
+  function deltaColor(n: number, invert = false): string {
+    if (n === 0) return 'var(--color-text-muted)';
+    const positive = invert ? n < 0 : n > 0;
+    return positive ? 'var(--color-success)' : 'var(--color-danger)';
+  }
+
+  return (
+    <div class="tax-section">
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 'var(--font-size-xs)',
+          fontWeight: 600,
+          color: 'var(--color-gold-secondary)',
+          letterSpacing: '3px',
+          textTransform: 'uppercase',
+        }}>
+          Tax Policy
+        </span>
+        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+          Combined{' '}
+          <strong style={{ color: isDirty ? TAX_LEVEL_COLORS[pendingLower.value] : 'var(--color-text-secondary)' }}>
+            {isDirty ? previewMult.toFixed(2) : currentMult.toFixed(2)}×
+          </strong>
+        </span>
+      </div>
+
+      {/* Sliders */}
+      <TaxSlider
+        label="Lower Class"
+        value={pendingLower.value}
+        onChange={(v) => { pendingLower.value = v; }}
+      />
+      <TaxSlider
+        label="Upper Class"
+        value={pendingUpper.value}
+        onChange={(v) => { pendingUpper.value = v; }}
+      />
+
+      {/* Steady-state summary (when no pending change) */}
+      {!isDirty && (
+        <div style={{
+          fontSize: 'var(--font-size-xs)',
+          color: 'var(--color-text-muted)',
+          display: 'flex', gap: '8px',
+        }}>
+          <span style={{ color: TAX_LEVEL_COLORS[province.lowerTax] }}>
+            {getTaxLabel(province.lowerTax)}
+          </span>
+          <span>/</span>
+          <span style={{ color: TAX_LEVEL_COLORS[province.upperTax] }}>
+            {getTaxLabel(province.upperTax)}
+          </span>
+          <span>·</span>
+          <span>{currentMult.toFixed(2)}×</span>
+        </div>
+      )}
+
+      {/* Live preview (only when dirty) */}
+      {isDirty && (
+        <div
+          class="tax-preview"
+          style={{
+            background: 'rgba(30, 26, 48, 0.6)',
+            border: '1px solid var(--color-border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            padding: '10px 12px',
+            display: 'flex', flexDirection: 'column', gap: '6px',
+          }}
+        >
+          <div style={{
+            fontSize: 'var(--font-size-xs)',
+            color: 'var(--color-text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '1.5px',
+            marginBottom: '2px',
+          }}>
+            Preview
+          </div>
+
+          {/* Gold income */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)' }}>
+            <span style={{ color: 'var(--color-text-secondary)' }}>Gold income</span>
+            <span>
+              <span style={{ color: 'var(--color-text-muted)' }}>{currentGold}g →</span>{' '}
+              <strong style={{ color: deltaColor(goldDelta) }}>{previewGold}g</strong>
+              {goldDelta !== 0 && (
+                <span style={{ color: deltaColor(goldDelta), marginLeft: '4px' }}>
+                  ({fmtDelta(goldDelta)}g)
+                </span>
+              )}
+            </span>
+          </div>
+
+          {/* Growth rate */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)' }}>
+            <span style={{ color: 'var(--color-text-secondary)' }}>Growth rate</span>
+            <span>
+              <span style={{ color: 'var(--color-text-muted)' }}>
+                {currentGrowth >= 0 ? '+' : ''}{currentGrowth.toFixed(1)}/s →
+              </span>{' '}
+              <strong style={{ color: deltaColor(growthDelta) }}>
+                {previewGrowth >= 0 ? '+' : ''}{previewGrowth.toFixed(1)}/s
+              </strong>
+              {growthDelta !== 0 && (
+                <span style={{ color: deltaColor(growthDelta), marginLeft: '4px' }}>
+                  ({fmtDelta(growthDelta, 1)}/s)
+                </span>
+              )}
+            </span>
+          </div>
+
+          {/* Wealth delta */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)' }}>
+            <span style={{ color: 'var(--color-text-secondary)' }}>Wealth Δ/season</span>
+            <span>
+              <span style={{ color: 'var(--color-text-muted)' }}>
+                {currentWealthDelta >= 0 ? '+' : ''}{currentWealthDelta.toFixed(1)} →
+              </span>{' '}
+              <strong style={{ color: deltaColor(wealthDeltaDiff) }}>
+                {previewWealthDelta >= 0 ? '+' : ''}{previewWealthDelta.toFixed(1)}
+              </strong>
+              {wealthDeltaDiff !== 0 && (
+                <span style={{ color: deltaColor(wealthDeltaDiff), marginLeft: '4px' }}>
+                  ({fmtDelta(wealthDeltaDiff, 1)})
+                </span>
+              )}
+            </span>
+          </div>
+
+          {/* Unrest delta (invert: lower unrest = better = green) */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)' }}>
+            <span style={{ color: 'var(--color-text-secondary)' }}>Unrest Δ/season</span>
+            <span>
+              <span style={{ color: 'var(--color-text-muted)' }}>
+                {currentTaxUnrest >= 0 ? '+' : ''}{currentTaxUnrest}/s →
+              </span>{' '}
+              <strong style={{ color: deltaColor(unrestDiff, true) }}>
+                {previewTaxUnrest >= 0 ? '+' : ''}{previewTaxUnrest}/s
+              </strong>
+              {unrestDiff !== 0 && (
+                <span style={{ color: deltaColor(unrestDiff, true), marginLeft: '4px' }}>
+                  ({fmtDelta(unrestDiff)}/s)
+                  {unrestDiff > 0 ? ' ↑' : ' ↓'}
+                </span>
+              )}
+            </span>
+          </div>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+            <button
+              class="tax-apply-btn ornate-btn"
+              onClick={handleApply}
+              style={{
+                flex: 1, padding: '6px 12px',
+                fontSize: 'var(--font-size-xs)',
+                letterSpacing: '1.5px',
+              }}
+            >
+              Apply
+            </button>
+            <button
+              class="tax-reset-btn"
+              onClick={handleReset}
+              style={{
+                fontSize: 'var(--font-size-xs)',
+                color: 'var(--color-text-muted)',
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
+              }}
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Province detail (right panel: governor strip + building grid) ──
 
 function ProvinceDetail({ province }: { province: Province }) {
@@ -618,6 +990,9 @@ function ProvinceDetail({ province }: { province: Province }) {
           </>
         )}
       </div>
+
+      {/* Tax Policy (S18-01) */}
+      <TaxSliders key={province.id} province={province} />
 
       {/* Building hero grid */}
       <div
