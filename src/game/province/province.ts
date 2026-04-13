@@ -2,6 +2,7 @@ import type { Faction, ResourceType } from '../core/commander';
 import type { ResourceCost, TaxLevel, TierTuple, WealthTier } from '../../types/index';
 import type { GovernorTrait } from './governor';
 import type { TerrainType } from '../../data/terrain-data';
+import type { TradeGoodType } from '../../data/trade-goods';
 
 // ── Investment types ──
 
@@ -69,6 +70,8 @@ export interface Province {
   rubbleTimer: number;
   /** Terrain type — drives modifiers, exclusive buildings, and trade-good assignment (S17). */
   terrain: TerrainType;
+  /** Assigned trade good, or null if none. Randomly assigned on conquest (S17-03). */
+  tradeGood: TradeGoodType | null;
 }
 
 // ── Investment data ──
@@ -284,6 +287,7 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
     growthAccumulator: 0,
     rubbleTimer: 0,
     terrain: 'plains',
+    tradeGood: null,
     ...overrides,
   };
 }
