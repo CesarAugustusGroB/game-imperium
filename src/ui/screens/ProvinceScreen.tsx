@@ -23,6 +23,7 @@ import {
   hireGovernor, dismissGovernor, getGovernorSalary,
 } from '../../game/province/governor-store';
 import { TRADE_GOOD_DATA } from '../../data/trade-goods';
+import { TERRAIN_DATA } from '../../data/terrain-data';
 import { nextInvestmentDiscount } from '../../game/progression/strategic-store';
 import { ROMAN, formatCost } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
@@ -304,6 +305,40 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
       pointer-events: none;
       transition: left var(--duration-slow) var(--ease-default),
                   width var(--duration-slow) var(--ease-default);
+    }
+
+    /* ── Province identity strip ── */
+    .identity-strip {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      padding: 10px 14px;
+      background: linear-gradient(90deg, rgba(24, 18, 42, 0.65), rgba(14, 10, 26, 0.5));
+      border: 1px solid var(--color-border-default);
+      border-left: 3px solid var(--color-border-strong);
+      border-radius: var(--radius-md);
+    }
+    .identity-chip {
+      display: flex; align-items: center; gap: 5px;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      cursor: default;
+      transition: background var(--duration-fast) var(--ease-default);
+    }
+    .identity-chip:not(.identity-chip-empty):hover {
+      background: rgba(180, 160, 100, 0.08);
+    }
+    .identity-chip-empty { opacity: 0.38; }
+    .identity-icon { font-size: 14px; line-height: 1; }
+    .identity-label {
+      font-family: var(--font-display);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      color: var(--color-text-primary);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .identity-sep {
+      color: var(--color-text-muted); font-size: var(--font-size-xs);
+      opacity: 0.45; user-select: none; padding: 0 2px;
     }
 
     /* ── Unrest section ── */
@@ -1286,6 +1321,163 @@ function TaxSliders({ province }: { province: Province }) {
   );
 }
 
+// ── Province identity strip ──
+
+const TERRAIN_ICONS: Record<string, string> = {
+  farmland:  '🌾',
+  hills:     '⛰️',
+  coast:     '🌊',
+  forest:    '🌲',
+  plains:    '🏕️',
+  mountains: '🏔️',
+  marsh:     '🌿',
+  desert:    '🏜️',
+};
+
+const TRADE_GOOD_ICONS: Record<string, string> = {
+  grain:    '🌾',
+  iron:     '⚙️',
+  silk:     '🧵',
+  marble:   '🏛️',
+  wine:     '🍷',
+  timber:   '🪵',
+  fish:     '🐟',
+  horses:   '🐴',
+  gold_ore: '⛏️',
+  incense:  '🕯️',
+  salt:     '🧂',
+  olives:   '🫒',
+};
+
+function formatSlug(slug: string): string {
+  return slug.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+}
+
+function IdentityStrip({ province }: { province: Province }) {
+  const terrain   = TERRAIN_DATA[province.terrain];
+  const tradeGood = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood] : null;
+
+  // ── Terrain tooltip ──
+  const mods = terrain.baseModifiers;
+  const modLines: string[] = [];
+  if (mods.growthModifier !== 0)  modLines.push(`Growth ${mods.growthModifier > 0 ? '+' : ''}${mods.growthModifier}/season`);
+  if (mods.pwgModifier    !== 0)  modLines.push(`Wealth Growth ${mods.pwgModifier > 0 ? '+' : ''}${mods.pwgModifier}/season`);
+  if (mods.faithBonus     !== 0)  modLines.push(`Faith +${mods.faithBonus}/season`);
+  if (mods.momentumBonus  !== 0)  modLines.push(`Momentum +${mods.momentumBonus}/season`);
+  if (mods.garrisonBonus  !== 0)  modLines.push(`Garrison +${mods.garrisonBonus}`);
+
+  const terrainTooltip = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '200px' }}>
+      <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)' }}>
+        {TERRAIN_ICONS[province.terrain]} {terrain.name}
+      </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontStyle: 'italic', lineHeight: '1.4' }}>
+        {terrain.flavour}
+      </div>
+      {modLines.length > 0 && (
+        <div style={{ marginTop: '2px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          {modLines.map(line => (
+            <div key={line} style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-success)' }}>{line}</div>
+          ))}
+        </div>
+      )}
+      {terrain.exclusiveBuildings.length > 0 && (
+        <div style={{ marginTop: '2px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+          Unlocks: {terrain.exclusiveBuildings.map(formatSlug).join(', ')}
+        </div>
+      )}
+    </div>
+  );
+
+  // ── Trade good tooltip ──
+  const tradeGoodTooltip = tradeGood ? (() => {
+    const lines: string[] = [];
+    if (tradeGood.flatGold     > 0) lines.push(`+${tradeGood.flatGold}g/season`);
+    if (tradeGood.flatGrowth   > 0) lines.push(`+${tradeGood.flatGrowth} growth/season`);
+    if (tradeGood.flatFaith    > 0) lines.push(`+${tradeGood.flatFaith} faith/season`);
+    if (tradeGood.flatMomentum > 0) lines.push(`+${tradeGood.flatMomentum} momentum/season`);
+    if (tradeGood.wealthGrowthBonus > 0) lines.push(`+${tradeGood.wealthGrowthBonus} wealth growth/season`);
+
+    const specialLine = (() => {
+      const s = tradeGood.special;
+      if (!s) return null;
+      switch (s.type) {
+        case 'pop-cap-bonus':       return `+${s.amount} max population`;
+        case 'build-cost-discount': return `-${s.percent}% building costs`;
+        case 'unrest-reduction':    return `-${s.amount} unrest/season`;
+        case 'enables-building':    return `Enables ${formatSlug(s.building)}`;
+        case 'cavalry-bonus':       return 'Cavalry bonus in battle';
+      }
+    })();
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '200px' }}>
+        <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)' }}>
+          {TRADE_GOOD_ICONS[province.tradeGood!] ?? '?'} {tradeGood.name}
+        </div>
+        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginBottom: '2px' }}>
+          Flat income — not affected by tax or wealth
+        </div>
+        {lines.map(l => (
+          <div key={l} style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-success)' }}>{l}</div>
+        ))}
+        {specialLine && (
+          <div style={{ marginTop: '2px', fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-secondary)' }}>
+            ✦ {specialLine}
+          </div>
+        )}
+      </div>
+    );
+  })() : null;
+
+  return (
+    <div class="identity-strip">
+      {/* Terrain */}
+      <Tooltip content={terrainTooltip} variant="rich" position="below">
+        <div class="identity-chip">
+          <span class="identity-icon">{TERRAIN_ICONS[province.terrain] ?? '?'}</span>
+          <span class="identity-label">{terrain.name}</span>
+        </div>
+      </Tooltip>
+
+      <span class="identity-sep">·</span>
+
+      {/* Trade good */}
+      {tradeGood && tradeGoodTooltip ? (
+        <Tooltip content={tradeGoodTooltip} variant="rich" position="below">
+          <div class="identity-chip">
+            <span class="identity-icon">{TRADE_GOOD_ICONS[province.tradeGood!] ?? '?'}</span>
+            <span class="identity-label">{tradeGood.name}</span>
+          </div>
+        </Tooltip>
+      ) : (
+        <div class="identity-chip identity-chip-empty">
+          <span class="identity-icon">—</span>
+          <span class="identity-label" style={{ color: 'var(--color-text-muted)' }}>No Trade Good</span>
+        </div>
+      )}
+
+      <span class="identity-sep">·</span>
+
+      {/* Unique feature — not yet implemented (Sprint 4) */}
+      <Tooltip
+        content={
+          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+            Unique features coming in Sprint 4
+          </div>
+        }
+        variant="rich"
+        position="below"
+      >
+        <div class="identity-chip identity-chip-empty">
+          <span class="identity-icon">🏛️</span>
+          <span class="identity-label" style={{ color: 'var(--color-text-muted)' }}>No Feature</span>
+        </div>
+      </Tooltip>
+    </div>
+  );
+}
+
 // ── Unrest section ──
 
 function UnrestSection({ province }: { province: Province }) {
@@ -1726,6 +1918,9 @@ function ProvinceDetail({ province }: { province: Province }) {
 
   return (
     <div style={{ animation: 'prov-fade-in var(--duration-normal) var(--ease-default)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Province Identity (S18-06) */}
+      <IdentityStrip province={province} />
+
       {/* Governor strip */}
       <div class="gov-strip">
         {assigned ? (
