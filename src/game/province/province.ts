@@ -2,8 +2,9 @@ import type { Faction, ResourceType } from '../core/commander';
 import type { ResourceCost, TaxLevel, TierTuple, WealthTier } from '../../types/index';
 import type { GovernorTrait } from './governor';
 import type { TerrainType } from '../../data/terrain-data';
-import { UNIVERSAL_BUILDINGS, TERRAIN_AVAILABLE_BUILDINGS } from '../../data/terrain-data';
+import { UNIVERSAL_BUILDINGS, TERRAIN_AVAILABLE_BUILDINGS, TERRAIN_DATA } from '../../data/terrain-data';
 import type { TradeGoodType } from '../../data/trade-goods';
+import { TRADE_GOOD_DATA } from '../../data/trade-goods';
 
 // ── Investment types ──
 
@@ -319,8 +320,14 @@ export function getActiveSynergies(province: Province): SynergyData[] {
  */
 export function getEffectiveMaxPop(province: Province): number {
   let max = province.maxPopulation;
+  // Synergy pop-cap bonuses (Insula+Aqueduct → +1)
   for (const syn of getActiveSynergies(province)) {
     if (syn.bonus.type === 'pop-cap') max += syn.bonus.amount;
+  }
+  // Trade good pop-cap bonus (Grain → +2)
+  if (province.tradeGood) {
+    const special = TRADE_GOOD_DATA[province.tradeGood].special;
+    if (special?.type === 'pop-cap-bonus') max += special.amount;
   }
   return max;
 }
@@ -408,6 +415,12 @@ export function getUnrestModifier(
   // Synergy unrest reduction (amount is positive = reduces unrest)
   for (const syn of getActiveSynergies(province)) {
     if (syn.bonus.type === 'unrest') mod -= syn.bonus.amount;
+  }
+
+  // Trade good unrest reduction (Wine → -5 unrest/season)
+  if (province.tradeGood) {
+    const special = TRADE_GOOD_DATA[province.tradeGood].special;
+    if (special?.type === 'unrest-reduction') mod -= special.amount;
   }
 
   return mod;
@@ -593,8 +606,7 @@ export function getUpperTaxUnrest(level: TaxLevel): number {
 
 // ── Wealth generation (NWG / PWG) ──
 
-/** PWG bonus from terrain type (Hills +1, Coast +1, Desert +2; others +0). */
-const TERRAIN_PWG: Record<string, number> = { hills: 1, coast: 1, desert: 2 };
+// TERRAIN_PWG replaced by direct TERRAIN_DATA lookup in calculatePWG (S17-07).
 
 /** PWG bonus contributed by commercial buildings, keyed by InvestmentType then level. */
 const BUILDING_PWG: Partial<Record<InvestmentType, Record<number, number>>> = {
@@ -621,7 +633,8 @@ const NWG_PARAMS: Record<TaxLevel, [number, number]> = {
  */
 export function calculatePWG(province: Province, terrain?: string): number {
   let pwg = 2;
-  if (terrain) pwg += TERRAIN_PWG[terrain.toLowerCase()] ?? 0;
+  const terrainKey = (terrain ?? province.terrain) as TerrainType;
+  pwg += TERRAIN_DATA[terrainKey]?.baseModifiers.pwgModifier ?? 0;
   for (const inv of province.investments) {
     pwg += BUILDING_PWG[inv.type]?.[inv.level] ?? 0;
   }
@@ -709,9 +722,7 @@ export function getAvailableBuildings(province: Province): InvestmentType[] {
 // ── Population growth accumulator ──
 
 /** Terrain growth contribution (plains/unknown = 1, coast = 2, desert = 0). */
-const TERRAIN_GROWTH: Record<string, number> = {
-  plains: 1, hills: 1, forest: 1, coast: 2, desert: 0,
-};
+// TERRAIN_GROWTH replaced by direct TERRAIN_DATA lookup in calculateRawGrowth (S17-07).
 
 /** Population growth bonus contributed by buildings, keyed by InvestmentType then level. */
 const BUILDING_GROWTH: Partial<Record<InvestmentType, Record<number, number>>> = {
@@ -735,7 +746,9 @@ export function calculateRawGrowth(
   terrain?: string,
   governorTraits: GovernorTrait[] = [],
 ): number {
-  let raw = terrain ? (TERRAIN_GROWTH[terrain.toLowerCase()] ?? 1) : 1;
+  const terrainKey = (terrain ?? province.terrain) as TerrainType;
+  // Base growth is 1; terrain adds its delta (e.g. Farmland +2, Mountains/Marsh -1, Desert -2)
+  let raw = 1 + (TERRAIN_DATA[terrainKey]?.baseModifiers.growthModifier ?? 0);
 
   for (const inv of province.investments) {
     raw += BUILDING_GROWTH[inv.type]?.[inv.level] ?? 0;

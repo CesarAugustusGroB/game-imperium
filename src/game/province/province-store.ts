@@ -21,7 +21,7 @@ import { nextInvestmentDiscount } from '../progression/strategic-store';
 import { addNotification } from '../../ui/notifications/notification-store';
 import { TERRAIN_DATA } from '../../data/terrain-data';
 import type { TerrainType } from '../../data/terrain-data';
-import { getTradeGoodsForTerrain } from '../../data/trade-goods';
+import { getTradeGoodsForTerrain, TRADE_GOOD_DATA } from '../../data/trade-goods';
 import type { TradeGoodType } from '../../data/trade-goods';
 
 // ── Province signals ──
@@ -142,7 +142,13 @@ export function buildInvestment(provinceId: string, type: InvestmentType): boole
   const traits = getGovernorTraits(provinceId);
   const governorDiscount = getInvestmentDiscount(traits);
   const scrollDiscount = nextInvestmentDiscount.value;
-  const effectiveDiscount = Math.min(90, governorDiscount + scrollDiscount);
+  // Trade good build-cost discount: Marble -15%, Timber -10%
+  let tradeDiscount = 0;
+  if (province.tradeGood) {
+    const special = TRADE_GOOD_DATA[province.tradeGood].special;
+    if (special?.type === 'build-cost-discount') tradeDiscount = special.percent;
+  }
+  const effectiveDiscount = Math.min(90, governorDiscount + scrollDiscount + tradeDiscount);
   const cost = effectiveDiscount > 0 ? applyInvestmentDiscount(baseCost, effectiveDiscount) : baseCost;
 
   if (!spendCost(cost)) return false;
@@ -249,6 +255,14 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
       provIncome[res] = Math.round(amt * wealthMult);
     }
 
+    // Trade good flat income — added after multipliers (flat = no tier × tax scaling per spec)
+    if (prov.tradeGood) {
+      const good = TRADE_GOOD_DATA[prov.tradeGood];
+      if (good.flatGold > 0)     provIncome.gold     = (provIncome.gold     ?? 0) + good.flatGold;
+      if (good.flatFaith > 0)    provIncome.faith    = (provIncome.faith    ?? 0) + good.flatFaith;
+      if (good.flatMomentum > 0) provIncome.momentum = (provIncome.momentum ?? 0) + good.flatMomentum;
+    }
+
     // Governor income-bonus trait applied after multipliers
     for (const trait of traits) {
       if (trait.type === 'income-bonus' && provIncome[trait.resource] != null) {
@@ -304,11 +318,11 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
     let p = prov;
 
     // 4. Tick wealth (clamp 0–200)
-    const netWealth = calculateNetWealthChange(p);
+    const netWealth = calculateNetWealthChange(p, p.terrain);
     p = { ...p, wealth: Math.min(200, Math.max(0, p.wealth + netWealth)) };
 
     // 6. Tick population growth accumulator
-    p = tickPopulationGrowth(p, undefined, traits);
+    p = tickPopulationGrowth(p, p.terrain, traits);
 
     // 7. Tick unrest: new formula + expense shortfall penalty
     let unrestDelta = calculateUnrestDelta(p, traits);
