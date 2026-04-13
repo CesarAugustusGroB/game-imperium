@@ -1,6 +1,15 @@
 import { signal } from '@preact/signals';
 import type { Province, InvestmentType } from './province';
-import { createProvince, INVESTMENT_DATA, getInvestmentDiscount, applyInvestmentDiscount, getProvinceIncome, getProvinceExpenses, getUnrestModifier, getBuildingSlots } from './province';
+import {
+  createProvince, INVESTMENT_DATA,
+  getInvestmentDiscount, applyInvestmentDiscount,
+  getProvinceExpenses, getBuildingSlots,
+  getWealthTier, getWealthMultiplier,
+  getTaxMultiplier,
+  calculateNetWealthChange,
+  tickPopulationGrowth,
+  calculateUnrestDelta, getRebelThreshold, applyRebellion,
+} from './province';
 import type { ResourceType } from '../core/commander';
 import type { DoctrineEffect } from '../items/doctrine';
 import type { ResourceCost } from '../../types/index';
@@ -140,20 +149,14 @@ export function assignGovernor(provinceId: string, governorId: string | undefine
 // without importing province-store (breaking the circular dependency).
 registerProvinceSyncCallback(assignGovernor);
 
-// ── Season income + unrest cycle ──
-
-/** Base unrest growth per season (constant pressure). */
-const BASE_UNREST_GROWTH = 5;
+// ── Season income + province tick cycle ──
 
 /** Unrest penalty when province expenses can't be paid. */
 const EXPENSE_SHORTFALL_UNREST = 10;
 
-/** Unrest threshold that triggers a rebellion. */
-const REBELLION_THRESHOLD = 80;
-
 export interface RebellionEvent {
   provinceName: string;
-  lostInvestment: string | null; // investment name lost, or null if no investments
+  lostInvestment: string | null; // first investment name lost, or null
 }
 
 export interface ProvinceIncomeResult {
@@ -164,50 +167,88 @@ export interface ProvinceIncomeResult {
 }
 
 /**
- * Get the Insula rebellion suppression threshold for a province.
- * Effective rebellion threshold = max(REBELLION_THRESHOLD, suppression).
- * Returns 0 (no suppression), 90 (Insula T2), or 101 (Insula T3 = immune).
- *
- * Previous values (50/70) were below REBELLION_THRESHOLD (80) and had no
- * effect. T2 now raises the bar to 90; T3 makes rebellion impossible (101 > 100 cap).
+ * Insula-based rebellion suppression.
+ * Returns 0 (none), 90 (T2 raises bar), or 101 (T3 = immune, since unrest caps at 100).
  */
 function getInsulaSuppression(prov: Province): number {
   const insula = prov.investments.find(i => i.type === 'insula');
   if (!insula) return 0;
-  if (insula.level >= 3) return 101; // Rebellion impossible (unrest caps at 100)
-  if (insula.level >= 2) return 90;  // Rebellion suppressed below 90 Unrest
+  if (insula.level >= 3) return 101;
+  if (insula.level >= 2) return 90;
   return 0;
 }
 
 /**
- * Collect income, pay expenses, tick unrest, and check rebellions for all provinces.
- * Called once per season tick.
+ * Rewritten season tick — wires all S16 sub-systems in spec order.
+ *
+ * Per-season tick order (per spec):
+ *  1. Calculate income: building_gold × wealthTier × taxMultiplier + 1 subsistence
+ *     Non-gold resources × wealthTier only (no tax).
+ *  2. Calculate expenses (buildings + governor).
+ *  3. Apply net income/expenses to global resources.
+ *  4. Tick wealth (PWG + NWG − devastation drain).
+ *  5. Wealth tier is derived from wealth — no stored field.
+ *  6. Tick pop growth accumulator, check threshold.
+ *  7. Tick unrest (tax + doom − decay + buildings + governor + exponential accel).
+ *  8. Check rebellion at threshold, apply if triggered.
+ *  9. Decrement devastation and rubble timers.
  */
 export function collectProvinceIncome(): ProvinceIncomeResult {
   const allProvinces = provinces.value;
+
+  // ── Steps 1–2: aggregate empire income & expenses ──
   const totals: Partial<Record<ResourceType, number>> = {};
   let totalExpenses = 0;
 
   for (const prov of allProvinces) {
     const traits = getGovernorTraits(prov.id);
-    const income = getProvinceIncome(prov, traits);
-    const expenses = getProvinceExpenses(prov, traits);
+    const wealthMult = getWealthMultiplier(getWealthTier(prov.wealth));
+    const taxMult = getTaxMultiplier(prov.lowerTax, prov.upperTax);
 
-    for (const [res, amt] of Object.entries(income) as [ResourceType, number][]) {
+    // Split building income into gold vs non-gold
+    let buildingGold = 0;
+    const nonGold: Partial<Record<ResourceType, number>> = {};
+    for (const inv of prov.investments) {
+      const effect = INVESTMENT_DATA[inv.type].levels[inv.level - 1];
+      for (const [res, amt] of Object.entries(effect.incomeBonus) as [ResourceType, number][]) {
+        if (res === 'gold') buildingGold += amt;
+        else nonGold[res] = (nonGold[res] ?? 0) + amt;
+      }
+    }
+
+    // Gold: building gold × wealth × tax, plus 1 subsistence always
+    const provIncome: Partial<Record<ResourceType, number>> = {
+      gold: Math.round(buildingGold * wealthMult * taxMult) + 1,
+    };
+
+    // Non-gold: wealth multiplier only (no tax)
+    for (const [res, amt] of Object.entries(nonGold) as [ResourceType, number][]) {
+      provIncome[res] = Math.round(amt * wealthMult);
+    }
+
+    // Governor income-bonus trait applied after multipliers
+    for (const trait of traits) {
+      if (trait.type === 'income-bonus' && provIncome[trait.resource] != null) {
+        provIncome[trait.resource] = Math.floor(
+          provIncome[trait.resource]! * (1 + trait.percent / 100),
+        );
+      }
+    }
+
+    for (const [res, amt] of Object.entries(provIncome) as [ResourceType, number][]) {
       if (amt > 0) totals[res] = (totals[res] ?? 0) + amt;
     }
-    totalExpenses += expenses;
+    totalExpenses += getProvinceExpenses(prov, traits);
   }
 
-  // Aqueduct T3: "All income +10%" — applies empire-wide
-  const aqueductBonus = hasAqueductIncomeBonus();
-  if (aqueductBonus) {
+  // Aqueduct T3 empire-wide bonus: +10% all income
+  if (hasAqueductIncomeBonus()) {
     for (const res of Object.keys(totals) as ResourceType[]) {
       totals[res] = Math.floor((totals[res] ?? 0) * 1.1);
     }
   }
 
-  // Add income resources
+  // Step 3: add income, drain expenses
   const incomeGained: { resource: ResourceType; amount: number }[] = [];
   for (const [res, amt] of Object.entries(totals) as [ResourceType, number][]) {
     if (amt > 0) {
@@ -216,7 +257,6 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
     }
   }
 
-  // Pay expenses (gold)
   let expensesPaid = 0;
   let expenseShortfall = 0;
   if (totalExpenses > 0) {
@@ -228,65 +268,77 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
         kind: 'pinned',
         icon: '⚠',
         title: 'Upkeep Shortfall',
-        message: `Can't cover all upkeep. Provinces gaining +10 unrest.`,
+        message: `Can't cover all upkeep. Provinces gaining +${EXPENSE_SHORTFALL_UNREST} unrest.`,
         color: '#d4a843',
       });
     }
   }
 
-  // Tick unrest + check rebellions
+  // ── Steps 4–9: per-province tick ──
   const rebellions: RebellionEvent[] = [];
   const updatedProvinces = allProvinces.map(prov => {
     const traits = getGovernorTraits(prov.id);
-    const unrestMod = getUnrestModifier(prov, traits);
+    let p = prov;
 
-    // Unrest change: base growth + investment/governor modifiers
-    let unrestDelta = BASE_UNREST_GROWTH + unrestMod;
+    // 4. Tick wealth (clamp 0–200)
+    const netWealth = calculateNetWealthChange(p);
+    p = { ...p, wealth: Math.min(200, Math.max(0, p.wealth + netWealth)) };
 
-    // Penalty for expense shortfall — only provinces that have expenses
-    if (expenseShortfall > 0 && getProvinceExpenses(prov, traits) > 0) {
+    // 6. Tick population growth accumulator
+    p = tickPopulationGrowth(p, undefined, traits);
+
+    // 7. Tick unrest: new formula + expense shortfall penalty
+    let unrestDelta = calculateUnrestDelta(p, traits);
+    if (expenseShortfall > 0 && getProvinceExpenses(p, traits) > 0) {
       unrestDelta += EXPENSE_SHORTFALL_UNREST;
     }
+    p = { ...p, unrest: Math.max(0, Math.min(100, p.unrest + unrestDelta)) };
 
-    const newUnrest = Math.max(0, Math.min(100, prov.unrest + unrestDelta));
+    // 8. Rebellion check
+    const effectiveThreshold = Math.max(getRebelThreshold(p), getInsulaSuppression(p));
+    if (p.unrest >= effectiveThreshold) {
+      const beforeInvestments = p.investments;
+      const beforeCount = p.rebellionCount;
+      p = applyRebellion(p);
 
-    // Rebellion check — Insula suppression raises the effective rebellion threshold.
-    // getInsulaSuppression returns 0 (none), 90 (T2), or 101 (T3 = immune).
-    // Effective threshold = max(REBELLION_THRESHOLD, suppression).
-    let investments = prov.investments;
-    const suppression = getInsulaSuppression(prov);
-    const effectiveThreshold = Math.max(REBELLION_THRESHOLD, suppression);
-    if (newUnrest >= effectiveThreshold && investments.length > 0) {
-      // Rebellion! Lose a random investment
-      const lostIdx = Math.floor(Math.random() * investments.length);
-      const lostName = INVESTMENT_DATA[investments[lostIdx].type].name;
-      investments = investments.filter((_, i) => i !== lostIdx);
+      // Determine what was lost for the notification
+      let lostName: string | null = null;
+      if (p.rebellionCount > beforeCount) {
+        if (beforeCount >= 2) {
+          // Ruined: all buildings gone
+          lostName = beforeInvestments.length > 0
+            ? INVESTMENT_DATA[beforeInvestments[0].type].name
+            : null;
+        } else {
+          const lost = beforeInvestments.find(i => !p.investments.some(j => j.type === i.type));
+          lostName = lost ? INVESTMENT_DATA[lost.type].name : null;
+        }
+      }
+
       rebellions.push({ provinceName: prov.name, lostInvestment: lostName });
       addNotification({
         kind: 'alert',
         icon: '⚔',
-        title: 'Rebellion',
-        message: `${prov.name} has rebelled! ${lostName} lost.`,
-        color: '#c24a3a',
-        duration: 4000,
-      });
-    } else if (newUnrest >= effectiveThreshold && investments.length === 0) {
-      rebellions.push({ provinceName: prov.name, lostInvestment: null });
-      addNotification({
-        kind: 'alert',
-        icon: '⚔',
-        title: 'Rebellion',
-        message: `${prov.name} has rebelled!`,
+        title: beforeCount >= 2 ? 'Province Ruined!' : 'Rebellion',
+        message: beforeCount >= 2
+          ? `${prov.name} is ruined — all buildings destroyed.`
+          : `${prov.name} has rebelled!${lostName ? ` ${lostName} lost.` : ''}`,
         color: '#c24a3a',
         duration: 4000,
       });
     }
 
-    return { ...prov, unrest: newUnrest, investments };
+    // 9. Decrement timers
+    p = {
+      ...p,
+      devastationTimer: Math.max(0, p.devastationTimer - 1),
+      rubbleTimer: Math.max(0, p.rubbleTimer - 1),
+    };
+
+    return p;
   });
 
   provinces.value = updatedProvinces;
-
   return { incomeGained, expensesPaid, expenseShortfall, rebellions };
 }
 
