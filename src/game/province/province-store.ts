@@ -18,6 +18,10 @@ import { getGovernorTraits, getGovernorSalary, registerProvinceSyncCallback } fr
 import { claimTerritory } from './province-map-store';
 import { nextInvestmentDiscount } from '../progression/strategic-store';
 import { addNotification } from '../../ui/notifications/notification-store';
+import { TERRAIN_DATA } from '../../data/terrain-data';
+import type { TerrainType } from '../../data/terrain-data';
+import { getTradeGoodsForTerrain } from '../../data/trade-goods';
+import type { TradeGoodType } from '../../data/trade-goods';
 
 // ── Province signals ──
 
@@ -25,6 +29,24 @@ import { addNotification } from '../../ui/notifications/notification-store';
 export const provinces = signal<Province[]>([]);
 
 // ── Management ──
+
+// All terrain types as an array, filtered to those with at least one valid trade good.
+// Mountains currently has no trade goods defined, so it is excluded from the pool.
+const TERRAIN_POOL: TerrainType[] = (Object.keys(TERRAIN_DATA) as TerrainType[]).filter(
+  t => getTradeGoodsForTerrain(t).length > 0,
+);
+
+/**
+ * Randomly assign a terrain type and a valid trade good for that terrain.
+ * Terrain is picked uniformly from the TERRAIN_POOL (terrains with ≥ 1 trade good).
+ * Trade good is picked uniformly from goods valid for the chosen terrain.
+ */
+export function assignProvinceIdentity(): { terrain: TerrainType; tradeGood: TradeGoodType } {
+  const terrain = TERRAIN_POOL[Math.floor(Math.random() * TERRAIN_POOL.length)];
+  const goods = getTradeGoodsForTerrain(terrain);
+  const tradeGood = goods[Math.floor(Math.random() * goods.length)];
+  return { terrain, tradeGood };
+}
 
 /**
  * Create a province from a completed spoke and add it to the store.
@@ -45,7 +67,8 @@ export function conquerProvince(
     if (perSpoke > 0) baseIncome[res] = perSpoke;
   }
 
-  const province = createProvince(name, { baseIncome });
+  const { terrain, tradeGood } = assignProvinceIdentity();
+  const province = createProvince(name, { baseIncome, terrain, tradeGood });
   provinces.value = [...provinces.value, province];
 
   // Claim a map territory for this province
