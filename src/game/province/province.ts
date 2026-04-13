@@ -211,9 +211,14 @@ export function getUnrestModifier(
   province: Province,
   governorTraits: GovernorTrait[] = [],
 ): number {
+  // garrison-strength multiplies Castrum's unrest reduction (×1.15 / ×1.25 / ×1.35)
+  const garrisonTrait = governorTraits.find(t => t.type === 'garrison-strength');
+  const garrisonMult = garrisonTrait ? 1 + (garrisonTrait as { type: 'garrison-strength'; percent: number }).percent / 100 : 1;
+
   let mod = 0;
   for (const inv of province.investments) {
-    mod += INVESTMENT_DATA[inv.type].levels[inv.level - 1].unrestChange;
+    const unrestChange = INVESTMENT_DATA[inv.type].levels[inv.level - 1].unrestChange;
+    mod += inv.type === 'castrum' ? Math.round(unrestChange * garrisonMult) : unrestChange;
   }
 
   // Apply governor unrest-reduction traits (flat reduction)

@@ -71,6 +71,15 @@ export function isGovernorAssigned(governorId: string): boolean {
   return Object.values(governorAssignments.value).some(a => a.governorId === governorId);
 }
 
+/**
+ * Governor salary deducted per season.
+ * T1 = 1g, T2 = 2g, T3 = 3g. Returns 0 if no governor assigned.
+ */
+export function getGovernorSalary(provinceId: string): number {
+  const assignment = governorAssignments.value[provinceId];
+  return assignment ? assignment.tier : 0;
+}
+
 // ── Actions ──
 
 /**

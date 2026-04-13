@@ -14,7 +14,7 @@ import type { ResourceType } from '../core/commander';
 import type { DoctrineEffect } from '../items/doctrine';
 import type { ResourceCost } from '../../types/index';
 import { getResource, spendResource, addResource } from '../core/resources';
-import { getGovernorTraits, registerProvinceSyncCallback } from './governor-store';
+import { getGovernorTraits, getGovernorSalary, registerProvinceSyncCallback } from './governor-store';
 import { claimTerritory } from './province-map-store';
 import { nextInvestmentDiscount } from '../progression/strategic-store';
 import { addNotification } from '../../ui/notifications/notification-store';
@@ -238,7 +238,7 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
     for (const [res, amt] of Object.entries(provIncome) as [ResourceType, number][]) {
       if (amt > 0) totals[res] = (totals[res] ?? 0) + amt;
     }
-    totalExpenses += getProvinceExpenses(prov, traits);
+    totalExpenses += getProvinceExpenses(prov, traits) + getGovernorSalary(prov.id);
   }
 
   // Aqueduct T3 empire-wide bonus: +10% all income
