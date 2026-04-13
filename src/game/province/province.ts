@@ -8,13 +8,11 @@ import type { TradeGoodType } from '../../data/trade-goods';
 // ── Investment types ──
 
 /**
- * The 6 province investments — one per color (Purple gets two: Market + Aqueduct).
- *   Red    → Castrum   (fort)
- *   Blue   → Basilica  (court)
- *   Gold   → Pantheon
- *   Purple → Market
- *   Purple → Aqueduct
- *   White  → Insula    (housing + arena)
+ * All province investment types.
+ * Universal (any terrain): castrum, basilica, pantheon, market, aqueduct, insula.
+ * Terrain-exclusive (S17-05): port, fishery, villa, stables, lumber_camp,
+ *   mountain_pass, oasis_market, caravan_post, oracle_shrine, reed_harvest.
+ * Pending (future task): granary, mine, forge, sacred_grove, training_ground, watchtower.
  */
 export type InvestmentType =
   | 'castrum'
@@ -22,7 +20,18 @@ export type InvestmentType =
   | 'pantheon'
   | 'market'
   | 'aqueduct'
-  | 'insula';
+  | 'insula'
+  // ── Terrain-exclusive (S17-05) ──
+  | 'port'          // Coast
+  | 'fishery'       // Coast
+  | 'villa'         // Farmland
+  | 'stables'       // Plains
+  | 'lumber_camp'   // Forest / Marsh
+  | 'mountain_pass' // Mountains
+  | 'oasis_market'  // Desert
+  | 'caravan_post'  // Desert
+  | 'oracle_shrine' // Marsh
+  | 'reed_harvest'; // Marsh
 
 export interface Investment {
   type: InvestmentType;
@@ -150,9 +159,112 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Insula & Arena',
     flavour: 'Bread, housing, and spectacles keep the masses content.',
     levels: [
-      { incomeBonus: {},                    expensesBonus: 1, unrestChange: -10, buildCost: { gold: 4 },                       description: '-10 Unrest/spoke.' },
-      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -20, buildCost: { gold: 10 },                      description: '-20 Unrest/spoke. Rebellion events suppressed at <50 Unrest.' },
-      { incomeBonus: { momentum: 1 },       expensesBonus: 2, unrestChange: -30, buildCost: { gold: 18 },                      description: '-30 Unrest/spoke. +1 Momentum/spoke. Rebellion impossible below 70 Unrest.' },
+      { incomeBonus: {},                          expensesBonus: 1, unrestChange: -10, buildCost: { gold: 4 },                       description: '-10 Unrest/spoke.' },
+      { incomeBonus: {},                          expensesBonus: 2, unrestChange: -20, buildCost: { gold: 10 },                      description: '-20 Unrest/spoke. Rebellion events suppressed at <50 Unrest.' },
+      { incomeBonus: { momentum: 1 },             expensesBonus: 2, unrestChange: -30, buildCost: { gold: 18 },                      description: '-30 Unrest/spoke. +1 Momentum/spoke. Rebellion impossible below 70 Unrest.' },
+    ],
+  },
+
+  // ── Terrain-exclusive buildings (S17-05) ──
+
+  port: {
+    type: 'port', color: 'blue',
+    name: 'Port',
+    flavour: 'Stone quays and warehouses channel the wealth of the sea.',
+    levels: [
+      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+2 Gold/spoke. +2 Wealth Growth/spoke.' },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 10 },                        description: '+3 Gold/spoke. +3 Wealth Growth/spoke.' },
+      { incomeBonus: { gold: 4 },                 expensesBonus: 2, unrestChange: 0, buildCost: { gold: 20 },                        description: '+4 Gold/spoke. +4 Wealth Growth/spoke. Trade hub.' },
+    ],
+  },
+  fishery: {
+    type: 'fishery', color: 'blue',
+    name: 'Fishery',
+    flavour: 'Nets and salt-curing houses feed the province through lean seasons.',
+    levels: [
+      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+2 Gold/spoke. +1 Pop Growth/spoke.' },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 9 },                         description: '+3 Gold/spoke. +2 Pop Growth/spoke.' },
+      { incomeBonus: { gold: 4 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 16 },                        description: '+4 Gold/spoke. +3 Pop Growth/spoke. Coastal settlements fed.' },
+    ],
+  },
+  villa: {
+    type: 'villa', color: 'gold',
+    name: 'Villa',
+    flavour: 'Country estates of the rich yield harvests and social stability.',
+    levels: [
+      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: -3, buildCost: { gold: 5 },                        description: '+1 Gold/spoke. +1 Pop Growth/spoke. -3 Unrest/spoke.' },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: -5, buildCost: { gold: 10 },                       description: '+2 Gold/spoke. +2 Pop Growth/spoke. -5 Unrest/spoke.' },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: -8, buildCost: { gold: 18 },                       description: '+3 Gold/spoke. +3 Pop Growth/spoke. -8 Unrest/spoke. Farmland yield doubled.' },
+    ],
+  },
+  stables: {
+    type: 'stables', color: 'red',
+    name: 'Stables',
+    flavour: 'Horses bred on the plains give the legion a decisive edge.',
+    levels: [
+      { incomeBonus: { momentum: 1 },             expensesBonus: 1, unrestChange: 0, buildCost: { gold: 5, momentum: 2 },            description: '+1 Momentum/spoke. Cavalry units trained here.' },
+      { incomeBonus: { momentum: 2 },             expensesBonus: 2, unrestChange: 0, buildCost: { gold: 10, momentum: 4 },           description: '+2 Momentum/spoke. +1 cavalry unit in battles.' },
+      { incomeBonus: { momentum: 3 },             expensesBonus: 3, unrestChange: 0, buildCost: { gold: 18, momentum: 6 },           description: '+3 Momentum/spoke. Elite cavalry in battles.' },
+    ],
+  },
+  lumber_camp: {
+    type: 'lumber_camp', color: 'white',
+    name: 'Lumber Camp',
+    flavour: 'Managed felling and seasoning pits supply timber to the whole empire.',
+    levels: [
+      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+1 Gold/spoke. -5% build costs in this province.' },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 9 },                         description: '+2 Gold/spoke. -10% build costs in this province.' },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 16 },                        description: '+3 Gold/spoke. -15% build costs in this province.' },
+    ],
+  },
+  mountain_pass: {
+    type: 'mountain_pass', color: 'red',
+    name: 'Mountain Pass',
+    flavour: 'A fortified defile that controls all movement through the heights.',
+    levels: [
+      { incomeBonus: { momentum: 1 },             expensesBonus: 1, unrestChange: 0, buildCost: { gold: 5, momentum: 2 },            description: '+1 Momentum/spoke. Opens mountain trade route.' },
+      { incomeBonus: { momentum: 1, gold: 1 },    expensesBonus: 2, unrestChange: 0, buildCost: { gold: 12, momentum: 4 },           description: '+1 Momentum, +1 Gold/spoke. Trade route active.' },
+      { incomeBonus: { momentum: 2, gold: 2 },    expensesBonus: 3, unrestChange: 0, buildCost: { gold: 22, momentum: 6 },           description: '+2 Momentum, +2 Gold/spoke. Strategic pass controlled.' },
+    ],
+  },
+  oasis_market: {
+    type: 'oasis_market', color: 'purple',
+    name: 'Oasis Market',
+    flavour: 'A palm-shaded market where desert caravans exchange rare goods.',
+    levels: [
+      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 5 },                         description: '+2 Gold/spoke. +2 Wealth Growth/spoke.' },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 12 },                        description: '+3 Gold/spoke. +3 Wealth Growth/spoke.' },
+      { incomeBonus: { gold: 5 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 22 },                        description: '+5 Gold/spoke. +4 Wealth Growth/spoke. Desert trade nexus.' },
+    ],
+  },
+  caravan_post: {
+    type: 'caravan_post', color: 'purple',
+    name: 'Caravan Post',
+    flavour: 'Rest stops and water depots sustain the cross-desert trade network.',
+    levels: [
+      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+1 Gold/spoke. +3 Wealth Growth/spoke.' },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 10 },                        description: '+2 Gold/spoke. +4 Wealth Growth/spoke.' },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 18 },                        description: '+3 Gold/spoke. +5 Wealth Growth/spoke. Cross-desert network.' },
+    ],
+  },
+  oracle_shrine: {
+    type: 'oracle_shrine', color: 'gold',
+    name: 'Oracle Shrine',
+    flavour: 'Marsh vapours and the whisper of reeds bring visions to the faithful.',
+    levels: [
+      { incomeBonus: { faith: 1 },                expensesBonus: 0, unrestChange: -3, buildCost: { gold: 4, faith: 2 },              description: '+1 Faith/spoke. -3 Unrest/spoke. Omens guide the province.' },
+      { incomeBonus: { faith: 2 },                expensesBonus: 1, unrestChange: -5, buildCost: { gold: 8, faith: 4 },              description: '+2 Faith/spoke. -5 Unrest/spoke. +1 extra event choice.' },
+      { incomeBonus: { faith: 3 },                expensesBonus: 1, unrestChange: -8, buildCost: { gold: 15, faith: 6 },             description: '+3 Faith/spoke. -8 Unrest/spoke. Rare prophecy events.' },
+    ],
+  },
+  reed_harvest: {
+    type: 'reed_harvest', color: 'white',
+    name: 'Reed Harvest',
+    flavour: 'Skilled harvesters work the marsh beds for papyrus, rushes, and fuel.',
+    levels: [
+      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 3 },                         description: '+1 Gold/spoke. +1 Pop Growth/spoke.' },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 8 },                         description: '+2 Gold/spoke. +2 Pop Growth/spoke.' },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 15 },                        description: '+3 Gold/spoke. +3 Pop Growth/spoke. Marshland mastered.' },
     ],
   },
 };
@@ -423,8 +535,13 @@ export function getUpperTaxUnrest(level: TaxLevel): number {
 /** PWG bonus from terrain type (Hills +1, Coast +1, Desert +2; others +0). */
 const TERRAIN_PWG: Record<string, number> = { hills: 1, coast: 1, desert: 2 };
 
-/** PWG bonus contributed by a Market investment, by level. */
-const MARKET_PWG: Record<number, number> = { 1: 2, 2: 3, 3: 4 };
+/** PWG bonus contributed by commercial buildings, keyed by InvestmentType then level. */
+const BUILDING_PWG: Partial<Record<InvestmentType, Record<number, number>>> = {
+  market:       { 1: 2, 2: 3, 3: 4 },
+  port:         { 1: 2, 2: 3, 3: 4 },
+  oasis_market: { 1: 2, 2: 3, 3: 4 },
+  caravan_post: { 1: 3, 2: 4, 3: 5 },
+};
 
 /** NWG formula coefficients [flat, multiplier] per upperTax level. */
 const NWG_PARAMS: Record<TaxLevel, [number, number]> = {
@@ -445,7 +562,7 @@ export function calculatePWG(province: Province, terrain?: string): number {
   let pwg = 2;
   if (terrain) pwg += TERRAIN_PWG[terrain.toLowerCase()] ?? 0;
   for (const inv of province.investments) {
-    if (inv.type === 'market') pwg += MARKET_PWG[inv.level] ?? 0;
+    pwg += BUILDING_PWG[inv.type]?.[inv.level] ?? 0;
   }
   return pwg;
 }
@@ -532,8 +649,13 @@ const TERRAIN_GROWTH: Record<string, number> = {
   plains: 1, hills: 1, forest: 1, coast: 2, desert: 0,
 };
 
-/** Aqueduct growth-rate bonus per level (each level adds +1 growth/season). */
-const AQUEDUCT_GROWTH: Record<number, number> = { 1: 1, 2: 1, 3: 1 };
+/** Population growth bonus contributed by buildings, keyed by InvestmentType then level. */
+const BUILDING_GROWTH: Partial<Record<InvestmentType, Record<number, number>>> = {
+  aqueduct:     { 1: 1, 2: 1, 3: 1 },
+  villa:        { 1: 1, 2: 2, 3: 3 },
+  fishery:      { 1: 1, 2: 2, 3: 3 },
+  reed_harvest: { 1: 1, 2: 2, 3: 3 },
+};
 
 /** Growth threshold to gain 1 population point: `8 + current_pop × 2`. */
 export function calculateGrowthThreshold(currentPop: number): number {
@@ -552,7 +674,7 @@ export function calculateRawGrowth(
   let raw = terrain ? (TERRAIN_GROWTH[terrain.toLowerCase()] ?? 1) : 1;
 
   for (const inv of province.investments) {
-    if (inv.type === 'aqueduct') raw += AQUEDUCT_GROWTH[inv.level] ?? 0;
+    raw += BUILDING_GROWTH[inv.type]?.[inv.level] ?? 0;
   }
 
   for (const trait of governorTraits) {
