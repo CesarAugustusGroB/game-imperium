@@ -16,7 +16,7 @@ import {
 import type { TaxLevel, WealthTier } from '../../types/index';
 import { FACTION_COLORS, RESOURCE_INFO, type ResourceType } from '../../game/core/commander';
 import { getResource } from '../../game/core/resources';
-import { getHireCost } from '../../game/province/governor';
+import { getHireCost, type GovernorTrait } from '../../game/province/governor';
 import {
   governorPool, governorAssignments,
   getAssignedGovernor, getGovernorTraits,
@@ -90,6 +90,34 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
     .gov-hire-btn { transition: all var(--duration-fast) var(--ease-default); cursor: pointer; }
     .gov-hire-btn:hover { border-color: var(--color-gold-primary) !important; color: var(--color-gold-primary) !important; background: rgba(80, 60, 20, 0.5) !important; }
     .gov-hire-btn:active { transform: scale(0.97); }
+
+    /* ── Governor traits panel (S18-08) ── */
+    .gov-traits {
+      display: flex; flex-direction: column; gap: 3px;
+      padding-top: 7px;
+      border-top: 1px solid rgba(180, 160, 100, 0.12);
+      margin-top: 5px;
+    }
+    .gov-trait-row {
+      display: flex; align-items: center; gap: 5px;
+      font-size: var(--font-size-xs);
+      color: var(--color-text-secondary);
+    }
+    .gov-salary-row {
+      font-size: var(--font-size-xs);
+      color: rgba(230, 130, 80, 0.9);
+      font-weight: 700; letter-spacing: 0.5px;
+    }
+    .gov-net-row {
+      display: flex; align-items: center; gap: 5px;
+      font-size: var(--font-size-xs); font-weight: 700;
+      padding-top: 4px;
+      border-top: 1px solid rgba(180, 160, 100, 0.1);
+      margin-top: 3px;
+    }
+    .gov-net-positive { color: var(--color-success); }
+    .gov-net-negative { color: var(--color-danger); }
+    .gov-net-neutral  { color: var(--color-text-secondary); }
 
     /* ── Investment hero cards ── */
     .inv-card {
@@ -995,6 +1023,7 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
                       {tierData.description.split(' ').slice(0, 6).join(' ')}
                     </span>
                     <span style={{ fontSize: '9px', color: 'var(--color-gold-secondary)', fontWeight: 700 }}>{formatCost(cost)}</span>
+                    <span style={{ fontSize: '8px', color: 'rgba(230, 130, 80, 0.75)', fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>then {tier}g/season</span>
                   </button>
                 );
               })}
@@ -1003,6 +1032,158 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
         );
       })}
     </div>
+  );
+}
+
+// ── Governor panel helpers (S18-08) ──
+
+/**
+ * Format a governor trait as a concrete, province-specific human-readable string.
+ * For garrison-strength, shows the Castrum's actual unrest values if built.
+ */
+function formatTraitEffect(trait: GovernorTrait, province: Province): string {
+  switch (trait.type) {
+    case 'population-growth':
+      return `Growth: +${trait.amount}/season`;
+    case 'unrest-reduction':
+      return `Unrest: -${trait.flat}/season`;
+    case 'income-bonus': {
+      const icon = RESOURCE_INFO[trait.resource]?.icon ?? trait.resource;
+      return `+${trait.percent}% ${icon} ${trait.resource} income`;
+    }
+    case 'expense-reduction':
+      return `-${trait.percent}% upkeep`;
+    case 'investment-discount':
+      return `-${trait.percent}% building costs`;
+    case 'garrison-strength': {
+      const castrumInv = province.investments.find(i => i.type === 'castrum');
+      if (castrumInv) {
+        const base = INVESTMENT_DATA.castrum.levels[castrumInv.level - 1].unrestChange;
+        const mult = 1 + trait.percent / 100;
+        const boosted = Math.round(base * mult * 10) / 10;
+        return `Castrum: ${base} → ${boosted} unrest/s (×${mult.toFixed(2)})`;
+      }
+      return `+${trait.percent}% garrison strength`;
+    }
+  }
+}
+
+/**
+ * Governor panel: portrait + name/tier + salary + trait effects + net contribution.
+ * Replaces the inline assigned-governor branch in ProvinceDetail.
+ */
+function GovernorPanel({ province }: { province: Province }) {
+  const assigned = getAssignedGovernor(province.id);
+  const salary = getGovernorSalary(province.id);
+
+  // Net gold contribution = income bonus + expense saving − salary
+  const traits = assigned ? assigned.governor.tiers[assigned.tier - 1].traits : [];
+  const baseIncomeGold = getProvinceIncome(province, []).gold ?? 0;
+  const traitIncomeGold = getProvinceIncome(province, traits).gold ?? 0;
+  const incomeBonusGold = traitIncomeGold - baseIncomeGold;
+  const baseExpenses = getProvinceExpenses(province, []);
+  const traitExpenses = getProvinceExpenses(province, traits);
+  const expenseSaving = baseExpenses - traitExpenses;
+  const netGold = incomeBonusGold + expenseSaving - salary;
+  const netClass = netGold > 0 ? 'gov-net-positive' : netGold < 0 ? 'gov-net-negative' : 'gov-net-neutral';
+  const netSign = netGold > 0 ? '+' : '';
+
+  if (!assigned) {
+    return (
+      <>
+        <div style={{
+          width: '96px', height: '112px',
+          border: '2px dashed var(--color-border-subtle)',
+          borderRadius: 'var(--radius-sm)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '36px', color: 'var(--color-text-muted)',
+          flexShrink: 0,
+        }}>
+          ⚔
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+          <div class="gov-name" style={{ color: 'var(--color-text-muted)' }}>No Governor</div>
+          <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+            Hire a governor to gain bonuses for this province.
+          </div>
+        </div>
+        <button
+          class="gov-hire-btn"
+          onClick={() => { showGovernorPicker.value = true; }}
+          style={{
+            padding: '8px 16px',
+            borderRadius: 'var(--radius-sm)',
+            background: 'rgba(50, 42, 12, 0.5)',
+            border: '1px solid var(--color-border-strong)',
+            color: 'var(--color-gold-secondary)',
+            fontFamily: 'inherit',
+            fontSize: 'var(--font-size-xs)', fontWeight: 700,
+            letterSpacing: '1.5px', textTransform: 'uppercase',
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+        >
+          Hire →
+        </button>
+      </>
+    );
+  }
+
+  const fColor = FACTION_COLORS[assigned.governor.color];
+  return (
+    <>
+      <Portrait
+        alt={assigned.governor.name}
+        size="medium"
+        factionColor={fColor}
+        tier={assigned.tier as 1 | 2 | 3}
+      />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span class="gov-name" style={{ color: fColor }}>
+            {assigned.governor.name}
+          </span>
+          <span class="gov-tier-pill">{ROMAN[assigned.tier]}</span>
+          <span class="gov-salary-row">Salary: {salary}g/season</span>
+        </div>
+        {/* Trait effects — concrete province-specific numbers */}
+        <div class="gov-traits">
+          {traits.map((trait, i) => (
+            <div key={i} class="gov-trait-row">
+              <span style={{ color: 'var(--color-success)', fontSize: '8px' }}>✦</span>
+              <span>{formatTraitEffect(trait, province)}</span>
+            </div>
+          ))}
+          {traits.length === 0 && (
+            <div class="gov-trait-row" style={{ fontStyle: 'italic', opacity: 0.6 }}>No active traits</div>
+          )}
+          {/* Net gold contribution */}
+          <div class={`gov-net-row ${netClass}`}>
+            Net: {netSign}{netGold}g/season after salary
+          </div>
+        </div>
+      </div>
+      <button
+        class="gov-dismiss-btn"
+        onClick={() => { dismissGovernor(province.id); showGovernorPicker.value = false; }}
+        title={`Dismiss governor (saves ${salary}g/season)`}
+        style={{
+          padding: '6px 12px',
+          borderRadius: 'var(--radius-sm)',
+          background: 'rgba(120, 40, 30, 0.3)',
+          border: '1px solid rgba(180, 80, 60, 0.4)',
+          color: 'rgba(220, 120, 100, 0.8)',
+          fontFamily: 'inherit',
+          fontSize: 'var(--font-size-xs)', fontWeight: 600,
+          letterSpacing: '1px', textTransform: 'uppercase',
+          cursor: 'pointer',
+          flexShrink: 0,
+          alignSelf: 'flex-start',
+        }}
+      >
+        Dismiss
+      </button>
+    </>
   );
 }
 
@@ -2157,8 +2338,6 @@ function IncomeLedger({ province }: { province: Province }) {
 // ── Province detail (right panel: governor strip + building grid) ──
 
 function ProvinceDetail({ province }: { province: Province }) {
-  const assigned = getAssignedGovernor(province.id);
-
   // Read assignment signal for reactivity
   void governorAssignments.value;
   void governorPool.value;
@@ -2168,84 +2347,9 @@ function ProvinceDetail({ province }: { province: Province }) {
       {/* Province Identity (S18-06) */}
       <IdentityStrip province={province} />
 
-      {/* Governor strip */}
+      {/* Governor strip (S18-08) */}
       <div class="gov-strip">
-        {assigned ? (
-          <>
-            <Portrait
-              alt={assigned.governor.name}
-              size="medium"
-              factionColor={FACTION_COLORS[assigned.governor.color]}
-              tier={assigned.tier as 1 | 2 | 3}
-            />
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span class="gov-name" style={{ color: FACTION_COLORS[assigned.governor.color] }}>
-                  {assigned.governor.name}
-                </span>
-                <span class="gov-tier-pill">{ROMAN[assigned.tier]}</span>
-              </div>
-              <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: '1.4' }}>
-                {assigned.governor.tiers[assigned.tier - 1].description}
-              </div>
-            </div>
-            <button
-              class="gov-dismiss-btn"
-              onClick={() => { dismissGovernor(province.id); showGovernorPicker.value = false; }}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 'var(--radius-sm)',
-                background: 'rgba(120, 40, 30, 0.3)',
-                border: '1px solid rgba(180, 80, 60, 0.4)',
-                color: 'rgba(220, 120, 100, 0.8)',
-                fontFamily: 'inherit',
-                fontSize: 'var(--font-size-xs)', fontWeight: 600,
-                letterSpacing: '1px', textTransform: 'uppercase',
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
-            >
-              Dismiss
-            </button>
-          </>
-        ) : (
-          <>
-            <div style={{
-              width: '96px', height: '112px',
-              border: '2px dashed var(--color-border-subtle)',
-              borderRadius: 'var(--radius-sm)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '36px', color: 'var(--color-text-muted)',
-              flexShrink: 0,
-            }}>
-              ⚔
-            </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
-              <div class="gov-name" style={{ color: 'var(--color-text-muted)' }}>No Governor</div>
-              <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                Hire a governor to gain bonuses for this province.
-              </div>
-            </div>
-            <button
-              class="gov-hire-btn"
-              onClick={() => { showGovernorPicker.value = true; }}
-              style={{
-                padding: '8px 16px',
-                borderRadius: 'var(--radius-sm)',
-                background: 'rgba(50, 42, 12, 0.5)',
-                border: '1px solid var(--color-border-strong)',
-                color: 'var(--color-gold-secondary)',
-                fontFamily: 'inherit',
-                fontSize: 'var(--font-size-xs)', fontWeight: 700,
-                letterSpacing: '1.5px', textTransform: 'uppercase',
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
-            >
-              Hire →
-            </button>
-          </>
-        )}
+        <GovernorPanel province={province} />
       </div>
 
       {/* Tax Policy (S18-01) */}
