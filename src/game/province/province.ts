@@ -1,5 +1,5 @@
 import type { Faction, ResourceType } from '../core/commander';
-import type { ResourceCost, TierTuple } from '../../types/index';
+import type { ResourceCost, TaxLevel, TierTuple } from '../../types/index';
 import type { GovernorTrait } from './governor';
 
 // ── Investment types ──
@@ -35,6 +35,8 @@ export interface Province {
   name: string;
   /** 1–10. Scales base income. */
   population: number;
+  /** Upper bound on population growth. Base 10, raised by investments. */
+  maxPopulation: number;
   /** Base resource income per spoke (before investment bonuses). */
   baseIncome: Partial<Record<ResourceType, number>>;
   /** 0–100. High unrest reduces income and may trigger a Rebellion event. */
@@ -45,6 +47,20 @@ export interface Province {
   investments: Investment[];
   /** Optional: ID of the assigned governor (defined in a later task). */
   governorId?: string;
+  /** 0–100+. Provincial wealth pool; drives income scaling and event triggers. */
+  wealth: number;
+  /** 0–100. War damage that suppresses growth and income. */
+  devastation: number;
+  /** Seasons remaining on active devastation penalty (counts down to 0). */
+  devastationTimer: number;
+  /** Number of past rebellions (0–3). Affects max unrest cap and event severity. */
+  rebellionCount: number;
+  /** Tax rate applied to the lower class (1=Very Low … 5=Very High, default 3=Normal). */
+  lowerTax: TaxLevel;
+  /** Tax rate applied to the upper class (1=Very Low … 5=Very High, default 3=Normal). */
+  upperTax: TaxLevel;
+  /** Fractional population growth banked toward the next full population point. */
+  growthAccumulator: number;
 }
 
 // ── Investment data ──
@@ -239,10 +255,18 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
     id: name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now(),
     name,
     population: 3,
+    maxPopulation: 10,
     baseIncome: { gold: 2 },
     unrest: 20,
     baseExpenses: 1,
     investments: [],
+    wealth: 40,
+    devastation: 0,
+    devastationTimer: 0,
+    rebellionCount: 0,
+    lowerTax: 3,
+    upperTax: 3,
+    growthAccumulator: 0,
     ...overrides,
   };
 }

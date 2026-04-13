@@ -22,16 +22,6 @@ export interface NationData {
   capital: number;
 }
 
-export interface MapTextures {
-  idMap: WebGLTexture;
-  terrain: WebGLTexture;
-  heightmap: WebGLTexture;
-  normalMap: WebGLTexture;
-  borders: WebGLTexture;
-  mapWidth: number;
-  mapHeight: number;
-}
-
 export interface ArmyData {
   id: number;
   owner: string;
@@ -93,6 +83,12 @@ export interface GameEntity {
 export interface FactionAffiliated {
   color: Faction;
 }
+
+/** Tax level for lower/upper class (1=Very Low … 5=Very High) */
+export type TaxLevel = 1 | 2 | 3 | 4 | 5;
+
+/** Wealth tier for province display (1=Poor … 5=Wealthy) */
+export type WealthTier = 1 | 2 | 3 | 4 | 5;
 
 /** Fixed 3-tier progression level */
 export type TierLevel = 1 | 2 | 3;
