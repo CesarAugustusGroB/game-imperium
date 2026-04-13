@@ -705,14 +705,15 @@ export function getSettlementLabel(pop: number): string {
  * Returns all universal buildings plus any terrain-exclusive buildings whose
  * InvestmentType values are registered (i.e. have INVESTMENT_DATA entries).
  *
- * Terrain-exclusive building types are promoted to InvestmentType in S17-05.
- * Until then, TERRAIN_AVAILABLE_BUILDINGS entries are TerrainBuildingType strings
- * and do not appear in InvestmentType, so only UNIVERSAL_BUILDINGS are returned.
+ * Universal buildings are defined in UNIVERSAL_BUILDINGS (terrain-data.ts).
+ * Terrain-exclusive buildings are defined per-terrain in TERRAIN_AVAILABLE_BUILDINGS;
+ * only those whose slugs appear in INVESTMENT_DATA are included — the remaining 6
+ * (granary, mine, forge, sacred_grove, training_ground, watchtower) are pending
+ * future tasks.
  */
 export function getAvailableBuildings(province: Province): InvestmentType[] {
   const universals: InvestmentType[] = [...UNIVERSAL_BUILDINGS];
-  // Terrain-gated buildings: include any exclusive building whose slug already
-  // exists as an InvestmentType value. This is a no-op until S17-05 adds them.
+  // Terrain-gated buildings: include any exclusive building whose slug is registered in INVESTMENT_DATA.
   const terrainBuildings = TERRAIN_AVAILABLE_BUILDINGS[province.terrain] as string[];
   const investmentSlugs = Object.keys(INVESTMENT_DATA) as string[];
   for (const slug of terrainBuildings) {
@@ -725,7 +726,6 @@ export function getAvailableBuildings(province: Province): InvestmentType[] {
 
 // ── Population growth accumulator ──
 
-/** Terrain growth contribution (plains/unknown = 1, coast = 2, desert = 0). */
 // TERRAIN_GROWTH replaced by direct TERRAIN_DATA lookup in calculateRawGrowth (S17-07).
 
 /** Population growth bonus contributed by buildings, keyed by InvestmentType then level. */
@@ -742,8 +742,8 @@ export function calculateGrowthThreshold(currentPop: number): number {
 }
 
 /**
- * Raw growth per season = terrain + aqueduct + governor pop-growth traits.
- * Trade goods and features not yet implemented; they contribute 0.
+ * Raw growth per season = terrain base + buildings + governor pop-growth traits
+ * + active synergy growth bonuses + trade good flatGrowth.
  */
 export function calculateRawGrowth(
   province: Province,
@@ -785,7 +785,7 @@ export function calculateEffectiveGrowth(
   terrain?: string,
   governorTraits: GovernorTrait[] = [],
 ): number {
-  const raw = calculateRawGrowth(province, terrain, governorTraits);
+  const raw = Math.max(0, calculateRawGrowth(province, terrain, governorTraits));
   const taxPenalty = Math.abs(getLowerTaxGrowthPenalty(province.lowerTax)) / 100;
   const devastationPenalty = province.devastationTimer > 0 ? 0.5 : 0;
   return raw * (1 - taxPenalty) * (1 - devastationPenalty);
