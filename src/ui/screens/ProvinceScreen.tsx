@@ -590,12 +590,6 @@ const buildingSlotType = signal<string | null>(null);
 
 // ── Helpers ──
 
-function formatIncome(income: Partial<Record<ResourceType, number>>): string {
-  const parts = (Object.entries(income) as [ResourceType, number][])
-    .filter(([, amt]) => amt > 0)
-    .map(([res, amt]) => `${RESOURCE_INFO[res].icon}${amt}`);
-  return parts.length > 0 ? parts.join(' ') : '-';
-}
 
 function UnrestBar({ unrest, modifier, width = 60 }: { unrest: number; modifier: number; width?: number }) {
   const pct = Math.min(100, Math.max(0, unrest));
@@ -2385,15 +2379,28 @@ export function ProvinceScreen() {
         <OrnateHeader
           eyebrow="Provinces"
           title={selected ? selected.name : '—'}
-          rightSlot={allProvinces.length > 0 && (
-            <>
-              <span class="ornate-stat-chip" title="Total Population">👥 <strong>{totalPop}</strong></span>
-              <span class="ornate-stat-chip" title="Total Income">{formatIncome(totalIncome)}</span>
-              <span class="ornate-stat-chip" title="Total Expenses">−<strong style={{ color: 'rgba(220, 160, 100, 0.85)' }}>{totalExpenses}g</strong></span>
-              <span class="ornate-stat-chip" title="Avg Unrest"><UnrestBar unrest={avgUnrest} modifier={0} width={50} /></span>
-              <span class="ornate-stat-chip" title="Avg Wealth">💰 <strong>{avgWealth}</strong></span>
-            </>
-          )}
+          rightSlot={allProvinces.length > 0 && (() => {
+            const netGold = (totalIncome.gold ?? 0) - totalExpenses;
+            return (
+              <>
+                <span class="ornate-stat-chip" title="Total Population">👥 <strong>{totalPop}</strong></span>
+                <span class="ornate-stat-chip" title="Net Gold/spoke" style={netGold < 0 ? { color: 'var(--color-danger)' } : undefined}>
+                  {RESOURCE_INFO.gold.icon} <strong>{netGold >= 0 ? '+' : ''}{netGold}</strong>
+                </span>
+                {(totalIncome.faith ?? 0) > 0 && (
+                  <span class="ornate-stat-chip" title="Faith/spoke">{RESOURCE_INFO.faith.icon} <strong>+{totalIncome.faith}</strong></span>
+                )}
+                {(totalIncome.influence ?? 0) > 0 && (
+                  <span class="ornate-stat-chip" title="Influence/spoke">{RESOURCE_INFO.influence.icon} <strong>+{totalIncome.influence}</strong></span>
+                )}
+                {(totalIncome.momentum ?? 0) > 0 && (
+                  <span class="ornate-stat-chip" title="Momentum/spoke">{RESOURCE_INFO.momentum.icon} <strong>+{totalIncome.momentum}</strong></span>
+                )}
+                <span class="ornate-stat-chip" title="Avg Wealth">{RESOURCE_INFO.gold.icon} <strong>{avgWealth}</strong></span>
+                <span class="ornate-stat-chip" title="Avg Unrest"><UnrestBar unrest={avgUnrest} modifier={0} width={50} /></span>
+              </>
+            );
+          })()}
           onClose={() => navigateTo('hub')}
           accentColor={accent}
         />
