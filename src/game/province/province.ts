@@ -737,22 +737,33 @@ export function getAvailableBuildings(province: Province): InvestmentType[] {
   return universals;
 }
 
-// ── Food production & consumption (S20) ──
+// ── Food system config (S20) — single source of truth for balance tuning ──
 
-/** Terrain base food production per season. */
-const TERRAIN_BASE_FOOD: Record<TerrainType, number> = {
-  farmland: 3,
-  plains: 2,
-  coast: 1,
-  forest: 1,
-  hills: 1,
-  mountains: 0,
-  desert: 0,
-  marsh: 1,
+/**
+ * All food/famine/immigration constants in one place.
+ * Modify these values to retune the economy without searching the file.
+ */
+export const FOOD_CONFIG = {
+  /** Base subsistence food every province produces (gathering, small plots). */
+  baseSubsistence: 2,
+  /** Terrain base food production per season. */
+  terrainFood: {
+    farmland: 3, plains: 2, coast: 1, forest: 1,
+    hills: 1, mountains: 0, desert: 0, marsh: 1,
+  } as Record<TerrainType, number>,
+  /** Tax food penalty fraction by lower-tax level (1=Minimal … 5=Oppressive). */
+  taxFoodPenalty: { 1: 0, 2: 0.10, 3: 0.20, 4: 0.35, 5: 0.55 } as Record<TaxLevel, number>,
+  /** Marketplace tax penalty mitigation by tier (multiplicative reduction). */
+  marketplaceMitigation: { 1: 0.05, 2: 0.10, 3: 0.15 } as Record<number, number>,
+  /** Famine unrest per season: soft phase (timer 1-2). */
+  famineUnrestSoft: 10,
+  /** Famine unrest per season: hard phase (timer 3+). */
+  famineUnrestHard: 25,
+  /** Default hard-famine threshold (seasons of deficit before pop death). */
+  famineHardThreshold: 3,
+  /** Granary T3 raises hard-famine threshold by this many seasons. */
+  granaryT3FamineDelay: 1,
 };
-
-/** Base subsistence food every province produces (gathering, small plots). */
-const BASE_SUBSISTENCE_FOOD = 2;
 
 /**
  * Total food production for a province per season.
@@ -762,7 +773,7 @@ export function calculateFoodProduction(
   province: Province,
   governorTraits: GovernorTrait[] = [],
 ): number {
-  let food = BASE_SUBSISTENCE_FOOD + (TERRAIN_BASE_FOOD[province.terrain] ?? 0);
+  let food = FOOD_CONFIG.baseSubsistence + (FOOD_CONFIG.terrainFood[province.terrain] ?? 0);
 
   // Building food bonuses (from InvestmentLevelEffect.foodBonus)
   for (const inv of province.investments) {
@@ -783,29 +794,10 @@ export function calculateFoodProduction(
   return food;
 }
 
-/**
- * Tax food penalty fraction by lower-tax level (S20).
- * Higher taxes reduce effective food supply — pops can't afford the surplus.
- */
-const TAX_FOOD_PENALTY: Record<TaxLevel, number> = {
-  1: 0,      // Minimal — no penalty
-  2: 0.10,   // Low — 10% food lost
-  3: 0.20,   // Normal — 20% food lost
-  4: 0.35,   // Heavy — 35% food lost
-  5: 0.55,   // Oppressive — 55% food lost
-};
-
 /** Tax food penalty fraction for a given lower-tax level. */
 export function getTaxFoodPenalty(level: TaxLevel): number {
-  return TAX_FOOD_PENALTY[level];
+  return FOOD_CONFIG.taxFoodPenalty[level];
 }
-
-/** Marketplace tax food penalty mitigation per tier (S20). */
-const MARKETPLACE_TAX_MITIGATION: Record<number, number> = {
-  1: 0.05,  // −5% from penalty
-  2: 0.10,  // −10% from penalty
-  3: 0.15,  // −15% from penalty
-};
 
 /**
  * Effective food production after tax friction.
@@ -822,7 +814,7 @@ export function calculateEffectiveFoodProduction(
   // Marketplace mitigates tax food penalty
   const marketplace = province.investments.find(i => i.type === 'market');
   if (marketplace) {
-    penalty *= (1 - (MARKETPLACE_TAX_MITIGATION[marketplace.level] ?? 0));
+    penalty *= (1 - (FOOD_CONFIG.marketplaceMitigation[marketplace.level] ?? 0));
   }
 
   return raw * (1 - penalty);
@@ -1000,10 +992,6 @@ export function tickPopulationGrowth(
 
 // ── Famine system (S20) ──
 
-/** Famine unrest per season during soft phase (famineTimer 1-2). */
-const FAMINE_UNREST_SOFT = 10;
-/** Famine unrest per season during hard phase (famineTimer 3+). */
-const FAMINE_UNREST_HARD = 25;
 
 /**
  * Advance one season of famine tracking.
@@ -1033,9 +1021,10 @@ export function tickFamine(
   // Deficit: increment famine timer
   const newTimer = province.famineTimer + 1;
 
-  // Granary T3 delays hard starvation by 1 season (threshold 4 instead of 3)
+  // Granary T3 delays hard starvation by extra seasons
   const granary = province.investments.find(i => i.type === 'granary');
-  const hardThreshold = granary && granary.level >= 3 ? 4 : 3;
+  const hardThreshold = FOOD_CONFIG.famineHardThreshold
+    + (granary && granary.level >= 3 ? FOOD_CONFIG.granaryT3FamineDelay : 0);
 
   if (newTimer >= hardThreshold) {
     // Hard phase: lose 1 pop (floor at 1), reset growth accumulator
@@ -1052,8 +1041,8 @@ export function tickFamine(
  * Soft (1-2): +10/season. Hard (3+): +25/season. None (0): 0.
  */
 export function getFamineUnrest(province: Province): number {
-  if (province.famineTimer >= 3) return FAMINE_UNREST_HARD;
-  if (province.famineTimer >= 1) return FAMINE_UNREST_SOFT;
+  if (province.famineTimer >= FOOD_CONFIG.famineHardThreshold) return FOOD_CONFIG.famineUnrestHard;
+  if (province.famineTimer >= 1) return FOOD_CONFIG.famineUnrestSoft;
   return 0;
 }
 
