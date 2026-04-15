@@ -13,7 +13,7 @@ import {
   getEffectiveMaxPop, getSettlementLabel, getBuildingSlots, calculateGrowthThreshold,
   calculateUnrestDelta, getRebelThreshold, getAvailableBuildings, SYNERGY_DATA,
   calculateFoodProduction, calculateEffectiveFoodProduction, calculateFoodConsumption,
-  calculateFoodSurplus, calculateBeautiness,
+  calculateFoodSurplus, calculateBeautiness, FOOD_CONFIG,
   type InvestmentType, type Province,
 } from '../../game/province/province';
 import type { TaxLevel } from '../../types/index';
@@ -1337,7 +1337,7 @@ function PopBar({ province }: { province: Province }) {
       )}
       {province.famineTimer > 0 && (
         <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)', fontWeight: 700 }}>
-          {province.famineTimer >= 3 ? 'FAMINE — losing population!' : `Food shortage: ${province.famineTimer} season${province.famineTimer > 1 ? 's' : ''}`}
+          {province.famineTimer >= FOOD_CONFIG.famineHardThreshold ? 'FAMINE — losing population!' : `Food shortage: ${province.famineTimer} season${province.famineTimer > 1 ? 's' : ''}`}
         </div>
       )}
       <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: '2px' }}>
@@ -1404,7 +1404,7 @@ function PopBar({ province }: { province: Province }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-danger)' }}>Famine</span>
                 <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)', fontWeight: 700 }}>
-                  {province.famineTimer >= 3 ? 'CRITICAL' : `${province.famineTimer}s`}
+                  {province.famineTimer >= FOOD_CONFIG.famineHardThreshold ? 'CRITICAL' : `${province.famineTimer}s`}
                 </span>
               </div>
             )}

@@ -344,10 +344,12 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
     p = { ...p, wealth: Math.min(9999, Math.max(0, p.wealth + netWealth)) };
 
     // 5b. Tick famine (S20): update famineTimer, hard phase kills pops
+    const prePop = p.population;
     const preFamine = p.famineTimer;
     p = tickFamine(p, traits);
     // Famine transition notifications (fire only on state change, not every season)
-    if (preFamine < 3 && p.famineTimer >= 3) {
+    if (p.population < prePop) {
+      // Actual pop death occurred — hard famine
       addNotification({
         kind: 'alert', icon: '💀', title: 'Famine',
         message: `${prov.name} is starving — losing population!`,

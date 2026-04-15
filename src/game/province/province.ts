@@ -572,20 +572,6 @@ export function formatTaxRate(rate: number): string {
   return `${(rate * 100).toFixed(0)}%`;
 }
 
-/**
- * Pop growth penalty (%) applied by lower-class tax level.
- * Returns a negative percentage (0 = no penalty, -70 = severe penalty).
- */
-export function getLowerTaxGrowthPenalty(level: TaxLevel): number {
-  const PENALTIES: Record<TaxLevel, number> = {
-    1: 0,
-    2: -10,
-    3: -25,
-    4: -45,
-    5: -70,
-  };
-  return PENALTIES[level];
-}
 
 /**
  * Unrest change per season from the lower-class tax level.
@@ -884,69 +870,9 @@ export function rollImmigration(province: Province): { province: Province; immig
 
 // ── Population growth accumulator ──
 
-// TERRAIN_GROWTH replaced by direct TERRAIN_DATA lookup in calculateRawGrowth (S17-07).
-
-/** Population growth bonus contributed by buildings, keyed by InvestmentType then level. */
-const BUILDING_GROWTH: Partial<Record<InvestmentType, Record<number, number>>> = {
-  aqueduct:     { 1: 1, 2: 1, 3: 1 },
-  villa:        { 1: 1, 2: 2, 3: 3 },
-  fishery:      { 1: 1, 2: 2, 3: 3 },
-  reed_harvest: { 1: 1, 2: 2, 3: 3 },
-};
-
 /** Growth threshold to gain 1 population point: `8 + current_pop × 2`. */
 export function calculateGrowthThreshold(currentPop: number): number {
   return 8 + currentPop * 2;
-}
-
-/**
- * Raw growth per season = terrain base + buildings + governor pop-growth traits
- * + active synergy growth bonuses + trade good flatGrowth.
- */
-export function calculateRawGrowth(
-  province: Province,
-  terrain?: string,
-  governorTraits: GovernorTrait[] = [],
-): number {
-  const terrainKey = (terrain ?? province.terrain) as TerrainType;
-  // Base growth is 1; terrain adds its delta (e.g. Farmland +2, Mountains/Marsh -1, Desert -2)
-  let raw = 1 + (TERRAIN_DATA[terrainKey]?.baseModifiers.growthModifier ?? 0);
-
-  for (const inv of province.investments) {
-    raw += BUILDING_GROWTH[inv.type]?.[inv.level] ?? 0;
-  }
-
-  for (const trait of governorTraits) {
-    if (trait.type === 'population-growth') raw += trait.amount;
-  }
-
-  for (const syn of getActiveSynergies(province)) {
-    if (syn.bonus.type === 'growth') raw += syn.bonus.amount;
-  }
-
-  // Trade good growth bonus — Grain +3, Fish +1, Salt +1, Olives +1
-  if (province.tradeGood) {
-    raw += TRADE_GOOD_DATA[province.tradeGood].flatGrowth;
-  }
-
-  return raw;
-}
-
-/**
- * Effective growth after penalties:
- *   effective = raw × (1 − lower_tax_penalty) × (1 − devastation_penalty)
- * Lower tax penalty: 0 / 0.10 / 0.25 / 0.45 / 0.70.
- * Devastation penalty: 0.50 while devastationTimer > 0.
- */
-export function calculateEffectiveGrowth(
-  province: Province,
-  terrain?: string,
-  governorTraits: GovernorTrait[] = [],
-): number {
-  const raw = Math.max(0, calculateRawGrowth(province, terrain, governorTraits));
-  const taxPenalty = Math.abs(getLowerTaxGrowthPenalty(province.lowerTax)) / 100;
-  const devastationPenalty = province.devastationTimer > 0 ? 0.5 : 0;
-  return raw * (1 - taxPenalty) * (1 - devastationPenalty);
 }
 
 /**
