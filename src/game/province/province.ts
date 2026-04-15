@@ -6,6 +6,9 @@ import { UNIVERSAL_BUILDINGS, TERRAIN_AVAILABLE_BUILDINGS, TERRAIN_DATA } from '
 import type { TradeGoodType } from '../../data/trade-goods';
 import type { ProvinceFeature } from '../../data/province-features';
 import { TRADE_GOOD_DATA } from '../../data/trade-goods';
+import {
+  FOOD, GROWTH, TAX, WEALTH, SETTLEMENT, PROVINCE_DEFAULTS,
+} from '../../config/game-config';
 
 // ── Investment types ──
 
@@ -505,60 +508,25 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
 
 // ── Initial wealth calculation (ETW-style: terrain + resource + population) ──
 
-/** Terrain base wealth for newly conquered provinces. */
-const TERRAIN_BASE_WEALTH: Record<TerrainType, number> = {
-  coast: 35, farmland: 30, hills: 25, plains: 20,
-  forest: 20, desert: 15, marsh: 10, mountains: 10,
-};
-
-/** Trade good bonus to initial wealth. */
-const TRADE_GOOD_WEALTH: Record<string, number> = {
-  gold_ore: 20, silk: 15, salt: 10, iron: 8, marble: 8,
-  incense: 8, wine: 6, horses: 5, fish: 5, olives: 5,
-  grain: 3, timber: 3,
-};
-
 /** Calculate initial wealth for a newly conquered province. */
 export function calculateInitialWealth(
   terrain: TerrainType, tradeGood: string | null, population: number,
 ): number {
-  return (TERRAIN_BASE_WEALTH[terrain] ?? 20)
-    + (tradeGood ? (TRADE_GOOD_WEALTH[tradeGood] ?? 0) : 0)
-    + population * 5;
+  return (WEALTH.terrainBase[terrain] ?? 20)
+    + (tradeGood ? (WEALTH.tradeGoodBonus[tradeGood] ?? 0) : 0)
+    + population * PROVINCE_DEFAULTS.wealthPerPop;
 }
 
 // ── Tax rate system (ETW-style: tax is a percentage of provincial wealth) ──
 
-/** Display label for a TaxLevel (1=Minimal … 5=Oppressive). */
+/** Display label for a TaxLevel. */
 export function getTaxLabel(level: TaxLevel): string {
-  const LABELS: Record<TaxLevel, string> = {
-    1: 'Minimal',
-    2: 'Low',
-    3: 'Normal',
-    4: 'High',
-    5: 'Oppressive',
-  };
-  return LABELS[level];
+  return TAX.labels[level];
 }
 
-/**
- * Tax rate (decimal fraction) from the dual tax sliders — applied to the
- * provincial wealth pool to calculate tax revenue (ETW-style).
- * Combined = lowerTax + upperTax (range 2–10).
- */
+/** Tax rate (decimal fraction) from the dual tax sliders. */
 export function getTaxRate(lowerTax: TaxLevel, upperTax: TaxLevel): number {
-  const RATES: Record<number, number> = {
-    2:  0.03,
-    3:  0.05,
-    4:  0.07,
-    5:  0.09,
-    6:  0.12,
-    7:  0.15,
-    8:  0.18,
-    9:  0.21,
-    10: 0.25,
-  };
-  return RATES[lowerTax + upperTax];
+  return TAX.rates[lowerTax + upperTax];
 }
 
 /** Format a tax rate decimal as a display percentage string (e.g. "12%"). */
@@ -566,57 +534,20 @@ export function formatTaxRate(rate: number): string {
   return `${(rate * 100).toFixed(0)}%`;
 }
 
-
-/**
- * Unrest change per season from the lower-class tax level.
- * Negative suppresses unrest; positive increases it.
- */
+/** Unrest delta per season from lower-tax level. */
 export function getLowerTaxUnrest(level: TaxLevel): number {
-  const UNREST: Record<TaxLevel, number> = {
-    1: -3,
-    2: -1,
-    3: 0,
-    4: 3,
-    5: 8,
-  };
-  return UNREST[level];
+  return TAX.lowerUnrest[level];
 }
 
-/**
- * Unrest change per season from the upper-class tax level.
- * Negative suppresses unrest; positive increases it.
- */
+/** Unrest delta per season from upper-tax level. */
 export function getUpperTaxUnrest(level: TaxLevel): number {
-  const UNREST: Record<TaxLevel, number> = {
-    1: -2,
-    2: 0,
-    3: 0,
-    4: 3,
-    5: 8,
-  };
-  return UNREST[level];
+  return TAX.upperUnrest[level];
 }
 
 // ── Wealth generation (NWG / PWG) ──
 
 // TERRAIN_PWG replaced by direct TERRAIN_DATA lookup in calculatePWG (S17-07).
 
-/** PWG bonus contributed by commercial buildings, keyed by InvestmentType then level. */
-const BUILDING_PWG: Partial<Record<InvestmentType, Record<number, number>>> = {
-  market:       { 1: 2, 2: 3, 3: 4 },
-  port:         { 1: 2, 2: 3, 3: 4 },
-  oasis_market: { 1: 2, 2: 3, 3: 4 },
-  caravan_post: { 1: 3, 2: 4, 3: 5 },
-};
-
-/** NWG formula coefficients [flat, multiplier] per upperTax level. */
-const NWG_PARAMS: Record<TaxLevel, [number, number]> = {
-  1: [0.5,  0.05],
-  2: [1.0,  0.10],
-  3: [1.5,  0.20],
-  4: [3.0,  0.50],
-  5: [5.0,  1.00],
-};
 
 /**
  * Positive Wealth Generation per season.
@@ -625,11 +556,11 @@ const NWG_PARAMS: Record<TaxLevel, [number, number]> = {
  * omit or pass undefined for terrain-agnostic contexts.
  */
 export function calculatePWG(province: Province, terrain?: string): number {
-  let pwg = 2;
+  let pwg = WEALTH.basePWG;
   const terrainKey = (terrain ?? province.terrain) as TerrainType;
   pwg += TERRAIN_DATA[terrainKey]?.baseModifiers.pwgModifier ?? 0;
   for (const inv of province.investments) {
-    pwg += BUILDING_PWG[inv.type]?.[inv.level] ?? 0;
+    pwg += (WEALTH.buildingPWG as Record<string, Record<number, number>>)[inv.type]?.[inv.level] ?? 0;
   }
   for (const syn of getActiveSynergies(province)) {
     if (syn.bonus.type === 'pwg') pwg += syn.bonus.amount;
@@ -651,7 +582,7 @@ export function calculatePWG(province: Province, terrain?: string): number {
  * Result is always negative.
  */
 export function calculateNWG(pwg: number, upperTax: TaxLevel): number {
-  const [flat, mult] = NWG_PARAMS[upperTax];
+  const { flat, mult } = WEALTH.nwgParams[upperTax];
   return -(flat + mult * pwg);
 }
 
@@ -662,39 +593,26 @@ export function calculateNWG(pwg: number, upperTax: TaxLevel): number {
 export function calculateNetWealthChange(province: Province, terrain?: string): number {
   const pwg = calculatePWG(province, terrain);
   const nwg = calculateNWG(pwg, province.upperTax);
-  const devastationDrain = province.devastationTimer > 0 ? -2 : 0;
+  const devastationDrain = province.devastationTimer > 0 ? -WEALTH.devastationDrain : 0;
   return pwg + nwg + devastationDrain;
 }
 
 // ── Population → building slots ──
 
-/**
- * Number of building slots available at a given population.
- *
- * Pop 1–2 → 1  (Settlement)
- * Pop 3–4 → 2  (Village)
- * Pop 5–6 → 3  (Town)
- * Pop 7–8 → 4  (City)
- * Pop 9–10 → 5 (Major City)
- * Pop 11+  → 6 (Metropolis)
- */
+/** Building slots for a given population (driven by SETTLEMENT.tiers). */
 export function getBuildingSlots(pop: number): number {
-  if (pop <= 2)  return 1;
-  if (pop <= 4)  return 2;
-  if (pop <= 6)  return 3;
-  if (pop <= 8)  return 4;
-  if (pop <= 10) return 5;
-  return 6;
+  for (const tier of SETTLEMENT.tiers) {
+    if (pop <= tier.maxPop) return tier.slots;
+  }
+  return SETTLEMENT.tiers[SETTLEMENT.tiers.length - 1].slots;
 }
 
-/** Settlement size label for a given population. */
+/** Settlement size label for a given population (driven by SETTLEMENT.tiers). */
 export function getSettlementLabel(pop: number): string {
-  if (pop <= 2)  return 'Settlement';
-  if (pop <= 4)  return 'Village';
-  if (pop <= 6)  return 'Town';
-  if (pop <= 8)  return 'City';
-  if (pop <= 10) return 'Major City';
-  return 'Metropolis';
+  for (const tier of SETTLEMENT.tiers) {
+    if (pop <= tier.maxPop) return tier.label;
+  }
+  return SETTLEMENT.tiers[SETTLEMENT.tiers.length - 1].label;
 }
 
 /**
@@ -721,34 +639,6 @@ export function getAvailableBuildings(province: Province): InvestmentType[] {
   return universals;
 }
 
-// ── Food system config (S20) — single source of truth for balance tuning ──
-
-/**
- * All food/famine/immigration constants in one place.
- * Modify these values to retune the economy without searching the file.
- */
-export const FOOD_CONFIG = {
-  /** Base subsistence food every province produces (gathering, small plots). */
-  baseSubsistence: 3,
-  /** Terrain base food production per season. */
-  terrainFood: {
-    farmland: 3, plains: 2, coast: 1, forest: 1,
-    hills: 1, mountains: 0, desert: 0, marsh: 1,
-  } as Record<TerrainType, number>,
-  /** Tax food penalty fraction by lower-tax level (1=Minimal … 5=Oppressive). */
-  taxFoodPenalty: { 1: 0, 2: 0.10, 3: 0.20, 4: 0.35, 5: 0.55 } as Record<TaxLevel, number>,
-  /** Marketplace tax penalty mitigation by tier (multiplicative reduction). */
-  marketplaceMitigation: { 1: 0.15, 2: 0.25, 3: 0.35 } as Record<number, number>,
-  /** Famine unrest per season: soft phase (timer 1-2). */
-  famineUnrestSoft: 10,
-  /** Famine unrest per season: hard phase (timer 3+). */
-  famineUnrestHard: 25,
-  /** Default hard-famine threshold (seasons of deficit before pop death). */
-  famineHardThreshold: 3,
-  /** Granary T3 raises hard-famine threshold by this many seasons. */
-  granaryT3FamineDelay: 1,
-};
-
 /**
  * Total food production for a province per season.
  * Sums: base subsistence + terrain + building foodBonus + trade good flatGrowth + governor traits.
@@ -757,7 +647,7 @@ export function calculateFoodProduction(
   province: Province,
   governorTraits: GovernorTrait[] = [],
 ): number {
-  let food = FOOD_CONFIG.baseSubsistence + (FOOD_CONFIG.terrainFood[province.terrain] ?? 0);
+  let food = FOOD.baseSubsistence + (FOOD.terrainFood[province.terrain] ?? 0);
 
   // Building food bonuses (from InvestmentLevelEffect.foodBonus)
   for (const inv of province.investments) {
@@ -790,7 +680,7 @@ export function calculateFoodProduction(
 
 /** Tax food penalty fraction for a given lower-tax level. */
 export function getTaxFoodPenalty(level: TaxLevel): number {
-  return FOOD_CONFIG.taxFoodPenalty[level];
+  return FOOD.taxFoodPenalty[level];
 }
 
 /**
@@ -808,7 +698,7 @@ export function calculateEffectiveFoodProduction(
   // Marketplace mitigates tax food penalty
   const marketplace = province.investments.find(i => i.type === 'market');
   if (marketplace) {
-    penalty *= (1 - (FOOD_CONFIG.marketplaceMitigation[marketplace.level] ?? 0));
+    penalty *= (1 - (FOOD.marketplaceMitigation[marketplace.level] ?? 0));
   }
 
   return raw * (1 - penalty);
@@ -878,9 +768,9 @@ export function rollImmigration(province: Province): { province: Province; immig
 
 // ── Population growth accumulator ──
 
-/** Growth threshold to gain 1 population point: `3 + current_pop`. */
+/** Growth threshold to gain 1 population point. */
 export function calculateGrowthThreshold(currentPop: number): number {
-  return 3 + currentPop;
+  return GROWTH.thresholdBase + currentPop * GROWTH.thresholdPerPop;
 }
 
 /**
@@ -951,8 +841,8 @@ export function tickFamine(
 
   // Granary T3 delays hard starvation by extra seasons
   const granary = province.investments.find(i => i.type === 'granary');
-  const hardThreshold = FOOD_CONFIG.famineHardThreshold
-    + (granary && granary.level >= 3 ? FOOD_CONFIG.granaryT3FamineDelay : 0);
+  const hardThreshold = FOOD.famineHardThreshold
+    + (granary && granary.level >= 3 ? FOOD.granaryT3FamineDelay : 0);
 
   if (newTimer >= hardThreshold) {
     // Hard phase: lose 1 pop (floor at 1), reset growth accumulator
@@ -969,8 +859,8 @@ export function tickFamine(
  * Soft (1-2): +10/season. Hard (3+): +25/season. None (0): 0.
  */
 export function getFamineUnrest(province: Province): number {
-  if (province.famineTimer >= FOOD_CONFIG.famineHardThreshold) return FOOD_CONFIG.famineUnrestHard;
-  if (province.famineTimer >= 1) return FOOD_CONFIG.famineUnrestSoft;
+  if (province.famineTimer >= FOOD.famineHardThreshold) return FOOD.famineUnrestHard;
+  if (province.famineTimer >= 1) return FOOD.famineUnrestSoft;
   return 0;
 }
 

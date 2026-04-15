@@ -13,7 +13,7 @@ import {
   getSettlementLabel, getBuildingSlots, calculateGrowthThreshold,
   calculateUnrestDelta, getRebelThreshold, getAvailableBuildings, SYNERGY_DATA,
   calculateFoodProduction, calculateEffectiveFoodProduction, calculateFoodConsumption,
-  calculateFoodSurplus, calculateBeautiness, FOOD_CONFIG,
+  calculateFoodSurplus, calculateBeautiness,
   type InvestmentType, type Province,
 } from '../../game/province/province';
 import type { TaxLevel } from '../../types/index';
@@ -28,6 +28,7 @@ import {
 import { TRADE_GOOD_DATA } from '../../data/trade-goods';
 import { TERRAIN_DATA, TERRAIN_AVAILABLE_BUILDINGS } from '../../data/terrain-data';
 import { nextInvestmentDiscount } from '../../game/progression/strategic-store';
+import { FOOD } from '../../config/game-config';
 import { ROMAN, formatCost } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
 import { Tooltip } from '../components/Tooltip';
@@ -1272,7 +1273,7 @@ function PopBar({ province }: { province: Province }) {
       )}
       {province.famineTimer > 0 && (
         <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)', fontWeight: 700 }}>
-          {province.famineTimer >= FOOD_CONFIG.famineHardThreshold ? 'FAMINE — losing population!' : `Food shortage: ${province.famineTimer} season${province.famineTimer > 1 ? 's' : ''}`}
+          {province.famineTimer >= FOOD.famineHardThreshold ? 'FAMINE — losing population!' : `Food shortage: ${province.famineTimer} season${province.famineTimer > 1 ? 's' : ''}`}
         </div>
       )}
       <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: '2px' }}>
@@ -1328,7 +1329,7 @@ function PopBar({ province }: { province: Province }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-danger)' }}>Famine</span>
                 <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)', fontWeight: 700 }}>
-                  {province.famineTimer >= FOOD_CONFIG.famineHardThreshold ? 'CRITICAL' : `${province.famineTimer}s`}
+                  {province.famineTimer >= FOOD.famineHardThreshold ? 'CRITICAL' : `${province.famineTimer}s`}
                 </span>
               </div>
             )}

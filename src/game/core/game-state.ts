@@ -19,6 +19,7 @@ import { computeArmySize } from '../army/cohort';
 import { recordRunStart } from './meta-save';
 import { STARTER_ADVISORS } from '../../data/advisor-data';
 import { initFeaturePool, resetFeaturePool } from '../province/feature-store';
+import { SEASON } from '../../config/game-config';
 
 // ── Core run state ──
 export const selectedCommander = signal<Commander | null>(null);
@@ -31,7 +32,7 @@ export const spokesSinceLastBattle = signal(0);
 // ── Season Clock ──
 
 /** Maximum seasons before the final invasion. */
-export const MAX_SEASONS = 24;
+export const MAX_SEASONS = SEASON.max;
 
 /** Total seasons elapsed across all spokes in this run. */
 export const globalSeason = signal(0);
@@ -50,9 +51,9 @@ export function getDoomLevel(): number {
  */
 export function getDoomUpkeep(): number {
   const doom = getDoomLevel();
-  if (doom >= 75) return 3;
-  if (doom >= 50) return 2;
-  if (doom >= 25) return 1;
+  for (const { threshold, gold } of SEASON.doomUpkeep) {
+    if (doom >= threshold) return gold;
+  }
   return 0;
 }
 

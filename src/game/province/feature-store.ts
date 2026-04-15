@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals';
 import type { ProvinceFeature } from '../../data/province-features';
 import { ALL_FEATURES } from '../../data/province-features';
+import { GROWTH } from '../../config/game-config';
 
 // ── Feature pool state ──
 
@@ -25,7 +26,8 @@ function shuffle<T>(arr: T[]): T[] {
  * Shuffles ALL_FEATURES and takes 8–12 randomly.
  */
 export function initFeaturePool(): void {
-  const count = 8 + Math.floor(Math.random() * 5); // 8–12
+  const range = GROWTH.featurePoolMax - GROWTH.featurePoolMin + 1;
+  const count = GROWTH.featurePoolMin + Math.floor(Math.random() * range);
   featurePool.value = shuffle(ALL_FEATURES).slice(0, count);
 }
 
