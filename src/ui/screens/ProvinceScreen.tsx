@@ -8,10 +8,12 @@ import {
   INVESTMENT_DATA, getProvinceIncome, getProvinceExpenses, getUnrestModifier,
   getInvestmentDiscount, applyInvestmentDiscount,
   getTaxLabel, getTaxRate, formatTaxRate, getLowerTaxUnrest,
-  getUpperTaxUnrest, calculateEffectiveGrowth, calculateNetWealthChange,
+  getUpperTaxUnrest, calculateNetWealthChange,
   getActiveSynergies,
   getEffectiveMaxPop, getSettlementLabel, getBuildingSlots, calculateGrowthThreshold,
   calculateUnrestDelta, getRebelThreshold, getAvailableBuildings, SYNERGY_DATA,
+  calculateFoodProduction, calculateEffectiveFoodProduction, calculateFoodConsumption,
+  calculateFoodSurplus, calculateBeautiness,
   type InvestmentType, type Province,
 } from '../../game/province/province';
 import type { TaxLevel } from '../../types/index';
@@ -1292,15 +1294,20 @@ function PopBar({ province }: { province: Province }) {
   const slotMax = getBuildingSlots(province.population);
   const builtCount = province.investments.length;
 
-  const effectiveGrowth = calculateEffectiveGrowth(province, province.terrain, traits);
+  const foodProd = calculateFoodProduction(province, traits);
+  const foodEffective = calculateEffectiveFoodProduction(province, traits);
+  const foodCons = calculateFoodConsumption(province);
+  const foodSurplus = calculateFoodSurplus(province, traits);
+  const beautiness = calculateBeautiness(province);
+
   const threshold = calculateGrowthThreshold(province.population);
   const accum = Math.min(province.growthAccumulator, threshold);
   const accumPct = threshold > 0 ? accum / threshold : 0;
 
-  // Seasons until next pop point
+  // Seasons until next pop point (only if surplus > 0)
   const remaining = threshold - accum;
-  const seasonsToNext = (!atCap && effectiveGrowth > 0)
-    ? Math.ceil(remaining / effectiveGrowth)
+  const seasonsToNext = (!atCap && foodSurplus > 0)
+    ? Math.ceil(remaining / foodSurplus)
     : null;
 
   // Bar geometry
@@ -1310,16 +1317,31 @@ function PopBar({ province }: { province: Province }) {
 
   const settlementColor = getSettlementColor(province.population);
 
+  const surplusColor = foodSurplus > 0 ? 'var(--color-success)' : foodSurplus < 0 ? 'var(--color-danger)' : 'var(--color-text-muted)';
+
   const tooltipContent = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
       <div style={{ fontWeight: 700, color: settlementColor }}>
         {settlementLabel} — Pop {province.population}/{maxPop}
       </div>
       <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-        Growth threshold: {threshold} ({accum.toFixed(1)} accumulated)
+        Food: {foodProd.toFixed(0)} produced{foodEffective < foodProd ? ` (${foodEffective.toFixed(1)} after tax)` : ''} — {foodCons} consumed
       </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: surplusColor }}>
+        Surplus: {foodSurplus >= 0 ? '+' : ''}{foodSurplus.toFixed(1)} {foodSurplus > 0 ? '(growing)' : foodSurplus < 0 ? '(starving!)' : '(equilibrium)'}
+      </div>
+      {beautiness > 0 && (
+        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-secondary)' }}>
+          Beautiness: {beautiness}% — immigration chance
+        </div>
+      )}
+      {province.famineTimer > 0 && (
+        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)', fontWeight: 700 }}>
+          {province.famineTimer >= 3 ? 'FAMINE — losing population!' : `Food shortage: ${province.famineTimer} season${province.famineTimer > 1 ? 's' : ''}`}
+        </div>
+      )}
       <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-        Building slots: {builtCount}/{slotMax} used
+        Growth threshold: {threshold} ({accum.toFixed(1)} accumulated) — Slots: {builtCount}/{slotMax}
       </div>
       {atCap && (
         <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-primary)', marginTop: '2px' }}>
@@ -1329,8 +1351,8 @@ function PopBar({ province }: { province: Province }) {
     </div>
   );
 
-  const growthColor = effectiveGrowth > 0 ? 'var(--color-success)' : effectiveGrowth < 0 ? 'var(--color-danger)' : 'var(--color-text-muted)';
-  const growthArrow = effectiveGrowth > 0 ? '↑' : effectiveGrowth < 0 ? '↓' : '→';
+  const growthColor = surplusColor;
+  const growthArrow = foodSurplus > 0 ? '↑' : foodSurplus < 0 ? '↓' : '→';
 
   return (
     <Tooltip content={tooltipContent} variant="rich" position="above" align="start">
@@ -1370,6 +1392,22 @@ function PopBar({ province }: { province: Province }) {
                 {builtCount} / {slotMax}
               </span>
             </div>
+            {beautiness > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Beauty</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-secondary)', fontWeight: 600 }}>
+                  {beautiness}%
+                </span>
+              </div>
+            )}
+            {province.famineTimer > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-danger)' }}>Famine</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)', fontWeight: 700 }}>
+                  {province.famineTimer >= 3 ? 'CRITICAL' : `${province.famineTimer}s`}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1388,7 +1426,7 @@ function PopBar({ province }: { province: Province }) {
           fontSize: '9px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
         }}>
           <span style={{ color: growthColor }}>
-            Growth Rate: {effectiveGrowth >= 0 ? '+' : ''}{effectiveGrowth.toFixed(1)}/s {growthArrow}
+            Food: {foodSurplus >= 0 ? '+' : ''}{foodSurplus.toFixed(1)} {growthArrow}
           </span>
           <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>
             {atCap ? 'At cap' : seasonsToNext !== null ? `Next in ${seasonsToNext}s` : 'No growth'}
@@ -1571,9 +1609,9 @@ function TaxSliders({ province }: { province: Province }) {
   const previewGold = Math.floor(province.wealth * previewRate) + buildingGold + 1;
   const goldDelta = previewGold - currentGold;
 
-  // Growth preview
-  const currentGrowth = calculateEffectiveGrowth(province, province.terrain, traits);
-  const previewGrowth = calculateEffectiveGrowth(previewProv, province.terrain, traits);
+  // Food surplus preview (replaces old growth preview)
+  const currentGrowth = calculateFoodSurplus(province, traits);
+  const previewGrowth = calculateFoodSurplus(previewProv, traits);
   const growthDelta = previewGrowth - currentGrowth;
 
   // Wealth delta preview
