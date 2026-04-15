@@ -1694,21 +1694,47 @@ function IdentityStrip({ province }: { province: Province }) {
 
       <span class="identity-sep">·</span>
 
-      {/* Unique feature — not yet implemented (Sprint 4) */}
-      <Tooltip
-        content={
-          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-            Unique features coming in Sprint 4
+      {/* Unique feature (S19) */}
+      {province.uniqueFeature ? (
+        <Tooltip
+          content={(() => {
+            const f = province.uniqueFeature!;
+            const rows: string[] = [];
+            if (f.goldPerSeason) rows.push(`${f.goldPerSeason > 0 ? '+' : ''}${f.goldPerSeason} Gold/spoke`);
+            if (f.foodPerSeason) rows.push(`+${f.foodPerSeason} Food/spoke`);
+            if (f.faithPerSeason) rows.push(`+${f.faithPerSeason} Faith/spoke`);
+            if (f.influencePerSeason) rows.push(`+${f.influencePerSeason} Influence/spoke`);
+            if (f.momentumPerSeason) rows.push(`+${f.momentumPerSeason} Momentum/spoke`);
+            if (f.unrestPerSeason) rows.push(`${f.unrestPerSeason} Unrest/spoke`);
+            if (f.beautinessBonus) rows.push(`+${f.beautinessBonus}% Beautiness`);
+            if (f.buildCostDiscount) rows.push(`-${f.buildCostDiscount}% Build Cost`);
+            if (f.wealthGrowthBonus) rows.push(`+${f.wealthGrowthBonus} Wealth Growth`);
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)' }}>{f.name}</div>
+                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>{f.flavour}</div>
+                {rows.length > 0 && (
+                  <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-primary)', marginTop: '2px' }}>
+                    {rows.join(' · ')}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+          variant="rich"
+          position="below"
+        >
+          <div class="identity-chip">
+            <span class="identity-icon">🏛️</span>
+            <span class="identity-label">{province.uniqueFeature.name}</span>
           </div>
-        }
-        variant="rich"
-        position="below"
-      >
+        </Tooltip>
+      ) : (
         <div class="identity-chip identity-chip-empty">
           <span class="identity-icon">🏛️</span>
           <span class="identity-label" style={{ color: 'var(--color-text-muted)' }}>No Feature</span>
         </div>
-      </Tooltip>
+      )}
     </div>
   );
 }
