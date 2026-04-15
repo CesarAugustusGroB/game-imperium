@@ -737,6 +737,68 @@ export function getAvailableBuildings(province: Province): InvestmentType[] {
   return universals;
 }
 
+// ── Food production & consumption (S20) ──
+
+/** Terrain base food production per season. */
+const TERRAIN_BASE_FOOD: Record<TerrainType, number> = {
+  farmland: 3,
+  plains: 2,
+  coast: 1,
+  forest: 1,
+  hills: 1,
+  mountains: 0,
+  desert: 0,
+  marsh: 1,
+};
+
+/**
+ * Total food production for a province per season.
+ * Sums: terrain base + building foodBonus + trade good flatGrowth + governor pop-growth traits.
+ */
+export function calculateFoodProduction(
+  province: Province,
+  governorTraits: GovernorTrait[] = [],
+): number {
+  let food = TERRAIN_BASE_FOOD[province.terrain] ?? 0;
+
+  // Building food bonuses (from InvestmentLevelEffect.foodBonus)
+  for (const inv of province.investments) {
+    const effect = INVESTMENT_DATA[inv.type]?.levels[inv.level - 1];
+    food += effect?.foodBonus ?? 0;
+  }
+
+  // Trade good food contribution (Grain +3, Fish +1, Salt +1, Olives +1 via flatGrowth)
+  if (province.tradeGood) {
+    food += TRADE_GOOD_DATA[province.tradeGood].flatGrowth;
+  }
+
+  // Governor population-growth trait → food production bonus
+  for (const trait of governorTraits) {
+    if (trait.type === 'population-growth') food += trait.amount;
+  }
+
+  return food;
+}
+
+/**
+ * Food consumption for a province per season.
+ * Each population point consumes 1 food.
+ */
+export function calculateFoodConsumption(province: Province): number {
+  return province.population;
+}
+
+/**
+ * Net food surplus (production − consumption).
+ * Positive = growth fuel, zero = equilibrium, negative = starvation.
+ */
+export function calculateFoodSurplus(
+  province: Province,
+  governorTraits: GovernorTrait[] = [],
+): number {
+  return calculateFoodProduction(province, governorTraits) - calculateFoodConsumption(province);
+}
+
 // ── Population growth accumulator ──
 
 // TERRAIN_GROWTH replaced by direct TERRAIN_DATA lookup in calculateRawGrowth (S17-07).
