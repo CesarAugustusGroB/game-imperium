@@ -1019,7 +1019,11 @@ export function tickFamine(
   // Deficit: increment famine timer
   const newTimer = province.famineTimer + 1;
 
-  if (newTimer >= 3) {
+  // Granary T3 delays hard starvation by 1 season (threshold 4 instead of 3)
+  const granary = province.investments.find(i => i.type === 'granary');
+  const hardThreshold = granary && granary.level >= 3 ? 4 : 3;
+
+  if (newTimer >= hardThreshold) {
     // Hard phase: lose 1 pop (floor at 1), reset growth accumulator
     const newPop = Math.max(1, province.population - 1);
     return { ...province, famineTimer: newTimer, population: newPop, growthAccumulator: 0 };
