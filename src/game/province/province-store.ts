@@ -344,7 +344,22 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
     p = { ...p, wealth: Math.min(9999, Math.max(0, p.wealth + netWealth)) };
 
     // 5b. Tick famine (S20): update famineTimer, hard phase kills pops
+    const preFamine = p.famineTimer;
     p = tickFamine(p, traits);
+    // Famine transition notifications (fire only on state change, not every season)
+    if (preFamine < 3 && p.famineTimer >= 3) {
+      addNotification({
+        kind: 'alert', icon: '💀', title: 'Famine',
+        message: `${prov.name} is starving — losing population!`,
+        color: '#c24a3a', duration: 4000,
+      });
+    } else if (preFamine === 0 && p.famineTimer >= 1) {
+      addNotification({
+        kind: 'toast', icon: '🌾', title: 'Food Shortage',
+        message: `${prov.name} cannot feed its people. Growth halted.`,
+        color: '#d4a843',
+      });
+    }
 
     // 6. Tick population growth accumulator (food-surplus driven, S20)
     p = tickPopulationGrowth(p, p.terrain, traits);
@@ -352,6 +367,13 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
     // 6b. Immigration roll (S20): d100 vs beautiness%, +1 pop on success
     const immigrationResult = rollImmigration(p);
     p = immigrationResult.province;
+    if (immigrationResult.immigrated) {
+      addNotification({
+        kind: 'toast', icon: '🏛', title: 'New Settler',
+        message: `${prov.name} attracted a new settler!`,
+        color: '#5a8a4a',
+      });
+    }
 
     // 7. Tick unrest: new formula + expense shortfall penalty
     let unrestDelta = calculateUnrestDelta(p, traits);
