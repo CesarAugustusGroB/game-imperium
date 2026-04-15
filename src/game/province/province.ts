@@ -784,6 +784,37 @@ export function calculateFoodProduction(
 }
 
 /**
+ * Tax food penalty fraction by lower-tax level (S20).
+ * Higher taxes reduce effective food supply — pops can't afford the surplus.
+ */
+const TAX_FOOD_PENALTY: Record<TaxLevel, number> = {
+  1: 0,      // Minimal — no penalty
+  2: 0.10,   // Low — 10% food lost
+  3: 0.20,   // Normal — 20% food lost
+  4: 0.35,   // Heavy — 35% food lost
+  5: 0.55,   // Oppressive — 55% food lost
+};
+
+/** Tax food penalty fraction for a given lower-tax level. */
+export function getTaxFoodPenalty(level: TaxLevel): number {
+  return TAX_FOOD_PENALTY[level];
+}
+
+/**
+ * Effective food production after tax friction.
+ * `effectiveFood = rawProduction × (1 − taxPenalty)`
+ * Use this (not raw production) for surplus calculations.
+ */
+export function calculateEffectiveFoodProduction(
+  province: Province,
+  governorTraits: GovernorTrait[] = [],
+): number {
+  const raw = calculateFoodProduction(province, governorTraits);
+  const penalty = getTaxFoodPenalty(province.lowerTax);
+  return raw * (1 - penalty);
+}
+
+/**
  * Food consumption for a province per season.
  * Each population point consumes 1 food.
  */
@@ -792,14 +823,15 @@ export function calculateFoodConsumption(province: Province): number {
 }
 
 /**
- * Net food surplus (production − consumption).
+ * Net food surplus (effective production − consumption).
  * Positive = growth fuel, zero = equilibrium, negative = starvation.
+ * Tax friction is already applied to production.
  */
 export function calculateFoodSurplus(
   province: Province,
   governorTraits: GovernorTrait[] = [],
 ): number {
-  return calculateFoodProduction(province, governorTraits) - calculateFoodConsumption(province);
+  return calculateEffectiveFoodProduction(province, governorTraits) - calculateFoodConsumption(province);
 }
 
 // ── Population growth accumulator ──
