@@ -4,8 +4,7 @@ import {
   createProvince, INVESTMENT_DATA,
   getInvestmentDiscount, applyInvestmentDiscount,
   getProvinceExpenses, getBuildingSlots,
-  getWealthTier, getWealthMultiplier,
-  getTaxMultiplier,
+  getTaxRate, calculateInitialWealth,
   calculateNetWealthChange,
   tickPopulationGrowth,
   calculateUnrestDelta, getRebelThreshold, applyRebellion,
@@ -16,7 +15,7 @@ import type { DoctrineEffect } from '../items/doctrine';
 import type { ResourceCost, TaxLevel } from '../../types/index';
 import { getResource, spendResource, addResource } from '../core/resources';
 import { getGovernorTraits, getGovernorSalary, registerProvinceSyncCallback } from './governor-store';
-import { claimTerritory } from './province-map-store';
+import { claimTerritory, claimTerritoryAt } from './province-map-store';
 import { nextInvestmentDiscount } from '../progression/strategic-store';
 import { addNotification } from '../../ui/notifications/notification-store';
 import { TERRAIN_DATA } from '../../data/terrain-data';
@@ -51,14 +50,16 @@ export function assignProvinceIdentity(): { terrain: TerrainType; tradeGood: Tra
 
 /**
  * Create a province from a completed spoke and add it to the store.
- * @param name   — spoke label (e.g. "Border War")
- * @param gains  — total resources earned during the spoke
- * @param duration — spoke duration in seasons (used to scale baseIncome)
+ * @param name      — province display name
+ * @param gains     — total resources earned during the spoke
+ * @param duration  — spoke duration in seasons (used to scale baseIncome)
+ * @param overrides — optional pre-rolled identity; when provided, skips random assignment
  */
 export function conquerProvince(
   name: string,
   gains: Record<ResourceType, number>,
   duration: number,
+  overrides?: { terrain?: TerrainType; tradeGood?: TradeGoodType; mapIndex?: number },
 ): Province {
   // Scale one-time gains down to a per-spoke income rate
   const divisor = Math.max(1, duration);
@@ -68,12 +69,19 @@ export function conquerProvince(
     if (perSpoke > 0) baseIncome[res] = perSpoke;
   }
 
-  const { terrain, tradeGood } = assignProvinceIdentity();
-  const province = createProvince(name, { baseIncome, terrain, tradeGood });
+  const { terrain, tradeGood } = (overrides?.terrain && overrides?.tradeGood)
+    ? { terrain: overrides.terrain, tradeGood: overrides.tradeGood }
+    : assignProvinceIdentity();
+  const wealth = calculateInitialWealth(terrain, tradeGood, 3);
+  const province = createProvince(name, { baseIncome, terrain, tradeGood, wealth });
   provinces.value = [...provinces.value, province];
 
-  // Claim a map territory for this province
-  claimTerritory(province.id);
+  // Claim the chosen map territory, or auto-pick if no specific index provided
+  if (overrides?.mapIndex !== undefined) {
+    claimTerritoryAt(province.id, overrides.mapIndex);
+  } else {
+    claimTerritory(province.id);
+  }
 
   return province;
 }
@@ -218,8 +226,8 @@ export interface ProvinceIncomeResult {
  * Rewritten season tick — wires all S16 sub-systems in spec order.
  *
  * Per-season tick order (per spec):
- *  1. Calculate income: building_gold × wealthTier × taxMultiplier + 1 subsistence
- *     Non-gold resources × wealthTier only (no tax).
+ *  1. Calculate income: taxRevenue (wealth × taxRate) + building_gold + 1 subsistence.
+ *     Non-gold resources are flat (no wealth/tax scaling).
  *  2. Calculate expenses (buildings + governor).
  *  3. Apply net income/expenses to global resources.
  *  4. Tick wealth (PWG + NWG − devastation drain).
@@ -238,8 +246,8 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
 
   for (const prov of allProvinces) {
     const traits = getGovernorTraits(prov.id);
-    const wealthMult = getWealthMultiplier(getWealthTier(prov.wealth));
-    const taxMult = getTaxMultiplier(prov.lowerTax, prov.upperTax);
+    const taxRate = getTaxRate(prov.lowerTax, prov.upperTax);
+    const taxRevenue = Math.floor(prov.wealth * taxRate);
 
     // Split building income into gold vs non-gold
     let buildingGold = 0;
@@ -252,19 +260,19 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
       }
     }
 
-    // Synergy gold bonus — treated as building income (× wealth × tax per spec)
+    // Synergy gold bonus — flat building income
     for (const syn of getActiveSynergies(prov)) {
       if (syn.bonus.type === 'gold') buildingGold += syn.bonus.amount;
     }
 
-    // Gold: building gold × wealth × tax, plus 1 subsistence always
+    // Gold: tax revenue (wealth × rate) + building gold + 1 subsistence
     const provIncome: Partial<Record<ResourceType, number>> = {
-      gold: Math.round(buildingGold * wealthMult * taxMult) + 1,
+      gold: taxRevenue + buildingGold + 1,
     };
 
-    // Non-gold: wealth multiplier only (no tax)
+    // Non-gold: flat building output (no wealth/tax scaling)
     for (const [res, amt] of Object.entries(nonGold) as [ResourceType, number][]) {
-      provIncome[res] = Math.round(amt * wealthMult);
+      provIncome[res] = amt;
     }
 
     // Trade good flat income — added after multipliers (flat = no tier × tax scaling per spec)
@@ -329,9 +337,9 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
     const traits = getGovernorTraits(prov.id);
     let p = prov;
 
-    // 4. Tick wealth (clamp 0–200)
+    // 4. Tick wealth (accumulative, clamp 0–9999)
     const netWealth = calculateNetWealthChange(p, p.terrain);
-    p = { ...p, wealth: Math.min(200, Math.max(0, p.wealth + netWealth)) };
+    p = { ...p, wealth: Math.min(9999, Math.max(0, p.wealth + netWealth)) };
 
     // 6. Tick population growth accumulator
     p = tickPopulationGrowth(p, p.terrain, traits);

@@ -4,11 +4,14 @@ import { useRef, useState, useEffect, useCallback } from 'preact/hooks';
 
 type TooltipPosition = 'above' | 'below' | 'left' | 'right';
 type TooltipVariant = 'simple' | 'rich';
+/** Horizontal alignment for above/below positions. 'start' = left-edge of trigger. */
+type TooltipAlign = 'center' | 'start';
 
 interface TooltipProps {
   content: ComponentChildren;
   children: ComponentChildren;
   position?: TooltipPosition;
+  align?: TooltipAlign;
   delay?: number;
   variant?: TooltipVariant;
   disabled?: boolean;
@@ -24,36 +27,20 @@ if (typeof document !== 'undefined' && !document.getElementById('tooltip-styles'
   document.head.appendChild(el);
 }
 
-function getPositionStyle(position: TooltipPosition): JSX.CSSProperties {
+function getPositionStyle(position: TooltipPosition, align: TooltipAlign): JSX.CSSProperties {
   switch (position) {
     case 'above':
-      return {
-        bottom: '100%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        marginBottom: '8px',
-      };
+      return align === 'start'
+        ? { bottom: '100%', left: '0', marginBottom: '8px' }
+        : { bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px' };
     case 'below':
-      return {
-        top: '100%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        marginTop: '8px',
-      };
+      return align === 'start'
+        ? { top: '100%', left: '0', marginTop: '8px' }
+        : { top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: '8px' };
     case 'left':
-      return {
-        right: '100%',
-        top: '50%',
-        transform: 'translateY(-50%)',
-        marginRight: '8px',
-      };
+      return { right: '100%', top: '50%', transform: 'translateY(-50%)', marginRight: '8px' };
     case 'right':
-      return {
-        left: '100%',
-        top: '50%',
-        transform: 'translateY(-50%)',
-        marginLeft: '8px',
-      };
+      return { left: '100%', top: '50%', transform: 'translateY(-50%)', marginLeft: '8px' };
   }
 }
 
@@ -61,6 +48,7 @@ export function Tooltip({
   content,
   children,
   position = 'above',
+  align = 'center',
   delay = 300,
   variant = 'simple',
   disabled = false,
@@ -117,7 +105,7 @@ export function Tooltip({
     scheduleHide();
   }, [scheduleHide]);
 
-  const positionStyle = getPositionStyle(position);
+  const positionStyle = getPositionStyle(position, align);
 
   const variantStyle: JSX.CSSProperties =
     variant === 'simple'
@@ -126,21 +114,27 @@ export function Tooltip({
           fontSize: 'var(--font-size-sm)',
           color: 'var(--color-text-secondary)',
           whiteSpace: 'nowrap',
+          background: 'var(--color-bg-primary)',
+          border: '1px solid var(--color-border-default)',
+          borderRadius: 'var(--radius-sm)',
+          boxShadow: 'var(--shadow-md)',
         }
       : {
-          padding: 'var(--space-sm) var(--space-md)',
+          padding: '10px 14px',
           fontSize: 'var(--font-size-sm)',
           color: 'var(--color-text-secondary)',
-          maxWidth: '320px',
+          minWidth: '180px',
+          maxWidth: '280px',
           whiteSpace: 'normal',
+          background: 'var(--color-marble-dark)',
+          border: '1px solid var(--color-border-strong)',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--shadow-lg), 0 0 0 1px rgba(240,208,128,0.06) inset',
+          borderTop: '2px solid var(--color-gold-secondary)',
         };
 
   const tooltipStyle: JSX.CSSProperties = {
     position: 'absolute',
-    background: 'var(--color-bg-primary)',
-    border: 'var(--border-width) solid var(--color-border-default)',
-    borderRadius: 'var(--radius-sm)',
-    boxShadow: 'var(--shadow-md)',
     fontFamily: 'var(--font-family)',
     zIndex: 100,
     pointerEvents: 'auto',

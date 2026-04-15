@@ -285,7 +285,7 @@ export function DoctrineSlot({
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
         }}>
-          {doctrine.name}
+          {doctrine.name.replace(/^Doctrine of (?:the )?/i, '')}
         </span>
 
         {/* Roman numeral level badge */}

@@ -1,10 +1,7 @@
 import type { ArmyData, BattleEvent, TopologyData } from '../../types/index';
-import type { GameState } from '../core/state';
-import type { ProvinceRegistry } from '../province/provinces';
 import type { Cohort } from '../army/cohort';
 import { computeArmySize } from '../army/cohort';
 import { lerp } from '../../utils/math';
-import { rgbToKey } from '../../utils/color';
 
 const MOVE_SPEED = 0.4;
 const COMBAT_INTERVAL = 1.5; // seconds between combat rounds
@@ -19,16 +16,12 @@ export class ArmyManager {
   armies: Map<number, ArmyData> = new Map();
   topology: TopologyData;
   battleEvents: BattleEvent[] = [];
-  private gameState: GameState;
-  private registry: ProvinceRegistry;
   private nextId = 1;
   private combatTimer = 0;
   private aiTimer = 0;
 
-  constructor(topology: TopologyData, gameState: GameState, registry: ProvinceRegistry) {
+  constructor(topology: TopologyData) {
     this.topology = topology;
-    this.gameState = gameState;
-    this.registry = registry;
   }
 
   /**
@@ -234,36 +227,10 @@ export class ArmyManager {
       }
     }
 
-    // Remove destroyed armies and transfer provinces to the victor
+    // Remove destroyed armies
     for (const id of toDestroy) {
-      const destroyed = this.armies.get(id);
-      if (destroyed) {
-        // Find a surviving enemy in the same province to claim it
-        const victor = this.getSurvivingEnemyInProvince(destroyed.provinceIndex, destroyed.owner);
-        if (victor) {
-          this.conquerProvince(destroyed.provinceIndex, victor.owner);
-        }
-      }
       this.armies.delete(id);
     }
-  }
-
-  private getSurvivingEnemyInProvince(provinceIndex: number, excludeOwner: string): ArmyData | null {
-    for (const army of this.armies.values()) {
-      if (army.provinceIndex === provinceIndex && army.owner !== excludeOwner && army.size > 0) {
-        return army;
-      }
-    }
-    return null;
-  }
-
-  private conquerProvince(provinceIndex: number, newOwner: string): void {
-    const province = this.gameState.provinceByIndex.get(provinceIndex);
-    if (!province || province.owner === newOwner) return;
-
-    const key = rgbToKey(province.color[0], province.color[1], province.color[2]);
-    this.gameState.transferProvince(key, newOwner);
-    this.registry.updateProvince(key);
   }
 
   private updateAI(): void {

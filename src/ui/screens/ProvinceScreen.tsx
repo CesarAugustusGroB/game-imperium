@@ -1,4 +1,5 @@
 import { signal, useSignal } from '@preact/signals';
+import type { ComponentChildren } from 'preact';
 import { navigateTo } from '../screens';
 import { selectedCommander } from '../../game/core/game-state';
 import { playSfx } from '../sound/sfx';
@@ -6,14 +7,14 @@ import { provinces, buildInvestment, canAffordCost, getNextInvestmentLevel, setP
 import {
   INVESTMENT_DATA, getProvinceIncome, getProvinceExpenses, getUnrestModifier,
   getInvestmentDiscount, applyInvestmentDiscount,
-  getTaxLabel, getTaxMultiplier, getLowerTaxUnrest,
+  getTaxLabel, getTaxRate, formatTaxRate, getLowerTaxUnrest,
   getUpperTaxUnrest, calculateEffectiveGrowth, calculateNetWealthChange,
-  getWealthTier, getWealthMultiplier, getWealthLabel, getActiveSynergies,
+  getActiveSynergies,
   getEffectiveMaxPop, getSettlementLabel, getBuildingSlots, calculateGrowthThreshold,
   calculateUnrestDelta, getRebelThreshold, getAvailableBuildings, SYNERGY_DATA,
   type InvestmentType, type Province,
 } from '../../game/province/province';
-import type { TaxLevel, WealthTier } from '../../types/index';
+import type { TaxLevel } from '../../types/index';
 import { FACTION_COLORS, RESOURCE_INFO, type ResourceType } from '../../game/core/commander';
 import { getResource } from '../../game/core/resources';
 import { getHireCost, type GovernorTrait } from '../../game/province/governor';
@@ -45,11 +46,19 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
       background: rgba(80, 60, 20, 0.35) !important;
       box-shadow: inset 3px 0 0 var(--color-gold-primary);
     }
-    .prov-ledger::-webkit-scrollbar { width: 4px; }
-    .prov-ledger::-webkit-scrollbar-track { background: transparent; }
-    .prov-ledger::-webkit-scrollbar-thumb { background: rgba(180, 160, 100, 0.25); border-radius: 2px; }
-    .prov-ledger::-webkit-scrollbar-thumb:hover { background: rgba(180, 160, 100, 0.45); }
-    .prov-ledger { scrollbar-width: thin; scrollbar-color: rgba(180,160,100,0.25) transparent; }
+    .prov-ledger::-webkit-scrollbar,
+    .prov-detail::-webkit-scrollbar { width: 3px; }
+    .prov-ledger::-webkit-scrollbar-track,
+    .prov-detail::-webkit-scrollbar-track { background: transparent; }
+    .prov-ledger::-webkit-scrollbar-thumb,
+    .prov-detail::-webkit-scrollbar-thumb {
+      background: rgba(180, 160, 100, 0.18);
+      border-radius: 2px;
+    }
+    .prov-ledger::-webkit-scrollbar-thumb:hover,
+    .prov-detail::-webkit-scrollbar-thumb:hover { background: rgba(180, 160, 100, 0.38); }
+    .prov-ledger { scrollbar-width: thin; scrollbar-color: rgba(180,160,100,0.18) transparent; }
+    .prov-detail { scrollbar-width: thin; scrollbar-color: rgba(180,160,100,0.18) transparent; }
 
     /* ── Governor card ── */
     .gov-strip {
@@ -226,7 +235,7 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
       .ornate-frame { padding: 18px 14px; }
       .ornate-title { font-size: 32px; letter-spacing: 4px; }
       .prov-layout { flex-direction: column !important; }
-      .prov-ledger { flex: 1 1 auto !important; max-height: 200px !important; }
+      .prov-ledger { flex: 1 1 auto !important; }
       .inv-grid { grid-template-columns: repeat(2, 1fr) !important; }
     }
 
@@ -293,28 +302,11 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
     .wealth-section {
       display: flex; flex-direction: column; gap: 8px;
       padding-bottom: 14px;
-      border-bottom: 1px solid var(--color-border-subtle);
     }
-    .wealth-zones {
-      position: relative; height: 10px;
-      border-radius: var(--radius-sm); overflow: hidden;
-      display: flex; cursor: default;
-    }
-    .wealth-marker {
-      position: absolute; top: -3px; bottom: -3px; width: 3px;
-      background: rgba(255, 255, 255, 0.9);
-      border-radius: 2px;
-      box-shadow: 0 0 5px rgba(0, 0, 0, 0.8), 0 0 2px rgba(255, 255, 255, 0.6);
-      transform: translateX(-50%);
-      pointer-events: none;
-      transition: left var(--duration-slow) var(--ease-default);
-    }
-
     /* ── Population bar ── */
     .pop-section {
       display: flex; flex-direction: column; gap: 8px;
       padding-bottom: 14px;
-      border-bottom: 1px solid var(--color-border-subtle);
     }
     .pop-bar {
       position: relative; height: 10px;
@@ -373,7 +365,6 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
     .unrest-section {
       display: flex; flex-direction: column; gap: 8px;
       padding-bottom: 14px;
-      border-bottom: 1px solid var(--color-border-subtle);
     }
     .unrest-bar {
       position: relative; height: 10px;
@@ -553,19 +544,6 @@ const TAX_LEVEL_COLORS: Record<TaxLevel, string> = {
   5: 'var(--color-danger)',
 };
 
-// Wealth tier zone definitions for the segmented bar.
-// Bar display range: 0–100 (wealth > 100 clamps marker to right edge).
-// Segment widths are proportional to each tier's value range.
-const WEALTH_TIER_ZONES: ReadonlyArray<{
-  tier: WealthTier; end: number; color: string; label: string;
-}> = [
-  { tier: 1, end: 15,  color: 'var(--color-danger)',       label: 'Destitute'  },
-  { tier: 2, end: 35,  color: '#d47a30',                   label: 'Poor'       },
-  { tier: 3, end: 55,  color: 'var(--color-warning)',      label: 'Growing'    },
-  { tier: 4, end: 80,  color: 'var(--color-success)',      label: 'Prosperous' },
-  { tier: 5, end: 100, color: 'var(--color-gold-primary)', label: 'Wealthy'    },
-];
-
 const selectedProvinceId = signal<string | null>(null);
 const showGovernorPicker = signal(false);
 const buildingSlotType = signal<string | null>(null);
@@ -644,12 +622,9 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
   const incomeBonus = currentEffect?.incomeBonus ?? {};
   const unrestChange = currentEffect?.unrestChange ?? 0;
 
-  // Gold formula: only for built buildings that produce gold
+  // Gold formula: only for built buildings that produce gold (flat, no multipliers)
   const rawGold = (incomeBonus as Record<string, number>).gold ?? 0;
   const showGoldFormula = currentLevel > 0 && rawGold > 0;
-  const wealthMult = getWealthMultiplier(getWealthTier(province.wealth));
-  const taxMult = getTaxMultiplier(province.lowerTax, province.upperTax);
-  const effectiveGold = showGoldFormula ? Math.round(rawGold * wealthMult * taxMult) : 0;
 
   const investmentTooltip = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -679,7 +654,7 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
           )}
           {showGoldFormula && (
             <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', marginTop: '2px', fontFamily: 'var(--font-mono, monospace)' }}>
-              {data.name} {ROMAN[currentLevel]}: {rawGold}g × {wealthMult.toFixed(2)} × {taxMult.toFixed(2)} = {effectiveGold}g
+              {data.name} {ROMAN[currentLevel]}: +{rawGold}g/season
             </div>
           )}
         </div>
@@ -851,28 +826,42 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
   const expenses = getProvinceExpenses(province, traits);
   const unrestMod = getUnrestModifier(province, traits);
   const invCount = province.investments.length;
+  const slotMax = getBuildingSlots(province.population);
+
+  const taxRate = getTaxRate(province.lowerTax, province.upperTax);
+  const taxRevenue = Math.floor(province.wealth * taxRate);
+  const netGold = taxRevenue + (income.gold ?? 0) - expenses;
+  const netWealthChange = calculateNetWealthChange(province, province.terrain);
+
+  const settlementLabel = getSettlementLabel(province.population);
+  const terrainIcon = TERRAIN_ICONS[province.terrain] ?? '?';
+  const tradeIcon = province.tradeGood ? (TRADE_GOOD_ICONS[province.tradeGood] ?? '') : '';
+  const governor = getAssignedGovernor(province.id);
 
   const unrestColor =
-    province.unrest < 40
-      ? 'var(--color-success)'
-      : province.unrest < 70
-      ? 'var(--color-warning)'
-      : 'var(--color-danger)';
+    province.unrest < 40 ? 'var(--color-success)'
+    : province.unrest < 70 ? 'var(--color-warning)'
+    : 'var(--color-danger)';
+  const wealthTrendColor = netWealthChange > 0.3 ? 'var(--color-success)' : netWealthChange < -0.3 ? 'var(--color-danger)' : 'var(--color-text-muted)';
+  const netGoldColor = netGold > 0 ? 'var(--color-success)' : netGold < 0 ? 'var(--color-danger)' : 'var(--color-text-muted)';
 
   const rowTooltip = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
       <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)', marginBottom: '2px' }}>
         {province.name}
       </div>
-      <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-        Population: {province.population}
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+        {terrainIcon} {province.terrain}{tradeIcon ? ` · ${tradeIcon} ${province.tradeGood}` : ''}
       </div>
-      <div style={{ color: unrestColor, fontSize: 'var(--font-size-sm)' }}>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+        Wealth: {province.wealth} ({netWealthChange >= 0 ? '+' : ''}{netWealthChange.toFixed(1)}/s)
+      </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: unrestColor }}>
         Unrest: {province.unrest}/100
       </div>
       {invCount > 0 && (
-        <div style={{ marginTop: '4px', color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-          {province.investments.map(inv => `${INVESTMENT_DATA[inv.type].name} Lv.${inv.level}`).join(', ')}
+        <div style={{ marginTop: '3px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
+          {province.investments.map(inv => `${INVESTMENT_DATA[inv.type].name} ${ROMAN[inv.level]}`).join(' · ')}
         </div>
       )}
     </div>
@@ -885,45 +874,57 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
           class={`prov-row${selected ? ' prov-row-selected' : ''}`}
           onClick={() => { selectedProvinceId.value = province.id; }}
           style={{
-            padding: '12px 14px',
+            padding: '10px 12px',
             borderRadius: 'var(--radius-md)',
             background: selected ? 'rgba(80, 60, 20, 0.35)' : 'rgba(20, 16, 32, 0.5)',
             border: `1px solid ${selected ? 'var(--color-gold-primary)' : 'var(--color-border-default)'}`,
-            display: 'flex', flexDirection: 'column', gap: '6px',
+            display: 'flex', flexDirection: 'column', gap: '5px',
+            cursor: 'pointer',
           }}
         >
-          {/* Row header */}
+          {/* Row 1: name + terrain+trade icons */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'var(--font-size-md)',
-                fontWeight: 600,
-                color: selected ? 'var(--color-gold-primary)' : 'var(--color-text-primary)',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-              }}
-            >
+            <span style={{
+              fontFamily: 'var(--font-display)', fontSize: 'var(--font-size-md)', fontWeight: 600,
+              color: selected ? 'var(--color-gold-primary)' : 'var(--color-text-primary)',
+              letterSpacing: '2px', textTransform: 'uppercase',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
+            }}>
               {province.name}
-            </div>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-              {invCount}/6
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0, marginLeft: '6px' }}>
+              <span style={{ fontSize: '12px' }} title={province.terrain}>{terrainIcon}</span>
+              {tradeIcon && <span style={{ fontSize: '12px' }} title={province.tradeGood ?? ''}>{tradeIcon}</span>}
+              {governor && <span style={{ fontSize: '10px', marginLeft: '2px' }} title={governor.governor.name}>⚔️</span>}
             </div>
           </div>
 
-          {/* Stats row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-              Pop {province.population}
-            </div>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-              {formatIncome(income)}
-            </div>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: 'rgba(200, 160, 100, 0.45)' }}>
-              -{expenses}g
-            </div>
+          {/* Row 2: wealth + wealth trend + pop */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-primary)', fontWeight: 700 }}>
+              🪙 {Math.round(province.wealth)}
+            </span>
+            <span style={{ fontSize: '9px', color: wealthTrendColor }}>
+              {netWealthChange >= 0 ? '+' : ''}{netWealthChange.toFixed(1)}/s
+            </span>
+            <span style={{ fontSize: '9px', color: 'var(--color-border-default)' }}>·</span>
+            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+              👥 {province.population} <span style={{ color: 'var(--color-text-muted)', fontSize: '9px' }}>{settlementLabel}</span>
+            </span>
+            <span style={{ marginLeft: 'auto', fontSize: '9px', color: 'var(--color-text-muted)' }}>
+              {invCount}/{slotMax} □
+            </span>
           </div>
-          <UnrestBar unrest={province.unrest} modifier={unrestMod} width={80} />
+
+          {/* Row 3: unrest bar + net gold */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ flex: 1 }}>
+              <UnrestBar unrest={province.unrest} modifier={unrestMod} width={80} />
+            </div>
+            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: netGoldColor, whiteSpace: 'nowrap', flexShrink: 0 }}>
+              {netGold >= 0 ? '+' : ''}{netGold}g
+            </span>
+          </div>
         </div>
       </Tooltip>
     </div>
@@ -950,7 +951,7 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', animation: 'prov-fade-in var(--duration-fast) var(--ease-default)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingBottom: '8px', animation: 'prov-fade-in var(--duration-fast) var(--ease-default)' }}>
       {pool.map(gov => {
         const fColor = FACTION_COLORS[gov.color];
         return (
@@ -1200,6 +1201,87 @@ function getSettlementColor(pop: number): string {
 
 // ── Population bar ──
 
+// ── Stat panel SVG icons ──
+
+function CoinSVG() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="6.5" fill="rgba(180,130,10,0.25)" stroke="#d4a843" strokeWidth="1"/>
+      <circle cx="8" cy="8" r="4" fill="rgba(180,130,10,0.15)" stroke="rgba(240,208,128,0.4)" strokeWidth="0.5"/>
+      {/* Two pillars + top/bottom beams (Roman column motif) */}
+      <rect x="5.5" y="4.2" width="5" height="0.9" rx="0.3" fill="#f0d080"/>
+      <rect x="5.5" y="10.9" width="5" height="0.9" rx="0.3" fill="#f0d080"/>
+      <rect x="6.3" y="5.1" width="0.9" height="5.8" fill="#f0d080"/>
+      <rect x="8.8" y="5.1" width="0.9" height="5.8" fill="#f0d080"/>
+    </svg>
+  );
+}
+
+function PeopleSVG() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+      {/* Back person (slightly right + darker) */}
+      <circle cx="9.5" cy="5.2" r="2.1" fill="#7070b8"/>
+      <path d="M5.8 14.5 Q5.8 10 9.5 10 Q13.2 10 13.2 14.5" fill="#7070b8"/>
+      {/* Front person (slightly left + lighter) */}
+      <circle cx="6.5" cy="5.8" r="2.1" fill="#a0a0d8"/>
+      <path d="M2.8 14.5 Q2.8 10 6.5 10 Q10.2 10 10.2 14.5" fill="#a0a0d8"/>
+    </svg>
+  );
+}
+
+function ScalesSVG() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+      {/* Pole */}
+      <rect x="7.6" y="3" width="0.9" height="9.5" rx="0.3" fill="#a0a0d8"/>
+      {/* Base */}
+      <rect x="5" y="12" width="6" height="0.9" rx="0.4" fill="#a0a0d8"/>
+      {/* Beam */}
+      <rect x="2.5" y="5.8" width="11" height="0.9" rx="0.4" fill="#a0a0d8"/>
+      {/* Left strings */}
+      <line x1="3.2" y1="6.7" x2="2.4" y2="9.5" stroke="#a0a0d8" strokeWidth="0.7"/>
+      <line x1="5.5" y1="6.7" x2="6.3" y2="9.5" stroke="#a0a0d8" strokeWidth="0.7"/>
+      {/* Left pan */}
+      <path d="M2 9.5 Q4.3 11 6.7 9.5" stroke="#a0a0d8" strokeWidth="0.9" fill="none"/>
+      {/* Right strings */}
+      <line x1="10.5" y1="6.7" x2="9.7" y2="9.5" stroke="#a0a0d8" strokeWidth="0.7"/>
+      <line x1="12.8" y1="6.7" x2="13.6" y2="9.5" stroke="#a0a0d8" strokeWidth="0.7"/>
+      {/* Right pan */}
+      <path d="M9.3 9.5 Q11.6 11 14 9.5" stroke="#a0a0d8" strokeWidth="0.9" fill="none"/>
+    </svg>
+  );
+}
+
+// ── Shared stat panel header: [BADGE] ─── TITLE ─── [BADGE] ──
+function StatPanelHeader({ title, icon }: { title: string; icon?: ComponentChildren }) {
+  const badgeStyle = {
+    width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
+    background: 'linear-gradient(145deg, rgba(44,38,64,0.96), rgba(18,14,30,0.98))',
+    border: '1.5px solid var(--color-gold-secondary)',
+    boxShadow: '0 0 5px rgba(212,168,67,0.18), inset 0 1px 0 rgba(240,208,128,0.08)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+  } as const;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '9px' }}>
+      {icon ? <div style={badgeStyle}>{icon}</div> : <div style={{ flex: 0, width: '4px' }} />}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '5px' }}>
+        <div style={{ flex: 1, height: '1px', background: 'var(--color-border-default)' }} />
+        <span style={{
+          fontFamily: 'var(--font-display)', fontSize: '7px', fontWeight: 700,
+          letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)',
+          whiteSpace: 'nowrap',
+        }}>
+          {title}
+        </span>
+        <div style={{ flex: 1, height: '1px', background: 'var(--color-border-default)' }} />
+      </div>
+      {icon ? <div style={badgeStyle}>{icon}</div> : <div style={{ flex: 0, width: '4px' }} />}
+    </div>
+  );
+}
+
 function PopBar({ province }: { province: Province }) {
   const traits = getGovernorTraits(province.id);
   const maxPop = getEffectiveMaxPop(province);
@@ -1245,85 +1327,83 @@ function PopBar({ province }: { province: Province }) {
     </div>
   );
 
+  const growthColor = effectiveGrowth > 0 ? 'var(--color-success)' : effectiveGrowth < 0 ? 'var(--color-danger)' : 'var(--color-text-muted)';
+  const growthArrow = effectiveGrowth > 0 ? '↑' : effectiveGrowth < 0 ? '↓' : '→';
+
   return (
-    <Tooltip content={tooltipContent} variant="rich" position="above">
+    <Tooltip content={tooltipContent} variant="rich" position="above" align="start">
       <div class="pop-section">
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <StatPanelHeader title="Settlement Population" icon={<PeopleSVG />} />
+
+        {/* Hero + breakdown rows */}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '6px' }}>
+          {/* Left: icon + pop number */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', flexShrink: 0 }}>
+            <span style={{ fontSize: '22px', lineHeight: 1 }}>👥</span>
             <span style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'var(--font-size-xs)',
-              fontWeight: 600,
-              color: 'var(--color-gold-secondary)',
-              letterSpacing: '3px',
-              textTransform: 'uppercase',
+              fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700,
+              color: settlementColor, lineHeight: 1,
             }}>
-              Population
-            </span>
-            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: settlementColor }}>
-              {settlementLabel}
+              {province.population}
             </span>
           </div>
-          <div style={{ display: 'flex', gap: '10px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-            <span>Pop <strong style={{ color: settlementColor }}>{province.population}</strong>/{maxPop}</span>
-            <span style={{ color: 'var(--color-text-muted)' }}>{builtCount}/{slotMax} slots</span>
+
+          {/* Right: stacked rows */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '2px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Settlement</span>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: settlementColor, fontWeight: 700 }}>
+                {settlementLabel}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Cap</span>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                {province.population} / {maxPop}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Slots</span>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                {builtCount} / {slotMax}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Fill bar with accumulator overlay */}
-        <div class="pop-bar">
-          <div
-            class="pop-fill"
-            style={{ width: `${popFillPct}%`, background: settlementColor }}
-          />
+        {/* Fill bar */}
+        <div class="pop-bar" style={{ marginBottom: '5px' }}>
+          <div class="pop-fill" style={{ width: `${popFillPct}%`, background: settlementColor }} />
           {!atCap && accumWidthPct > 0 && (
-            <div
-              class="pop-accumulator"
-              style={{ left: `${popFillPct}%`, width: `${accumWidthPct}%` }}
-            />
+            <div class="pop-accumulator" style={{ left: `${popFillPct}%`, width: `${accumWidthPct}%` }} />
           )}
         </div>
 
-        {/* Growth projection */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)' }}>
-          {atCap ? (
-            <span style={{ color: 'var(--color-gold-primary)', fontWeight: 600 }}>
-              Max population reached
-            </span>
-          ) : (
-            <>
-              <span style={{ color: 'var(--color-text-secondary)' }}>
-                Growth:{' '}
-                <strong style={{ color: effectiveGrowth > 0 ? 'var(--color-success)' : 'var(--color-text-muted)' }}>
-                  {effectiveGrowth >= 0 ? '+' : ''}{effectiveGrowth.toFixed(1)}/season
-                </strong>
-              </span>
-              <span style={{ color: seasonsToNext !== null ? 'var(--color-text-muted)' : 'var(--color-warning)' }}>
-                {seasonsToNext !== null
-                  ? `Next pop in ${seasonsToNext}s`
-                  : 'No growth'}
-              </span>
-            </>
-          )}
+        {/* Footer rate line */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          borderTop: '1px solid var(--color-border-subtle)', paddingTop: '5px',
+          fontSize: '9px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
+        }}>
+          <span style={{ color: growthColor }}>
+            Growth Rate: {effectiveGrowth >= 0 ? '+' : ''}{effectiveGrowth.toFixed(1)}/s {growthArrow}
+          </span>
+          <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>
+            {atCap ? 'At cap' : seasonsToNext !== null ? `Next in ${seasonsToNext}s` : 'No growth'}
+          </span>
         </div>
       </div>
     </Tooltip>
   );
 }
 
-// ── Wealth tier bar ──
+// ── Wealth display (ETW-style accumulative) ──
 
-function WealthBar({ province }: { province: Province }) {
-  const tier = getWealthTier(province.wealth);
-  const mult = getWealthMultiplier(tier);
-  const label = getWealthLabel(tier);
+function WealthDisplay({ province }: { province: Province }) {
   const netChange = calculateNetWealthChange(province, province.terrain);
+  const taxRate = getTaxRate(province.lowerTax, province.upperTax);
+  const taxRevenue = Math.floor(province.wealth * taxRate);
 
-  // Marker: clamp wealth to display range 0–100
-  const markerPct = Math.min(province.wealth / 100, 1) * 100;
-
-  // Trend arrow
   const isGrowing  = netChange >  0.5;
   const isShrinking = netChange < -0.5;
   const trendArrow = isGrowing ? '↑' : isShrinking ? '↓' : '→';
@@ -1333,115 +1413,73 @@ function WealthBar({ province }: { province: Province }) {
     ? 'var(--color-danger)'
     : 'var(--color-text-muted)';
 
-  // Current tier color
-  const tierColor = WEALTH_TIER_ZONES[tier - 1].color;
-
-  // Next tier threshold for tooltip
-  const nextThresholds: Record<WealthTier, string> = {
-    1: 'Next tier at 16',
-    2: 'Next tier at 36',
-    3: 'Next tier at 56',
-    4: 'Next tier at 81',
-    5: 'Max tier reached',
-  };
-
   const tooltipContent = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      <div style={{ fontWeight: 700, color: tierColor }}>
-        {label} ({mult.toFixed(2)}×)
+      <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)' }}>
+        Provincial Wealth
       </div>
       <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-        All building gold income is multiplied by{' '}
-        <strong style={{ color: tierColor }}>{mult.toFixed(2)}×</strong>
+        Tax revenue: {Math.round(province.wealth)} x {formatTaxRate(taxRate)} ={' '}
+        <strong style={{ color: 'var(--color-gold-primary)' }}>+{taxRevenue}g</strong>
       </div>
-      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-        Wealth: {province.wealth} · {nextThresholds[tier]}
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+        Growth: {netChange >= 0 ? '+' : ''}{netChange.toFixed(1)}/season
+      </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+        Higher taxes extract more gold but drain wealth faster
       </div>
     </div>
   );
 
   return (
-    <Tooltip content={tooltipContent} variant="rich" position="above">
+    <Tooltip content={tooltipContent} variant="rich" position="above" align="start">
       <div class="wealth-section">
-        {/* Header row */}
+        <StatPanelHeader title="Wealth Economy" icon={<CoinSVG />} />
+
+        {/* Hero + breakdown rows */}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '6px' }}>
+          {/* Left: coin + number */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', flexShrink: 0 }}>
+            <span style={{ fontSize: '22px', lineHeight: 1 }}>🪙</span>
+            <span style={{
+              fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700,
+              color: 'var(--color-gold-primary)', lineHeight: 1,
+            }}>
+              {Math.round(province.wealth)}
+            </span>
+          </div>
+
+          {/* Right: stacked rows */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '2px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
+                Seasonal
+              </span>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: trendColor, fontWeight: 600 }}>
+                {netChange >= 0 ? '+' : ''}{netChange.toFixed(1)}/s {trendArrow}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
+                Taxes
+              </span>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                x{formatTaxRate(taxRate)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer: net income */}
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          borderTop: '1px solid var(--color-border-subtle)', paddingTop: '5px',
+          fontSize: '9px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'var(--font-size-xs)',
-              fontWeight: 600,
-              color: 'var(--color-gold-secondary)',
-              letterSpacing: '3px',
-              textTransform: 'uppercase',
-            }}>
-              Wealth
-            </span>
-            <span style={{
-              fontSize: 'var(--font-size-xs)',
-              fontWeight: 700,
-              color: tierColor,
-            }}>
-              {label}
-            </span>
-            <span style={{
-              fontSize: 'var(--font-size-xs)',
-              color: 'var(--color-text-muted)',
-            }}>
-              {mult.toFixed(2)}×
-            </span>
-          </div>
-          <div style={{
-            fontSize: 'var(--font-size-xs)',
-            color: trendColor,
-            fontWeight: 600,
-          }}>
-            {netChange >= 0 ? '+' : ''}{netChange.toFixed(1)}/season{' '}
-            <span style={{ fontSize: '11px' }}>{trendArrow}</span>
-          </div>
-        </div>
-
-        {/* Segmented bar with marker */}
-        <div class="wealth-zones">
-          {WEALTH_TIER_ZONES.map((zone, i) => {
-            const prevEnd = i === 0 ? 0 : WEALTH_TIER_ZONES[i - 1].end;
-            const width = zone.end - prevEnd; // out of 100
-            const isActive = zone.tier <= tier;
-            const isCurrent = zone.tier === tier;
-            return (
-              <div
-                key={zone.tier}
-                style={{
-                  width: `${width}%`,
-                  background: zone.color,
-                  opacity: isActive ? 1 : 0.18,
-                  borderRight: i < WEALTH_TIER_ZONES.length - 1
-                    ? '1px solid rgba(10, 8, 20, 0.6)'
-                    : 'none',
-                  boxShadow: isCurrent ? `inset 0 0 8px ${zone.color}55` : 'none',
-                  transition: 'opacity var(--duration-normal)',
-                }}
-              />
-            );
-          })}
-          {/* Current wealth marker */}
-          <div
-            class="wealth-marker"
-            style={{ left: `${markerPct}%` }}
-          />
-        </div>
-
-        {/* Wealth value row */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between',
-          fontSize: '8px', color: 'var(--color-text-muted)',
-        }}>
-          <span>0</span>
-          <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>
-            {province.wealth}
+          <span style={{ color: 'var(--color-text-muted)' }}>Net Income</span>
+          <span style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
+            +{taxRevenue}g/season
           </span>
-          <span>100+</span>
         </div>
       </div>
     </Tooltip>
@@ -1517,7 +1555,7 @@ function TaxSliders({ province }: { province: Province }) {
     upperTax: pendingUpper.value,
   };
 
-  // Gold preview: raw building gold × wealth mult × tax mult + 1
+  // Gold preview: tax revenue (wealth × rate) + building gold + 1 subsistence
   let buildingGold = 0;
   for (const inv of province.investments) {
     buildingGold += INVESTMENT_DATA[inv.type].levels[inv.level - 1].incomeBonus.gold ?? 0;
@@ -1525,11 +1563,10 @@ function TaxSliders({ province }: { province: Province }) {
   for (const syn of getActiveSynergies(province)) {
     if (syn.bonus.type === 'gold') buildingGold += syn.bonus.amount;
   }
-  const wealthMult = getWealthMultiplier(getWealthTier(province.wealth));
-  const currentGold = Math.round(buildingGold * wealthMult
-    * getTaxMultiplier(province.lowerTax, province.upperTax)) + 1;
-  const previewGold = Math.round(buildingGold * wealthMult
-    * getTaxMultiplier(pendingLower.value, pendingUpper.value)) + 1;
+  const currentRate = getTaxRate(province.lowerTax, province.upperTax);
+  const previewRate = getTaxRate(pendingLower.value, pendingUpper.value);
+  const currentGold = Math.floor(province.wealth * currentRate) + buildingGold + 1;
+  const previewGold = Math.floor(province.wealth * previewRate) + buildingGold + 1;
   const goldDelta = previewGold - currentGold;
 
   // Growth preview
@@ -1548,9 +1585,6 @@ function TaxSliders({ province }: { province: Province }) {
   const previewTaxUnrest = getLowerTaxUnrest(pendingLower.value)
     + getUpperTaxUnrest(pendingUpper.value);
   const unrestDiff = previewTaxUnrest - currentTaxUnrest;
-
-  const previewMult = getTaxMultiplier(pendingLower.value, pendingUpper.value);
-  const currentMult = getTaxMultiplier(province.lowerTax, province.upperTax);
 
   function handleApply() {
     playSfx('ui_click');
@@ -1588,9 +1622,9 @@ function TaxSliders({ province }: { province: Province }) {
           Tax Policy
         </span>
         <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-          Combined{' '}
+          Rate{' '}
           <strong style={{ color: isDirty ? TAX_LEVEL_COLORS[pendingLower.value] : 'var(--color-text-secondary)' }}>
-            {isDirty ? previewMult.toFixed(2) : currentMult.toFixed(2)}×
+            {isDirty ? formatTaxRate(previewRate) : formatTaxRate(currentRate)}
           </strong>
         </span>
       </div>
@@ -1622,7 +1656,7 @@ function TaxSliders({ province }: { province: Province }) {
             {getTaxLabel(province.upperTax)}
           </span>
           <span>·</span>
-          <span>{currentMult.toFixed(2)}×</span>
+          <span>{formatTaxRate(currentRate)}</span>
         </div>
       )}
 
@@ -1787,31 +1821,82 @@ function IdentityStrip({ province }: { province: Province }) {
 
   // ── Terrain tooltip ──
   const mods = terrain.baseModifiers;
-  const modLines: string[] = [];
-  if (mods.growthModifier !== 0)  modLines.push(`Growth ${mods.growthModifier > 0 ? '+' : ''}${mods.growthModifier}/season`);
-  if (mods.pwgModifier    !== 0)  modLines.push(`Wealth Growth ${mods.pwgModifier > 0 ? '+' : ''}${mods.pwgModifier}/season`);
-  if (mods.faithBonus     !== 0)  modLines.push(`Faith +${mods.faithBonus}/season`);
-  if (mods.momentumBonus  !== 0)  modLines.push(`Momentum +${mods.momentumBonus}/season`);
-  if (mods.garrisonBonus  !== 0)  modLines.push(`Garrison +${mods.garrisonBonus}`);
+  interface ModRow { icon: string; label: string; value: string; positive: boolean }
+  const modRows: ModRow[] = [];
+  if (mods.growthModifier !== 0) modRows.push({ icon: '👥', label: 'Pop Growth',    value: `${mods.growthModifier > 0 ? '+' : ''}${mods.growthModifier}/s`, positive: mods.growthModifier > 0 });
+  if (mods.pwgModifier    !== 0) modRows.push({ icon: '💰', label: 'Wealth Growth',  value: `${mods.pwgModifier > 0 ? '+' : ''}${mods.pwgModifier}/s`,    positive: mods.pwgModifier > 0 });
+  if (mods.faithBonus     !== 0) modRows.push({ icon: '✦',  label: 'Faith',         value: `+${mods.faithBonus}/s`,                                         positive: true });
+  if (mods.momentumBonus  !== 0) modRows.push({ icon: '⚡', label: 'Momentum',      value: `+${mods.momentumBonus}/s`,                                      positive: true });
+  if (mods.garrisonBonus  !== 0) modRows.push({ icon: '🛡', label: 'Garrison',      value: `+${mods.garrisonBonus}`,                                        positive: true });
 
   const terrainTooltip = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '200px' }}>
-      <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)' }}>
-        {TERRAIN_ICONS[province.terrain]} {terrain.name}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', paddingBottom: '8px', borderBottom: '1px solid var(--color-border-subtle)', marginBottom: '8px' }}>
+        <span style={{ fontSize: '22px', lineHeight: '1', flexShrink: 0, marginTop: '1px' }}>
+          {TERRAIN_ICONS[province.terrain]}
+        </span>
+        <div>
+          <div style={{
+            fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 700,
+            color: 'var(--color-gold-primary)', letterSpacing: '2px', textTransform: 'uppercase',
+          }}>
+            {terrain.name}
+          </div>
+          <div style={{
+            fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)',
+            fontStyle: 'italic', lineHeight: '1.45', marginTop: '3px',
+          }}>
+            {terrain.flavour}
+          </div>
+        </div>
       </div>
-      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontStyle: 'italic', lineHeight: '1.4' }}>
-        {terrain.flavour}
-      </div>
-      {modLines.length > 0 && (
-        <div style={{ marginTop: '2px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-          {modLines.map(line => (
-            <div key={line} style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-success)' }}>{line}</div>
+
+      {/* Modifiers */}
+      {modRows.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: terrain.exclusiveBuildings.length > 0 ? '8px' : '0' }}>
+          {modRows.map(row => (
+            <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                <span style={{ fontSize: '11px', opacity: 0.75 }}>{row.icon}</span>
+                {row.label}
+              </span>
+              <span style={{
+                fontSize: 'var(--font-size-xs)', fontWeight: 700,
+                color: row.positive ? 'var(--color-success)' : 'var(--color-danger)',
+                background: row.positive ? 'rgba(90,138,74,0.15)' : 'rgba(194,74,58,0.15)',
+                border: `1px solid ${row.positive ? 'rgba(90,138,74,0.3)' : 'rgba(194,74,58,0.3)'}`,
+                borderRadius: '3px', padding: '1px 5px', whiteSpace: 'nowrap', flexShrink: 0,
+              }}>
+                {row.value}
+              </span>
+            </div>
           ))}
         </div>
       )}
+
+      {/* Unlocks */}
       {terrain.exclusiveBuildings.length > 0 && (
-        <div style={{ marginTop: '2px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-          Unlocks: {terrain.exclusiveBuildings.map(formatSlug).join(', ')}
+        <div style={{ borderTop: '1px solid var(--color-border-subtle)', paddingTop: '7px' }}>
+          <div style={{
+            fontSize: '8px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase',
+            color: 'var(--color-text-muted)', marginBottom: '5px',
+          }}>
+            Unlocks
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+            {terrain.exclusiveBuildings.map(b => (
+              <span key={b} style={{
+                fontSize: 'var(--font-size-xs)', padding: '2px 7px',
+                background: 'rgba(180,160,100,0.08)',
+                border: '1px solid var(--color-border-default)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--color-text-secondary)',
+              }}>
+                {formatSlug(b)}
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -1819,12 +1904,13 @@ function IdentityStrip({ province }: { province: Province }) {
 
   // ── Trade good tooltip ──
   const tradeGoodTooltip = tradeGood ? (() => {
-    const lines: string[] = [];
-    if (tradeGood.flatGold     > 0) lines.push(`+${tradeGood.flatGold}g/season`);
-    if (tradeGood.flatGrowth   > 0) lines.push(`+${tradeGood.flatGrowth} growth/season`);
-    if (tradeGood.flatFaith    > 0) lines.push(`+${tradeGood.flatFaith} faith/season`);
-    if (tradeGood.flatMomentum > 0) lines.push(`+${tradeGood.flatMomentum} momentum/season`);
-    if (tradeGood.wealthGrowthBonus > 0) lines.push(`+${tradeGood.wealthGrowthBonus} wealth growth/season`);
+    interface TGRow { icon: string; label: string; value: string }
+    const rows: TGRow[] = [];
+    if (tradeGood.flatGold          > 0) rows.push({ icon: '🪙', label: 'Gold',         value: `+${tradeGood.flatGold}g/s` });
+    if (tradeGood.flatGrowth        > 0) rows.push({ icon: '👥', label: 'Pop Growth',   value: `+${tradeGood.flatGrowth}/s` });
+    if (tradeGood.flatFaith         > 0) rows.push({ icon: '✦',  label: 'Faith',        value: `+${tradeGood.flatFaith}/s` });
+    if (tradeGood.flatMomentum      > 0) rows.push({ icon: '⚡', label: 'Momentum',     value: `+${tradeGood.flatMomentum}/s` });
+    if (tradeGood.wealthGrowthBonus > 0) rows.push({ icon: '💰', label: 'Wealth Growth',value: `+${tradeGood.wealthGrowthBonus}/s` });
 
     const specialLine = (() => {
       const s = tradeGood.special;
@@ -1838,20 +1924,73 @@ function IdentityStrip({ province }: { province: Province }) {
       }
     })();
 
+    const hasContent = rows.length > 0 || specialLine;
+
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '200px' }}>
-        <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)' }}>
-          {TRADE_GOOD_ICONS[province.tradeGood!] ?? '?'} {tradeGood.name}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', paddingBottom: hasContent ? '8px' : '0', borderBottom: hasContent ? '1px solid var(--color-border-subtle)' : 'none', marginBottom: hasContent ? '8px' : '0' }}>
+          <span style={{ fontSize: '22px', lineHeight: '1', flexShrink: 0, marginTop: '1px' }}>
+            {TRADE_GOOD_ICONS[province.tradeGood!] ?? '📦'}
+          </span>
+          <div>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: '13px', fontWeight: 700,
+              color: 'var(--color-gold-primary)', letterSpacing: '2px', textTransform: 'uppercase',
+            }}>
+              {tradeGood.name}
+            </div>
+            <span style={{
+              display: 'inline-block', marginTop: '4px',
+              fontSize: '8px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
+              padding: '1px 5px', borderRadius: '3px',
+              background: 'rgba(100, 70, 150, 0.35)', color: '#c0a0f0',
+              border: '1px solid rgba(150,100,220,0.3)',
+            }}>
+              Flat Income
+            </span>
+          </div>
         </div>
-        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginBottom: '2px' }}>
-          Flat income — not affected by tax or wealth
-        </div>
-        {lines.map(l => (
-          <div key={l} style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-success)' }}>{l}</div>
-        ))}
+
+        {/* Bonus rows */}
+        {rows.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: specialLine ? '8px' : '0' }}>
+            {rows.map(row => (
+              <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+                  <span style={{ fontSize: '11px', opacity: 0.75 }}>{row.icon}</span>
+                  {row.label}
+                </span>
+                <span style={{
+                  fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-success)',
+                  background: 'rgba(90,138,74,0.15)', border: '1px solid rgba(90,138,74,0.3)',
+                  borderRadius: '3px', padding: '1px 5px', whiteSpace: 'nowrap', flexShrink: 0,
+                }}>
+                  {row.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Special ability */}
         {specialLine && (
-          <div style={{ marginTop: '2px', fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-secondary)' }}>
-            ✦ {specialLine}
+          <div style={{
+            borderTop: rows.length > 0 ? '1px solid var(--color-border-subtle)' : 'none',
+            paddingTop: rows.length > 0 ? '7px' : '0',
+            display: 'flex', alignItems: 'center', gap: '6px',
+          }}>
+            <span style={{
+              fontSize: '8px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
+              padding: '2px 5px', borderRadius: '3px',
+              background: 'rgba(240,208,128,0.12)', color: 'var(--color-gold-secondary)',
+              border: '1px solid rgba(240,208,128,0.25)', flexShrink: 0,
+            }}>
+              Special
+            </span>
+            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-secondary)' }}>
+              {specialLine}
+            </span>
           </div>
         )}
       </div>
@@ -1861,7 +2000,7 @@ function IdentityStrip({ province }: { province: Province }) {
   return (
     <div class="identity-strip">
       {/* Terrain */}
-      <Tooltip content={terrainTooltip} variant="rich" position="below">
+      <Tooltip content={terrainTooltip} variant="rich" position="below" align="start">
         <div class="identity-chip">
           <span class="identity-icon">{TERRAIN_ICONS[province.terrain] ?? '?'}</span>
           <span class="identity-label">{terrain.name}</span>
@@ -1872,7 +2011,7 @@ function IdentityStrip({ province }: { province: Province }) {
 
       {/* Trade good */}
       {tradeGood && tradeGoodTooltip ? (
-        <Tooltip content={tradeGoodTooltip} variant="rich" position="below">
+        <Tooltip content={tradeGoodTooltip} variant="rich" position="below" align="start">
           <div class="identity-chip">
             <span class="identity-icon">{TRADE_GOOD_ICONS[province.tradeGood!] ?? '?'}</span>
             <span class="identity-label">{tradeGood.name}</span>
@@ -1915,7 +2054,7 @@ function UnrestSection({ province }: { province: Province }) {
 
   // Zone states
   const isCritical = province.unrest >= 70;
-  const isWarning  = province.unrest >= 60;
+
 
   // Bar fill color by zone
   const barColor = province.unrest > 60
@@ -2001,49 +2140,64 @@ function UnrestSection({ province }: { province: Province }) {
     </div>
   );
 
+  // Order status label
+  const orderStatus = rebelThreshold >= 101
+    ? 'Suppressed'
+    : province.unrest < 30
+    ? 'Calm'
+    : province.unrest < 60
+    ? 'Troubled'
+    : isCritical
+    ? 'Critical'
+    : 'Volatile';
+  const orderStatusColor = rebelThreshold >= 101 || province.unrest < 30
+    ? 'var(--color-success)'
+    : province.unrest < 60
+    ? 'var(--color-warning)'
+    : 'var(--color-danger)';
+
+  const unrestStatusLabel = isRising ? 'Unrest Rising' : isFalling ? 'Unrest Falling' : 'Stabilizing';
+
   return (
-    <Tooltip content={tooltipContent} variant="rich" position="above">
+    <Tooltip content={tooltipContent} variant="rich" position="above" align="start">
       <div class="unrest-section">
-        {/* Header row */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <StatPanelHeader title="Regional Order" icon={<ScalesSVG />} />
+
+        {/* Hero icon + number + change rows */}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '5px' }}>
+          {/* Left: icon + unrest number */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', flexShrink: 0 }}>
+            <span style={{ fontSize: '22px', lineHeight: 1 }}>
+              {isCritical ? '🔥' : province.unrest > 60 ? '⚔️' : province.unrest > 30 ? '😤' : '🛡️'}
+            </span>
             <span style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'var(--font-size-xs)',
-              fontWeight: 600,
-              color: 'var(--color-gold-secondary)',
-              letterSpacing: '3px',
-              textTransform: 'uppercase',
+              fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700,
+              color: barColor, lineHeight: 1,
             }}>
-              Unrest
-            </span>
-            <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: barColor }}>
               {province.unrest}
+              {isCritical && <span style={{ fontSize: '10px', marginLeft: '2px', animation: 'unrest-flash 0.8s ease-in-out infinite' }}>🔴</span>}
             </span>
-            {isCritical && (
-              <span
-                style={{ fontSize: '11px', animation: 'unrest-flash 0.8s ease-in-out infinite' }}
-                title="Critical — rebellion imminent!"
-              >
-                🔴
+          </div>  {/* end left icon col */}
+
+          {/* Right: change + stabilizing */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '3px', paddingTop: '2px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Change</span>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: trendColor, fontWeight: 600 }}>
+                {delta >= 0 ? '+' : ''}{delta.toFixed(1)}/s {trendArrow}
               </span>
-            )}
-            {!isCritical && isWarning && (
-              <span style={{ fontSize: '11px' }} title="Acceleration zone — unrest rising faster">⚠</span>
-            )}
-          </div>
-          <div style={{
-            fontSize: 'var(--font-size-xs)',
-            color: trendColor,
-            fontWeight: 600,
-          }}>
-            {delta >= 0 ? '+' : ''}{delta.toFixed(1)}/season{' '}
-            <span style={{ fontSize: '11px' }}>{trendArrow}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Rebel At</span>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-warning)' }}>
+                {rebelThreshold >= 101 ? '—' : rebelThreshold}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Fill bar */}
-        <div class="unrest-bar">
+        {/* Bar 0–100 with threshold marker */}
+        <div class="unrest-bar" style={{ marginBottom: '4px' }}>
           <div class="unrest-bar-track">
             <div
               class={`unrest-fill${isCritical ? ' unrest-fill-critical' : ''}`}
@@ -2051,31 +2205,30 @@ function UnrestSection({ province }: { province: Province }) {
             />
           </div>
           {showMarker && (
-            <div
-              class="unrest-threshold-marker"
-              style={{ left: `${thresholdPct}%` }}
-            />
+            <div class="unrest-threshold-marker" style={{ left: `${thresholdPct}%` }} />
           )}
         </div>
 
-        {/* Projection row */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between',
-          fontSize: '8px', color: 'var(--color-text-muted)',
-        }}>
+        {/* 0 / 100 scale */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8px', color: 'var(--color-text-muted)', marginBottom: '5px' }}>
           <span>0</span>
-          <span style={{ color: 'var(--color-text-muted)' }}>
-            {rebelThreshold >= 101
-              ? 'Rebellion suppressed (Insula III)'
-              : seasonsToRebel !== null
-              ? <span style={{ color: isCritical ? 'var(--color-danger)' : 'var(--color-text-muted)' }}>
-                  Rebels in {seasonsToRebel}s
-                </span>
-              : isFalling
-              ? 'Unrest falling'
-              : 'Stable'}
-          </span>
-          <span>{showMarker ? `Rebel at ${rebelThreshold}` : '—'}</span>
+          <span style={{ color: trendColor, fontWeight: 600 }}>{unrestStatusLabel}</span>
+          <span>100</span>
+        </div>
+
+        {/* Footer: order status */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '5px',
+          borderTop: '1px solid var(--color-border-subtle)', paddingTop: '5px',
+          fontSize: '9px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
+          color: orderStatusColor,
+        }}>
+          ✦ Order Status: {orderStatus}
+          {seasonsToRebel !== null && (
+            <span style={{ marginLeft: 'auto', fontWeight: 400, fontSize: '8px', color: 'var(--color-danger)', letterSpacing: 0 }}>
+              Rebels in {seasonsToRebel}s
+            </span>
+          )}
         </div>
       </div>
     </Tooltip>
@@ -2149,8 +2302,8 @@ function IncomeLedger({ province }: { province: Province }) {
   const isExpanded = useSignal(false);
   const traits = getGovernorTraits(province.id);
 
-  const wealthMult = getWealthMultiplier(getWealthTier(province.wealth));
-  const taxMult   = getTaxMultiplier(province.lowerTax, province.upperTax);
+  const taxRate = getTaxRate(province.lowerTax, province.upperTax);
+  const taxRevenue = Math.floor(province.wealth * taxRate);
 
   // ── Building income breakdown ──
   interface BldLine { name: string; tier: number; rawGold: number; isSynergy: boolean }
@@ -2179,16 +2332,15 @@ function IncomeLedger({ province }: { province: Province }) {
     }
   }
 
-  const buildingGoldResult = Math.round(rawBuildingGold * wealthMult * taxMult);
   const subsistence = 1;
   const tradeGoodGold     = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood].flatGold     : 0;
   const tradeGoodFaith    = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood].flatFaith    : 0;
   const tradeGoodMomentum = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood].flatMomentum : 0;
 
-  // Non-gold income (building × wealthMult + trade good flat)
+  // Non-gold income (flat building output, no wealth/tax scaling)
   const nonGoldIncome: Partial<Record<ResourceType, number>> = {};
   for (const [res, amt] of Object.entries(nonGoldRaw) as [ResourceType, number][]) {
-    nonGoldIncome[res] = Math.round(amt * wealthMult);
+    nonGoldIncome[res] = amt;
   }
   if (tradeGoodFaith    > 0) nonGoldIncome.faith    = (nonGoldIncome.faith    ?? 0) + tradeGoodFaith;
   if (tradeGoodMomentum > 0) nonGoldIncome.momentum = (nonGoldIncome.momentum ?? 0) + tradeGoodMomentum;
@@ -2201,8 +2353,8 @@ function IncomeLedger({ province }: { province: Province }) {
     }
   }
 
-  // Gold total: apply governor income-bonus last
-  let goldTotal = buildingGoldResult + subsistence + tradeGoodGold;
+  // Gold total: tax revenue + building gold + subsistence + trade
+  let goldTotal = taxRevenue + rawBuildingGold + subsistence + tradeGoodGold;
   const goldPreGov = goldTotal;
   for (const trait of traits) {
     if (trait.type === 'income-bonus' && trait.resource === 'gold') {
@@ -2259,17 +2411,24 @@ function IncomeLedger({ province }: { province: Province }) {
       {/* Expanded breakdown */}
       {isExpanded.value && (
         <div class="ledger-body">
-          {/* Building gold lines */}
+          {/* Tax revenue (ETW-style: wealth × rate) */}
+          <LedgerRow
+            label="Tax Revenue"
+            detail={`${province.wealth} x ${formatTaxRate(taxRate)}`}
+            value={`+${taxRevenue}g`}
+            positive
+          />
+
+          {/* Building gold lines (flat, no multipliers) */}
           {bldLines.map((l, i) => (
             <LedgerRow
               key={i}
               label={l.isSynergy ? `${l.name} (synergy)` : `${l.name} ${ROMAN[l.tier]}`}
-              detail={`${l.rawGold}g × ${wealthMult.toFixed(2)} × ${taxMult.toFixed(2)}`}
-              value={`+${Math.round(l.rawGold * wealthMult * taxMult)}g`}
+              value={`+${l.rawGold}g`}
               positive
             />
           ))}
-          {bldLines.length === 0 && (
+          {bldLines.length === 0 && rawBuildingGold === 0 && (
             <LedgerRow label="No buildings" value="" />
           )}
 
@@ -2355,14 +2514,17 @@ function ProvinceDetail({ province }: { province: Province }) {
       {/* Tax Policy (S18-01) */}
       <TaxSliders key={province.id} province={province} />
 
-      {/* Wealth Tier Bar (S18-02) */}
-      <WealthBar province={province} />
-
-      {/* Population Bar (S18-03) */}
-      <PopBar province={province} />
-
-      {/* Unrest Trajectory (S18-05) */}
-      <UnrestSection province={province} />
+      {/* Wealth · Population · Unrest — same row */}
+      <div style={{
+        display: 'flex', alignItems: 'stretch',
+        paddingBottom: '14px', borderBottom: '1px solid var(--color-border-subtle)',
+      }}>
+        <div style={{ flex: '1 1 0', minWidth: 0, paddingRight: '12px' }}><WealthDisplay province={province} /></div>
+        <div style={{ width: '1px', background: 'var(--color-border-subtle)', flexShrink: 0 }} />
+        <div style={{ flex: '1 1 0', minWidth: 0, padding: '0 12px' }}><PopBar province={province} /></div>
+        <div style={{ width: '1px', background: 'var(--color-border-subtle)', flexShrink: 0 }} />
+        <div style={{ flex: '1 1 0', minWidth: 0, paddingLeft: '12px' }}><UnrestSection province={province} /></div>
+      </div>
 
       {/* Income Ledger (S18-04) */}
       <IncomeLedger province={province} />
@@ -2439,7 +2601,6 @@ export function ProvinceScreen() {
             <div class="prov-ledger" style={{
               flex: '0 0 260px', minWidth: '220px',
               display: 'flex', flexDirection: 'column', gap: '8px',
-              maxHeight: 'calc(100vh - 260px)', overflowY: 'auto',
               paddingRight: '4px',
             }}>
               <div style={{
@@ -2459,7 +2620,7 @@ export function ProvinceScreen() {
             </div>
 
             {/* Right: Detail */}
-            <div style={{ flex: '1 1 400px', minWidth: '0', maxHeight: 'calc(100vh - 260px)', overflowY: 'auto', paddingRight: '4px' }}>
+            <div class="prov-detail" style={{ flex: '1 1 400px', minWidth: '0', maxHeight: 'calc(100vh - 260px)', overflowY: 'auto', overflowX: 'hidden', paddingRight: '6px' }}>
               {selected ? (
                 <ProvinceDetail province={selected} />
               ) : (
@@ -2487,7 +2648,8 @@ export function ProvinceScreen() {
           <OrnateFrame
             width="min(580px, 92vw)"
             padding="compact"
-            style={{ maxHeight: '85vh', overflowY: 'auto' }}
+            className="prov-detail"
+            style={{ maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }}
             onClick={(e: MouseEvent) => e.stopPropagation()}
           >
             <OrnateHeader

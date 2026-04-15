@@ -28,6 +28,25 @@ if (typeof document !== 'undefined' && !document.getElementById('post-battle-sty
     .battle-banner {
       animation: banner-entrance 0.4s ease-out;
     }
+    .reward-tooltip-wrap { position: relative; }
+    .reward-item-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-bg-primary);
+      border: 1px solid var(--color-border-default);
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      white-space: nowrap;
+      z-index: 50;
+      pointer-events: none;
+      box-shadow: var(--shadow-md);
+    }
+    .reward-tooltip-wrap:hover .reward-item-tooltip { display: block; }
   `;
   document.head.appendChild(el);
 }
@@ -47,6 +66,7 @@ interface DoctrineReward {
   kind: 'doctrine';
   label: string;
   description: string;
+  tooltip: string;       // level-1 effect description
   doctrineIndex: number; // index into STARTER_DOCTRINES
 }
 
@@ -54,6 +74,7 @@ interface DecretumReward {
   kind: 'decretum';
   label: string;
   description: string;
+  tooltip: string;       // scroll effect description
   decretumIndex: number; // index into STARTER_DECRETUM
 }
 
@@ -114,6 +135,7 @@ export function PostBattleScreen() {
         kind: 'doctrine',
         label: 'New Doctrine',
         description: pickedDoctrineEntry.d.name,
+        tooltip: pickedDoctrineEntry.d.levels[0].description,
         doctrineIndex: pickedDoctrineEntry.i,
       });
     }
@@ -123,6 +145,7 @@ export function PostBattleScreen() {
         kind: 'decretum',
         label: 'New Scroll',
         description: pickedDecretumEntry.d.name,
+        tooltip: pickedDecretumEntry.d.description,
         decretumIndex: pickedDecretumEntry.i,
       });
     }
@@ -271,74 +294,83 @@ export function PostBattleScreen() {
               ? color
               : undefined;
 
+            const tooltipText = (reward.kind === 'doctrine' || reward.kind === 'decretum')
+              ? reward.tooltip
+              : undefined;
+
             return (
-              <button
-                class="ornate-btn"
-                key={reward.label + i}
-                onClick={() => handlePick(i)}
-                disabled={chosenIndex.value !== null}
-                style={{
-                  padding: '14px 18px', borderRadius: 'var(--radius-md)',
-                  cursor: chosenIndex.value !== null ? 'default' : 'pointer',
-                  background: isChosen
-                    ? `linear-gradient(135deg, ${color}35, ${color}18)`
-                    : 'rgba(35, 32, 55, 0.9)',
-                  border: `1px solid ${isChosen ? color : 'var(--color-border-default)'}`,
-                  color: chosenIndex.value !== null && !isChosen ? 'rgba(120, 110, 100, 0.3)' : '#e8e0cc',
-                  fontFamily: 'inherit', fontSize: 'var(--font-size-md)',
-                  textAlign: 'left',
-                  opacity: chosenIndex.value !== null && !isChosen ? 0.4 : 1,
-                  textTransform: 'none',
-                  letterSpacing: 'normal',
-                  fontWeight: 'normal',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
-                  <span style={{ fontWeight: 600, fontSize: '14px' }}>{reward.label}</span>
-                  {reward.kind === 'resource' && reward.resource && (() => {
-                    const amount = isVictory ? reward.victory : reward.defeat;
-                    return amount > 0 ? (
-                      <span style={{
-                        fontWeight: 700, fontSize: '15px',
-                        color: RESOURCE_INFO[reward.resource!].color,
-                        textShadow: `0 0 8px ${RESOURCE_INFO[reward.resource!].color}40`,
-                      }}>
-                        {RESOURCE_INFO[reward.resource!].icon} +{amount}
-                      </span>
-                    ) : null;
-                  })()}
-                  {(reward.kind === 'doctrine' || reward.kind === 'decretum') && (
-                    <span style={{
-                      fontSize: 'var(--font-size-sm)', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase',
-                      color: rewardAccentColor,
-                      textShadow: `0 0 8px ${rewardAccentColor}60`,
-                      opacity: 0.85,
-                    }}>
-                      {reward.kind === 'doctrine' ? 'Doctrine' : 'Scroll'}
-                    </span>
-                  )}
-                </div>
-                <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
-                  {reward.kind === 'resource' ? (
-                    <>
-                      {reward.description}
-                      {reward.resource === null && (
-                        <span style={{ marginLeft: '6px', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                          (Army healing coming in future update)
+              <div class="reward-tooltip-wrap" key={reward.label + i}>
+                <button
+                  class="ornate-btn"
+                  onClick={() => handlePick(i)}
+                  disabled={chosenIndex.value !== null}
+                  style={{
+                    width: '100%',
+                    padding: '14px 18px', borderRadius: 'var(--radius-md)',
+                    cursor: chosenIndex.value !== null ? 'default' : 'pointer',
+                    background: isChosen
+                      ? `linear-gradient(135deg, ${color}35, ${color}18)`
+                      : 'rgba(35, 32, 55, 0.9)',
+                    border: `1px solid ${isChosen ? color : 'var(--color-border-default)'}`,
+                    color: chosenIndex.value !== null && !isChosen ? 'rgba(120, 110, 100, 0.3)' : '#e8e0cc',
+                    fontFamily: 'inherit', fontSize: 'var(--font-size-md)',
+                    textAlign: 'left',
+                    opacity: chosenIndex.value !== null && !isChosen ? 0.4 : 1,
+                    textTransform: 'none',
+                    letterSpacing: 'normal',
+                    fontWeight: 'normal',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '14px' }}>{reward.label}</span>
+                    {reward.kind === 'resource' && reward.resource && (() => {
+                      const amount = isVictory ? reward.victory : reward.defeat;
+                      return amount > 0 ? (
+                        <span style={{
+                          fontWeight: 700, fontSize: '15px',
+                          color: RESOURCE_INFO[reward.resource!].color,
+                          textShadow: `0 0 8px ${RESOURCE_INFO[reward.resource!].color}40`,
+                        }}>
+                          {RESOURCE_INFO[reward.resource!].icon} +{amount}
                         </span>
-                      )}
-                    </>
-                  ) : (
-                    <span style={{
-                      color: rewardAccentColor,
-                      opacity: chosenIndex.value !== null && !isChosen ? 0.3 : 0.9,
-                      fontStyle: 'italic',
-                    }}>
-                      {reward.description}
-                    </span>
-                  )}
-                </div>
-              </button>
+                      ) : null;
+                    })()}
+                    {(reward.kind === 'doctrine' || reward.kind === 'decretum') && (
+                      <span style={{
+                        fontSize: 'var(--font-size-sm)', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase',
+                        color: rewardAccentColor,
+                        textShadow: `0 0 8px ${rewardAccentColor}60`,
+                        opacity: 0.85,
+                      }}>
+                        {reward.kind === 'doctrine' ? 'Doctrine' : 'Scroll'}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                    {reward.kind === 'resource' ? (
+                      <>
+                        {reward.description}
+                        {reward.resource === null && (
+                          <span style={{ marginLeft: '6px', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                            (Army healing coming in future update)
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span style={{
+                        color: rewardAccentColor,
+                        opacity: chosenIndex.value !== null && !isChosen ? 0.3 : 0.9,
+                        fontStyle: 'italic',
+                      }}>
+                        {reward.description}
+                      </span>
+                    )}
+                  </div>
+                </button>
+                {tooltipText && (
+                  <div class="reward-item-tooltip">{tooltipText}</div>
+                )}
+              </div>
             );
           })}
         </div>

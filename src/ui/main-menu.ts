@@ -1,5 +1,3 @@
-import type { Camera } from '../camera/camera';
-
 export interface MenuCallbacks {
   onNewGame: () => void;
   onContinue: () => void;
@@ -8,7 +6,6 @@ export interface MenuCallbacks {
 export class MainMenu {
   private menu: HTMLElement;
   private settingsOverlay: HTMLElement;
-  private camera: Camera | null = null;
 
   constructor(callbacks: MenuCallbacks) {
     this.menu = document.getElementById('main-menu')!;
@@ -57,14 +54,8 @@ export class MainMenu {
     });
   }
 
-  setCamera(camera: Camera): void {
-    this.camera = camera;
-  }
-
   private applySettings(): void {
-    if (!this.camera) return;
-    const smoothing = parseInt((document.getElementById('set-smoothing') as HTMLInputElement).value);
-    this.camera.smoothing = smoothing / 100;
+    // Camera settings removed — no map renderer
   }
 
   show(): void {
