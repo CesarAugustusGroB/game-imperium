@@ -3,6 +3,7 @@ import { topologyData, territoryMap, claimedIndices, getAllTerritoryPositions } 
 import { provinces } from '../../game/province/province-store';
 import { selectedCommander } from '../../game/core/game-state';
 import { FACTION_COLORS } from '../../game/core/commander';
+import type { Province } from '../../game/province/province';
 
 // ── Props ──
 
@@ -41,8 +42,23 @@ const RADIUS_UNCLAIMED = 3;
 const CLICK_HIT_RADIUS = 15;
 const LABEL_FONT = '9px "Segoe UI", system-ui, sans-serif';
 const CSS_HEIGHT = 200;
-/** Show a red unrest dot on the map when province unrest exceeds this value. */
-const UNREST_INDICATOR_THRESHOLD = 50;
+
+/** Wealth tier → dot color (S19-07). */
+function getWealthDotColor(province: Province): string {
+  const w = province.wealth;
+  if (province.rebellionCount >= 3) return '#666666'; // Ruined — gray
+  if (w < 20) return '#c24a3a';  // Destitute — red
+  if (w < 50) return '#d4a843';  // Poor — orange
+  if (w < 100) return '#c8c0a8'; // Growing — off-white
+  if (w < 200) return '#5a8a4a'; // Prosperous — green
+  return '#f0d080';              // Wealthy — gold
+}
+
+/** Unrest dot radius: 0 below 30, scales 2–5 from 30 to 80+. */
+function getUnrestRadius(unrest: number): number {
+  if (unrest < 30) return 0;
+  return 2 + Math.min(3, (unrest - 30) / 50 * 3);
+}
 
 // ── Component ──
 
@@ -168,10 +184,11 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
 
         const province = provinceById.get(roguelikeId);
         const isSelected = roguelikeId === selectedId;
+        const isRuined = province && province.rebellionCount >= 3;
         const radius = isSelected ? RADIUS_SELECTED : RADIUS_OWNED;
 
-        // Use the province's current unrest for the indicator (not projected)
-        const unrest = province?.unrest ?? 0;
+        // Wealth-tier dot color (S19-07)
+        const dotColor = province ? getWealthDotColor(province) : factionColor;
 
         // Glow halo (semi-transparent, larger circle) — pulse for selected
         const glowRadius = radius + 5;
@@ -179,14 +196,13 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
         const glowAlpha = isSelected ? 0.35 : 0.18;
         ctx.beginPath();
         ctx.arc(x, y, pulseGlow, 0, Math.PI * 2);
-        ctx.fillStyle = factionColor + Math.round(glowAlpha * 255).toString(16).padStart(2, '0');
+        ctx.fillStyle = dotColor + Math.round(glowAlpha * 255).toString(16).padStart(2, '0');
         ctx.fill();
 
         if (isSelected) {
-          // Second outer ring for selected
           ctx.beginPath();
           ctx.arc(x, y, pulseGlow + 4, 0, Math.PI * 2);
-          ctx.strokeStyle = factionColor + '55';
+          ctx.strokeStyle = dotColor + '55';
           ctx.lineWidth = 1;
           ctx.stroke();
         }
@@ -194,13 +210,24 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
         // Main dot
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = isSelected ? factionColor : factionColor + 'cc';
+        ctx.fillStyle = isRuined ? '#444444' : (isSelected ? dotColor : dotColor + 'cc');
         ctx.fill();
 
         // Dot border
         ctx.strokeStyle = isSelected ? '#fff8e0' : 'rgba(255,255,255,0.35)';
         ctx.lineWidth = isSelected ? 1.5 : 0.8;
         ctx.stroke();
+
+        // Ruined X mark (S19-07)
+        if (isRuined) {
+          ctx.strokeStyle = '#e04040';
+          ctx.lineWidth = 1.5;
+          const s = radius * 0.5;
+          ctx.beginPath();
+          ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s);
+          ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s);
+          ctx.stroke();
+        }
 
         // Province name label
         if (province) {
@@ -211,23 +238,32 @@ export function ProvinceMapView({ selectedId, onSelect }: ProvinceMapViewProps) 
           const label = province.name;
           const labelY = y + radius + 2;
 
-          // Text shadow for legibility
           ctx.fillStyle = 'rgba(0,0,0,0.7)';
           ctx.fillText(label, x + 1, labelY + 1);
-
           ctx.fillStyle = isSelected ? '#fff8e0' : 'rgba(240, 230, 200, 0.75)';
           ctx.fillText(label, x, labelY);
         }
 
-        // Unrest indicator — small red dot when unrest is high
-        if (unrest > UNREST_INDICATOR_THRESHOLD) {
+        // Unrest indicator — red dot scaled by severity (S19-07)
+        const unrest = province?.unrest ?? 0;
+        const unrestR = getUnrestRadius(unrest);
+        if (unrestR > 0) {
           ctx.beginPath();
-          ctx.arc(x + radius - 1, y - radius + 1, 3, 0, Math.PI * 2);
+          ctx.arc(x + radius - 1, y - radius + 1, unrestR, 0, Math.PI * 2);
           ctx.fillStyle = '#e04040';
           ctx.fill();
           ctx.strokeStyle = 'rgba(0,0,0,0.5)';
           ctx.lineWidth = 0.5;
           ctx.stroke();
+        }
+
+        // Feature indicator — small gold star (S19-07)
+        if (province?.uniqueFeature) {
+          ctx.font = '7px "Segoe UI", system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.fillStyle = '#f0d080';
+          ctx.fillText('★', x, y - radius - 1);
         }
       }
 

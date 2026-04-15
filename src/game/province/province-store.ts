@@ -16,7 +16,8 @@ import type { ResourceType } from '../core/commander';
 import type { DoctrineEffect } from '../items/doctrine';
 import type { ResourceCost, TaxLevel } from '../../types/index';
 import { getResource, spendResource, addResource } from '../core/resources';
-import { getGovernorTraits, getGovernorSalary, registerProvinceSyncCallback } from './governor-store';
+import { getGovernorTraits, getGovernorSalary, dismissGovernor, registerProvinceSyncCallback } from './governor-store';
+import { assignNextFeature } from './feature-store';
 import { claimTerritory, claimTerritoryAt } from './province-map-store';
 import { nextInvestmentDiscount } from '../progression/strategic-store';
 import { addNotification } from '../../ui/notifications/notification-store';
@@ -75,7 +76,8 @@ export function conquerProvince(
     ? { terrain: overrides.terrain, tradeGood: overrides.tradeGood }
     : assignProvinceIdentity();
   const wealth = calculateInitialWealth(terrain, tradeGood, 3);
-  const province = createProvince(name, { baseIncome, terrain, tradeGood, wealth });
+  const uniqueFeature = assignNextFeature();
+  const province = createProvince(name, { baseIncome, terrain, tradeGood, wealth, uniqueFeature });
   provinces.value = [...provinces.value, province];
 
   // Claim the chosen map territory, or auto-pick if no specific index provided
@@ -83,6 +85,27 @@ export function conquerProvince(
     claimTerritoryAt(province.id, overrides.mapIndex);
   } else {
     claimTerritory(province.id);
+  }
+
+  // Feature discovery notification (S19-03)
+  if (uniqueFeature) {
+    const bonuses: string[] = [];
+    if (uniqueFeature.goldPerSeason) bonuses.push(`${uniqueFeature.goldPerSeason > 0 ? '+' : ''}${uniqueFeature.goldPerSeason}g`);
+    if (uniqueFeature.foodPerSeason) bonuses.push(`+${uniqueFeature.foodPerSeason} food`);
+    if (uniqueFeature.faithPerSeason) bonuses.push(`+${uniqueFeature.faithPerSeason} faith`);
+    if (uniqueFeature.influencePerSeason) bonuses.push(`+${uniqueFeature.influencePerSeason} influence`);
+    if (uniqueFeature.momentumPerSeason) bonuses.push(`+${uniqueFeature.momentumPerSeason} momentum`);
+    if (uniqueFeature.unrestPerSeason) bonuses.push(`${uniqueFeature.unrestPerSeason} unrest`);
+    if (uniqueFeature.beautinessBonus) bonuses.push(`+${uniqueFeature.beautinessBonus}% beauty`);
+    if (uniqueFeature.buildCostDiscount) bonuses.push(`-${uniqueFeature.buildCostDiscount}% build cost`);
+    if (uniqueFeature.wealthGrowthBonus) bonuses.push(`+${uniqueFeature.wealthGrowthBonus} PWG`);
+    addNotification({
+      kind: 'pinned',
+      icon: '🏛',
+      title: `${uniqueFeature.name} discovered!`,
+      message: `${bonuses.join(', ')}. ${uniqueFeature.flavour}`,
+      color: '#f0d080',
+    });
   }
 
   return province;
@@ -150,7 +173,7 @@ export function buildInvestment(provinceId: string, type: InvestmentType): boole
 
   // Apply governor + scroll investment discounts
   const traits = getGovernorTraits(provinceId);
-  const governorDiscount = getInvestmentDiscount(traits);
+  const governorDiscount = getInvestmentDiscount(traits, province);
   const scrollDiscount = nextInvestmentDiscount.value;
   // Trade good build-cost discount: Marble -15%, Timber -10%
   let tradeDiscount = 0;
@@ -415,6 +438,11 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
         color: '#c24a3a',
         duration: 4000,
       });
+
+      // Auto-dismiss governor on Ruined (3rd rebellion) — no point paying salary
+      if (beforeCount >= 2) {
+        dismissGovernor(prov.id);
+      }
     }
 
     // 9. Decrement timers

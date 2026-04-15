@@ -4,6 +4,7 @@ import type { GovernorTrait } from './governor';
 import type { TerrainType } from '../../data/terrain-data';
 import { UNIVERSAL_BUILDINGS, TERRAIN_AVAILABLE_BUILDINGS, TERRAIN_DATA } from '../../data/terrain-data';
 import type { TradeGoodType } from '../../data/trade-goods';
+import type { ProvinceFeature } from '../../data/province-features';
 import { TRADE_GOOD_DATA } from '../../data/trade-goods';
 
 // ── Investment types ──
@@ -85,6 +86,8 @@ export interface Province {
   terrain: TerrainType;
   /** Assigned trade good, or null if none. Randomly assigned on conquest (S17-03). */
   tradeGood: TradeGoodType | null;
+  /** Unique province feature (landmark/wonder), or null. Assigned from pool on conquest (S19). */
+  uniqueFeature: ProvinceFeature | null;
 }
 
 // ── Investment data ──
@@ -360,6 +363,15 @@ export function getProvinceIncome(
     }
   }
 
+  // Unique feature flat income
+  const feat = province.uniqueFeature;
+  if (feat) {
+    if (feat.goldPerSeason) total.gold = (total.gold ?? 0) + feat.goldPerSeason;
+    if (feat.faithPerSeason) total.faith = (total.faith ?? 0) + feat.faithPerSeason;
+    if (feat.influencePerSeason) total.influence = (total.influence ?? 0) + feat.influencePerSeason;
+    if (feat.momentumPerSeason) total.momentum = (total.momentum ?? 0) + feat.momentumPerSeason;
+  }
+
   // Apply governor income-bonus traits (percentage boost per resource)
   for (const trait of governorTraits) {
     if (trait.type === 'income-bonus' && total[trait.resource] != null) {
@@ -438,12 +450,16 @@ export function getUnrestModifier(
  * Get investment cost discount percentage from governor traits.
  * Returns 0 if no discount applies.
  */
-export function getInvestmentDiscount(governorTraits: GovernorTrait[]): number {
+export function getInvestmentDiscount(governorTraits: GovernorTrait[], province?: Province): number {
   let discount = 0;
   for (const trait of governorTraits) {
     if (trait.type === 'investment-discount') {
       discount += trait.percent;
     }
+  }
+  // Unique feature build cost discount
+  if (province?.uniqueFeature?.buildCostDiscount) {
+    discount += province.uniqueFeature.buildCostDiscount;
   }
   return discount;
 }
@@ -483,6 +499,7 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
     rubbleTimer: 0,
     terrain: 'plains',
     tradeGood: null,
+    uniqueFeature: null,
     ...overrides,
   };
 }
@@ -622,6 +639,10 @@ export function calculatePWG(province: Province, terrain?: string): number {
   if (province.tradeGood) {
     pwg += TRADE_GOOD_DATA[province.tradeGood].wealthGrowthBonus;
   }
+  // Unique feature wealth growth bonus
+  if (province.uniqueFeature?.wealthGrowthBonus) {
+    pwg += province.uniqueFeature.wealthGrowthBonus;
+  }
   return pwg;
 }
 
@@ -709,7 +730,7 @@ export function getAvailableBuildings(province: Province): InvestmentType[] {
  */
 export const FOOD_CONFIG = {
   /** Base subsistence food every province produces (gathering, small plots). */
-  baseSubsistence: 2,
+  baseSubsistence: 3,
   /** Terrain base food production per season. */
   terrainFood: {
     farmland: 3, plains: 2, coast: 1, forest: 1,
@@ -718,7 +739,7 @@ export const FOOD_CONFIG = {
   /** Tax food penalty fraction by lower-tax level (1=Minimal … 5=Oppressive). */
   taxFoodPenalty: { 1: 0, 2: 0.10, 3: 0.20, 4: 0.35, 5: 0.55 } as Record<TaxLevel, number>,
   /** Marketplace tax penalty mitigation by tier (multiplicative reduction). */
-  marketplaceMitigation: { 1: 0.05, 2: 0.10, 3: 0.15 } as Record<number, number>,
+  marketplaceMitigation: { 1: 0.15, 2: 0.25, 3: 0.35 } as Record<number, number>,
   /** Famine unrest per season: soft phase (timer 1-2). */
   famineUnrestSoft: 10,
   /** Famine unrest per season: hard phase (timer 3+). */
@@ -753,6 +774,11 @@ export function calculateFoodProduction(
   // Governor population-growth trait → food production bonus
   for (const trait of governorTraits) {
     if (trait.type === 'population-growth') food += trait.amount;
+  }
+
+  // Unique feature food bonus
+  if (province.uniqueFeature?.foodPerSeason) {
+    food += province.uniqueFeature.foodPerSeason;
   }
 
   return food;
@@ -817,6 +843,10 @@ export function calculateBeautiness(province: Province): number {
     const effect = INVESTMENT_DATA[inv.type]?.levels[inv.level - 1];
     score += effect?.beautinessBonus ?? 0;
   }
+  // Unique feature beautiness bonus
+  if (province.uniqueFeature?.beautinessBonus) {
+    score += province.uniqueFeature.beautinessBonus;
+  }
   return Math.max(0, Math.min(100, score));
 }
 
@@ -844,9 +874,9 @@ export function rollImmigration(province: Province): { province: Province; immig
 
 // ── Population growth accumulator ──
 
-/** Growth threshold to gain 1 population point: `8 + current_pop × 2`. */
+/** Growth threshold to gain 1 population point: `5 + current_pop`. */
 export function calculateGrowthThreshold(currentPop: number): number {
-  return 8 + currentPop * 2;
+  return 5 + currentPop;
 }
 
 /**
@@ -958,8 +988,9 @@ export function calculateUnrestDelta(
 ): number {
   const taxUnrest = getLowerTaxUnrest(province.lowerTax) + getUpperTaxUnrest(province.upperTax);
   const famineUnrest = getFamineUnrest(province);
+  const featureUnrest = province.uniqueFeature?.unrestPerSeason ?? 0;
   const mod = getUnrestModifier(province, governorTraits); // negative = suppresses unrest
-  const base = taxUnrest + famineUnrest + doom - 2 + mod;
+  const base = taxUnrest + famineUnrest + featureUnrest + doom - 2 + mod;
   const accel = province.unrest > 60 ? (province.unrest - 60) * 0.25 : 0;
   return base + accel;
 }
@@ -1000,12 +1031,12 @@ function destroyMostExpensive(investments: Investment[], count: number): Investm
 /**
  * Apply rebellion consequences to a province. Returns a new Province object.
  *
- * rebellionCount 0 → 1st rebellion: destroy 1–2 buildings, −1 max pop,
+ * rebellionCount 0 → 1st rebellion: destroy 1–2 buildings, −1 pop,
  *   unrest→40, devastation 4 seasons, rubble 2 seasons.
- * rebellionCount 1 → 2nd rebellion: destroy 2 buildings, −2 max pop,
+ * rebellionCount 1 → 2nd rebellion: destroy 2 buildings, −2 pop,
  *   same devastation + rubble.
  * rebellionCount 2 → 3rd rebellion (Ruined): all buildings gone, pop→1,
- *   wealth→0, 8-season devastation + rubble.
+ *   wealth→0, 8-season devastation + rubble. Governor auto-dismissed.
  *
  * `rng` defaults to Math.random — injectable for deterministic tests.
  */
@@ -1025,6 +1056,8 @@ export function applyRebellion(
       population: 1,
       wealth: 0,
       unrest: 40,
+      famineTimer: 0,
+      growthAccumulator: 0,
       devastationTimer: 8,
       rubbleTimer: 8,
       rebellionCount: 3,
