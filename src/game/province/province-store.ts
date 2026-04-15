@@ -6,6 +6,7 @@ import {
   getProvinceExpenses, getBuildingSlots,
   getTaxRate, calculateInitialWealth,
   calculateNetWealthChange,
+  tickFamine,
   tickPopulationGrowth,
   calculateUnrestDelta, getRebelThreshold, applyRebellion,
   getAvailableBuildings, getActiveSynergies,
@@ -341,7 +342,10 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
     const netWealth = calculateNetWealthChange(p, p.terrain);
     p = { ...p, wealth: Math.min(9999, Math.max(0, p.wealth + netWealth)) };
 
-    // 6. Tick population growth accumulator
+    // 5b. Tick famine (S20): update famineTimer, hard phase kills pops
+    p = tickFamine(p, traits);
+
+    // 6. Tick population growth accumulator (food-surplus driven, S20)
     p = tickPopulationGrowth(p, p.terrain, traits);
 
     // 7. Tick unrest: new formula + expense shortfall penalty

@@ -910,11 +910,66 @@ export function tickPopulationGrowth(
   return { ...province, growthAccumulator: newAccumulator };
 }
 
+// ── Famine system (S20) ──
+
+/** Famine unrest per season during soft phase (famineTimer 1-2). */
+const FAMINE_UNREST_SOFT = 10;
+/** Famine unrest per season during hard phase (famineTimer 3+). */
+const FAMINE_UNREST_HARD = 25;
+
+/**
+ * Advance one season of famine tracking.
+ *
+ * - Surplus >= 0 → reset famineTimer to 0 (recovery).
+ * - Surplus < 0, famineTimer 1-2 (soft phase) → growth blocked (handled by
+ *   tickPopulationGrowth), unrest added via calculateUnrestDelta.
+ * - Surplus < 0, famineTimer 3+ (hard phase) → lose 1 pop/season (min 1),
+ *   reset growthAccumulator to 0.
+ *
+ * Returns an updated Province — does NOT mutate the input.
+ */
+export function tickFamine(
+  province: Province,
+  governorTraits: GovernorTrait[] = [],
+): Province {
+  const surplus = calculateFoodSurplus(province, governorTraits);
+
+  if (surplus >= 0) {
+    // Recovery: reset famine timer
+    if (province.famineTimer > 0) {
+      return { ...province, famineTimer: 0 };
+    }
+    return province;
+  }
+
+  // Deficit: increment famine timer
+  const newTimer = province.famineTimer + 1;
+
+  if (newTimer >= 3) {
+    // Hard phase: lose 1 pop (floor at 1), reset growth accumulator
+    const newPop = Math.max(1, province.population - 1);
+    return { ...province, famineTimer: newTimer, population: newPop, growthAccumulator: 0 };
+  }
+
+  // Soft phase: just increment timer (growth blocked by tickPopulationGrowth)
+  return { ...province, famineTimer: newTimer };
+}
+
+/**
+ * Famine unrest contribution based on famineTimer.
+ * Soft (1-2): +10/season. Hard (3+): +25/season. None (0): 0.
+ */
+export function getFamineUnrest(province: Province): number {
+  if (province.famineTimer >= 3) return FAMINE_UNREST_HARD;
+  if (province.famineTimer >= 1) return FAMINE_UNREST_SOFT;
+  return 0;
+}
+
 // ── Unrest + rebellion system ──
 
 /**
  * Net unrest change per season.
- *   base  = tax_unrest + doom − 2 (natural decay) + investment/governor modifier
+ *   base  = tax_unrest + famine + doom − 2 (natural decay) + investment/governor modifier
  *   accel = (unrest > 60) ? (unrest − 60) × 0.25 : 0
  *   total = base + accel
  *
@@ -927,8 +982,9 @@ export function calculateUnrestDelta(
   doom: number = 0,
 ): number {
   const taxUnrest = getLowerTaxUnrest(province.lowerTax) + getUpperTaxUnrest(province.upperTax);
+  const famineUnrest = getFamineUnrest(province);
   const mod = getUnrestModifier(province, governorTraits); // negative = suppresses unrest
-  const base = taxUnrest + doom - 2 + mod;
+  const base = taxUnrest + famineUnrest + doom - 2 + mod;
   const accel = province.unrest > 60 ? (province.unrest - 60) * 0.25 : 0;
   return base + accel;
 }
