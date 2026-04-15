@@ -1031,12 +1031,12 @@ function destroyMostExpensive(investments: Investment[], count: number): Investm
 /**
  * Apply rebellion consequences to a province. Returns a new Province object.
  *
- * rebellionCount 0 → 1st rebellion: destroy 1–2 buildings, −1 max pop,
+ * rebellionCount 0 → 1st rebellion: destroy 1–2 buildings, −1 pop,
  *   unrest→40, devastation 4 seasons, rubble 2 seasons.
- * rebellionCount 1 → 2nd rebellion: destroy 2 buildings, −2 max pop,
+ * rebellionCount 1 → 2nd rebellion: destroy 2 buildings, −2 pop,
  *   same devastation + rubble.
  * rebellionCount 2 → 3rd rebellion (Ruined): all buildings gone, pop→1,
- *   wealth→0, 8-season devastation + rubble.
+ *   wealth→0, 8-season devastation + rubble. Governor auto-dismissed.
  *
  * `rng` defaults to Math.random — injectable for deterministic tests.
  */
@@ -1056,6 +1056,8 @@ export function applyRebellion(
       population: 1,
       wealth: 0,
       unrest: 40,
+      famineTimer: 0,
+      growthAccumulator: 0,
       devastationTimer: 8,
       rubbleTimer: 8,
       rebellionCount: 3,

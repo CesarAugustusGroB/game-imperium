@@ -16,7 +16,7 @@ import type { ResourceType } from '../core/commander';
 import type { DoctrineEffect } from '../items/doctrine';
 import type { ResourceCost, TaxLevel } from '../../types/index';
 import { getResource, spendResource, addResource } from '../core/resources';
-import { getGovernorTraits, getGovernorSalary, registerProvinceSyncCallback } from './governor-store';
+import { getGovernorTraits, getGovernorSalary, dismissGovernor, registerProvinceSyncCallback } from './governor-store';
 import { assignNextFeature } from './feature-store';
 import { claimTerritory, claimTerritoryAt } from './province-map-store';
 import { nextInvestmentDiscount } from '../progression/strategic-store';
@@ -438,6 +438,11 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
         color: '#c24a3a',
         duration: 4000,
       });
+
+      // Auto-dismiss governor on Ruined (3rd rebellion) — no point paying salary
+      if (beforeCount >= 2) {
+        dismissGovernor(prov.id);
+      }
     }
 
     // 9. Decrement timers
