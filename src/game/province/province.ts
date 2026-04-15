@@ -158,9 +158,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Aqueduct',
     flavour: 'Running water feeds population growth and scales all income.',
     levels: [
-      { incomeBonus: { gold: 1 },           expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 6 },                       description: '+1 Gold/spoke. +1 Population cap. -5 Unrest/spoke.', beautinessBonus: 3 },
-      { incomeBonus: { gold: 2 },           expensesBonus: 2, unrestChange: -5,  buildCost: { gold: 14 },                      description: '+2 Gold/spoke. +2 Population cap. -5 Unrest/spoke.', beautinessBonus: 4 },
-      { incomeBonus: { gold: 3 },           expensesBonus: 2, unrestChange: -10, buildCost: { gold: 26 },                      description: '+3 Gold/spoke. +3 Population cap. -10 Unrest/spoke. All income +10%.', beautinessBonus: 5 },
+      { incomeBonus: { gold: 1 },           expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 6 },                       description: '+1 Gold/spoke. +1 Food. +1 Pop cap. -5 Unrest/spoke.', beautinessBonus: 3, foodBonus: 1 },
+      { incomeBonus: { gold: 2 },           expensesBonus: 2, unrestChange: -5,  buildCost: { gold: 14 },                      description: '+2 Gold/spoke. +2 Food. +2 Pop cap. -5 Unrest/spoke.', beautinessBonus: 4, foodBonus: 2 },
+      { incomeBonus: { gold: 3 },           expensesBonus: 2, unrestChange: -10, buildCost: { gold: 26 },                      description: '+3 Gold/spoke. +3 Food. +3 Pop cap. -10 Unrest/spoke. All income +10%.', beautinessBonus: 5, foodBonus: 3 },
     ],
   },
   insula: {
@@ -191,9 +191,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Fishery',
     flavour: 'Nets and salt-curing houses feed the province through lean seasons.',
     levels: [
-      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+2 Gold/spoke. +1 Pop Growth/spoke.' },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 9 },                         description: '+3 Gold/spoke. +2 Pop Growth/spoke.' },
-      { incomeBonus: { gold: 4 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 16 },                        description: '+4 Gold/spoke. +3 Pop Growth/spoke. Coastal settlements fed.' },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+2 Gold/spoke. +1 Food/spoke.', foodBonus: 1 },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 9 },                         description: '+3 Gold/spoke. +2 Food/spoke.', foodBonus: 2 },
+      { incomeBonus: { gold: 4 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 16 },                        description: '+4 Gold/spoke. +3 Food/spoke. Coastal settlements fed.', foodBonus: 3 },
     ],
   },
   villa: {
@@ -201,9 +201,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Villa',
     flavour: 'Country estates of the rich yield harvests and social stability.',
     levels: [
-      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: -3, buildCost: { gold: 5 },                        description: '+1 Gold/spoke. +1 Pop Growth/spoke. -3 Unrest/spoke.' },
-      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: -5, buildCost: { gold: 10 },                       description: '+2 Gold/spoke. +2 Pop Growth/spoke. -5 Unrest/spoke.' },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: -8, buildCost: { gold: 18 },                       description: '+3 Gold/spoke. +3 Pop Growth/spoke. -8 Unrest/spoke. Farmland yield doubled.' },
+      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: -3, buildCost: { gold: 5 },                        description: '+1 Gold/spoke. +1 Food/spoke. -3 Unrest/spoke.', foodBonus: 1 },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: -5, buildCost: { gold: 10 },                       description: '+2 Gold/spoke. +2 Food/spoke. -5 Unrest/spoke.', foodBonus: 2 },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: -8, buildCost: { gold: 18 },                       description: '+3 Gold/spoke. +3 Food/spoke. -8 Unrest/spoke. Farmland yield doubled.', foodBonus: 3 },
     ],
   },
   stables: {
@@ -271,9 +271,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Reed Harvest',
     flavour: 'Skilled harvesters work the marsh beds for papyrus, rushes, and fuel.',
     levels: [
-      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 3 },                         description: '+1 Gold/spoke. +1 Pop Growth/spoke.' },
-      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 8 },                         description: '+2 Gold/spoke. +2 Pop Growth/spoke.' },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 15 },                        description: '+3 Gold/spoke. +3 Pop Growth/spoke. Marshland mastered.' },
+      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 3 },                         description: '+1 Gold/spoke. +1 Food/spoke.', foodBonus: 1 },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 8 },                         description: '+2 Gold/spoke. +2 Food/spoke.', foodBonus: 2 },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 15 },                        description: '+3 Gold/spoke. +3 Food/spoke. Marshland mastered.', foodBonus: 3 },
     ],
   },
   // ── S20: Food & Population ──
@@ -800,17 +800,31 @@ export function getTaxFoodPenalty(level: TaxLevel): number {
   return TAX_FOOD_PENALTY[level];
 }
 
+/** Marketplace tax food penalty mitigation per tier (S20). */
+const MARKETPLACE_TAX_MITIGATION: Record<number, number> = {
+  1: 0.05,  // −5% from penalty
+  2: 0.10,  // −10% from penalty
+  3: 0.15,  // −15% from penalty
+};
+
 /**
  * Effective food production after tax friction.
- * `effectiveFood = rawProduction × (1 − taxPenalty)`
- * Use this (not raw production) for surplus calculations.
+ * `effectiveFood = rawProduction × (1 − effectiveTaxPenalty)`
+ * Marketplace mitigates the tax penalty multiplicatively.
  */
 export function calculateEffectiveFoodProduction(
   province: Province,
   governorTraits: GovernorTrait[] = [],
 ): number {
   const raw = calculateFoodProduction(province, governorTraits);
-  const penalty = getTaxFoodPenalty(province.lowerTax);
+  let penalty = getTaxFoodPenalty(province.lowerTax);
+
+  // Marketplace mitigates tax food penalty
+  const marketplace = province.investments.find(i => i.type === 'market');
+  if (marketplace) {
+    penalty *= (1 - (MARKETPLACE_TAX_MITIGATION[marketplace.level] ?? 0));
+  }
+
   return raw * (1 - penalty);
 }
 
