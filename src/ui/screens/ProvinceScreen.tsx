@@ -858,19 +858,44 @@ function BuildingGrid({ province }: { province: Province }) {
   );
 }
 
+// ── Net gold income (single source of truth — matches IncomeLedger) ──
+
+function getNetGoldIncome(province: Province): number {
+  const traits = getGovernorTraits(province.id);
+  const taxRate = getTaxRate(province.lowerTax, province.upperTax);
+  const taxRevenue = Math.floor(province.wealth * taxRate);
+
+  let buildingGold = 0;
+  for (const inv of province.investments) {
+    buildingGold += INVESTMENT_DATA[inv.type].levels[inv.level - 1].incomeBonus.gold ?? 0;
+  }
+  for (const syn of getActiveSynergies(province)) {
+    if (syn.bonus.type === 'gold') buildingGold += (syn.bonus as { type: 'gold'; amount: number }).amount;
+  }
+
+  const subsistence = 1;
+  const tradeGoodGold = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood].flatGold : 0;
+
+  let goldTotal = taxRevenue + buildingGold + subsistence + tradeGoodGold;
+  for (const trait of traits) {
+    if (trait.type === 'income-bonus' && trait.resource === 'gold') {
+      goldTotal = Math.floor(goldTotal * (1 + trait.percent / 100));
+    }
+  }
+
+  const expenses = getProvinceExpenses(province, traits) + getGovernorSalary(province.id);
+  return goldTotal - expenses;
+}
+
 // ── Province ledger row ──
 
 function ProvinceRow({ province, selected }: { province: Province; selected: boolean }) {
   const traits = getGovernorTraits(province.id);
-  const income = getProvinceIncome(province, traits);
-  const expenses = getProvinceExpenses(province, traits);
   const unrestMod = getUnrestModifier(province, traits);
   const invCount = province.investments.length;
   const slotMax = getBuildingSlots(province.population);
 
-  const taxRate = getTaxRate(province.lowerTax, province.upperTax);
-  const taxRevenue = Math.floor(province.wealth * taxRate);
-  const netGold = taxRevenue + (income.gold ?? 0) - expenses;
+  const netGold = getNetGoldIncome(province);
   const netWealthChange = calculateNetWealthChange(province, province.terrain);
 
   const settlementLabel = getSettlementLabel(province.population);
@@ -2194,14 +2219,9 @@ function ProvinceAdminPanel({ province }: { province: Province }) {
   const traitExpenses = getProvinceExpenses(province, traits);
   const netGold = (traitIncomeGold - baseIncomeGold) + (baseExpenses - traitExpenses) - salary;
 
-  const govTraits = getGovernorTraits(province.id);
   const currentRate = getTaxRate(province.lowerTax, province.upperTax);
   const rateStr = formatTaxRate(currentRate);
-
-  // Net income: tax revenue + building gold + subsistence − expenses
-  const income = getProvinceIncome(province, govTraits);
-  const expenses = getProvinceExpenses(province, govTraits);
-  const netIncome = (income.gold ?? 0) - expenses;
+  const netIncome = getNetGoldIncome(province);
 
   function setLower(v: TaxLevel) { playSfx('ui_click'); setProvinceTax(province.id, v, province.upperTax); }
   function setUpper(v: TaxLevel) { playSfx('ui_click'); setProvinceTax(province.id, province.lowerTax, v); }
@@ -2334,11 +2354,25 @@ export function ProvinceScreen() {
     selectedProvinceId.value = selected.id;
   }
 
-  // Stats for header (province-specific)
-  const headerTraits = selected ? getGovernorTraits(selected.id) : [];
-  const headerIncome = selected ? getProvinceIncome(selected, headerTraits) : null;
-  const headerExpenses = selected ? getProvinceExpenses(selected, headerTraits) : 0;
-  const headerUnrestMod = selected ? getUnrestModifier(selected, headerTraits) : 0;
+  // Empire-wide aggregates for header
+  const totalPop = allProvinces.reduce((s, p) => s + p.population, 0);
+  const totalIncome: Partial<Record<ResourceType, number>> = {};
+  let totalExpenses = 0;
+  let totalUnrest = 0;
+  let totalWealth = 0;
+  for (const p of allProvinces) {
+    const t = getGovernorTraits(p.id);
+    const inc = getProvinceIncome(p, t);
+    for (const [res, amt] of Object.entries(inc) as [ResourceType, number][]) {
+      totalIncome[res] = (totalIncome[res] ?? 0) + amt;
+    }
+    totalExpenses += getProvinceExpenses(p, t);
+    totalUnrest += p.unrest;
+    totalWealth += p.wealth;
+  }
+  const n = allProvinces.length || 1;
+  const avgUnrest = Math.round(totalUnrest / n);
+  const avgWealth = Math.round(totalWealth / n);
 
   return (
     <div style={{
@@ -2351,12 +2385,13 @@ export function ProvinceScreen() {
         <OrnateHeader
           eyebrow="Provinces"
           title={selected ? selected.name : '—'}
-          rightSlot={selected && headerIncome && (
+          rightSlot={allProvinces.length > 0 && (
             <>
-              <span class="ornate-stat-chip" title="Population">👥 <strong>{selected.population}</strong></span>
-              <span class="ornate-stat-chip" title="Income per spoke">{formatIncome(headerIncome)}</span>
-              <span class="ornate-stat-chip" title="Expenses">−<strong style={{ color: 'rgba(220, 160, 100, 0.85)' }}>{headerExpenses}g</strong></span>
-              <span class="ornate-stat-chip" title="Unrest"><UnrestBar unrest={selected.unrest} modifier={headerUnrestMod} width={50} /></span>
+              <span class="ornate-stat-chip" title="Total Population">👥 <strong>{totalPop}</strong></span>
+              <span class="ornate-stat-chip" title="Total Income">{formatIncome(totalIncome)}</span>
+              <span class="ornate-stat-chip" title="Total Expenses">−<strong style={{ color: 'rgba(220, 160, 100, 0.85)' }}>{totalExpenses}g</strong></span>
+              <span class="ornate-stat-chip" title="Avg Unrest"><UnrestBar unrest={avgUnrest} modifier={0} width={50} /></span>
+              <span class="ornate-stat-chip" title="Avg Wealth">⚜ <strong>{avgWealth}</strong></span>
             </>
           )}
           onClose={() => navigateTo('hub')}
