@@ -730,7 +730,7 @@ export function getAvailableBuildings(province: Province): InvestmentType[] {
  */
 export const FOOD_CONFIG = {
   /** Base subsistence food every province produces (gathering, small plots). */
-  baseSubsistence: 2,
+  baseSubsistence: 3,
   /** Terrain base food production per season. */
   terrainFood: {
     farmland: 3, plains: 2, coast: 1, forest: 1,
@@ -739,7 +739,7 @@ export const FOOD_CONFIG = {
   /** Tax food penalty fraction by lower-tax level (1=Minimal … 5=Oppressive). */
   taxFoodPenalty: { 1: 0, 2: 0.10, 3: 0.20, 4: 0.35, 5: 0.55 } as Record<TaxLevel, number>,
   /** Marketplace tax penalty mitigation by tier (multiplicative reduction). */
-  marketplaceMitigation: { 1: 0.05, 2: 0.10, 3: 0.15 } as Record<number, number>,
+  marketplaceMitigation: { 1: 0.15, 2: 0.25, 3: 0.35 } as Record<number, number>,
   /** Famine unrest per season: soft phase (timer 1-2). */
   famineUnrestSoft: 10,
   /** Famine unrest per season: hard phase (timer 3+). */
@@ -874,9 +874,9 @@ export function rollImmigration(province: Province): { province: Province; immig
 
 // ── Population growth accumulator ──
 
-/** Growth threshold to gain 1 population point: `8 + current_pop × 2`. */
+/** Growth threshold to gain 1 population point: `5 + current_pop`. */
 export function calculateGrowthThreshold(currentPop: number): number {
-  return 8 + currentPop * 2;
+  return 5 + currentPop;
 }
 
 /**
