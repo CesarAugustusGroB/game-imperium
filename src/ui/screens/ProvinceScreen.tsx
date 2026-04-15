@@ -10,7 +10,7 @@ import {
   getTaxLabel, getTaxRate, formatTaxRate, getLowerTaxUnrest,
   getUpperTaxUnrest, calculateNetWealthChange,
   getActiveSynergies,
-  getEffectiveMaxPop, getSettlementLabel, getBuildingSlots, calculateGrowthThreshold,
+  getSettlementLabel, getBuildingSlots, calculateGrowthThreshold,
   calculateUnrestDelta, getRebelThreshold, getAvailableBuildings, SYNERGY_DATA,
   calculateFoodProduction, calculateEffectiveFoodProduction, calculateFoodConsumption,
   calculateFoodSurplus, calculateBeautiness, FOOD_CONFIG,
@@ -302,6 +302,48 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
     }
     .tax-reset-btn:hover { color: var(--color-text-primary) !important; }
 
+    /* ── Province Administration panel ── */
+    .pa-admin { border: 1px solid var(--color-border-default); border-radius: var(--radius-md); background: linear-gradient(90deg, rgba(40,30,60,0.45), rgba(20,16,32,0.35)); overflow: hidden; }
+    .pa-admin-title-bar { text-align: center; padding: 14px 16px 0; }
+    .pa-admin-title { font-family: var(--font-display); font-size: 12px; font-weight: 700; color: var(--color-gold-primary); letter-spacing: 5px; text-transform: uppercase; text-shadow: 0 1px 6px rgba(240,208,128,0.15); }
+    .pa-admin-divider { height: 1px; margin-top: 10px; background: linear-gradient(90deg, transparent, var(--color-gold-secondary), transparent); }
+    .pa-admin-col-labels { display: flex; justify-content: space-between; padding: 8px 16px 4px; }
+    .pa-admin-col-label { font-size: 8px; font-weight: 700; color: var(--color-text-muted); letter-spacing: 2px; text-transform: uppercase; }
+    .pa-admin-content { display: flex; gap: 16px; padding: 4px 16px 14px; }
+    .pa-admin-vsep { width: 1px; align-self: stretch; background: linear-gradient(180deg, transparent, var(--color-border-default), transparent); }
+    .pa-admin-gov { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; min-width: 0; }
+    .pa-admin-gov-portrait { width: 64px; height: 64px; border-radius: var(--radius-sm); background: linear-gradient(135deg, rgba(20,18,32,0.9), rgba(35,30,50,0.9)); border: 1px solid var(--color-border-default); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .pa-admin-gov-portrait-dashed { border: 1.5px dashed var(--color-border-default); background: transparent; }
+    .pa-admin-gov-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .pa-admin-gov-name { font-family: var(--font-display); font-size: 12px; font-weight: 700; color: var(--color-text-primary); letter-spacing: 2px; text-transform: uppercase; }
+    .pa-admin-gov-desc { font-size: 9px; color: var(--color-text-muted); line-height: 1.35; font-style: italic; }
+    .pa-admin-tax { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+    .pa-admin-rate-badge { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, rgba(60,45,15,0.9), rgba(40,30,10,0.95)); border: 2px solid var(--color-gold-secondary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 10px rgba(240,208,128,0.12); }
+    .pa-admin-rate-value { font-family: var(--font-display); font-size: 11px; font-weight: 700; color: var(--color-gold-primary); }
+    .pa-admin-tax-row { display: flex; flex-direction: column; gap: 2px; }
+    .pa-admin-tax-row-header { display: flex; justify-content: space-between; align-items: center; }
+    .pa-admin-tax-label { font-size: 9px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 1.2px; }
+    .pa-admin-tax-badge { font-size: 8px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; }
+    .pa-admin-tax-track { position: relative; height: 3px; border-radius: 2px; background: rgba(180,160,100,0.1); margin: 1px 2px; }
+    .pa-admin-tax-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 2px; transition: width var(--duration-fast) var(--ease-default); }
+    .pa-admin-tax-dots { position: absolute; top: 50%; left: 0; right: 0; display: flex; justify-content: space-between; transform: translateY(-50%); padding: 0 1px; }
+    .pa-admin-tax-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(180,160,100,0.2); border: 1px solid rgba(180,160,100,0.3); cursor: pointer; transition: all var(--duration-fast) var(--ease-default); position: relative; z-index: 1; }
+    .pa-admin-tax-dot.active { border-color: var(--color-gold-primary); box-shadow: 0 0 5px rgba(240,208,128,0.35); }
+    .pa-admin-tax-dot:hover { transform: scale(1.3); }
+    .pa-admin-tax-steps { display: flex; justify-content: space-between; padding: 0 1px; }
+    .pa-admin-tax-step { font-size: 7px; color: var(--color-text-muted); cursor: pointer; user-select: none; transition: color var(--duration-fast); }
+    .pa-admin-tax-step:hover { color: var(--color-text-secondary); }
+    .pa-admin-tax-step.active { font-weight: 700; }
+    .pa-admin-footer { text-align: center; padding: 8px 16px 10px; border-top: 1px solid var(--color-border-subtle); font-size: 8px; color: var(--color-text-muted); letter-spacing: 0.4px; }
+    .pa-admin-footer-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; vertical-align: middle; margin-right: 2px; }
+    .pa-admin-footer-tri { display: inline-block; width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; border-bottom: 6px solid; vertical-align: middle; margin-right: 2px; }
+    .pa-admin-gov-traits { display: flex; flex-direction: column; gap: 2px; padding-top: 4px; border-top: 1px solid rgba(180,160,100,0.1); margin-top: 3px; }
+    .pa-admin-gov-trait-row { display: flex; align-items: center; gap: 4px; font-size: 8px; color: var(--color-text-secondary); }
+    @media (max-width: 720px) {
+      .pa-admin-content { flex-direction: column; gap: 10px; }
+      .pa-admin-vsep { width: auto; height: 1px; align-self: auto; background: linear-gradient(90deg, transparent, var(--color-border-default), transparent); }
+    }
+
     /* ── Wealth tier bar ── */
     .wealth-section {
       display: flex; flex-direction: column; gap: 8px;
@@ -540,13 +582,7 @@ function getTerrainsForBuilding(building: string): string[] {
     .map(([terrain]) => TERRAIN_DATA[terrain as keyof typeof TERRAIN_DATA]?.name ?? _toTitle(terrain));
 }
 
-const TAX_LEVEL_COLORS: Record<TaxLevel, string> = {
-  1: 'var(--color-success)',
-  2: '#68a860',
-  3: 'var(--color-text-secondary)',
-  4: 'var(--color-warning)',
-  5: 'var(--color-danger)',
-};
+
 
 const selectedProvinceId = signal<string | null>(null);
 const showGovernorPicker = signal(false);
@@ -1073,124 +1109,6 @@ function formatTraitEffect(trait: GovernorTrait, province: Province): string {
   }
 }
 
-/**
- * Governor panel: portrait + name/tier + salary + trait effects + net contribution.
- * Replaces the inline assigned-governor branch in ProvinceDetail.
- */
-function GovernorPanel({ province }: { province: Province }) {
-  const assigned = getAssignedGovernor(province.id);
-  const salary = getGovernorSalary(province.id);
-
-  // Net gold contribution = income bonus + expense saving − salary
-  const traits = assigned ? assigned.governor.tiers[assigned.tier - 1].traits : [];
-  const baseIncomeGold = getProvinceIncome(province, []).gold ?? 0;
-  const traitIncomeGold = getProvinceIncome(province, traits).gold ?? 0;
-  const incomeBonusGold = traitIncomeGold - baseIncomeGold;
-  const baseExpenses = getProvinceExpenses(province, []);
-  const traitExpenses = getProvinceExpenses(province, traits);
-  const expenseSaving = baseExpenses - traitExpenses;
-  const netGold = incomeBonusGold + expenseSaving - salary;
-  const netClass = netGold > 0 ? 'gov-net-positive' : netGold < 0 ? 'gov-net-negative' : 'gov-net-neutral';
-  const netSign = netGold > 0 ? '+' : '';
-
-  if (!assigned) {
-    return (
-      <>
-        <div style={{
-          width: '96px', height: '112px',
-          border: '2px dashed var(--color-border-subtle)',
-          borderRadius: 'var(--radius-sm)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '36px', color: 'var(--color-text-muted)',
-          flexShrink: 0,
-        }}>
-          ⚔
-        </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
-          <div class="gov-name" style={{ color: 'var(--color-text-muted)' }}>No Governor</div>
-          <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-            Hire a governor to gain bonuses for this province.
-          </div>
-        </div>
-        <button
-          class="gov-hire-btn"
-          onClick={() => { showGovernorPicker.value = true; }}
-          style={{
-            padding: '8px 16px',
-            borderRadius: 'var(--radius-sm)',
-            background: 'rgba(50, 42, 12, 0.5)',
-            border: '1px solid var(--color-border-strong)',
-            color: 'var(--color-gold-secondary)',
-            fontFamily: 'inherit',
-            fontSize: 'var(--font-size-xs)', fontWeight: 700,
-            letterSpacing: '1.5px', textTransform: 'uppercase',
-            cursor: 'pointer',
-            flexShrink: 0,
-          }}
-        >
-          Hire →
-        </button>
-      </>
-    );
-  }
-
-  const fColor = FACTION_COLORS[assigned.governor.color];
-  return (
-    <>
-      <Portrait
-        alt={assigned.governor.name}
-        size="medium"
-        factionColor={fColor}
-        tier={assigned.tier as 1 | 2 | 3}
-      />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span class="gov-name" style={{ color: fColor }}>
-            {assigned.governor.name}
-          </span>
-          <span class="gov-tier-pill">{ROMAN[assigned.tier]}</span>
-          <span class="gov-salary-row">Salary: {salary}g/season</span>
-        </div>
-        {/* Trait effects — concrete province-specific numbers */}
-        <div class="gov-traits">
-          {traits.map((trait, i) => (
-            <div key={i} class="gov-trait-row">
-              <span style={{ color: 'var(--color-success)', fontSize: '8px' }}>✦</span>
-              <span>{formatTraitEffect(trait, province)}</span>
-            </div>
-          ))}
-          {traits.length === 0 && (
-            <div class="gov-trait-row" style={{ fontStyle: 'italic', opacity: 0.6 }}>No active traits</div>
-          )}
-          {/* Net gold contribution */}
-          <div class={`gov-net-row ${netClass}`}>
-            Net: {netSign}{netGold}g/season after salary
-          </div>
-        </div>
-      </div>
-      <button
-        class="gov-dismiss-btn"
-        onClick={() => { dismissGovernor(province.id); showGovernorPicker.value = false; }}
-        title={`Dismiss governor (saves ${salary}g/season)`}
-        style={{
-          padding: '6px 12px',
-          borderRadius: 'var(--radius-sm)',
-          background: 'rgba(120, 40, 30, 0.3)',
-          border: '1px solid rgba(180, 80, 60, 0.4)',
-          color: 'rgba(220, 120, 100, 0.8)',
-          fontFamily: 'inherit',
-          fontSize: 'var(--font-size-xs)', fontWeight: 600,
-          letterSpacing: '1px', textTransform: 'uppercase',
-          cursor: 'pointer',
-          flexShrink: 0,
-          alignSelf: 'flex-start',
-        }}
-      >
-        Dismiss
-      </button>
-    </>
-  );
-}
 
 // ── Settlement color by pop ──
 
@@ -1288,8 +1206,6 @@ function StatPanelHeader({ title, icon }: { title: string; icon?: ComponentChild
 
 function PopBar({ province }: { province: Province }) {
   const traits = getGovernorTraits(province.id);
-  const maxPop = getEffectiveMaxPop(province);
-  const atCap = province.population >= maxPop;
   const settlementLabel = getSettlementLabel(province.population);
   const slotMax = getBuildingSlots(province.population);
   const builtCount = province.investments.length;
@@ -1306,14 +1222,14 @@ function PopBar({ province }: { province: Province }) {
 
   // Seasons until next pop point (only if surplus > 0)
   const remaining = threshold - accum;
-  const seasonsToNext = (!atCap && foodSurplus > 0)
+  const seasonsToNext = foodSurplus > 0
     ? Math.ceil(remaining / foodSurplus)
     : null;
 
-  // Bar geometry
-  const popFillPct = maxPop > 0 ? Math.min(province.population / maxPop, 1) * 100 : 0;
-  // Accumulator: one pop-point = 1/maxPop of bar. Scale by accumPct.
-  const accumWidthPct = maxPop > 0 ? (accumPct / maxPop) * 100 : 0;
+  // Bar geometry — scale relative to a visual reference (10 pops = full bar)
+  const barRef = Math.max(10, province.population);
+  const popFillPct = Math.min(province.population / barRef, 1) * 100;
+  const accumWidthPct = (accumPct / barRef) * 100;
 
   const settlementColor = getSettlementColor(province.population);
 
@@ -1322,7 +1238,7 @@ function PopBar({ province }: { province: Province }) {
   const tooltipContent = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
       <div style={{ fontWeight: 700, color: settlementColor }}>
-        {settlementLabel} — Pop {province.population}/{maxPop}
+        {settlementLabel} — Pop {province.population}
       </div>
       <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
         Food: {foodProd.toFixed(0)} produced{foodEffective < foodProd ? ` (${foodEffective.toFixed(1)} after tax)` : ''} — {foodCons} consumed
@@ -1343,11 +1259,6 @@ function PopBar({ province }: { province: Province }) {
       <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: '2px' }}>
         Growth threshold: {threshold} ({accum.toFixed(1)} accumulated) — Slots: {builtCount}/{slotMax}
       </div>
-      {atCap && (
-        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-primary)', marginTop: '2px' }}>
-          Max population reached
-        </div>
-      )}
     </div>
   );
 
@@ -1381,12 +1292,6 @@ function PopBar({ province }: { province: Province }) {
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Cap</span>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                {province.population} / {maxPop}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Slots</span>
               <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
                 {builtCount} / {slotMax}
@@ -1414,7 +1319,7 @@ function PopBar({ province }: { province: Province }) {
         {/* Fill bar */}
         <div class="pop-bar" style={{ marginBottom: '5px' }}>
           <div class="pop-fill" style={{ width: `${popFillPct}%`, background: settlementColor }} />
-          {!atCap && accumWidthPct > 0 && (
+          {accumWidthPct > 0 && (
             <div class="pop-accumulator" style={{ left: `${popFillPct}%`, width: `${accumWidthPct}%` }} />
           )}
         </div>
@@ -1429,7 +1334,7 @@ function PopBar({ province }: { province: Province }) {
             Food: {foodSurplus >= 0 ? '+' : ''}{foodSurplus.toFixed(1)} {growthArrow}
           </span>
           <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>
-            {atCap ? 'At cap' : seasonsToNext !== null ? `Next in ${seasonsToNext}s` : 'No growth'}
+            {seasonsToNext !== null ? `Next in ${seasonsToNext}s` : 'No growth'}
           </span>
         </div>
       </div>
@@ -1526,302 +1431,6 @@ function WealthDisplay({ province }: { province: Province }) {
   );
 }
 
-// ── Tax slider components ──
-
-function TaxSlider({
-  label, value, onChange,
-}: {
-  label: string;
-  value: TaxLevel;
-  onChange: (v: TaxLevel) => void;
-}) {
-  const color = TAX_LEVEL_COLORS[value];
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-      {/* Label row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{
-          fontSize: 'var(--font-size-xs)',
-          color: 'var(--color-text-secondary)',
-          textTransform: 'uppercase',
-          letterSpacing: '1.5px',
-        }}>
-          {label}
-        </span>
-        <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color }}>
-          {getTaxLabel(value)}
-        </span>
-      </div>
-      {/* Range input */}
-      <input
-        type="range"
-        class="tax-slider"
-        min={1} max={5} step={1}
-        value={value}
-        onInput={(e) => onChange(Number((e.target as HTMLInputElement).value) as TaxLevel)}
-      />
-      {/* Stop labels */}
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        {([1, 2, 3, 4, 5] as TaxLevel[]).map(l => (
-          <span
-            key={l}
-            style={{
-              fontSize: '8px',
-              color: l === value ? TAX_LEVEL_COLORS[l] : 'var(--color-text-muted)',
-              fontWeight: l === value ? 700 : 400,
-              transition: 'color var(--duration-fast)',
-            }}
-          >
-            {getTaxLabel(l)}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TaxSliders({ province }: { province: Province }) {
-  const pendingLower = useSignal<TaxLevel>(province.lowerTax);
-  const pendingUpper = useSignal<TaxLevel>(province.upperTax);
-
-  const traits = getGovernorTraits(province.id);
-  const isDirty = pendingLower.value !== province.lowerTax
-    || pendingUpper.value !== province.upperTax;
-
-  // Preview province — only lowerTax/upperTax differ
-  const previewProv: Province = {
-    ...province,
-    lowerTax: pendingLower.value,
-    upperTax: pendingUpper.value,
-  };
-
-  // Gold preview: tax revenue (wealth × rate) + building gold + 1 subsistence
-  let buildingGold = 0;
-  for (const inv of province.investments) {
-    buildingGold += INVESTMENT_DATA[inv.type].levels[inv.level - 1].incomeBonus.gold ?? 0;
-  }
-  for (const syn of getActiveSynergies(province)) {
-    if (syn.bonus.type === 'gold') buildingGold += syn.bonus.amount;
-  }
-  const currentRate = getTaxRate(province.lowerTax, province.upperTax);
-  const previewRate = getTaxRate(pendingLower.value, pendingUpper.value);
-  const currentGold = Math.floor(province.wealth * currentRate) + buildingGold + 1;
-  const previewGold = Math.floor(province.wealth * previewRate) + buildingGold + 1;
-  const goldDelta = previewGold - currentGold;
-
-  // Food surplus preview (replaces old growth preview)
-  const currentGrowth = calculateFoodSurplus(province, traits);
-  const previewGrowth = calculateFoodSurplus(previewProv, traits);
-  const growthDelta = previewGrowth - currentGrowth;
-
-  // Wealth delta preview
-  const currentWealthDelta = calculateNetWealthChange(province, province.terrain);
-  const previewWealthDelta = calculateNetWealthChange(previewProv, province.terrain);
-  const wealthDeltaDiff = previewWealthDelta - currentWealthDelta;
-
-  // Unrest delta (tax portion only)
-  const currentTaxUnrest = getLowerTaxUnrest(province.lowerTax)
-    + getUpperTaxUnrest(province.upperTax);
-  const previewTaxUnrest = getLowerTaxUnrest(pendingLower.value)
-    + getUpperTaxUnrest(pendingUpper.value);
-  const unrestDiff = previewTaxUnrest - currentTaxUnrest;
-
-  function handleApply() {
-    playSfx('ui_click');
-    setProvinceTax(province.id, pendingLower.value, pendingUpper.value);
-  }
-
-  function handleReset() {
-    pendingLower.value = province.lowerTax;
-    pendingUpper.value = province.upperTax;
-  }
-
-  function fmtDelta(n: number, decimals = 0): string {
-    const v = decimals > 0 ? n.toFixed(decimals) : String(Math.round(n));
-    return n > 0 ? `+${v}` : v;
-  }
-
-  function deltaColor(n: number, invert = false): string {
-    if (n === 0) return 'var(--color-text-muted)';
-    const positive = invert ? n < 0 : n > 0;
-    return positive ? 'var(--color-success)' : 'var(--color-danger)';
-  }
-
-  return (
-    <div class="tax-section">
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 'var(--font-size-xs)',
-          fontWeight: 600,
-          color: 'var(--color-gold-secondary)',
-          letterSpacing: '3px',
-          textTransform: 'uppercase',
-        }}>
-          Tax Policy
-        </span>
-        <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-          Rate{' '}
-          <strong style={{ color: isDirty ? TAX_LEVEL_COLORS[pendingLower.value] : 'var(--color-text-secondary)' }}>
-            {isDirty ? formatTaxRate(previewRate) : formatTaxRate(currentRate)}
-          </strong>
-        </span>
-      </div>
-
-      {/* Sliders */}
-      <TaxSlider
-        label="Lower Class"
-        value={pendingLower.value}
-        onChange={(v) => { pendingLower.value = v; }}
-      />
-      <TaxSlider
-        label="Upper Class"
-        value={pendingUpper.value}
-        onChange={(v) => { pendingUpper.value = v; }}
-      />
-
-      {/* Steady-state summary (when no pending change) */}
-      {!isDirty && (
-        <div style={{
-          fontSize: 'var(--font-size-xs)',
-          color: 'var(--color-text-muted)',
-          display: 'flex', gap: '8px',
-        }}>
-          <span style={{ color: TAX_LEVEL_COLORS[province.lowerTax] }}>
-            {getTaxLabel(province.lowerTax)}
-          </span>
-          <span>/</span>
-          <span style={{ color: TAX_LEVEL_COLORS[province.upperTax] }}>
-            {getTaxLabel(province.upperTax)}
-          </span>
-          <span>·</span>
-          <span>{formatTaxRate(currentRate)}</span>
-        </div>
-      )}
-
-      {/* Live preview (only when dirty) */}
-      {isDirty && (
-        <div
-          class="tax-preview"
-          style={{
-            background: 'rgba(30, 26, 48, 0.6)',
-            border: '1px solid var(--color-border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '10px 12px',
-            display: 'flex', flexDirection: 'column', gap: '6px',
-          }}
-        >
-          <div style={{
-            fontSize: 'var(--font-size-xs)',
-            color: 'var(--color-text-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '1.5px',
-            marginBottom: '2px',
-          }}>
-            Preview
-          </div>
-
-          {/* Gold income */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)' }}>
-            <span style={{ color: 'var(--color-text-secondary)' }}>Gold income</span>
-            <span>
-              <span style={{ color: 'var(--color-text-muted)' }}>{currentGold}g →</span>{' '}
-              <strong style={{ color: deltaColor(goldDelta) }}>{previewGold}g</strong>
-              {goldDelta !== 0 && (
-                <span style={{ color: deltaColor(goldDelta), marginLeft: '4px' }}>
-                  ({fmtDelta(goldDelta)}g)
-                </span>
-              )}
-            </span>
-          </div>
-
-          {/* Growth rate */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)' }}>
-            <span style={{ color: 'var(--color-text-secondary)' }}>Growth rate</span>
-            <span>
-              <span style={{ color: 'var(--color-text-muted)' }}>
-                {currentGrowth >= 0 ? '+' : ''}{currentGrowth.toFixed(1)}/s →
-              </span>{' '}
-              <strong style={{ color: deltaColor(growthDelta) }}>
-                {previewGrowth >= 0 ? '+' : ''}{previewGrowth.toFixed(1)}/s
-              </strong>
-              {growthDelta !== 0 && (
-                <span style={{ color: deltaColor(growthDelta), marginLeft: '4px' }}>
-                  ({fmtDelta(growthDelta, 1)}/s)
-                </span>
-              )}
-            </span>
-          </div>
-
-          {/* Wealth delta */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)' }}>
-            <span style={{ color: 'var(--color-text-secondary)' }}>Wealth Δ/season</span>
-            <span>
-              <span style={{ color: 'var(--color-text-muted)' }}>
-                {currentWealthDelta >= 0 ? '+' : ''}{currentWealthDelta.toFixed(1)} →
-              </span>{' '}
-              <strong style={{ color: deltaColor(wealthDeltaDiff) }}>
-                {previewWealthDelta >= 0 ? '+' : ''}{previewWealthDelta.toFixed(1)}
-              </strong>
-              {wealthDeltaDiff !== 0 && (
-                <span style={{ color: deltaColor(wealthDeltaDiff), marginLeft: '4px' }}>
-                  ({fmtDelta(wealthDeltaDiff, 1)})
-                </span>
-              )}
-            </span>
-          </div>
-
-          {/* Unrest delta (invert: lower unrest = better = green) */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--font-size-xs)' }}>
-            <span style={{ color: 'var(--color-text-secondary)' }}>Unrest Δ/season</span>
-            <span>
-              <span style={{ color: 'var(--color-text-muted)' }}>
-                {currentTaxUnrest >= 0 ? '+' : ''}{currentTaxUnrest}/s →
-              </span>{' '}
-              <strong style={{ color: deltaColor(unrestDiff, true) }}>
-                {previewTaxUnrest >= 0 ? '+' : ''}{previewTaxUnrest}/s
-              </strong>
-              {unrestDiff !== 0 && (
-                <span style={{ color: deltaColor(unrestDiff, true), marginLeft: '4px' }}>
-                  ({fmtDelta(unrestDiff)}/s)
-                  {unrestDiff > 0 ? ' ↑' : ' ↓'}
-                </span>
-              )}
-            </span>
-          </div>
-
-          {/* Action buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
-            <button
-              class="tax-apply-btn ornate-btn"
-              onClick={handleApply}
-              style={{
-                flex: 1, padding: '6px 12px',
-                fontSize: 'var(--font-size-xs)',
-                letterSpacing: '1.5px',
-              }}
-            >
-              Apply
-            </button>
-            <button
-              class="tax-reset-btn"
-              onClick={handleReset}
-              style={{
-                fontSize: 'var(--font-size-xs)',
-                color: 'var(--color-text-muted)',
-                letterSpacing: '1px',
-                textTransform: 'uppercase',
-              }}
-            >
-              Reset
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ── Province identity strip ──
 
@@ -2534,6 +2143,146 @@ function IncomeLedger({ province }: { province: Province }) {
   );
 }
 
+// ── Province Administration panel (canvas design: governor + tax side-by-side) ──
+
+const PA_TAX_COLORS: Record<TaxLevel, string> = {
+  1: 'var(--color-success)', 2: '#68a860', 3: 'var(--color-text-secondary)',
+  4: 'var(--color-warning)', 5: 'var(--color-danger)',
+};
+const PA_TAX_LEVELS: TaxLevel[] = [1, 2, 3, 4, 5];
+
+function PATaxStep({ label, value, onChange }: { label: string; value: TaxLevel; onChange: (v: TaxLevel) => void }) {
+  const color = PA_TAX_COLORS[value];
+  const fillPct = ((value - 1) / 4) * 100;
+  return (
+    <div class="pa-admin-tax-row">
+      <div class="pa-admin-tax-row-header">
+        <span class="pa-admin-tax-label">{label}</span>
+        <span class="pa-admin-tax-badge" style={{ color, background: `${color}18`, border: `1px solid ${color}40` }}>{getTaxLabel(value)}</span>
+      </div>
+      <div class="pa-admin-tax-track">
+        <div class="pa-admin-tax-fill" style={{ width: `${fillPct}%`, background: color }} />
+        <div class="pa-admin-tax-dots">
+          {PA_TAX_LEVELS.map(l => (
+            <div key={l} class={`pa-admin-tax-dot${l <= value ? ' active' : ''}`}
+              style={l <= value ? { background: color, borderColor: color } : undefined}
+              onClick={() => onChange(l)} title={getTaxLabel(l)} />
+          ))}
+        </div>
+      </div>
+      <div class="pa-admin-tax-steps">
+        {PA_TAX_LEVELS.map(l => (
+          <span key={l} class={`pa-admin-tax-step${l === value ? ' active' : ''}`}
+            style={l === value ? { color } : undefined} onClick={() => onChange(l)}>{getTaxLabel(l)}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProvinceAdminPanel({ province }: { province: Province }) {
+  void governorAssignments.value;
+  void governorPool.value;
+
+  const assigned = getAssignedGovernor(province.id);
+  const salary = getGovernorSalary(province.id);
+  const traits = assigned ? assigned.governor.tiers[assigned.tier - 1].traits : [];
+
+  const baseIncomeGold = getProvinceIncome(province, []).gold ?? 0;
+  const traitIncomeGold = getProvinceIncome(province, traits).gold ?? 0;
+  const baseExpenses = getProvinceExpenses(province, []);
+  const traitExpenses = getProvinceExpenses(province, traits);
+  const netGold = (traitIncomeGold - baseIncomeGold) + (baseExpenses - traitExpenses) - salary;
+
+  const govTraits = getGovernorTraits(province.id);
+  const currentRate = getTaxRate(province.lowerTax, province.upperTax);
+  const rateStr = formatTaxRate(currentRate);
+
+  // Net income: tax revenue + building gold + subsistence − expenses
+  const income = getProvinceIncome(province, govTraits);
+  const expenses = getProvinceExpenses(province, govTraits);
+  const netIncome = (income.gold ?? 0) - expenses;
+
+  function setLower(v: TaxLevel) { playSfx('ui_click'); setProvinceTax(province.id, v, province.upperTax); }
+  function setUpper(v: TaxLevel) { playSfx('ui_click'); setProvinceTax(province.id, province.lowerTax, v); }
+
+  return (
+    <div class="pa-admin">
+      <div class="pa-admin-title-bar">
+        <div class="pa-admin-title">Province Administration</div>
+        <div class="pa-admin-divider" />
+      </div>
+      <div class="pa-admin-col-labels">
+        <span class="pa-admin-col-label">Governor Office</span>
+        <span class="pa-admin-col-label">Tax Policy & Rate</span>
+      </div>
+      <div class="pa-admin-content">
+        {/* Governor */}
+        <div class="pa-admin-gov">
+          {!assigned ? (
+            <>
+              <div class="pa-admin-gov-portrait pa-admin-gov-portrait-dashed">
+                <span style={{ fontSize: '24px', color: 'var(--color-text-muted)', opacity: 0.5 }}>⚔</span>
+              </div>
+              <div class="pa-admin-gov-info">
+                <span class="pa-admin-gov-name" style={{ color: 'var(--color-text-muted)' }}>No Governor</span>
+                <span class="pa-admin-gov-desc">Appoint a governor to gain specific bonuses for this province</span>
+                <button class="gov-hire-btn" onClick={() => { showGovernorPicker.value = true; }}
+                  style={{ marginTop: '3px', padding: '4px 12px', borderRadius: 'var(--radius-sm)', background: 'linear-gradient(180deg, rgba(100,70,20,0.8), rgba(60,45,12,0.9))', border: '1px solid var(--color-border-strong)', color: 'var(--color-gold-primary)', fontFamily: 'inherit', fontSize: '9px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', cursor: 'pointer', alignSelf: 'flex-start' }}>
+                  Hire →
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Portrait alt={assigned.governor.name} size="small" factionColor={FACTION_COLORS[assigned.governor.color]} tier={assigned.tier as 1 | 2 | 3} />
+              <div class="pa-admin-gov-info">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <span class="pa-admin-gov-name" style={{ color: FACTION_COLORS[assigned.governor.color] }}>{assigned.governor.name}</span>
+                  <span class="gov-tier-pill" style={{ fontSize: '8px', height: '14px', minWidth: '16px', padding: '0 4px' }}>{ROMAN[assigned.tier]}</span>
+                </div>
+                <span style={{ fontSize: '8px', color: 'rgba(230,130,80,0.9)', fontWeight: 700 }}>Salary: {salary}g/season</span>
+                <div class="pa-admin-gov-traits">
+                  {traits.map((trait, i) => (
+                    <div key={i} class="pa-admin-gov-trait-row">
+                      <span style={{ color: 'var(--color-success)', fontSize: '7px' }}>✦</span>
+                      <span>{formatTraitEffect(trait, province)}</span>
+                    </div>
+                  ))}
+                  <div style={{ fontSize: '8px', fontWeight: 700, paddingTop: '2px', borderTop: '1px solid rgba(180,160,100,0.08)', marginTop: '2px', color: netGold > 0 ? 'var(--color-success)' : netGold < 0 ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>
+                    Net: {netGold > 0 ? '+' : ''}{netGold}g/s
+                  </div>
+                </div>
+                <button class="gov-dismiss-btn" onClick={() => { dismissGovernor(province.id); showGovernorPicker.value = false; }}
+                  title={`Dismiss (saves ${salary}g/season)`}
+                  style={{ marginTop: '3px', padding: '3px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(120,40,30,0.25)', border: '1px solid rgba(180,80,60,0.35)', color: 'rgba(220,120,100,0.75)', fontFamily: 'inherit', fontSize: '8px', fontWeight: 600, letterSpacing: '0.8px', textTransform: 'uppercase', cursor: 'pointer', alignSelf: 'flex-start' }}>
+                  Dismiss
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+        <div class="pa-admin-vsep" />
+        {/* Tax */}
+        <div class="pa-admin-tax">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+            <div class="pa-admin-rate-badge"><span class="pa-admin-rate-value">{rateStr}</span></div>
+            <span style={{ fontSize: '7px', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 700 }}>Rate</span>
+          </div>
+          <PATaxStep label="Lower Class" value={province.lowerTax} onChange={setLower} />
+          <PATaxStep label="Upper Class" value={province.upperTax} onChange={setUpper} />
+        </div>
+      </div>
+      <div class="pa-admin-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Net Income</span>
+        <span style={{ color: netIncome >= 0 ? 'var(--color-success)' : 'var(--color-danger)', fontWeight: 700, fontSize: '9px' }}>
+          {netIncome >= 0 ? '+' : ''}{netIncome}g / season
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── Province detail (right panel: governor strip + building grid) ──
 
 function ProvinceDetail({ province }: { province: Province }) {
@@ -2546,13 +2295,8 @@ function ProvinceDetail({ province }: { province: Province }) {
       {/* Province Identity (S18-06) */}
       <IdentityStrip province={province} />
 
-      {/* Governor strip (S18-08) */}
-      <div class="gov-strip">
-        <GovernorPanel province={province} />
-      </div>
-
-      {/* Tax Policy (S18-01) */}
-      <TaxSliders key={province.id} province={province} />
+      {/* Province Administration (governor + tax side-by-side) */}
+      <ProvinceAdminPanel key={province.id} province={province} />
 
       {/* Wealth · Population · Unrest — same row */}
       <div style={{

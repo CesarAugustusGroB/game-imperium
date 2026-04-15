@@ -48,10 +48,8 @@ export interface Province {
   id: string;
   /** Display name (usually from the spoke that created it). */
   name: string;
-  /** 1–10. Scales base income. */
+  /** Population count. Grows via food surplus; no hard cap (food is the ceiling). */
   population: number;
-  /** Upper bound on population growth. Base 10, raised by investments. */
-  maxPopulation: number;
   /** Base resource income per spoke (before investment bonuses). */
   baseIncome: Partial<Record<ResourceType, number>>;
   /** 0–100. High unrest reduces income and may trigger a Rebellion event. */
@@ -342,25 +340,6 @@ export function getActiveSynergies(province: Province): SynergyData[] {
   return SYNERGY_DATA.filter(s => types.has(s.buildingA) && types.has(s.buildingB));
 }
 
-/**
- * Effective maximum population for a province, including synergy bonuses.
- * Base: province.maxPopulation.
- * Synergy: Insula + Aqueduct → +1 pop cap (Public Works).
- */
-export function getEffectiveMaxPop(province: Province): number {
-  let max = province.maxPopulation;
-  // Synergy pop-cap bonuses (Insula+Aqueduct → +1)
-  for (const syn of getActiveSynergies(province)) {
-    if (syn.bonus.type === 'pop-cap') max += syn.bonus.amount;
-  }
-  // Trade good pop-cap bonus (Grain → +2)
-  if (province.tradeGood) {
-    const special = TRADE_GOOD_DATA[province.tradeGood].special;
-    if (special?.type === 'pop-cap-bonus') max += special.amount;
-  }
-  return max;
-}
-
 // ── Helpers ──
 
 /**
@@ -489,7 +468,6 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
     id: name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now(),
     name,
     population: 3,
-    maxPopulation: 10,
     baseIncome: { gold: 2 },
     unrest: 20,
     baseExpenses: 1,
@@ -844,7 +822,7 @@ export function calculateBeautiness(province: Province): number {
 
 /**
  * Roll immigration for a province. Rolls d100; if roll <= beautiness%,
- * the province gains +1 population (capped at maxPop).
+ * the province gains +1 population.
  * Returns the updated province and whether immigration succeeded.
  */
 export function rollImmigration(province: Province): { province: Province; immigrated: boolean } {
@@ -855,10 +833,6 @@ export function rollImmigration(province: Province): { province: Province; immig
 
   const roll = Math.floor(Math.random() * 100) + 1; // 1–100
   if (roll <= beautiness) {
-    const maxPop = getEffectiveMaxPop(province);
-    if (province.population >= maxPop) {
-      return { province, immigrated: false }; // at cap
-    }
     return {
       province: { ...province, population: province.population + 1 },
       immigrated: true,
@@ -883,8 +857,8 @@ export function calculateGrowthThreshold(currentPop: number): number {
  * separately by tickFamine in S20-04; this function does not decrease population).
  *
  * When the accumulator reaches the threshold, population increments by 1
- * (capped at maxPopulation) and the accumulator resets by subtracting the
- * threshold (preserving overflow).
+ * and the accumulator resets by subtracting the threshold (preserving overflow).
+ * Food supply is the natural ceiling — no hard population cap.
  *
  * Returns an updated Province — does NOT mutate the input.
  */
@@ -893,11 +867,6 @@ export function tickPopulationGrowth(
   _terrain?: string,
   governorTraits: GovernorTrait[] = [],
 ): Province {
-  const maxPop = getEffectiveMaxPop(province);
-  if (province.population >= maxPop) {
-    return province; // already at cap
-  }
-
   const surplus = calculateFoodSurplus(province, governorTraits);
 
   // Only positive surplus drives growth; zero/negative = no accumulation
@@ -909,8 +878,7 @@ export function tickPopulationGrowth(
   const threshold = calculateGrowthThreshold(province.population);
 
   if (newAccumulator >= threshold) {
-    const newPop = Math.min(province.population + 1, maxPop);
-    return { ...province, population: newPop, growthAccumulator: newAccumulator - threshold };
+    return { ...province, population: province.population + 1, growthAccumulator: newAccumulator - threshold };
   }
 
   return { ...province, growthAccumulator: newAccumulator };
@@ -1065,14 +1033,12 @@ export function applyRebellion(
 
   // ── 1st or 2nd rebellion ──
   const destroyCount = n === 0 ? (rng() < 0.5 ? 1 : 2) : 2;
-  const maxPopReduction = n === 0 ? 1 : 2;
-  const newMaxPop = Math.max(1, province.maxPopulation - maxPopReduction);
+  const popLoss = n === 0 ? 1 : 2;
 
   return {
     ...province,
     investments: destroyMostExpensive(province.investments, destroyCount),
-    maxPopulation: newMaxPop,
-    population: Math.min(province.population, newMaxPop),
+    population: Math.max(1, province.population - popLoss),
     unrest: 40,
     devastationTimer: 4,
     rubbleTimer: 2,
