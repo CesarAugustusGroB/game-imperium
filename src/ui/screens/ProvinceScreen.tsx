@@ -2391,7 +2391,7 @@ export function ProvinceScreen() {
               <span class="ornate-stat-chip" title="Total Income">{formatIncome(totalIncome)}</span>
               <span class="ornate-stat-chip" title="Total Expenses">−<strong style={{ color: 'rgba(220, 160, 100, 0.85)' }}>{totalExpenses}g</strong></span>
               <span class="ornate-stat-chip" title="Avg Unrest"><UnrestBar unrest={avgUnrest} modifier={0} width={50} /></span>
-              <span class="ornate-stat-chip" title="Avg Wealth">⚜ <strong>{avgWealth}</strong></span>
+              <span class="ornate-stat-chip" title="Avg Wealth">💰 <strong>{avgWealth}</strong></span>
             </>
           )}
           onClose={() => navigateTo('hub')}
