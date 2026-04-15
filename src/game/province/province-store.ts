@@ -8,6 +8,7 @@ import {
   calculateNetWealthChange,
   tickFamine,
   tickPopulationGrowth,
+  rollImmigration,
   calculateUnrestDelta, getRebelThreshold, applyRebellion,
   getAvailableBuildings, getActiveSynergies,
 } from './province';
@@ -347,6 +348,10 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
 
     // 6. Tick population growth accumulator (food-surplus driven, S20)
     p = tickPopulationGrowth(p, p.terrain, traits);
+
+    // 6b. Immigration roll (S20): d100 vs beautiness%, +1 pop on success
+    const immigrationResult = rollImmigration(p);
+    p = immigrationResult.province;
 
     // 7. Tick unrest: new formula + expense shortfall penalty
     let unrestDelta = calculateUnrestDelta(p, traits);

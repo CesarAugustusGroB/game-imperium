@@ -118,9 +118,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Castrum',
     flavour: 'A fortified camp that garrisons a permanent legion detachment.',
     levels: [
-      { incomeBonus: {},                    expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: 'Garrison deters minor raids. -5 Unrest/spoke.' },
-      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -10, buildCost: { gold: 10, momentum: 3 },          description: 'Full cohort stationed. -10 Unrest/spoke. Free levy unit in defense battles.' },
-      { incomeBonus: { momentum: 1 },       expensesBonus: 3, unrestChange: -15, buildCost: { gold: 20, momentum: 6 },          description: 'Veteran legion presence. -15 Unrest/spoke. +1 Momentum/spoke. Free veteran unit.' },
+      { incomeBonus: {},                    expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: 'Garrison deters minor raids. -5 Unrest/spoke.', beautinessBonus: -3 },
+      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -10, buildCost: { gold: 10, momentum: 3 },          description: 'Full cohort stationed. -10 Unrest/spoke. Free levy unit in defense battles.', beautinessBonus: -4 },
+      { incomeBonus: { momentum: 1 },       expensesBonus: 3, unrestChange: -15, buildCost: { gold: 20, momentum: 6 },          description: 'Veteran legion presence. -15 Unrest/spoke. +1 Momentum/spoke. Free veteran unit.', beautinessBonus: -5 },
     ],
   },
   basilica: {
@@ -128,9 +128,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Basilica',
     flavour: 'A court of law that channels political loyalty upward.',
     levels: [
-      { incomeBonus: { influence: 1 },      expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+1 Influence/spoke.' },
-      { incomeBonus: { influence: 2 },      expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 10, influence: 3 },         description: '+2 Influence/spoke. -5 Unrest/spoke.' },
-      { incomeBonus: { influence: 3 },      expensesBonus: 2, unrestChange: -10, buildCost: { gold: 20, influence: 6 },         description: '+3 Influence/spoke. -10 Unrest/spoke. +1 extra event choice.' },
+      { incomeBonus: { influence: 1 },      expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+1 Influence/spoke.', beautinessBonus: 3 },
+      { incomeBonus: { influence: 2 },      expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 10, influence: 3 },         description: '+2 Influence/spoke. -5 Unrest/spoke.', beautinessBonus: 4 },
+      { incomeBonus: { influence: 3 },      expensesBonus: 2, unrestChange: -10, buildCost: { gold: 20, influence: 6 },         description: '+3 Influence/spoke. -10 Unrest/spoke. +1 extra event choice.', beautinessBonus: 5 },
     ],
   },
   pantheon: {
@@ -138,9 +138,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Pantheon',
     flavour: 'Temples to the Roman gods maintain divine favour and civic morale.',
     levels: [
-      { incomeBonus: { faith: 1 },          expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: '+1 Faith/spoke. -5 Unrest/spoke.' },
-      { incomeBonus: { faith: 2 },          expensesBonus: 1, unrestChange: -10, buildCost: { gold: 10, faith: 3 },             description: '+2 Faith/spoke. -10 Unrest/spoke.' },
-      { incomeBonus: { faith: 3 },          expensesBonus: 2, unrestChange: -15, buildCost: { gold: 20, faith: 6 },             description: '+3 Faith/spoke. -15 Unrest/spoke. Units in this province\'s battles revive once.' },
+      { incomeBonus: { faith: 1 },          expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: '+1 Faith/spoke. -5 Unrest/spoke.', beautinessBonus: 5 },
+      { incomeBonus: { faith: 2 },          expensesBonus: 1, unrestChange: -10, buildCost: { gold: 10, faith: 3 },             description: '+2 Faith/spoke. -10 Unrest/spoke.', beautinessBonus: 8 },
+      { incomeBonus: { faith: 3 },          expensesBonus: 2, unrestChange: -15, buildCost: { gold: 20, faith: 6 },             description: '+3 Faith/spoke. -15 Unrest/spoke. Units in this province\'s battles revive once.', beautinessBonus: 10 },
     ],
   },
   market: {
@@ -148,9 +148,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Market',
     flavour: 'A bustling forum that taxes trade flowing through the province.',
     levels: [
-      { incomeBonus: { gold: 2 },           expensesBonus: 0, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+2 Gold/spoke.' },
-      { incomeBonus: { gold: 4 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 12 },                      description: '+4 Gold/spoke.' },
-      { incomeBonus: { gold: 6 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 24 },                      description: '+6 Gold/spoke. Resource exchange rates in this province improved by 1.' },
+      { incomeBonus: { gold: 2 },           expensesBonus: 0, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+2 Gold/spoke.', beautinessBonus: -2 },
+      { incomeBonus: { gold: 4 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 12 },                      description: '+4 Gold/spoke.', beautinessBonus: -2 },
+      { incomeBonus: { gold: 6 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 24 },                      description: '+6 Gold/spoke. Resource exchange rates in this province improved by 1.', beautinessBonus: -3 },
     ],
   },
   aqueduct: {
@@ -158,9 +158,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Aqueduct',
     flavour: 'Running water feeds population growth and scales all income.',
     levels: [
-      { incomeBonus: { gold: 1 },           expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 6 },                       description: '+1 Gold/spoke. +1 Population cap. -5 Unrest/spoke.' },
-      { incomeBonus: { gold: 2 },           expensesBonus: 2, unrestChange: -5,  buildCost: { gold: 14 },                      description: '+2 Gold/spoke. +2 Population cap. -5 Unrest/spoke.' },
-      { incomeBonus: { gold: 3 },           expensesBonus: 2, unrestChange: -10, buildCost: { gold: 26 },                      description: '+3 Gold/spoke. +3 Population cap. -10 Unrest/spoke. All income +10%.' },
+      { incomeBonus: { gold: 1 },           expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 6 },                       description: '+1 Gold/spoke. +1 Population cap. -5 Unrest/spoke.', beautinessBonus: 3 },
+      { incomeBonus: { gold: 2 },           expensesBonus: 2, unrestChange: -5,  buildCost: { gold: 14 },                      description: '+2 Gold/spoke. +2 Population cap. -5 Unrest/spoke.', beautinessBonus: 4 },
+      { incomeBonus: { gold: 3 },           expensesBonus: 2, unrestChange: -10, buildCost: { gold: 26 },                      description: '+3 Gold/spoke. +3 Population cap. -10 Unrest/spoke. All income +10%.', beautinessBonus: 5 },
     ],
   },
   insula: {
@@ -832,6 +832,48 @@ export function calculateFoodSurplus(
   governorTraits: GovernorTrait[] = [],
 ): number {
   return calculateEffectiveFoodProduction(province, governorTraits) - calculateFoodConsumption(province);
+}
+
+// ── Beautiness & immigration (S20) ──
+
+/**
+ * Province beautiness score (0–100%, clamped).
+ * Sums beautinessBonus from all installed buildings.
+ * Green buildings add, industrial buildings subtract.
+ */
+export function calculateBeautiness(province: Province): number {
+  let score = 0;
+  for (const inv of province.investments) {
+    const effect = INVESTMENT_DATA[inv.type]?.levels[inv.level - 1];
+    score += effect?.beautinessBonus ?? 0;
+  }
+  return Math.max(0, Math.min(100, score));
+}
+
+/**
+ * Roll immigration for a province. Rolls d100; if roll <= beautiness%,
+ * the province gains +1 population (capped at maxPop).
+ * Returns the updated province and whether immigration succeeded.
+ */
+export function rollImmigration(province: Province): { province: Province; immigrated: boolean } {
+  const beautiness = calculateBeautiness(province);
+  if (beautiness <= 0) {
+    return { province, immigrated: false };
+  }
+
+  const roll = Math.floor(Math.random() * 100) + 1; // 1–100
+  if (roll <= beautiness) {
+    const maxPop = getEffectiveMaxPop(province);
+    if (province.population >= maxPop) {
+      return { province, immigrated: false }; // at cap
+    }
+    return {
+      province: { ...province, population: province.population + 1 },
+      immigrated: true,
+    };
+  }
+
+  return { province, immigrated: false };
 }
 
 // ── Population growth accumulator ──
