@@ -234,44 +234,50 @@ interface BuildingIconProps {
  * its color from `color` (defaults to gold).
  */
 export function BuildingIcon({ type, size = 56, color, style }: BuildingIconProps) {
+  const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  // Reset failure state if the type changes (e.g. swapping between cards)
-  useEffect(() => { setFailed(false); }, [type]);
+  // Reset state if the type changes (e.g. swapping between cards)
+  useEffect(() => { setFailed(false); setLoaded(false); }, [type]);
 
-  if (failed) {
-    return (
-      <div
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-          color: color ?? 'var(--color-gold-primary)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55))',
-          ...style,
-        }}
-      >
-        {BUILDING_SVG[type]}
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={`/asset/building_${type}.png`}
-      width={size}
-      height={size}
-      alt=""
-      onError={() => setFailed(true)}
+  const svgFallback = (
+    <div
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        objectFit: 'contain',
+        color: color ?? 'var(--color-gold-primary)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55))',
         ...style,
       }}
-    />
+    >
+      {BUILDING_SVG[type]}
+    </div>
+  );
+
+  if (failed) return svgFallback;
+
+  return (
+    <>
+      <img
+        src={`/asset/building_${type}.png`}
+        width={size}
+        height={size}
+        alt=""
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          objectFit: 'contain',
+          filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55))',
+          display: loaded ? 'block' : 'none',
+          ...style,
+        }}
+      />
+      {!loaded && svgFallback}
+    </>
   );
 }

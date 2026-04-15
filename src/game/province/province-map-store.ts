@@ -167,6 +167,53 @@ export function getAllTerritoryPositions(): Array<{
   return results;
 }
 
+// ── Conquest helpers ──
+
+/** Static lookup: map province index → historical name (from provinces.json). */
+export const PROVINCE_NAMES: Record<number, string> = {
+  1: 'Ile-de-France', 2: 'Champagne', 3: 'Normandie', 4: 'Aquitaine',
+  5: 'Provence', 6: 'Burgundy', 7: 'Brittany', 8: 'Languedoc',
+  9: 'Kent', 10: 'London', 11: 'East Anglia', 12: 'Wessex',
+  13: 'York', 14: 'Wales', 15: 'Cornwall', 16: 'Lothian',
+  17: 'Highlands', 18: 'Castilla', 19: 'Aragon', 20: 'Portugal',
+  21: 'Granada', 22: 'Bavaria', 23: 'Saxony', 24: 'Rhineland',
+  25: 'Lombardy', 26: 'Tuscany', 27: 'Latium', 28: 'Naples',
+  29: 'Sicily', 30: 'Venezia', 31: 'Flanders', 32: 'Holland',
+  33: 'Denmark', 34: 'Sweden', 35: 'Norway', 36: 'Poland',
+  37: 'Lithuania', 38: 'Muscovy', 39: 'Novgorod', 40: 'Constantinople',
+  41: 'Anatolia', 42: 'Balkans', 43: 'Hungary', 44: 'Bohemia',
+  45: 'Austria', 46: 'Switzerland', 47: 'Ireland', 48: 'Sardinia',
+};
+
+/**
+ * Return `count` unclaimed map indices to use as conquest candidates.
+ * Prefers adjacency-first expansion; falls back to any unclaimed.
+ * Returns fewer than `count` if not enough unclaimed provinces remain.
+ */
+export function getCandidateIndices(count: number): number[] {
+  const topology = topologyData.value;
+  if (!topology) return [];
+  const claimed = claimedIndices.value;
+  const adjacent = getAdjacentUnclaimed(topology, claimed);
+  const pool = adjacent.length >= count
+    ? adjacent
+    : allProvinceIndices().filter(i => !claimed.has(i));
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+/**
+ * Claim a specific map province index for a roguelike province.
+ * Use after the player has chosen a candidate — bypasses the auto-pick logic.
+ */
+export function claimTerritoryAt(roguelikeProvinceId: string, mapIndex: number): void {
+  const currentClaimed = claimedIndices.value;
+  const currentMap = territoryMap.value;
+  if (currentMap.has(roguelikeProvinceId)) return;
+  territoryMap.value = new Map(currentMap).set(roguelikeProvinceId, mapIndex);
+  claimedIndices.value = new Set(currentClaimed).add(mapIndex);
+}
+
 /**
  * Load topology and reset all territory mappings.
  * Call once at the start of a new run.

@@ -6,7 +6,12 @@ import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../../game/progression/spoke';
 import type { SpokeNode, NodeType, SeasonTickResult } from '../../game/progression/spoke';
 import { selectedCommander, completedSpokes, threatLevel } from '../../game/core/game-state';
-import { conquerProvince, getProvinceEffects } from '../../game/province/province-store';
+import { conquerProvince, assignProvinceIdentity, getProvinceEffects } from '../../game/province/province-store';
+import { getCandidateIndices, PROVINCE_NAMES } from '../../game/province/province-map-store';
+import { calculateInitialWealth } from '../../game/province/province';
+import type { TerrainType } from '../../data/terrain-data';
+import type { TradeGoodType } from '../../data/trade-goods';
+import { TRADE_GOOD_DATA } from '../../data/trade-goods';
 import { FACTION_COLORS, RESOURCE_INFO, FACTION_PRIMARY_RESOURCE } from '../../game/core/commander';
 import type { ResourceType } from '../../game/core/commander';
 import { spendResource, getResource } from '../../game/core/resources';
@@ -178,6 +183,18 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
     @media (max-width: 600px) {
       .node-circle { min-width: 56px !important; min-height: 56px !important; }
     }
+
+    /* City choice cards */
+    .city-card {
+      transition: all var(--duration-normal) var(--ease-default);
+      cursor: pointer;
+    }
+    .city-card:hover {
+      border-color: var(--color-border-strong) !important;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg), 0 0 12px rgba(240,208,128,0.15) !important;
+    }
+    .city-card:active { transform: scale(0.98); }
   `;
   document.head.appendChild(el);
 }
@@ -208,6 +225,27 @@ const NODE_STYLES: Record<NodeType, { color: string; glow: string; hoverLabel: s
 const NODE_SIZE_REGULAR = 68;
 const NODE_SIZE_BOSS = 82;
 
+// ── City choice types & state ──
+
+interface CityCandidate {
+  mapIndex: number;
+  name: string;
+  terrain: TerrainType;
+  tradeGood: TradeGoodType;
+  wealth: number;
+}
+
+const TERRAIN_ICON: Record<TerrainType, string> = {
+  farmland: '🌾', hills: '⛰', coast: '⚓', forest: '🌲',
+  plains: '🏞', mountains: '🏔', marsh: '🌿', desert: '🏜',
+};
+
+const TRADE_GOOD_ICON: Record<TradeGoodType, string> = {
+  grain: '🌾', iron: '⚙️', silk: '🪡', marble: '🏛',
+  wine: '🍷', timber: '🪵', fish: '🐟', horses: '🐎',
+  gold_ore: '🪙', incense: '🕯', salt: '🧂', olives: '🫒',
+};
+
 // ── Modal state ──
 const showRetreatConfirm = signal(false);
 const showRestModal = signal(false);
@@ -215,6 +253,8 @@ const restGains = signal<{ type: ResourceType; actual: number; isPrimary: boolea
 const showEventModal = signal(false);
 const activeEvent = signal<GameEvent | null>(null);
 const showSpokeCompleteModal = signal(false);
+const showCityChoiceModal = signal(false);
+const cityCandidates = signal<CityCandidate[]>([]);
 const showSeasonModal = signal(false);
 const lastSeasonTick = signal<SeasonTickResult | null>(null);
 
@@ -562,8 +602,19 @@ export function NodeMapScreen() {
     }
   }
 
-  // Show the spoke complete modal when all nodes are resolved
-  if (spokeComplete && !showSpokeCompleteModal.value) {
+  // Show the spoke complete modal when all nodes are resolved; pre-roll city candidates
+  if (spokeComplete && !showSpokeCompleteModal.value && cityCandidates.value.length === 0) {
+    const indices = getCandidateIndices(2);
+    cityCandidates.value = indices.map(mapIndex => {
+      const { terrain, tradeGood } = assignProvinceIdentity();
+      return {
+        mapIndex,
+        name: PROVINCE_NAMES[mapIndex] ?? `Province ${mapIndex}`,
+        terrain,
+        tradeGood,
+        wealth: calculateInitialWealth(terrain, tradeGood, 3),
+      };
+    });
     showSpokeCompleteModal.value = true;
   }
 
@@ -585,12 +636,29 @@ export function NodeMapScreen() {
     }
     if (newTierUps.length > 0) tierUpNotices.value = newTierUps;
 
-    // Create a province from the completed spoke
-    if (spoke) {
-      conquerProvince(spoke.label, spokeGains.value, spoke.duration);
-    }
-
+    // Transition to city choice — province creation happens when player picks a city
     showSpokeCompleteModal.value = false;
+    if (cityCandidates.value.length === 0) {
+      // Fallback: no candidates available (map fully claimed), create province immediately
+      if (spoke) conquerProvince(spoke.label, spokeGains.value, spoke.duration);
+      completedSpokes.value += 1;
+      completeSpoke();
+      navigateTo('hub');
+    } else {
+      showCityChoiceModal.value = true;
+    }
+  }
+
+  function handleCityChosen(city: CityCandidate) {
+    if (spoke) {
+      conquerProvince(city.name, spokeGains.value, spoke.duration, {
+        terrain: city.terrain,
+        tradeGood: city.tradeGood,
+        mapIndex: city.mapIndex,
+      });
+    }
+    showCityChoiceModal.value = false;
+    cityCandidates.value = [];
     completedSpokes.value += 1;
     completeSpoke();
     navigateTo('hub');
@@ -848,12 +916,104 @@ export function NodeMapScreen() {
                 <button class="modal-action-btn ornate-btn" onClick={handleReturnToHub} style={{
                   padding: '10px 24px',
                 }}>
-                  Return to Hub
+                  Choose Your Conquest →
                 </button>
               </>
             );
           })()}
         </NodeModal>
+      )}
+
+      {/* City conquest choice modal */}
+      {showCityChoiceModal.value && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.80)',
+            zIndex: 210, display: 'flex', alignItems: 'center',
+            justifyContent: 'center', padding: '20px',
+          }}
+        >
+          <OrnateFrame width="min(680px, 94vw)" padding="compact">
+            <OrnateHeader
+              eyebrow="Spoke Complete"
+              title="Choose Your Conquest"
+              titleSize="md"
+            />
+            <p style={{
+              textAlign: 'center', fontSize: 'var(--font-size-sm)',
+              color: 'var(--color-text-muted)', margin: '0 0 20px',
+            }}>
+              Your campaign has earned a new territory. Choose wisely.
+            </p>
+            <div style={{
+              display: 'flex', gap: '16px', justifyContent: 'center',
+              flexWrap: 'wrap', paddingBottom: '8px',
+            }}>
+              {cityCandidates.value.map(city => (
+                <div
+                  key={city.mapIndex}
+                  class="city-card"
+                  onClick={() => handleCityChosen(city)}
+                  style={{
+                    width: '260px', display: 'flex', flexDirection: 'column', gap: '0',
+                    background: 'var(--color-marble-dark)',
+                    border: '1px solid var(--color-border-default)',
+                    borderTop: '2px solid var(--color-gold-secondary)',
+                    borderRadius: 'var(--radius-md)',
+                    boxShadow: 'var(--shadow-md)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Card header */}
+                  <div style={{
+                    padding: '14px 16px 10px',
+                    borderBottom: '1px solid var(--color-border-subtle)',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '22px', lineHeight: 1 }}>{TERRAIN_ICON[city.terrain]}</span>
+                      <span style={{
+                        fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 700,
+                        color: 'var(--color-text-primary)', letterSpacing: '1.5px',
+                        textTransform: 'uppercase',
+                      }}>
+                        {city.name}
+                      </span>
+                    </div>
+                    <div style={{
+                      fontSize: 'var(--font-size-xs)', letterSpacing: '1.5px',
+                      textTransform: 'uppercase', color: 'var(--color-text-muted)',
+                    }}>
+                      {city.terrain}
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div style={{ padding: '10px 16px', display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                      <span style={{ fontSize: '14px' }}>{TRADE_GOOD_ICON[city.tradeGood]}</span>
+                      <span>{TRADE_GOOD_DATA[city.tradeGood].name}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+                      <span style={{ fontSize: '13px' }}>🪙</span>
+                      <span>Initial Wealth: </span>
+                      <strong style={{ color: 'var(--color-gold-primary)' }}>{city.wealth}g</strong>
+                    </div>
+                  </div>
+
+                  {/* Capture CTA */}
+                  <div style={{ padding: '10px 12px 12px' }}>
+                    <div
+                      class="ornate-btn"
+                      style={{ width: '100%', padding: '8px', textAlign: 'center' }}
+                    >
+                      Capture {city.name}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </OrnateFrame>
+        </div>
       )}
 
       {/* Season tick modal */}

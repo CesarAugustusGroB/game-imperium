@@ -87,9 +87,6 @@ export interface FactionAffiliated {
 /** Tax level for lower/upper class (1=Very Low … 5=Very High) */
 export type TaxLevel = 1 | 2 | 3 | 4 | 5;
 
-/** Wealth tier for province display (1=Poor … 5=Wealthy) */
-export type WealthTier = 1 | 2 | 3 | 4 | 5;
-
 /** Fixed 3-tier progression level */
 export type TierLevel = 1 | 2 | 3;
 

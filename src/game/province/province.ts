@@ -1,5 +1,5 @@
 import type { Faction, ResourceType } from '../core/commander';
-import type { ResourceCost, TaxLevel, TierTuple, WealthTier } from '../../types/index';
+import type { ResourceCost, TaxLevel, TierTuple } from '../../types/index';
 import type { GovernorTrait } from './governor';
 import type { TerrainType } from '../../data/terrain-data';
 import { UNIVERSAL_BUILDINGS, TERRAIN_AVAILABLE_BUILDINGS, TERRAIN_DATA } from '../../data/terrain-data';
@@ -465,7 +465,7 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
     unrest: 20,
     baseExpenses: 1,
     investments: [],
-    wealth: 40,
+    wealth: 0,
     devastation: 0,
     devastationTimer: 0,
     rebellionCount: 0,
@@ -479,52 +479,31 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
   };
 }
 
-// ── Wealth tier system ──
+// ── Initial wealth calculation (ETW-style: terrain + resource + population) ──
 
-/**
- * Map a raw wealth value to a WealthTier (1–5).
- * Wealth is floored at 0 before lookup.
- *
- * Tiers:  0–15 → 1 (Destitute)
- *        16–35 → 2 (Poor)
- *        36–55 → 3 (Growing)
- *        56–80 → 4 (Prosperous)
- *          81+ → 5 (Wealthy)
- */
-export function getWealthTier(wealth: number): WealthTier {
-  const w = Math.max(0, wealth);
-  if (w <= 15) return 1;
-  if (w <= 35) return 2;
-  if (w <= 55) return 3;
-  if (w <= 80) return 4;
-  return 5;
+/** Terrain base wealth for newly conquered provinces. */
+const TERRAIN_BASE_WEALTH: Record<TerrainType, number> = {
+  coast: 35, farmland: 30, hills: 25, plains: 20,
+  forest: 20, desert: 15, marsh: 10, mountains: 10,
+};
+
+/** Trade good bonus to initial wealth. */
+const TRADE_GOOD_WEALTH: Record<string, number> = {
+  gold_ore: 20, silk: 15, salt: 10, iron: 8, marble: 8,
+  incense: 8, wine: 6, horses: 5, fish: 5, olives: 5,
+  grain: 3, timber: 3,
+};
+
+/** Calculate initial wealth for a newly conquered province. */
+export function calculateInitialWealth(
+  terrain: TerrainType, tradeGood: string | null, population: number,
+): number {
+  return (TERRAIN_BASE_WEALTH[terrain] ?? 20)
+    + (tradeGood ? (TRADE_GOOD_WEALTH[tradeGood] ?? 0) : 0)
+    + population * 5;
 }
 
-/** Income multiplier for a given wealth tier (0.50x – 1.50x). */
-export function getWealthMultiplier(tier: WealthTier): number {
-  const MULTIPLIERS: Record<WealthTier, number> = {
-    1: 0.50,
-    2: 0.75,
-    3: 1.00,
-    4: 1.25,
-    5: 1.50,
-  };
-  return MULTIPLIERS[tier];
-}
-
-/** Display label for a given wealth tier. */
-export function getWealthLabel(tier: WealthTier): string {
-  const LABELS: Record<WealthTier, string> = {
-    1: 'Destitute',
-    2: 'Poor',
-    3: 'Growing',
-    4: 'Prosperous',
-    5: 'Wealthy',
-  };
-  return LABELS[tier];
-}
-
-// ── Tax multiplier system ──
+// ── Tax rate system (ETW-style: tax is a percentage of provincial wealth) ──
 
 /** Display label for a TaxLevel (1=Minimal … 5=Oppressive). */
 export function getTaxLabel(level: TaxLevel): string {
@@ -539,24 +518,28 @@ export function getTaxLabel(level: TaxLevel): string {
 }
 
 /**
- * Gold income multiplier from the dual tax sliders.
+ * Tax rate (decimal fraction) from the dual tax sliders — applied to the
+ * provincial wealth pool to calculate tax revenue (ETW-style).
  * Combined = lowerTax + upperTax (range 2–10).
- * Anchor points: 2→0.50, 4→0.70, 6→1.00, 8→1.30, 10→1.60.
- * Odd combined values are midpoints between adjacent anchors.
  */
-export function getTaxMultiplier(lowerTax: TaxLevel, upperTax: TaxLevel): number {
-  const MULTIPLIERS: Record<number, number> = {
-    2: 0.50,
-    3: 0.60,
-    4: 0.70,
-    5: 0.85,
-    6: 1.00,
-    7: 1.15,
-    8: 1.30,
-    9: 1.45,
-    10: 1.60,
+export function getTaxRate(lowerTax: TaxLevel, upperTax: TaxLevel): number {
+  const RATES: Record<number, number> = {
+    2:  0.03,
+    3:  0.05,
+    4:  0.07,
+    5:  0.09,
+    6:  0.12,
+    7:  0.15,
+    8:  0.18,
+    9:  0.21,
+    10: 0.25,
   };
-  return MULTIPLIERS[lowerTax + upperTax];
+  return RATES[lowerTax + upperTax];
+}
+
+/** Format a tax rate decimal as a display percentage string (e.g. "12%"). */
+export function formatTaxRate(rate: number): string {
+  return `${(rate * 100).toFixed(0)}%`;
 }
 
 /**
