@@ -4,6 +4,7 @@ import type { GovernorTrait } from './governor';
 import type { TerrainType } from '../../data/terrain-data';
 import { UNIVERSAL_BUILDINGS, TERRAIN_AVAILABLE_BUILDINGS, TERRAIN_DATA } from '../../data/terrain-data';
 import type { TradeGoodType } from '../../data/trade-goods';
+import type { ProvinceFeature } from '../../data/province-features';
 import { TRADE_GOOD_DATA } from '../../data/trade-goods';
 
 // ── Investment types ──
@@ -85,6 +86,8 @@ export interface Province {
   terrain: TerrainType;
   /** Assigned trade good, or null if none. Randomly assigned on conquest (S17-03). */
   tradeGood: TradeGoodType | null;
+  /** Unique province feature (landmark/wonder), or null. Assigned from pool on conquest (S19). */
+  uniqueFeature: ProvinceFeature | null;
 }
 
 // ── Investment data ──
@@ -483,6 +486,7 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
     rubbleTimer: 0,
     terrain: 'plains',
     tradeGood: null,
+    uniqueFeature: null,
     ...overrides,
   };
 }

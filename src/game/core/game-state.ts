@@ -18,6 +18,7 @@ import { getCohortById } from '../army/cohort-data';
 import { computeArmySize } from '../army/cohort';
 import { recordRunStart } from './meta-save';
 import { STARTER_ADVISORS } from '../../data/advisor-data';
+import { initFeaturePool, resetFeaturePool } from '../province/feature-store';
 
 // ── Core run state ──
 export const selectedCommander = signal<Commander | null>(null);
@@ -154,6 +155,7 @@ export function startNewRun(commander: Commander): void {
   }
 
   initGovernorStore();
+  initFeaturePool();
 
   // Create the home province first (no territory claimed yet — topology not loaded)
   conquerProvince('Roma', { gold: 2, faith: 1, influence: 1, momentum: 0 }, 1);
@@ -189,6 +191,7 @@ export function resetRun(): void {
   resetProvinceMapStore();
   resetEventStore();
   resetStrategicStore();
+  resetFeaturePool();
   resetNPCFactions();
   resetSpoke();
 

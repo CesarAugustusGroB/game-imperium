@@ -17,6 +17,7 @@ import type { DoctrineEffect } from '../items/doctrine';
 import type { ResourceCost, TaxLevel } from '../../types/index';
 import { getResource, spendResource, addResource } from '../core/resources';
 import { getGovernorTraits, getGovernorSalary, registerProvinceSyncCallback } from './governor-store';
+import { assignNextFeature } from './feature-store';
 import { claimTerritory, claimTerritoryAt } from './province-map-store';
 import { nextInvestmentDiscount } from '../progression/strategic-store';
 import { addNotification } from '../../ui/notifications/notification-store';
@@ -75,7 +76,8 @@ export function conquerProvince(
     ? { terrain: overrides.terrain, tradeGood: overrides.tradeGood }
     : assignProvinceIdentity();
   const wealth = calculateInitialWealth(terrain, tradeGood, 3);
-  const province = createProvince(name, { baseIncome, terrain, tradeGood, wealth });
+  const uniqueFeature = assignNextFeature();
+  const province = createProvince(name, { baseIncome, terrain, tradeGood, wealth, uniqueFeature });
   provinces.value = [...provinces.value, province];
 
   // Claim the chosen map territory, or auto-pick if no specific index provided
