@@ -751,15 +751,18 @@ const TERRAIN_BASE_FOOD: Record<TerrainType, number> = {
   marsh: 1,
 };
 
+/** Base subsistence food every province produces (gathering, small plots). */
+const BASE_SUBSISTENCE_FOOD = 2;
+
 /**
  * Total food production for a province per season.
- * Sums: terrain base + building foodBonus + trade good flatGrowth + governor pop-growth traits.
+ * Sums: base subsistence + terrain + building foodBonus + trade good flatGrowth + governor traits.
  */
 export function calculateFoodProduction(
   province: Province,
   governorTraits: GovernorTrait[] = [],
 ): number {
-  let food = TERRAIN_BASE_FOOD[province.terrain] ?? 0;
+  let food = BASE_SUBSISTENCE_FOOD + (TERRAIN_BASE_FOOD[province.terrain] ?? 0);
 
   // Building food bonuses (from InvestmentLevelEffect.foodBonus)
   for (const inv of province.investments) {
@@ -867,15 +870,21 @@ export function calculateEffectiveGrowth(
 }
 
 /**
- * Advance one season of population growth.
- * Adds effective growth to growthAccumulator; when threshold is reached,
- * increments population by 1 (capped at maxPopulation) and resets accumulator
- * by subtracting the threshold (preserving overflow).
+ * Advance one season of population growth (S20 food-surplus driven).
+ *
+ * Growth is fueled by food surplus: only positive surplus feeds the accumulator.
+ * Zero surplus = equilibrium (no growth). Negative surplus = starvation (handled
+ * separately by tickFamine in S20-04; this function does not decrease population).
+ *
+ * When the accumulator reaches the threshold, population increments by 1
+ * (capped at maxPopulation) and the accumulator resets by subtracting the
+ * threshold (preserving overflow).
+ *
  * Returns an updated Province — does NOT mutate the input.
  */
 export function tickPopulationGrowth(
   province: Province,
-  terrain?: string,
+  _terrain?: string,
   governorTraits: GovernorTrait[] = [],
 ): Province {
   const maxPop = getEffectiveMaxPop(province);
@@ -883,8 +892,14 @@ export function tickPopulationGrowth(
     return province; // already at cap
   }
 
-  const growth = calculateEffectiveGrowth(province, terrain, governorTraits);
-  const newAccumulator = province.growthAccumulator + growth;
+  const surplus = calculateFoodSurplus(province, governorTraits);
+
+  // Only positive surplus drives growth; zero/negative = no accumulation
+  if (surplus <= 0) {
+    return province;
+  }
+
+  const newAccumulator = province.growthAccumulator + surplus;
   const threshold = calculateGrowthThreshold(province.population);
 
   if (newAccumulator >= threshold) {
