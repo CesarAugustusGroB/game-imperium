@@ -13,7 +13,7 @@ import { TRADE_GOOD_DATA } from '../../data/trade-goods';
  * Universal (any terrain): castrum, basilica, pantheon, market, aqueduct, insula.
  * Terrain-exclusive (S17-05): port, fishery, villa, stables, lumber_camp,
  *   mountain_pass, oasis_market, caravan_post, oracle_shrine, reed_harvest.
- * Pending (future task): granary, mine, forge, sacred_grove, training_ground, watchtower.
+ * Pending (future task): mine, forge, sacred_grove, training_ground, watchtower.
  */
 export type InvestmentType =
   | 'castrum'
@@ -22,6 +22,8 @@ export type InvestmentType =
   | 'market'
   | 'aqueduct'
   | 'insula'
+  | 'granary'        // S20 — Food & Population
+  | 'gardens'        // S20 — Food & Population
   // ── Terrain-exclusive (S17-05) ──
   | 'port'          // Coast
   | 'fishery'       // Coast
@@ -46,10 +48,8 @@ export interface Province {
   id: string;
   /** Display name (usually from the spoke that created it). */
   name: string;
-  /** 1–10. Scales base income. */
+  /** Population count. Grows via food surplus; no hard cap (food is the ceiling). */
   population: number;
-  /** Upper bound on population growth. Base 10, raised by investments. */
-  maxPopulation: number;
   /** Base resource income per spoke (before investment bonuses). */
   baseIncome: Partial<Record<ResourceType, number>>;
   /** 0–100. High unrest reduces income and may trigger a Rebellion event. */
@@ -74,6 +74,8 @@ export interface Province {
   upperTax: TaxLevel;
   /** Fractional population growth banked toward the next full population point. */
   growthAccumulator: number;
+  /** Consecutive seasons of food deficit. 0 = no famine. Drives escalating starvation (S20). */
+  famineTimer: number;
   /**
    * Seasons remaining during which rebuilding is blocked (post-rebellion rubble).
    * 0 = no rubble. Set to 2 after the 1st/2nd rebellion, 8 after Ruined.
@@ -93,6 +95,10 @@ export interface InvestmentLevelEffect {
   unrestChange: number;    // negative = suppresses unrest per spoke
   buildCost: ResourceCost; // resources to build / upgrade to this level
   description: string;
+  /** Food production bonus for this tier (S20 — Food & Population). */
+  foodBonus?: number;
+  /** Beautiness score contribution for this tier (S20 — Immigration). Negative = industrial penalty. */
+  beautinessBonus?: number;
 }
 
 export interface InvestmentData {
@@ -110,9 +116,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Castrum',
     flavour: 'A fortified camp that garrisons a permanent legion detachment.',
     levels: [
-      { incomeBonus: {},                    expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: 'Garrison deters minor raids. -5 Unrest/spoke.' },
-      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -10, buildCost: { gold: 10, momentum: 3 },          description: 'Full cohort stationed. -10 Unrest/spoke. Free levy unit in defense battles.' },
-      { incomeBonus: { momentum: 1 },       expensesBonus: 3, unrestChange: -15, buildCost: { gold: 20, momentum: 6 },          description: 'Veteran legion presence. -15 Unrest/spoke. +1 Momentum/spoke. Free veteran unit.' },
+      { incomeBonus: {},                    expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: 'Garrison deters minor raids. -5 Unrest/spoke.', beautinessBonus: -3 },
+      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -10, buildCost: { gold: 10, momentum: 3 },          description: 'Full cohort stationed. -10 Unrest/spoke. Free levy unit in defense battles.', beautinessBonus: -4 },
+      { incomeBonus: { momentum: 1 },       expensesBonus: 3, unrestChange: -15, buildCost: { gold: 20, momentum: 6 },          description: 'Veteran legion presence. -15 Unrest/spoke. +1 Momentum/spoke. Free veteran unit.', beautinessBonus: -5 },
     ],
   },
   basilica: {
@@ -120,9 +126,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Basilica',
     flavour: 'A court of law that channels political loyalty upward.',
     levels: [
-      { incomeBonus: { influence: 1 },      expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+1 Influence/spoke.' },
-      { incomeBonus: { influence: 2 },      expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 10, influence: 3 },         description: '+2 Influence/spoke. -5 Unrest/spoke.' },
-      { incomeBonus: { influence: 3 },      expensesBonus: 2, unrestChange: -10, buildCost: { gold: 20, influence: 6 },         description: '+3 Influence/spoke. -10 Unrest/spoke. +1 extra event choice.' },
+      { incomeBonus: { influence: 1 },      expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+1 Influence/spoke.', beautinessBonus: 3 },
+      { incomeBonus: { influence: 2 },      expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 10, influence: 3 },         description: '+2 Influence/spoke. -5 Unrest/spoke.', beautinessBonus: 4 },
+      { incomeBonus: { influence: 3 },      expensesBonus: 2, unrestChange: -10, buildCost: { gold: 20, influence: 6 },         description: '+3 Influence/spoke. -10 Unrest/spoke. +1 extra event choice.', beautinessBonus: 5 },
     ],
   },
   pantheon: {
@@ -130,9 +136,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Pantheon',
     flavour: 'Temples to the Roman gods maintain divine favour and civic morale.',
     levels: [
-      { incomeBonus: { faith: 1 },          expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: '+1 Faith/spoke. -5 Unrest/spoke.' },
-      { incomeBonus: { faith: 2 },          expensesBonus: 1, unrestChange: -10, buildCost: { gold: 10, faith: 3 },             description: '+2 Faith/spoke. -10 Unrest/spoke.' },
-      { incomeBonus: { faith: 3 },          expensesBonus: 2, unrestChange: -15, buildCost: { gold: 20, faith: 6 },             description: '+3 Faith/spoke. -15 Unrest/spoke. Units in this province\'s battles revive once.' },
+      { incomeBonus: { faith: 1 },          expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: '+1 Faith/spoke. -5 Unrest/spoke.', beautinessBonus: 5 },
+      { incomeBonus: { faith: 2 },          expensesBonus: 1, unrestChange: -10, buildCost: { gold: 10, faith: 3 },             description: '+2 Faith/spoke. -10 Unrest/spoke.', beautinessBonus: 8 },
+      { incomeBonus: { faith: 3 },          expensesBonus: 2, unrestChange: -15, buildCost: { gold: 20, faith: 6 },             description: '+3 Faith/spoke. -15 Unrest/spoke. Units in this province\'s battles revive once.', beautinessBonus: 10 },
     ],
   },
   market: {
@@ -140,9 +146,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Market',
     flavour: 'A bustling forum that taxes trade flowing through the province.',
     levels: [
-      { incomeBonus: { gold: 2 },           expensesBonus: 0, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+2 Gold/spoke.' },
-      { incomeBonus: { gold: 4 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 12 },                      description: '+4 Gold/spoke.' },
-      { incomeBonus: { gold: 6 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 24 },                      description: '+6 Gold/spoke. Resource exchange rates in this province improved by 1.' },
+      { incomeBonus: { gold: 2 },           expensesBonus: 0, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+2 Gold/spoke.', beautinessBonus: -2 },
+      { incomeBonus: { gold: 4 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 12 },                      description: '+4 Gold/spoke.', beautinessBonus: -2 },
+      { incomeBonus: { gold: 6 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 24 },                      description: '+6 Gold/spoke. Resource exchange rates in this province improved by 1.', beautinessBonus: -3 },
     ],
   },
   aqueduct: {
@@ -150,9 +156,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Aqueduct',
     flavour: 'Running water feeds population growth and scales all income.',
     levels: [
-      { incomeBonus: { gold: 1 },           expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 6 },                       description: '+1 Gold/spoke. +1 Population cap. -5 Unrest/spoke.' },
-      { incomeBonus: { gold: 2 },           expensesBonus: 2, unrestChange: -5,  buildCost: { gold: 14 },                      description: '+2 Gold/spoke. +2 Population cap. -5 Unrest/spoke.' },
-      { incomeBonus: { gold: 3 },           expensesBonus: 2, unrestChange: -10, buildCost: { gold: 26 },                      description: '+3 Gold/spoke. +3 Population cap. -10 Unrest/spoke. All income +10%.' },
+      { incomeBonus: { gold: 1 },           expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 6 },                       description: '+1 Gold/spoke. +1 Food. +1 Pop cap. -5 Unrest/spoke.', beautinessBonus: 3, foodBonus: 1 },
+      { incomeBonus: { gold: 2 },           expensesBonus: 2, unrestChange: -5,  buildCost: { gold: 14 },                      description: '+2 Gold/spoke. +2 Food. +2 Pop cap. -5 Unrest/spoke.', beautinessBonus: 4, foodBonus: 2 },
+      { incomeBonus: { gold: 3 },           expensesBonus: 2, unrestChange: -10, buildCost: { gold: 26 },                      description: '+3 Gold/spoke. +3 Food. +3 Pop cap. -10 Unrest/spoke. All income +10%.', beautinessBonus: 5, foodBonus: 3 },
     ],
   },
   insula: {
@@ -183,9 +189,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Fishery',
     flavour: 'Nets and salt-curing houses feed the province through lean seasons.',
     levels: [
-      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+2 Gold/spoke. +1 Pop Growth/spoke.' },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 9 },                         description: '+3 Gold/spoke. +2 Pop Growth/spoke.' },
-      { incomeBonus: { gold: 4 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 16 },                        description: '+4 Gold/spoke. +3 Pop Growth/spoke. Coastal settlements fed.' },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+2 Gold/spoke. +1 Food/spoke.', foodBonus: 1 },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 9 },                         description: '+3 Gold/spoke. +2 Food/spoke.', foodBonus: 2 },
+      { incomeBonus: { gold: 4 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 16 },                        description: '+4 Gold/spoke. +3 Food/spoke. Coastal settlements fed.', foodBonus: 3 },
     ],
   },
   villa: {
@@ -193,9 +199,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Villa',
     flavour: 'Country estates of the rich yield harvests and social stability.',
     levels: [
-      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: -3, buildCost: { gold: 5 },                        description: '+1 Gold/spoke. +1 Pop Growth/spoke. -3 Unrest/spoke.' },
-      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: -5, buildCost: { gold: 10 },                       description: '+2 Gold/spoke. +2 Pop Growth/spoke. -5 Unrest/spoke.' },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: -8, buildCost: { gold: 18 },                       description: '+3 Gold/spoke. +3 Pop Growth/spoke. -8 Unrest/spoke. Farmland yield doubled.' },
+      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: -3, buildCost: { gold: 5 },                        description: '+1 Gold/spoke. +1 Food/spoke. -3 Unrest/spoke.', foodBonus: 1 },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: -5, buildCost: { gold: 10 },                       description: '+2 Gold/spoke. +2 Food/spoke. -5 Unrest/spoke.', foodBonus: 2 },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: -8, buildCost: { gold: 18 },                       description: '+3 Gold/spoke. +3 Food/spoke. -8 Unrest/spoke. Farmland yield doubled.', foodBonus: 3 },
     ],
   },
   stables: {
@@ -263,9 +269,30 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Reed Harvest',
     flavour: 'Skilled harvesters work the marsh beds for papyrus, rushes, and fuel.',
     levels: [
-      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 3 },                         description: '+1 Gold/spoke. +1 Pop Growth/spoke.' },
-      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 8 },                         description: '+2 Gold/spoke. +2 Pop Growth/spoke.' },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 15 },                        description: '+3 Gold/spoke. +3 Pop Growth/spoke. Marshland mastered.' },
+      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 3 },                         description: '+1 Gold/spoke. +1 Food/spoke.', foodBonus: 1 },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 8 },                         description: '+2 Gold/spoke. +2 Food/spoke.', foodBonus: 2 },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 15 },                        description: '+3 Gold/spoke. +3 Food/spoke. Marshland mastered.', foodBonus: 3 },
+    ],
+  },
+  // ── S20: Food & Population ──
+  granary: {
+    type: 'granary', color: 'white',
+    name: 'Granary',
+    flavour: 'Raised storehouses keep grain dry and the province fed through lean seasons.',
+    levels: [
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: 0,  buildCost: { gold: 5 },                         description: '+1 Food/spoke. Stores surplus grain.', foodBonus: 1 },
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: 0,  buildCost: { gold: 10 },                        description: '+2 Food/spoke. Improved storage capacity.', foodBonus: 2 },
+      { incomeBonus: {},                           expensesBonus: 2, unrestChange: 0,  buildCost: { gold: 20 },                        description: '+3 Food/spoke. Famine recovery -1 season.', foodBonus: 3 },
+    ],
+  },
+  gardens: {
+    type: 'gardens', color: 'gold',
+    name: 'Gardens & Fountains',
+    flavour: 'Terraced gardens and marble fountains draw settlers from across the realm.',
+    levels: [
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: -2, buildCost: { gold: 6, influence: 2 },            description: '+10% Beautiness. -2 Unrest/spoke.', beautinessBonus: 10 },
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: -4, buildCost: { gold: 12, influence: 4 },           description: '+15% Beautiness. -4 Unrest/spoke.', beautinessBonus: 15 },
+      { incomeBonus: {},                           expensesBonus: 2, unrestChange: -6, buildCost: { gold: 22, influence: 6 },           description: '+20% Beautiness. -6 Unrest/spoke. A jewel of the empire.', beautinessBonus: 20 },
     ],
   },
 };
@@ -311,25 +338,6 @@ export const SYNERGY_DATA: SynergyData[] = [
 export function getActiveSynergies(province: Province): SynergyData[] {
   const types = new Set(province.investments.map(i => i.type as string));
   return SYNERGY_DATA.filter(s => types.has(s.buildingA) && types.has(s.buildingB));
-}
-
-/**
- * Effective maximum population for a province, including synergy bonuses.
- * Base: province.maxPopulation.
- * Synergy: Insula + Aqueduct → +1 pop cap (Public Works).
- */
-export function getEffectiveMaxPop(province: Province): number {
-  let max = province.maxPopulation;
-  // Synergy pop-cap bonuses (Insula+Aqueduct → +1)
-  for (const syn of getActiveSynergies(province)) {
-    if (syn.bonus.type === 'pop-cap') max += syn.bonus.amount;
-  }
-  // Trade good pop-cap bonus (Grain → +2)
-  if (province.tradeGood) {
-    const special = TRADE_GOOD_DATA[province.tradeGood].special;
-    if (special?.type === 'pop-cap-bonus') max += special.amount;
-  }
-  return max;
 }
 
 // ── Helpers ──
@@ -460,7 +468,6 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
     id: name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now(),
     name,
     population: 3,
-    maxPopulation: 10,
     baseIncome: { gold: 2 },
     unrest: 20,
     baseExpenses: 1,
@@ -472,6 +479,7 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
     lowerTax: 3,
     upperTax: 3,
     growthAccumulator: 0,
+    famineTimer: 0,
     rubbleTimer: 0,
     terrain: 'plains',
     tradeGood: null,
@@ -542,20 +550,6 @@ export function formatTaxRate(rate: number): string {
   return `${(rate * 100).toFixed(0)}%`;
 }
 
-/**
- * Pop growth penalty (%) applied by lower-class tax level.
- * Returns a negative percentage (0 = no penalty, -70 = severe penalty).
- */
-export function getLowerTaxGrowthPenalty(level: TaxLevel): number {
-  const PENALTIES: Record<TaxLevel, number> = {
-    1: 0,
-    2: -10,
-    3: -25,
-    4: -45,
-    5: -70,
-  };
-  return PENALTIES[level];
-}
 
 /**
  * Unrest change per season from the lower-class tax level.
@@ -707,17 +701,148 @@ export function getAvailableBuildings(province: Province): InvestmentType[] {
   return universals;
 }
 
-// ── Population growth accumulator ──
+// ── Food system config (S20) — single source of truth for balance tuning ──
 
-// TERRAIN_GROWTH replaced by direct TERRAIN_DATA lookup in calculateRawGrowth (S17-07).
-
-/** Population growth bonus contributed by buildings, keyed by InvestmentType then level. */
-const BUILDING_GROWTH: Partial<Record<InvestmentType, Record<number, number>>> = {
-  aqueduct:     { 1: 1, 2: 1, 3: 1 },
-  villa:        { 1: 1, 2: 2, 3: 3 },
-  fishery:      { 1: 1, 2: 2, 3: 3 },
-  reed_harvest: { 1: 1, 2: 2, 3: 3 },
+/**
+ * All food/famine/immigration constants in one place.
+ * Modify these values to retune the economy without searching the file.
+ */
+export const FOOD_CONFIG = {
+  /** Base subsistence food every province produces (gathering, small plots). */
+  baseSubsistence: 2,
+  /** Terrain base food production per season. */
+  terrainFood: {
+    farmland: 3, plains: 2, coast: 1, forest: 1,
+    hills: 1, mountains: 0, desert: 0, marsh: 1,
+  } as Record<TerrainType, number>,
+  /** Tax food penalty fraction by lower-tax level (1=Minimal … 5=Oppressive). */
+  taxFoodPenalty: { 1: 0, 2: 0.10, 3: 0.20, 4: 0.35, 5: 0.55 } as Record<TaxLevel, number>,
+  /** Marketplace tax penalty mitigation by tier (multiplicative reduction). */
+  marketplaceMitigation: { 1: 0.05, 2: 0.10, 3: 0.15 } as Record<number, number>,
+  /** Famine unrest per season: soft phase (timer 1-2). */
+  famineUnrestSoft: 10,
+  /** Famine unrest per season: hard phase (timer 3+). */
+  famineUnrestHard: 25,
+  /** Default hard-famine threshold (seasons of deficit before pop death). */
+  famineHardThreshold: 3,
+  /** Granary T3 raises hard-famine threshold by this many seasons. */
+  granaryT3FamineDelay: 1,
 };
+
+/**
+ * Total food production for a province per season.
+ * Sums: base subsistence + terrain + building foodBonus + trade good flatGrowth + governor traits.
+ */
+export function calculateFoodProduction(
+  province: Province,
+  governorTraits: GovernorTrait[] = [],
+): number {
+  let food = FOOD_CONFIG.baseSubsistence + (FOOD_CONFIG.terrainFood[province.terrain] ?? 0);
+
+  // Building food bonuses (from InvestmentLevelEffect.foodBonus)
+  for (const inv of province.investments) {
+    const effect = INVESTMENT_DATA[inv.type]?.levels[inv.level - 1];
+    food += effect?.foodBonus ?? 0;
+  }
+
+  // Trade good food contribution (Grain +3, Fish +1, Salt +1, Olives +1 via flatGrowth)
+  if (province.tradeGood) {
+    food += TRADE_GOOD_DATA[province.tradeGood].flatGrowth;
+  }
+
+  // Governor population-growth trait → food production bonus
+  for (const trait of governorTraits) {
+    if (trait.type === 'population-growth') food += trait.amount;
+  }
+
+  return food;
+}
+
+/** Tax food penalty fraction for a given lower-tax level. */
+export function getTaxFoodPenalty(level: TaxLevel): number {
+  return FOOD_CONFIG.taxFoodPenalty[level];
+}
+
+/**
+ * Effective food production after tax friction.
+ * `effectiveFood = rawProduction × (1 − effectiveTaxPenalty)`
+ * Marketplace mitigates the tax penalty multiplicatively.
+ */
+export function calculateEffectiveFoodProduction(
+  province: Province,
+  governorTraits: GovernorTrait[] = [],
+): number {
+  const raw = calculateFoodProduction(province, governorTraits);
+  let penalty = getTaxFoodPenalty(province.lowerTax);
+
+  // Marketplace mitigates tax food penalty
+  const marketplace = province.investments.find(i => i.type === 'market');
+  if (marketplace) {
+    penalty *= (1 - (FOOD_CONFIG.marketplaceMitigation[marketplace.level] ?? 0));
+  }
+
+  return raw * (1 - penalty);
+}
+
+/**
+ * Food consumption for a province per season.
+ * Each population point consumes 1 food.
+ */
+export function calculateFoodConsumption(province: Province): number {
+  return province.population;
+}
+
+/**
+ * Net food surplus (effective production − consumption).
+ * Positive = growth fuel, zero = equilibrium, negative = starvation.
+ * Tax friction is already applied to production.
+ */
+export function calculateFoodSurplus(
+  province: Province,
+  governorTraits: GovernorTrait[] = [],
+): number {
+  return calculateEffectiveFoodProduction(province, governorTraits) - calculateFoodConsumption(province);
+}
+
+// ── Beautiness & immigration (S20) ──
+
+/**
+ * Province beautiness score (0–100%, clamped).
+ * Sums beautinessBonus from all installed buildings.
+ * Green buildings add, industrial buildings subtract.
+ */
+export function calculateBeautiness(province: Province): number {
+  let score = 0;
+  for (const inv of province.investments) {
+    const effect = INVESTMENT_DATA[inv.type]?.levels[inv.level - 1];
+    score += effect?.beautinessBonus ?? 0;
+  }
+  return Math.max(0, Math.min(100, score));
+}
+
+/**
+ * Roll immigration for a province. Rolls d100; if roll <= beautiness%,
+ * the province gains +1 population.
+ * Returns the updated province and whether immigration succeeded.
+ */
+export function rollImmigration(province: Province): { province: Province; immigrated: boolean } {
+  const beautiness = calculateBeautiness(province);
+  if (beautiness <= 0) {
+    return { province, immigrated: false };
+  }
+
+  const roll = Math.floor(Math.random() * 100) + 1; // 1–100
+  if (roll <= beautiness) {
+    return {
+      province: { ...province, population: province.population + 1 },
+      immigrated: true,
+    };
+  }
+
+  return { province, immigrated: false };
+}
+
+// ── Population growth accumulator ──
 
 /** Growth threshold to gain 1 population point: `8 + current_pop × 2`. */
 export function calculateGrowthThreshold(currentPop: number): number {
@@ -725,89 +850,101 @@ export function calculateGrowthThreshold(currentPop: number): number {
 }
 
 /**
- * Raw growth per season = terrain base + buildings + governor pop-growth traits
- * + active synergy growth bonuses + trade good flatGrowth.
- */
-export function calculateRawGrowth(
-  province: Province,
-  terrain?: string,
-  governorTraits: GovernorTrait[] = [],
-): number {
-  const terrainKey = (terrain ?? province.terrain) as TerrainType;
-  // Base growth is 1; terrain adds its delta (e.g. Farmland +2, Mountains/Marsh -1, Desert -2)
-  let raw = 1 + (TERRAIN_DATA[terrainKey]?.baseModifiers.growthModifier ?? 0);
-
-  for (const inv of province.investments) {
-    raw += BUILDING_GROWTH[inv.type]?.[inv.level] ?? 0;
-  }
-
-  for (const trait of governorTraits) {
-    if (trait.type === 'population-growth') raw += trait.amount;
-  }
-
-  for (const syn of getActiveSynergies(province)) {
-    if (syn.bonus.type === 'growth') raw += syn.bonus.amount;
-  }
-
-  // Trade good growth bonus — Grain +3, Fish +1, Salt +1, Olives +1
-  if (province.tradeGood) {
-    raw += TRADE_GOOD_DATA[province.tradeGood].flatGrowth;
-  }
-
-  return raw;
-}
-
-/**
- * Effective growth after penalties:
- *   effective = raw × (1 − lower_tax_penalty) × (1 − devastation_penalty)
- * Lower tax penalty: 0 / 0.10 / 0.25 / 0.45 / 0.70.
- * Devastation penalty: 0.50 while devastationTimer > 0.
- */
-export function calculateEffectiveGrowth(
-  province: Province,
-  terrain?: string,
-  governorTraits: GovernorTrait[] = [],
-): number {
-  const raw = Math.max(0, calculateRawGrowth(province, terrain, governorTraits));
-  const taxPenalty = Math.abs(getLowerTaxGrowthPenalty(province.lowerTax)) / 100;
-  const devastationPenalty = province.devastationTimer > 0 ? 0.5 : 0;
-  return raw * (1 - taxPenalty) * (1 - devastationPenalty);
-}
-
-/**
- * Advance one season of population growth.
- * Adds effective growth to growthAccumulator; when threshold is reached,
- * increments population by 1 (capped at maxPopulation) and resets accumulator
- * by subtracting the threshold (preserving overflow).
+ * Advance one season of population growth (S20 food-surplus driven).
+ *
+ * Growth is fueled by food surplus: only positive surplus feeds the accumulator.
+ * Zero surplus = equilibrium (no growth). Negative surplus = starvation (handled
+ * separately by tickFamine in S20-04; this function does not decrease population).
+ *
+ * When the accumulator reaches the threshold, population increments by 1
+ * and the accumulator resets by subtracting the threshold (preserving overflow).
+ * Food supply is the natural ceiling — no hard population cap.
+ *
  * Returns an updated Province — does NOT mutate the input.
  */
 export function tickPopulationGrowth(
   province: Province,
-  terrain?: string,
+  _terrain?: string,
   governorTraits: GovernorTrait[] = [],
 ): Province {
-  const maxPop = getEffectiveMaxPop(province);
-  if (province.population >= maxPop) {
-    return province; // already at cap
+  const surplus = calculateFoodSurplus(province, governorTraits);
+
+  // Only positive surplus drives growth; zero/negative = no accumulation
+  if (surplus <= 0) {
+    return province;
   }
 
-  const growth = calculateEffectiveGrowth(province, terrain, governorTraits);
-  const newAccumulator = province.growthAccumulator + growth;
+  const newAccumulator = province.growthAccumulator + surplus;
   const threshold = calculateGrowthThreshold(province.population);
 
   if (newAccumulator >= threshold) {
-    const newPop = Math.min(province.population + 1, maxPop);
-    return { ...province, population: newPop, growthAccumulator: newAccumulator - threshold };
+    return { ...province, population: province.population + 1, growthAccumulator: newAccumulator - threshold };
   }
 
   return { ...province, growthAccumulator: newAccumulator };
+}
+
+// ── Famine system (S20) ──
+
+
+/**
+ * Advance one season of famine tracking.
+ *
+ * - Surplus >= 0 → reset famineTimer to 0 (recovery).
+ * - Surplus < 0, famineTimer 1-2 (soft phase) → growth blocked (handled by
+ *   tickPopulationGrowth), unrest added via calculateUnrestDelta.
+ * - Surplus < 0, famineTimer 3+ (hard phase) → lose 1 pop/season (min 1),
+ *   reset growthAccumulator to 0.
+ *
+ * Returns an updated Province — does NOT mutate the input.
+ */
+export function tickFamine(
+  province: Province,
+  governorTraits: GovernorTrait[] = [],
+): Province {
+  const surplus = calculateFoodSurplus(province, governorTraits);
+
+  if (surplus >= 0) {
+    // Recovery: reset famine timer
+    if (province.famineTimer > 0) {
+      return { ...province, famineTimer: 0 };
+    }
+    return province;
+  }
+
+  // Deficit: increment famine timer
+  const newTimer = province.famineTimer + 1;
+
+  // Granary T3 delays hard starvation by extra seasons
+  const granary = province.investments.find(i => i.type === 'granary');
+  const hardThreshold = FOOD_CONFIG.famineHardThreshold
+    + (granary && granary.level >= 3 ? FOOD_CONFIG.granaryT3FamineDelay : 0);
+
+  if (newTimer >= hardThreshold) {
+    // Hard phase: lose 1 pop (floor at 1), reset growth accumulator
+    const newPop = Math.max(1, province.population - 1);
+    return { ...province, famineTimer: newTimer, population: newPop, growthAccumulator: 0 };
+  }
+
+  // Soft phase: just increment timer (growth blocked by tickPopulationGrowth)
+  return { ...province, famineTimer: newTimer };
+}
+
+/**
+ * Famine unrest contribution based on famineTimer.
+ * Soft (1-2): +10/season. Hard (3+): +25/season. None (0): 0.
+ */
+export function getFamineUnrest(province: Province): number {
+  if (province.famineTimer >= FOOD_CONFIG.famineHardThreshold) return FOOD_CONFIG.famineUnrestHard;
+  if (province.famineTimer >= 1) return FOOD_CONFIG.famineUnrestSoft;
+  return 0;
 }
 
 // ── Unrest + rebellion system ──
 
 /**
  * Net unrest change per season.
- *   base  = tax_unrest + doom − 2 (natural decay) + investment/governor modifier
+ *   base  = tax_unrest + famine + doom − 2 (natural decay) + investment/governor modifier
  *   accel = (unrest > 60) ? (unrest − 60) × 0.25 : 0
  *   total = base + accel
  *
@@ -820,8 +957,9 @@ export function calculateUnrestDelta(
   doom: number = 0,
 ): number {
   const taxUnrest = getLowerTaxUnrest(province.lowerTax) + getUpperTaxUnrest(province.upperTax);
+  const famineUnrest = getFamineUnrest(province);
   const mod = getUnrestModifier(province, governorTraits); // negative = suppresses unrest
-  const base = taxUnrest + doom - 2 + mod;
+  const base = taxUnrest + famineUnrest + doom - 2 + mod;
   const accel = province.unrest > 60 ? (province.unrest - 60) * 0.25 : 0;
   return base + accel;
 }
@@ -895,14 +1033,12 @@ export function applyRebellion(
 
   // ── 1st or 2nd rebellion ──
   const destroyCount = n === 0 ? (rng() < 0.5 ? 1 : 2) : 2;
-  const maxPopReduction = n === 0 ? 1 : 2;
-  const newMaxPop = Math.max(1, province.maxPopulation - maxPopReduction);
+  const popLoss = n === 0 ? 1 : 2;
 
   return {
     ...province,
     investments: destroyMostExpensive(province.investments, destroyCount),
-    maxPopulation: newMaxPop,
-    population: Math.min(province.population, newMaxPop),
+    population: Math.max(1, province.population - popLoss),
     unrest: 40,
     devastationTimer: 4,
     rubbleTimer: 2,

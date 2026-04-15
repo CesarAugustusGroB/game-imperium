@@ -208,6 +208,55 @@ export const EVENTS: GameEvent[] = [
     ],
   },
 
+  // ── Food & famine events (S20) ──
+
+  {
+    id: 'granary-rats',
+    title: 'Rats in the Granary',
+    description: 'Vermin have infested a province\'s grain stores. The people cry out for action — but fumigating is costly, and burning the infected stocks risks hunger.',
+    color: 'neutral', tier: 1,
+    choices: [
+      { text: 'Fumigate the stores (3g)', effects: [{ resource: 'gold', amount: -3 }, { resource: 'influence', amount: 2 }], requiresResource: { gold: 3 }, consequence: 'granary_saved' },
+      { text: 'Burn infected stocks', effects: [{ resource: 'momentum', amount: 2 }] },
+      { text: 'Ignore the problem', effects: [{ resource: 'gold', amount: 1 }] },
+    ],
+  },
+  {
+    id: 'drought-prayer',
+    title: 'Drought Season',
+    description: 'The rains have not come. Fields wither and wells run dry. The priests urge a grand sacrifice to appease the gods, while the merchants suggest buying grain from abroad.',
+    color: 'neutral', tier: 2,
+    requirements: { minProvinces: 2 },
+    choices: [
+      { text: 'Grand sacrifice (3 faith)', effects: [{ resource: 'faith', amount: -3 }, { resource: 'influence', amount: 3 }, { resource: 'momentum', amount: 2 }], requiresResource: { faith: 3 }, consequence: 'gods_appeased' },
+      { text: 'Buy foreign grain (5g)', effects: [{ resource: 'gold', amount: -5 }, { resource: 'influence', amount: 2 }], requiresResource: { gold: 5 } },
+      { text: 'Ration what remains', effects: [{ resource: 'momentum', amount: -1 }] },
+    ],
+  },
+  {
+    id: 'bumper-harvest',
+    title: 'Bumper Harvest',
+    description: 'An exceptional growing season has blessed your provinces. The granaries overflow with grain, and the people celebrate with feasts.',
+    color: 'neutral', tier: 1,
+    choices: [
+      { text: 'Feast and celebrate', effects: [{ resource: 'influence', amount: 3 }, { resource: 'momentum', amount: 2 }] },
+      { text: 'Sell the surplus', effects: [{ resource: 'gold', amount: 5 }] },
+      { text: 'Store for winter', effects: [{ resource: 'faith', amount: 2 }, { resource: 'momentum', amount: 1 }] },
+    ],
+  },
+  {
+    id: 'wandering-farmers',
+    title: 'Displaced Farmers',
+    description: 'A column of farmers displaced by war in a neighbouring region seeks refuge in your lands. They bring skills and willing hands — but also hungry mouths.',
+    color: 'neutral', tier: 2,
+    requirements: { minProvinces: 2 },
+    choices: [
+      { text: 'Welcome them (3g)', effects: [{ resource: 'gold', amount: -3 }, { resource: 'influence', amount: 4 }, { resource: 'faith', amount: 1 }], requiresResource: { gold: 3 }, consequence: 'refugee_farmers' },
+      { text: 'Recruit able-bodied', effects: [{ resource: 'momentum', amount: 3 }] },
+      { text: 'Turn them away', effects: [{ resource: 'gold', amount: 1 }] },
+    ],
+  },
+
   // ── Faction-colored events (S7-04 through S7-08) ──
   ...RED_EVENTS,
   ...BLUE_EVENTS,
