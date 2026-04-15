@@ -25,9 +25,7 @@ if (typeof document !== 'undefined' && !document.getElementById('end-screen-styl
       from { opacity: 0; transform: scale(0.95); }
       to { opacity: 1; transform: scale(1); }
     }
-    @media (max-width: 600px) {
-      .ornate-frame { padding: 28px 20px 24px !important; }
-    }
+    /* Responsive padding handled by OrnateFrame CSS classes */
   `;
   document.head.appendChild(el);
 }

@@ -187,13 +187,13 @@ export function HubScreen() {
         />
 
         {/* Two-column layout */}
-        <div class="hub-container" style={{
+        <div class="hub-container hub-columns" style={{
           display: 'flex', flexDirection: 'row', flexWrap: 'wrap',
           alignItems: 'flex-start', gap: '12px',
         }}>
 
           {/* ── LEFT: Council + Embark + Provinces ── */}
-          <div style={{ flex: '1 1 0', minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ flex: '1 1 180px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
             {/* Council panel */}
             <div style={{ ...PANEL, background: 'var(--color-bg-secondary)', animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both' }}>
@@ -368,7 +368,7 @@ export function HubScreen() {
           </div>
 
           {/* ── RIGHT: Sidebar panels ── */}
-          <div style={{ flex: '1 1 0', minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ flex: '1 1 180px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
             {/* Doctrines Summary */}
             <div style={{ ...PANEL, background: 'var(--color-bg-secondary)', animation: 'panel-slide-in var(--duration-slow) var(--ease-default) both', animationDelay: '0s' }}>

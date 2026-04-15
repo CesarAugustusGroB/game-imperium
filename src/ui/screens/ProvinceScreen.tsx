@@ -232,11 +232,13 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
 
     /* ── Responsive ── */
     @media (max-width: 720px) {
-      .ornate-frame { padding: 18px 14px; }
-      .ornate-title { font-size: 32px; letter-spacing: 4px; }
       .prov-layout { flex-direction: column !important; }
-      .prov-ledger { flex: 1 1 auto !important; }
+      .prov-ledger { flex: 1 1 auto !important; min-width: 0 !important; }
+      .prov-detail { max-height: none !important; }
       .inv-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+    @media (max-width: 400px) {
+      .inv-grid { grid-template-columns: 1fr !important; }
     }
 
     /* ── Tax sliders ── */

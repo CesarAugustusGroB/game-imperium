@@ -955,7 +955,7 @@ export function NodeMapScreen() {
                   class="city-card"
                   onClick={() => handleCityChosen(city)}
                   style={{
-                    width: '260px', display: 'flex', flexDirection: 'column', gap: '0',
+                    flex: '1 1 240px', maxWidth: '260px', display: 'flex', flexDirection: 'column', gap: '0',
                     background: 'var(--color-marble-dark)',
                     border: '1px solid var(--color-border-default)',
                     borderTop: '2px solid var(--color-gold-secondary)',

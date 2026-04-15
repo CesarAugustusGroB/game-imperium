@@ -47,7 +47,7 @@ function CommanderCard({ commander }: { commander: Commander }) {
       onMouseLeave={() => { hoveredId.value = null; }}
       onClick={() => selectCommander(commander)}
       style={{
-        width: '210px',
+        width: 'min(210px, calc(50vw - 32px))',
         background: isSelected
           ? `linear-gradient(135deg, ${color}30, ${color}18)`
           : `linear-gradient(135deg, var(--color-bg-secondary), var(--color-bg-primary))`,

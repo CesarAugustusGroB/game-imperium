@@ -218,7 +218,7 @@ export function DoctrineScreen() {
                     onDragStart={canEquip ? (e) => handleDragStart(e as unknown as DragEvent, d.id) : undefined}
                     onDragEnd={handleDragEnd}
                     style={{
-                      width: '130px', padding: '10px',
+                      flex: '1 1 120px', maxWidth: '180px', padding: '10px',
                       background: `rgba(30, 28, 48, ${canEquip ? '0.8' : '0.45'})`,
                       border: `1px solid rgba(180, 160, 100, ${canEquip ? '0.2' : '0.06'})`,
                       borderTop: `3px solid ${FACTION_COLORS[d.color]}`,
@@ -336,7 +336,7 @@ export function DoctrineScreen() {
                     class="doctrine-coll-card"
                     onClick={() => handleEquipToSlot(equipTargetSlot.value!, d)}
                     style={{
-                      width: '120px', padding: '10px',
+                      flex: '1 1 110px', maxWidth: '160px', padding: '10px',
                       background: 'var(--color-bg-secondary)',
                       border: '1px solid var(--color-border-default)',
                       borderTop: `3px solid ${FACTION_COLORS[d.color]}`,

@@ -163,7 +163,7 @@ export function DoctrineSlot({
         class={`doctrine-slot-empty${onEquip ? ' doctrine-slot-clickable' : ''}`}
         onClick={onEquip}
         style={{
-          width: '140px',
+          width: 'min(140px, calc(25vw - 8px))',
           height: '180px',
           background: 'var(--color-bg-secondary)',
           border: '2px dashed var(--color-border-subtle)',
@@ -233,7 +233,7 @@ export function DoctrineSlot({
     <div
       class="doctrine-slot-card"
       style={{
-        width: '140px',
+        width: 'min(140px, calc(25vw - 8px))',
         height: '180px',
         background: 'var(--color-bg-secondary)',
         borderRadius: 'var(--radius-md)',

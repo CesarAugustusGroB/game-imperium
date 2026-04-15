@@ -114,6 +114,7 @@ export function LegateHiringScreen() {
             display: 'flex',
             alignItems: 'flex-start',
             gap: '14px',
+            flexWrap: 'wrap',
           }}>
             <Portrait alt={currentLegate.name} size="medium" />
 
@@ -164,9 +165,10 @@ export function LegateHiringScreen() {
 
         {/* ── Candidate grid ── */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+          display: 'flex',
+          flexWrap: 'wrap',
           gap: '12px',
+          justifyContent: 'center',
           marginBottom: '24px',
         }}>
           {pool.map(candidate => {
@@ -179,6 +181,8 @@ export function LegateHiringScreen() {
                 key={candidate.id}
                 class="legate-card"
                 style={{
+                  flex: '1 1 200px',
+                  maxWidth: '280px',
                   background: 'var(--color-bg-secondary)',
                   border: '1px solid var(--color-border-subtle)',
                   borderRadius: 'var(--radius-md)',

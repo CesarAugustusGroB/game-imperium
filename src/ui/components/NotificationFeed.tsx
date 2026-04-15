@@ -36,7 +36,7 @@ function NotifCard({ notif }: { notif: Notification }): JSX.Element {
     <div
       class="notif-card"
       style={{
-        width: '280px',
+        width: 'min(280px, calc(100vw - 32px))',
         background: 'var(--color-bg-primary)',
         backdropFilter: 'blur(var(--blur-panel))',
         WebkitBackdropFilter: 'blur(var(--blur-panel))',

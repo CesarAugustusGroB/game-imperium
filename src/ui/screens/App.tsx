@@ -60,9 +60,12 @@ if (typeof document !== 'undefined' && !document.getElementById('screen-transiti
     @media (max-width: 900px) {
       .curtain-img { opacity: 0.3 !important; }
     }
-    @media (max-width: 600px) {
+    @media (max-width: 640px) {
       .curtain-img { display: none !important; }
       .screen-wrapper { padding-top: 42px !important; }
+      /* Hub two-column stack */
+      .hub-columns { flex-direction: column !important; }
+      .hub-columns > * { min-width: 0 !important; width: 100% !important; }
     }
   `;
   document.head.appendChild(el);

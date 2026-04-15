@@ -25,6 +25,20 @@ if (typeof document !== 'undefined' && !document.getElementById('ornate-styles')
       border-radius: calc(var(--radius-lg) - 4px);
       pointer-events: none;
     }
+    /* Responsive padding classes */
+    .ornate-pad-default { padding: 28px 32px; }
+    .ornate-pad-compact { padding: 20px 24px; }
+    .ornate-pad-hero    { padding: 40px 48px; }
+    @media (max-width: 640px) {
+      .ornate-pad-default { padding: 20px 16px; }
+      .ornate-pad-compact { padding: 16px 14px; }
+      .ornate-pad-hero    { padding: 28px 20px; }
+    }
+    @media (max-width: 400px) {
+      .ornate-pad-default { padding: 16px 12px; }
+      .ornate-pad-compact { padding: 12px 12px; }
+      .ornate-pad-hero    { padding: 20px 16px; }
+    }
     /* Corner ornaments — 4 absolutely positioned spans drawn as bracket pieces */
     .ornate-corner {
       position: absolute;
@@ -68,10 +82,20 @@ if (typeof document !== 'undefined' && !document.getElementById('ornate-styles')
       text-transform: uppercase;
       line-height: 1;
       text-shadow: 0 2px 10px rgba(240, 208, 128, 0.25), 0 0 24px rgba(0, 0, 0, 0.4);
+      word-break: break-word;
     }
     .ornate-title-sm {
       font-size: 28px;
       letter-spacing: 5px;
+    }
+    @media (max-width: 640px) {
+      .ornate-eyebrow { letter-spacing: 3px; }
+      .ornate-title   { font-size: 30px; letter-spacing: 5px; }
+      .ornate-title-sm { font-size: 22px; letter-spacing: 3px; }
+    }
+    @media (max-width: 400px) {
+      .ornate-title   { font-size: 24px; letter-spacing: 3px; }
+      .ornate-title-sm { font-size: 19px; letter-spacing: 2px; }
     }
     .ornate-divider {
       height: 1px;
@@ -95,6 +119,9 @@ if (typeof document !== 'undefined' && !document.getElementById('ornate-styles')
       color: var(--color-gold-primary);
       font-weight: 700;
       font-size: var(--font-size-sm);
+    }
+    @media (max-width: 640px) {
+      .ornate-stat-chip { padding: 3px 7px; gap: 3px; }
     }
     .ornate-close-btn {
       width: 32px; height: 32px;
@@ -184,14 +211,14 @@ export function OrnateFrame({
   style,
   onClick,
 }: OrnateFrameProps) {
-  const pad =
-    padding === 'compact' ? '20px 24px' :
-    padding === 'hero'    ? '40px 48px' :
-                            '28px 32px';
+  const padClass =
+    padding === 'compact' ? 'ornate-pad-compact' :
+    padding === 'hero'    ? 'ornate-pad-hero' :
+                            'ornate-pad-default';
   return (
     <div
-      class={`ornate-frame${className ? ' ' + className : ''}`}
-      style={{ width, padding: pad, ...style }}
+      class={`ornate-frame ${padClass}${className ? ' ' + className : ''}`}
+      style={{ width, ...style }}
       onClick={onClick}
     >
       <span class="ornate-corner tl" />

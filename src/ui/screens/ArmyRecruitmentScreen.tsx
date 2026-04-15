@@ -191,7 +191,7 @@ export function ArmyRecruitmentScreen() {
                     </div>
 
                     {/* Stat bars */}
-                    <div style={{ maxWidth: '260px' }}>
+                    <div style={{ maxWidth: 'min(260px, 100%)' }}>
                       <StatBar label="ATK" value={cohort.stats.atk} max={STAT_MAX.atk} color={STAT_COLORS.atk} />
                       <StatBar label="DEF" value={cohort.stats.def} max={STAT_MAX.def} color={STAT_COLORS.def} />
                       <StatBar label="HP"  value={cohort.stats.hp}  max={STAT_MAX.hp}  color={STAT_COLORS.hp} />
@@ -224,7 +224,7 @@ export function ArmyRecruitmentScreen() {
           </div>
 
           {/* ── RIGHT: Army composition ── */}
-          <div style={{ flex: '1 1 220px', minWidth: '220px' }}>
+          <div style={{ flex: '1 1 220px', minWidth: 0 }}>
             <div style={{
               ...PANEL,
               background: 'var(--color-bg-secondary)',

@@ -143,7 +143,7 @@ export function CouncilScreen() {
         {/* ── 3 Advisor Slots ── */}
         <div style={{
           display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center',
-          marginBottom: '24px',
+          marginBottom: '24px', width: '100%',
         }}>
           {slots.map((advisor, i) => {
             if (!advisor) {
@@ -154,7 +154,7 @@ export function CouncilScreen() {
                   class="council-slot-empty"
                   onClick={() => { equipTargetSlot.value = i; }}
                   style={{
-                    width: '140px', height: '160px',
+                    flex: '1 1 160px', maxWidth: '280px', height: '180px',
                     border: '2px dashed var(--color-border-default)',
                     borderRadius: 'var(--radius-md)',
                     background: 'var(--color-bg-primary)',
@@ -164,12 +164,12 @@ export function CouncilScreen() {
                   }}
                 >
                   <div style={{
-                    fontSize: '24px', color: 'var(--color-border-default)',
+                    fontSize: '28px', color: 'var(--color-border-default)',
                     lineHeight: 1,
                   }}>+</div>
                   <div style={{
                     fontSize: 'var(--font-size-sm)', color: 'var(--color-border-default)',
-                    letterSpacing: '1px', textTransform: 'uppercase',
+                    letterSpacing: '1.5px', textTransform: 'uppercase',
                   }}>
                     Empty Slot
                   </div>
@@ -212,12 +212,12 @@ export function CouncilScreen() {
               <div
                 key={advisor.id}
                 style={{
-                  width: '140px', height: 'var(--slot-height-council)',
+                  flex: '1 1 160px', maxWidth: '280px', minHeight: '180px',
                   background: 'var(--color-bg-primary)',
                   border: '1px solid var(--color-border-default)',
                   borderTop: `4px solid ${fColor}`,
                   borderRadius: 'var(--radius-md)',
-                  padding: '10px',
+                  padding: '12px',
                   display: 'flex', flexDirection: 'column',
                   position: 'relative',
                 }}
@@ -416,7 +416,7 @@ export function CouncilScreen() {
           disabled={seatedCount === 0}
           onClick={handleEmbark}
           style={{
-            width: '240px', marginBottom: '12px',
+            width: 'min(240px, 100%)', marginBottom: '12px',
             padding: '12px 24px',
             fontSize: 'var(--font-size-lg)',
             fontWeight: 600,
@@ -502,7 +502,7 @@ export function CouncilScreen() {
                       class="council-advisor-card"
                       onClick={() => handlePickAdvisor(advisor)}
                       style={{
-                        width: '120px', padding: '10px',
+                        flex: '1 1 110px', maxWidth: '160px', padding: '10px',
                         background: 'var(--color-bg-secondary)',
                         border: '1px solid var(--color-border-default)',
                         borderTop: `3px solid ${fColor}`,

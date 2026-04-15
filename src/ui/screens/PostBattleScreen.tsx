@@ -206,7 +206,7 @@ export function PostBattleScreen() {
             src="/asset/victory_banner.png"
             alt="Victory"
             style={{
-              width: '320px', height: 'auto',
+              width: 'min(320px, 90%)', height: 'auto',
               marginBottom: '12px',
               filter: 'drop-shadow(0 4px 12px rgba(180, 140, 40, 0.4))',
             }}
@@ -217,7 +217,7 @@ export function PostBattleScreen() {
             src="/asset/defeat_label.png"
             alt="Defeat"
             style={{
-              width: '320px', height: 'auto',
+              width: 'min(320px, 90%)', height: 'auto',
               marginBottom: '12px',
               filter: 'drop-shadow(0 4px 12px rgba(80, 40, 20, 0.5))',
             }}
