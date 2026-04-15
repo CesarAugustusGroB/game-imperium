@@ -13,7 +13,7 @@ import { TRADE_GOOD_DATA } from '../../data/trade-goods';
  * Universal (any terrain): castrum, basilica, pantheon, market, aqueduct, insula.
  * Terrain-exclusive (S17-05): port, fishery, villa, stables, lumber_camp,
  *   mountain_pass, oasis_market, caravan_post, oracle_shrine, reed_harvest.
- * Pending (future task): granary, mine, forge, sacred_grove, training_ground, watchtower.
+ * Pending (future task): mine, forge, sacred_grove, training_ground, watchtower.
  */
 export type InvestmentType =
   | 'castrum'
@@ -22,6 +22,8 @@ export type InvestmentType =
   | 'market'
   | 'aqueduct'
   | 'insula'
+  | 'granary'        // S20 — Food & Population
+  | 'gardens'        // S20 — Food & Population
   // ── Terrain-exclusive (S17-05) ──
   | 'port'          // Coast
   | 'fishery'       // Coast
@@ -74,6 +76,8 @@ export interface Province {
   upperTax: TaxLevel;
   /** Fractional population growth banked toward the next full population point. */
   growthAccumulator: number;
+  /** Consecutive seasons of food deficit. 0 = no famine. Drives escalating starvation (S20). */
+  famineTimer: number;
   /**
    * Seasons remaining during which rebuilding is blocked (post-rebellion rubble).
    * 0 = no rubble. Set to 2 after the 1st/2nd rebellion, 8 after Ruined.
@@ -93,6 +97,10 @@ export interface InvestmentLevelEffect {
   unrestChange: number;    // negative = suppresses unrest per spoke
   buildCost: ResourceCost; // resources to build / upgrade to this level
   description: string;
+  /** Food production bonus for this tier (S20 — Food & Population). */
+  foodBonus?: number;
+  /** Beautiness score contribution for this tier (S20 — Immigration). Negative = industrial penalty. */
+  beautinessBonus?: number;
 }
 
 export interface InvestmentData {
@@ -266,6 +274,27 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
       { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 3 },                         description: '+1 Gold/spoke. +1 Pop Growth/spoke.' },
       { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 8 },                         description: '+2 Gold/spoke. +2 Pop Growth/spoke.' },
       { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 15 },                        description: '+3 Gold/spoke. +3 Pop Growth/spoke. Marshland mastered.' },
+    ],
+  },
+  // ── S20: Food & Population ──
+  granary: {
+    type: 'granary', color: 'white',
+    name: 'Granary',
+    flavour: 'Raised storehouses keep grain dry and the province fed through lean seasons.',
+    levels: [
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: 0,  buildCost: { gold: 5 },                         description: '+1 Food/spoke. Stores surplus grain.', foodBonus: 1 },
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: 0,  buildCost: { gold: 10 },                        description: '+2 Food/spoke. Improved storage capacity.', foodBonus: 2 },
+      { incomeBonus: {},                           expensesBonus: 2, unrestChange: 0,  buildCost: { gold: 20 },                        description: '+3 Food/spoke. Famine recovery -1 season.', foodBonus: 3 },
+    ],
+  },
+  gardens: {
+    type: 'gardens', color: 'gold',
+    name: 'Gardens & Fountains',
+    flavour: 'Terraced gardens and marble fountains draw settlers from across the realm.',
+    levels: [
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: -2, buildCost: { gold: 6, influence: 2 },            description: '+10% Beautiness. -2 Unrest/spoke.', beautinessBonus: 10 },
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: -4, buildCost: { gold: 12, influence: 4 },           description: '+15% Beautiness. -4 Unrest/spoke.', beautinessBonus: 15 },
+      { incomeBonus: {},                           expensesBonus: 2, unrestChange: -6, buildCost: { gold: 22, influence: 6 },           description: '+20% Beautiness. -6 Unrest/spoke. A jewel of the empire.', beautinessBonus: 20 },
     ],
   },
 };
@@ -472,6 +501,7 @@ export function createProvince(name: string, overrides?: Partial<Province>): Pro
     lowerTax: 3,
     upperTax: 3,
     growthAccumulator: 0,
+    famineTimer: 0,
     rubbleTimer: 0,
     terrain: 'plains',
     tradeGood: null,

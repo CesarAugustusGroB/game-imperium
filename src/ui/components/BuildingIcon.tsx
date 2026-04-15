@@ -219,6 +219,32 @@ const BUILDING_SVG: Record<InvestmentType, JSX.Element> = {
       <path d="M10 52c6-4 38-4 44 0" stroke="currentColor" strokeWidth="3" fill="none" />
     </svg>
   ),
+  // Granary — raised storehouse with peaked roof
+  granary: (
+    <svg viewBox="0 0 64 64" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 56h56v4H4z" />
+      <rect x="12" y="32" width="40" height="24" opacity="0.85" />
+      <path d="M32 12 8 32h48z" />
+      <rect x="10" y="50" width="4" height="6" fill="#0a0a14" opacity="0.5" />
+      <rect x="50" y="50" width="4" height="6" fill="#0a0a14" opacity="0.5" />
+      <rect x="18" y="38" width="8" height="8" fill="#0a0a14" opacity="0.55" />
+      <rect x="38" y="38" width="8" height="8" fill="#0a0a14" opacity="0.55" />
+      <rect x="28" y="42" width="8" height="14" fill="#0a0a14" opacity="0.65" />
+    </svg>
+  ),
+  // Gardens — fountain with flanking hedges
+  gardens: (
+    <svg viewBox="0 0 64 64" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 56h56v4H4z" />
+      <rect x="30" y="34" width="4" height="22" />
+      <ellipse cx="32" cy="34" rx="4" ry="6" />
+      <path d="M28 30c-4-8 0-16 4-20 4 4 8 12 4 20z" opacity="0.8" />
+      <path d="M22 28c-2-6 2-12 6-14 2 4 2 10-2 14z" opacity="0.6" />
+      <path d="M42 28c2-6-2-12-6-14-2 4-2 10 2 14z" opacity="0.6" />
+      <ellipse cx="14" cy="48" rx="10" ry="8" opacity="0.7" />
+      <ellipse cx="50" cy="48" rx="10" ry="8" opacity="0.7" />
+    </svg>
+  ),
 };
 
 interface BuildingIconProps {

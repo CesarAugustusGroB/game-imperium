@@ -165,6 +165,8 @@ export const UNIVERSAL_BUILDINGS: InvestmentType[] = [
   'market',
   'aqueduct',
   'insula',
+  'granary',   // S20 — Food & Population
+  'gardens',   // S20 — Food & Population
 ];
 
 /**
