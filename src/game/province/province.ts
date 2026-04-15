@@ -363,6 +363,15 @@ export function getProvinceIncome(
     }
   }
 
+  // Unique feature flat income
+  const feat = province.uniqueFeature;
+  if (feat) {
+    if (feat.goldPerSeason) total.gold = (total.gold ?? 0) + feat.goldPerSeason;
+    if (feat.faithPerSeason) total.faith = (total.faith ?? 0) + feat.faithPerSeason;
+    if (feat.influencePerSeason) total.influence = (total.influence ?? 0) + feat.influencePerSeason;
+    if (feat.momentumPerSeason) total.momentum = (total.momentum ?? 0) + feat.momentumPerSeason;
+  }
+
   // Apply governor income-bonus traits (percentage boost per resource)
   for (const trait of governorTraits) {
     if (trait.type === 'income-bonus' && total[trait.resource] != null) {
@@ -441,12 +450,16 @@ export function getUnrestModifier(
  * Get investment cost discount percentage from governor traits.
  * Returns 0 if no discount applies.
  */
-export function getInvestmentDiscount(governorTraits: GovernorTrait[]): number {
+export function getInvestmentDiscount(governorTraits: GovernorTrait[], province?: Province): number {
   let discount = 0;
   for (const trait of governorTraits) {
     if (trait.type === 'investment-discount') {
       discount += trait.percent;
     }
+  }
+  // Unique feature build cost discount
+  if (province?.uniqueFeature?.buildCostDiscount) {
+    discount += province.uniqueFeature.buildCostDiscount;
   }
   return discount;
 }
@@ -626,6 +639,10 @@ export function calculatePWG(province: Province, terrain?: string): number {
   if (province.tradeGood) {
     pwg += TRADE_GOOD_DATA[province.tradeGood].wealthGrowthBonus;
   }
+  // Unique feature wealth growth bonus
+  if (province.uniqueFeature?.wealthGrowthBonus) {
+    pwg += province.uniqueFeature.wealthGrowthBonus;
+  }
   return pwg;
 }
 
@@ -759,6 +776,11 @@ export function calculateFoodProduction(
     if (trait.type === 'population-growth') food += trait.amount;
   }
 
+  // Unique feature food bonus
+  if (province.uniqueFeature?.foodPerSeason) {
+    food += province.uniqueFeature.foodPerSeason;
+  }
+
   return food;
 }
 
@@ -820,6 +842,10 @@ export function calculateBeautiness(province: Province): number {
   for (const inv of province.investments) {
     const effect = INVESTMENT_DATA[inv.type]?.levels[inv.level - 1];
     score += effect?.beautinessBonus ?? 0;
+  }
+  // Unique feature beautiness bonus
+  if (province.uniqueFeature?.beautinessBonus) {
+    score += province.uniqueFeature.beautinessBonus;
   }
   return Math.max(0, Math.min(100, score));
 }
@@ -962,8 +988,9 @@ export function calculateUnrestDelta(
 ): number {
   const taxUnrest = getLowerTaxUnrest(province.lowerTax) + getUpperTaxUnrest(province.upperTax);
   const famineUnrest = getFamineUnrest(province);
+  const featureUnrest = province.uniqueFeature?.unrestPerSeason ?? 0;
   const mod = getUnrestModifier(province, governorTraits); // negative = suppresses unrest
-  const base = taxUnrest + famineUnrest + doom - 2 + mod;
+  const base = taxUnrest + famineUnrest + featureUnrest + doom - 2 + mod;
   const accel = province.unrest > 60 ? (province.unrest - 60) * 0.25 : 0;
   return base + accel;
 }
