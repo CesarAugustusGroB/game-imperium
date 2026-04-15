@@ -57,8 +57,8 @@ export interface TradeGoodData {
 export const TRADE_GOOD_DATA: Record<TradeGoodType, TradeGoodData> = {
   grain: {
     id: 'grain', name: 'Grain',
-    flatGold: 0, flatGrowth: 3, flatFaith: 0, flatMomentum: 0, wealthGrowthBonus: 0,
-    special: { type: 'pop-cap-bonus', amount: 2 },
+    flatGold: 0, flatGrowth: 5, flatFaith: 0, flatMomentum: 0, wealthGrowthBonus: 0,
+    special: null,
     validTerrains: ['farmland'],
   },
   iron: {

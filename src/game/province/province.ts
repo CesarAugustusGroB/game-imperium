@@ -262,9 +262,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Oracle Shrine',
     flavour: 'Marsh vapours and the whisper of reeds bring visions to the faithful.',
     levels: [
-      { incomeBonus: { faith: 1 },                expensesBonus: 0, unrestChange: -3, buildCost: { gold: 4, faith: 2 },              description: '+1 Faith/spoke. -3 Unrest/spoke. Omens guide the province.' },
-      { incomeBonus: { faith: 2 },                expensesBonus: 1, unrestChange: -5, buildCost: { gold: 8, faith: 4 },              description: '+2 Faith/spoke. -5 Unrest/spoke. +1 extra event choice.' },
-      { incomeBonus: { faith: 3 },                expensesBonus: 1, unrestChange: -8, buildCost: { gold: 15, faith: 6 },             description: '+3 Faith/spoke. -8 Unrest/spoke. Rare prophecy events.' },
+      { incomeBonus: { faith: 1 },                expensesBonus: 0, unrestChange: -3, buildCost: { gold: 4, faith: 2 },              description: '+1 Faith/spoke. +1 Food. -3 Unrest/spoke.', foodBonus: 1 },
+      { incomeBonus: { faith: 2 },                expensesBonus: 1, unrestChange: -5, buildCost: { gold: 8, faith: 4 },              description: '+2 Faith/spoke. +1 Food. -5 Unrest/spoke.', foodBonus: 1 },
+      { incomeBonus: { faith: 3 },                expensesBonus: 1, unrestChange: -8, buildCost: { gold: 15, faith: 6 },             description: '+3 Faith/spoke. +2 Food. -8 Unrest/spoke.', foodBonus: 2 },
     ],
   },
   reed_harvest: {
@@ -308,10 +308,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
  */
 export type SynergyBonus =
   | { type: 'pwg'; amount: number }                  // +X Wealth Growth per season
-  | { type: 'growth'; amount: number }               // +X Pop Growth per season
+  | { type: 'food'; amount: number }                 // +X Food production per season (S20)
   | { type: 'gold'; amount: number }                 // +X gold (× wealth tier × tax, as building income)
   | { type: 'unrest'; amount: number }               // −X Unrest per season (amount is the reduction)
-  | { type: 'pop-cap'; amount: number }              // +X max population
   | { type: 'unit-cost-discount'; percent: number }; // −X% unit recruit cost (battle system)
 
 export interface SynergyData {
@@ -328,9 +327,9 @@ export interface SynergyData {
 export const SYNERGY_DATA: SynergyData[] = [
   { buildingA: 'market',   buildingB: 'port',         bonus: { type: 'pwg',                amount: 2  }, label: 'Trade Hub' },
   { buildingA: 'castrum',  buildingB: 'forge',        bonus: { type: 'unit-cost-discount', percent: 10 }, label: 'Military-Industrial' },
-  { buildingA: 'aqueduct', buildingB: 'granary',      bonus: { type: 'growth',             amount: 2  }, label: 'Irrigated Farms' },
+  { buildingA: 'aqueduct', buildingB: 'granary',      bonus: { type: 'food',               amount: 2  }, label: 'Irrigated Farms' },
   { buildingA: 'basilica', buildingB: 'sacred_grove', bonus: { type: 'unrest',             amount: 5  }, label: 'Religious Harmony' },
-  { buildingA: 'insula',   buildingB: 'aqueduct',     bonus: { type: 'pop-cap',            amount: 1  }, label: 'Public Works' },
+  { buildingA: 'insula',   buildingB: 'aqueduct',     bonus: { type: 'unrest',             amount: 5  }, label: 'Civic Order' },
   { buildingA: 'market',   buildingB: 'mine',         bonus: { type: 'gold',               amount: 1  }, label: 'Resource Commerce' },
 ];
 
@@ -771,6 +770,11 @@ export function calculateFoodProduction(
     food += TRADE_GOOD_DATA[province.tradeGood].flatGrowth;
   }
 
+  // Synergy food bonuses (e.g., Aqueduct+Granary → Irrigated Farms +2 food)
+  for (const syn of getActiveSynergies(province)) {
+    if (syn.bonus.type === 'food') food += syn.bonus.amount;
+  }
+
   // Governor population-growth trait → food production bonus
   for (const trait of governorTraits) {
     if (trait.type === 'population-growth') food += trait.amount;
@@ -874,9 +878,9 @@ export function rollImmigration(province: Province): { province: Province; immig
 
 // ── Population growth accumulator ──
 
-/** Growth threshold to gain 1 population point: `5 + current_pop`. */
+/** Growth threshold to gain 1 population point: `3 + current_pop`. */
 export function calculateGrowthThreshold(currentPop: number): number {
-  return 5 + currentPop;
+  return 3 + currentPop;
 }
 
 /**
