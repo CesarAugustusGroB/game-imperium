@@ -3,6 +3,7 @@ import { topologyData, territoryMap, claimedIndices, getAllTerritoryPositions } 
 import { provinces } from '../../game/province/province-store';
 import { selectedCommander } from '../../game/core/game-state';
 import { FACTION_COLORS } from '../../game/core/commander';
+import type { Province } from '../../game/province/province';
 
 // ── Props ──
 
@@ -32,8 +33,6 @@ function loadTerrainImage(): Promise<HTMLImageElement> {
 
   return terrainLoadPromise;
 }
-
-import type { Province } from '../../game/province/province';
 
 // ── Drawing constants ──
 

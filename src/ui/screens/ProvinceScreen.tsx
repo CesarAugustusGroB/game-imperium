@@ -630,7 +630,7 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
 
   // Apply governor + scroll investment discounts for display
   const traits = getGovernorTraits(province.id);
-  const governorDiscount = getInvestmentDiscount(traits);
+  const governorDiscount = getInvestmentDiscount(traits, province);
   const scrollDiscount = nextInvestmentDiscount.value;
   const effectiveDiscount = Math.min(90, governorDiscount + scrollDiscount);
   const cost = baseCost && effectiveDiscount > 0 ? applyInvestmentDiscount(baseCost, effectiveDiscount) : baseCost;

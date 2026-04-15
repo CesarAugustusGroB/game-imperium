@@ -173,7 +173,7 @@ export function buildInvestment(provinceId: string, type: InvestmentType): boole
 
   // Apply governor + scroll investment discounts
   const traits = getGovernorTraits(provinceId);
-  const governorDiscount = getInvestmentDiscount(traits);
+  const governorDiscount = getInvestmentDiscount(traits, province);
   const scrollDiscount = nextInvestmentDiscount.value;
   // Trade good build-cost discount: Marble -15%, Timber -10%
   let tradeDiscount = 0;
