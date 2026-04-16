@@ -58,7 +58,7 @@ export function TitleScreen() {
           <button
             class="ornate-btn-ghost"
             style={{ padding: '14px 24px', fontSize: 'var(--font-size-lg)', letterSpacing: '2px' }}
-            onClick={() => navigateTo('battle')}
+            onClick={() => navigateTo('battleV2')}
           >
             Quick Battle
           </button>

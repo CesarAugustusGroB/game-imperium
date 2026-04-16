@@ -40,6 +40,8 @@ export interface BattleUnit {
   // Doctrine: revive (unit revives once at threshold % HP)
   reviveThreshold: number; // 0 = no revive, >0 = revive at this % of maxHp
   hasRevived: boolean;
+  // Greedy AI: flipped on first combat (attack given or received)
+  hasEngaged: boolean;
 }
 
 export interface FloatingText {
@@ -55,4 +57,6 @@ export interface BattleConfig {
   rows: number;
   hexSize: number;
   victoryMode: VictoryMode;
+  /** When true, blue spawns at bottom (high r) and red at top (low r). Default: horizontal (left/right). */
+  vertical?: boolean;
 }

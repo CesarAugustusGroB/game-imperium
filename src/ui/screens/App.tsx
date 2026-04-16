@@ -14,6 +14,7 @@ import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
 import { ArmyRecruitmentScreen } from './ArmyRecruitmentScreen';
 import { LegateHiringScreen } from './LegateHiringScreen';
+import { BattleScreenV2 } from './BattleScreenV2';
 import { toggleMute, musicMuted } from '../sound/music';
 import { NotificationFeed } from '../components/NotificationFeed';
 import { loadMetaSave } from '../../game/core/meta-save';
@@ -131,6 +132,8 @@ function ScreenContent() {
       return <LegateHiringScreen />;
     case 'node-map':
       return <NodeMapScreen />;
+    case 'battleV2':
+      return <BattleScreenV2 />;
     case 'post-battle':
       return <PostBattleScreen />;
     case 'victory':
@@ -168,7 +171,7 @@ function ScreenContent() {
 export function App() {
   const screen = currentScreen.value;
   const exiting = transitionState.value === 'exiting';
-  const showResourceBar = screen !== 'title' && screen !== 'commander-select' && screen !== 'battle';
+  const showResourceBar = screen !== 'title' && screen !== 'commander-select' && screen !== 'battle' && screen !== 'battleV2';
 
   const showCurtains = false;
 

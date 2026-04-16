@@ -8,12 +8,15 @@ import { selectedCommander, veteranStacks, allianceCount, threatLevel, globalSea
 import { currentSpoke, currentNodeIndex } from '../game/progression/spoke';
 import { generateEnemyArmy } from '../game/army/enemy-army-generator';
 import { VETERAN_BONUS_PER_STACK, VETERAN_SOFT_CAP_STACKS, VETERAN_BONUS_ABOVE_CAP, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO, WAR_CRY_DAMAGE_BONUS } from './battle-config';
-import { offsetToAxial } from './hex';
+import { offsetToAxial, offsetToAxialFlatTop } from './hex';
 import { getActiveEffects } from '../game/items/doctrine-store';
 import type { DoctrineEffect } from '../game/items/doctrine';
 import { getProvinceEffects, provinces } from '../game/province/province-store';
 import { consumeCrusadeBattle, warCryActive, pendingEnemyConversions } from '../game/progression/strategic-store';
+import { COHORT_CATALOG } from '../game/army/cohort-data';
+import { ENEMY_COHORTS } from '../game/army/enemy-cohort-data';
 import { pauseMusic, resumeMusic } from '../ui/sound/music';
+import { spriteReloadTrigger } from './battle-settings';
 
 import type { ArmyData } from '../types/index';
 
@@ -31,6 +34,7 @@ export class BattleMode {
   private onExitCallback: () => void;
   private _isVisible = false;
   private boundToggleCoords: () => void;
+  private lastSpriteReload = 0;
 
   constructor(onExitCallback: () => void) {
     this.onExitCallback = onExitCallback;
@@ -251,8 +255,105 @@ export class BattleMode {
     }
   }
 
+  /**
+   * Quick-battle entry for BattleScreenV2 — spawns default armies in a
+   * vertical layout (blue at bottom, red at top) without requiring
+   * spoke/commander state. Used for prototyping and direct #battleV2 access.
+   */
+  enterQuickBattle(): void {
+    this._isVisible = true;
+    pauseMusic();
+
+    // Vertical grid: hexSize 31 (60px sprites), grid sized to fit all units with room
+    this._state = new BattleState({
+      cols: 50,
+      rows: 30,
+      hexSize: 31,
+      victoryMode: 'annihilation',
+      vertical: true,
+    });
+    this._state.generateGrid();
+
+    // ── Cohort stat templates ──
+    const hastati   = COHORT_CATALOG.find(c => c.id === 'hastati')!;
+    const principes = COHORT_CATALOG.find(c => c.id === 'principes')!;
+    const triarii   = COHORT_CATALOG.find(c => c.id === 'triarii')!;
+    const equites   = COHORT_CATALOG.find(c => c.id === 'equites')!;
+    const velites   = COHORT_CATALOG.find(c => c.id === 'velites')!;
+
+    const warrior      = ENEMY_COHORTS.find(c => c.id === 'barbarian-warrior')!;
+    const champion     = ENEMY_COHORTS.find(c => c.id === 'barbarian-champion')!;
+    const raider       = ENEMY_COHORTS.find(c => c.id === 'barbarian-raider')!;
+    const shieldbearer = ENEMY_COHORTS.find(c => c.id === 'barbarian-shieldbearer')!;
+
+    // 2 lines × 25 units per army = 50 units per faction, 100 total
+    const LINE_COUNT = 25;
+    const startCol = 12;
+
+    // Spartan unit types (cycled across 25 columns)
+    const spartanTypes: { template: typeof hastati; name: string; role: typeof hastati.role }[] = [
+      { template: hastati, name: 'Hoplite', role: 'vanguard' },
+      { template: principes, name: 'Spartiate', role: 'vanguard' },
+      { template: velites, name: 'Psiloi', role: 'vanguard' },
+      { template: triarii, name: 'Perioikoi', role: 'reserve' },
+      { template: equites, name: 'Hippeis', role: 'guard' },
+    ];
+
+    // Persian unit types (cycled across 25 columns)
+    const persianTypes: { template: typeof warrior; name: string; role: typeof warrior.role }[] = [
+      { template: warrior, name: 'Sparabara', role: 'vanguard' },
+      { template: champion, name: 'Immortal', role: 'vanguard' },
+      { template: raider, name: 'Takabara', role: 'reserve' },
+      { template: shieldbearer, name: 'Gerrophora', role: 'guard' },
+    ];
+
+    // Blue: 2 rows (front row 22, back row 24)
+    const blueRows = [22, 24];
+    for (const row of blueRows) {
+      for (let i = 0; i < LINE_COUNT; i++) {
+        const type = spartanTypes[i % spartanTypes.length];
+        const col = startCol + i;
+        const hex = offsetToAxialFlatTop(col, row);
+        if (this._state.isValidHex(hex)) {
+          const stats = { ...type.template.stats, hp: type.template.stats.hp * 2 };
+          this._state.addUnit('blue', hex, `${type.name}`, type.role, stats);
+        }
+      }
+    }
+
+    // Red: 2 rows (front row 7, back row 5)
+    const redRows = [7, 5];
+    for (const row of redRows) {
+      for (let i = 0; i < LINE_COUNT; i++) {
+        const type = persianTypes[i % persianTypes.length];
+        const col = startCol + i;
+        const hex = offsetToAxialFlatTop(col, row);
+        if (this._state.isValidHex(hex)) {
+          const stats = { ...type.template.stats, hp: type.template.stats.hp * 2 };
+          this._state.addUnit('red', hex, `${type.name}`, type.role, stats);
+        }
+      }
+    }
+
+    // Record starting strengths and place stars
+    this._state.placeStarsAndStrength();
+
+    isFinalBattle.value = false;
+    lastEnemyArmy.value = null;
+
+    this.renderer.suppressVictoryOverlay = true;
+    this.renderer.setState(this._state);
+    this.input.setState(this._state);
+    this.resize(window.innerWidth, window.innerHeight);
+    this.input.attach();
+    initAbilityBar(this._state);
+    initDecretumBar(this._state);
+    document.getElementById('btn-coords')?.addEventListener('click', this.boundToggleCoords);
+  }
+
   exit(): void {
     this._isVisible = false;
+    this.renderer.suppressVictoryOverlay = false;
     resumeMusic();
     this.input.detach();
     destroyAbilityBar();
@@ -263,6 +364,12 @@ export class BattleMode {
 
   update(dt: number): void {
     if (!this._isVisible) return;
+
+    // Update camera pan from WASD keys
+    this.input.updateCamera(dt);
+
+    // When paused, only allow camera pan — skip simulation
+    if (this._state.paused) return;
 
     // Tick all animations (movement, shake, flash, lunge, death, cooldowns)
     this._state.updateAnimations(dt);
@@ -282,6 +389,11 @@ export class BattleMode {
 
   render(): void {
     if (!this._isVisible) return;
+    // Reload sprites when settings change
+    if (spriteReloadTrigger.value !== this.lastSpriteReload) {
+      this.lastSpriteReload = spriteReloadTrigger.value;
+      this.renderer.reloadSprites();
+    }
     this.renderer.render();
   }
 

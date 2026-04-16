@@ -1,5 +1,5 @@
 import type { Hex, Point } from './hex';
-import { hexKey, hexNeighbors, hexDistance, offsetToAxial } from './hex';
+import { hexKey, hexNeighbors, hexDistance, offsetToAxial, offsetToAxialFlatTop, hexToPixel } from './hex';
 import type { BattleFaction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder } from './battle-types';
 import { playSfx } from '../ui/sound/sfx';
 import {
@@ -47,6 +47,7 @@ export class BattleState {
 
   // Combat state
   phase: BattlePhase = 'fighting';
+  paused = false;
   winner: BattleFaction | null = null;
   roundCount = 0;
   lieutenantOrder: LieutenantOrder = 'auto';
@@ -81,11 +82,14 @@ export class BattleState {
   generateGrid(): void {
     this.grid.clear();
     this.gridHexes.length = 0;
+    const flatTop = !!this.config.vertical;
     for (let col = 0; col < this.config.cols; col++) {
       for (let row = 0; row < this.config.rows; row++) {
-        // Skip col 0 even rows (jagged left edge)
-        if (col === 0 && row % 2 === 0) continue;
-        const hex = offsetToAxial(col, row);
+        if (!flatTop) {
+          // Pointy-top: skip col 0 even rows (jagged left edge)
+          if (col === 0 && row % 2 === 0) continue;
+        }
+        const hex = flatTop ? offsetToAxialFlatTop(col, row) : offsetToAxial(col, row);
         const key = hexKey(hex.q, hex.r);
         if (!this.grid.has(key)) {
           this.grid.add(key);
@@ -100,14 +104,28 @@ export class BattleState {
   }
 
   getGridOrigin(canvasW: number, canvasH: number): Point {
-    const sqrt3 = Math.sqrt(3);
     const s = this.config.hexSize;
-    // Pointy-top: width uses sqrt3, height uses 3/2
-    const totalW = this.config.cols * s * sqrt3 + s * sqrt3 * 0.5;
-    const totalH = (this.config.rows - 1) * s * 1.5 + s * 2;
+    const flatTop = !!this.config.vertical;
+
+    // Compute bounding box of all hex centers at origin (0,0)
+    const zero = { x: 0, y: 0 };
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const hex of this.gridHexes) {
+      const p = hexToPixel(hex, s, zero, flatTop);
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+
+    // Add hex radius padding
+    const pad = s;
+    const totalW = (maxX - minX) + pad * 2;
+    const totalH = (maxY - minY) + pad * 2;
+
     return {
-      x: (canvasW - totalW) / 2 + s * sqrt3 / 2,
-      y: (canvasH - totalH) / 2 + s,
+      x: (canvasW - totalW) / 2 + pad - minX,
+      y: (canvasH - totalH) / 2 + pad - minY,
     };
   }
 
@@ -127,6 +145,7 @@ export class BattleState {
       crackSeed: id * 7919, // prime for deterministic crack angles
       reviveThreshold: 0,
       hasRevived: false,
+      hasEngaged: false,
     };
     this.units.set(unit.id, unit);
     return unit;
@@ -191,6 +210,10 @@ export class BattleState {
   /** Reset a unit's action cooldown with random jitter. */
   resetCooldown(unit: BattleUnit): void {
     unit.actionCooldown = ACTION_COOLDOWN + (Math.random() - 0.5) * ACTION_JITTER * 2;
+  }
+
+  togglePause(): void {
+    this.paused = !this.paused;
   }
 
   /** Set the player's lieutenant order (governs all blue-faction AI behaviour). */
@@ -384,6 +407,10 @@ export class BattleState {
   }
 
   resolveCombat(attacker: BattleUnit, defender: BattleUnit): void {
+    // Mark both units as engaged (greedy AI trigger)
+    attacker.hasEngaged = true;
+    defender.hasEngaged = true;
+
     // Pin the defender — can't move until attacker is dead
     if (defender.pinnedBy === null) {
       defender.pinnedBy = attacker.id;
@@ -758,14 +785,25 @@ export class BattleState {
     this.placeFactionUnits('blue', blueArmy, blueLegate);
     this.placeFactionUnits('red', redArmy, redLegate);
 
+    this.placeStarsAndStrength();
+  }
+
+  /** Record starting strengths and place capture stars. Can be called after manual unit placement. */
+  placeStarsAndStrength(): void {
     // Record starting strengths for morale check
     this.startingStrength.set('blue', this.getBattleFactionStrength('blue'));
     this.startingStrength.set('red', this.getBattleFactionStrength('red'));
 
     // Place capture stars at the back-center of each side
-    const midRow = Math.floor(this.config.rows / 2);
-    this.stars.set('blue', offsetToAxial(0, midRow));
-    this.stars.set('red', offsetToAxial(this.config.cols - 1, midRow));
+    if (this.config.vertical) {
+      const midCol = Math.floor(this.config.cols / 2);
+      this.stars.set('blue', offsetToAxialFlatTop(midCol, this.config.rows - 1)); // bottom
+      this.stars.set('red', offsetToAxialFlatTop(midCol, 0));                      // top
+    } else {
+      const midRow = Math.floor(this.config.rows / 2);
+      this.stars.set('blue', offsetToAxial(0, midRow));
+      this.stars.set('red', offsetToAxial(this.config.cols - 1, midRow));
+    }
     this.captureProgress.set('blue', 0);
     this.captureProgress.set('red', 0);
   }

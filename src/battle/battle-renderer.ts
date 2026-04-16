@@ -4,6 +4,7 @@ import type { Point } from './hex';
 import { hexToPixel, hexCorners } from './hex';
 import { hexToCol } from './battle-zones';
 import { CAPTURE_DURATION, SCREEN_SHAKE_DURATION, SCREEN_SHAKE_INTENSITY } from './battle-config';
+import { gfxShadows, gfxCracks, gfxParticles, gfxHighRes } from './battle-settings';
 
 export class BattleRenderer {
   private canvas: HTMLCanvasElement;
@@ -22,6 +23,37 @@ export class BattleRenderer {
   private hoveredHex: { q: number; r: number } | null = null;
   showCoords = false;
 
+  // FPS counter
+  private fpsFrames = 0;
+  private fpsLastTime = performance.now();
+  private fpsDisplay = 0;
+
+  // Cached grid background (static — redrawn only on resize)
+  private gridCache: HTMLCanvasElement | null = null;
+  private gridCacheDirty = true;
+
+  // Cached grid origin (recomputed once per render)
+  private cachedOrigin: Point = { x: 0, y: 0 };
+  /** When true, the canvas victory overlay is suppressed (Preact overlay handles it). */
+  suppressVictoryOverlay = false;
+
+  /** Camera pan offset (pixels). Modified by WASD input. */
+  cameraX = 0;
+  cameraY = 0;
+
+  /** Whether the current battle uses flat-top hexes (vertical orientation). */
+  private get flatTop(): boolean { return !!this.state.config.vertical; }
+
+  /** Wrapper: hex→pixel with automatic flat-top detection. */
+  private hp(hex: { q: number; r: number }, size: number, origin: { x: number; y: number }): Point {
+    return hexToPixel(hex, size, origin, this.flatTop);
+  }
+
+  /** Wrapper: hex corners with automatic flat-top detection. */
+  private hc(center: { x: number; y: number }, size: number): Point[] {
+    return hexCorners(center, size, this.flatTop);
+  }
+
   constructor(canvas: HTMLCanvasElement, state: BattleState) {
     this.canvas = canvas;
     const ctx = canvas.getContext('2d');
@@ -33,6 +65,18 @@ export class BattleRenderer {
 
   setState(state: BattleState): void {
     this.state = state;
+  }
+
+  /** Reload all sprite assets (call after toggling gfxHighRes). */
+  reloadSprites(): void {
+    this.shields.clear();
+    this.loadShield('/asset/spartan_round.png', (c) => { this.shields.set('blue:vanguard', c); });
+    this.loadShield('/asset/spartan_gold_round.png', (c) => { this.shields.set('blue:reserve', c); });
+    this.loadShield('/asset/athens_hoplite_round.png', (c) => { this.shields.set('blue:guard', c); });
+    this.loadShield('/asset/persina_inmortal_round.png', (c) => { this.shields.set('red:vanguard', c); });
+    this.loadShield('/asset/persina_inmortal_round.png', (c) => { this.shields.set('red:reserve', c); });
+    this.loadShield('/asset/persina_inmortal_round.png', (c) => { this.shields.set('red:guard', c); });
+    this.loadShield('/asset/commander_round.png', (c) => { this.starImage = c; });
   }
 
   setHoveredHex(hex: { q: number; r: number } | null): void {
@@ -50,14 +94,14 @@ export class BattleRenderer {
     bg.onload = () => { this.bgImage = bg; };
     bg.src = bgSrc;
 
-    // Blue team: Viking / Samurai / Companion
-    this.loadShield('/asset/viking_round.png', (c) => { this.shields.set('blue:vanguard', c); });
-    this.loadShield('/asset/samurai_round.png', (c) => { this.shields.set('blue:reserve', c); });
-    this.loadShield('/asset/war_elephant_round.png', (c) => { this.shields.set('blue:guard', c); });
-    // Red team: Spartan Gold / Roman / Spartan
+    // Blue team: Spartans
+    this.loadShield('/asset/spartan_round.png', (c) => { this.shields.set('blue:vanguard', c); });
+    this.loadShield('/asset/spartan_gold_round.png', (c) => { this.shields.set('blue:reserve', c); });
+    this.loadShield('/asset/athens_hoplite_round.png', (c) => { this.shields.set('blue:guard', c); });
+    // Red team: Persians
     this.loadShield('/asset/persina_inmortal_round.png', (c) => { this.shields.set('red:vanguard', c); });
-    this.loadShield('/asset/roman_round.png', (c) => { this.shields.set('red:reserve', c); });
-    this.loadShield('/asset/spartan_round.png', (c) => { this.shields.set('red:guard', c); });
+    this.loadShield('/asset/persina_inmortal_round.png', (c) => { this.shields.set('red:reserve', c); });
+    this.loadShield('/asset/persina_inmortal_round.png', (c) => { this.shields.set('red:guard', c); });
     // Star objective
     this.loadShield('/asset/commander_round.png', (c) => { this.starImage = c; });
   }
@@ -67,7 +111,7 @@ export class BattleRenderer {
     const img = new Image();
     img.onload = () => {
       const dpr = window.devicePixelRatio || 1;
-      const cacheSize = Math.round(60 * dpr * 2); // 2x oversampling for sharpness
+      const cacheSize = Math.round(60 * dpr * (gfxHighRes.value ? 2 : 1));
       const offscreen = document.createElement('canvas');
       offscreen.width = cacheSize;
       offscreen.height = cacheSize;
@@ -103,6 +147,7 @@ export class BattleRenderer {
     this.canvas.style.width = width + 'px';
     this.canvas.style.height = height + 'px';
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.gridCacheDirty = true;
   }
 
   render(): void {
@@ -110,6 +155,14 @@ export class BattleRenderer {
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     ctx.clearRect(0, 0, this.w, this.h);
+
+    // Cache grid origin once per frame (avoids recomputing per draw call)
+    this.cachedOrigin = this.state.getGridOrigin(this.w, this.h);
+
+    // Apply camera pan
+    ctx.save();
+    ctx.translate(this.cameraX, this.cameraY);
+
     if (this.state.screenShake > 0) {
       const intensity = this.state.screenShake * SCREEN_SHAKE_INTENSITY / SCREEN_SHAKE_DURATION;
       const sx = (Math.random() - 0.5) * intensity * 2;
@@ -118,7 +171,7 @@ export class BattleRenderer {
       ctx.translate(sx, sy);
     }
     this.drawBackground();
-    this.drawGrid();
+    this.drawGridCached();
     this.drawTargetingHighlights();
     this.drawZones();
     this.drawStars();
@@ -130,17 +183,32 @@ export class BattleRenderer {
     this.drawFloatingTexts();
     this.drawParticles();
     this.drawVictoryOverlay();
+    this.drawPauseOverlay();
     this.drawOrderIndicator();
     this.drawVeteranIndicator();
     if (this.state.screenShake > 0) {
       ctx.restore();
     }
+
+    // Restore camera pan
+    ctx.restore();
+
+    // FPS drawn outside camera transform so it stays fixed on screen
+    this.drawFps();
   }
 
   // ── Layers ──
 
   private drawBackground(): void {
     const { ctx } = this;
+
+    if (this.state.config.vertical) {
+      // Vertical mode: plain dark background, grass hexes drawn in drawGrid
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(0, 0, this.w, this.h);
+      return;
+    }
+
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, this.w, this.h);
     if (!this.bgImage) return;
@@ -167,28 +235,97 @@ export class BattleRenderer {
     ctx.fillRect(0, 0, this.w, this.h);
   }
 
-  private drawGrid(): void {
-    const { ctx } = this;
-    const origin = this.state.getGridOrigin(this.w, this.h);
-    const size = this.state.config.hexSize;
+  // Grid cache blit offset (set during cache build)
+  private gridBlitX = 0;
+  private gridBlitY = 0;
 
-    ctx.strokeStyle = 'rgba(200, 180, 120, 0.3)';
-    ctx.lineWidth = 1;
+  /** Render the grid to an offscreen canvas once, then blit each frame. */
+  private drawGridCached(): void {
+    if (this.gridCacheDirty || !this.gridCache) {
+      const dpr = window.devicePixelRatio || 1;
+      const size = this.state.config.hexSize;
+      const { cols, rows } = this.state.config;
 
-    for (const hex of this.state.gridHexes) {
-      const center = hexToPixel(hex, size, origin);
-      this.strokeHex(center, size);
+      // Cache covers the full grid with padding for axis labels
+      const cacheW = (cols + 3) * size * 2;
+      const cacheH = (rows + 3) * size * 2;
+      // Cache-local origin: keeps all hex coords positive inside the cache
+      const cacheOrigin = { x: size * 2, y: size * 2 };
+      // Blit offset: aligns cache with the real grid position on screen
+      this.gridBlitX = this.cachedOrigin.x - cacheOrigin.x;
+      this.gridBlitY = this.cachedOrigin.y - cacheOrigin.y;
 
-      // Coordinate label (offset col,row) — only when enabled
-      if (this.showCoords) {
-        const col = hex.q + Math.floor(hex.r / 2);
-        ctx.font = '8px monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-        ctx.fillText(`${col},${hex.r}`, center.x, center.y);
+      const cache = document.createElement('canvas');
+      cache.width = Math.round(cacheW * dpr);
+      cache.height = Math.round(cacheH * dpr);
+      const cctx = cache.getContext('2d')!;
+      cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const origin = cacheOrigin;
+      const isVertical = !!this.state.config.vertical;
+
+      cctx.strokeStyle = 'rgba(200, 180, 120, 0.3)';
+      cctx.lineWidth = 1;
+
+      for (const hex of this.state.gridHexes) {
+        const center = this.hp(hex, size, origin);
+        const corners = this.hc(center, size);
+
+        if (isVertical) {
+          const noise = ((hex.q * 7 + hex.r * 13) & 0xFF) / 255;
+          const g = Math.floor(100 + noise * 30);
+          const r = Math.floor(40 + noise * 15);
+          cctx.beginPath();
+          cctx.moveTo(corners[0].x, corners[0].y);
+          for (let i = 1; i < corners.length; i++) cctx.lineTo(corners[i].x, corners[i].y);
+          cctx.closePath();
+          cctx.fillStyle = `rgb(${r}, ${g}, 45)`;
+          cctx.fill();
+          cctx.strokeStyle = 'rgba(30, 60, 20, 0.4)';
+          cctx.lineWidth = 1;
+          cctx.stroke();
+        } else {
+          cctx.beginPath();
+          cctx.moveTo(corners[0].x, corners[0].y);
+          for (let i = 1; i < corners.length; i++) cctx.lineTo(corners[i].x, corners[i].y);
+          cctx.closePath();
+          cctx.stroke();
+        }
       }
+      // Axis labels (Cartesian-plane style)
+      if (isVertical) {
+        const { cols, rows } = this.state.config;
+        cctx.font = "bold 10px 'Segoe UI', system-ui, sans-serif";
+        cctx.textAlign = 'center';
+        cctx.textBaseline = 'middle';
+
+        // X axis — column numbers along the top
+        for (let col = 0; col < cols; col++) {
+          const x = col * size * 2 + origin.x;
+          const y = -1 * size * 2 + origin.y;
+          cctx.fillStyle = 'rgba(200, 190, 160, 0.4)';
+          cctx.fillText(`${col}`, x, y);
+        }
+
+        // Y axis — row numbers along the left
+        cctx.textAlign = 'right';
+        for (let row = 0; row < rows; row++) {
+          const x = -1 * size * 2 + origin.x;
+          const y = row * size * 2 + origin.y;
+          cctx.fillStyle = 'rgba(200, 190, 160, 0.4)';
+          cctx.fillText(`${row}`, x, y);
+        }
+      }
+
+      this.gridCache = cache;
+      this.gridCacheDirty = false;
     }
+
+    // Blit cached grid at the correct offset
+    const dpr = window.devicePixelRatio || 1;
+    const cw = this.gridCache.width / dpr;
+    const ch = this.gridCache.height / dpr;
+    this.ctx.drawImage(this.gridCache, this.gridBlitX, this.gridBlitY, cw, ch);
   }
 
   /** Highlight valid target hexes when an ability is in targeting mode. */
@@ -196,12 +333,12 @@ export class BattleRenderer {
     if (!this.state.targetingAbility) return;
 
     const abilityId = this.state.targetingAbility;
-    const origin = this.state.getGridOrigin(this.w, this.h);
+    const origin = this.cachedOrigin;
     const size = this.state.config.hexSize;
 
     // Determine which hexes are valid based on ability type
     for (const hex of this.state.gridHexes) {
-      const center = hexToPixel(hex, size, origin);
+      const center = this.hp(hex, size, origin);
       const col = hexToCol(hex);
       const unitAtHex = this.state.getUnitAt(hex);
 
@@ -230,7 +367,8 @@ export class BattleRenderer {
   /** Tint hexes for the 3 zones per side: camp, reserve, center. */
   private drawZones(): void {
     if (this.state.config.victoryMode !== 'capture') return;
-    const origin = this.state.getGridOrigin(this.w, this.h);
+    if (this.state.config.vertical) return; // vertical mode has no visible zones
+    const origin = this.cachedOrigin;
     const size = this.state.config.hexSize;
     const cols = this.state.config.cols;
 
@@ -240,7 +378,7 @@ export class BattleRenderer {
 
     for (const hex of this.state.gridHexes) {
       const col = hexToCol(hex);
-      const center = hexToPixel(hex, size, origin);
+      const center = this.hp(hex, size, origin);
 
       // Blue side
       if (col < campCols) {
@@ -272,12 +410,12 @@ export class BattleRenderer {
 
     // Compute x from the top row (row 0) hex center, then offset to left edge
     const topHex = { q: col, r: 0 }; // row 0: offset col == axial q
-    const topPt = hexToPixel(topHex, hexSize, origin);
+    const topPt = this.hp(topHex, hexSize, origin);
     const x = topPt.x - hexSize * sqrt3 / 2;
 
     // Compute y range from top and bottom row hex centers
     const botHex = { q: col - Math.floor((rows - 1) / 2), r: rows - 1 };
-    const botPt = hexToPixel(botHex, hexSize, origin);
+    const botPt = this.hp(botHex, hexSize, origin);
 
     ctx.save();
     ctx.strokeStyle = color;
@@ -294,13 +432,13 @@ export class BattleRenderer {
   private drawStars(): void {
     if (this.state.config.victoryMode !== 'capture') return;
     const { ctx } = this;
-    const origin = this.state.getGridOrigin(this.w, this.h);
+    const origin = this.cachedOrigin;
     const size = this.state.config.hexSize;
 
     for (const faction of ['blue', 'red'] as BattleFaction[]) {
       const star = this.state.stars.get(faction);
       if (!star) continue;
-      const center = hexToPixel(star, size, origin);
+      const center = this.hp(star, size, origin);
       const progress = this.state.captureProgress.get(faction) ?? 0;
       const captureRatio = Math.min(1, progress / CAPTURE_DURATION);
 
@@ -374,8 +512,8 @@ export class BattleRenderer {
     const selected = this.state.getSelectedUnit();
     if (selected && selected.hex.q === this.hoveredHex.q && selected.hex.r === this.hoveredHex.r) return;
 
-    const origin = this.state.getGridOrigin(this.w, this.h);
-    const center = hexToPixel(this.hoveredHex, this.state.config.hexSize, origin);
+    const origin = this.cachedOrigin;
+    const center = this.hp(this.hoveredHex, this.state.config.hexSize, origin);
     this.fillHex(center, this.state.config.hexSize, 'rgba(255, 255, 255, 0.08)');
   }
 
@@ -383,12 +521,12 @@ export class BattleRenderer {
     const selected = this.state.getSelectedUnit();
     if (!selected) return;
 
-    const origin = this.state.getGridOrigin(this.w, this.h);
+    const origin = this.cachedOrigin;
     const size = this.state.config.hexSize;
     const range = this.state.getMovementRange(selected.hex);
 
     for (const hex of range) {
-      const center = hexToPixel(hex, size, origin);
+      const center = this.hp(hex, size, origin);
       this.fillHex(center, size, 'rgba(100, 200, 255, 0.18)');
       this.strokeHexStyled(center, size, 'rgba(100, 200, 255, 0.5)', 1.5);
     }
@@ -398,8 +536,8 @@ export class BattleRenderer {
     const selected = this.state.getSelectedUnit();
     if (!selected) return;
 
-    const origin = this.state.getGridOrigin(this.w, this.h);
-    const center = hexToPixel(selected.hex, this.state.config.hexSize, origin);
+    const origin = this.cachedOrigin;
+    const center = this.hp(selected.hex, this.state.config.hexSize, origin);
     this.fillHex(center, this.state.config.hexSize, 'rgba(255, 215, 0, 0.2)');
     this.strokeHexStyled(center, this.state.config.hexSize, 'rgba(255, 215, 0, 0.7)', 2);
   }
@@ -407,7 +545,7 @@ export class BattleRenderer {
   /** Draw dashed path lines for units that have a queued path. */
   private drawPaths(): void {
     const { ctx } = this;
-    const origin = this.state.getGridOrigin(this.w, this.h);
+    const origin = this.cachedOrigin;
     const size = this.state.config.hexSize;
 
     for (const unit of this.state.units.values()) {
@@ -421,19 +559,19 @@ export class BattleRenderer {
       ctx.setLineDash([6, 4]);
 
       // Start from current hex
-      const start = hexToPixel(unit.hex, size, origin);
+      const start = this.hp(unit.hex, size, origin);
       ctx.beginPath();
       ctx.moveTo(start.x, start.y);
 
       for (const pathHex of unit.path) {
-        const pt = hexToPixel(pathHex, size, origin);
+        const pt = this.hp(pathHex, size, origin);
         ctx.lineTo(pt.x, pt.y);
       }
       ctx.stroke();
 
       // Target circle at final destination
       const last = unit.path[unit.path.length - 1];
-      const target = hexToPixel(last, size, origin);
+      const target = this.hp(last, size, origin);
       ctx.setLineDash([]);
       ctx.beginPath();
       ctx.arc(target.x, target.y, 6, 0, Math.PI * 2);
@@ -444,16 +582,16 @@ export class BattleRenderer {
   }
 
   private drawUnits(): void {
-    const origin = this.state.getGridOrigin(this.w, this.h);
+    const origin = this.cachedOrigin;
     const size = this.state.config.hexSize;
 
     for (const unit of this.state.units.values()) {
-      const dest = hexToPixel(unit.hex, size, origin);
+      const dest = this.hp(unit.hex, size, origin);
 
       // Interpolate position during movement animation
       let center: Point;
       if (unit.prevHex && unit.moveProgress < 1) {
-        const src = hexToPixel(unit.prevHex, size, origin);
+        const src = this.hp(unit.prevHex, size, origin);
         // Smooth easing for all hops — easeInOut for mid-path, easeOut for final
         const t = unit.path.length > 0
           ? this.easeInOutCubic(unit.moveProgress)  // smooth continuous walk
@@ -513,8 +651,8 @@ export class BattleRenderer {
 
     // Lunge: unit rushes toward target hex then snaps back
     if (unit.lungeTarget && unit.lungeTimer > 0) {
-      const origin = this.state.getGridOrigin(this.w, this.h);
-      const targetPt = hexToPixel(unit.lungeTarget, this.state.config.hexSize, origin);
+      const origin = this.cachedOrigin;
+      const targetPt = this.hp(unit.lungeTarget, this.state.config.hexSize, origin);
       // t goes 0→1 as timer counts down
       const t = 1 - unit.lungeTimer / 0.4;
       // Forward in first half (0→0.5), snap back in second half (0.5→1)
@@ -535,11 +673,11 @@ export class BattleRenderer {
 
     ctx.translate(sx, sy);
 
-    // Selection glow
+    // Shadows / glow
     if (isSelected) {
       ctx.shadowColor = '#ffd700';
-      ctx.shadowBlur = 14;
-    } else {
+      ctx.shadowBlur = 12;
+    } else if (gfxShadows.value) {
       ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
       ctx.shadowBlur = 4;
       ctx.shadowOffsetY = 2;
@@ -573,12 +711,14 @@ export class BattleRenderer {
       ctx.fill();
     }
 
-    // Damage cracks (grietas) — accumulate with damage
-    const crackRatio = unit.isDying
-      ? Math.min(1, unit.deathProgress / 0.33) // spread to full during death phase 1
-      : damageRatio;
-    if (crackRatio > 0.05) {
-      this.drawCracks(unit.crackSeed, iconSize, crackRatio);
+    // Damage cracks — accumulate with damage
+    if (gfxCracks.value) {
+      const crackRatio = unit.isDying
+        ? Math.min(1, unit.deathProgress / 0.33)
+        : damageRatio;
+      if (crackRatio > 0.05) {
+        this.drawCracks(unit.crackSeed, iconSize, crackRatio);
+      }
     }
 
     // Selection ring
@@ -618,105 +758,71 @@ export class BattleRenderer {
     return x - Math.floor(x);
   }
 
-  /** Draw refined cracks over the unit sprite — fractal jagged paths with branches. */
+  /** Draw cracks over the unit sprite — batched into 2 strokes (outer + inner). */
   private drawCracks(seed: number, iconSize: number, intensity: number): void {
     const { ctx } = this;
-    const MAX_MAIN_CRACKS = 6;
+    const MAX_MAIN_CRACKS = 4; // reduced from 6
     const crackCount = Math.ceil(intensity * MAX_MAIN_CRACKS);
     const radius = iconSize / 2;
 
     ctx.save();
-    ctx.translate(0, -4); // center on sprite
+    ctx.translate(0, -4);
     ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+
+    // Batch all cracks into two paths (outer dark, inner bright) — 2 strokes total
+    const outerPath = new Path2D();
+    const innerPath = new Path2D();
 
     for (let i = 0; i < crackCount; i++) {
       const rng = (offset: number) => this.seededRandom(seed + i * 3571 + offset);
-
-      // Evenly distributed base angles with jitter for natural feel
       const baseAngle = (i / MAX_MAIN_CRACKS) * Math.PI * 2;
       const angle = baseAngle + (rng(0) - 0.5) * 0.8;
       const len = radius * (0.6 + rng(1) * 0.4) * Math.min(1, intensity * 1.4);
+      const segments = 3 + Math.floor(rng(2) * 2); // 3-4 segments (reduced)
 
-      // Build multi-segment jagged main crack path
-      const segments = 4 + Math.floor(rng(2) * 3); // 4-6 segments
-      const points: { x: number; y: number }[] = [{ x: 0, y: 0 }];
-
+      let px = 0, py = 0;
+      outerPath.moveTo(0, 0);
+      innerPath.moveTo(0, 0);
       for (let s = 1; s <= segments; s++) {
         const t = s / segments;
-        const drift = (rng(s * 17) - 0.5) * len * 0.18; // lateral jitter
-        const px = Math.cos(angle) * len * t + Math.sin(angle) * drift;
-        const py = Math.sin(angle) * len * t - Math.cos(angle) * drift;
-        points.push({ x: px, y: py });
+        const drift = (rng(s * 17) - 0.5) * len * 0.18;
+        px = Math.cos(angle) * len * t + Math.sin(angle) * drift;
+        py = Math.sin(angle) * len * t - Math.cos(angle) * drift;
+        outerPath.lineTo(px, py);
+        innerPath.lineTo(px, py);
       }
 
-      // Draw outer dark stroke (depth shadow)
-      ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let s = 1; s < points.length; s++) {
-        ctx.lineTo(points[s].x, points[s].y);
-      }
-      ctx.strokeStyle = 'rgba(10, 5, 2, 0.7)';
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-
-      // Draw inner bright highlight (hot crack interior)
-      ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let s = 1; s < points.length; s++) {
-        ctx.lineTo(points[s].x, points[s].y);
-      }
-      ctx.strokeStyle = `rgba(160, 80, 30, ${0.3 + intensity * 0.4})`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Branches — thinner cracks forking off at ~40-60% along the main path
-      const branchCount = Math.floor(rng(3) * 2) + 1; // 1-2 branches
-      for (let b = 0; b < branchCount; b++) {
-        const branchIdx = 1 + Math.floor(rng(b * 31 + 50) * (points.length - 2));
-        const origin = points[branchIdx];
-        const branchAngle = angle + (rng(b * 47 + 70) - 0.5) * 1.8;
-        const branchLen = len * (0.2 + rng(b * 61 + 80) * 0.2);
-
-        const bSegs = 2 + Math.floor(rng(b * 71 + 90) * 2); // 2-3 segments
-        const bPts: { x: number; y: number }[] = [origin];
-        for (let s = 1; s <= bSegs; s++) {
-          const bt = s / bSegs;
-          const drift = (rng(b * 100 + s * 19) - 0.5) * branchLen * 0.2;
-          bPts.push({
-            x: origin.x + Math.cos(branchAngle) * branchLen * bt + Math.sin(branchAngle) * drift,
-            y: origin.y + Math.sin(branchAngle) * branchLen * bt - Math.cos(branchAngle) * drift,
-          });
-        }
-
-        // Branch outer stroke
-        ctx.beginPath();
-        ctx.moveTo(bPts[0].x, bPts[0].y);
-        for (let s = 1; s < bPts.length; s++) ctx.lineTo(bPts[s].x, bPts[s].y);
-        ctx.strokeStyle = 'rgba(10, 5, 2, 0.5)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // Branch inner highlight
-        ctx.beginPath();
-        ctx.moveTo(bPts[0].x, bPts[0].y);
-        for (let s = 1; s < bPts.length; s++) ctx.lineTo(bPts[s].x, bPts[s].y);
-        ctx.strokeStyle = `rgba(140, 60, 20, ${0.2 + intensity * 0.3})`;
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-      }
+      // Single branch per crack
+      const branchIdx = Math.floor(segments * 0.5);
+      const bt = branchIdx / segments;
+      const bx = Math.cos(angle) * len * bt;
+      const by = Math.sin(angle) * len * bt;
+      const branchAngle = angle + (rng(50) - 0.5) * 1.8;
+      const branchLen = len * 0.25;
+      outerPath.moveTo(bx, by);
+      innerPath.moveTo(bx, by);
+      outerPath.lineTo(bx + Math.cos(branchAngle) * branchLen, by + Math.sin(branchAngle) * branchLen);
+      innerPath.lineTo(bx + Math.cos(branchAngle) * branchLen, by + Math.sin(branchAngle) * branchLen);
     }
+
+    ctx.strokeStyle = 'rgba(10, 5, 2, 0.7)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke(outerPath);
+
+    ctx.strokeStyle = `rgba(160, 80, 30, ${0.3 + intensity * 0.4})`;
+    ctx.lineWidth = 1;
+    ctx.stroke(innerPath);
 
     ctx.restore();
   }
 
   private drawFloatingTexts(): void {
     const { ctx } = this;
-    const origin = this.state.getGridOrigin(this.w, this.h);
+    const origin = this.cachedOrigin;
     const size = this.state.config.hexSize;
 
     for (const ft of this.state.floatingTexts) {
-      const center = hexToPixel(ft.hex, size, origin);
+      const center = this.hp(ft.hex, size, origin);
       const t = 1 - ft.timer / ft.duration; // 0→1 as text ages
       const offsetY = -30 - t * 40; // float upward
       const alpha = t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3; // fade out last 30%
@@ -733,32 +839,35 @@ export class BattleRenderer {
       ctx.strokeText(ft.text, 0, 0);
       // Fill
       ctx.fillStyle = ft.color;
-      ctx.shadowColor = ft.color;
-      ctx.shadowBlur = 8;
       ctx.fillText(ft.text, 0, 0);
       ctx.restore();
     }
   }
 
   private drawParticles(): void {
+    if (!gfxParticles.value || this.state.particles.length === 0) return;
     const { hexSize } = this.state.config;
-    const origin = this.state.getGridOrigin(this.w, this.h);
+    const origin = this.cachedOrigin;
+    const { ctx } = this;
+
+    // Group particles by color to minimize style changes
     for (const p of this.state.particles) {
-      const center = hexToPixel(p.hex, hexSize, origin);
+      const center = this.hp(p.hex, hexSize, origin);
       const x = center.x + p.offsetX;
       const y = center.y + p.offsetY;
       const alpha = Math.max(0, p.life / p.maxLife);
-      this.ctx.save();
-      this.ctx.globalAlpha = alpha;
-      this.ctx.fillStyle = p.color;
-      this.ctx.beginPath();
-      this.ctx.arc(x, y, p.size * (0.5 + 0.5 * alpha), 0, Math.PI * 2);
-      this.ctx.fill();
-      this.ctx.restore();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(x, y, p.size * (0.5 + 0.5 * alpha), 0, Math.PI * 2);
+      ctx.fill();
     }
+    ctx.globalAlpha = 1;
   }
 
   private drawVictoryOverlay(): void {
+    if (this.suppressVictoryOverlay) return;
+    if (window.location.hash === '#battleV2') return;
     const isDraw = this.state.phase === 'draw';
     const isVictory = this.state.phase === 'victory' && this.state.winner;
     if (!isDraw && !isVictory) return;
@@ -806,6 +915,43 @@ export class BattleRenderer {
     ctx.font = "14px 'Segoe UI', system-ui, sans-serif";
     ctx.fillStyle = 'rgba(200, 190, 160, 0.6)';
     ctx.fillText(`Battle concluded in ${this.state.roundCount} rounds — press ESC to return`, this.w / 2, bannerY + bannerH / 2 + 22);
+  }
+
+  private drawPauseOverlay(): void {
+    if (!this.state.paused) return;
+    const { ctx } = this;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fillRect(0, 0, this.w, this.h);
+    ctx.font = "bold 48px 'Segoe UI', system-ui, sans-serif";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillText('PAUSED', this.w / 2, this.h / 2);
+    ctx.font = "14px 'Segoe UI', system-ui, sans-serif";
+    ctx.fillStyle = 'rgba(200, 190, 160, 0.6)';
+    ctx.fillText('Press SPACE to resume', this.w / 2, this.h / 2 + 32);
+  }
+
+  private drawFps(): void {
+    this.fpsFrames++;
+    const now = performance.now();
+    if (now - this.fpsLastTime >= 1000) {
+      this.fpsDisplay = this.fpsFrames;
+      this.fpsFrames = 0;
+      this.fpsLastTime = now;
+    }
+    const { ctx } = this;
+    const unitCount = this.state.units.size;
+    const label = `${this.fpsDisplay} FPS | ${unitCount} units`;
+    ctx.save();
+    ctx.font = "bold 13px 'Segoe UI', system-ui, sans-serif";
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(this.w - 160, this.h - 32, 152, 24);
+    ctx.fillStyle = this.fpsDisplay >= 50 ? '#44ff66' : this.fpsDisplay >= 30 ? '#ffdd44' : '#ff4444';
+    ctx.fillText(label, this.w - 16, this.h - 10);
+    ctx.restore();
   }
 
   private drawOrderIndicator(): void {
@@ -866,10 +1012,10 @@ export class BattleRenderer {
 
   private strokeHex(center: Point, size: number): void {
     const { ctx } = this;
-    const corners = hexCorners(center, size);
+    const corners = this.hc(center, size);
     ctx.beginPath();
     ctx.moveTo(corners[0].x, corners[0].y);
-    for (let i = 1; i < 6; i++) ctx.lineTo(corners[i].x, corners[i].y);
+    for (let i = 1; i < corners.length; i++) ctx.lineTo(corners[i].x, corners[i].y);
     ctx.closePath();
     ctx.stroke();
   }
@@ -885,10 +1031,10 @@ export class BattleRenderer {
 
   private fillHex(center: Point, size: number, style: string): void {
     const { ctx } = this;
-    const corners = hexCorners(center, size);
+    const corners = this.hc(center, size);
     ctx.beginPath();
     ctx.moveTo(corners[0].x, corners[0].y);
-    for (let i = 1; i < 6; i++) ctx.lineTo(corners[i].x, corners[i].y);
+    for (let i = 1; i < corners.length; i++) ctx.lineTo(corners[i].x, corners[i].y);
     ctx.closePath();
     ctx.fillStyle = style;
     ctx.fill();
