@@ -2,7 +2,7 @@ import type { BattleState } from './battle-state';
 import type { BattleUnit, BattleFaction, LieutenantOrder } from './battle-types';
 import type { Point } from './hex';
 import { hexToPixel, hexCorners } from './hex';
-import { hexToCol } from './battle-zones';
+import { classifyZone, getAxisBands, isInDeploymentZone } from './battle-zones';
 import { CAPTURE_DURATION, SCREEN_SHAKE_DURATION, SCREEN_SHAKE_INTENSITY } from './battle-config';
 import { gfxShadows, gfxCracks, gfxParticles, gfxHighRes } from './battle-settings';
 
@@ -272,17 +272,61 @@ export class BattleRenderer {
         const corners = this.hc(center, size);
 
         if (isVertical) {
+          const col = hex.q;
+          const offsetRow = hex.r + Math.floor(hex.q / 2);
           const noise = ((hex.q * 7 + hex.r * 13) & 0xFF) / 255;
-          const g = Math.floor(100 + noise * 30);
-          const r = Math.floor(40 + noise * 15);
+          const zoneRows = Math.floor(rows / 3); // 10 rows per zone
+
+          // Row zones: red (top 0-9), center (10-19), blue (bottom 20-29)
+          let zr: number, zg: number, zb: number;
+          if (offsetRow < zoneRows) {
+            zr = Math.floor(70 + noise * 20);
+            zg = Math.floor(85 + noise * 20);
+            zb = 40;
+          } else if (offsetRow < zoneRows * 2) {
+            zr = Math.floor(40 + noise * 15);
+            zg = Math.floor(100 + noise * 30);
+            zb = 45;
+          } else {
+            zr = Math.floor(35 + noise * 15);
+            zg = Math.floor(90 + noise * 25);
+            zb = Math.floor(55 + noise * 15);
+          }
+
+          // Column flanks: left (0-11), center (12-37), right (38-49)
+          if (col < 12 || col >= 38) {
+            // Flanks: slightly darker
+            zr = Math.floor(zr * 0.85);
+            zg = Math.floor(zg * 0.85);
+            zb = Math.floor(zb * 0.85);
+          }
+
           cctx.beginPath();
           cctx.moveTo(corners[0].x, corners[0].y);
           for (let i = 1; i < corners.length; i++) cctx.lineTo(corners[i].x, corners[i].y);
           cctx.closePath();
-          cctx.fillStyle = `rgb(${r}, ${g}, 45)`;
+          cctx.fillStyle = `rgb(${zr}, ${zg}, ${zb})`;
           cctx.fill();
+
+          // Draw flank divider lines at col 12 and col 38 boundaries
+          const isLeftBorder = col === 12;
+          const isRightBorder = col === 38;
+          if (isLeftBorder || isRightBorder) {
+            cctx.strokeStyle = 'rgba(200, 180, 120, 0.25)';
+            cctx.lineWidth = 2;
+            const x = center.x - size;
+            cctx.beginPath();
+            cctx.moveTo(x, center.y - size);
+            cctx.lineTo(x, center.y + size);
+            cctx.stroke();
+          }
+
           cctx.strokeStyle = 'rgba(30, 60, 20, 0.4)';
           cctx.lineWidth = 1;
+          cctx.beginPath();
+          cctx.moveTo(corners[0].x, corners[0].y);
+          for (let i = 1; i < corners.length; i++) cctx.lineTo(corners[i].x, corners[i].y);
+          cctx.closePath();
           cctx.stroke();
         } else {
           cctx.beginPath();
@@ -337,14 +381,16 @@ export class BattleRenderer {
     const size = this.state.config.hexSize;
 
     // Determine which hexes are valid based on ability type
+    const cols = this.state.config.cols;
+    const rows = this.state.config.rows;
+    const vertical = !!this.state.config.vertical;
     for (const hex of this.state.gridHexes) {
       const center = this.hp(hex, size, origin);
-      const col = hexToCol(hex);
       const unitAtHex = this.state.getUnitAt(hex);
 
       if (abilityId === 'Buy Reinforcements') {
-        // Valid: empty hexes in columns 0-3 (blue back area)
-        if (!unitAtHex && col < 4) {
+        // Valid: empty hexes in blue's deployment zone (back band)
+        if (!unitAtHex && isInDeploymentZone(hex, cols, rows, 'blue', vertical)) {
           this.fillHex(center, size, 'rgba(240, 208, 128, 0.15)');
           this.strokeHexStyled(center, size, 'rgba(240, 208, 128, 0.35)', 1.5);
         }
@@ -364,42 +410,31 @@ export class BattleRenderer {
     }
   }
 
-  /** Tint hexes for the 3 zones per side: camp, reserve, center. */
+  /**
+   * Tint the 3 depth bands: blue deployment (back), midfield, red deployment (front).
+   * Flanks/center lanes share the same tint — this visual only calls out the deployment bands.
+   */
   private drawZones(): void {
     if (this.state.config.victoryMode !== 'capture') return;
     if (this.state.config.vertical) return; // vertical mode has no visible zones
     const origin = this.cachedOrigin;
     const size = this.state.config.hexSize;
     const cols = this.state.config.cols;
-
-    // Zone boundaries (offset columns)
-    const campCols = Math.round(cols * 0.2);     // 4
-    const reserveCols = Math.round(cols * 0.15);  // 3
+    const rows = this.state.config.rows;
 
     for (const hex of this.state.gridHexes) {
-      const col = hexToCol(hex);
       const center = this.hp(hex, size, origin);
-
-      // Blue side
-      if (col < campCols) {
-        this.fillHex(center, size, 'rgba(80, 140, 255, 0.25)');  // camp
-      } else if (col < campCols + reserveCols) {
-        this.fillHex(center, size, 'rgba(200, 180, 80, 0.18)');  // reserve
-      }
-
-      // Red side
-      if (col >= cols - campCols) {
-        this.fillHex(center, size, 'rgba(255, 80, 80, 0.25)');   // camp
-      } else if (col >= cols - campCols - reserveCols) {
-        this.fillHex(center, size, 'rgba(200, 180, 80, 0.18)');  // reserve
+      const { depth } = classifyZone(hex, cols, rows, 'blue', false);
+      if (depth === 'back') {
+        this.fillHex(center, size, 'rgba(80, 140, 255, 0.25)');   // blue deployment
+      } else if (depth === 'front') {
+        this.fillHex(center, size, 'rgba(255, 80, 80, 0.25)');    // red deployment
       }
     }
 
-    // Draw zone boundary lines
-    this.drawZoneLine(origin, size, campCols, 'rgba(80, 140, 255, 0.50)');
-    this.drawZoneLine(origin, size, campCols + reserveCols, 'rgba(200, 180, 80, 0.40)');
-    this.drawZoneLine(origin, size, cols - campCols, 'rgba(255, 80, 80, 0.50)');
-    this.drawZoneLine(origin, size, cols - campCols - reserveCols, 'rgba(200, 180, 80, 0.40)');
+    const bands = getAxisBands(cols);
+    this.drawZoneLine(origin, size, bands.low.end, 'rgba(80, 140, 255, 0.50)');
+    this.drawZoneLine(origin, size, bands.high.start, 'rgba(255, 80, 80, 0.50)');
   }
 
   /** Draw a straight vertical dashed line at a given offset column boundary. */

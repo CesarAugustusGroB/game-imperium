@@ -1,5 +1,6 @@
 import type { Hex, Point } from './hex';
 import { hexKey, hexNeighbors, hexDistance, offsetToAxial, offsetToAxialFlatTop, hexToPixel } from './hex';
+import { findReinforcementHex } from './deployment';
 import type { BattleFaction, BattlePhase, UnitRole, UnitStats, VictoryMode, BattleUnit, BattleConfig, FloatingText, LieutenantOrder } from './battle-types';
 import { playSfx } from '../ui/sound/sfx';
 import {
@@ -12,7 +13,7 @@ import {
 } from './battle-config';
 import type { DecretumEffect } from '../game/items/decretum';
 import type { ArmyData } from '../types/index';
-import { mapArmyToBattleUnits } from '../game/army/cohort-to-battle-unit';
+import { mapArmyToBattleUnits } from './legacy/legacy-cohort-mapping';
 import type { Legate, LegateEffect } from '../game/army/legate';
 import { getLegateTraitById } from '../game/army/legate-traits';
 
@@ -713,27 +714,30 @@ export class BattleState {
         break;
       }
       case 'buff': {
-        for (const unit of this.getBattleFactionUnits('blue')) {
+        const blueUnits = this.getBattleFactionUnits('blue');
+        for (const unit of blueUnits) {
           if (effect.stat === 'atk') unit.stats.atk = Math.floor(unit.stats.atk * (1 + effect.multiplier));
           else if (effect.stat === 'def') unit.stats.def = Math.floor(unit.stats.def * (1 + effect.multiplier));
           else if (effect.stat === 'hp') unit.stats.hp = Math.floor(unit.stats.hp * (1 + effect.multiplier));
           else if (effect.stat === 'agi') unit.stats.agi = Math.floor(unit.stats.agi * (1 + effect.multiplier));
         }
-        this.floatingTexts.push({ text: 'BUFFED!', hex: { q: 5, r: 7 }, color: '#ffd700', timer: 0.8, duration: 0.8 });
+        // Position BUFFED! text at any blue unit so it's visible regardless of grid geometry
+        if (blueUnits.length > 0) {
+          const anchor = blueUnits[0].hex;
+          this.floatingTexts.push({
+            text: 'BUFFED!',
+            hex: { q: anchor.q, r: anchor.r },
+            color: '#ffd700', timer: 0.8, duration: 0.8,
+          });
+        }
         break;
       }
       case 'spawn': {
-        // Spawn units at back row
-        const rows = [3, 5, 7, 9, 11];
-        let spawned = 0;
-        for (const row of rows) {
-          if (spawned >= effect.count) break;
-          const hex = offsetToAxial(2, row);
-          if (this.isValidHex(hex) && !this.getUnitAt(hex)) {
-            const unit = this.addUnit('blue', hex, `Militia ${spawned + 1}`, effect.unitRole);
-            unit.currentHp = Math.floor(unit.stats.hp * 0.6); // militia are weak
-            spawned++;
-          }
+        for (let i = 0; i < effect.count; i++) {
+          const hex = findReinforcementHex(this, 'blue');
+          if (!hex) break;
+          const unit = this.addUnit('blue', hex, `Militia ${i + 1}`, effect.unitRole);
+          unit.currentHp = Math.floor(unit.stats.hp * 0.6); // militia are weak
         }
         break;
       }
@@ -839,7 +843,7 @@ export class BattleState {
    * Looks up each `traitId` in the catalog and dispatches its effect through
    * `applyLegateEffect`.
    */
-  private applyLegateTraits(faction: BattleFaction, legate: Legate): void {
+  applyLegateTraits(faction: BattleFaction, legate: Legate): void {
     for (const traitId of legate.traitIds) {
       const trait = getLegateTraitById(traitId);
       if (!trait) continue;

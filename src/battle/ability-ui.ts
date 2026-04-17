@@ -6,7 +6,7 @@ import type { Commander, CommanderAbility } from '../game/core/commander';
 import type { BattleState } from './battle-state';
 import type { BattleUnit } from './battle-types';
 import { SHAKE_DURATION, FLASH_DURATION, ROLE_STATS, ABILITY_PARTICLE_COUNT } from './battle-config';
-import { hexToCol } from './battle-zones';
+import { isInDeploymentZone } from './battle-zones';
 import { getHandWithCastability, castDecretum } from '../game/items/decretum-store';
 import { getDecretumTargeting, DECRETUM_SELL_PRICE } from '../game/items/decretum';
 import type { DecretumEffect } from '../game/items/decretum';
@@ -21,7 +21,6 @@ const EMPTY_HEX_ABILITIES = new Set(['Buy Reinforcements']);
 
 const MAX_MERCS = 2;
 const MERC_COST = [3, 6]; // cost for 1st and 2nd merc
-const BLUE_BACK_COL_MAX = 4; // columns 0-3 are blue's back rows
 
 let currentState: BattleState | null = null;
 let abilityButton: HTMLButtonElement | null = null;
@@ -64,8 +63,8 @@ export function initAbilityBar(state: BattleState): void {
       if (state.getUnitAt(targetHex)) return; // must be empty
       if (abilityId === 'Buy Reinforcements') {
         if (mercCount >= MAX_MERCS) return;
-        const col = hexToCol(targetHex);
-        if (col >= BLUE_BACK_COL_MAX) return; // must be back rows
+        const { cols, rows, vertical } = state.config;
+        if (!isInDeploymentZone(targetHex, cols, rows, 'blue', !!vertical)) return;
         const cost = MERC_COST[mercCount] ?? MERC_COST[MERC_COST.length - 1];
         if (!spendResource('gold', cost)) return;
         executeBuyReinforcements(state, targetHex);

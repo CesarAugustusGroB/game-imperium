@@ -1,68 +1,137 @@
 import type { Hex } from './hex';
 import type { BattleFaction } from './battle-types';
 
-export interface ZoneBounds {
-  campEnd: number;     // last camp column/row (inclusive)
-  reserveEnd: number;  // last reserve column/row (inclusive)
-  // center = reserveEnd+1 to midfield
+/**
+ * 3×3 battlefield zones — purely geometric, faction-relative.
+ *
+ *   Depth (along advance axis):  back → middle → front
+ *   Lane  (along flank axis):    left → center → right
+ *
+ * A faction's own deployment zone is `back`. The enemy deployment zone is
+ * `front`. Lanes mirror per faction so each faction's `left` is on their own
+ * left side. Zones are independent of unit roles — use them for deployment,
+ * flanking checks, and coarse AI heuristics, not for role-specific logic.
+ */
+
+export type DepthBand = 'back' | 'middle' | 'front';
+export type LaneBand = 'left' | 'center' | 'right';
+
+export interface ZoneCoord {
+  depth: DepthBand;
+  lane: LaneBand;
 }
 
-// ── Horizontal zones (column-based, default) ──
+/** Fraction of the axis claimed by each outer band (back/front, or left/right). */
+const OUTER_BAND_FRAC = 0.3;
 
-export function getZones(cols: number, faction: BattleFaction): ZoneBounds {
-  const campCols = Math.round(cols * 0.2);     // 4 cols
-  const reserveCols = Math.round(cols * 0.15);  // 3 cols
-  if (faction === 'blue') {
-    return { campEnd: campCols - 1, reserveEnd: campCols + reserveCols - 1 };
-  } else {
-    return {
-      campEnd: cols - campCols,        // col 16 (cols 16-19 = camp)
-      reserveEnd: cols - campCols - reserveCols, // col 13 (cols 13-15 = reserve)
-    };
-  }
+/** Start/end (inclusive/exclusive) of each band along an axis. */
+export interface AxisBands {
+  low:  { start: number; end: number };
+  mid:  { start: number; end: number };
+  high: { start: number; end: number };
 }
 
-/** Check if an offset column is in the camp zone. */
-export function isInCamp(col: number, zones: ZoneBounds, faction: BattleFaction): boolean {
-  return faction === 'blue' ? col <= zones.campEnd : col >= zones.campEnd;
+export function getAxisBands(axisLen: number): AxisBands {
+  const lowEnd = Math.round(axisLen * OUTER_BAND_FRAC);
+  const highStart = axisLen - Math.round(axisLen * OUTER_BAND_FRAC);
+  return {
+    low:  { start: 0,         end: lowEnd },
+    mid:  { start: lowEnd,    end: highStart },
+    high: { start: highStart, end: axisLen },
+  };
 }
 
-/** Check if an offset column is in the reserve zone (or deeper). */
-export function isInReserveOrDeeper(col: number, zones: ZoneBounds, faction: BattleFaction): boolean {
-  return faction === 'blue' ? col <= zones.reserveEnd : col >= zones.reserveEnd;
+function bandIndex(pos: number, axisLen: number): 0 | 1 | 2 {
+  const b = getAxisBands(axisLen);
+  if (pos < b.low.end) return 0;
+  if (pos >= b.high.start) return 2;
+  return 1;
 }
 
-/** Convert axial hex to approximate offset column. */
+// ── Hex → offset projections ──
+
+/** Offset column (pointy-top even-r) — horizontal advance axis. */
 export function hexToCol(hex: Hex): number {
   return hex.q + Math.floor(hex.r / 2);
 }
 
-// ── Vertical zones (row-based) ──
+/** Offset row (flat-top even-q) — vertical advance axis. */
+export function hexToFlatRow(hex: Hex): number {
+  return hex.r + Math.floor(hex.q / 2);
+}
 
-export function getVerticalZones(rows: number, faction: BattleFaction): ZoneBounds {
-  const campRows = Math.round(rows * 0.2);
-  const reserveRows = Math.round(rows * 0.15);
-  if (faction === 'blue') {
-    // Blue camp = bottom (high r)
-    return {
-      campEnd: rows - campRows,
-      reserveEnd: rows - campRows - reserveRows,
-    };
-  } else {
-    // Red camp = top (low r)
-    return {
-      campEnd: campRows - 1,
-      reserveEnd: campRows + reserveRows - 1,
-    };
+interface AxisProjection {
+  advance: number;
+  flank: number;
+  advanceLen: number;
+  flankLen: number;
+}
+
+function project(hex: Hex, cols: number, rows: number, vertical: boolean): AxisProjection {
+  if (vertical) {
+    return { advance: hexToFlatRow(hex), flank: hex.q, advanceLen: rows, flankLen: cols };
   }
+  return { advance: hexToCol(hex), flank: hex.r, advanceLen: cols, flankLen: rows };
 }
 
-/** Check if a row is in the camp zone (vertical). */
-export function isInCampVertical(row: number, zones: ZoneBounds, faction: BattleFaction): boolean {
-  return faction === 'blue' ? row >= zones.campEnd : row <= zones.campEnd;
+// ── Classification ──
+
+/** Classify a hex into (depth, lane) from a given faction's perspective. */
+export function classifyZone(
+  hex: Hex, cols: number, rows: number, faction: BattleFaction, vertical: boolean,
+): ZoneCoord {
+  const p = project(hex, cols, rows, vertical);
+  const di = bandIndex(p.advance, p.advanceLen);
+  const li = bandIndex(p.flank, p.flankLen);
+
+  // Which end of the advance axis is this faction's own back?
+  //   Horizontal: blue sits at low-col (left), red at high-col (right).
+  //   Vertical:   red sits at low-row (top),  blue at high-row (bottom).
+  const ownsLowEnd = vertical ? faction === 'red' : faction === 'blue';
+  const depth: DepthBand = ownsLowEnd
+    ? (di === 0 ? 'back'  : di === 2 ? 'front' : 'middle')
+    : (di === 0 ? 'front' : di === 2 ? 'back'  : 'middle');
+
+  // Lanes mirror on red so each faction's "left" is on their own left.
+  const lane: LaneBand = faction === 'red'
+    ? (li === 0 ? 'right' : li === 2 ? 'left'  : 'center')
+    : (li === 0 ? 'left'  : li === 2 ? 'right' : 'center');
+
+  return { depth, lane };
 }
 
-/** Check if a row is in the reserve zone or deeper (vertical). */
-export function isInReserveOrDeeperVertical(row: number, zones: ZoneBounds, faction: BattleFaction): boolean {
-  return faction === 'blue' ? row >= zones.reserveEnd : row <= zones.reserveEnd;
+/** Depth band of a hex from a faction's perspective. */
+export function depthOf(
+  hex: Hex, cols: number, rows: number, faction: BattleFaction, vertical: boolean,
+): DepthBand {
+  return classifyZone(hex, cols, rows, faction, vertical).depth;
+}
+
+/** Lane band of a hex from a faction's perspective. */
+export function laneOf(
+  hex: Hex, cols: number, rows: number, faction: BattleFaction, vertical: boolean,
+): LaneBand {
+  return classifyZone(hex, cols, rows, faction, vertical).lane;
+}
+
+/** True if the hex is in the faction's own deployment zone (back band). */
+export function isInDeploymentZone(
+  hex: Hex, cols: number, rows: number, faction: BattleFaction, vertical: boolean,
+): boolean {
+  return depthOf(hex, cols, rows, faction, vertical) === 'back';
+}
+
+/** True if the hex is in the enemy deployment zone (faction's front band). */
+export function isInEnemyDeploymentZone(
+  hex: Hex, cols: number, rows: number, faction: BattleFaction, vertical: boolean,
+): boolean {
+  return depthOf(hex, cols, rows, faction, vertical) === 'front';
+}
+
+/** True if the hex is on one of the faction's flanks (left or right lane). */
+export function isOnFlank(
+  hex: Hex, cols: number, rows: number, faction: BattleFaction, vertical: boolean,
+): boolean {
+  const l = laneOf(hex, cols, rows, faction, vertical);
+  return l === 'left' || l === 'right';
 }

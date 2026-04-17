@@ -1,4 +1,5 @@
 import './ui/design-tokens.css';
+import './ui/globals.css';
 import { render } from 'preact';
 import { effect } from '@preact/signals';
 import { App } from './ui/screens/App';
@@ -67,7 +68,8 @@ if (isBattleScreen(initialScreen)) {
   if (initialScreen === 'battleV2') {
     battleMode.enterQuickBattle();
   } else {
-    battleMode.enter();
+    // Spoke battles now run on BattleV2 (50×30 vertical, central-spawn deployment)
+    battleMode.enterFromSpoke();
   }
 } else {
   const battleScreen = document.getElementById('battle-screen');
@@ -83,7 +85,7 @@ effect(() => {
     if (screen === 'battleV2') {
       battleMode.enterQuickBattle();
     } else {
-      battleMode.enter();
+      battleMode.enterFromSpoke();
     }
   } else if (!isBattleScreen(screen) && isBattleActive) {
     isBattleActive = false;

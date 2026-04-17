@@ -1,13 +1,14 @@
 import type { BattleState } from './battle-state';
 import type { BattleFaction, BattleUnit } from './battle-types';
 import type { Hex } from './hex';
-import { hexDistance, hexNeighbors, offsetToAxialFlatTop } from './hex';
+import { hexNeighbors, offsetToAxialFlatTop } from './hex';
+import { depthOf } from './battle-zones';
 import {
-  getZones, getVerticalZones,
-  isInCamp, isInReserveOrDeeper, hexToCol,
-  isInCampVertical, isInReserveOrDeeperVertical,
-  type ZoneBounds,
-} from './battle-zones';
+  resolveMovement, whenEngaged, forward, greedy,
+  pickWeakest, handlePinned, findInterceptHex, findClosestTo,
+  findAdvanceTarget, moveForward,
+  type MoveContext,
+} from './movements';
 
 /**
  * Football-style zonal battle AI.
@@ -32,8 +33,9 @@ interface TickContext {
   vertical: boolean;
   ownStar: Hex;
   enemyStar: Hex;
-  zones: ZoneBounds;
-  enemyZones: ZoneBounds;
+  cols: number;
+  rows: number;
+  faction: BattleFaction;
   enemyBattleFaction: BattleFaction;
   allEnemies: BattleUnit[];
 }
@@ -68,12 +70,9 @@ function tickCapture(state: BattleState, faction: BattleFaction): void {
     vertical,
     ownStar: state.stars.get(faction)!,
     enemyStar: state.getEnemyStar(faction)!,
-    zones: vertical
-      ? getVerticalZones(state.config.rows, faction)
-      : getZones(state.config.cols, faction),
-    enemyZones: vertical
-      ? getVerticalZones(state.config.rows, enemyBattleFaction)
-      : getZones(state.config.cols, enemyBattleFaction),
+    cols: state.config.cols,
+    rows: state.config.rows,
+    faction,
     enemyBattleFaction,
     allEnemies: state.getBattleFactionUnits(enemyBattleFaction),
   };
@@ -84,7 +83,7 @@ function tickCapture(state: BattleState, faction: BattleFaction): void {
       case 'attack':   tickVanguard(state, units, ctx); break;
       case 'defend':   tickGuard(state, units); break;
       case 'skirmish': tickSkirmish(state, units, ctx); break;
-      case 'mobile':   tickReserve(state, units, faction, ctx); break;
+      case 'mobile':   tickReserve(state, units, ctx); break;
     }
   } else if (vertical) {
     // Vertical mode: all units charge forward like vanguard
@@ -100,25 +99,21 @@ function tickCapture(state: BattleState, faction: BattleFaction): void {
       else vanguard.push(u);
     }
     tickVanguard(state, vanguard, ctx);
-    tickReserve(state, reserve, faction, ctx);
+    tickReserve(state, reserve, ctx);
     tickGuard(state, guard);
   }
 }
 
-// ── Position helpers (abstract over orientation) ──
+// ── Position helpers (zone-aware, orientation-agnostic) ──
 
-/** Check if a hex is in the enemy camp zone. */
-function checkInCamp(hex: Hex, zones: ZoneBounds, faction: BattleFaction, vertical: boolean): boolean {
-  return vertical
-    ? isInCampVertical(hex.r + Math.floor(hex.q / 2), zones, faction)
-    : isInCamp(hexToCol(hex), zones, faction);
+/** Is `hex` inside the enemy's own deployment zone (my front band)? */
+function inEnemyBack(hex: Hex, ctx: TickContext): boolean {
+  return depthOf(hex, ctx.cols, ctx.rows, ctx.faction, ctx.vertical) === 'front';
 }
 
-/** Check if a hex is in reserve-or-deeper zone. */
-function checkInReserveOrDeeper(hex: Hex, zones: ZoneBounds, faction: BattleFaction, vertical: boolean): boolean {
-  return vertical
-    ? isInReserveOrDeeperVertical(hex.r + Math.floor(hex.q / 2), zones, faction)
-    : isInReserveOrDeeper(hexToCol(hex), zones, faction);
+/** Is `hex` inside my own deployment zone (my back band)? */
+function inOwnBack(hex: Hex, ctx: TickContext): boolean {
+  return depthOf(hex, ctx.cols, ctx.rows, ctx.faction, ctx.vertical) === 'back';
 }
 
 // ── VANGUARD: always march forward ──
@@ -136,8 +131,8 @@ function tickVanguard(state: BattleState, units: BattleUnit[], ctx: TickContext)
       continue;
     }
 
-    // 2. In enemy camp → pathfind to star (bypass forward-only)
-    if (checkInCamp(unit.hex, ctx.enemyZones, ctx.enemyBattleFaction, ctx.vertical)) {
+    // 2. In enemy deployment zone → pathfind to star (bypass forward-only)
+    if (inEnemyBack(unit.hex, ctx)) {
       if (state.moveUnitAlongPath(unit.id, ctx.enemyStar)) {
         state.resetCooldown(unit);
         continue;
@@ -219,7 +214,7 @@ function findRetreatHex(state: BattleState, unit: BattleUnit, dir: number, verti
 // ── RESERVE: intercept with busy state, become vanguard when enemy vanguard dies ──
 
 function tickReserve(
-  state: BattleState, units: BattleUnit[], faction: BattleFaction, ctx: TickContext,
+  state: BattleState, units: BattleUnit[], ctx: TickContext,
 ): void {
   const enemyVanguardAlive = ctx.allEnemies.filter(e => e.role === 'vanguard');
 
@@ -248,8 +243,8 @@ function tickReserve(
     if (enemyVanguardAlive.length === 0) {
       busyTargets.delete(unit.id);
 
-      // In enemy camp → pathfind to star
-      if (checkInCamp(unit.hex, ctx.enemyZones, ctx.enemyBattleFaction, ctx.vertical)) {
+      // In enemy deployment zone → pathfind to star
+      if (inEnemyBack(unit.hex, ctx)) {
         if (state.moveUnitAlongPath(unit.id, ctx.enemyStar)) {
           state.resetCooldown(unit);
           continue;
@@ -280,10 +275,10 @@ function tickReserve(
       busyTargets.delete(unit.id);
     }
 
-    // 4. Idle: intercept enemy vanguards that entered our reserve zone (or deeper)
+    // 4. Idle: intercept enemy vanguards that have reached our deployment zone
     const reserveThreats = ctx.allEnemies.filter(e => {
       if (e.role !== 'vanguard') return false;
-      return checkInReserveOrDeeper(e.hex, ctx.zones, faction, ctx.vertical);
+      return inOwnBack(e.hex, ctx);
     });
     if (reserveThreats.length > 0) {
       // Find nearest threat not already being chased by another reserve
@@ -307,168 +302,12 @@ function tickReserve(
   }
 }
 
-// ── Pin Helper ──
+// ── Helpers re-exported from movements.ts ──
+// handlePinned, pickWeakest, findInterceptHex, findClosestTo,
+// findAdvanceTarget, moveForward — all imported above
 
-/** If unit is pinned, it can only attack its pinner. Returns true if pinned (handled). */
-function handlePinned(state: BattleState, unit: BattleUnit): boolean {
-  if (unit.pinnedBy === null) return false;
-
-  const pinner = state.units.get(unit.pinnedBy);
-  // Pinner dead or gone — unpin
-  if (!pinner || pinner.isDying) {
-    unit.pinnedBy = null;
-    return false;
-  }
-
-  // Pinner adjacent — attack it
-  const enemies = state.getAdjacentEnemies(unit);
-  const pinnerAdjacent = enemies.find(e => e.id === unit.pinnedBy);
-  if (pinnerAdjacent) {
-    state.resolveCombat(unit, pinnerAdjacent);
-    state.resetCooldown(unit);
-  }
-  // Pinned — can't do anything else (don't move)
-  return true;
-}
-
-// ── Movement Helpers ──
-
-/** Move forward only — reject backward movement. */
-function moveForward(state: BattleState, unitId: number, target: Hex, dir: number, vertical: boolean): boolean {
-  const unit = state.units.get(unitId);
-  if (!unit) return false;
-  if (vertical) {
-    // Compare in screen-row space: row = r + floor(q/2)
-    const unitRow = unit.hex.r + Math.floor(unit.hex.q / 2);
-    const targetRow = target.r + Math.floor(target.q / 2);
-    if ((targetRow - unitRow) * dir < 0) return false;
-  } else {
-    if ((target.q - unit.hex.q) * dir < 0) return false;
-  }
-  return state.moveUnitAlongPath(unitId, target);
-}
-
-// ── Shared Helpers ──
-
-/** Pick the weakest unit (lowest HP). */
-function pickWeakest(units: BattleUnit[]): BattleUnit {
-  return units.reduce((a, b) => a.currentHp < b.currentHp ? a : b);
-}
-
-/** Find the nearest empty hex adjacent to the target (for interception pathing). */
-function findInterceptHex(state: BattleState, chaser: BattleUnit, target: BattleUnit): Hex | null {
-  let bestHex: Hex | null = null;
-  let bestDist = Infinity;
-  for (const nb of hexNeighbors(target.hex)) {
-    if (!state.isValidHex(nb)) continue;
-    if (state.getUnitAt(nb)) continue;
-    const d = hexDistance(chaser.hex, nb);
-    if (d < bestDist) { bestDist = d; bestHex = nb; }
-  }
-  return bestHex;
-}
-
-/** Find the closest target by hex distance. */
-function findClosestTo(unit: BattleUnit, targets: BattleUnit[]): BattleUnit | null {
-  let best: BattleUnit | null = null;
-  let bestDist = Infinity;
-  for (const t of targets) {
-    const d = hexDistance(unit.hex, t.hex);
-    if (d < bestDist) { bestDist = d; best = t; }
-  }
-  return best;
-}
-
-/** Find the best hex to advance forward (with diagonal fallback). */
-function findAdvanceTarget(
-  state: BattleState, unit: BattleUnit, dir: number, maxSteps: number, vertical: boolean,
-): Hex | null {
-  if (vertical) {
-    // Work in offset coords (col, row) for square grid
-    const col = unit.hex.q;
-    let row = unit.hex.r + Math.floor(unit.hex.q / 2);
-    const startRow = row;
-
-    // Step straight forward (same col, row ± dir)
-    for (let s = 0; s < maxSteps; s++) {
-      const nextRow = row + dir;
-      const next = offsetToAxialFlatTop(col, nextRow);
-      if (!state.isValidHex(next)) break;
-      if (state.getUnitAt(next)) break;
-      row = nextRow;
-    }
-
-    if (row !== startRow) {
-      return offsetToAxialFlatTop(col, row);
-    }
-
-    // Blocked — try diagonal (col±1, row+dir)
-    for (const colOff of [-1, 1]) {
-      const diagHex = offsetToAxialFlatTop(col + colOff, startRow + dir);
-      if (state.isValidHex(diagHex) && !state.getUnitAt(diagHex)) {
-        return diagHex;
-      }
-    }
-    return null;
-  }
-
-  // Horizontal mode: step along q
-  let target: Hex = { q: unit.hex.q, r: unit.hex.r };
-
-  for (let s = 0; s < maxSteps; s++) {
-    const next: Hex = { q: target.q + dir, r: target.r };
-    if (!state.isValidHex(next)) break;
-    if (state.getUnitAt(next)) break;
-    target = next;
-  }
-
-  if (target.q === unit.hex.q && target.r === unit.hex.r) {
-    for (const rOffset of [-1, 1]) {
-      const diag: Hex = { q: unit.hex.q + dir, r: unit.hex.r + rOffset };
-      if (state.isValidHex(diag) && !state.getUnitAt(diag)) {
-        return diag;
-      }
-    }
-    return null;
-  }
-
-  return target;
-}
-
-// ── Greedy AI: march forward, then chase nearest enemy after first combat ──
-
-function tickGreedy(state: BattleState, units: BattleUnit[], dir: number, vertical: boolean): void {
-  for (const unit of units) {
-    if (!state.canAct(unit)) continue;
-    if (handlePinned(state, unit)) continue;
-
-    // Always attack adjacent enemies first
-    const enemies = state.getAdjacentEnemies(unit);
-    if (enemies.length > 0) {
-      state.resolveCombat(unit, pickWeakest(enemies));
-      state.resetCooldown(unit);
-      continue;
-    }
-
-    if (unit.hasEngaged) {
-      // POST-ENGAGEMENT: chase nearest enemy (no direction restriction)
-      const nearest = state.findNearestEnemy(unit);
-      if (nearest) {
-        const interceptHex = findInterceptHex(state, unit, nearest);
-        if (interceptHex) {
-          state.moveUnitAlongPath(unit.id, interceptHex);
-        }
-      }
-    } else {
-      // PRE-ENGAGEMENT: march straight forward
-      const target = findAdvanceTarget(state, unit, dir, 3, vertical);
-      if (target) {
-        moveForward(state, unit.id, target, dir, vertical);
-      }
-    }
-    state.resetCooldown(unit);
-  }
-}
+// ── Composed movement: forward → greedy on engagement ──
+const greedyAdvance = whenEngaged(forward, greedy);
 
 // ── Legacy AI (morale / annihilation modes) ──
 
@@ -480,5 +319,11 @@ function tickLegacy(state: BattleState, faction: BattleFaction): void {
   const units = state.getBattleFactionUnits(faction);
   if (units.length === 0) return;
 
-  tickGreedy(state, units, dir, vertical);
+  const ctx: MoveContext = {
+    dir,
+    vertical,
+    rows: state.config.rows,
+    cols: state.config.cols,
+  };
+  resolveMovement(state, units, greedyAdvance, ctx);
 }
