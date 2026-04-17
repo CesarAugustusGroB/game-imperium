@@ -1,6 +1,5 @@
 import type { Layer } from '../Layer';
 import type { RenderContext } from '../RenderContext';
-import { hexToPixel } from '../../hex';
 
 /**
  * Draws floating combat-text labels (DODGE!, CRIT!!, damage numbers, etc.)
@@ -14,7 +13,7 @@ export class FloatingTextLayer implements Layer {
     const size = state.config.hexSize;
 
     for (const ft of state.floatingTexts) {
-      const center  = hexToPixel(ft.hex, size, origin);
+      const center  = rc.hp(ft.hex, size, origin);
       const t       = 1 - ft.timer / ft.duration; // 0→1 as text ages
       const offsetY = -30 - t * 40;               // float upward
       const alpha   = t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3; // fade last 30%

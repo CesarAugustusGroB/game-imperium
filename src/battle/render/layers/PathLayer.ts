@@ -1,6 +1,5 @@
 import type { Layer } from '../Layer';
 import type { RenderContext } from '../RenderContext';
-import { hexToPixel } from '../../hex';
 
 /**
  * Draws dashed path lines for units that have a queued movement path.
@@ -22,18 +21,18 @@ export class PathLayer implements Layer {
       ctx.lineWidth = 2;
       ctx.setLineDash([6, 4]);
 
-      const start = hexToPixel(unit.hex, size, origin);
+      const start = rc.hp(unit.hex, size, origin);
       ctx.beginPath();
       ctx.moveTo(start.x, start.y);
       for (const pathHex of unit.path) {
-        const pt = hexToPixel(pathHex, size, origin);
+        const pt = rc.hp(pathHex, size, origin);
         ctx.lineTo(pt.x, pt.y);
       }
       ctx.stroke();
 
       // Target circle at final destination.
       const last   = unit.path[unit.path.length - 1];
-      const target = hexToPixel(last, size, origin);
+      const target = rc.hp(last, size, origin);
       ctx.setLineDash([]);
       ctx.beginPath();
       ctx.arc(target.x, target.y, 6, 0, Math.PI * 2);

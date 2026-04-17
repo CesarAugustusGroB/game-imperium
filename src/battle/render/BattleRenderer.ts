@@ -81,6 +81,11 @@ export class BattleRenderer {
 
   setState(state: BattleState): void {
     this.state = state;
+    // New battle may have a different grid size — mark every stateful layer dirty.
+    for (const layer of this.layers) {
+      const l = layer as { resize?: (w: number, h: number) => void };
+      if (typeof l.resize === 'function') l.resize(this.w, this.h);
+    }
   }
 
   setHoveredHex(hex: { q: number; r: number } | null): void {

@@ -1,6 +1,5 @@
 import type { Layer } from '../Layer';
 import type { RenderContext } from '../RenderContext';
-import { hexToPixel } from '../../hex';
 
 /**
  * Draws:
@@ -20,13 +19,13 @@ export class HoverLayer implements Layer {
     if (selected) {
       const range = state.getMovementRange(selected.hex);
       for (const hex of range) {
-        const center = hexToPixel(hex, size, origin);
+        const center = rc.hp(hex, size, origin);
         rc.fillHex(center, size, 'rgba(100, 200, 255, 0.18)');
         rc.strokeHexStyled(center, size, 'rgba(100, 200, 255, 0.5)', 1.5);
       }
 
       // ── Selected hex ──
-      const selCenter = hexToPixel(selected.hex, size, origin);
+      const selCenter = rc.hp(selected.hex, size, origin);
       rc.fillHex(selCenter, size, 'rgba(255, 215, 0, 0.2)');
       rc.strokeHexStyled(selCenter, size, 'rgba(255, 215, 0, 0.7)', 2);
     }
@@ -37,7 +36,7 @@ export class HoverLayer implements Layer {
     if (!state.isValidHex(hov)) return;
     if (selected && selected.hex.q === hov.q && selected.hex.r === hov.r) return;
 
-    const hovCenter = hexToPixel(hov, size, origin);
+    const hovCenter = rc.hp(hov, size, origin);
     rc.fillHex(hovCenter, size, 'rgba(255, 255, 255, 0.08)');
   }
 }

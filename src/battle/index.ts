@@ -10,9 +10,9 @@ import { generateEnemyArmy } from '../game/army/enemy-army-generator';
 import { COHORT_CATALOG } from '../game/army/cohort-data';
 import { ENEMY_COHORTS } from '../game/army/enemy-cohort-data';
 import { pauseMusic, resumeMusic } from '../ui/sound/music';
-import { spriteReloadTrigger } from './battle-settings';
 import { applyProgressionEffects, computeIsFinalBattle } from './progression-bridge';
 import { CENTRAL_SPAWN, FLANK_LEFT, FLANK_RIGHT, deployArmy } from './deployment';
+import { resetReserveAIState } from './movements';
 import type { ArmyData, Cohort } from '../types/index';
 
 /** S7-11: True when the current battle is the final invasion (season >= MAX_SEASONS). */
@@ -45,7 +45,6 @@ export class BattleMode {
   private onExitCallback: () => void;
   private _isVisible = false;
   private boundToggleCoords: () => void;
-  private lastSpriteReload = 0;
 
   constructor(onExitCallback: () => void) {
     this.onExitCallback = onExitCallback;
@@ -78,6 +77,7 @@ export class BattleMode {
   enter(): void {
     this._isVisible = true;
     pauseMusic();
+    resetReserveAIState();
 
     this._state = new BattleState();
     this._state.generateGrid();
@@ -124,6 +124,7 @@ export class BattleMode {
   enterFromSpoke(): void {
     this._isVisible = true;
     pauseMusic();
+    resetReserveAIState();
 
     // V2 grid: 50×30 vertical, annihilation mode
     this._state = new BattleState({
@@ -180,6 +181,7 @@ export class BattleMode {
   enterQuickBattle(): void {
     this._isVisible = true;
     pauseMusic();
+    resetReserveAIState();
 
     this._state = new BattleState({
       cols: 50,
@@ -282,11 +284,7 @@ export class BattleMode {
 
   render(): void {
     if (!this._isVisible) return;
-    // Reload sprites when settings change
-    if (spriteReloadTrigger.value !== this.lastSpriteReload) {
-      this.lastSpriteReload = spriteReloadTrigger.value;
-      this.renderer.reloadSprites();
-    }
+    // Sprite-reload polling lives inside BattleRenderer now (it owns the SpriteManager).
     this.renderer.render();
   }
 

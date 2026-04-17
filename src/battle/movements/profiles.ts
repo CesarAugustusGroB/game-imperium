@@ -17,16 +17,18 @@ import {
 import {
   findInterceptHex, findClosestTo, isInEnemyZone,
 } from './helpers';
-import { prioritize, sequence } from './combinators';
+import { prioritize, sequence, fallback } from './combinators';
 import { inEnemyZone, always } from './conditions';
 
 // ── Vanguard — march forward, chase the enemy star when deep in enemy territory ──
+// In the enemy zone we try `pathToStar` first; if the star hex is blocked by
+// another unit (engine.moveUnitAlongPath returns false) the `pathToStar`
+// primitive returns null (see implementation), so we fall back to `forward`
+// so vanguards don't freeze waiting for an unreachable tile.
 
 export const VANGUARD_AI: MovementFn = prioritize([
-  // Once we've broken into the enemy deployment zone, go for the star.
-  { cond: inEnemyZone, move: pathToStar },
-  // Default: march forward.
-  { cond: always, move: forward },
+  { cond: inEnemyZone, move: fallback(pathToStar, forward) },
+  { cond: always,      move: forward },
 ]);
 
 // ── Guard — attack adjacent enemies only, never leave your spot ──
@@ -51,6 +53,12 @@ export const FLANKER_AI: MovementFn = sequence(flank, greedy);
 
 /** Module-local map of reserve unit id → the enemy vanguard id they're chasing. */
 const reserveBusyTargets = new Map<number, number>();
+
+/** Clear the reserve busy-target state. Call on battle enter so stale IDs
+ *  from a previous battle don't leak into the new one. */
+export function resetReserveAIState(): void {
+  reserveBusyTargets.clear();
+}
 
 /** Called each frame (via the profile) to prune dead links. */
 function pruneBusy(engine: BattleEngine): void {

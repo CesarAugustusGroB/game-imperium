@@ -1,7 +1,6 @@
 import type { Layer } from '../Layer';
 import type { RenderContext } from '../RenderContext';
-import { hexToPixel } from '../../hex';
-import { hexToCol } from '../../battle-zones';
+import { isInDeploymentZone } from '../../battle-zones';
 
 /**
  * Highlights valid target hexes when an ability is in targeting mode.
@@ -18,16 +17,16 @@ export class TargetingLayer implements Layer {
   render(rc: RenderContext): void {
     const { state, origin } = rc;
     const abilityId = state.targetingAbility!;
-    const size      = state.config.hexSize;
+    const size = state.config.hexSize;
+    const { cols, rows } = state.config;
 
     for (const hex of state.gridHexes) {
-      const center    = hexToPixel(hex, size, origin);
-      const col       = hexToCol(hex);
+      const center = rc.hp(hex, size, origin);
       const unitAtHex = state.getUnitAt(hex);
 
       if (abilityId === 'Buy Reinforcements') {
-        // Valid: empty hexes in columns 0-3 (blue back area).
-        if (!unitAtHex && col < 4) {
+        // Valid: empty hexes in blue's deployment zone (works for both grid orientations)
+        if (!unitAtHex && isInDeploymentZone(hex, cols, rows, 'blue', rc.flatTop)) {
           rc.fillHex(center, size, 'rgba(240, 208, 128, 0.15)');
           rc.strokeHexStyled(center, size, 'rgba(240, 208, 128, 0.35)', 1.5);
         }

@@ -11,6 +11,12 @@ import type { ResourceType } from '../game/core/commander';
 import { pendingEnemyConversions, nextInvestmentDiscount } from '../game/progression/strategic-store';
 import { abilityRegistry, type AbilityEffect } from './effects';
 
+/** Narrow a raw ability name string to the registered AbilityEffect union. */
+function toAbilityEffect(name: string): AbilityEffect | null {
+  if (!abilityRegistry.has(name as AbilityEffect['type'])) return null;
+  return { type: name as AbilityEffect['type'] } as AbilityEffect;
+}
+
 /** Abilities that fire immediately (no targeting needed). */
 const IMMEDIATE_ABILITIES = new Set(['Fury Charge']);
 
@@ -83,15 +89,16 @@ export function initAbilityBar(state: BattleState): void {
     // Turncoat requires an enemy target
     if (abilityId === 'Turncoat' && target.faction === 'blue') return;
 
+    // Refuse unknown abilities early so we don't spend resources on a no-op
+    const effect = toAbilityEffect(abilityId);
+    if (!effect) return;
+
     // Deduct cost + mark cooldown
     if (ab.cost && !spendResource(ab.cost.resource, ab.cost.amount)) return;
     if (ab.cooldown === 'once-per-battle') state.markAbilityUsed(abilityId);
 
     // Dispatch through the ability registry — handlers live in effects/ability-effects.ts
-    abilityRegistry.apply(
-      { type: abilityId as AbilityEffect['type'] } as AbilityEffect,
-      { engine: state, targetUnit: target, targetHex },
-    );
+    abilityRegistry.apply(effect, { engine: state, targetUnit: target, targetHex });
   };
 }
 
@@ -124,12 +131,11 @@ function handleAbilityClick(ability: CommanderAbility): void {
 
   // Immediate abilities — execute directly, no targeting
   if (IMMEDIATE_ABILITIES.has(ability.name)) {
+    const effect = toAbilityEffect(ability.name);
+    if (!effect) return;
     if (ability.cost && !spendResource(ability.cost.resource, ability.cost.amount)) return;
     if (ability.cooldown === 'once-per-battle') currentState.markAbilityUsed(ability.name);
-    abilityRegistry.apply(
-      { type: ability.name as AbilityEffect['type'] } as AbilityEffect,
-      { engine: currentState },
-    );
+    abilityRegistry.apply(effect, { engine: currentState });
     return;
   }
 

@@ -1,7 +1,6 @@
 import type { Layer } from '../Layer';
 import type { RenderContext } from '../RenderContext';
 import type { BattleFaction } from '../../battle-types';
-import { hexToPixel } from '../../hex';
 import { CAPTURE_DURATION } from '../../battle-config';
 
 /**
@@ -24,7 +23,7 @@ export class StarLayer implements Layer {
       const star = state.stars.get(faction);
       if (!star) continue;
 
-      const center       = hexToPixel(star, size, origin);
+      const center       = rc.hp(star, size, origin);
       const progress     = state.captureProgress.get(faction) ?? 0;
       const captureRatio = Math.min(1, progress / CAPTURE_DURATION);
 

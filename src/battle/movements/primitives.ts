@@ -64,10 +64,10 @@ export const standGround: MovementFn = hold;
 
 // ── Skirmish (hit-and-run) ──
 
-/** Skirmish: retreat one step if we just attacked this tick, otherwise
- *  approach the nearest enemy. Relies on `ctx.justAttacked` set by the
- *  resolver after an adjacent strike. */
-export const skirmish: MovementFn = (engine, unit, ctx) => {
+/** Skirmish: retreat one step after striking, otherwise approach the nearest
+ *  enemy. Opts into post-attack movement via `postAttackMove = true` so the
+ *  resolver calls it after combat — every other primitive stays put. */
+const skirmishFn: MovementFn = (engine, unit, ctx) => {
   if (ctx.justAttacked) {
     return findRetreatHex(engine, unit, ctx.dir, ctx.vertical);
   }
@@ -75,6 +75,8 @@ export const skirmish: MovementFn = (engine, unit, ctx) => {
   if (!nearest) return null;
   return findInterceptHex(engine, unit, nearest);
 };
+skirmishFn.postAttackMove = true;
+export const skirmish = skirmishFn;
 
 // ── Flank ──
 
@@ -114,8 +116,12 @@ export const flank: MovementFn = (engine, unit, ctx) => {
 // ── Path to star (capture mode) ──
 
 /** Pathfind toward the enemy's capture star — used by vanguards once they've
- *  broken into the enemy zone. Bypasses the forward-only direction guard. */
+ *  broken into the enemy zone. Returns null when the star hex is occupied or
+ *  no path exists, so `fallback(pathToStar, forward)` can recover. */
 export const pathToStar: MovementFn = (engine, unit) => {
-  // getEnemyStar(unit.faction) returns the star this faction is trying to capture.
-  return engine.getEnemyStar(unit.faction);
+  const star = engine.getEnemyStar(unit.faction);
+  if (!star) return null;
+  // If someone's standing on the star, moveUnitAlongPath would silently fail.
+  if (engine.getUnitAt(star)) return null;
+  return star;
 };

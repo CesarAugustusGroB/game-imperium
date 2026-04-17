@@ -29,16 +29,35 @@ export interface MoveContext {
   justAttacked?: boolean;
 }
 
-/** A movement decision function. Returns the target hex (or null for no move). */
-export type MovementFn = (
-  engine: BattleEngine,
-  unit: BattleUnit,
-  ctx: MoveContext,
-) => Hex | null;
+/**
+ * A movement decision function. Returns the target hex (or null for no move).
+ *
+ * Optional `postAttackMove: true` lets the resolver call this primitive even
+ * AFTER a same-tick attack — only `skirmish` sets this so it can retreat.
+ * All other primitives stay out of the way after an attack to preserve the
+ * pin mechanic.
+ */
+export interface MovementFn {
+  (engine: BattleEngine, unit: BattleUnit, ctx: MoveContext): Hex | null;
+  postAttackMove?: boolean;
+}
 
 /**
  * Process a list of units with a given movement function.
- * Handles the shared boilerplate: canAct, pinned, attack adjacent, move, cooldown.
+ *
+ * Per-unit flow:
+ *   1. Skip if can't act (cooldown / mid-animation / dying).
+ *   2. Skip if pinned (handlePinned resolves the pinner-only attack itself).
+ *   3. Attack the weakest adjacent enemy if any. In the default case this
+ *      pins the defender and the unit does **not** move this tick — mirrors
+ *      pre-refactor behavior. Attacking + moving on the same tick breaks the
+ *      pin chain (attacker leaves, defender stuck).
+ *   4. If no adjacent enemy, consult `moveFn` for a target hex and move.
+ *   5. Always reset the cooldown afterward.
+ *
+ * **Hit-and-run exception**: `MovementFn`s with `postAttackMove = true`
+ * (e.g. `skirmish`) DO run after an attack so they can retreat. They read
+ * `ctx.justAttacked` to know why they were called.
  */
 export function resolveMovement(
   engine: BattleEngine,
@@ -50,19 +69,20 @@ export function resolveMovement(
     if (!engine.canAct(unit)) continue;
     if (handlePinned(engine, unit)) continue;
 
-    // Attack adjacent enemies first
-    let justAttacked = false;
     const enemies = engine.getAdjacentEnemies(unit);
     if (enemies.length > 0) {
       engine.resolveCombat(unit, pickWeakest(enemies));
-      justAttacked = true;
+      // Only opt-in primitives (skirmish) move after striking.
+      if (moveFn.postAttackMove) {
+        const hex = moveFn(engine, unit, { ...ctx, justAttacked: true });
+        if (hex) engine.moveUnitAlongPath(unit.id, hex);
+      }
+      engine.resetCooldown(unit);
+      continue;
     }
 
-    // Then let the MovementFn decide where to move (if anywhere). The
-    // justAttacked flag lets skirmish primitives retreat right after striking.
-    const hex = moveFn(engine, unit, { ...ctx, justAttacked });
+    const hex = moveFn(engine, unit, { ...ctx, justAttacked: false });
     if (hex) engine.moveUnitAlongPath(unit.id, hex);
-
     engine.resetCooldown(unit);
   }
 }
