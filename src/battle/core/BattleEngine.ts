@@ -24,17 +24,18 @@ import type {
 } from '../battle-types';
 import type { DecretumEffect } from '../../game/items/decretum';
 import type { ArmyData } from '../../types/index';
-import type { Legate, LegateEffect } from '../../game/army/legate';
+import type { Legate } from '../../game/army/legate';
 
 import * as grid from '../systems/grid-system';
 import * as units from '../systems/unit-system';
 import * as combat from '../systems/combat-system';
 import * as anim from '../systems/animation-system';
 
-import { FLASH_DURATION, SHAKE_DURATION } from '../battle-config';
-import { findReinforcementHex } from '../deployment';
 import { mapArmyToBattleUnits } from '../legacy/legacy-cohort-mapping';
 import { getLegateTraitById } from '../../game/army/legate-traits';
+import {
+  registerAllEffects, decretumRegistry, legateRegistry,
+} from '../effects';
 
 // Re-export Particle so callers that `import { Particle } from './battle-state'` still work.
 export type { Particle };
@@ -45,6 +46,8 @@ export class BattleEngine {
 
   constructor(config?: Partial<BattleConfig>) {
     this.world = new BattleWorld(config);
+    // Idempotent — ensures registries are populated before any effect dispatch.
+    registerAllEffects();
   }
 
   // ── Read-only accessors (mirror the old BattleState public fields) ──
@@ -131,84 +134,10 @@ export class BattleEngine {
 
   updateAnimations(dt: number): void { anim.updateAnimations(this.world, dt); }
 
-  // ── Decretum effects (PR 2 will move these to an effect registry) ──
+  // ── Decretum effects (dispatched via decretumRegistry) ──
 
   applyDecretumEffect(effect: DecretumEffect, targetHex?: Hex): void {
-    switch (effect.type) {
-      case 'heal': {
-        if (effect.target === 'all') {
-          for (const unit of this.getBattleFactionUnits('blue')) {
-            unit.currentHp = Math.min(unit.stats.hp, unit.currentHp + Math.floor(unit.stats.hp * effect.amount));
-            unit.flashTimer = FLASH_DURATION;
-          }
-        } else if (targetHex) {
-          const unit = this.getUnitAt(targetHex);
-          if (unit && unit.faction === 'blue') {
-            unit.currentHp = Math.min(unit.stats.hp, unit.currentHp + Math.floor(unit.stats.hp * effect.amount));
-            unit.flashTimer = FLASH_DURATION;
-          }
-        }
-        return;
-      }
-      case 'damage': {
-        if (effect.target === 'area') {
-          for (const unit of this.world.units.values()) {
-            if (unit.isDying) continue;
-            unit.currentHp -= effect.amount;
-            unit.shakeTimer = SHAKE_DURATION;
-            unit.flashTimer = FLASH_DURATION;
-            this.applyDeathCheck(unit);
-          }
-        } else if (targetHex) {
-          const unit = this.getUnitAt(targetHex);
-          if (unit && unit.faction === 'red') {
-            unit.currentHp -= effect.amount;
-            unit.shakeTimer = SHAKE_DURATION;
-            unit.flashTimer = FLASH_DURATION;
-            this.applyDeathCheck(unit);
-          }
-        }
-        return;
-      }
-      case 'buff': {
-        const blueUnits = this.getBattleFactionUnits('blue');
-        for (const unit of blueUnits) {
-          if (effect.stat === 'atk') unit.stats.atk = Math.floor(unit.stats.atk * (1 + effect.multiplier));
-          else if (effect.stat === 'def') unit.stats.def = Math.floor(unit.stats.def * (1 + effect.multiplier));
-          else if (effect.stat === 'hp') unit.stats.hp = Math.floor(unit.stats.hp * (1 + effect.multiplier));
-          else if (effect.stat === 'agi') unit.stats.agi = Math.floor(unit.stats.agi * (1 + effect.multiplier));
-        }
-        if (blueUnits.length > 0) {
-          const anchor = blueUnits[0].hex;
-          this.world.floatingTexts.push({
-            text: 'BUFFED!',
-            hex: { q: anchor.q, r: anchor.r },
-            color: '#ffd700', timer: 0.8, duration: 0.8,
-          });
-        }
-        return;
-      }
-      case 'spawn': {
-        for (let i = 0; i < effect.count; i++) {
-          const hex = findReinforcementHex(this, 'blue');
-          if (!hex) break;
-          const unit = this.addUnit('blue', hex, `Militia ${i + 1}`, effect.unitRole);
-          unit.currentHp = Math.floor(unit.stats.hp * 0.6);
-        }
-        return;
-      }
-      case 'prevent-death':
-        this.world.preventDeathCount += effect.count;
-        return;
-      case 'resource-gain':
-      case 'reveal':
-      case 'event-modifier':
-      case 'upkeep-reduction':
-      case 'debuff':
-      case 'convert-enemy-next-battle':
-      case 'investment-discount':
-        return; // handled elsewhere
-    }
+    decretumRegistry.apply(effect, { engine: this, targetHex });
   }
 
   // ── Setup ──
@@ -242,42 +171,12 @@ export class BattleEngine {
     if (legate) this.applyLegateTraits(faction, legate);
   }
 
-  /** Apply every trait on a Legate to the faction's freshly-spawned units. */
+  /** Apply every trait on a Legate to `faction`'s freshly-spawned units. */
   applyLegateTraits(faction: BattleFaction, legate: Legate): void {
     for (const traitId of legate.traitIds) {
       const trait = getLegateTraitById(traitId);
       if (!trait) continue;
-      this.applyLegateEffect(faction, trait.effect);
-    }
-  }
-
-  private applyLegateEffect(faction: BattleFaction, effect: LegateEffect): void {
-    switch (effect.type) {
-      case 'stat-bonus': {
-        const list = this.getBattleFactionUnits(faction);
-        for (const unit of list) {
-          if (effect.target !== 'all' && unit.role !== effect.target) continue;
-          const old = unit.stats[effect.stat];
-          const next = Math.max(1, Math.floor(old * (1 + effect.multiplier)));
-          unit.stats[effect.stat] = next;
-          if (effect.stat === 'hp') unit.currentHp = next;
-        }
-        return;
-      }
-      case 'lieutenant-preset':
-        if (faction === 'blue') this.setLieutenantOrder(effect.order);
-        return;
-      case 'random-rally': {
-        const list = this.getBattleFactionUnits(faction);
-        if (list.length === 0) return;
-        const pick = list[Math.floor(Math.random() * list.length)];
-        pick.stats.atk = Math.max(1, Math.floor(pick.stats.atk * (1 + effect.multiplier)));
-        pick.stats.def = Math.max(0, Math.floor(pick.stats.def * (1 + effect.multiplier)));
-        pick.stats.hp  = Math.max(1, Math.floor(pick.stats.hp  * (1 + effect.multiplier)));
-        pick.stats.agi = Math.max(1, Math.floor(pick.stats.agi * (1 + effect.multiplier)));
-        pick.currentHp = pick.stats.hp;
-        return;
-      }
+      legateRegistry.apply(trait.effect, { engine: this, faction });
     }
   }
 }

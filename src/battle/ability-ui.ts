@@ -1,17 +1,15 @@
 import { selectedCommander } from '../game/core/game-state';
 import { canAfford, spendResource, addResource } from '../game/core/resources';
 import { RESOURCE_INFO, FACTION_COLORS } from '../game/core/commander';
-import { playSfx } from '../ui/sound/sfx';
 import type { Commander, CommanderAbility } from '../game/core/commander';
 import type { BattleState } from './battle-state';
-import type { BattleUnit } from './battle-types';
-import { SHAKE_DURATION, FLASH_DURATION, ROLE_STATS, ABILITY_PARTICLE_COUNT } from './battle-config';
 import { isInDeploymentZone } from './battle-zones';
 import { getHandWithCastability, castDecretum } from '../game/items/decretum-store';
 import { getDecretumTargeting, DECRETUM_SELL_PRICE } from '../game/items/decretum';
 import type { DecretumEffect } from '../game/items/decretum';
 import type { ResourceType } from '../game/core/commander';
 import { pendingEnemyConversions, nextInvestmentDiscount } from '../game/progression/strategic-store';
+import { abilityRegistry, type AbilityEffect } from './effects';
 
 /** Abilities that fire immediately (no targeting needed). */
 const IMMEDIATE_ABILITIES = new Set(['Fury Charge']);
@@ -51,23 +49,27 @@ export function initAbilityBar(state: BattleState): void {
   abilityButton = btn;
   mercCount = 0;
 
-  // Ability execution — dispatch by ability name
+  // Ability execution — routing gates (cost / cooldown / target type) stay here;
+  // the actual effect is dispatched through abilityRegistry.
   state.onAbilityExecute = (abilityId: string, targetHex) => {
     const cmdr = selectedCommander.value;
     if (!cmdr) return;
     const ab = cmdr.tacticalAbility;
     if (ab.name !== abilityId) return;
 
-    // Buy Reinforcements targets an empty hex
+    // Buy Reinforcements — targets an empty hex, variable cost, up to MAX_MERCS
     if (EMPTY_HEX_ABILITIES.has(abilityId)) {
-      if (state.getUnitAt(targetHex)) return; // must be empty
+      if (state.getUnitAt(targetHex)) return;
       if (abilityId === 'Buy Reinforcements') {
         if (mercCount >= MAX_MERCS) return;
         const { cols, rows, vertical } = state.config;
         if (!isInDeploymentZone(targetHex, cols, rows, 'blue', !!vertical)) return;
         const cost = MERC_COST[mercCount] ?? MERC_COST[MERC_COST.length - 1];
         if (!spendResource('gold', cost)) return;
-        executeBuyReinforcements(state, targetHex);
+        abilityRegistry.apply(
+          { type: 'Buy Reinforcements', mercIndex: mercCount },
+          { engine: state, targetHex },
+        );
         mercCount++;
         if (mercCount >= MAX_MERCS) state.markAbilityUsed(abilityId);
       }
@@ -81,27 +83,15 @@ export function initAbilityBar(state: BattleState): void {
     // Turncoat requires an enemy target
     if (abilityId === 'Turncoat' && target.faction === 'blue') return;
 
-    // Deduct cost
-    if (ab.cost) {
-      if (!spendResource(ab.cost.resource, ab.cost.amount)) return;
-    }
+    // Deduct cost + mark cooldown
+    if (ab.cost && !spendResource(ab.cost.resource, ab.cost.amount)) return;
+    if (ab.cooldown === 'once-per-battle') state.markAbilityUsed(abilityId);
 
-    // Mark cooldown
-    if (ab.cooldown === 'once-per-battle') {
-      state.markAbilityUsed(abilityId);
-    }
-
-    // Execute ability effect
-    switch (abilityId) {
-      case 'Miracle':
-        executeMiracle(state, target);
-        break;
-      case 'Turncoat':
-        executeTurncoat(state, target);
-        break;
-      default:
-        break;
-    }
+    // Dispatch through the ability registry — handlers live in effects/ability-effects.ts
+    abilityRegistry.apply(
+      { type: abilityId as AbilityEffect['type'] } as AbilityEffect,
+      { engine: state, targetUnit: target, targetHex },
+    );
   };
 }
 
@@ -136,7 +126,10 @@ function handleAbilityClick(ability: CommanderAbility): void {
   if (IMMEDIATE_ABILITIES.has(ability.name)) {
     if (ability.cost && !spendResource(ability.cost.resource, ability.cost.amount)) return;
     if (ability.cooldown === 'once-per-battle') currentState.markAbilityUsed(ability.name);
-    executeImmediate(currentState, ability.name);
+    abilityRegistry.apply(
+      { type: ability.name as AbilityEffect['type'] } as AbilityEffect,
+      { engine: currentState },
+    );
     return;
   }
 
@@ -192,114 +185,6 @@ export function destroyAbilityBar(): void {
   abilityButton = null;
   currentState = null;
   mercCount = 0;
-}
-
-// ── Miracle (Pope Innocent) ──
-
-function executeMiracle(state: BattleState, target: BattleUnit): void {
-  if (target.faction === 'blue') {
-    // Heal friendly unit to full HP
-    target.currentHp = target.stats.hp;
-    target.flashTimer = FLASH_DURATION;
-    state.floatingTexts.push({
-      text: 'HEALED!', hex: { q: target.hex.q, r: target.hex.r },
-      color: '#ffd700', timer: 0.8, duration: 0.8,
-    });
-    state.spawnParticles(target.hex, ABILITY_PARTICLE_COUNT, '#ffd700', Math.PI * 2, 25, 1.0);
-    playSfx('ability_heal');
-  } else {
-    // Smite enemy unit — deal 2000 damage
-    const damage = 2000;
-    target.currentHp -= damage;
-    target.shakeTimer = SHAKE_DURATION;
-    target.flashTimer = FLASH_DURATION;
-    state.floatingTexts.push({
-      text: 'SMITE!', hex: { q: target.hex.q, r: target.hex.r },
-      color: '#ffd700', timer: 0.8, duration: 0.8,
-    });
-    state.spawnParticles(target.hex, ABILITY_PARTICLE_COUNT, '#ffd700', Math.PI * 2, 50, 0.8);
-    playSfx('ability_fire');
-    // Death check
-    state.applyDeathCheck(target);
-  }
-}
-
-// ── Immediate ability dispatch ──
-
-function executeImmediate(state: BattleState, abilityId: string): void {
-  switch (abilityId) {
-    case 'Fury Charge':
-      executeFuryCharge(state);
-      break;
-  }
-}
-
-// ── Fury Charge (Boudicca) ──
-
-function executeFuryCharge(state: BattleState): void {
-  const blueUnits = state.getBattleFactionUnits('blue');
-  const dir = 1; // blue advances right (+q)
-
-  for (const unit of blueUnits) {
-    if (unit.isDying) continue;
-
-    // Try to advance 2 hexes forward
-    let currentHex = unit.hex;
-    let moved = 0;
-    for (let step = 0; step < 2; step++) {
-      const nextHex = { q: currentHex.q + dir, r: currentHex.r };
-      if (!state.isValidHex(nextHex)) break;
-
-      const occupant = state.getUnitAt(nextHex);
-      if (occupant && !occupant.isDying) {
-        if (occupant.faction !== 'blue') {
-          // Impact damage on collision with enemy
-          const impactDamage = 1000;
-          occupant.currentHp -= impactDamage;
-          occupant.shakeTimer = SHAKE_DURATION;
-          occupant.flashTimer = FLASH_DURATION;
-          state.floatingTexts.push({
-            text: 'CHARGE!', hex: { q: occupant.hex.q, r: occupant.hex.r },
-            color: '#ff4444', timer: 0.8, duration: 0.8,
-          });
-          state.applyDeathCheck(occupant);
-          state.spawnParticles(occupant.hex, ABILITY_PARTICLE_COUNT, '#ff6633', Math.PI, 50, 0.8);
-        }
-        break; // blocked by unit (friendly or enemy after impact)
-      }
-
-      currentHex = nextHex;
-      moved++;
-    }
-
-    // Move unit to furthest reached hex
-    if (moved > 0) {
-      state.moveUnitAlongPath(unit.id, currentHex);
-    }
-  }
-
-  // Floating text for the charge itself — anchor to grid center
-  const { cols, rows } = state.config;
-  const centerHex = { q: Math.floor(cols / 2), r: Math.floor(rows / 2) };
-  state.floatingTexts.push({
-    text: 'FURY CHARGE!', hex: centerHex,
-    color: '#ff4444', timer: 1.0, duration: 1.0,
-  });
-  playSfx('charge');
-}
-
-// ── Buy Reinforcements (Crassus) ──
-
-function executeBuyReinforcements(state: BattleState, hex: { q: number; r: number }): void {
-  const stats = { ...ROLE_STATS.vanguard };
-  const unit = state.addUnit('blue', hex, `Mercenary ${mercCount + 1}`, 'vanguard', stats);
-  // 70% HP — expendable hired troops
-  unit.currentHp = Math.floor(unit.stats.hp * 0.7);
-  unit.flashTimer = FLASH_DURATION;
-  state.floatingTexts.push({
-    text: 'HIRED!', hex: { q: hex.q, r: hex.r },
-    color: '#d4a843', timer: 0.8, duration: 0.8,
-  });
 }
 
 // ── Decretum Bar ──
@@ -480,23 +365,5 @@ function handleDecretumClick(decretumId: string, state: BattleState): void {
   };
 }
 
-// ── Turncoat (Augustus) ──
-
-function executeTurncoat(state: BattleState, target: BattleUnit): void {
-  // Switch faction to player side
-  Object.assign(target, { faction: 'blue' as const });
-
-  // Set HP to 50% of max (demoralized)
-  target.currentHp = Math.floor(target.stats.hp * 0.5);
-
-  // Clear pin — converted unit is no longer engaged
-  target.pinnedBy = null;
-
-  // Visual feedback
-  target.flashTimer = FLASH_DURATION;
-  state.floatingTexts.push({
-    text: 'TURNCOAT!', hex: { q: target.hex.q, r: target.hex.r },
-    color: '#4a7cc2', timer: 1.0, duration: 1.0,
-  });
-  state.spawnParticles(target.hex, ABILITY_PARTICLE_COUNT, '#4a7cc2', Math.PI * 2, 30, 1.0);
-}
+// All ability execution now lives in `src/battle/effects/ability-effects.ts`.
+// This file is pure UI: button rendering + click routing + targeting setup.

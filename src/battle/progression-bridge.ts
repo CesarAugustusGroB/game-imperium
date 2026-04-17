@@ -18,11 +18,12 @@ import {
 } from '../game/core/game-state';
 import {
   VETERAN_BONUS_PER_STACK, VETERAN_SOFT_CAP_STACKS, VETERAN_BONUS_ABOVE_CAP,
-  ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO, WAR_CRY_DAMAGE_BONUS,
+  ALLY_SPAWN_HP_RATIO, WAR_CRY_DAMAGE_BONUS,
 } from './battle-config';
 import { findReinforcementHex } from './deployment';
 import { getActiveEffects } from '../game/items/doctrine-store';
 import type { DoctrineEffect } from '../game/items/doctrine';
+import { doctrineRegistry } from './effects';
 import { getProvinceEffects, provinces } from '../game/province/province-store';
 import { consumeCrusadeBattle, warCryActive, pendingEnemyConversions } from '../game/progression/strategic-store';
 import { isFinalBattle } from './index';
@@ -107,60 +108,8 @@ function applyCommanderPerks(state: BattleState): void {
 /** Apply all active Doctrine and Province effects at battle start. */
 function applyDoctrineAndProvinceEffects(state: BattleState): void {
   const effects: DoctrineEffect[] = [...getActiveEffects(), ...getProvinceEffects()];
-
   for (const effect of effects) {
-    switch (effect.type) {
-      case 'stat-modifier': {
-        for (const unit of state.getBattleFactionUnits('blue')) {
-          if (effect.stat === 'damage') unit.stats.atk = Math.floor(unit.stats.atk * (1 + effect.multiplier));
-          else if (effect.stat === 'armor') unit.stats.def = Math.floor(unit.stats.def * (1 + effect.multiplier));
-          else if (effect.stat === 'maxHp') {
-            unit.stats.hp = Math.floor(unit.stats.hp * (1 + effect.multiplier));
-            unit.currentHp = Math.min(unit.currentHp, unit.stats.hp);
-          }
-        }
-        break;
-      }
-      case 'heal-battle-start': {
-        for (const unit of state.getBattleFactionUnits('blue')) {
-          if (effect.amount === 'full') {
-            unit.currentHp = unit.stats.hp;
-          } else if (typeof effect.amount === 'object') {
-            unit.currentHp = Math.min(unit.stats.hp, Math.floor(unit.stats.hp * effect.amount.percent));
-          } else {
-            unit.currentHp = Math.min(unit.stats.hp, unit.currentHp + effect.amount);
-          }
-        }
-        break;
-      }
-      case 'free-units': {
-        for (let i = 0; i < effect.count; i++) {
-          const hex = findReinforcementHex(state, 'blue');
-          if (!hex) break;
-          const u = state.addUnit('blue', hex, `Militia ${i + 1}`, effect.unitRole);
-          u.currentHp = Math.floor(u.stats.hp * MILITIA_SPAWN_HP_RATIO);
-        }
-        break;
-      }
-      case 'ally-units': {
-        for (let i = 0; i < effect.count; i++) {
-          const hex = findReinforcementHex(state, 'blue');
-          if (!hex) break;
-          const u = state.addUnit('blue', hex, `Allied ${i + 1}`, 'reserve');
-          u.currentHp = Math.floor(u.stats.hp * ALLY_SPAWN_HP_RATIO);
-        }
-        break;
-      }
-      case 'revive': {
-        for (const unit of state.getBattleFactionUnits('blue')) {
-          unit.reviveThreshold = Math.max(unit.reviveThreshold, effect.hpPercent);
-          unit.hasRevived = false;
-        }
-        break;
-      }
-      default:
-        break;
-    }
+    doctrineRegistry.apply(effect, { engine: state });
   }
 }
 
