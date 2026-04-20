@@ -50,10 +50,14 @@ function resolveScreen(screen: ScreenName): ScreenName {
   return screen;
 }
 
-// Read initial screen from URL hash (e.g., #battle, #hub, #node-map)
+// Read initial screen from URL hash (e.g., #battle, #forum, #node-map).
+// Legacy hashes like `#provinces` also resolve correctly: resolveScreen
+// will rewrite them to `forum` and stamp the matching Forum tab so a
+// bookmark from before S22 still lands the user in the right place.
 function getInitialScreen(): ScreenName {
   const hash = window.location.hash.slice(1) as ScreenName;
-  return VALID_SCREENS.includes(hash) ? hash : 'title';
+  const requested = VALID_SCREENS.includes(hash) ? hash : 'title';
+  return resolveScreen(requested);
 }
 
 export const currentScreen = signal<ScreenName>(getInitialScreen());

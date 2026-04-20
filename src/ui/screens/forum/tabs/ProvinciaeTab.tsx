@@ -1,12 +1,6 @@
-import { provinces } from '../../../../game/province/province-store';
-import { PlaceholderTab } from './PlaceholderTab';
-
-export function ProvinciaeTab() {
-  return (
-    <PlaceholderTab
-      title="Provinciae"
-      subtitle={`${provinces.value.length} Holdings`}
-      nextTask="S22-04"
-    />
-  );
-}
+/**
+ * Provinciae tab — the full province management body lives in
+ * `src/ui/screens/ProvinceScreen.tsx` (kept there to avoid churning its
+ * 20+ relative imports) and is re-exported under its Forum-tab name here.
+ */
+export { ProvinciaeTab } from '../../ProvinceScreen';

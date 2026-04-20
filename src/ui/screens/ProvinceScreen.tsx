@@ -1,6 +1,5 @@
 import { signal, useSignal } from '@preact/signals';
 import type { ComponentChildren } from 'preact';
-import { navigateTo } from '../screens';
 import { selectedCommander } from '../../game/core/game-state';
 import { playSfx } from '../sound/sfx';
 import { provinces, buildInvestment, canAffordCost, getNextInvestmentLevel, setProvinceTax } from '../../game/province/province-store';
@@ -34,6 +33,7 @@ import { Portrait } from '../components/Portrait';
 import { Tooltip } from '../components/Tooltip';
 import { BuildingIcon } from '../components/BuildingIcon';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
+import { Masthead } from './forum/Masthead';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('province-styles')) {
@@ -2362,7 +2362,16 @@ function ProvinceDetail({ province }: { province: Province }) {
 
 // ── Main screen ──
 
-export function ProvinceScreen() {
+/**
+ * Province management screen body — mounted as the Provinciae tab inside
+ * the Forum shell. Legacy route `#provinces` redirects here via
+ * `resolveScreen()` in src/ui/screens.ts.
+ *
+ * Exported under two names for clarity: `ProvinciaeTab` is the canonical
+ * Forum-tab name, `ProvinceScreen` is kept as an alias for any lingering
+ * direct importers.
+ */
+export function ProvinciaeTab() {
   const commander = selectedCommander.value;
   const faction = commander?.faction;
   const accent = faction ? FACTION_COLORS[faction] : 'var(--color-gold-primary)';
@@ -2395,43 +2404,20 @@ export function ProvinceScreen() {
   const avgUnrest = Math.round(totalUnrest / n);
   const avgWealth = Math.round(totalWealth / n);
 
-  return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      minHeight: '100vh', fontFamily: 'var(--font-family)',
-      background: 'var(--color-bg-primary)',
-      paddingTop: '40px', paddingBottom: '40px',
-    }}>
-      <OrnateFrame width="min(1180px, 94vw)">
-        <OrnateHeader
-          eyebrow="Provinces"
-          title={selected ? selected.name : '—'}
-          rightSlot={allProvinces.length > 0 && (() => {
-            const netGold = (totalIncome.gold ?? 0) - totalExpenses;
-            return (
-              <>
-                <span class="ornate-stat-chip" title="Total Population">👥 <strong>{totalPop}</strong></span>
-                <span class="ornate-stat-chip" title="Net Gold/spoke" style={netGold < 0 ? { color: 'var(--color-danger)' } : undefined}>
-                  {RESOURCE_INFO.gold.icon} <strong>{netGold >= 0 ? '+' : ''}{netGold}</strong>
-                </span>
-                {(totalIncome.faith ?? 0) > 0 && (
-                  <span class="ornate-stat-chip" title="Faith/spoke">{RESOURCE_INFO.faith.icon} <strong>+{totalIncome.faith}</strong></span>
-                )}
-                {(totalIncome.influence ?? 0) > 0 && (
-                  <span class="ornate-stat-chip" title="Influence/spoke">{RESOURCE_INFO.influence.icon} <strong>+{totalIncome.influence}</strong></span>
-                )}
-                {(totalIncome.momentum ?? 0) > 0 && (
-                  <span class="ornate-stat-chip" title="Momentum/spoke">{RESOURCE_INFO.momentum.icon} <strong>+{totalIncome.momentum}</strong></span>
-                )}
-                <span class="ornate-stat-chip" title="Avg Wealth">{RESOURCE_INFO.gold.icon} <strong>{avgWealth}</strong></span>
-                <span class="ornate-stat-chip" title="Avg Unrest"><UnrestBar unrest={avgUnrest} modifier={0} width={50} /></span>
-              </>
-            );
-          })()}
-          onClose={() => navigateTo('hub')}
-          accentColor={accent}
-        />
+  const netGold = (totalIncome.gold ?? 0) - totalExpenses;
+  const subtitle = allProvinces.length === 0
+    ? 'No holdings'
+    : `${allProvinces.length} Holding${allProvinces.length === 1 ? '' : 's'} · ${netGold >= 0 ? '+' : ''}${netGold}⚜ · Avg unrest ${avgUnrest}%`;
 
+  return (
+    <>
+      <Masthead
+        title="Provinciae"
+        subtitle={subtitle}
+        accent={accent}
+      />
+
+      <div style={{ flex: 1, padding: '20px 32px 24px', minHeight: 0, overflow: 'auto', fontFamily: 'var(--font-family)' }}>
         {allProvinces.length === 0 ? (
           /* Empty state */
           <div style={{
@@ -2445,6 +2431,14 @@ export function ProvinceScreen() {
             <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', maxWidth: '320px', lineHeight: '1.5' }}>
               Complete spokes to conquer provinces. Each province generates income and can be improved with investments.
             </div>
+            {/* Aggregate empire-wide income chips — surfaced here so the metric
+                isn't lost when the empty state hides the detail panels. */}
+            {totalPop > 0 && (
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <span class="ornate-stat-chip" title="Total Population">👥 <strong>{totalPop}</strong></span>
+                <span class="ornate-stat-chip" title="Avg Wealth">{RESOURCE_INFO.gold.icon} <strong>{avgWealth}</strong></span>
+              </div>
+            )}
           </div>
         ) : (
           /* Two-column layout */
@@ -2457,15 +2451,22 @@ export function ProvinceScreen() {
               paddingRight: '4px',
             }}>
               <div style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'var(--font-size-xs)',
-                fontWeight: 600,
-                color: 'var(--color-gold-secondary)',
-                letterSpacing: '3px',
-                textTransform: 'uppercase',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
                 marginBottom: '4px',
               }}>
-                {allProvinces.length} Province{allProvinces.length !== 1 ? 's' : ''}
+                <div style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 'var(--font-size-xs)',
+                  fontWeight: 600,
+                  color: 'var(--color-gold-secondary)',
+                  letterSpacing: '3px',
+                  textTransform: 'uppercase',
+                }}>
+                  {allProvinces.length} Province{allProvinces.length !== 1 ? 's' : ''}
+                </div>
+                <span class="ornate-stat-chip" title="Avg Unrest">
+                  <UnrestBar unrest={avgUnrest} modifier={0} width={50} />
+                </span>
               </div>
               {allProvinces.map(p => (
                 <ProvinceRow key={p.id} province={p} selected={selected?.id === p.id} />
@@ -2473,7 +2474,7 @@ export function ProvinceScreen() {
             </div>
 
             {/* Right: Detail */}
-            <div class="prov-detail" style={{ flex: '1 1 400px', minWidth: '0', maxHeight: 'calc(100vh - 260px)', overflowY: 'auto', overflowX: 'hidden', paddingRight: '6px' }}>
+            <div class="prov-detail" style={{ flex: '1 1 400px', minWidth: '0', overflowY: 'auto', overflowX: 'hidden', paddingRight: '6px' }}>
               {selected ? (
                 <ProvinceDetail province={selected} />
               ) : (
@@ -2484,7 +2485,7 @@ export function ProvinceScreen() {
             </div>
           </div>
         )}
-      </OrnateFrame>
+      </div>
 
       {/* ── Governor Picker Modal ── */}
       {showGovernorPicker.value && selected && (
@@ -2515,6 +2516,9 @@ export function ProvinceScreen() {
           </OrnateFrame>
         </div>
       )}
-    </div>
+    </>
   );
 }
+
+/** Alias kept for any direct importers of the old name. */
+export const ProvinceScreen = ProvinciaeTab;

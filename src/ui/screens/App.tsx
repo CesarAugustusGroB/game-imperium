@@ -9,7 +9,6 @@ import { NodeMapScreen } from './NodeMapScreen';
 import { PostBattleScreen } from './PostBattleScreen';
 import { DoctrineScreen } from './DoctrineScreen';
 import { CouncilScreen } from './CouncilScreen';
-import { ProvinceScreen } from './ProvinceScreen';
 import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
 import { ArmyRecruitmentScreen } from './ArmyRecruitmentScreen';
@@ -35,10 +34,12 @@ const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> =
   // Legacy routes — resolveScreen() in screens.ts rewrites them to `forum`
   // with the correct active tab. Entries kept here as safe fallbacks if the
   // hash lands before resolution runs (e.g. a stale bookmark).
+  // Legacy route fallbacks — kept for screens that still have standalone
+  // bodies pending migration into Forum tabs (S22-05/06/07). Once those
+  // land, these entries can be dropped.
   'hub': ForumShell,
   'doctrine': DoctrineScreen,
   'council': CouncilScreen,
-  'provinces': ProvinceScreen,
   'army-recruitment': ArmyRecruitmentScreen,
   'legate-hiring': LegateHiringScreen,
   'node-map': NodeMapScreen,
