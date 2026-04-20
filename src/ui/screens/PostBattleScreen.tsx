@@ -203,7 +203,7 @@ export function PostBattleScreen() {
         {result === 'victory' ? (
           <img
             class="battle-banner"
-            src="/asset/victory_banner.png"
+            src="/asset/ui/victory_banner.png"
             alt="Victory"
             style={{
               width: 'min(320px, 90%)', height: 'auto',
@@ -214,7 +214,7 @@ export function PostBattleScreen() {
         ) : result === 'defeat' ? (
           <img
             class="battle-banner"
-            src="/asset/defeat_label.png"
+            src="/asset/ui/defeat_label.png"
             alt="Defeat"
             style={{
               width: 'min(320px, 90%)', height: 'auto',
