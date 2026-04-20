@@ -217,6 +217,7 @@ export class BattleMode {
       stats: { atk: 125, def: 72, hp: 1050, agi: 38 },
       aurumCost: 0,
       description: 'Citizen hoplite of Athens. Heavy spear and aspis, close phalanx.',
+      spriteId: 'athens_hoplite_uncommon',
       movementProfile: 'vanguard-march',
     };
 
@@ -227,6 +228,7 @@ export class BattleMode {
       stats: { atk: 145, def: 85, hp: 1200, agi: 30 },
       aurumCost: 0,
       description: 'Select corps of Athens. The heavy rear rank who anchor the phalanx wall.',
+      spriteId: 'athens_hoplite_uncommon',
       movementProfile: 'guard-stand',
     };
 
