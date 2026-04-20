@@ -1,8 +1,4 @@
-import { navigateTo } from '../screens';
-import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { Portrait } from '../components/Portrait';
-import { FACTION_COLORS } from '../../game/core/commander';
-import { selectedCommander } from '../../game/core/game-state';
 import { gold } from '../../game/core/resources';
 import { canAfford } from '../../game/core/resources';
 import {
@@ -58,13 +54,15 @@ if (typeof document !== 'undefined' && !document.getElementById('legate-screen-s
 
 const LEGATE_HIRE_COST = 80;
 
-export function LegateHiringScreen() {
+/**
+ * Legate hiring body — mounted as the "Legate" sub-tab inside the
+ * Exercitus Forum tab. Legacy route `#legate-hiring` redirects into
+ * the Exercitus tab with the legate sub-tab active via `resolveScreen`.
+ * The `LegateHiringScreen` alias is kept for any direct importer.
+ */
+export function ExercitusLegateBody() {
   // Ensure pool has candidates on mount
   ensureLegatePool();
-
-  const commander = selectedCommander.value;
-  const faction = commander?.faction ?? null;
-  const accentColor = faction ? FACTION_COLORS[faction] : undefined;
 
   const currentGold = gold.value;
   const currentLegate = preparedLegate.value;
@@ -84,26 +82,21 @@ export function LegateHiringScreen() {
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      minHeight: '100vh', fontFamily: 'var(--font-family)',
-      background: 'var(--color-bg-primary)',
-      paddingTop: '48px', paddingBottom: '40px',
+      fontFamily: 'var(--font-family)',
+      color: 'var(--color-text-primary)',
     }}>
-      <OrnateFrame width="min(1100px, 94vw)">
-        <OrnateHeader
-          eyebrow="Army Management"
-          title="LEGATES"
-          rightSlot={<>
-            <span class="ornate-stat-chip" title="Gold">⚜ <strong>{currentGold}</strong></span>
-            {currentLegate ? (
-              <span class="ornate-stat-chip" title="Assigned Legate">{currentLegate.name.split(' ')[0]}</span>
-            ) : (
-              <span class="ornate-stat-chip" style={{ color: 'var(--color-text-muted)' }}>No Legate</span>
-            )}
-          </>}
-          onClose={() => navigateTo('hub')}
-          accentColor={accentColor}
-        />
+      {/* Compact stats strip — replaces the old rightSlot chips. */}
+      <div style={{
+        display: 'flex', gap: 8, flexWrap: 'wrap',
+        marginBottom: 16, padding: '0 4px',
+      }}>
+        <span class="ornate-stat-chip" title="Gold">⚜ <strong>{currentGold}</strong></span>
+        {currentLegate ? (
+          <span class="ornate-stat-chip" title="Assigned Legate">{currentLegate.name.split(' ')[0]}</span>
+        ) : (
+          <span class="ornate-stat-chip" style={{ color: 'var(--color-text-muted)' }}>No Legate</span>
+        )}
+      </div>
 
         {/* ── Current Legate section ── */}
         {currentLegate && (
@@ -242,17 +235,9 @@ export function LegateHiringScreen() {
           })}
         </div>
 
-        {/* ── Back ── */}
-        <div style={{ textAlign: 'center' }}>
-          <button
-            class="ornate-btn-ghost"
-            onClick={() => navigateTo('hub')}
-            style={{ padding: '9px 28px', fontSize: 'var(--font-size-xs)' }}
-          >
-            ← Back to Hub
-          </button>
-        </div>
-      </OrnateFrame>
     </div>
   );
 }
+
+/** Alias kept for any direct importers of the old name. */
+export const LegateHiringScreen = ExercitusLegateBody;

@@ -1,8 +1,4 @@
-import { navigateTo } from '../screens';
-import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { COHORT_CATALOG } from '../../game/army/cohort-data';
-import { FACTION_COLORS } from '../../game/core/commander';
-import { selectedCommander } from '../../game/core/game-state';
 import { gold } from '../../game/core/resources';
 import { preparedArmy, ensurePreparedArmy, recruitCohort, removeCohort } from '../../game/progression/strategic-store';
 import { PANEL, PANEL_TITLE } from '../ui-constants';
@@ -87,13 +83,16 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
   );
 }
 
-export function ArmyRecruitmentScreen() {
+/**
+ * Army recruitment body — mounted as the "Roster" sub-tab inside the
+ * Exercitus Forum tab. Legacy route `#army-recruitment` redirects into
+ * the Exercitus tab (with the roster sub-tab active by default) via
+ * `resolveScreen()` in src/ui/screens.ts. The `ArmyRecruitmentScreen`
+ * alias is kept for any direct importer.
+ */
+export function ExercitusRosterBody() {
   // Ensure prepared army exists when the screen mounts
   ensurePreparedArmy();
-
-  const commander = selectedCommander.value;
-  const faction = commander?.faction ?? null;
-  const accentColor = faction ? FACTION_COLORS[faction] : undefined;
 
   // Force reactivity on gold + prepared army
   const currentGold = gold.value;
@@ -126,25 +125,20 @@ export function ArmyRecruitmentScreen() {
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      minHeight: '100vh', fontFamily: 'var(--font-family)',
-      background: 'var(--color-bg-primary)',
-      paddingTop: '48px', paddingBottom: '40px',
+      fontFamily: 'var(--font-family)',
+      color: 'var(--color-text-primary)',
     }}>
-      <OrnateFrame width="min(1100px, 94vw)">
-        <OrnateHeader
-          eyebrow="Army Management"
-          title="RECRUITMENT"
-          rightSlot={<>
-            <span class="ornate-stat-chip" title="Gold">⚜ <strong>{currentGold}</strong></span>
-            <span class="ornate-stat-chip" title="Cohorts">{cohorts.length} cohort{cohorts.length !== 1 ? 's' : ''}</span>
-            {totalSize > 0 && (
-              <span class="ornate-stat-chip" title="Army size">{totalSize >= 1000 ? `${(totalSize / 1000).toFixed(1)}K` : totalSize} HP</span>
-            )}
-          </>}
-          onClose={() => navigateTo('hub')}
-          accentColor={accentColor}
-        />
+      {/* Compact stats strip — replaces the old rightSlot chips. */}
+      <div style={{
+        display: 'flex', gap: 8, flexWrap: 'wrap',
+        marginBottom: 16, padding: '0 4px',
+      }}>
+        <span class="ornate-stat-chip" title="Gold">⚜ <strong>{currentGold}</strong></span>
+        <span class="ornate-stat-chip" title="Cohorts">{cohorts.length} cohort{cohorts.length !== 1 ? 's' : ''}</span>
+        {totalSize > 0 && (
+          <span class="ornate-stat-chip" title="Army size">{totalSize >= 1000 ? `${(totalSize / 1000).toFixed(1)}K` : totalSize} HP</span>
+        )}
+      </div>
 
         {/* Two-column layout */}
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
@@ -298,21 +292,13 @@ export function ArmyRecruitmentScreen() {
                 </div>
               )}
 
-              {/* Back button */}
-              <div style={{ marginTop: '16px' }}>
-                <button
-                  class="ornate-btn-ghost"
-                  onClick={() => navigateTo('hub')}
-                  style={{ width: '100%', padding: '8px', fontSize: 'var(--font-size-xs)' }}
-                >
-                  ← Back to Hub
-                </button>
-              </div>
             </div>
           </div>
 
         </div>
-      </OrnateFrame>
     </div>
   );
 }
+
+/** Alias kept for any direct importers of the old name. */
+export const ArmyRecruitmentScreen = ExercitusRosterBody;

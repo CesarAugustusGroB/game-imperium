@@ -10,8 +10,6 @@ import { PostBattleScreen } from './PostBattleScreen';
 import { DoctrineScreen } from './DoctrineScreen';
 import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
-import { ArmyRecruitmentScreen } from './ArmyRecruitmentScreen';
-import { LegateHiringScreen } from './LegateHiringScreen';
 import { BattleScreenV2 } from './BattleScreenV2';
 import { ForumShell } from './forum';
 import { loadMetaSave } from '../../game/core/meta-save';
@@ -38,8 +36,6 @@ const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> =
   // land, these entries can be dropped.
   'hub': ForumShell,
   'doctrine': DoctrineScreen,
-  'army-recruitment': ArmyRecruitmentScreen,
-  'legate-hiring': LegateHiringScreen,
   'node-map': NodeMapScreen,
   'battleV2': BattleScreenV2,
   'post-battle': PostBattleScreen,
