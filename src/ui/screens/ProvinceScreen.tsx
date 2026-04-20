@@ -1454,7 +1454,7 @@ function WealthDisplay({ province }: { province: Province }) {
 
 // ── Province identity strip ──
 
-const TERRAIN_ICONS: Record<string, string> = {
+export const TERRAIN_ICONS: Record<string, string> = {
   farmland:  '🌾',
   hills:     '⛰️',
   coast:     '🌊',
@@ -1465,7 +1465,7 @@ const TERRAIN_ICONS: Record<string, string> = {
   desert:    '🏜️',
 };
 
-const TRADE_GOOD_ICONS: Record<string, string> = {
+export const TRADE_GOOD_ICONS: Record<string, string> = {
   grain:    '🌾',
   iron:     '⚙️',
   silk:     '🧵',

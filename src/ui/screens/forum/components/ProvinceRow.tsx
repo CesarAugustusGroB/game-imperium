@@ -1,6 +1,12 @@
 import { useState } from 'preact/hooks';
 import type { Province } from '../../../../game/province/province';
+import {
+  INVESTMENT_DATA, calculateNetWealthChange,
+} from '../../../../game/province/province';
 import { getAssignedGovernor } from '../../../../game/province/governor-store';
+import { ROMAN } from '../../../ui-constants';
+import { TERRAIN_ICONS, TRADE_GOOD_ICONS } from '../../ProvinceScreen';
+import { Tooltip } from '../../../components/Tooltip';
 
 interface ProvinceRowProps {
   p: Province;
@@ -29,7 +35,42 @@ export function ProvinceRow({ p, accent = '#d4a843', onClick, selected = false }
   const assigned = getAssignedGovernor(p.id);
   const governorName = assigned?.governor.name ?? null;
 
+  // ── Rich hover tooltip — mirrors the one on the full Provinciae tab's ledger row ──
+  const terrainIcon = TERRAIN_ICONS[p.terrain] ?? '?';
+  const tradeIcon = p.tradeGood ? (TRADE_GOOD_ICONS[p.tradeGood] ?? '') : '';
+  const netWealthChange = calculateNetWealthChange(p, p.terrain);
+  const tooltipUnrestColor =
+    p.unrest < 40 ? 'var(--color-success)' :
+    p.unrest < 70 ? 'var(--color-warning)' :
+    'var(--color-danger)';
+
+  const rowTooltip = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)', marginBottom: '2px' }}>
+        {p.name}
+      </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+        {terrainIcon} {p.terrain}{tradeIcon ? ` · ${tradeIcon} ${p.tradeGood}` : ''}
+      </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+        Wealth: {p.wealth} ({netWealthChange >= 0 ? '+' : ''}{netWealthChange.toFixed(1)}/s)
+      </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: tooltipUnrestColor }}>
+        Unrest: {p.unrest}/100
+      </div>
+      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+        Net: {totalIncome >= 0 ? '+' : ''}{totalIncome}⚜/turn · Governor: {governorName ?? 'none'}
+      </div>
+      {p.investments.length > 0 && (
+        <div style={{ marginTop: '3px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
+          {p.investments.map(inv => `${INVESTMENT_DATA[inv.type].name} ${ROMAN[inv.level]}`).join(' · ')}
+        </div>
+      )}
+    </div>
+  );
+
   return (
+    <Tooltip content={rowTooltip} variant="rich" position="right">
     <div
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
@@ -106,5 +147,6 @@ export function ProvinceRow({ p, accent = '#d4a843', onClick, selected = false }
         </div>
       </div>
     </div>
+    </Tooltip>
   );
 }
