@@ -1,4 +1,6 @@
-import type { UnitRole, UnitStats } from '../../battle/battle-types';
+import type {
+  MovementProfileId, UnitRole, UnitStats,
+} from '../../battle/battle-types';
 
 /**
  * Cohort — the atomic unit of an Imperium army.
@@ -23,6 +25,19 @@ export interface Cohort {
   aurumCost: number;
   /** Flavor description shown in the Recruitment Screen. */
   description: string;
+  /**
+   * Optional sprite override for this cohort. Must match a key registered by
+   * `SpriteManager` (see `/asset/soldiers/soldiers.json` ids, e.g. "samurai",
+   * "viking"). When unset, the renderer falls back to `${faction}:${role}`.
+   */
+  spriteId?: string;
+  /**
+   * Optional movement AI profile for this cohort. Decoupled from `role` so two
+   * cohorts sharing a role can play distinctly (e.g. Hastati march forward while
+   * Velites skirmish). When unset, a role-based default is applied at spawn.
+   * Keys must exist in `MOVEMENT_PROFILES` (see `src/battle/movements/profiles.ts`).
+   */
+  movementProfile?: MovementProfileId;
 }
 
 /**

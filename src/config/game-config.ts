@@ -230,31 +230,31 @@ export const ASSETS = {
   textures: {
     terrainMap: '/textures/v2/terrain_map.png',
     battlegrounds: [
-      '/textures/battleground.png',
-      '/textures/battleground2.png',
-      '/textures/Battleground3.png',
+      '/textures/battlegrounds/battleground.png',
+      '/textures/battlegrounds/battleground2.png',
+      '/textures/battlegrounds/Battleground3.png',
     ],
   },
   shields: {
-    viking:    '/asset/viking_round.png',
-    samurai:   '/asset/samurai_round.png',
-    elephant:  '/asset/war_elephant_round.png',
-    persian:   '/asset/persina_inmortal_round.png',
-    roman:     '/asset/roman_round.png',
-    spartan:   '/asset/spartan_round.png',
-    commander: '/asset/commander_round.png',
+    viking:    '/asset/soldiers/viking_common_soldier.png',
+    samurai:   '/asset/soldiers/samurai_uncommon_soldier.png',
+    elephant:  '/asset/soldiers/war_elephant_rare_soldier.png',
+    persian:   '/asset/soldiers/persian_immortal_uncommon_soldier.png',
+    roman:     '/asset/soldiers/roman_common_soldier.png',
+    spartan:   '/asset/soldiers/spartan_rare_soldier.png',
+    commander: '/asset/soldiers/commander_leader_card.png',
   },
   commanders: {
-    pope:     '/asset/char_pope_innocent.png',
-    boudicca: '/asset/char_boudicca.png',
-    augustus:  '/asset/char_caesar_augustus.png',
-    crassus:  '/asset/char_marcus_crassus.png',
+    pope:     '/asset/characters/char_pope_innocent.png',
+    boudicca: '/asset/characters/char_boudicca.png',
+    augustus:  '/asset/characters/char_caesar_augustus.png',
+    crassus:  '/asset/characters/char_marcus_crassus.png',
   },
   ui: {
-    curtainLeft: '/asset/cortina_izq.png',
-    victoryBanner: '/asset/victory_banner.png',
+    curtainLeft: '/asset/ui/cortina_izq.png',
+    victoryBanner: '/asset/ui/victory_banner.png',
     /** Dynamic building icon path. Use: `ASSETS.ui.buildingIcon('castrum')` */
-    buildingIcon: (type: string) => `/asset/building_${type}.png`,
+    buildingIcon: (type: string) => `/asset/buildings/building_${type}.png`,
   },
 };
 

@@ -1,0 +1,37 @@
+/* Screen transition animations */
+@keyframes screen-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes screen-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+.screen-wrapper {
+  animation: screen-enter var(--duration-slow) var(--ease-default);
+}
+.screen-wrapper.exiting {
+  animation: screen-exit var(--duration-normal) ease-in forwards;
+}
+
+/* Global focus-visible styles for keyboard accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-gold-primary);
+  outline-offset: 2px;
+}
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Global selection color */
+::selection {
+  background: var(--color-border-subtle);
+  color: var(--color-gold-primary);
+}
+
+/* Mobile layout adjustments */
+@media (max-width: 640px) {
+  .screen-wrapper { padding-top: 42px !important; }
+  .hub-columns { flex-direction: column !important; }
+  .hub-columns > * { min-width: 0 !important; width: 100% !important; }
+}

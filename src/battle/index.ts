@@ -4,24 +4,38 @@ import { BattleRenderer } from './battle-renderer';
 import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
 import { initAbilityBar, updateAbilityBar, destroyAbilityBar, initDecretumBar, updateDecretumBar, destroyDecretumBar } from './ability-ui';
-import { selectedCommander, veteranStacks, allianceCount, threatLevel, globalSeason, MAX_SEASONS, battlesWon, completedSpokes } from '../game/core/game-state';
+import { threatLevel, globalSeason, completedSpokes } from '../game/core/game-state';
 import { currentSpoke, currentNodeIndex } from '../game/progression/spoke';
 import { generateEnemyArmy } from '../game/army/enemy-army-generator';
-import { VETERAN_BONUS_PER_STACK, VETERAN_SOFT_CAP_STACKS, VETERAN_BONUS_ABOVE_CAP, ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO, WAR_CRY_DAMAGE_BONUS } from './battle-config';
-import { offsetToAxial } from './hex';
-import { getActiveEffects } from '../game/items/doctrine-store';
-import type { DoctrineEffect } from '../game/items/doctrine';
-import { getProvinceEffects, provinces } from '../game/province/province-store';
-import { consumeCrusadeBattle, warCryActive, pendingEnemyConversions } from '../game/progression/strategic-store';
+import { COHORT_CATALOG } from '../game/army/cohort-data';
+import { ENEMY_COHORTS } from '../game/army/enemy-cohort-data';
 import { pauseMusic, resumeMusic } from '../ui/sound/music';
-
-import type { ArmyData } from '../types/index';
+import { applyProgressionEffects, computeIsFinalBattle } from './progression-bridge';
+import { CENTRAL_SPAWN, deployArmy } from './deployment';
+import { resetReserveAIState } from './movements';
+import type { ArmyData, Cohort } from '../types/index';
 
 /** S7-11: True when the current battle is the final invasion (season >= MAX_SEASONS). */
 export const isFinalBattle = signal(false);
 
 /** S15-05: Snapshot of the generated enemy army for PostBattleScreen display. */
 export const lastEnemyArmy = signal<ArmyData | null>(null);
+
+/**
+ * Build a minimal in-memory `ArmyData` by cycling a cohort template list to
+ * the target size. Used by `enterQuickBattle` so its rosters flow through the
+ * same `deployArmy` pipeline as real spoke armies.
+ */
+function syntheticArmy(name: string, cycle: readonly Cohort[], size: number): ArmyData {
+  const cohorts: Cohort[] = [];
+  for (let i = 0; i < size; i++) cohorts.push(cycle[i % cycle.length]);
+  return {
+    id: -1, owner: 'quick-battle', name, size: cohorts.length,
+    cohorts, legateId: null,
+    provinceIndex: -1, targetProvinceIndex: null, progress: 0, path: [],
+    inCombat: false, combatTarget: null, lastRoll: 0,
+  };
+}
 
 export class BattleMode {
   private canvas: HTMLCanvasElement;
@@ -55,9 +69,15 @@ export class BattleMode {
     return this._state;
   }
 
+  /**
+   * @deprecated V1 battle entry — 20×14 horizontal grid, legacy spawn rows.
+   * The V2 migration lands in `enterFromSpoke()`; this method is retained
+   * temporarily so tests and fallback routes still work.
+   */
   enter(): void {
     this._isVisible = true;
     pauseMusic();
+    resetReserveAIState();
 
     this._state = new BattleState();
     this._state.generateGrid();
@@ -71,7 +91,7 @@ export class BattleMode {
 
     const nodeType = spoke?.nodes[currentNodeIndex.value]?.type ?? 'battle';
     const isBoss = nodeType === 'boss';
-    isFinalBattle.value = globalSeason.value >= MAX_SEASONS;
+    computeIsFinalBattle();
 
     const redArmy = generateEnemyArmy(
       threatLevel.value, completedSpokes.value, globalSeason.value,
@@ -80,127 +100,9 @@ export class BattleMode {
     lastEnemyArmy.value = redArmy;
     this._state.placeStartingUnits(blueArmy, redArmy, blueLegate, null);
 
-    // S15-04: stat scaling only — composition is handled by the generator
-    this.applyThreatScaling();
-
-    if (selectedCommander.value?.id === 'boudicca') {
-      const stacks = veteranStacks.value;
-      const capped = Math.min(stacks, VETERAN_SOFT_CAP_STACKS);
-      const excess = Math.max(0, stacks - VETERAN_SOFT_CAP_STACKS);
-      this._state.veteranBonus = capped * VETERAN_BONUS_PER_STACK + excess * VETERAN_BONUS_ABOVE_CAP;
-    }
-
-    // S3-10: Augustus — spawn extra allied units based on allianceCount
-    if (selectedCommander.value?.id === 'augustus') {
-      const extraUnits = Math.min(allianceCount.value, 4);
-      for (let i = 0; i < extraUnits; i++) {
-        // Spawn in blue reserve area (col 4, varied rows)
-        const row = 3 + i * 4; // rows 3, 7
-        const hex = offsetToAxial(4, row);
-        if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
-          const unit = this._state.addUnit('blue', hex, `Allied ${i + 1}`, 'reserve');
-          unit.currentHp = Math.floor(unit.stats.hp * ALLY_SPAWN_HP_RATIO);
-        }
-      }
-    }
-
-    // Apply Doctrine + Province passive effects at battle start
-    const doctrineEffects: DoctrineEffect[] = [...getActiveEffects(), ...getProvinceEffects()];
-    for (const effect of doctrineEffects) {
-      switch (effect.type) {
-        case 'stat-modifier': {
-          for (const unit of this._state.getBattleFactionUnits('blue')) {
-            if (effect.stat === 'damage') unit.stats.atk = Math.floor(unit.stats.atk * (1 + effect.multiplier));
-            else if (effect.stat === 'armor') unit.stats.def = Math.floor(unit.stats.def * (1 + effect.multiplier));
-            else if (effect.stat === 'maxHp') {
-              unit.stats.hp = Math.floor(unit.stats.hp * (1 + effect.multiplier));
-              unit.currentHp = Math.min(unit.currentHp, unit.stats.hp);
-            }
-          }
-          break;
-        }
-        case 'heal-battle-start': {
-          for (const unit of this._state.getBattleFactionUnits('blue')) {
-            if (effect.amount === 'full') {
-              unit.currentHp = unit.stats.hp;
-            } else if (typeof effect.amount === 'object') {
-              unit.currentHp = Math.min(unit.stats.hp, Math.floor(unit.stats.hp * effect.amount.percent));
-            } else {
-              unit.currentHp = Math.min(unit.stats.hp, unit.currentHp + effect.amount);
-            }
-          }
-          break;
-        }
-        case 'free-units': {
-          const freeRows = [2, 4, 6, 8, 10, 12];
-          let spawned = 0;
-          for (const row of freeRows) {
-            if (spawned >= effect.count) break;
-            const hex = offsetToAxial(3, row);
-            if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
-              const u = this._state.addUnit('blue', hex, `Militia ${spawned + 1}`, effect.unitRole);
-              u.currentHp = Math.floor(u.stats.hp * MILITIA_SPAWN_HP_RATIO);
-              spawned++;
-            }
-          }
-          break;
-        }
-        case 'ally-units': {
-          const allyRows = [3, 7, 11];
-          let spawned = 0;
-          for (const row of allyRows) {
-            if (spawned >= effect.count) break;
-            const hex = offsetToAxial(4, row);
-            if (this._state.isValidHex(hex) && !this._state.getUnitAt(hex)) {
-              const u = this._state.addUnit('blue', hex, `Allied ${spawned + 1}`, 'reserve');
-              u.currentHp = Math.floor(u.stats.hp * ALLY_SPAWN_HP_RATIO);
-              spawned++;
-            }
-          }
-          break;
-        }
-        case 'revive': {
-          // Set revive threshold on all blue units — highest threshold wins via max()
-          for (const unit of this._state.getBattleFactionUnits('blue')) {
-            unit.reviveThreshold = Math.max(unit.reviveThreshold, effect.hpPercent);
-            unit.hasRevived = false;
-          }
-          break;
-        }
-        // Other effect types do not apply at battle-start
-        default:
-          break;
-      }
-    }
-
-    // S7-12: Call Crusade — +30% damage for N battles
-    const crusadeBonus = consumeCrusadeBattle();
-    if (crusadeBonus > 0) {
-      for (const unit of this._state.getBattleFactionUnits('blue')) {
-        unit.stats.atk = Math.floor(unit.stats.atk * (1 + crusadeBonus));
-      }
-    }
-
-    // S7-13: Boudicca's War Cry — +25% ATK to all blue units (first-strike advantage)
-    if (warCryActive.value) {
-      warCryActive.value = false;
-      for (const unit of this._state.getBattleFactionUnits('blue')) {
-        unit.stats.atk = Math.floor(unit.stats.atk * (1 + WAR_CRY_DAMAGE_BONUS));
-      }
-    }
-
-    // S9-03: Mandatum Legati — convert weakest red unit(s) to blue at 50% HP
-    const conversions = pendingEnemyConversions.value;
-    if (conversions > 0) {
-      pendingEnemyConversions.value = 0;
-      const redUnits = this._state.getBattleFactionUnits('red').filter(u => !u.isDying);
-      for (let i = 0; i < Math.min(conversions, redUnits.length); i++) {
-        const weakest = redUnits.reduce((a, b) => a.stats.hp <= b.stats.hp ? a : b);
-        Object.assign(weakest, { faction: 'blue' as const });
-        weakest.currentHp = Math.floor(weakest.stats.hp * 0.5);
-        redUnits.splice(redUnits.indexOf(weakest), 1);
-      }
-    }
+    // Progression integration — all threat scaling, commander perks,
+    // doctrines, crusade, war cry, mandatum conversions live here.
+    applyProgressionEffects(this._state);
 
     this.renderer.setState(this._state);
     this.input.setState(this._state);
@@ -213,46 +115,129 @@ export class BattleMode {
   }
 
   /**
-   * S15-04: Post-spawn stat scaling only. Enemy army composition is now
-   * handled by `generateEnemyArmy()` — this method only applies:
-   *   1. +5%/threatLevel HP+ATK to all red units
-   *   2. Final-invasion boss multiplier (provinces/allies/battlesWon formula)
+   * BattleV2 entry path — fights on the 50×30 vertical battlefield with the
+   * spoke's bound army + generated enemy, central-spawn deployment, and
+   * all progression integrations from `applyProgressionEffects`.
+   *
+   * This is the production replacement for `enter()`.
    */
-  private applyThreatScaling(): void {
-    const threat = threatLevel.value;
+  enterFromSpoke(): void {
+    this._isVisible = true;
+    pauseMusic();
+    resetReserveAIState();
 
-    // Scale enemy stats: +5% per threat level
-    const statMultiplier = 1 + (threat * 0.05);
-    if (statMultiplier > 1) {
-      for (const unit of this._state.getBattleFactionUnits('red')) {
-        unit.stats = { ...unit.stats };
-        unit.stats.hp = Math.floor(unit.stats.hp * statMultiplier);
-        unit.stats.atk = Math.floor(unit.stats.atk * statMultiplier);
-        unit.currentHp = unit.stats.hp;
-      }
-    }
+    // V2 grid: 50×30 vertical, annihilation mode
+    this._state = new BattleState({
+      cols: 50,
+      rows: 30,
+      hexSize: 31,
+      victoryMode: 'annihilation',
+      vertical: true,
+    });
+    this._state.generateGrid();
 
-    // Final invasion boss multiplier (provinces/allies/battlesWon scaling)
-    if (isFinalBattle.value) {
-      const provinceCount = provinces.value.length;
-      const allies = allianceCount.value;
-      const bossMultiplier = Math.max(1.3, Math.min(2.5,
-        1.5
-        + (provinceCount * 0.05)
-        - (allies * 0.05)
-        - (battlesWon.value * 0.03)
-        + (Math.max(0, threat - 15) * 0.02),
-      ));
-      for (const unit of this._state.getBattleFactionUnits('red')) {
-        unit.stats.hp = Math.floor(unit.stats.hp * bossMultiplier);
-        unit.stats.atk = Math.floor(unit.stats.atk * bossMultiplier);
-        unit.currentHp = unit.stats.hp;
-      }
-    }
+    // Pull spoke inputs (same source as the legacy `enter()`)
+    const spoke = currentSpoke.value;
+    const blueArmy = spoke?.boundArmy ?? undefined;
+    const blueLegate = spoke?.boundLegate ?? null;
+
+    const nodeType = spoke?.nodes[currentNodeIndex.value]?.type ?? 'battle';
+    const isBoss = nodeType === 'boss';
+    computeIsFinalBattle();
+
+    const redArmy = generateEnemyArmy(
+      threatLevel.value, completedSpokes.value, globalSeason.value,
+      isBoss, isFinalBattle.value,
+    );
+    lastEnemyArmy.value = redArmy;
+
+    // V2 deployment (central spawn) — replaces V1 placeStartingUnits
+    deployArmy(this._state, 'blue', blueArmy, CENTRAL_SPAWN);
+    deployArmy(this._state, 'red', redArmy, CENTRAL_SPAWN);
+    this._state.placeStarsAndStrength();
+
+    // Apply Legate traits (V1 used to do this inside placeFactionUnits)
+    if (blueLegate) this._state.applyLegateTraits('blue', blueLegate);
+
+    // All progression effects — threat scaling, doctrines, crusade, etc.
+    applyProgressionEffects(this._state);
+
+    this.renderer.setState(this._state);
+    this.input.setState(this._state);
+    this.resize(window.innerWidth, window.innerHeight);
+    this.input.attach();
+    initAbilityBar(this._state);
+    initDecretumBar(this._state);
+    document.getElementById('btn-coords')?.addEventListener('click', this.boundToggleCoords);
+  }
+
+  /**
+   * Quick-battle entry for BattleScreenV2 — movement-profile demo on a
+   * vertical 50×30 battlefield. No spoke / commander state required.
+   *
+   * Blue shows one movement profile per deployment zone (front/middle/back):
+   *   front  (vanguard role) → Velites  — 'skirmisher'       (hit-and-run)
+   *   middle (reserve role)  → Triarii  — 'reserve-intercept' (chase breakthroughs)
+   *   back   (guard role)    → Equites  — 'flanker'           (swing to a side column)
+   *
+   * Red is a plain marching line of Barbarian Warriors (vanguard-march) so
+   * blue's mixed AI reads against a single predictable foe.
+   */
+  enterQuickBattle(): void {
+    this._isVisible = true;
+    pauseMusic();
+    resetReserveAIState();
+
+    this._state = new BattleState({
+      cols: 50,
+      rows: 30,
+      hexSize: 31,
+      victoryMode: 'annihilation',
+      vertical: true,
+    });
+    this._state.generateGrid();
+
+    // ── Blue demo roster — one movement profile per zone ──
+    const velites = COHORT_CATALOG.find(c => c.id === 'velites')!;
+    const triarii = COHORT_CATALOG.find(c => c.id === 'triarii')!;
+    const equites = COHORT_CATALOG.find(c => c.id === 'equites')!;
+
+    const buff = (c: Cohort, mult: number): Cohort =>
+      ({ ...c, stats: { ...c.stats, hp: c.stats.hp * mult } });
+
+    const blueCycle: Cohort[] = [
+      buff(velites, 2), buff(velites, 2), buff(velites, 2),  // front — skirmisher
+      buff(triarii, 2), buff(triarii, 2), buff(triarii, 2),  // middle — reserve-intercept
+      buff(equites, 2), buff(equites, 2), buff(equites, 2),  // back — flanker
+    ];
+    const blueArmy = syntheticArmy('demo-zones', blueCycle, blueCycle.length);
+
+    // ── Red — uniform marching line to react against ──
+    const warrior = ENEMY_COHORTS.find(c => c.id === 'barbarian-warrior')!;
+    const redCycle: Cohort[] = [buff(warrior, 2)];
+    const redArmy = syntheticArmy('barbarian-line', redCycle, blueCycle.length);
+
+    deployArmy(this._state, 'blue', blueArmy, CENTRAL_SPAWN);
+    deployArmy(this._state, 'red',  redArmy,  CENTRAL_SPAWN);
+
+    this._state.placeStarsAndStrength();
+
+    isFinalBattle.value = false;
+    lastEnemyArmy.value = null;
+
+    this.renderer.suppressVictoryOverlay = true;
+    this.renderer.setState(this._state);
+    this.input.setState(this._state);
+    this.resize(window.innerWidth, window.innerHeight);
+    this.input.attach();
+    initAbilityBar(this._state);
+    initDecretumBar(this._state);
+    document.getElementById('btn-coords')?.addEventListener('click', this.boundToggleCoords);
   }
 
   exit(): void {
     this._isVisible = false;
+    this.renderer.suppressVictoryOverlay = false;
     resumeMusic();
     this.input.detach();
     destroyAbilityBar();
@@ -263,6 +248,12 @@ export class BattleMode {
 
   update(dt: number): void {
     if (!this._isVisible) return;
+
+    // Update camera pan from WASD keys
+    this.input.updateCamera(dt);
+
+    // When paused, only allow camera pan — skip simulation
+    if (this._state.paused) return;
 
     // Tick all animations (movement, shake, flash, lunge, death, cooldowns)
     this._state.updateAnimations(dt);
@@ -282,6 +273,7 @@ export class BattleMode {
 
   render(): void {
     if (!this._isVisible) return;
+    // Sprite-reload polling lives inside BattleRenderer now (it owns the SpriteManager).
     this.renderer.render();
   }
 

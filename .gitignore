@@ -25,3 +25,7 @@ dist-ssr
 
 # Planning artifacts
 plan.md
+
+# Local tool state
+.claude/
+.vercel/

@@ -1,4 +1,5 @@
 import './ui/design-tokens.css';
+import './ui/globals.css';
 import { render } from 'preact';
 import { effect } from '@preact/signals';
 import { App } from './ui/screens/App';
@@ -6,6 +7,7 @@ import { currentScreen, navigateTo } from './ui/screens';
 import { BattleMode, isFinalBattle } from './battle/index';
 import { currentSpoke, lastBattleResult } from './game/progression/spoke';
 import { selectedCommander, veteranStacks, spokesSinceLastBattle, battlesWon } from './game/core/game-state';
+import { syncBattleSignals, resetBattleSignals, battleActive, requestBattleExit } from './battle/battle-signals';
 
 // Mount Preact UI
 const appRoot = document.getElementById('app-root');
@@ -52,15 +54,23 @@ const battleMode = new BattleMode(() => {
   }
 });
 
-// Apply initial screen state (handles #battle on page load)
-let battleActive = false;
+// Apply initial screen state (handles #battle / #battleV2 on page load)
+let isBattleActive = false;
 const initialScreen = currentScreen.value;
-if (initialScreen === 'battle') {
-  if (appRoot) appRoot.style.display = 'none';
+const isBattleScreen = (s: string) => s === 'battle' || s === 'battleV2';
+
+if (isBattleScreen(initialScreen)) {
+  if (appRoot && initialScreen === 'battle') appRoot.style.display = 'none';
   const battleScreen = document.getElementById('battle-screen');
   if (battleScreen) battleScreen.style.display = 'block';
-  battleActive = true;
-  battleMode.enter();
+  isBattleActive = true;
+  battleActive.value = true;
+  if (initialScreen === 'battleV2') {
+    battleMode.enterQuickBattle();
+  } else {
+    // Spoke battles now run on BattleV2 (50×30 vertical, central-spawn deployment)
+    battleMode.enterFromSpoke();
+  }
 } else {
   const battleScreen = document.getElementById('battle-screen');
   if (battleScreen) battleScreen.style.display = 'none';
@@ -68,11 +78,19 @@ if (initialScreen === 'battle') {
 
 // Enter/exit battle when currentScreen signal changes
 effect(() => {
-  if (currentScreen.value === 'battle' && !battleActive) {
-    battleActive = true;
-    battleMode.enter();
-  } else if (currentScreen.value !== 'battle' && battleActive) {
-    battleActive = false;
+  const screen = currentScreen.value;
+  if (isBattleScreen(screen) && !isBattleActive) {
+    isBattleActive = true;
+    battleActive.value = true;
+    if (screen === 'battleV2') {
+      battleMode.enterQuickBattle();
+    } else {
+      battleMode.enterFromSpoke();
+    }
+  } else if (!isBattleScreen(screen) && isBattleActive) {
+    isBattleActive = false;
+    battleActive.value = false;
+    resetBattleSignals();
     battleMode.exit();
   }
 });
@@ -87,9 +105,21 @@ let lastTime = performance.now();
 function frame(now: number) {
   const dt = (now - lastTime) / 1000;
   lastTime = now;
-  if (battleActive) {
+  if (isBattleActive) {
+    // Handle exit request from Preact overlay (e.g. Continue button)
+    if (requestBattleExit.value) {
+      requestBattleExit.value = false;
+      // Set flags before exit to prevent the effect from double-exiting
+      isBattleActive = false;
+      battleActive.value = false;
+      resetBattleSignals();
+      battleMode.exit();
+      return requestAnimationFrame(frame);
+    }
     battleMode.update(dt);
     battleMode.render();
+    // Sync battle state → Preact signals for BattleScreenV2 overlay
+    syncBattleSignals(battleMode.state);
   }
   requestAnimationFrame(frame);
 }
