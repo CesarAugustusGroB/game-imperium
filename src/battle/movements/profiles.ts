@@ -21,8 +21,9 @@ import { depthOf } from '../battle-zones';
 import {
   forward, greedy, standGround, skirmish, flank, pathToStar,
 } from './primitives';
+import { hexDistance } from '../hex';
 import {
-  findInterceptHex, findClosestTo, isInEnemyZone,
+  findInterceptHex, findClosestTo, findRetreatHex, isInEnemyZone,
 } from './helpers';
 import { prioritize, sequence, fallback } from './combinators';
 import { inEnemyZone, always } from './conditions';
@@ -53,6 +54,40 @@ export const SKIRMISHER_AI: MovementFn = skirmish;
 // ── Flanker — approach via flank columns, chase the nearest enemy when close ──
 
 export const FLANKER_AI: MovementFn = sequence(flank, greedy);
+
+// ── Ranged skirmisher — 3-state arc with a proximity kite override.
+//    Kite: enemy within 3 hexes → retreat backward.
+//    1) Still in own back zone → advance forward out of camp.
+//    2) Out of camp → intercept enemies in the same depth band.
+//    3) Zone clear → greedy chase anywhere on the map. ──
+
+const RANGED_KITE_DIST = 3;
+
+export const RANGED_SKIRMISHER_AI: MovementFn = (engine, unit, ctx) => {
+  const enemyFaction: BattleFaction = unit.faction === 'blue' ? 'red' : 'blue';
+  const enemies = engine.getBattleFactionUnits(enemyFaction).filter(e => !e.isDying);
+  if (enemies.length === 0) return null;
+
+  const closest = findClosestTo(unit, enemies);
+  if (closest && hexDistance(unit.hex, closest.hex) <= RANGED_KITE_DIST) {
+    return findRetreatHex(engine, unit, ctx.dir, ctx.vertical);
+  }
+
+  const myDepth = depthOf(unit.hex, ctx.cols, ctx.rows, unit.faction, ctx.vertical);
+  if (myDepth === 'back') {
+    return forward(engine, unit, ctx);
+  }
+
+  const inZone = enemies.filter(e =>
+    depthOf(e.hex, ctx.cols, ctx.rows, unit.faction, ctx.vertical) === myDepth,
+  );
+  if (inZone.length > 0) {
+    const target = findClosestTo(unit, inZone);
+    if (target) return findInterceptHex(engine, unit, target);
+  }
+
+  return greedy(engine, unit, ctx);
+};
 
 // ── Reserve — intercept enemy vanguards that entered our zone; become
 //   vanguard when no enemy vanguards remain. Stateful: tracks assigned
@@ -133,14 +168,15 @@ export const RESERVE_AI: MovementFn = (engine, unit, ctx) => {
  * lookup instead of a parallel dispatch path.
  */
 export const MOVEMENT_PROFILES: Record<MovementProfileId, MovementFn> = {
-  'vanguard-march':      greedy,
-  'reserve-intercept':   greedy,
-  'guard-stand':         greedy,
-  'berserker':           greedy,
-  'skirmisher':          greedy,
-  'flanker':             greedy,
-  'lieutenant:attack':   greedy,
-  'lieutenant:defend':   greedy,
-  'lieutenant:skirmish': greedy,
-  'lieutenant:mobile':   greedy,
+  'vanguard-march':      VANGUARD_AI,
+  'reserve-intercept':   RESERVE_AI,
+  'guard-stand':         GUARD_AI,
+  'berserker':           BERSERKER_AI,
+  'skirmisher':          SKIRMISHER_AI,
+  'ranged-skirmisher':   RANGED_SKIRMISHER_AI,
+  'flanker':             FLANKER_AI,
+  'lieutenant:attack':   VANGUARD_AI,
+  'lieutenant:defend':   GUARD_AI,
+  'lieutenant:skirmish': SKIRMISHER_AI,
+  'lieutenant:mobile':   FLANKER_AI,
 };

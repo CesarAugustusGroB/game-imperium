@@ -16,6 +16,7 @@
 import type { BattleEngine } from '../core/BattleEngine';
 import type { BattleUnit } from '../battle-types';
 import type { Hex } from '../hex';
+import { hexDistance } from '../hex';
 import { handlePinned, pickWeakest } from './helpers';
 
 export interface MoveContext {
@@ -68,6 +69,26 @@ export function resolveMovement(
   for (const unit of units) {
     if (!engine.canAct(unit)) continue;
     if (handlePinned(engine, unit)) continue;
+
+    // Ranged pre-check: fire an arrow if target is within weapon range.
+    if (unit.ranged && unit.actionCooldown <= 0) {
+      const range = unit.ranged.range;
+      let rangedTarget: BattleUnit | null = null;
+      let bestDist = Infinity;
+      for (const other of engine.units.values()) {
+        if (other.isDying || other.faction === unit.faction) continue;
+        const d = hexDistance(unit.hex, other.hex);
+        if (d >= 1 && d <= range && d < bestDist) { bestDist = d; rangedTarget = other; }
+      }
+      if (rangedTarget) {
+        engine.fireProjectile(unit, rangedTarget);
+        // Movement profile handles kiting — skip melee and movement this tick.
+        const hex = moveFn(engine, unit, { ...ctx, justAttacked: false });
+        if (hex) engine.moveUnitAlongPath(unit.id, hex);
+        // Cooldown already set by fireProjectile; just continue.
+        continue;
+      }
+    }
 
     const enemies = engine.getAdjacentEnemies(unit);
     if (enemies.length > 0) {

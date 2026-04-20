@@ -27,20 +27,48 @@ if (typeof document !== 'undefined' && !document.getElementById('tooltip-styles'
   document.head.appendChild(el);
 }
 
-function getPositionStyle(position: TooltipPosition, align: TooltipAlign): JSX.CSSProperties {
+/**
+ * Compute viewport-fixed coordinates for the tooltip based on the trigger's
+ * bounding rect. Uses `position: fixed` so the tooltip escapes every
+ * `overflow: hidden`/`auto` ancestor — critical for the Forum shell where
+ * tabs live inside stacked scroll containers that would otherwise clip
+ * absolute-positioned children.
+ */
+function getFixedPositionStyle(
+  rect: DOMRect,
+  position: TooltipPosition,
+  align: TooltipAlign,
+): JSX.CSSProperties {
+  const GAP = 8;
   switch (position) {
     case 'above':
       return align === 'start'
-        ? { bottom: '100%', left: '0', marginBottom: '8px' }
-        : { bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px' };
+        ? { left: rect.left, top: rect.top - GAP, transform: 'translateY(-100%)' }
+        : {
+            left: rect.left + rect.width / 2,
+            top: rect.top - GAP,
+            transform: 'translate(-50%, -100%)',
+          };
     case 'below':
       return align === 'start'
-        ? { top: '100%', left: '0', marginTop: '8px' }
-        : { top: '100%', left: '50%', transform: 'translateX(-50%)', marginTop: '8px' };
+        ? { left: rect.left, top: rect.bottom + GAP }
+        : {
+            left: rect.left + rect.width / 2,
+            top: rect.bottom + GAP,
+            transform: 'translateX(-50%)',
+          };
     case 'left':
-      return { right: '100%', top: '50%', transform: 'translateY(-50%)', marginRight: '8px' };
+      return {
+        left: rect.left - GAP,
+        top: rect.top + rect.height / 2,
+        transform: 'translate(-100%, -50%)',
+      };
     case 'right':
-      return { left: '100%', top: '50%', transform: 'translateY(-50%)', marginLeft: '8px' };
+      return {
+        left: rect.right + GAP,
+        top: rect.top + rect.height / 2,
+        transform: 'translateY(-50%)',
+      };
   }
 }
 
@@ -54,8 +82,29 @@ export function Tooltip({
   disabled = false,
 }: TooltipProps): JSX.Element {
   const [visible, setVisible] = useState(false);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const triggerRef = useRef<HTMLSpanElement | null>(null);
   const showTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const measure = useCallback(() => {
+    if (triggerRef.current) setRect(triggerRef.current.getBoundingClientRect());
+  }, []);
+
+  // While visible, keep the tooltip pinned to the trigger. Any ancestor
+  // scroll or window resize hides it (rather than risking a stale-position
+  // flash) — the user is welcome to re-hover to bring it back.
+  useEffect(() => {
+    if (!visible) return;
+    const hide = () => setVisible(false);
+    // Capture phase catches nested scroll containers too.
+    window.addEventListener('scroll', hide, true);
+    window.addEventListener('resize', hide);
+    return () => {
+      window.removeEventListener('scroll', hide, true);
+      window.removeEventListener('resize', hide);
+    };
+  }, [visible]);
 
   useEffect(() => {
     return () => {
@@ -84,10 +133,11 @@ export function Tooltip({
     cancelHide();
     if (showTimer.current !== null) clearTimeout(showTimer.current);
     showTimer.current = setTimeout(() => {
+      measure();
       setVisible(true);
       showTimer.current = null;
     }, delay);
-  }, [disabled, delay, cancelHide]);
+  }, [disabled, delay, cancelHide, measure]);
 
   const handleTriggerMouseLeave = useCallback(() => {
     if (showTimer.current !== null) {
@@ -104,8 +154,6 @@ export function Tooltip({
   const handleTooltipMouseLeave = useCallback(() => {
     scheduleHide();
   }, [scheduleHide]);
-
-  const positionStyle = getPositionStyle(position, align);
 
   const variantStyle: JSX.CSSProperties =
     variant === 'simple'
@@ -133,23 +181,24 @@ export function Tooltip({
           borderTop: '2px solid var(--color-gold-secondary)',
         };
 
-  const tooltipStyle: JSX.CSSProperties = {
-    position: 'absolute',
+  const tooltipStyle: JSX.CSSProperties | null = rect ? {
+    position: 'fixed',
     fontFamily: 'var(--font-family)',
-    zIndex: 100,
+    zIndex: 1000,
     pointerEvents: 'auto',
-    ...positionStyle,
+    ...getFixedPositionStyle(rect, position, align),
     ...variantStyle,
-  };
+  } : null;
 
   return (
     <span
+      ref={triggerRef}
       style={{ position: 'relative', display: 'inline-block' }}
       onMouseEnter={handleTriggerMouseEnter}
       onMouseLeave={handleTriggerMouseLeave}
     >
       {children}
-      {visible && !disabled && (
+      {visible && !disabled && tooltipStyle && (
         <div
           class="tooltip-box"
           style={tooltipStyle}

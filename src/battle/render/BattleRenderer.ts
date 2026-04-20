@@ -13,6 +13,7 @@ import { StarLayer }          from './layers/StarLayer';
 import { HoverLayer }         from './layers/HoverLayer';
 import { PathLayer }          from './layers/PathLayer';
 import { UnitLayer }          from './layers/UnitLayer';
+import { ProjectileLayer }    from './layers/ProjectileLayer';
 import { FloatingTextLayer }  from './layers/FloatingTextLayer';
 import { ParticleLayer }      from './layers/ParticleLayer';
 import { OverlayLayer }       from './layers/OverlayLayer';
@@ -69,6 +70,7 @@ export class BattleRenderer {
       new HoverLayer(),
       new PathLayer(),
       new UnitLayer(),
+      new ProjectileLayer(),
       new FloatingTextLayer(),
       new ParticleLayer(),
       new OverlayLayer(),

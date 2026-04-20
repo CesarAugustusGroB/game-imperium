@@ -5,8 +5,8 @@
 
 import type { BattleWorld } from '../core/BattleWorld';
 import type { Hex } from '../hex';
-import { offsetToAxial, offsetToAxialFlatTop } from '../hex';
-import type { BattleFaction, BattleUnit } from '../battle-types';
+import { hexDistance, offsetToAxial, offsetToAxialFlatTop } from '../hex';
+import type { BattleFaction, BattleUnit, Projectile } from '../battle-types';
 import {
   CAPTURE_DURATION, DODGE_AGI_FACTOR, DODGE_MAX, DOUBLE_STRIKE_RATIO,
   FLASH_DURATION, LUNGE_DURATION, MORALE_BREAK_THRESHOLD,
@@ -57,7 +57,7 @@ export function resolveCombat(
   }
 }
 
-function performStrike(world: BattleWorld, attacker: BattleUnit, defender: BattleUnit): void {
+export function performStrike(world: BattleWorld, attacker: BattleUnit, defender: BattleUnit): void {
   // Dodge check
   const dodgeChance = Math.min(DODGE_MAX, Math.max(0,
     (defender.stats.agi - attacker.stats.agi) * DODGE_AGI_FACTOR,
@@ -90,6 +90,87 @@ function performStrike(world: BattleWorld, attacker: BattleUnit, defender: Battl
   spawnParticles(world, defender.hex, HIT_PARTICLE_COUNT, '#ffaa44', Math.PI * 2, 30, 0.5);
 
   applyDeathCheck(world, defender);
+}
+
+// ── Ranged combat ──
+
+const FLIGHT_SECONDS_PER_HEX = 0.12;
+
+/**
+ * Spawn an in-flight arrow from `attacker` aimed at `defender`. Snapshots
+ * attacker stats so impact still resolves if the archer dies mid-flight.
+ * Triggers a brief draw-back lunge in the opposite direction (visual bow-pull).
+ */
+export function fireProjectile(
+  world: BattleWorld,
+  attacker: BattleUnit,
+  defender: BattleUnit,
+): void {
+  const dist = hexDistance(attacker.hex, defender.hex);
+  const duration = dist * FLIGHT_SECONDS_PER_HEX;
+
+  const projectile: Projectile = {
+    id: world.nextProjectileId++,
+    ownerId: attacker.id,
+    targetId: defender.id,
+    fromHex: { q: attacker.hex.q, r: attacker.hex.r },
+    toHex: { q: defender.hex.q, r: defender.hex.r },
+    elapsed: 0,
+    duration,
+    kind: 'arrow',
+    atkSnapshot: attacker.stats.atk,
+    agiSnapshot: attacker.stats.agi,
+  };
+  world.projectiles.push(projectile);
+
+  // Backward lunge — pulls toward the hex opposite the target (visual bow-draw).
+  const dq = attacker.hex.q - defender.hex.q;
+  const dr = attacker.hex.r - defender.hex.r;
+  const mag = Math.max(1, Math.abs(dq) + Math.abs(dr));
+  attacker.lungeTarget = {
+    q: attacker.hex.q + Math.round(dq / mag),
+    r: attacker.hex.r + Math.round(dr / mag),
+  };
+  attacker.lungeTimer = 0.15;
+
+  if (attacker.ranged) {
+    attacker.actionCooldown = attacker.ranged.cooldown;
+  }
+  attacker.hasEngaged = true;
+}
+
+/**
+ * Resolve the impact of a projectile on its target. Reuses `performStrike` so
+ * hit flash, dodge, damage, and death all come for free.
+ */
+export function resolveProjectileImpact(world: BattleWorld, projectile: Projectile): void {
+  const target = world.units.get(projectile.targetId);
+  if (!target || target.isDying) return;
+
+  // Build a minimal stat proxy for the (possibly dead) attacker.
+  const fakeAttacker: BattleUnit = {
+    ...(world.units.get(projectile.ownerId) ?? {
+      id: projectile.ownerId,
+      faction: target.faction === 'blue' ? 'red' : 'blue',
+      role: 'vanguard' as const,
+      hex: projectile.fromHex,
+      stats: { atk: projectile.atkSnapshot, def: 0, hp: 1, agi: projectile.agiSnapshot },
+      currentHp: 1,
+      name: '',
+      prevHex: null, moveProgress: 1, path: [],
+      shakeTimer: 0, flashTimer: 0,
+      lungeTarget: null, lungeTimer: 0,
+      isDying: false, deathProgress: 0,
+      pinnedBy: null, actionCooldown: 0,
+      crackSeed: 0, reviveThreshold: 0,
+      hasRevived: false, hasEngaged: false,
+      movementProfile: 'vanguard-march' as const,
+    }),
+    // Always use snapshot stats so an archer death doesn't void shots in flight.
+    stats: { atk: projectile.atkSnapshot, def: 0, hp: 1, agi: projectile.agiSnapshot },
+  } as BattleUnit;
+
+  performStrike(world, fakeAttacker, target);
 }
 
 /** Process a unit's death with priority: prevent-death → revive → actual death. */

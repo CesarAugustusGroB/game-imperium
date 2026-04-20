@@ -61,6 +61,16 @@ export const ENEMY_COHORTS: readonly Cohort[] = [
     aurumCost: 0,
     description: 'A warlord who has united the tribes. Reserved for the fiercest confrontations.',
   },
+  {
+    id: 'makedon-hetairoi',
+    name: 'Makedon Hetairoi',
+    role: 'vanguard',
+    stats: { atk: 180, def: 55, hp: 1500, agi: 85 },
+    aurumCost: 0,
+    description: "Alexander's royal Companion Cavalry. Heavy xyston-armed horse that crashes through lines.",
+    spriteId: 'makedon_hetairoi_secret_rare',
+    movementProfile: 'vanguard-march',
+  },
 ] as const;
 
 /** Lookup an enemy cohort definition by id, or `undefined` if not found. */

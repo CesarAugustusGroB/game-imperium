@@ -60,12 +60,19 @@ export class SpriteManager {
       persian_immortal_uncommon:'/asset/soldiers/persian_immortal_uncommon_soldier.png',
       samurai_uncommon:         '/asset/soldiers/samurai_uncommon_soldier.png',
       roman_legionary_uncommon: '/asset/soldiers/roman_legionary_uncommon_soldier.png',
+      roman_hastatii_common:    '/asset/soldiers/roman_hastatii_common_soldier.png',
+      roman_velite_uncommon:    '/asset/soldiers/roman_velite_uncommon_soldier.png',
+      roman_princeps_rare:      '/asset/soldiers/roman_princeps_rare_soldier.png',
+      roman_triarii_super_rare: '/asset/soldiers/roman_triarii_super-rare_soldier.png',
+      roman_equite_rare:        '/asset/soldiers/roman_equite_rare_cavalry.png',
+      punic_common:             '/asset/soldiers/punic_common_soldier.png',
       spartan_rare:             '/asset/soldiers/spartan_rare_soldier.png',
       cretan_archer_rare:       '/asset/soldiers/cretan_archer_rare_soldier.png',
       war_elephant_rare:        '/asset/soldiers/war_elephant_rare_soldier.png',
       spartan_royal_super_rare: '/asset/soldiers/spartan_royal_super-rare_soldier.png',
       companion_super_rare:     '/asset/soldiers/companion_super-rare_soldier.png',
       athen_hoplite_elite_super_rare: '/asset/soldiers/athen_hoplite-elite_super-rare_soldier.png',
+      makedon_hetairoi_secret_rare: '/asset/soldiers/makedon_hetairoi_secret-rare_cavalry.png',
     };
     for (const [id, path] of Object.entries(soldiers)) {
       this.loadShield(path, (c) => { this.shields.set(id, c); });
@@ -73,6 +80,11 @@ export class SpriteManager {
 
     // Commander leader card (capture objective)
     this.loadShield('/asset/soldiers/commander_leader_card.png', (c) => { this.starImage = c; });
+
+    // Projectile sprites — none registered by default; ProjectileLayer falls
+    // back to the programmatic line+arrowhead drawing.
+    // To activate sprite rendering for arrows:
+    //   this.loadShield('/asset/projectiles/arrow.png', (c) => { this.shields.set('arrow', c); });
   }
 
   /**

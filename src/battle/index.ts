@@ -175,13 +175,8 @@ export class BattleMode {
    * Quick-battle entry for BattleScreenV2 — movement-profile demo on a
    * vertical 50×30 battlefield. No spoke / commander state required.
    *
-   * Blue shows one movement profile per deployment zone (front/middle/back):
-   *   front  (vanguard role) → Velites  — 'skirmisher'       (hit-and-run)
-   *   middle (reserve role)  → Triarii  — 'reserve-intercept' (chase breakthroughs)
-   *   back   (guard role)    → Equites  — 'flanker'           (swing to a side column)
-   *
-   * Red is a plain marching line of Barbarian Warriors (vanguard-march) so
-   * blue's mixed AI reads against a single predictable foe.
+   * Blue: 10 Velites (ranged-skirmisher) throwing javelins at range.
+   * Red: 10 Makedon Hetairoi — Alexander's royal heavy cavalry, charging in.
    */
   enterQuickBattle(): void {
     this._isVisible = true;
@@ -197,25 +192,17 @@ export class BattleMode {
     });
     this._state.generateGrid();
 
-    // ── Blue demo roster — one movement profile per zone ──
     const velites = COHORT_CATALOG.find(c => c.id === 'velites')!;
-    const triarii = COHORT_CATALOG.find(c => c.id === 'triarii')!;
-    const equites = COHORT_CATALOG.find(c => c.id === 'equites')!;
+    const hetairoi = ENEMY_COHORTS.find(c => c.id === 'makedon-hetairoi')!;
 
     const buff = (c: Cohort, mult: number): Cohort =>
       ({ ...c, stats: { ...c.stats, hp: c.stats.hp * mult } });
 
-    const blueCycle: Cohort[] = [
-      buff(velites, 2), buff(velites, 2), buff(velites, 2),  // front — skirmisher
-      buff(triarii, 2), buff(triarii, 2), buff(triarii, 2),  // middle — reserve-intercept
-      buff(equites, 2), buff(equites, 2), buff(equites, 2),  // back — flanker
-    ];
-    const blueArmy = syntheticArmy('demo-zones', blueCycle, blueCycle.length);
+    const blueCycle: Cohort[] = [buff(velites, 2)];
+    const blueArmy = syntheticArmy('velites-skirmishers', blueCycle, 10);
 
-    // ── Red — uniform marching line to react against ──
-    const warrior = ENEMY_COHORTS.find(c => c.id === 'barbarian-warrior')!;
-    const redCycle: Cohort[] = [buff(warrior, 2)];
-    const redArmy = syntheticArmy('barbarian-line', redCycle, blueCycle.length);
+    const redCycle: Cohort[] = [buff(hetairoi, 2)];
+    const redArmy = syntheticArmy('makedon-hetairoi', redCycle, 10);
 
     deployArmy(this._state, 'blue', blueArmy, CENTRAL_SPAWN);
     deployArmy(this._state, 'red',  redArmy,  CENTRAL_SPAWN);

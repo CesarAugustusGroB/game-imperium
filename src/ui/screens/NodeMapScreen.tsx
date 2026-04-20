@@ -512,7 +512,7 @@ export function NodeMapScreen() {
 
   function handleNodeActivate(node: SpokeNode) {
     if (node.type === 'battle' || node.type === 'boss') {
-      navigateTo('battle');
+      navigateTo('battleV2');
     } else if (node.type === 'rest') {
       openRestModal();
     } else if (node.type === 'event') {

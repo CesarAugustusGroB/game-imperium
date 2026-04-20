@@ -666,17 +666,17 @@ export function BattleScreenV2() {
   const capRed = captureRedProgress.value;
   const settingsOpen = useSignal(false);
 
-  // Hide the old HTML battle HUD — this overlay replaces it
+  // Hide the old HTML battle HUD — this overlay replaces the top title/round
+  // block and the coords dev button. The bottom bar stays visible: it carries
+  // the commander-ability button ("leader effect") and the decretum grid,
+  // which V2 does not yet re-implement in Preact.
   useEffect(() => {
     const oldHud = document.getElementById('battle-hud');
-    const oldBottom = document.getElementById('battle-bottom-bar');
     const oldCoords = document.getElementById('btn-coords');
     if (oldHud) oldHud.style.display = 'none';
-    if (oldBottom) oldBottom.style.display = 'none';
     if (oldCoords) oldCoords.style.display = 'none';
     return () => {
       if (oldHud) oldHud.style.display = '';
-      if (oldBottom) oldBottom.style.display = '';
       if (oldCoords) oldCoords.style.display = '';
     };
   }, []);

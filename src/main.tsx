@@ -65,11 +65,13 @@ if (isBattleScreen(initialScreen)) {
   if (battleScreen) battleScreen.style.display = 'block';
   isBattleActive = true;
   battleActive.value = true;
-  if (initialScreen === 'battleV2') {
-    battleMode.enterQuickBattle();
-  } else {
-    // Spoke battles now run on BattleV2 (50×30 vertical, central-spawn deployment)
+  // Entry point is picked by whether a spoke is active, not by screen name —
+  // NodeMapScreen now routes spoke battles through 'battleV2' so the Preact
+  // overlay (settings, unit-info, army panels, strength bar) mounts on top.
+  if (currentSpoke.value) {
     battleMode.enterFromSpoke();
+  } else {
+    battleMode.enterQuickBattle();
   }
 } else {
   const battleScreen = document.getElementById('battle-screen');
@@ -82,10 +84,10 @@ effect(() => {
   if (isBattleScreen(screen) && !isBattleActive) {
     isBattleActive = true;
     battleActive.value = true;
-    if (screen === 'battleV2') {
-      battleMode.enterQuickBattle();
-    } else {
+    if (currentSpoke.value) {
       battleMode.enterFromSpoke();
+    } else {
+      battleMode.enterQuickBattle();
     }
   } else if (!isBattleScreen(screen) && isBattleActive) {
     isBattleActive = false;

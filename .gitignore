@@ -29,3 +29,4 @@ plan.md
 # Local tool state
 .claude/
 .vercel/
+.clone/

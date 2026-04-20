@@ -27,6 +27,17 @@ function defaultProfileForRole(role: UnitRole): MovementProfileId {
   }
 }
 
+/**
+ * Sets the `ranged` field on a unit when its movement profile indicates ranged
+ * combat. Centralises defaults so any future ranged soldier added to a cohort
+ * catalog automatically picks up the correct weapon stats.
+ */
+function applyRangedProfile(unit: BattleUnit, profile: MovementProfileId): void {
+  if (profile === 'ranged-skirmisher') {
+    unit.ranged = { range: 5, cooldown: 2.0 };
+  }
+}
+
 /** Add a unit to the world and return it. Auto-increments `world.nextId`. */
 export function addUnit(
   world: BattleWorld,
@@ -40,6 +51,7 @@ export function addUnit(
 ): BattleUnit {
   const id = world.nextId++;
   const unitStats = stats ?? ROLE_STATS[role];
+  const resolvedProfile = movementProfile ?? defaultProfileForRole(role);
   const unit: BattleUnit = {
     id, faction, role, hex, stats: unitStats, currentHp: unitStats.hp, name,
     prevHex: null, moveProgress: 1, path: [],
@@ -53,8 +65,9 @@ export function addUnit(
     hasRevived: false,
     hasEngaged: false,
     spriteId,
-    movementProfile: movementProfile ?? defaultProfileForRole(role),
+    movementProfile: resolvedProfile,
   };
+  applyRangedProfile(unit, resolvedProfile);
   world.units.set(unit.id, unit);
   return unit;
 }

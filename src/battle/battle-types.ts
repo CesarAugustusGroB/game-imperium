@@ -21,6 +21,7 @@ export type MovementProfileId =
   | 'guard-stand'
   | 'berserker'
   | 'skirmisher'
+  | 'ranged-skirmisher'
   | 'flanker'
   | 'lieutenant:attack'
   | 'lieutenant:defend'
@@ -71,6 +72,22 @@ export interface BattleUnit {
   // Decoupled from `role` so two cohorts sharing a role (e.g. both vanguard)
   // can still play differently (e.g. 'vanguard-march' vs 'skirmisher').
   movementProfile: MovementProfileId;
+  // Ranged weapon definition. Presence of this field marks the unit as ranged.
+  ranged?: { range: number; cooldown: number };
+}
+
+export interface Projectile {
+  id: number;
+  ownerId: number;
+  targetId: number;
+  fromHex: Hex;
+  toHex: Hex;
+  elapsed: number;
+  duration: number;
+  kind: 'arrow';
+  /** Snapshot of attacker stats at fire time — resolves even if archer dies in flight. */
+  atkSnapshot: number;
+  agiSnapshot: number;
 }
 
 export interface FloatingText {

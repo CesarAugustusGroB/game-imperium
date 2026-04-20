@@ -4,6 +4,22 @@ Rules for Claude to avoid repeating past mistakes.
 
 ---
 
+## "Keep existing X" means only X, not everything
+**Date**: 2026-04-20
+**Mistake**: During S22 (Imperium Forum port), the user said "Provinciae should keep our current UI, just integrate as a tab." I generalized that to mean every lift-and-shift was acceptable, and applied the same OrnateFrame-strip pattern to Consilium (S22-05) and Exercitus (S22-06) instead of porting them to the new Forum design. The user had to stop me: "THE ONLY ONE THAT HAVE TO KEEP ITS WAY WAS THE PROVINCIAE!!"
+**Rule**: When the user makes a specific exception (e.g. "keep Provinciae as-is"), treat it as scoped to that item only. The default for everything else in that sprint remains the sprint's stated goal (here: port to the new design). Don't extrapolate exceptions across siblings without asking.
+**How to apply**: Before generalizing a pattern across multiple tasks in a sprint, re-check the sprint's goal statement. If the pattern being applied conflicts with the goal, stop and confirm per task.
+
+## Spawned-agent worktree base is not the parent branch
+**Date**: 2026-04-20
+**Mistake**: Spawned an implementation agent with `isolation: "worktree"` off `feat/ui-overhaul`, but the harness created the worktree off `main` (a much older commit line that didn't yet track `src/ui/design-tokens.css`). The agent, finding no tokens file, created one "fresh" — effectively destroying 70 lines of existing tokens when the result was copied back.
+**Rule**: When spawning a worktree agent, the agent's view of the tree may be based on a different (usually older) branch than the one you are on. Before trusting an agent's "file didn't exist, so I created it" report, verify the file's state in the **main checkout** — `git ls-tree <current-branch> -- <path>` is authoritative. If the file is tracked there but the agent reports it missing, reconcile by merging/appending in the main checkout instead of trusting the worktree output.
+
+## Agent briefs: "append only" must be enforced by reading first
+**Date**: 2026-04-20
+**Mistake**: Told an agent to "extend `design-tokens.css` — do not modify existing vars". The agent didn't find the file in its worktree (see lesson above) and silently created a fresh file with only the new block, reporting "created 50 lines". The wording "append new vars only" wasn't strong enough when the file appeared absent.
+**Rule**: Any brief that says "append to file X" must also require the agent to Read X first, echo its existing byte count/line count, and confirm it's preserving that content before writing. If the file is absent in the agent's view, the agent must stop and escalate — not create a fresh one.
+
 ## Notion Page Content Formatting
 **Date**: 2026-03-26
 **Mistake**: Used `\n` escape sequences in Notion page content strings. Rendered as a wall of text instead of proper markdown with headings and line breaks.

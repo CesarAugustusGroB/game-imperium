@@ -6,11 +6,11 @@
     "orientation": "Facing-forward framing (character centered, head and shield/weapon visible).",
     "resolution": "Source rasters are ~800–1400 px per side; the renderer downsamples to 60 * DPR (or 120 * DPR in high-res mode) via SpriteManager.loadShield().",
     "colorSpace": "sRGB, 8-bit RGBA, anti-aliased edges against transparent background.",
-    "filenamePattern": "{culture}_{rarity}_{format}.png — e.g. gallic_common_soldier.png, spartan_royal_super-rare_soldier.png, commander_leader_card.png",
+    "filenamePattern": "{culture}_{rarity}_{format}.png — e.g. gallic_common_soldier.png, spartan_royal_super-rare_soldier.png, roman_equite_rare_cavalry.png, commander_leader_card.png",
     "filenameFields": {
-      "culture":  "lowercase snake_case (gallic, roman, spartan_royal, athens_hoplite, persian_immortal, companion, war_elephant)",
+      "culture":  "lowercase snake_case (gallic, roman, spartan_royal, athens_hoplite, persian_immortal, companion, war_elephant, roman_equite)",
       "rarity":   "common | uncommon | rare | super-rare | secret-rare | leader (hyphenated in filenames, mirrors style-guide.json rarity ids)",
-      "format":   "soldier (circle portrait) | card (5:7 full-art, reserved for leaders)"
+      "format":   "soldier (circle portrait, foot unit) | cavalry (circle portrait, mounted unit — rider + horse/camel/elephant inside the ring) | card (5:7 full-art, reserved for leaders)"
     },
     "spriteIdPattern": "{culture}_{rarity} — same as filename but with underscores only (super_rare, secret_rare). This is the JS-friendly key used in SpriteManager.shields and BattleUnit.spriteId."
   },
@@ -94,6 +94,56 @@
       "tags": ["gallic", "celtic", "warband", "iron-age", "shock", "common"]
     },
     {
+      "id": "punic_common",
+      "file": "punic_common_soldier.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1028789,
+      "rarity": "common",
+      "format": "circle",
+      "culture": "Punic Citizen-Soldier",
+      "era": "Punic Wars era Carthage (3rd c. BCE)",
+      "role": "line-infantry",
+      "weapon": "long thrusting spear",
+      "armor": "quilted linothorax linen cuirass over saffron-orange tunic with a royal-purple waist sash",
+      "helm": "bronze Phrygian-style konos with cheek-guards and a short black plume",
+      "shield": "round bronze-rimmed shield with a purple field bearing a white eight-point star-of-Tanit and a gold central boss",
+      "palette": ["weathered bronze", "saffron orange", "royal purple", "ivory linen"],
+      "culturalMotif": {
+        "primary":   "Sign-of-Tanit pendant at the neck (trapezoid body with upraised arms and sun-disc head)",
+        "secondary": "eight-point star-of-Tanit on the round shield",
+        "family":    "carthaginian"
+      },
+      "usedFor": [],
+      "tags": ["punic", "carthaginian", "phoenician", "line", "common", "tanit"]
+    },
+    {
+      "id": "roman_hastatii_common",
+      "cohortId": "hastati",
+      "file": "roman_hastatii_common_soldier.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 594222,
+      "rarity": "common",
+      "format": "circle",
+      "culture": "Roman Hastatus",
+      "era": "Roman Republic — Polybian manipular army (3rd–2nd c. BCE)",
+      "role": "line-infantry",
+      "weapon": "pilum heavy throwing javelin (shouldered) + gladius hispaniensis sheathed at the right hip (dual-weapon lock: both on the sword-arm side)",
+      "armor": "bronze rectangular pectoral heart-plate (kardiophylax) strapped with crossed leather thongs over a deep-red short-sleeved wool tunic, single bronze greave on the forward left leg, hobnailed caligae",
+      "helm": "hammered-bronze Montefortino helmet with hinged bronze cheek-guards and a tall dyed-indigo feather plume rising straight up from a bronze crown-socket",
+      "shield": "tall oval Republican scutum with a vertical bronze spina, central iron boss, and a red-and-gold Jupiter-thunderbolt (fulmen) blazon on a crimson canvas field",
+      "palette": ["weathered bronze", "deep crimson wool", "indigo-purple feathers", "ivory flesh", "polished iron"],
+      "culturalMotif": {
+        "primary":   "Jupiter-thunderbolt (fulmen) blazon on the scutum — the stormfather's lightning marking the young front-line",
+        "secondary": null,
+        "family":    "roman"
+      },
+      "usedFor": [],
+      "tags": ["roman", "hastatus", "republic", "polybian", "manipular", "line", "common", "jupiter-fulmen"],
+      "filenameNote": "Plural Latin spelling 'hastatii' retained in filename; canonical culture is singular 'Hastatus'."
+    },
+    {
       "id": "athens_hoplite_uncommon",
       "file": "athens_hoplite_uncommon_soldier.png",
       "width": 1182,
@@ -172,6 +222,31 @@
       "filenameNote": "Typo 'legionarie' fixed to 'legionary' during the rarity migration."
     },
     {
+      "id": "roman_velite_uncommon",
+      "cohortId": "velites",
+      "file": "roman_velite_uncommon_soldier.png",
+      "width": 888,
+      "height": 865,
+      "bytes": 1084352,
+      "rarity": "uncommon",
+      "format": "circle",
+      "culture": "Roman Velite",
+      "era": "Roman Republic — Polybian manipular army (3rd–2nd c. BCE)",
+      "role": "skirmisher",
+      "weapon": "sheaf of seven light velite javelins (hastae velitares) held at the right hip with one drawn cocked overhead + gladius hispaniensis sheathed also at the right hip (dual-weapon lock)",
+      "armor": "no body armor — simple sleeveless short red wool tunic belted with a bronze buckle, hobnailed caligae",
+      "helm": "plain hammered-bronze Montefortino helm entirely hooded by the full pelt of a grey timber-wolf, the wolf's upper jaw drawn up over the forehead and the paws and tail hanging loose down the back (Lupa-Romana Capitoline Wolf motif)",
+      "shield": "small round parma skirmisher's shield (~90 cm) with a bronze rim, crimson canvas field, and a small embossed bronze Capitoline Wolf suckling Romulus and Remus around the central boss",
+      "palette": ["tawny wolf-grey", "cream pelt-undercoat", "weathered bronze", "deep crimson wool", "polished iron", "oiled leather"],
+      "culturalMotif": {
+        "primary":   "Capitoline Wolf (Lupa Romana) full pelt worn as a hood — the velite's defining uniform piece linking him to Romulus and Mars",
+        "secondary": "Capitoline Wolf suckling Romulus & Remus embossed on the parma shield boss (echoing primary)",
+        "family":    "roman"
+      },
+      "usedFor": [],
+      "tags": ["roman", "velite", "skirmisher", "republic", "polybian", "uncommon", "wolf-hood", "capitoline-wolf"]
+    },
+    {
       "id": "spartan_rare",
       "file": "spartan_rare_soldier.png",
       "width": 1350,
@@ -192,6 +267,7 @@
     },
     {
       "id": "cretan_archer_rare",
+      "cohortId": "cretan_archer",
       "file": "cretan_archer_rare_soldier.png",
       "width": 1264,
       "height": 1143,
@@ -208,6 +284,32 @@
       "palette": ["tan", "olive", "muted red"],
       "usedFor": [],
       "tags": ["greek", "archer", "skirmisher", "mercenary", "rare"]
+    },
+    {
+      "id": "roman_princeps_rare",
+      "cohortId": "principes",
+      "file": "roman_princeps_rare_soldier.png",
+      "width": 934,
+      "height": 935,
+      "bytes": 1466774,
+      "rarity": "rare",
+      "format": "circle",
+      "culture": "Roman Princeps",
+      "era": "Roman Republic — Polybian manipular army (3rd–2nd c. BCE)",
+      "role": "line-infantry",
+      "weapon": "pair of pilums gripped in the right hand with one cocked back overhead ready to hurl + gladius hispaniensis sheathed also on the right hip (dual-weapon lock)",
+      "armor": "knee-length riveted iron lorica hamata chainmail shirt with elbow-length sleeves over a short red wool tunic, broad bronze cingulum belt with hanging studded apron-straps, bronze greaves on both legs, hobnailed caligae",
+      "helm": "hammered-bronze Etrusco-Corinthian helm with hinged cheek-guards and a wide fore-aft crest of mixed black-and-crimson horsehair, Minerva's aegis serpent-fringe embossed around the brow just under the crest (the war-goddess mask motif)",
+      "shield": "tall oval Republican scutum with a curved vertical bronze spina, iron boss, and an embossed bronze spread-winged Owl-of-Minerva on a deep-crimson canvas field bordered with a simple laurel line",
+      "palette": ["weathered bronze", "deep crimson wool", "polished iron", "oiled leather", "ivory flesh"],
+      "culturalMotif": {
+        "primary":   "Minerva's aegis serpent-fringe embossed around the helm brow under the crest — the war-goddess war-mask",
+        "secondary": "spread-winged Owl-of-Minerva embossed on the scutum (two echoing placements per the rare+ rule)",
+        "family":    "roman"
+      },
+      "innerBackground": "warm-grey ambient battlefield with swirling dust motes catching a low-right rim light, no specific scene",
+      "usedFor": [],
+      "tags": ["roman", "princeps", "republic", "polybian", "manipular", "line", "rare", "minerva-aegis", "minerva-owl"]
     },
     {
       "id": "war_elephant_rare",
@@ -286,6 +388,90 @@
       "usedFor": [],
       "tags": ["macedonian", "cavalry", "elite", "companion", "super-rare"],
       "filenameNote": "Typo 'companio' fixed to 'companion' during the rarity migration."
+    },
+    {
+      "id": "roman_triarii_super_rare",
+      "cohortId": "triarii",
+      "file": "roman_triarii_super-rare_soldier.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1808086,
+      "rarity": "super-rare",
+      "format": "circle",
+      "culture": "Roman Triarius",
+      "era": "Roman Republic — Polybian manipular army (3rd–2nd c. BCE)",
+      "role": "elite-heavy-infantry",
+      "weapon": "long hasta thrusting spear held two-handed at mid-shaft with bronze butt-spike planted in the earth and iron leaf-blade tip angled forward at chest-height (the planted-spear last-stand brace) + gladius hispaniensis sheathed in an ornate bronze-fitted scabbard on the right hip (dual-weapon lock — hasta is two-handed so the gladius stays sheathed)",
+      "armor": "gilded bronze anatomical muscle-cuirass with chased floral relief over a fine-woven riveted iron lorica hamata under-shirt (visible at sleeves and skirt hem), layered leather pteruges trimmed with woven gold thread, anatomical ornate bronze greaves with worked calf-muscle relief on both legs, broad bronze cingulum belt inlaid with silver floral scrollwork, hobnailed caligae, gold signet-ring on the right index finger, deep-dyed fine-wool crimson tunic with a woven gold hem and a narrow Tyrian-purple clavus stripe at the shoulder",
+      "helm": "finely-worked hammered-bronze Etrusco-Corinthian helm with chased relief across the dome and hinged cheek-guards raised, crowned by a bull-horned Bellona war-crest (two outward-curving polished-bronze bull-horns mounted at the temples with a dark oxblood-crimson fore-aft horsehair plume running between them)",
+      "shield": "large round Etrusco-Italic clipeus (~90 cm) with a gilded bronze rim, a richly painted oxblood-crimson canvas field bordered by a thin gold laurel line, and an embossed gilded-bronze bull-skull-of-Bellona centered on the boss",
+      "palette": ["richly gilded bronze", "iron-grey mail", "oxblood crimson fine wool", "Tyrian purple clavus", "silver inlay", "Mediterranean ivory flesh", "ash-tone battlefield smoke"],
+      "culturalMotif": {
+        "primary":   "bull-horned Bellona war-crest at the helm temples — the grim war-goddess of last resort",
+        "secondary": "bull-skull-of-Bellona embossed on the clipeus boss (two echoing placements per the super-rare rule)",
+        "family":    "roman"
+      },
+      "characterNote": "Mature mid-forties, greying only at the temples and in a close-trimmed short beard, dignified and iron-calm with a patrician bearing — NOT elderly, NOT grey-bearded, NOT hunched. The triarii's signature is WEALTH (Servian top-census class), not age: gilded muscle-cuirass + chased helm + ornate greaves + silver-inlaid cingulum + signet-ring are what read first. See feedback_triarii_wealth.md.",
+      "narrativeMoment": "The 'res ad triarios redit' moment — a single darker silhouette over the triarius's right shoulder shows a staggering wounded Principes falling back through the triarii gap with his helm knocked askew and his pilum slipping from his fingers. Drifting battlefield smoke and embers catch a rim-light above the hasta tip. The iron wall of last resort.",
+      "circleFrame": "super-rare thick ornate gold ring with a continuous laurel-leaf scroll wrapping the entire circumference, filigree detailing between the leaves, and four small gold rosette bosses at the cardinal points",
+      "usedFor": [],
+      "tags": ["roman", "triarii", "triarius", "republic", "polybian", "manipular", "elite", "last-stand", "super-rare", "bellona", "bull-horns", "bull-skull", "patrician-class"]
+    },
+    {
+      "id": "roman_equite_rare",
+      "cohortId": "equites",
+      "file": "roman_equite_rare_cavalry.png",
+      "width": 966,
+      "height": 977,
+      "bytes": 1853306,
+      "rarity": "rare",
+      "format": "cavalry",
+      "culture": "Roman Equites",
+      "era": "Roman Republic (3rd–1st c. BCE)",
+      "role": "heavy-cavalry",
+      "weapon": "hasta cavalry spear + sheathed gladius hispaniensis (both on the right / sword-arm side)",
+      "armor": "iridescent bronze muscle-cuirass with layered red-leather pteruges over a short red wool tunic, single bronze greave on the forward leg, leather leg-wraps",
+      "helm": "bronze Attic cavalry helm with a Mars-face war-god visor (stern bearded bronze mask over the brow and cheeks) and a tall crimson horsehair crest sweeping back",
+      "shield": "round parma equestris with a crimson field, vertical golden Jupiter-thunderbolt (fulmen) motif, and SPQR inscription flanking the central gold boss",
+      "mount": "bay warhorse with dark mane and tail, rearing in three-quarter charge, bronze-studded leather tack",
+      "palette": ["crimson", "weathered bronze", "polished steel", "bay brown", "ochre dust"],
+      "culturalMotif": {
+        "primary":   "Mars-face war-god visor on the Attic helm",
+        "secondary": "Jupiter thunderbolt (fulmen) on the parma equestris",
+        "family":    "roman"
+      },
+      "circleFrame": "rare-tier double gold line with a Greek-key / meander engraving band between the two rings and gold laurel-leaf clusters at the four cardinal points",
+      "innerBackground": "warm-dark ambient void with an ochre dust cloud under the galloping hooves and drifting ember-motes catching a low rim light",
+      "usedFor": [],
+      "tags": ["roman", "equites", "cavalry", "republic", "rare", "mars-visor", "jupiter-fulmen"]
+    },
+    {
+      "id": "makedon_hetairoi_secret_rare",
+      "file": "makedon_hetairoi_secret-rare_cavalry.png",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1976638,
+      "rarity": "secret-rare",
+      "format": "cavalry",
+      "culture": "Macedonian Hetairoi Companion Cavalry",
+      "era": "Argead Macedon — Alexander the Great's royal heavy horse (4th c. BCE)",
+      "role": "elite-heavy-cavalry",
+      "weapon": "long xyston cavalry lance couched level at shoulder-height in the right hand + kopis short-sword sheathed also on the right hip (dual-weapon lock: both on the sword-arm side)",
+      "armor": "gilded bronze muscle-cuirass with ivory leather pteruges trimmed in gold embroidery over an ivory short tunic, deep Tyrian royal-purple chlamys pinned at the right shoulder and flaring behind",
+      "helm": "gilded bronze Thracian-Phrygian cavalry helm with the skull-and-pelt of the Nemean lion draped across the brow as the Herakleid royal mask (the Macedonian royal house claimed descent from Herakles), ivory-and-gold side-plume falling to the right shoulder",
+      "shield": "small round cavalry pelta bearing a sixteen-point Vergina Argead sunburst in gold on an ivory field outlined in gold",
+      "mount": "gleaming Thessalian-black stallion with flowing dark mane and tail, three-quarter rearing in an iconic commander's pose, bronze-studded leather tack",
+      "palette": ["weathered gold", "Tyrian royal-purple", "ivory", "tawny Nemean-lion brown", "Thessalian-black", "dust-gold amber"],
+      "culturalMotif": {
+        "primary":   "Nemean lion-pelt headdress draped across the Thracian-Phrygian helm brow — the Herakleid royal mask of Alexander's bloodline",
+        "secondary": "sixteen-point Vergina Argead sunburst on the pelta — the literal royal blazon of Argead Macedon",
+        "family":    "hellenic"
+      },
+      "circleFrame": "secret-rare thick ornate gold ring with embossed Macedonian runes between the bosses, four gemmed corner bosses (sapphire at 12, ruby at 3, emerald at 6, amethyst at 9 o'clock), prismatic sheen catching in the engraved grooves",
+      "innerBackground": "full-bleed painterly chiaroscuro — a dust-gold Macedonian plain with silhouetted Persian cavalry melting far into warm darkness, drifting gold-light as the single atmospheric effect catching the lion-pelt and xyston leaf-blade",
+      "usedFor": [],
+      "tags": ["macedonian", "hetairoi", "companion", "cavalry", "hellenic", "argead", "alexander", "secret-rare", "herakles-lion-pelt", "vergina-sun"],
+      "filenameNote": "Uses culture prefix 'makedon_hetairoi' to disambiguate from the earlier `companion_super_rare` sprite (same culture, one tier lower)."
     },
     {
       "id": "commander_leader",

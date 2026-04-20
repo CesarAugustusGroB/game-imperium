@@ -5,35 +5,35 @@ import { NotificationFeed } from '../components/NotificationFeed';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TitleScreen } from './TitleScreen';
 import { CommanderSelectScreen } from './CommanderSelectScreen';
-import { HubScreen } from './HubScreen';
 import { NodeMapScreen } from './NodeMapScreen';
 import { PostBattleScreen } from './PostBattleScreen';
-import { DoctrineScreen } from './DoctrineScreen';
-import { CouncilScreen } from './CouncilScreen';
-import { ProvinceScreen } from './ProvinceScreen';
 import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
-import { ArmyRecruitmentScreen } from './ArmyRecruitmentScreen';
-import { LegateHiringScreen } from './LegateHiringScreen';
 import { BattleScreenV2 } from './BattleScreenV2';
+import { ForumShell } from './forum';
 import { loadMetaSave } from '../../game/core/meta-save';
 
 // Load meta-save from localStorage on startup
 loadMetaSave();
 
-/** Screens that should not render the global ResourceBar. */
-const BARE_SCREENS: ReadonlySet<ScreenName> = new Set(['title', 'commander-select', 'battle', 'battleV2']);
+/**
+ * Screens that should not render the global ResourceBar. The Forum shell
+ * provides its own resource chips in the Masthead, so `forum` is bare too.
+ */
+const BARE_SCREENS: ReadonlySet<ScreenName> = new Set(['title', 'commander-select', 'forum', 'battle', 'battleV2']);
 
 /** Map of screen id → component. Order matches navigation flow. */
 const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> = {
   'title': TitleScreen,
   'commander-select': CommanderSelectScreen,
-  'hub': HubScreen,
-  'doctrine': DoctrineScreen,
-  'council': CouncilScreen,
-  'provinces': ProvinceScreen,
-  'army-recruitment': ArmyRecruitmentScreen,
-  'legate-hiring': LegateHiringScreen,
+  'forum': ForumShell,
+  // Legacy routes — resolveScreen() in screens.ts rewrites them to `forum`
+  // with the correct active tab. Entries kept here as safe fallbacks if the
+  // hash lands before resolution runs (e.g. a stale bookmark).
+  // Legacy route fallbacks — kept for screens that still have standalone
+  // bodies pending migration into Forum tabs (S22-05/06/07). Once those
+  // land, these entries can be dropped.
+  'hub': ForumShell,
   'node-map': NodeMapScreen,
   'battleV2': BattleScreenV2,
   'post-battle': PostBattleScreen,
