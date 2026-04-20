@@ -19,7 +19,9 @@ WebGL2 grand strategy map renderer (EU4/CK3 style) with dice-based combat and AI
 - `src/shaders/` — GLSL shaders (map.vert, map.frag, lighting.glsl, borders.glsl, common.glsl)
 - `src/camera/` — Pan/zoom camera with smooth interpolation
 - `src/game/` — Game state, province registry, army manager (combat + AI), province picker
-- `src/ui/` — HTML tooltip overlay, debug panel
+- `src/ui/` — Preact screens + shared components
+- `src/ui/screens/forum/` — Imperium Forum shell (S22): sidebar, masthead, and all 6 domain tabs (Overview/Provinciae/Consilium/Exercitus/Doctrinae/Decreta)
+- `src/ui/components/motifs/` — SVG primitives for the Forum aesthetic (Laurel, LaurelWreath, Corners, MosaicBand, textures)
 - `public/textures/` — terrain_map.png (source of truth), id-map.png, heightmap.png, normalmap.png, borders.png
 - `public/data/` — provinces.json, nations.json, topology.json
 - `tools/` — Python texture generator, MCP server
