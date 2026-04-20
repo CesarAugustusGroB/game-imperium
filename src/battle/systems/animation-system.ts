@@ -17,7 +17,7 @@ import {
   DEATH_DURATION, MOVE_ANIM_SPEED, PARTICLE_GRAVITY,
 } from '../battle-config';
 import { getUnitAt } from './unit-system';
-import { updateCapture } from './combat-system';
+import { resolveProjectileImpact, updateCapture } from './combat-system';
 
 export function updateAnimations(world: BattleWorld, dt: number): void {
   const toRemove: number[] = [];
@@ -81,6 +81,16 @@ export function updateAnimations(world: BattleWorld, dt: number): void {
     p.vy += PARTICLE_GRAVITY * dt;
     p.life -= dt;
     if (p.life <= 0) world.particles.splice(i, 1);
+  }
+
+  // Projectiles — advance elapsed and resolve on landing.
+  for (let i = world.projectiles.length - 1; i >= 0; i--) {
+    const p = world.projectiles[i];
+    p.elapsed += dt;
+    if (p.elapsed >= p.duration) {
+      resolveProjectileImpact(world, p);
+      world.projectiles.splice(i, 1);
+    }
   }
 
   // Screen shake

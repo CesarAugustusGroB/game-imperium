@@ -3,6 +3,14 @@ import type {
 } from '../../battle/battle-types';
 
 /**
+ * Rarity tier for a recruitable cohort. Mirrors the ladder authored in
+ * `public/asset/soldiers/style-guide.json > rarities` and the sprite catalog
+ * in `public/asset/soldiers/soldiers.json`. Drives tier cues in the
+ * Recruitment Screen and (later) any rarity-based drop / gacha logic.
+ */
+export type CohortRarity = 'common' | 'uncommon' | 'rare' | 'super-rare' | 'secret-rare' | 'leader';
+
+/**
  * Cohort — the atomic unit of an Imperium army.
  *
  * Each Cohort in an army is a roster entry that, when deployed to a Pitched
@@ -25,6 +33,11 @@ export interface Cohort {
   aurumCost: number;
   /** Flavor description shown in the Recruitment Screen. */
   description: string;
+  /**
+   * Rarity tier. Mirrors `style-guide.json > rarities[id]`; links this cohort
+   * to its art-catalog entry in `soldiers.json`. Optional for older entries.
+   */
+  rarity?: CohortRarity;
   /**
    * Optional sprite override for this cohort. Must match a key registered by
    * `SpriteManager` (see `/asset/soldiers/soldiers.json` ids, e.g. "samurai",

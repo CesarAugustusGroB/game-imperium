@@ -113,7 +113,9 @@
     "Muscle-cuirass implies corinthian or boeotian helm; lorica-segmentata is the exception (pairs with galea).",
     "Gilded / ornate armor variants use a gold-primary palette; standard line variants use bronze or natural metal.",
     "Transverse helm crest marks officers; fore-aft crest or no crest marks line troops.",
-    "Weapon-shield lock: doru pairs with aspis only; xyston pairs with pelta only — never cross these."
+    "Weapon-shield lock: doru pairs with aspis only; xyston pairs with pelta only — never cross these.",
+    "Dual-weapon lock: when a unit carries two weapons (e.g. gladius + pilum, short-spear + recurve-bow, katana + wakizashi), BOTH weapons are held in the SAME hand — the off-hand stays free for the shield or a clear gesture. Mirror the Spartan-style one-handed bundle; never split weapons across both hands.",
+    "Cultural-mask lock: EVERY sprite MUST carry at least one visible motif drawn from its culture's god or mythic iconography — look it up in `culturalMaskMotifs[family]`. The motif can be embossed on the helm face (preferred — a Mars-face visor for Romans, a Gorgoneion for Greeks, a Tanit sun-star for Punics, a menpō oni for Samurai, etc.), engraved on the shield boss, stamped on the cuirass breastplate, or hung as a pendant — but it MUST be named explicitly in the prompt. Generic helms without divine iconography are forbidden."
   ],
 
   "promptTemplate": "A high-quality vector mascot logo of a {culture} {role} centered in a dark circular frame. The character is wearing {armor} and a {helmet}. They are holding {weapon} and a {shield}. Bold black outlines, clean cel-shading, and vibrant {palette} tones. Flat vector style, professional esports aesthetic, high contrast, isolated on a dark gray grid background.",
@@ -467,6 +469,58 @@
       "leader      — no ring at all; full-art edge-to-edge with a gold-leaf nameplate banner at the bottom"
     ],
     "rule": "The circle frame is ALWAYS mentioned explicitly in the prompt. It is one of the fastest tier cues the eye reads — do not skip it."
+  },
+
+  "culturalMaskMotifs": {
+    "description": "Per-family registry of god / mythic iconography that every sprite in that family MUST carry as a visible motif. The generator picks one entry from the family's list (or combines two — one on the helm, one on the shield/cuirass) and names it explicitly in the prompt. This is the primary anti-generic lever: it guarantees every sprite reads as belonging to a specific culture's sacred vocabulary, not just a generic bronze-helm warrior. Precedence: helm face-mask > shield boss > cuirass embossing > pendant.",
+    "placement": {
+      "preferred":  "embossed face-mask or forehead boss on the helm (reads first, fastest cultural cue)",
+      "secondary":  "shield-boss emblem or blazon field",
+      "tertiary":   "cuirass breastplate embossing, or a large pendant at the neck",
+      "rule":       "At LEAST one placement must be visible; higher rarities (rare+) should carry the motif in two placements that echo each other (e.g. Mars face on the helm + Mars-wolf on the shield)."
+    },
+    "families": {
+      "roman": {
+        "gods":       ["Mars (war)", "Jupiter (sky/thunder)", "Minerva (strategy)", "Bellona (battle-fury)", "Victoria (victory)"],
+        "motifs":     ["Mars-face war-god bronze visor (stern bearded helm-mask)", "Jupiter's eagle (aquila)", "Jupiter's thunderbolt (fulmen)", "Minerva's owl + aegis", "Capitoline Wolf suckling Romulus & Remus", "laurel-wreath of Victoria", "Bellona helm-horns"],
+        "default":    "Mars-face helm visor with a Jupiter-eagle on the shield boss"
+      },
+      "hellenic": {
+        "gods":       ["Athena (wisdom/war)", "Ares (war)", "Apollo (sun/arrow)", "Herakles (strength)", "Nike (victory)", "Zeus (thunder)"],
+        "motifs":     ["Gorgoneion (Medusa-face helm or aegis)", "Owl-of-Athena", "Athenian aegis with serpent fringe", "Herakles' lion-skin headdress + club", "winged Nike blazon", "Zeus thunderbolt", "Apollo sunburst + laurel", "Spartan lambda with Ares spear-cross"],
+        "default":    "Gorgoneion embossed on the helm forehead or the aspis center"
+      },
+      "persian": {
+        "gods":       ["Ahura Mazda (supreme god)", "Mithra (sun/contract)", "Anahita (waters/war-goddess)", "Verethragna (victory-warrior)"],
+        "motifs":     ["Faravahar winged-sun of Ahura Mazda", "lion-and-sun of Mithra", "Anahita star-rosette", "Verethragna boar-crest", "Lamassu winged bull on the gerron", "four-winged cherub of the Achaemenid royal guard"],
+        "default":    "Faravahar winged-sun embossed on the tiara or the gerron shield"
+      },
+      "germanic": {
+        "gods":       ["Odin (war/wisdom — for Norse)", "Thor (thunder — for Norse)", "Týr (justice-in-war — for Norse)", "Cernunnos (horned hunt-lord — for Celts)", "Taranis (thunder-wheel — for Celts)", "Epona (war-horse — for Celts)", "Lugh (light/craft — for Celts)"],
+        "motifs":     ["Odin one-eye helm with raven-wings (Huginn & Muninn)", "Thor's Mjölnir hammer-pendant", "Týr-rune on the shield", "Cernunnos stag-horn helm-crest", "Taranis spoked-thunder-wheel blazon", "Epona horse-head on the shield", "Celtic triskele knotwork on a thureos", "lime-washed Gaesatae war-mane (hair-as-mask)"],
+        "default":    "Cernunnos stag-horns or Odin raven-wings on the helm; triskele on the shield"
+      },
+      "east-asian": {
+        "gods":       ["Hachiman (war)", "Bishamonten (warrior-guardian)", "Marishiten (battle-light)", "Fūjin (wind) + Raijin (thunder)"],
+        "motifs":     ["menpō oni-face demon mask (snarling iron visor)", "menpō akaoni red-demon mask", "kuwagata stag-beetle horns of Hachiman", "Bishamonten pagoda-crest kuwagata", "Marishiten three-face sun-disc kamon", "Fūjin wind-bag kamon", "kitsune nine-tail fox menpō", "tengu long-nose red menpō"],
+        "default":    "menpō oni face-mask + Hachiman kuwagata horns on the kabuto"
+      },
+      "indian": {
+        "gods":       ["Hanuman (monkey-god of strength)", "Indra (thunder/king of gods)", "Kartikeya / Skanda (war)", "Durga (warrior-goddess)", "Garuda (eagle-mount of Vishnu)"],
+        "motifs":     ["Hanuman monkey-face forehead embossing", "Indra vajra thunderbolt", "Kartikeya peacock crest", "Durga trident (trishula)", "Garuda eagle-head on the howdah banner", "Om symbol on the turban brooch", "Ashoka lion-capital on the shield"],
+        "default":    "Hanuman monkey-face on the forehead of the mahout turban + Garuda eagle banner on the howdah"
+      },
+      "carthaginian": {
+        "gods":       ["Tanit (sky/moon/fertility)", "Baal-Hammon (storm/sun)", "Melqart (patron of Tyre/Carthage, Herakles-equivalent)", "Eshmun (healing/warrior)"],
+        "motifs":     ["Sign-of-Tanit (trapezoid body with upraised arms and sun-disc head)", "Baal-Hammon crescent-and-disc", "Melqart lion-mask helm-visor or skin-headdress", "palm tree of Tanit", "horse-and-palm Punic coin motif", "eight-point star-of-Tanit on the shield"],
+        "default":    "Sign-of-Tanit pendant + eight-point Tanit star on the shield boss"
+      },
+      "egyptian": {
+        "gods":       ["Horus (falcon-king)", "Anubis (jackal-underworld)", "Ra (sun)", "Sekhmet (lion-goddess of war)", "Montu (falcon-war-god)", "Bastet (cat-protector)"],
+        "motifs":     ["Horus falcon-head helm-visor", "Anubis jackal-head war-mask", "Sekhmet lioness face-mask", "Montu double-plumed falcon crest", "Ra sun-disc with uraeus cobras", "Eye-of-Horus on the shield", "Bastet cat-face on the cuirass pectoral", "nemes striped headdress with cobra + vulture uraei"],
+        "default":    "Horus falcon-head helm-visor + Eye-of-Horus on the shield"
+      }
+    }
   },
 
   "hellenisticGuard": {

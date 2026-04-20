@@ -20,7 +20,7 @@ import type { Particle } from './BattleWorld';
 import type { Hex, Point } from '../hex';
 import type {
   BattleFaction, BattleConfig, BattleUnit, FloatingText, LieutenantOrder,
-  MovementProfileId, UnitRole, UnitStats,
+  MovementProfileId, Projectile, UnitRole, UnitStats,
 } from '../battle-types';
 import type { DecretumEffect } from '../../game/items/decretum';
 import type { ArmyData } from '../../types/index';
@@ -58,6 +58,7 @@ export class BattleEngine {
   get units(): Map<number, BattleUnit> { return this.world.units; }
   get floatingTexts(): FloatingText[] { return this.world.floatingTexts; }
   get particles(): Particle[] { return this.world.particles; }
+  get projectiles(): Projectile[] { return this.world.projectiles; }
   get stars(): Map<BattleFaction, Hex> { return this.world.stars; }
   get captureProgress(): Map<BattleFaction, number> { return this.world.captureProgress; }
   get abilityCooldowns(): Set<string> { return this.world.abilityCooldowns; }
@@ -123,6 +124,9 @@ export class BattleEngine {
 
   resolveCombat(attacker: BattleUnit, defender: BattleUnit): void {
     combat.resolveCombat(this.world, attacker, defender);
+  }
+  fireProjectile(attacker: BattleUnit, defender: BattleUnit): void {
+    combat.fireProjectile(this.world, attacker, defender);
   }
   applyDeathCheck(unit: BattleUnit): void { combat.applyDeathCheck(this.world, unit); }
   checkVictory(): void { combat.checkVictory(this.world); }

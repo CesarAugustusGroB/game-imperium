@@ -16,6 +16,7 @@
 import type { Hex } from '../hex';
 import type {
   BattleFaction, BattlePhase, BattleUnit, BattleConfig, FloatingText, LieutenantOrder,
+  Projectile,
 } from '../battle-types';
 import { DEFAULT_CONFIG } from '../battle-config';
 
@@ -69,6 +70,10 @@ export class BattleWorld {
   // ── Particles + screen shake ──
   readonly particles: Particle[] = [];
   screenShake: number = 0;
+
+  // ── Projectiles (ranged attacks in flight) ──
+  readonly projectiles: Projectile[] = [];
+  nextProjectileId = 1;
 
   // ── Capture-the-star state ──
   readonly stars = new Map<BattleFaction, Hex>();
