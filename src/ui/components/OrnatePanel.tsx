@@ -1,8 +1,8 @@
-import type { JSX } from 'preact';
+import type { JSX, ComponentChildren } from 'preact';
 import { Corners } from './motifs/Corners';
 
 interface OrnatePanelProps {
-  children: JSX.Element | JSX.Element[] | string;
+  children: ComponentChildren;
   accent?: string;
   cornersSize?: number;
   noCorners?: boolean;
