@@ -17,7 +17,7 @@ import type { ArmyData, Cohort } from '../types/index';
 import type { Hex } from './hex';
 import { offsetToAxial, offsetToAxialFlatTop } from './hex';
 
-export type DeploymentStrategy = 'central' | 'flanked';
+export type DeploymentStrategy = 'central' | 'flanked' | 'cavalry-flanked';
 
 export interface DeploymentPlan {
   strategy: DeploymentStrategy;
@@ -56,6 +56,16 @@ export const FLANK_RIGHT: DeploymentPlan = {
 };
 
 /**
+ * Polybian/Hellenistic formation: infantry massed in the center (22-col wide),
+ * cavalry (movementProfile 'flanker') split evenly onto the outer flank columns.
+ */
+export const CAVALRY_FLANKED_SPAWN: DeploymentPlan = {
+  strategy: 'cavalry-flanked',
+  frontRowOffset: 1,
+  maxWidth: 22,
+};
+
+/**
  * Place `army.cohorts` onto `state`'s grid according to `plan`.
  * If the army has no cohorts, nothing is placed — the caller is responsible
  * for upstream checks (e.g. embark gate).
@@ -74,6 +84,9 @@ export function deployArmy(
       return;
     case 'flanked':
       deployFlanked(state, faction, army.cohorts, plan);
+      return;
+    case 'cavalry-flanked':
+      deployCavalryFlanked(state, faction, army.cohorts, plan);
       return;
   }
 }
@@ -157,6 +170,61 @@ function deployFlanked(
       if (row < 0 || row >= rows) break;
       if (!tryAdd(state, faction, col, row, cohorts[idx])) continue;
       idx++;
+    }
+  }
+}
+
+// ── Cavalry-flanked spawn ──────────────────────────────────────
+
+/**
+ * Polybian/Hellenistic formation.
+ *
+ * Cohorts with `movementProfile === 'flanker'` are treated as cavalry and
+ * placed on the outermost columns (left and right wings), split evenly.
+ * All other cohorts deploy centrally via `deployCentral` with a narrowed
+ * `maxWidth` so the flanks stay open.
+ */
+function deployCavalryFlanked(
+  state: BattleState,
+  faction: BattleFaction,
+  cohorts: readonly Cohort[],
+  plan: DeploymentPlan,
+): void {
+  const { cols, rows } = state.config;
+  const zoneRows = Math.floor(rows / 3);
+  const enemyEdge = faction === 'blue' ? zoneRows * 2 : zoneRows - 1;
+  const depthDir = faction === 'blue' ? 1 : -1;
+  const frontRow = enemyEdge + plan.frontRowOffset * depthDir;
+
+  const cavalry = cohorts.filter(c => c.movementProfile === 'flanker');
+  const infantry = cohorts.filter(c => c.movementProfile !== 'flanker');
+
+  deployCentral(state, faction, infantry, plan);
+
+  const half = Math.ceil(cavalry.length / 2);
+  const leftCols  = [2, 3, 4, 5, 6, 7];
+  const rightCols = [cols - 3, cols - 4, cols - 5, cols - 6, cols - 7, cols - 8];
+
+  placeCavalryWing(state, faction, cavalry.slice(0, half),       leftCols,  frontRow, depthDir, rows);
+  placeCavalryWing(state, faction, cavalry.slice(half),           rightCols, frontRow, depthDir, rows);
+}
+
+function placeCavalryWing(
+  state: BattleState,
+  faction: BattleFaction,
+  cav: readonly Cohort[],
+  wingCols: number[],
+  frontRow: number,
+  depthDir: number,
+  rows: number,
+): void {
+  let idx = 0;
+  for (const col of wingCols) {
+    if (idx >= cav.length) break;
+    for (let d = 0; d < 3 && idx < cav.length; d++) {
+      const row = frontRow + d * depthDir;
+      if (row < 0 || row >= rows) continue;
+      if (tryAdd(state, faction, col, row, cav[idx])) idx++;
     }
   }
 }

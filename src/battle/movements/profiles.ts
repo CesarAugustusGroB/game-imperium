@@ -19,41 +19,47 @@ import type { MovementFn } from './resolver';
 import { depthOf } from '../battle-zones';
 
 import {
-  forward, greedy, standGround, skirmish, flank, pathToStar,
+  forward, greedy, skirmish, flank, pathToStar,
 } from './primitives';
 import { hexDistance } from '../hex';
 import {
   findInterceptHex, findClosestTo, findRetreatHex, isInEnemyZone,
 } from './helpers';
-import { prioritize, sequence, fallback } from './combinators';
-import { inEnemyZone, always } from './conditions';
+import { sequence, fallback, whenEngaged } from './combinators';
 
-// ── Vanguard — march forward, chase the enemy star when deep in enemy territory ──
-// In the enemy zone we try `pathToStar` first; if the star hex is blocked by
-// another unit (engine.moveUnitAlongPath returns false) the `pathToStar`
-// primitive returns null (see implementation), so we fall back to `forward`
-// so vanguards don't freeze waiting for an unreachable tile.
+// ── Vanguard — march forward until first engagement, then greedy-chase ──
+// Once a vanguard hits or is hit (or enters enemy zone), it drops the march
+// and pursues the nearest enemy at all costs.
 
-export const VANGUARD_AI: MovementFn = prioritize([
-  { cond: inEnemyZone, move: fallback(pathToStar, forward) },
-  { cond: always,      move: forward },
-]);
+export const VANGUARD_AI: MovementFn = whenEngaged(
+  fallback(forward, greedy),
+  greedy,
+);
 
-// ── Guard — attack adjacent enemies only, never leave your spot ──
+// ── Guard — advance toward enemies until first engagement, then greedy-chase ──
 
-export const GUARD_AI: MovementFn = standGround;
+export const GUARD_AI: MovementFn = whenEngaged(
+  fallback(forward, greedy),
+  greedy,
+);
 
 // ── Berserker — chase the nearest enemy at all times (no direction restriction) ──
 
 export const BERSERKER_AI: MovementFn = greedy;
 
-// ── Skirmisher — retreat after striking, approach when nothing is adjacent ──
+// ── Skirmisher — skirmish approach until engaged, then greedy-chase ──
 
-export const SKIRMISHER_AI: MovementFn = skirmish;
+export const SKIRMISHER_AI: MovementFn = whenEngaged(
+  fallback(skirmish, greedy),
+  greedy,
+);
 
-// ── Flanker — approach via flank columns, chase the nearest enemy when close ──
+// ── Flanker — approach via flank columns, greedy-chase after first engagement ──
 
-export const FLANKER_AI: MovementFn = sequence(flank, greedy);
+export const FLANKER_AI: MovementFn = whenEngaged(
+  sequence(flank, greedy),
+  greedy,
+);
 
 // ── Ranged skirmisher — 3-state arc with a proximity kite override.
 //    Kite: enemy within 3 hexes → retreat backward.
@@ -113,7 +119,7 @@ function pruneBusy(engine: BattleEngine): void {
   }
 }
 
-export const RESERVE_AI: MovementFn = (engine, unit, ctx) => {
+const RESERVE_LOGIC: MovementFn = (engine, unit, ctx) => {
   pruneBusy(engine);
 
   const enemyFaction: BattleFaction = unit.faction === 'blue' ? 'red' : 'blue';
@@ -153,9 +159,16 @@ export const RESERVE_AI: MovementFn = (engine, unit, ctx) => {
     }
   }
 
-  // 4. No threats — hold position
+  // 4. No immediate threats — hold position (outer whenEngaged will greedy if engaged)
   return null;
 };
+
+// ── Reserve — intercept/defend until first engagement, then greedy-chase ──
+
+export const RESERVE_AI: MovementFn = whenEngaged(
+  fallback(RESERVE_LOGIC, greedy),
+  greedy,
+);
 
 // ── Dispatch table ──
 

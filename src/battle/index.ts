@@ -11,7 +11,7 @@ import { COHORT_CATALOG } from '../game/army/cohort-data';
 import { ENEMY_COHORTS } from '../game/army/enemy-cohort-data';
 import { pauseMusic, resumeMusic } from '../ui/sound/music';
 import { applyProgressionEffects, computeIsFinalBattle } from './progression-bridge';
-import { CENTRAL_SPAWN, deployArmy } from './deployment';
+import { CAVALRY_FLANKED_SPAWN, CENTRAL_SPAWN, deployArmy } from './deployment';
 import { resetReserveAIState } from './movements';
 import type { ArmyData, Cohort } from '../types/index';
 
@@ -21,21 +21,6 @@ export const isFinalBattle = signal(false);
 /** S15-05: Snapshot of the generated enemy army for PostBattleScreen display. */
 export const lastEnemyArmy = signal<ArmyData | null>(null);
 
-/**
- * Build a minimal in-memory `ArmyData` by cycling a cohort template list to
- * the target size. Used by `enterQuickBattle` so its rosters flow through the
- * same `deployArmy` pipeline as real spoke armies.
- */
-function syntheticArmy(name: string, cycle: readonly Cohort[], size: number): ArmyData {
-  const cohorts: Cohort[] = [];
-  for (let i = 0; i < size; i++) cohorts.push(cycle[i % cycle.length]);
-  return {
-    id: -1, owner: 'quick-battle', name, size: cohorts.length,
-    cohorts, legateId: null,
-    provinceIndex: -1, targetProvinceIndex: null, progress: 0, path: [],
-    inCombat: false, combatTarget: null, lastRoll: 0,
-  };
-}
 
 export class BattleMode {
   private canvas: HTMLCanvasElement;
@@ -192,20 +177,75 @@ export class BattleMode {
     });
     this._state.generateGrid();
 
-    const velites = COHORT_CATALOG.find(c => c.id === 'velites')!;
-    const hetairoi = ENEMY_COHORTS.find(c => c.id === 'makedon-hetairoi')!;
+    // ── Roman army (Blue) — Polybian manipular formation ──────────────────────
+    // Velites screen → Hastati 1st line → Principes 2nd line → Triarii last resort
+    // Equites on both cavalry wings.
+    const hastati   = COHORT_CATALOG.find(c => c.id === 'hastati')!;
+    const velites   = COHORT_CATALOG.find(c => c.id === 'velites')!;
+    const principes = COHORT_CATALOG.find(c => c.id === 'principes')!;
+    const triarii   = COHORT_CATALOG.find(c => c.id === 'triarii')!;
+    const equites   = COHORT_CATALOG.find(c => c.id === 'equites')!;
 
-    const buff = (c: Cohort, mult: number): Cohort =>
-      ({ ...c, stats: { ...c.stats, hp: c.stats.hp * mult } });
+    const romanCohorts: Cohort[] = [
+      ...Array(8).fill(velites),    // ranged skirmish screen
+      ...Array(12).fill(hastati),   // 1st heavy line
+      ...Array(10).fill(principes), // 2nd heavy line
+      ...Array(6).fill(triarii),    // last-resort reserve
+      ...Array(4).fill(equites),    // equites — 2 per cavalry wing
+    ]; // 40 total
 
-    const blueCycle: Cohort[] = [buff(velites, 2)];
-    const blueArmy = syntheticArmy('velites-skirmishers', blueCycle, 10);
+    const blueArmy: ArmyData = {
+      id: -1, owner: 'quick-battle', name: 'Legio Romana',
+      size: romanCohorts.length, cohorts: romanCohorts, legateId: null,
+      provinceIndex: -1, targetProvinceIndex: null, progress: 0, path: [],
+      inCombat: false, combatTarget: null, lastRoll: 0,
+    };
 
-    const redCycle: Cohort[] = [buff(hetairoi, 2)];
-    const redArmy = syntheticArmy('makedon-hetairoi', redCycle, 10);
+    // ── Athenian–Macedonian army (Red) ─────────────────────────────────────────
+    // Cretan archer screen → Athenian phalanx (two depth ranks) → Hetairoi wings.
+    const cretan = COHORT_CATALOG.find(c => c.id === 'cretan_archer')!;
 
-    deployArmy(this._state, 'blue', blueArmy, CENTRAL_SPAWN);
-    deployArmy(this._state, 'red',  redArmy,  CENTRAL_SPAWN);
+    const hetairoi: Cohort = {
+      ...ENEMY_COHORTS.find(c => c.id === 'makedon-hetairoi')!,
+      movementProfile: 'flanker',
+    };
+
+    const athenianHoplite: Cohort = {
+      id: 'athenian-hoplite',
+      name: 'Athenian Hoplite',
+      role: 'vanguard',
+      stats: { atk: 125, def: 72, hp: 1050, agi: 38 },
+      aurumCost: 0,
+      description: 'Citizen hoplite of Athens. Heavy spear and aspis, close phalanx.',
+      movementProfile: 'vanguard-march',
+    };
+
+    const athenianEpilektos: Cohort = {
+      id: 'athenian-epilektos',
+      name: 'Athenian Epilektos',
+      role: 'guard',
+      stats: { atk: 145, def: 85, hp: 1200, agi: 30 },
+      aurumCost: 0,
+      description: 'Select corps of Athens. The heavy rear rank who anchor the phalanx wall.',
+      movementProfile: 'guard-stand',
+    };
+
+    const greekCohorts: Cohort[] = [
+      ...Array(8).fill(cretan),              // Cretan archer screen
+      ...Array(12).fill(athenianHoplite),    // phalanx front rank
+      ...Array(12).fill(athenianEpilektos),  // phalanx depth / anchor
+      ...Array(8).fill(hetairoi),            // Hetairoi — 4 per cavalry wing
+    ]; // 40 total
+
+    const redArmy: ArmyData = {
+      id: -1, owner: 'quick-battle', name: 'Polemos Hellenos',
+      size: greekCohorts.length, cohorts: greekCohorts, legateId: null,
+      provinceIndex: -1, targetProvinceIndex: null, progress: 0, path: [],
+      inCombat: false, combatTarget: null, lastRoll: 0,
+    };
+
+    deployArmy(this._state, 'blue', blueArmy, CAVALRY_FLANKED_SPAWN);
+    deployArmy(this._state, 'red',  redArmy,  CAVALRY_FLANKED_SPAWN);
 
     this._state.placeStarsAndStrength();
 
