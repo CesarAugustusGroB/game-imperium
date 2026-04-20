@@ -29,7 +29,7 @@ export function TitleScreen() {
       `}</style>
 
       <img
-        src="/asset/spartan_gold_round.png"
+        src="/asset/soldiers/spartan_royal_super-rare_soldier.png"
         alt="Shield"
         style={shieldStyle}
       />

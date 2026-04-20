@@ -255,7 +255,7 @@ interface BuildingIconProps {
 }
 
 /**
- * Building hero icon. Tries to load /asset/building_<type>.png first;
+ * Building hero icon. Tries to load /asset/buildings/building_<type>.png first;
  * if that 404s, falls back to a hand-drawn inline SVG glyph that takes
  * its color from `color` (defaults to gold).
  */
@@ -288,7 +288,7 @@ export function BuildingIcon({ type, size = 56, color, style }: BuildingIconProp
   return (
     <>
       <img
-        src={`/asset/building_${type}.png`}
+        src={`/asset/buildings/building_${type}.png`}
         width={size}
         height={size}
         alt=""

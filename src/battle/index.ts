@@ -11,7 +11,7 @@ import { COHORT_CATALOG } from '../game/army/cohort-data';
 import { ENEMY_COHORTS } from '../game/army/enemy-cohort-data';
 import { pauseMusic, resumeMusic } from '../ui/sound/music';
 import { applyProgressionEffects, computeIsFinalBattle } from './progression-bridge';
-import { CENTRAL_SPAWN, FLANK_LEFT, FLANK_RIGHT, deployArmy } from './deployment';
+import { CENTRAL_SPAWN, deployArmy } from './deployment';
 import { resetReserveAIState } from './movements';
 import type { ArmyData, Cohort } from '../types/index';
 
@@ -172,11 +172,16 @@ export class BattleMode {
   }
 
   /**
-   * Quick-battle entry for BattleScreenV2 — Spartans vs Persians in a
+   * Quick-battle entry for BattleScreenV2 — movement-profile demo on a
    * vertical 50×30 battlefield. No spoke / commander state required.
    *
-   * Uses the same `deployArmy` pipeline as `enterFromSpoke` — proving the
-   * deployment system is fully data-driven.
+   * Blue shows one movement profile per deployment zone (front/middle/back):
+   *   front  (vanguard role) → Velites  — 'skirmisher'       (hit-and-run)
+   *   middle (reserve role)  → Triarii  — 'reserve-intercept' (chase breakthroughs)
+   *   back   (guard role)    → Equites  — 'flanker'           (swing to a side column)
+   *
+   * Red is a plain marching line of Barbarian Warriors (vanguard-march) so
+   * blue's mixed AI reads against a single predictable foe.
    */
   enterQuickBattle(): void {
     this._isVisible = true;
@@ -192,44 +197,28 @@ export class BattleMode {
     });
     this._state.generateGrid();
 
-    // ── Cohort stat templates ──
-    const hastati   = COHORT_CATALOG.find(c => c.id === 'hastati')!;
-    const principes = COHORT_CATALOG.find(c => c.id === 'principes')!;
-    const triarii   = COHORT_CATALOG.find(c => c.id === 'triarii')!;
-    const equites   = COHORT_CATALOG.find(c => c.id === 'equites')!;
-    const velites   = COHORT_CATALOG.find(c => c.id === 'velites')!;
+    // ── Blue demo roster — one movement profile per zone ──
+    const velites = COHORT_CATALOG.find(c => c.id === 'velites')!;
+    const triarii = COHORT_CATALOG.find(c => c.id === 'triarii')!;
+    const equites = COHORT_CATALOG.find(c => c.id === 'equites')!;
 
-    const warrior      = ENEMY_COHORTS.find(c => c.id === 'barbarian-warrior')!;
-    const champion     = ENEMY_COHORTS.find(c => c.id === 'barbarian-champion')!;
-    const raider       = ENEMY_COHORTS.find(c => c.id === 'barbarian-raider')!;
-    const shieldbearer = ENEMY_COHORTS.find(c => c.id === 'barbarian-shieldbearer')!;
+    const buff = (c: Cohort, mult: number): Cohort =>
+      ({ ...c, stats: { ...c.stats, hp: c.stats.hp * mult } });
 
-    // Spartan & Persian rosters — same visual themes, stats doubled for a longer prototype fight.
-    const spartanCycle: Cohort[] = [
-      { ...hastati,   name: 'Hoplite',    stats: { ...hastati.stats,   hp: hastati.stats.hp   * 2 } },
-      { ...principes, name: 'Spartiate',  stats: { ...principes.stats, hp: principes.stats.hp * 2 } },
-      { ...velites,   name: 'Psiloi',     stats: { ...velites.stats,   hp: velites.stats.hp   * 2 } },
-      { ...triarii,   name: 'Perioikoi',  stats: { ...triarii.stats,   hp: triarii.stats.hp   * 2 } },
-      { ...equites,   name: 'Hippeis',    stats: { ...equites.stats,   hp: equites.stats.hp   * 2 } },
+    const blueCycle: Cohort[] = [
+      buff(velites, 2), buff(velites, 2), buff(velites, 2),  // front — skirmisher
+      buff(triarii, 2), buff(triarii, 2), buff(triarii, 2),  // middle — reserve-intercept
+      buff(equites, 2), buff(equites, 2), buff(equites, 2),  // back — flanker
     ];
-    const persianCycle: Cohort[] = [
-      { ...warrior,      name: 'Sparabara',  stats: { ...warrior.stats,      hp: warrior.stats.hp      * 2 } },
-      { ...champion,     name: 'Immortal',   stats: { ...champion.stats,     hp: champion.stats.hp     * 2 } },
-      { ...raider,       name: 'Takabara',   stats: { ...raider.stats,       hp: raider.stats.hp       * 2 } },
-      { ...shieldbearer, name: 'Gerrophora', stats: { ...shieldbearer.stats, hp: shieldbearer.stats.hp * 2 } },
-    ];
+    const blueArmy = syntheticArmy('demo-zones', blueCycle, blueCycle.length);
 
-    // Build armies by cycling the rosters to the target sizes.
-    const spartanMain = syntheticArmy('spartan-main', spartanCycle, 50);
-    const spartanFlank = syntheticArmy('spartan-flank', spartanCycle, 10);
-    const persianMain = syntheticArmy('persian-main', persianCycle, 50);
-    const persianFlank = syntheticArmy('persian-flank', persianCycle, 20);
+    // ── Red — uniform marching line to react against ──
+    const warrior = ENEMY_COHORTS.find(c => c.id === 'barbarian-warrior')!;
+    const redCycle: Cohort[] = [buff(warrior, 2)];
+    const redArmy = syntheticArmy('barbarian-line', redCycle, blueCycle.length);
 
-    // Deploy — same pipeline the spoke entry uses.
-    deployArmy(this._state, 'blue', spartanMain, CENTRAL_SPAWN);
-    deployArmy(this._state, 'blue', spartanFlank, FLANK_RIGHT);
-    deployArmy(this._state, 'red', persianMain, CENTRAL_SPAWN);
-    deployArmy(this._state, 'red', persianFlank, FLANK_LEFT);
+    deployArmy(this._state, 'blue', blueArmy, CENTRAL_SPAWN);
+    deployArmy(this._state, 'red',  redArmy,  CENTRAL_SPAWN);
 
     this._state.placeStarsAndStrength();
 

@@ -65,7 +65,10 @@ export class UnitLayer implements Layer {
   private drawUnit(rc: RenderContext, unit: BattleUnit, center: Point): void {
     const { ctx, state, sprites } = rc;
     const isSelected  = unit.id === state.selectedUnitId;
-    const shieldImg   = sprites.shields.get(`${unit.faction}:${unit.role}`) ?? null;
+    const spriteKey   = unit.spriteId ?? `${unit.faction}:${unit.role}`;
+    const shieldImg   = sprites.shields.get(spriteKey)
+                     ?? sprites.shields.get(`${unit.faction}:${unit.role}`)
+                     ?? null;
     const iconSize    = 60;
     const damageRatio = 1 - Math.max(0, unit.currentHp) / unit.stats.hp;
 

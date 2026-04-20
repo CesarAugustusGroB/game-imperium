@@ -20,7 +20,7 @@ import type { Particle } from './BattleWorld';
 import type { Hex, Point } from '../hex';
 import type {
   BattleFaction, BattleConfig, BattleUnit, FloatingText, LieutenantOrder,
-  UnitRole, UnitStats,
+  MovementProfileId, UnitRole, UnitStats,
 } from '../battle-types';
 import type { DecretumEffect } from '../../game/items/decretum';
 import type { ArmyData } from '../../types/index';
@@ -95,8 +95,8 @@ export class BattleEngine {
 
   // ── Units ──
 
-  addUnit(faction: BattleFaction, hex: Hex, name: string, role: UnitRole = 'vanguard', stats?: UnitStats): BattleUnit {
-    return units.addUnit(this.world, faction, hex, name, role, stats);
+  addUnit(faction: BattleFaction, hex: Hex, name: string, role: UnitRole = 'vanguard', stats?: UnitStats, spriteId?: string, movementProfile?: MovementProfileId): BattleUnit {
+    return units.addUnit(this.world, faction, hex, name, role, stats, spriteId, movementProfile);
   }
   getUnitAt(hex: Hex): BattleUnit | null { return units.getUnitAt(this.world, hex); }
   moveUnit(unitId: number, target: Hex): boolean { return units.moveUnit(this.world, unitId, target); }

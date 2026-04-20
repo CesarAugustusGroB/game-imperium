@@ -1,9 +1,10 @@
 import type { BattleState } from './battle-state';
 import type { BattleRenderer } from './battle-renderer';
 import type { LieutenantOrder } from './battle-types';
-import { pixelToHex, hexEqual } from './hex';
+import { pixelToHex, hexEqual, type Hex } from './hex';
 
 const PAN_SPEED = 400; // pixels per second
+const WHEEL_ZOOM_STEP = 1.1; // multiplicative per notch
 
 export class BattleInput {
   private canvas: HTMLCanvasElement;
@@ -16,6 +17,7 @@ export class BattleInput {
   private boundKeydown: (e: KeyboardEvent) => void;
   private boundKeyup: (e: KeyboardEvent) => void;
   private boundMousemove: (e: MouseEvent) => void;
+  private boundWheel: (e: WheelEvent) => void;
   private isAttached = false;
 
   /** Currently held WASD keys. */
@@ -32,6 +34,15 @@ export class BattleInput {
     this.boundKeydown = this.onKeydown.bind(this);
     this.boundKeyup = this.onKeyup.bind(this);
     this.boundMousemove = this.onMousemove.bind(this);
+    this.boundWheel = this.onWheel.bind(this);
+  }
+
+  /** Convert a mouse event to the hex under the cursor, accounting for
+   *  camera pan + zoom. Used by click / right-click / hover handlers. */
+  private pickHex(e: MouseEvent): Hex {
+    const origin = this.state.getGridOrigin(this.canvas.clientWidth, this.canvas.clientHeight);
+    const { x, y } = this.renderer.camera.screenToWorld(e.offsetX, e.offsetY);
+    return pixelToHex(x, y, this.state.config.hexSize, origin, !!this.state.config.vertical);
   }
 
   /** Call each frame to update camera pan from held WASD keys. */
@@ -56,6 +67,7 @@ export class BattleInput {
     this.canvas.addEventListener('click', this.boundClick);
     this.canvas.addEventListener('contextmenu', this.boundContextmenu);
     this.canvas.addEventListener('mousemove', this.boundMousemove);
+    this.canvas.addEventListener('wheel', this.boundWheel, { passive: false });
     window.addEventListener('keydown', this.boundKeydown);
     window.addEventListener('keyup', this.boundKeyup);
     this.isAttached = true;
@@ -66,6 +78,7 @@ export class BattleInput {
     this.canvas.removeEventListener('click', this.boundClick);
     this.canvas.removeEventListener('contextmenu', this.boundContextmenu);
     this.canvas.removeEventListener('mousemove', this.boundMousemove);
+    this.canvas.removeEventListener('wheel', this.boundWheel);
     window.removeEventListener('keydown', this.boundKeydown);
     window.removeEventListener('keyup', this.boundKeyup);
     this.keysDown.clear();
@@ -81,16 +94,14 @@ export class BattleInput {
     }
     // Targeting mode — redirect click to ability execution
     if (this.state.targetingAbility !== null) {
-      const origin = this.state.getGridOrigin(this.canvas.clientWidth, this.canvas.clientHeight);
-      const clicked = pixelToHex(e.offsetX - this.renderer.cameraX, e.offsetY - this.renderer.cameraY, this.state.config.hexSize, origin, !!this.state.config.vertical);
+      const clicked = this.pickHex(e);
       if (this.state.isValidHex(clicked) && this.state.onAbilityExecute) {
         this.state.onAbilityExecute(this.state.targetingAbility, clicked);
       }
       this.state.setTargeting(null);
       return;
     }
-    const origin = this.state.getGridOrigin(this.canvas.clientWidth, this.canvas.clientHeight);
-    const clicked = pixelToHex(e.offsetX - this.renderer.cameraX, e.offsetY - this.renderer.cameraY, this.state.config.hexSize, origin, !!this.state.config.vertical);
+    const clicked = this.pickHex(e);
 
     if (!this.state.isValidHex(clicked)) {
       this.state.selectUnit(null);
@@ -116,8 +127,7 @@ export class BattleInput {
     if (!selected) return;
     if (this.state.isUnitMoving(selected)) return;
 
-    const origin = this.state.getGridOrigin(this.canvas.clientWidth, this.canvas.clientHeight);
-    const clicked = pixelToHex(e.offsetX - this.renderer.cameraX, e.offsetY - this.renderer.cameraY, this.state.config.hexSize, origin, !!this.state.config.vertical);
+    const clicked = this.pickHex(e);
 
     if (!this.state.isValidHex(clicked)) return;
 
@@ -128,9 +138,15 @@ export class BattleInput {
   }
 
   private onMousemove(e: MouseEvent): void {
-    const origin = this.state.getGridOrigin(this.canvas.clientWidth, this.canvas.clientHeight);
-    const hex = pixelToHex(e.offsetX - this.renderer.cameraX, e.offsetY - this.renderer.cameraY, this.state.config.hexSize, origin, !!this.state.config.vertical);
+    const hex = this.pickHex(e);
     this.renderer.setHoveredHex(this.state.isValidHex(hex) ? hex : null);
+  }
+
+  /** Mouse wheel → zoom in/out around the cursor position. */
+  private onWheel(e: WheelEvent): void {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? WHEEL_ZOOM_STEP : 1 / WHEEL_ZOOM_STEP;
+    this.renderer.camera.zoomAt(e.offsetX, e.offsetY, factor);
   }
 
   private onKeyup(e: KeyboardEvent): void {

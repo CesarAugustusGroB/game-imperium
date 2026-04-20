@@ -1,0 +1,481 @@
+{
+  "description": "Style taxonomy for authoring new soldier sprites that match the existing 12. Companion to soldiers.json — that file says WHAT each sprite is; this file says which building-blocks are ALLOWED and how they combine. Pick one value per category, feed into promptTemplate, and the result stays visually consistent.",
+
+  "style": {
+    "framing": "Round portrait, bust-up (head + shoulders + shield). Character centered with ~4% circular margin. Transparent corners on the source PNG.",
+    "background": "Transparent. No scene, no environment. Downstream renderer adds the dark disc.",
+    "lineWork": "Bold black outlines, uniform weight, not sketchy.",
+    "shading": "Clean cel-shading with 2–3 value steps per material. No soft airbrush gradients.",
+    "lighting": "Top-left key light, soft ambient fill. Highlights on helm crest and shield boss.",
+    "resolution": "~1100–1400 px square source raster. Renderer downsamples to 60·DPR (or 120·DPR in high-res mode).",
+    "aesthetic": "Professional esports mascot meets grand-strategy portrait — flat vector silhouettes with painted-metal detailing."
+  },
+
+  "categories": {
+    "weapons": {
+      "spear": {
+        "doru":        "Long hoplite thrusting spear, bronze leaf-blade, wooden shaft.",
+        "xyston":      "Macedonian cavalry lance, double-length, iron butt-spike.",
+        "short-spear": "One-handed stabbing spear, typical of Persian Immortals."
+      },
+      "sword": {
+        "gladius":        "Short Roman stabbing sword, wide double-edge blade.",
+        "xiphos":         "Greek leaf-shaped short sword.",
+        "katana":         "Japanese single-edged curved blade.",
+        "la-tene-longsword": "Long iron Celtic slashing sword with anthropomorphic hilt."
+      },
+      "axe": {
+        "dane-axe": "Two-handed Viking broadaxe, long haft."
+      },
+      "polearm": {
+        "pilum": "Roman heavy throwing javelin with soft-iron shank."
+      },
+      "ranged": {
+        "composite-bow": "Recurved horn-and-sinew bow (Cretan, steppe).",
+        "recurve-bow":   "Persian short recurve with decorated limbs."
+      },
+      "beast": {
+        "tusks": "War-elephant ivory tusks, often capped with iron sleeves."
+      },
+      "modifiers": {
+        "dual-wield": "Secondary off-hand blade (e.g. samurai wakizashi paired with katana)."
+      }
+    },
+
+    "helmets": {
+      "corinthian":  { "origin": "Greek / Spartan",  "crest": "transverse or fore-aft, dyed horsehair" },
+      "attic":       { "origin": "Athenian",         "crest": "optional low plume" },
+      "pilos":       { "origin": "Greek skirmisher", "crest": "none — simple conical felt/bronze cap" },
+      "galea":       { "origin": "Roman",            "crest": "optional officer's transverse crest" },
+      "boeotian":    { "origin": "Macedonian cavalry", "crest": "often a side-plume" },
+      "kabuto":      { "origin": "Japanese",         "crest": "kuwagata horns + menpō face mask" },
+      "spangenhelm": { "origin": "Norse",            "crest": "none, riveted iron segments, nasal guard" },
+      "tiara":       { "origin": "Persian",          "crest": "embroidered headwrap, no metal crest" },
+      "turban":      { "origin": "Indian mahout",    "crest": "cloth wrap, sometimes with jewel brooch" },
+      "bare-lime-spike": { "origin": "Gallic / Celtic", "crest": "no helm — lime-washed auburn hair spiked back like a mane, drooping moustache" }
+    },
+
+    "armors": {
+      "heavy": {
+        "muscle-cuirass":      "Sculpted bronze or iron breastplate, anatomical.",
+        "lorica-segmentata":   "Roman banded plate over leather straps.",
+        "o-yoroi-lamellar":    "Japanese silk-laced iron scales in boxy cuirass."
+      },
+      "medium": {
+        "scale-mail":   "Overlapping metal scales sewn to cloth backing.",
+        "mail-hauberk": "Riveted iron-ring chainmail shirt."
+      },
+      "light": {
+        "linothorax":    "Glued linen layers, stiff but flexible, Greek.",
+        "leather-chiton": "Soft leather tunic with minimal reinforcement."
+      }
+    },
+
+    "shields": {
+      "round-large": {
+        "aspis":        "Deep bronze-faced wooden dish, ~90 cm, blazon centered.",
+        "viking-round": "Flat wooden planks, radial paint, iron boss."
+      },
+      "oval": {
+        "thureos": "Tall oval Celtic/Hellenistic shield, wooden planks, bronze spindle boss, painted triskele or knotwork."
+      },
+      "rectangular": {
+        "scutum": "Curved oblong Roman body-shield, gold eagle + lightning blazon."
+      },
+      "small": {
+        "pelta":         "Crescent or small oval cavalry shield.",
+        "gerron-wicker": "Persian wicker rectangle, geometric patterning."
+      },
+      "none": "Archers, two-handed swordsmen, elephants — no shield."
+    },
+
+    "palettes": {
+      "bronze-crimson-ivory":        { "primary": "#8A6A3B", "accent": "#A11E23", "highlight": "#EFE3CC", "usedFor": "Spartan line" },
+      "gold-ivory-crimson":          { "primary": "#D4A33C", "accent": "#8B1E24", "highlight": "#F6EAD2", "usedFor": "Spartan Royal / elite gold variants" },
+      "bronze-cobalt-olive":         { "primary": "#8A6A3B", "accent": "#27406F", "highlight": "#7B8A4B", "usedFor": "Athenian Hoplite" },
+      "gold-lapis-crimson":          { "primary": "#C89A2F", "accent": "#1C3B78", "highlight": "#932A2A", "usedFor": "Persian Immortal" },
+      "crimson-steel-brass":         { "primary": "#8B1E24", "accent": "#9FA6AE", "highlight": "#B68840", "usedFor": "Roman Legionary" },
+      "iron-rust-oak":               { "primary": "#6A6A6A", "accent": "#8B3A1E", "highlight": "#6B4A2A", "usedFor": "Viking raider" },
+      "lacquer-vermilion-gold":      { "primary": "#1A1A1A", "accent": "#D13B2A", "highlight": "#C89A2F", "usedFor": "Samurai" },
+      "earth-saffron-tarnished-gold": { "primary": "#6B4A2A", "accent": "#E0A033", "highlight": "#9A7A30", "usedFor": "War Elephant / Indian" },
+      "white-gold-deep-blue":        { "primary": "#F2EDE0", "accent": "#D4A33C", "highlight": "#1C3B78", "usedFor": "Neutral Commander" },
+      "woad-crimson-bronze":         { "primary": "#2F5A8A", "accent": "#A11E23", "highlight": "#8A6A3B", "usedFor": "Gallic Warband / Celtic" }
+    }
+  },
+
+  "combinations": [
+    "Helm crest color echoes the palette's ACCENT color (not primary).",
+    "Shield blazon uses the palette's HIGHLIGHT color on a primary-color field.",
+    "Light armor (linothorax, leather-chiton) pairs with pilos or attic helm — never corinthian.",
+    "Heavy armor (muscle-cuirass, lorica-segmentata, o-yoroi) always carries a matching crested helm.",
+    "Archers and two-handed swordsmen carry shield = none.",
+    "Cavalry (xyston lance) implies boeotian helm and pelta shield.",
+    "Muscle-cuirass implies corinthian or boeotian helm; lorica-segmentata is the exception (pairs with galea).",
+    "Gilded / ornate armor variants use a gold-primary palette; standard line variants use bronze or natural metal.",
+    "Transverse helm crest marks officers; fore-aft crest or no crest marks line troops.",
+    "Weapon-shield lock: doru pairs with aspis only; xyston pairs with pelta only — never cross these."
+  ],
+
+  "promptTemplate": "A high-quality vector mascot logo of a {culture} {role} centered in a dark circular frame. The character is wearing {armor} and a {helmet}. They are holding {weapon} and a {shield}. Bold black outlines, clean cel-shading, and vibrant {palette} tones. Flat vector style, professional esports aesthetic, high contrast, isolated on a dark gray grid background.",
+
+  "promptExample": {
+    "culture": "Spartan",
+    "role": "line infantry hoplite",
+    "weapon": "a doru spear raised overhead",
+    "shield": "an aspis with a golden lambda (Λ) blazon",
+    "armor": "a bronze muscle-cuirass with leather pteruges",
+    "helmet": "Corinthian helm with a red transverse horsehair crest",
+    "palette": "bronze, crimson, and ivory"
+  },
+
+  "formats": {
+    "circle": {
+      "aspect":      "1:1 (square raster, circular safe-area)",
+      "frame":       "dark circular frame, ~4% margin inside the circle",
+      "crop":        "bust-up (head, shoulders, weapon tip, shield rim)",
+      "background":  "transparent PNG; the renderer composites the circle",
+      "fileSuffix":  "_soldier",
+      "usage":       "every rank-and-file battle unit; all current SpriteManager entries",
+      "promptAddon": "centered in a dark circular frame, bust-up composition, isolated on a dark gray grid background"
+    },
+    "card": {
+      "aspect":      "5:7 portrait (standard TCG card)",
+      "frame":       "full-art bleed — illustration reaches the card edges",
+      "crop":        "full-body or three-quarter, with an environment suggested behind",
+      "background":  "painted scene, atmospheric depth, subject lit dramatically",
+      "fileSuffix":  "_card",
+      "usage":       "Leader tier only — named commanders and story figures",
+      "promptAddon": "full-art 5:7 portrait card composition, no border, painted environment behind the subject"
+    }
+  },
+
+  "rarities": {
+    "common": {
+      "code": "C",
+      "name": "Common",
+      "foil": "none",
+      "background": "transparent or flat dark gray",
+      "border": "none",
+      "pose": "static bust, front-facing, weapon at rest",
+      "palette_intensity": "muted / natural",
+      "dropWeight": 60,
+      "aurumCost": 1,
+      "promptAddon": "clean flat colors, matte finish, no foil, static front-facing bust pose",
+      "heroLever": "pose-clarity",
+      "calmAxes": ["framing: mid-shot bust", "background: neutral dark gray", "palette: flat matte", "foil: none", "border: none", "environment: none"],
+      "paletteBudget": 0,
+      "compositionAmbition": "single-figure, static-to-mid-action bust",
+      "promptAddonLoud": "clear readable pose, subject centered and forward-facing, silhouette reads first",
+      "promptAddonCalm": "flat matte colors, no foil, no border, no environment hint, mid-shot bust framing",
+      "circleFrame": {
+        "width":         "thin — ~1% of the diameter",
+        "color":         "single dark-grey ring, same as the background",
+        "pattern":       "plain unbroken line",
+        "ornament":      "none",
+        "cornerAccents": "none",
+        "promptSnippet": "a thin single-color dark-grey ring, plain and unbroken, no ornament"
+      }
+    },
+    "uncommon": {
+      "code": "UC",
+      "name": "Uncommon",
+      "foil": "subtle silver foil highlights on metal surfaces",
+      "background": "single-tone vignette matching the palette accent color",
+      "border": "thin gold hairline along the circle",
+      "pose": "slight contrapposto, confident, weapon held ready",
+      "palette_intensity": "slightly vibrant",
+      "dropWeight": 25,
+      "aurumCost": 3,
+      "promptAddon": "soft silver foil highlights on metal, subtle vignette in the accent color, thin gold hairline border, confident contrapposto pose",
+      "heroLever": "weapon-and-gear-specialization",
+      "calmAxes": ["framing: mid-shot bust", "pose: confident static", "environment: vignette only — no scene", "palette: one boost slot used"],
+      "paletteBudget": 1,
+      "compositionAmbition": "single-figure, confident stance with a specialization-tell",
+      "promptAddonLoud": "one distinctive weapon-grip or specialized gear detail that reads the unit's niche (e.g. a scout's throwing-darts, a drummer's mallet-strap, an officer's baton)",
+      "promptAddonCalm": "subtle palette-accent vignette background, thin gold hairline border, soft silver foil limited to metal edges only",
+      "circleFrame": {
+        "width":         "thin — ~1.5% of the diameter",
+        "color":         "single thin gold hairline over a dark ring",
+        "pattern":       "plain unbroken gold line",
+        "ornament":      "none",
+        "cornerAccents": "four tiny dot accents at the cardinal points (12, 3, 6, 9 o'clock)",
+        "promptSnippet": "a thin gold hairline ring with four tiny dot accents at the cardinal points, otherwise plain"
+      }
+    },
+    "rare": {
+      "code": "R",
+      "name": "Rare",
+      "foil": "silver holographic sheen across metal and cloth",
+      "background": "abstract texture — dust motes, smoke, or parchment grain",
+      "border": "double gold line with small corner ornaments",
+      "pose": "three-quarter angle, weapon raised, dramatic mid-breath",
+      "palette_intensity": "vibrant",
+      "dropWeight": 10,
+      "aurumCost": 7,
+      "promptAddon": "rare silver holographic sheen, faint dust motes behind, gold double-line ornate border, three-quarter angle with weapon raised",
+      "heroLever": "dynamic-pose-plus-environment",
+      "calmAxes": ["foil: silver sheen on metal only — no rainbow", "border: simple gold double-line", "supporting cast: none"],
+      "paletteBudget": 2,
+      "compositionAmbition": "three-quarter dynamic, hero and environment cue",
+      "promptAddonLoud": "three-quarter dynamic pose with weapon raised mid-breath, readable environment cue behind (dust motes, smoke, parchment grain)",
+      "promptAddonCalm": "silver holographic sheen limited to metal surfaces, gold double-line border with small corner ornaments, no second figure",
+      "circleFrame": {
+        "width":         "medium — ~2.5% of the diameter",
+        "color":         "double gold line with a hint of engraved texture between the two lines",
+        "pattern":       "two concentric gold rings with faint engraved fill",
+        "ornament":      "small leaf-shaped corner motifs at the 4 cardinal points",
+        "cornerAccents": "four small leaf motifs in matching gold",
+        "promptSnippet": "a double gold-line ring with faint engraved texture between the lines and four small leaf corner motifs at the cardinal points"
+      }
+    },
+    "super-rare": {
+      "code": "SR",
+      "name": "Super Rare",
+      "foil": "rainbow holographic across the whole subject",
+      "background": "action scene silhouette (battlefield, charging horses, fire)",
+      "border": "ornate laurel-leaf gold frame with filigree",
+      "pose": "mid-action, dynamic low-angle, motion blur at weapon tip",
+      "palette_intensity": "saturated with holographic glow",
+      "dropWeight": 4,
+      "aurumCost": 15,
+      "promptAddon": "vibrant rainbow holographic foil, kinetic action silhouette behind the subject, ornate laurel-leaf gold frame, dynamic mid-action low-angle pose",
+      "heroLever": "second-figure-or-narrative-moment",
+      "calmAxes": ["environment: kept as silhouette, darker than hero — never competing", "composition: hero-centered, single focal subject", "border: ornate but not gemmed (reserve gems for secret-rare)"],
+      "paletteBudget": "2 + 1 atmospheric",
+      "compositionAmbition": "narrative moment — hero in mid-iconic-action with a second figure OR story beat implied, not a crowd scene",
+      "promptAddonLoud": "a narrative moment — a second figure implied over the hero's shoulder or a signature action beat mid-execution, with one atmospheric effect (dust, embers, or mist) catching the light",
+      "promptAddonCalm": "action silhouette kept behind and darker than the hero, ornate laurel-leaf gold frame, rainbow holographic foil limited to cuirass and helm — not on cloth or skin",
+      "circleFrame": {
+        "width":         "thick — ~3.5% of the diameter",
+        "color":         "ornate gold with filigree shadowing",
+        "pattern":       "continuous laurel-leaf scroll wrapping the whole ring",
+        "ornament":      "raised laurel leaves alternating with small filigree curls",
+        "cornerAccents": "four slightly larger rosette bosses at the cardinal points",
+        "promptSnippet": "a thick ornate gold ring with a continuous laurel-leaf scroll, filigree detailing, and four rosette bosses at the cardinal points"
+      }
+    },
+    "secret-rare": {
+      "code": "SEC",
+      "name": "Secret Rare",
+      "foil": "prismatic rainbow foil with refractive texture",
+      "background": "full painted scene, cinematic chiaroscuro lighting, supporting figures",
+      "border": "ornate frame with gemmed corners and embossed runes",
+      "pose": "full diorama, multiple figures implied, hero lit center-stage",
+      "palette_intensity": "cinematic, high dynamic range",
+      "dropWeight": 0.9,
+      "aurumCost": 40,
+      "promptAddon": "prismatic rainbow foil with refractive texture, painterly chiaroscuro cinematic lighting, full diorama with supporting figures, ornate gemmed frame",
+      "heroLever": "full-bleed-framing-plus-atmosphere",
+      "calmAxes": ["pose: iconic / symmetrical — NOT another action sprawl", "supporting figures: implied as silhouettes only, never competing with the hero for attention", "composition: DE-ESCALATED from super-rare — this is the anti-muddiness guard"],
+      "paletteBudget": "2 + 1 atmospheric",
+      "compositionAmbition": "iconic silhouette, cinematic chiaroscuro — hero reads first even amidst the painted scene",
+      "promptAddonLoud": "full-bleed painted scene with cinematic chiaroscuro and one atmospheric effect (smoke, gold light, or dust)",
+      "promptAddonCalm": "pose returns to iconic silhouette — symmetrical, centered, hero reads first; supporting figures as darker silhouettes only; prismatic foil limited to the hero; ornate gemmed frame with embossed runes",
+      "circleFrame": {
+        "width":         "thick — ~4.5% of the diameter",
+        "color":         "ornate gold with deep shadowed relief, embossed runes fill the ring between ornaments",
+        "pattern":       "continuous ornate scrollwork with embossed runes between the bosses",
+        "ornament":      "embossed runes engraved along the ring, prismatic sheen catching in the grooves",
+        "cornerAccents": "four gemmed corner bosses (sapphire, ruby, emerald, amethyst) at the cardinal points; optional smaller cabochons at the diagonals",
+        "promptSnippet": "a thick ornate gold ring with embossed runes between the bosses, four gemmed corner bosses (sapphire, ruby, emerald, amethyst) at the cardinal points, prismatic sheen catching in the engraved grooves"
+      }
+    },
+    "leader": {
+      "code": "L",
+      "name": "Leader",
+      "foil": "gold-leaf accents on name plate and key armor pieces",
+      "background": "full-bleed landscape illustration, army hinted in the distance",
+      "border": "no frame — full-art edge-to-edge bleed",
+      "pose": "commanding hero pose, arm outstretched or sword raised, gaze off-frame",
+      "palette_intensity": "painterly, filmic color grading",
+      "dropWeight": 0.1,
+      "aurumCost": 100,
+      "promptAddon": "full-art leader card with gold-leaf accents, iconic commanding hero pose, army hinted in the distant background, filmic color grading, no border — full-bleed edge-to-edge",
+      "heroLever": "signature-backdrop-plus-foil-lighting",
+      "calmAxes": ["pose: single hero silhouette — commanding but symmetrical", "supporting cast: only hinted far in the distance — never in the foreground", "composition: SIMPLIFIES from secret-rare — the fix for legendary muddiness"],
+      "paletteBudget": "2 + 1 atmospheric",
+      "compositionAmbition": "single hero silhouette with a signature backdrop keyed to the commander's identity",
+      "promptAddonLoud": "a signature backdrop that keys to the commander's identity (fortress, legion standard, crowned peak, burning city) with filmic color grading and gold-leaf accents on the name plate and key armor pieces",
+      "promptAddonCalm": "composition simplifies to a single hero silhouette in a commanding pose — army only hinted far in the distance, no foreground crowd — no frame, full-bleed edge-to-edge; no rainbow foil, gold-leaf is the tier cue",
+      "circleFrame": {
+        "width":         "none — full-art edge-to-edge bleed (card format only)",
+        "color":         "no ring; replaced by a gold-leaf nameplate banner at the bottom of the card",
+        "pattern":       "no ring pattern; nameplate uses Celtic/Roman knot or laurel motif keyed to the leader's culture",
+        "ornament":      "gold-leaf nameplate with the commander's name in slab-serif caps, optionally a small rank sigil above",
+        "cornerAccents": "tiny gold-leaf corner accents at the card's four corners only",
+        "promptSnippet": "no circular frame — full-art edge-to-edge bleed with a gold-leaf nameplate banner at the bottom bearing the commander's name in slab-serif caps, tiny gold-leaf accents at the card corners"
+      }
+    }
+  },
+
+  "promptTemplate_v2": "{baseTemplate} {rarityAddon} {formatAddon}",
+  "promptTemplate_v2_example": {
+    "rarity":   "super-rare",
+    "format":   "circle",
+    "culture":  "Gaesatae Celtic berserker",
+    "role":     "shock infantry champion",
+    "weapon":   "a massive two-handed La Tène iron longsword",
+    "shield":   "none — both hands on the sword",
+    "armor":    "bare woad-painted torso, heavy twisted bronze torc",
+    "helmet":   "no helmet — lime-washed spiked auburn hair and drooping moustache",
+    "palette":  "woad blue, weathered bronze, and blood crimson",
+    "composed": "A high-quality vector mascot logo of a Gaesatae Celtic berserker shock infantry champion centered in a dark circular frame. The character is wearing bare woad-painted torso, heavy twisted bronze torc and no helmet — lime-washed spiked auburn hair and drooping moustache. They are holding a massive two-handed La Tène iron longsword and none — both hands on the sword. Bold black outlines, clean cel-shading, and vibrant woad blue, weathered bronze, and blood crimson tones. Flat vector style, professional esports aesthetic, high contrast, isolated on a dark gray grid background. Vibrant rainbow holographic foil, kinetic action silhouette behind the subject, ornate laurel-leaf gold frame, dynamic mid-action low-angle pose. Centered in a dark circular frame, bust-up composition, isolated on a dark gray grid background."
+  },
+
+  "houseStyleHex": {
+    "outline":        "#0B0B0B",
+    "gridBackground": "#2B2B2B",
+    "celShadeShadow": "rgba(0,0,0,0.35)",
+    "celShadeHighlight": "rgba(255,255,255,0.20)",
+    "goldBorderThin": "#C9A24A",
+    "goldBorderOrnate": "#E6C86B",
+    "foilHologramTint": "#9FD6FF",
+    "foilRainbowHint":  "magenta→cyan→yellow gradient sheen"
+  },
+
+  "promptingPrinciples": {
+    "general": [
+      "Positive framing only — never 'no X'. Rewrite 'no background' as 'isolated on dark gray grid'.",
+      "Specify materials, not adjectives: 'oxidized bronze muscle-cuirass' beats 'shiny armor'.",
+      "Keep a single cohesive style — do not mix 'flat vector' with 'photorealistic' or 'anime'.",
+      "For Leader cards, text on the art must be quoted literally and short (one name, one title)."
+    ],
+    "nanoBananaPro": {
+      "structure": "Labeled 6-block creative brief: [Subject] / [Composition] / [Action] / [Location] / [Style] / [Editing Instructions].",
+      "aspect": "State aspect ratio in prose ('round 1:1 bust portrait', '3:4 TCG card').",
+      "color": "Prefer named/descriptive color ('woad blue, weathered bronze'). Hex codes are OK but not the strong lever.",
+      "references": "Up to 14 reference images with explicit role labels ('image 1 = style, image 2 = palette, image 3 = pose'). Strongest lever for house-style consistency.",
+      "text": "Quote literal strings and name the font. Finalize copy conversationally before requesting the image.",
+      "avoid": "Tag soup ('masterpiece, 4k, trending'). Negative prompts. Burying the subject under adjectives."
+    },
+    "flux2Pro": {
+      "structure": "Single prose paragraph: Subject + Action + Style + Context, 30–80 words. Leading tokens weigh more — front-load the house style.",
+      "aspect": "Passed as width/height params (multiples of 16), NOT in the prompt text.",
+      "color": "Bind exact hex codes to specific objects: 'outline in #0B0B0B', 'shield field in #2F5A8A'. This is the strongest palette-lock lever.",
+      "references": "Up to 10 images, 9MP total budget across inputs + output.",
+      "jsonPrompt": "For catalog automation, Flux accepts a structured JSON prompt with scene/subjects/style/color_palette/lighting/camera keys.",
+      "avoid": "Negative prompts. Comma-separated tag lists. Style keywords buried at the end of a long paragraph. prompt_upsampling when determinism matters."
+    }
+  },
+
+  "promptTemplate_v2_nano": "[Subject] {culture} {role}, wearing {armor} and {helmet}, wielding {weapon} with {shield}.\n[Composition] {formatAspect} — {formatFraming}.\n[Action] {rarityPose}.\n[Location] {rarityBackground}, isolated on a dark gray grid background.\n[Style] Flat vector mascot logo, bold black outlines, clean cel-shading with 2–3 value steps per material, palette of {palette}. Professional esports aesthetic, high contrast.\n[Editing Instructions] {rarityFoil}, {rarityBorder}.",
+
+  "promptTemplate_v2_flux": "Flat vector mascot logo portrait of a {culture} {role}, bold black outlines in #0B0B0B, clean cel-shading, isolated on a dark gray grid background in #2B2B2B. The subject wears {armor} and {helmet}, wielding {weapon} with {shield}. Palette bound to specific objects: {paletteHexBinding}. {rarityAddon}. {formatAddon}. Professional esports aesthetic, high contrast, sharp focus throughout.",
+
+  "promptTemplate_v2_flux_json": {
+    "scene": "{culture} {role} portrait for trading card game sprite catalog",
+    "subjects": [
+      {
+        "id": "hero",
+        "description": "{culture} {role}",
+        "loadout": {
+          "armor":  "{armor}",
+          "helmet": "{helmet}",
+          "weapon": "{weapon}",
+          "shield": "{shield}"
+        },
+        "pose": "{rarityPose}"
+      }
+    ],
+    "style": "flat vector mascot logo, bold black outlines, clean cel-shading with 2–3 value steps per material, professional esports aesthetic, high contrast",
+    "color_palette": {
+      "outline":    "#0B0B0B",
+      "background": "#2B2B2B",
+      "primary":    "{palettePrimary}",
+      "accent":     "{paletteAccent}",
+      "highlight":  "{paletteHighlight}"
+    },
+    "lighting": "top-left key light, soft ambient fill, highlights on helm crest and shield boss",
+    "camera": "{formatCamera}",
+    "rarity_treatment": "{rarityAddon}"
+  },
+
+  "promptTemplate_v2_nano_example": {
+    "rarity":   "super-rare",
+    "format":   "circle",
+    "culture":  "Gaesatae Celtic berserker",
+    "role":     "shock infantry champion",
+    "composed": "[Subject] Gaesatae Celtic berserker shock infantry champion, wearing bare woad-painted torso with a heavy twisted bronze torc and no helmet — lime-washed spiked auburn hair and drooping moustache, wielding a massive two-handed La Tène iron longsword with no shield.\n[Composition] Round 1:1 bust portrait — centered in a dark circular frame with ~4% margin.\n[Action] Mid-action dynamic low-angle, weapon raised, motion blur at the blade tip.\n[Location] Kinetic action silhouette of a charging warband behind the subject, isolated on a dark gray grid background.\n[Style] Flat vector mascot logo, bold black outlines, clean cel-shading with 2–3 value steps per material, palette of woad blue, weathered bronze, and blood crimson. Professional esports aesthetic, high contrast.\n[Editing Instructions] Vibrant rainbow holographic foil across the whole subject, ornate laurel-leaf gold frame with filigree."
+  },
+
+  "promptTemplate_v2_flux_example": {
+    "rarity":   "super-rare",
+    "format":   "circle",
+    "culture":  "Gaesatae Celtic berserker",
+    "role":     "shock infantry champion",
+    "composed": "Flat vector mascot logo portrait of a Gaesatae Celtic berserker shock infantry champion, bold black outlines in #0B0B0B, clean cel-shading, isolated on a dark gray grid background in #2B2B2B. The subject wears a bare woad-painted torso with a heavy twisted bronze torc and no helmet — lime-washed spiked auburn hair and drooping moustache — wielding a massive two-handed La Tène iron longsword with no shield. Palette bound to specific objects: woad torso in #2F5A8A, torc in #8A6A3B, blood accents in #A11E23, highlights in #EFE3CC. Vibrant rainbow holographic foil, kinetic action silhouette behind the subject, ornate laurel-leaf gold frame, dynamic mid-action low-angle pose. Centered in a dark circular frame, bust-up composition. Professional esports aesthetic, high contrast, sharp focus throughout."
+  },
+
+  "variationAxes": {
+    "description": "When a same-(culturalFamily, rarity) sibling already exists in sprites[], the generator must force the new sprite to differ on at least 3 of these 6 axes. This prevents clone output and widens the visual vocabulary of the catalog.",
+    "axes": {
+      "sub_archetype":  ["line-infantry", "skirmisher", "scout", "standard-bearer", "drummer", "veteran", "officer", "champion"],
+      "age_bracket":    ["youth", "prime", "veteran", "elder"],
+      "gender":         ["male", "female", "ambiguous"],
+      "focal_verb":     ["advancing", "bracing", "roaring", "striking", "recoiling", "scanning", "resting", "hailing"],
+      "weapon_grip":    ["overhead", "couched", "shouldered", "sheathed", "dual", "ready-guard", "pointed-at-viewer"],
+      "midground_prop": ["banner", "trophy", "torch", "horn", "hound", "standard-pole", "offering-bowl", "none"]
+    },
+    "minAxesToDiffer": 3
+  },
+
+  "culturalFamilies": {
+    "description": "Cultures that share enough visual vocabulary to be treated as one cluster for collision detection. When picking a new sprite at a given rarity, the generator compares against every existing sprite whose culture maps to the same family here.",
+    "hellenic":     ["Spartan", "Hoplite", "Athenian", "Athenian Hoplite", "Athenian Elite Hoplite", "Cretan", "Cretan Archer", "Macedonian", "Companion", "Hetairoi", "Theban", "Boeotian", "Spartan Royal"],
+    "roman":        ["Roman", "Roman Legionary", "Legionary", "Praetorian", "Auxiliary", "Centurion"],
+    "persian":      ["Persian", "Persian Immortal", "Immortal", "Anūšiya", "Parthian", "Median"],
+    "germanic":     ["Gallic", "Celtic", "Gaesatae", "Viking", "Norse Raider", "Germanic"],
+    "east-asian":   ["Samurai", "Bushi", "Ashigaru"],
+    "indian":       ["Indian", "Mauryan", "Mahout", "War Elephant"],
+    "carthaginian": ["Carthaginian", "Punic", "Libyan", "Iberian", "Numidian"],
+    "egyptian":     ["Egyptian", "Nubian", "Medjay"]
+  },
+
+  "rarityLadder": {
+    "description": "One hero-lever per tier, clamp the others. At secret-rare and leader the composition DE-ESCALATES back toward iconic silhouette — the fix for the Pokémon SIR muddiness problem. The generator must emit exactly ONE loud axis per prompt and keep the calm axes calm.",
+    "common":      { "heroLever": "pose-clarity",                      "paletteBudget": 0,                    "compositionAmbition": "single-figure static-to-mid-action bust" },
+    "uncommon":    { "heroLever": "weapon-and-gear-specialization",    "paletteBudget": 1,                    "compositionAmbition": "single-figure confident stance with a specialization-tell" },
+    "rare":        { "heroLever": "dynamic-pose-plus-environment",     "paletteBudget": 2,                    "compositionAmbition": "three-quarter dynamic, hero and environment cue" },
+    "super-rare":  { "heroLever": "second-figure-or-narrative-moment", "paletteBudget": "2 + 1 atmospheric",  "compositionAmbition": "narrative moment, hero-centered — NOT a crowd scene" },
+    "secret-rare": { "heroLever": "full-bleed-framing-plus-atmosphere","paletteBudget": "2 + 1 atmospheric",  "compositionAmbition": "iconic silhouette (DE-ESCALATED from super-rare), cinematic chiaroscuro" },
+    "leader":      { "heroLever": "signature-backdrop-plus-foil-lighting", "paletteBudget": "2 + 1 atmospheric", "compositionAmbition": "single hero silhouette (DE-ESCALATED), signature backdrop" },
+    "paletteBoostSlots":  ["figure_saturation", "background_contrast", "rim_light_intensity"],
+    "atmosphericEffects": ["dust", "embers", "mist", "smoke", "gold-light", "parchment-grain", "falling-ash"],
+    "deEscalationRule": "At secret-rare and leader, the pose returns to a single iconic silhouette and supporting figures stay as darker silhouettes only. Never stack second-figure + kinetic-action + crowd at these tiers."
+  },
+
+  "mtgSixFieldBrief": {
+    "description": "The semantic payload that feeds every model template. Modeled on MTG's art-brief structure (Muddy Colors, WotC Ultimate Masters). `Action` must contain a verb clause; `Mood` must be a one-sentence emotional punchline — not a list of adjectives. This is the strongest anti-generic lever.",
+    "fields": {
+      "Setting":  "Who the subject is — culture, role, sub-archetype, age, gender, weapon, armor, helm, shield (the Subject line).",
+      "Palette":  "Named colors for Nano, hex-bound colors for Flux. Include which palette slot gets the boost from the rarityLadder budget.",
+      "Location": "Where the subject is — background cue matched to the rarity (dark gray grid for common, silhouette for super-rare, painted scene for secret-rare/leader).",
+      "Action":   "What the subject is DOING — a verb clause: 'bracing the shield wall', 'roaring and raising the dane-axe', 'scanning the ridgeline'. Never a static description.",
+      "Focus":    "What the viewer's eye should land on first — usually the weapon tip, the crest color, the shield blazon, the gaze.",
+      "Mood":     "A one-sentence emotional punchline. 'The line will hold, but barely.' 'He knows this is the last charge.' Not adjectives."
+    }
+  },
+
+  "circleFrameLadder": {
+    "description": "The dark circular frame that contains the bust portrait is a first-class rarity signal. It escalates from a plain thin grey ring at common to a thick gemmed-and-runed ring at secret-rare, then DISSOLVES at leader (full-art bleed with gold-leaf nameplate instead). The ring must read as rarer at a glance than the previous tier — same philosophy as a TCG's card border. See each `rarities.<id>.circleFrame` for the full spec.",
+    "progression": [
+      "common      — thin single-color dark-grey ring, plain, no ornament",
+      "uncommon    — thin gold hairline + four tiny dot accents at cardinal points",
+      "rare        — double gold line, engraved texture between lines, four small leaf corner motifs",
+      "super-rare  — thick ornate gold ring, continuous laurel-leaf scroll, four rosette bosses",
+      "secret-rare — thick ornate gold ring, embossed runes between ornaments, four gemmed corner bosses (sapphire/ruby/emerald/amethyst), prismatic sheen in the grooves",
+      "leader      — no ring at all; full-art edge-to-edge with a gold-leaf nameplate banner at the bottom"
+    ],
+    "rule": "The circle frame is ALWAYS mentioned explicitly in the prompt. It is one of the fastest tier cues the eye reads — do not skip it."
+  },
+
+  "hellenisticGuard": {
+    "description": "Special constraint: when culturalFamily is `hellenic` AND rarity is `super-rare` or higher, the generator must force at least TWO of these axes to differ from every existing hellenic super-rare+ sprite in sprites[]. This is the explicit fix for the current collision zone (spartan_royal_super_rare, athen_hoplite_elite_super_rare, companion_super_rare).",
+    "forcedDifferentiators": {
+      "helm_style":       ["corinthian", "attic", "boeotian", "pilos", "thracian-phrygian"],
+      "helm_crest_color": ["crimson", "forest-green", "gold", "ivory", "deep-blue", "black-dyed"],
+      "shield_blazon":    ["lambda", "owl-of-athena", "gorgoneion", "starburst", "club-of-herakles", "thunderbolt", "pegasus"]
+    },
+    "minDifferentiatorsToDiffer": 2
+  }
+}

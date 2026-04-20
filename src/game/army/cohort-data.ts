@@ -21,6 +21,7 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     stats: { atk: 140, def: 40, hp: 1000, agi: 40 },
     aurumCost: 40,
     description: 'Young front-line spearmen. The first rank to meet the enemy.',
+    movementProfile: 'vanguard-march',
   },
   {
     id: 'principes',
@@ -29,6 +30,7 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     stats: { atk: 170, def: 55, hp: 1150, agi: 45 },
     aurumCost: 80,
     description: 'Veteran heavy infantry. The elite core of the legion.',
+    movementProfile: 'vanguard-march',
   },
   {
     id: 'triarii',
@@ -37,6 +39,7 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     stats: { atk: 130, def: 90, hp: 1300, agi: 25 },
     aurumCost: 100,
     description: 'The oldest and most experienced soldiers. Held in reserve until the line must hold.',
+    movementProfile: 'reserve-intercept',
   },
   {
     id: 'velites',
@@ -45,6 +48,7 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     stats: { atk: 130, def: 25, hp: 700, agi: 90 },
     aurumCost: 30,
     description: 'Light skirmishers. Fragile but fast — harass and withdraw.',
+    movementProfile: 'skirmisher',
   },
   {
     id: 'equites',
@@ -53,6 +57,7 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     stats: { atk: 160, def: 50, hp: 900, agi: 80 },
     aurumCost: 90,
     description: "Roman cavalry. Mobile flankers that strike the enemy's weak points.",
+    movementProfile: 'flanker',
   },
 ] as const;
 

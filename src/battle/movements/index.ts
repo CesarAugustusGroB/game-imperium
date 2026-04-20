@@ -10,7 +10,7 @@
  *   - Conditions: isLowHP, enemyAdjacent, inEnemyZone, inOwnZone, hasEngaged,
  *     isOutnumbered, hasMorale, hasAttackedThisTick, not/all/any/always
  *   - Profiles: VANGUARD_AI, RESERVE_AI, GUARD_AI, BERSERKER_AI,
- *     SKIRMISHER_AI, FLANKER_AI, plus ROLE_PROFILES / LIEUTENANT_PROFILES tables
+ *     SKIRMISHER_AI, FLANKER_AI, plus `MOVEMENT_PROFILES` dispatch registry
  *   - Helpers (re-exported for AI authors): pickWeakest, handlePinned,
  *     findInterceptHex, findClosestTo, findAdvanceTarget, moveForward
  */
