@@ -1,4 +1,5 @@
 import { useSignal } from '@preact/signals';
+import type { JSX } from 'preact';
 import { selectedCommander } from '../../../../game/core/game-state';
 import {
   equippedDoctrines, doctrineCollection,
@@ -24,6 +25,8 @@ const RESOURCE_GLYPH: Record<ResourceType, string> = {
 
 export function DoctrinaeTab() {
   const selectedId = useSignal<string | null>(null);
+  const draggedId = useSignal<string | null>(null);
+  const dragOverSlot = useSignal<number | null>(null);
   const commander = selectedCommander.value;
   const faction = commander?.faction ?? null;
   const slots = equippedDoctrines.value;
@@ -68,6 +71,39 @@ export function DoctrinaeTab() {
     if (selectedId.value === id) selectedId.value = null;
   }
 
+  // ── Drag-and-drop: collection → equipped slot ──
+  function handleDragStart(e: DragEvent, id: string) {
+    draggedId.value = id;
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', id);
+    }
+  }
+  function handleDragEnd() {
+    draggedId.value = null;
+    dragOverSlot.value = null;
+  }
+  function handleSlotDragOver(e: DragEvent, slotIndex: number) {
+    if (!draggedId.value) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    dragOverSlot.value = slotIndex;
+  }
+  function handleSlotDragLeave() {
+    dragOverSlot.value = null;
+  }
+  function handleSlotDrop(e: DragEvent, slotIndex: number) {
+    e.preventDefault();
+    dragOverSlot.value = null;
+    const id = draggedId.value ?? e.dataTransfer?.getData('text/plain') ?? null;
+    if (!id) return;
+    const d = collection.find((x) => x.id === id);
+    if (!d || !faction || !isDoctrineEquippable(d, faction)) return;
+    equipDoctrine(slotIndex, d);
+    playSfx('ui_equip');
+    draggedId.value = null;
+  }
+
   return (
     <>
       <Masthead title="Doctrinae" subtitle={subtitle} accent={accent} />
@@ -101,8 +137,12 @@ export function DoctrinaeTab() {
                   doctrine={d}
                   slotIndex={i}
                   selected={d?.id === current?.doctrine.id}
+                  dragOver={dragOverSlot.value === i}
                   accent={accent}
                   onSelect={() => d && handleSelect(d.id)}
+                  onDragOver={(e) => handleSlotDragOver(e, i)}
+                  onDragLeave={handleSlotDragLeave}
+                  onDrop={(e) => handleSlotDrop(e, i)}
                 />
               ))}
             </div>
@@ -137,10 +177,13 @@ export function DoctrinaeTab() {
                   canEquip={!!faction && isDoctrineEquippable(d, faction)}
                   hasEmptySlot={slots.some((s) => s === null)}
                   selected={d.id === current?.doctrine.id}
+                  dragging={draggedId.value === d.id}
                   accent={accent}
                   onSelect={() => handleSelect(d.id)}
                   onEquip={() => handleEquip(d)}
                   onSell={() => handleSell(d.id)}
+                  onDragStart={(e) => handleDragStart(e, d.id)}
+                  onDragEnd={handleDragEnd}
                 />
               ))}
             </div>
@@ -185,19 +228,43 @@ interface EquippedSlotCardProps {
   doctrine: Doctrine | null;
   slotIndex: number;
   selected: boolean;
+  dragOver: boolean;
   accent: string;
   onSelect: () => void;
+  onDragOver: (e: DragEvent) => void;
+  onDragLeave: () => void;
+  onDrop: (e: DragEvent) => void;
 }
 
-function EquippedSlotCard({ doctrine, selected, accent, onSelect }: EquippedSlotCardProps) {
+function EquippedSlotCard({
+  doctrine, selected, dragOver, accent, onSelect,
+  onDragOver, onDragLeave, onDrop,
+}: EquippedSlotCardProps) {
+  // Shared drop-target handlers — wrapping Preact's DragEvent so the
+  // inline handlers stay type-safe when the slot is empty or filled.
+  const dropHandlers = {
+    onDragOver: (e: JSX.TargetedDragEvent<HTMLDivElement>) => onDragOver(e as unknown as DragEvent),
+    onDragLeave,
+    onDrop: (e: JSX.TargetedDragEvent<HTMLDivElement>) => onDrop(e as unknown as DragEvent),
+  };
+
   if (!doctrine) {
     return (
-      <div style={{
-        aspectRatio: '3/2', position: 'relative',
-        background: 'rgba(20, 18, 32, 0.3)',
-        border: '1px dashed rgba(212, 168, 67, 0.15)',
-        borderRadius: 2, padding: '12px 14px',
-      }}>
+      <div
+        {...dropHandlers}
+        style={{
+          aspectRatio: '3/2', position: 'relative',
+          background: dragOver
+            ? 'rgba(80, 60, 20, 0.35)'
+            : 'rgba(20, 18, 32, 0.3)',
+          border: dragOver
+            ? `1px solid ${accent}`
+            : '1px dashed rgba(212, 168, 67, 0.15)',
+          borderRadius: 2, padding: '12px 14px',
+          boxShadow: dragOver ? `0 0 0 1px ${accent}, 0 0 16px ${accent}50` : 'none',
+          transition: 'all 140ms',
+        }}
+      >
         <div style={{
           position: 'absolute', inset: 0,
           display: 'flex', flexDirection: 'column',
@@ -223,13 +290,17 @@ function EquippedSlotCard({ doctrine, selected, accent, onSelect }: EquippedSlot
   return (
     <div
       onClick={onSelect}
+      {...dropHandlers}
       style={{
         aspectRatio: '3/2', position: 'relative',
         background: `linear-gradient(135deg, ${color}22 0%, rgba(20, 18, 32, 0.9) 100%)`,
-        border: `1px solid ${selected ? accent : `${color}66`}`,
+        border: `1px solid ${dragOver ? accent : selected ? accent : `${color}66`}`,
         borderRadius: 2, padding: '12px 14px',
         cursor: 'pointer',
-        boxShadow: selected ? `0 0 0 1px ${accent}, 0 0 16px ${accent}50` : 'none',
+        boxShadow:
+          dragOver ? `0 0 0 2px ${accent}, 0 0 20px ${accent}60` :
+          selected ? `0 0 0 1px ${accent}, 0 0 16px ${accent}50` :
+          'none',
         transition: 'all 200ms',
       }}
     >
@@ -278,15 +349,18 @@ interface CollectionRowProps {
   canEquip: boolean;
   hasEmptySlot: boolean;
   selected: boolean;
+  dragging: boolean;
   accent: string;
   onSelect: () => void;
   onEquip: () => void;
   onSell: () => void;
+  onDragStart: (e: DragEvent) => void;
+  onDragEnd: () => void;
 }
 
 function CollectionRow({
-  doctrine, canEquip, hasEmptySlot, selected,
-  accent, onSelect, onEquip, onSell,
+  doctrine, canEquip, hasEmptySlot, selected, dragging,
+  accent, onSelect, onEquip, onSell, onDragStart, onDragEnd,
 }: CollectionRowProps) {
   const color = FACTION_COLORS[doctrine.color];
   const desc = doctrine.levels[doctrine.currentLevel - 1]?.description ?? '';
@@ -296,6 +370,12 @@ function CollectionRow({
   return (
     <div
       onClick={onSelect}
+      draggable={canEquip}
+      onDragStart={canEquip
+        ? ((e: JSX.TargetedDragEvent<HTMLDivElement>) => onDragStart(e as unknown as DragEvent))
+        : undefined}
+      onDragEnd={canEquip ? onDragEnd : undefined}
+      title={canEquip ? 'Drag onto a slot to equip, or click to inspect' : undefined}
       style={{
         padding: '10px 12px',
         background: selected
@@ -305,7 +385,9 @@ function CollectionRow({
         borderLeft: `3px solid ${color}`,
         borderRadius: 2,
         display: 'flex', alignItems: 'center', gap: 10,
-        cursor: 'pointer',
+        cursor: canEquip ? 'grab' : 'pointer',
+        opacity: dragging ? 0.4 : 1,
+        transform: dragging ? 'scale(0.97)' : 'none',
         transition: 'all 140ms',
       }}
     >
