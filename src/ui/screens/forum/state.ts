@@ -19,9 +19,6 @@ export function setForumTab(tab: ForumTab): void {
   activeForumTab.value = tab;
 }
 
-/** Sub-tab inside the Exercitus tab (Roster + Legate). */
-export type ExercitusSubTab = 'roster' | 'legate';
-export const activeExercitusSubTab = signal<ExercitusSubTab>('roster');
 
 /**
  * Derive a Roman-ish calendar label from the current turn.

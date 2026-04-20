@@ -2,7 +2,7 @@ import { signal } from '@preact/signals';
 import { selectedCommander } from '../game/core/game-state';
 import { playSfx } from './sound/sfx';
 import { switchTrackForScreen } from './sound/music';
-import { activeForumTab, activeExercitusSubTab } from './screens/forum/state';
+import { activeForumTab } from './screens/forum/state';
 import type { ForumTab } from './screens/forum/state';
 
 export type ScreenName =
@@ -45,13 +45,6 @@ function resolveScreen(screen: ScreenName): ScreenName {
   const tab = LEGACY_TAB_MAP[screen];
   if (tab) {
     activeForumTab.value = tab;
-    // Legate hiring was its own screen pre-S22; preserve that intent by
-    // landing the user on the Legate sub-tab rather than the default Roster.
-    if (screen === 'legate-hiring') {
-      activeExercitusSubTab.value = 'legate';
-    } else if (screen === 'army-recruitment') {
-      activeExercitusSubTab.value = 'roster';
-    }
     return 'forum';
   }
   return screen;
