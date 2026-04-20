@@ -6,6 +6,27 @@ export type UnitRole = 'vanguard' | 'reserve' | 'guard';
 export type LieutenantOrder = 'auto' | 'attack' | 'defend' | 'skirmish' | 'mobile';
 export type VictoryMode = 'morale' | 'annihilation' | 'capture';
 
+/**
+ * Movement AI profile key — picks a `MovementFn` from `MOVEMENT_PROFILES`
+ * in `src/battle/movements/profiles.ts`.
+ *
+ * Cohorts typically declare one of the non-`lieutenant:*` keys. The
+ * `lieutenant:*` entries are produced by `tickAI` when the player has a
+ * non-`auto` lieutenant order active — they override the cohort default
+ * for the duration of that order.
+ */
+export type MovementProfileId =
+  | 'vanguard-march'
+  | 'reserve-intercept'
+  | 'guard-stand'
+  | 'berserker'
+  | 'skirmisher'
+  | 'flanker'
+  | 'lieutenant:attack'
+  | 'lieutenant:defend'
+  | 'lieutenant:skirmish'
+  | 'lieutenant:mobile';
+
 export interface UnitStats {
   atk: number;
   def: number;
@@ -42,6 +63,14 @@ export interface BattleUnit {
   hasRevived: boolean;
   // Greedy AI: flipped on first combat (attack given or received)
   hasEngaged: boolean;
+  // Optional per-unit sprite override. Keys a sprite registered on SpriteManager
+  // under its soldier id (e.g. "spartan", "samurai"). When unset, the renderer
+  // falls back to the `${faction}:${role}` sprite key.
+  spriteId?: string;
+  // Movement AI profile key — resolved against `MOVEMENT_PROFILES` each tick.
+  // Decoupled from `role` so two cohorts sharing a role (e.g. both vanguard)
+  // can still play differently (e.g. 'vanguard-march' vs 'skirmisher').
+  movementProfile: MovementProfileId;
 }
 
 export interface FloatingText {

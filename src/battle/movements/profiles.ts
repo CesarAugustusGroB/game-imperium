@@ -1,12 +1,19 @@
 /**
  * Named AI profiles — pre-composed MovementFn combinations ready to slot
- * into the role or lieutenant-order dispatch tables.
+ * into the unit-level `MOVEMENT_PROFILES` registry.
  *
  * Each profile is a single exported `MovementFn`. Swapping one line of a
  * profile changes battle behavior for every unit that uses it.
+ *
+ * The `MOVEMENT_PROFILES` record at the bottom is the single source of truth
+ * the dispatcher reads from; `BattleUnit.movementProfile` is a string key into
+ * it. Adding a new profile = one `MovementFn` export + one map entry + one
+ * entry on the `MovementProfileId` union in `battle-types.ts`.
  */
 
-import type { BattleFaction, UnitRole, LieutenantOrder } from '../battle-types';
+import type {
+  BattleFaction, MovementProfileId,
+} from '../battle-types';
 import type { BattleEngine } from '../core/BattleEngine';
 import type { MovementFn } from './resolver';
 import { depthOf } from '../battle-zones';
@@ -115,19 +122,25 @@ export const RESERVE_AI: MovementFn = (engine, unit, ctx) => {
   return null;
 };
 
-// ── Dispatch tables ──
+// ── Dispatch table ──
 
-/** Default AI per role — used by the auto/capture dispatcher in battle-ai. */
-export const ROLE_PROFILES: Record<UnitRole, MovementFn> = {
-  vanguard: VANGUARD_AI,
-  reserve:  RESERVE_AI,
-  guard:    GUARD_AI,
-};
-
-/** Lieutenant-order → AI mapping. 'auto' uses the role-based dispatch above. */
-export const LIEUTENANT_PROFILES: Record<Exclude<LieutenantOrder, 'auto'>, MovementFn> = {
-  attack:   VANGUARD_AI,
-  defend:   GUARD_AI,
-  skirmish: SKIRMISHER_AI,
-  mobile:   RESERVE_AI,
+/**
+ * The single registry `tickAI` reads from. Keys are `BattleUnit.movementProfile`
+ * ids (declared in `battle-types.ts`); values are the composed `MovementFn`s.
+ *
+ * `lieutenant:*` entries are produced by `tickAI` when the player has a
+ * non-`auto` order active — they route lieutenant orders through the same
+ * lookup instead of a parallel dispatch path.
+ */
+export const MOVEMENT_PROFILES: Record<MovementProfileId, MovementFn> = {
+  'vanguard-march':      greedy,
+  'reserve-intercept':   greedy,
+  'guard-stand':         greedy,
+  'berserker':           greedy,
+  'skirmisher':          greedy,
+  'flanker':             greedy,
+  'lieutenant:attack':   greedy,
+  'lieutenant:defend':   greedy,
+  'lieutenant:skirmish': greedy,
+  'lieutenant:mobile':   greedy,
 };

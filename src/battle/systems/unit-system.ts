@@ -9,12 +9,23 @@ import type { BattleWorld, Particle } from '../core/BattleWorld';
 import type { Hex } from '../hex';
 import { hexDistance, hexNeighbors } from '../hex';
 import type {
-  BattleFaction, BattleUnit, LieutenantOrder, UnitRole, UnitStats,
+  BattleFaction, BattleUnit, LieutenantOrder, MovementProfileId, UnitRole,
+  UnitStats,
 } from '../battle-types';
 import { ACTION_COOLDOWN, ACTION_JITTER, MOVE_RANGE, ROLE_STATS } from '../battle-config';
 import { findPath, isValidHex } from './grid-system';
 
 // ── Spawning ──
+
+/** Role → default movement profile. Used when a unit is spawned without
+ *  an explicit `movementProfile` (legacy reinforcement call-sites). */
+function defaultProfileForRole(role: UnitRole): MovementProfileId {
+  switch (role) {
+    case 'vanguard': return 'vanguard-march';
+    case 'reserve':  return 'reserve-intercept';
+    case 'guard':    return 'guard-stand';
+  }
+}
 
 /** Add a unit to the world and return it. Auto-increments `world.nextId`. */
 export function addUnit(
@@ -24,6 +35,8 @@ export function addUnit(
   name: string,
   role: UnitRole = 'vanguard',
   stats?: UnitStats,
+  spriteId?: string,
+  movementProfile?: MovementProfileId,
 ): BattleUnit {
   const id = world.nextId++;
   const unitStats = stats ?? ROLE_STATS[role];
@@ -39,6 +52,8 @@ export function addUnit(
     reviveThreshold: 0,
     hasRevived: false,
     hasEngaged: false,
+    spriteId,
+    movementProfile: movementProfile ?? defaultProfileForRole(role),
   };
   world.units.set(unit.id, unit);
   return unit;

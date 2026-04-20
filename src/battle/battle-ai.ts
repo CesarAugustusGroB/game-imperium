@@ -1,19 +1,22 @@
 /**
  * Battle AI dispatcher.
  *
- * Thin layer that groups units by role (or by lieutenant order for the player
- * faction) and runs each group through its matching `MovementFn` profile.
- * All actual movement decisions live in `./movements/profiles.ts`.
+ * Thin layer that groups units by their `movementProfile` id and runs each
+ * bucket through the matching `MovementFn` from `MOVEMENT_PROFILES`. When the
+ * player has a non-`auto` lieutenant order active, every blue unit's bucket
+ * is overridden to the corresponding `lieutenant:*` profile for that tick —
+ * the order wins over the cohort default, then falls back to it when the
+ * player returns to `auto`.
  *
- * Adding a new role behavior or lieutenant order = add one entry to the
- * profile tables; no edits here.
+ * Adding a new movement profile = one entry in `MOVEMENT_PROFILES` + one entry
+ * on the `MovementProfileId` union; no edits here.
  */
 
 import type { BattleEngine } from './core/BattleEngine';
-import type { BattleFaction, BattleUnit, UnitRole } from './battle-types';
+import type { BattleFaction, BattleUnit, MovementProfileId } from './battle-types';
 import {
-  resolveMovement, ROLE_PROFILES, LIEUTENANT_PROFILES,
-  type MoveContext, type MovementFn,
+  resolveMovement, MOVEMENT_PROFILES,
+  type MoveContext,
 } from './movements';
 
 export function tickAI(engine: BattleEngine, faction: BattleFaction): void {
@@ -32,21 +35,24 @@ export function tickAI(engine: BattleEngine, faction: BattleFaction): void {
     rows: engine.config.rows,
   };
 
-  // Player with a non-auto lieutenant order → every unit follows the order
-  if (faction === 'blue' && engine.lieutenantOrder !== 'auto') {
-    const profile = LIEUTENANT_PROFILES[engine.lieutenantOrder];
-    resolveMovement(engine, units, profile, ctx);
-    return;
+  // Blue-only: a non-'auto' lieutenant order maps to a 'lieutenant:*' profile
+  // id that overrides the unit's cohort default for this tick.
+  const orderOverride: MovementProfileId | null =
+    faction === 'blue' && engine.lieutenantOrder !== 'auto'
+      ? (`lieutenant:${engine.lieutenantOrder}` as MovementProfileId)
+      : null;
+
+  // Bucket by effective profile id so stateful profiles (e.g. RESERVE_AI's
+  // pruneBusy pass) see their whole group once per tick.
+  const buckets = new Map<MovementProfileId, BattleUnit[]>();
+  for (const u of units) {
+    const id = orderOverride ?? u.movementProfile;
+    const bucket = buckets.get(id);
+    if (bucket) bucket.push(u);
+    else buckets.set(id, [u]);
   }
 
-  // Otherwise group by role and dispatch through ROLE_PROFILES
-  const buckets: Record<UnitRole, BattleUnit[]> = { vanguard: [], reserve: [], guard: [] };
-  for (const u of units) buckets[u.role].push(u);
-
-  for (const role of Object.keys(buckets) as UnitRole[]) {
-    const group = buckets[role];
-    if (group.length === 0) continue;
-    const profile: MovementFn = ROLE_PROFILES[role];
-    resolveMovement(engine, group, profile, ctx);
+  for (const [id, group] of buckets) {
+    resolveMovement(engine, group, MOVEMENT_PROFILES[id], ctx);
   }
 }

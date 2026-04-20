@@ -188,7 +188,10 @@ function tryAdd(
   const hex = offsetToAxialFlatTop(col, row);
   if (!state.isValidHex(hex)) return false;
   if (state.getUnitAt(hex)) return false;
-  state.addUnit(faction, hex, cohort.name, cohort.role, { ...cohort.stats });
+  state.addUnit(
+    faction, hex, cohort.name, cohort.role,
+    { ...cohort.stats }, cohort.spriteId, cohort.movementProfile,
+  );
   return true;
 }
 
