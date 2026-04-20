@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { navigateTo } from '../screens';
 import { Button } from '../components/Button';
-import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
+import { Masthead } from './forum/Masthead';
 import { FACTION_COLORS } from '../../game/core/commander';
 import { getCurrentTier, getCurrentPassive, getXpToNextTier, XP_TIER_2, XP_TIER_3 } from '../../game/council/advisor';
 import type { Advisor, AdvisorPassive } from '../../game/council/advisor';
@@ -95,7 +95,13 @@ function xpProgress(advisor: Advisor): number {
   return Math.min(1, (advisor.xp - start) / (end - start));
 }
 
-export function CouncilScreen() {
+/**
+ * Council management body — mounted as the Consilium tab inside the
+ * Forum shell. Legacy route `#council` redirects here via resolveScreen
+ * in src/ui/screens.ts. `CouncilScreen` alias kept for any direct
+ * importer.
+ */
+export function ConsiliumTab() {
   const slots = councilSlots.value;
   const pool = advisorPool.value;
   const seatedCount = slots.filter(Boolean).length;
@@ -119,25 +125,17 @@ export function CouncilScreen() {
     navigateTo('node-map');
   }
 
-  return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      minHeight: '100vh', fontFamily: 'var(--font-family)',
-      background: 'var(--color-bg-primary)',
-      paddingTop: '48px', paddingBottom: '32px',
-    }}>
-      {/* Dark content panel */}
-      <OrnateFrame width="min(1100px, 94vw)">
-        <OrnateHeader
-          eyebrow="The Council"
-          title="ADVISORS"
-          rightSlot={<>
-            <span class="ornate-stat-chip" title="Seated">SEATED <strong>{seatedCount}/3</strong></span>
-            <span class="ornate-stat-chip" title="Available">POOL <strong>{pool.length}</strong></span>
-          </>}
-          onClose={() => navigateTo('hub')}
-        />
+  const subtitle = `Seated ${seatedCount}/3 · Pool ${pool.length}`;
 
+  return (
+    <>
+      <Masthead title="Consilium" subtitle={subtitle} />
+
+      <div style={{
+        flex: 1, minHeight: 0, overflow: 'auto',
+        padding: '20px 32px 32px',
+        fontFamily: 'var(--font-family)',
+      }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
         {/* ── 3 Advisor Slots ── */}
@@ -427,16 +425,8 @@ export function CouncilScreen() {
         >
           Embark
         </button>
-
-        {/* Back button */}
-        <Button
-          variant="primary"
-          onClick={() => { equipTargetSlot.value = null; navigateTo('hub'); }}
-        >
-          Back to Hub
-        </Button>
         </div>
-      </OrnateFrame>
+      </div>
 
       {/* ── Advisor Picker Modal ── */}
       {targetSlot !== null && (
@@ -547,6 +537,9 @@ export function CouncilScreen() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
+
+/** Alias kept for any direct importers of the old name. */
+export const CouncilScreen = ConsiliumTab;
