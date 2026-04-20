@@ -4,6 +4,7 @@ import { selectedCommander } from '../../../../game/core/game-state';
 import {
   equippedDoctrines, doctrineCollection,
   equipDoctrine, unequipDoctrine, upgradeDoctrine, sellDoctrine,
+  swapEquippedDoctrines,
 } from '../../../../game/items/doctrine-store';
 import {
   isDoctrineEquippable, getDoctrineSellPrice, getUpgradeCost,
@@ -25,7 +26,8 @@ const RESOURCE_GLYPH: Record<ResourceType, string> = {
 
 export function DoctrinaeTab() {
   const selectedId = useSignal<string | null>(null);
-  const draggedId = useSignal<string | null>(null);
+  const draggedId = useSignal<string | null>(null);          // dragging FROM collection
+  const draggedFromSlot = useSignal<number | null>(null);    // dragging FROM equipped slot
   const dragOverSlot = useSignal<number | null>(null);
   const commander = selectedCommander.value;
   const faction = commander?.faction ?? null;
@@ -71,20 +73,36 @@ export function DoctrinaeTab() {
     if (selectedId.value === id) selectedId.value = null;
   }
 
-  // ── Drag-and-drop: collection → equipped slot ──
-  function handleDragStart(e: DragEvent, id: string) {
+  // ── Drag-and-drop ──
+  // Two paths: (1) collection row → equipped slot (equip, with swap if
+  // target filled); (2) equipped slot → equipped slot (reorder, pure swap
+  // without touching the collection).
+
+  function handleCollectionDragStart(e: DragEvent, id: string) {
     draggedId.value = id;
+    draggedFromSlot.value = null;
     if (e.dataTransfer) {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', id);
     }
   }
+  function handleSlotDragStart(e: DragEvent, slotIndex: number) {
+    draggedFromSlot.value = slotIndex;
+    draggedId.value = null;
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', `slot:${slotIndex}`);
+    }
+  }
   function handleDragEnd() {
     draggedId.value = null;
+    draggedFromSlot.value = null;
     dragOverSlot.value = null;
   }
   function handleSlotDragOver(e: DragEvent, slotIndex: number) {
-    if (!draggedId.value) return;
+    const dragging = draggedId.value !== null || draggedFromSlot.value !== null;
+    if (!dragging) return;
+    if (draggedFromSlot.value === slotIndex) return; // can't drop onto self
     e.preventDefault();
     if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
     dragOverSlot.value = slotIndex;
@@ -95,6 +113,18 @@ export function DoctrinaeTab() {
   function handleSlotDrop(e: DragEvent, slotIndex: number) {
     e.preventDefault();
     dragOverSlot.value = null;
+
+    // Slot-to-slot swap
+    if (draggedFromSlot.value !== null) {
+      const from = draggedFromSlot.value;
+      draggedFromSlot.value = null;
+      if (from === slotIndex) return;
+      swapEquippedDoctrines(from, slotIndex);
+      playSfx('ui_equip');
+      return;
+    }
+
+    // Collection-to-slot equip
     const id = draggedId.value ?? e.dataTransfer?.getData('text/plain') ?? null;
     if (!id) return;
     const d = collection.find((x) => x.id === id);
@@ -138,8 +168,11 @@ export function DoctrinaeTab() {
                   slotIndex={i}
                   selected={d?.id === current?.doctrine.id}
                   dragOver={dragOverSlot.value === i}
+                  dragging={draggedFromSlot.value === i}
                   accent={accent}
                   onSelect={() => d && handleSelect(d.id)}
+                  onDragStart={(e) => handleSlotDragStart(e, i)}
+                  onDragEnd={handleDragEnd}
                   onDragOver={(e) => handleSlotDragOver(e, i)}
                   onDragLeave={handleSlotDragLeave}
                   onDrop={(e) => handleSlotDrop(e, i)}
@@ -182,7 +215,7 @@ export function DoctrinaeTab() {
                   onSelect={() => handleSelect(d.id)}
                   onEquip={() => handleEquip(d)}
                   onSell={() => handleSell(d.id)}
-                  onDragStart={(e) => handleDragStart(e, d.id)}
+                  onDragStart={(e) => handleCollectionDragStart(e, d.id)}
                   onDragEnd={handleDragEnd}
                 />
               ))}
@@ -229,16 +262,19 @@ interface EquippedSlotCardProps {
   slotIndex: number;
   selected: boolean;
   dragOver: boolean;
+  dragging: boolean;
   accent: string;
   onSelect: () => void;
+  onDragStart: (e: DragEvent) => void;
+  onDragEnd: () => void;
   onDragOver: (e: DragEvent) => void;
   onDragLeave: () => void;
   onDrop: (e: DragEvent) => void;
 }
 
 function EquippedSlotCard({
-  doctrine, selected, dragOver, accent, onSelect,
-  onDragOver, onDragLeave, onDrop,
+  doctrine, selected, dragOver, dragging, accent, onSelect,
+  onDragStart, onDragEnd, onDragOver, onDragLeave, onDrop,
 }: EquippedSlotCardProps) {
   // Shared drop-target handlers — wrapping Preact's DragEvent so the
   // inline handlers stay type-safe when the slot is empty or filled.
@@ -290,13 +326,19 @@ function EquippedSlotCard({
   return (
     <div
       onClick={onSelect}
+      draggable={true}
+      onDragStart={(e: JSX.TargetedDragEvent<HTMLDivElement>) => onDragStart(e as unknown as DragEvent)}
+      onDragEnd={onDragEnd}
       {...dropHandlers}
+      title="Drag to reorder or swap with another slot"
       style={{
         aspectRatio: '3/2', position: 'relative',
         background: `linear-gradient(135deg, ${color}22 0%, rgba(20, 18, 32, 0.9) 100%)`,
         border: `1px solid ${dragOver ? accent : selected ? accent : `${color}66`}`,
         borderRadius: 2, padding: '12px 14px',
-        cursor: 'pointer',
+        cursor: 'grab',
+        opacity: dragging ? 0.4 : 1,
+        transform: dragging ? 'scale(0.97)' : 'none',
         boxShadow:
           dragOver ? `0 0 0 2px ${accent}, 0 0 20px ${accent}60` :
           selected ? `0 0 0 1px ${accent}, 0 0 16px ${accent}50` :

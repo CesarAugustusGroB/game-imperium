@@ -53,6 +53,21 @@ export function equipDoctrine(slotIndex: number, doctrine: Doctrine): boolean {
 }
 
 /**
+ * Swap the contents of two equipped slots (including empties).
+ * No-op if either index is out of range or both indices are the same.
+ * Does NOT touch the collection — the doctrines stay equipped, just in
+ * different positions. Useful for UI reordering via drag-and-drop.
+ */
+export function swapEquippedDoctrines(a: number, b: number): void {
+  if (a < 0 || a > 3 || b < 0 || b > 3 || a === b) return;
+  const slots = equippedDoctrines.value.slice() as (Doctrine | null)[];
+  const tmp = slots[a];
+  slots[a] = slots[b];
+  slots[b] = tmp;
+  equippedDoctrines.value = slots;
+}
+
+/**
  * Unequip the doctrine in the given slot and return it to the collection.
  * No-op if the slot is empty or the index is out of range.
  */
