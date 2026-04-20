@@ -84,8 +84,16 @@ interface AdvisorSlotProps {
 }
 
 function AdvisorSlot({ advisor, label, accent }: AdvisorSlotProps) {
-  const color = advisor ? FACTION_COLORS[advisor.color] : 'rgba(212, 168, 67, 0.15)';
+  const color = advisor ? FACTION_COLORS[advisor.color] : null;
   const tierRoman = advisor ? (['I', 'II', 'III'][advisor.currentTier - 1] ?? '·') : null;
+  const initial = label.charAt(0).toUpperCase();
+
+  // Empty-slot placeholder: dark porphyry-red card with a large Cormorant
+  // initial and the role name at the bottom. Matches the design reference.
+  const emptyBg = `
+    radial-gradient(ellipse at center, rgba(122, 36, 50, 0.32) 0%, rgba(13, 11, 20, 0.98) 75%),
+    linear-gradient(180deg, rgba(40, 18, 24, 0.6) 0%, rgba(13, 11, 20, 1) 100%)
+  `;
 
   return (
     <div
@@ -94,8 +102,12 @@ function AdvisorSlot({ advisor, label, accent }: AdvisorSlotProps) {
         flex: 1, aspectRatio: '3/4',
         position: 'relative',
         cursor: 'pointer',
-        background: advisor ? 'rgba(30, 26, 45, 0.7)' : 'rgba(30, 26, 45, 0.35)',
-        border: advisor ? `1px solid ${color}` : `1px dashed rgba(212, 168, 67, 0.15)`,
+        background: advisor
+          ? 'rgba(30, 26, 45, 0.7)'
+          : emptyBg,
+        border: advisor
+          ? `1px solid ${color ?? 'rgba(212, 168, 67, 0.15)'}`
+          : '1px solid rgba(180, 60, 70, 0.35)',
         borderRadius: 2,
         overflow: 'hidden',
         transition: 'all 200ms',
@@ -105,9 +117,15 @@ function AdvisorSlot({ advisor, label, accent }: AdvisorSlotProps) {
         <div style={{
           position: 'absolute', inset: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--imp-text-lo)', fontSize: 22,
+          fontFamily: 'var(--imp-font-display)',
+          fontSize: 'clamp(40px, 8vw, 84px)',
+          fontWeight: 500,
+          color: 'rgba(178, 58, 58, 0.85)',
+          lineHeight: 1,
+          textShadow: '0 2px 10px rgba(0, 0, 0, 0.6)',
+          paddingBottom: 24, // pull the glyph slightly above the bottom label
         }}>
-          ⚔
+          {initial}
         </div>
       )}
       {advisor && tierRoman && (
@@ -126,11 +144,11 @@ function AdvisorSlot({ advisor, label, accent }: AdvisorSlotProps) {
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
         background: 'linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.85) 60%)',
-        padding: '16px 6px 4px',
+        padding: '16px 6px 6px',
         fontFamily: 'var(--imp-font-display)',
         fontSize: 9, fontWeight: 600,
-        letterSpacing: 0.5,
-        color: 'var(--imp-text-hi)',
+        letterSpacing: 2,
+        color: advisor ? 'var(--imp-text-hi)' : accent,
         textAlign: 'center', textTransform: 'uppercase',
       }}>
         {advisor?.name ?? label}
