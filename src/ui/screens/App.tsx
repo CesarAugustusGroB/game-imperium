@@ -7,7 +7,6 @@ import { TitleScreen } from './TitleScreen';
 import { CommanderSelectScreen } from './CommanderSelectScreen';
 import { NodeMapScreen } from './NodeMapScreen';
 import { PostBattleScreen } from './PostBattleScreen';
-import { DoctrineScreen } from './DoctrineScreen';
 import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
 import { BattleScreenV2 } from './BattleScreenV2';
@@ -35,7 +34,6 @@ const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> =
   // bodies pending migration into Forum tabs (S22-05/06/07). Once those
   // land, these entries can be dropped.
   'hub': ForumShell,
-  'doctrine': DoctrineScreen,
   'node-map': NodeMapScreen,
   'battleV2': BattleScreenV2,
   'post-battle': PostBattleScreen,
