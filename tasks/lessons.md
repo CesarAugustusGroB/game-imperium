@@ -4,6 +4,12 @@ Rules for Claude to avoid repeating past mistakes.
 
 ---
 
+## "Keep existing X" means only X, not everything
+**Date**: 2026-04-20
+**Mistake**: During S22 (Imperium Forum port), the user said "Provinciae should keep our current UI, just integrate as a tab." I generalized that to mean every lift-and-shift was acceptable, and applied the same OrnateFrame-strip pattern to Consilium (S22-05) and Exercitus (S22-06) instead of porting them to the new Forum design. The user had to stop me: "THE ONLY ONE THAT HAVE TO KEEP ITS WAY WAS THE PROVINCIAE!!"
+**Rule**: When the user makes a specific exception (e.g. "keep Provinciae as-is"), treat it as scoped to that item only. The default for everything else in that sprint remains the sprint's stated goal (here: port to the new design). Don't extrapolate exceptions across siblings without asking.
+**How to apply**: Before generalizing a pattern across multiple tasks in a sprint, re-check the sprint's goal statement. If the pattern being applied conflicts with the goal, stop and confirm per task.
+
 ## Spawned-agent worktree base is not the parent branch
 **Date**: 2026-04-20
 **Mistake**: Spawned an implementation agent with `isolation: "worktree"` off `feat/ui-overhaul`, but the harness created the worktree off `main` (a much older commit line that didn't yet track `src/ui/design-tokens.css`). The agent, finding no tokens file, created one "fresh" — effectively destroying 70 lines of existing tokens when the result was copied back.
