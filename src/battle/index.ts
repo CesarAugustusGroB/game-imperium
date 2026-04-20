@@ -225,10 +225,10 @@ export class BattleMode {
       id: 'athenian-epilektos',
       name: 'Athenian Epilektos',
       role: 'guard',
-      stats: { atk: 145, def: 85, hp: 1200, agi: 30 },
+      stats: { atk: 145, def: 85, hp: 1400, agi: 30 },
       aurumCost: 0,
       description: 'Select corps of Athens. The heavy rear rank who anchor the phalanx wall.',
-      spriteId: 'athens_hoplite_uncommon',
+      spriteId: 'athen_hoplite_elite_super_rare',
       movementProfile: 'guard-stand',
     };
 
