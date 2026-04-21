@@ -4,6 +4,7 @@ import { getLegateTraitById } from '../../game/army/legate-traits';
 import type { ArmyData } from '../../types/index';
 import type { Legate } from '../../game/army/legate';
 import type { UnitRole } from '../../battle/battle-types';
+import type { MoraleResult, MoraleTier } from '../../game/army/morale';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('army-hud-styles')) {
@@ -30,13 +31,25 @@ const ROLE_COLORS: Record<UnitRole, string> = {
   guard: '#d4a843',
 };
 
+// S24-05: tier → badge color. Ash/red for broken, amber for shaken, neutral
+// bronze for steady, gold ramp for resolute/inspired.
+const MORALE_TIER_COLOR: Record<MoraleTier, string> = {
+  broken:   'var(--color-danger)',
+  shaken:   '#d48b3a',
+  steady:   'var(--color-text-secondary)',
+  resolute: 'var(--color-gold-secondary)',
+  inspired: 'var(--color-gold-primary)',
+};
+
 interface ArmyDetailHUDProps {
   army: ArmyData;
   legate: Legate | null;
+  /** S24-05: pre-battle morale. Omit (or pass null) to hide the morale section. */
+  morale?: MoraleResult | null;
   onClose: () => void;
 }
 
-export function ArmyDetailHUD({ army, legate, onClose }: ArmyDetailHUDProps) {
+export function ArmyDetailHUD({ army, legate, morale, onClose }: ArmyDetailHUDProps) {
   // Group cohorts by id
   const cohortGroups = new Map<string, { name: string; role: UnitRole; count: number; hpEach: number }>();
   for (const c of army.cohorts) {
@@ -111,6 +124,60 @@ export function ArmyDetailHUD({ army, legate, onClose }: ArmyDetailHUDProps) {
             </div>
           )}
         </div>
+
+        {/* ── Morale (S24-05) — only rendered when a spoke context provides pre-battle morale ── */}
+        {morale && (
+          <div class="army-hud-section">
+            <div style={{
+              fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-text-muted)',
+              letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px',
+            }}>
+              Morale
+            </div>
+            <div style={{
+              display: 'flex', alignItems: 'baseline', gap: '12px',
+              marginBottom: morale.modifiers.length > 0 ? '10px' : 0,
+            }}>
+              <span style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '32px', fontWeight: 700, lineHeight: 1,
+                color: MORALE_TIER_COLOR[morale.tier],
+              }}>
+                {morale.total}
+              </span>
+              <span style={{
+                fontSize: 'var(--font-size-xs)', fontWeight: 700,
+                letterSpacing: '2px', textTransform: 'uppercase',
+                color: MORALE_TIER_COLOR[morale.tier],
+              }}>
+                {morale.tier}
+              </span>
+            </div>
+            {morale.modifiers.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {[...morale.modifiers]
+                  .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+                  .map((m, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      fontSize: 'var(--font-size-xs)',
+                    }}>
+                      <span style={{
+                        fontFamily: 'var(--font-family)',
+                        minWidth: '32px', textAlign: 'right', fontWeight: 700,
+                        color: m.delta >= 0 ? 'var(--color-success)' : 'var(--color-danger)',
+                      }}>
+                        {m.delta >= 0 ? '+' : ''}{m.delta}
+                      </span>
+                      <span style={{ color: 'var(--color-text-secondary)' }}>
+                        {m.label}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Legate ── */}
         <div class="army-hud-section">

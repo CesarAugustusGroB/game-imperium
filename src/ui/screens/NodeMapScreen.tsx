@@ -23,6 +23,7 @@ import { getExtraEventChoices } from '../../game/items/doctrine-store';
 import { manipulateUsesLeft, consumeManipulateUse } from '../../game/progression/strategic-store';
 import { councilSlots, grantAdvisorXp, tierUpNotices } from '../../game/council/council-store';
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
+import { computeArmyMorale } from '../../game/army/morale';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('node-map-styles')) {
@@ -1156,6 +1157,7 @@ export function NodeMapScreen() {
         <ArmyDetailHUD
           army={spoke.boundArmy}
           legate={spoke.boundLegate ?? null}
+          morale={computeArmyMorale(spoke)}
           onClose={() => { showArmyHUDOnMap.value = false; }}
         />
       )}
