@@ -9,7 +9,7 @@ import { hexDistance, offsetToAxial, offsetToAxialFlatTop } from '../hex';
 import type { BattleFaction, BattleUnit, Projectile } from '../battle-types';
 import {
   CAPTURE_DURATION, DODGE_AGI_FACTOR, DODGE_MAX, DOUBLE_STRIKE_RATIO,
-  FLASH_DURATION, LUNGE_DURATION, MORALE_BREAK_THRESHOLD,
+  FLASH_DURATION, LUNGE_DURATION, COHESION_BREAK_THRESHOLD,
   SCREEN_SHAKE_DURATION, SHAKE_DURATION, HIT_PARTICLE_COUNT, DEATH_PARTICLE_COUNT,
 } from '../battle-config';
 import { playSfx } from '../../ui/sound/sfx';
@@ -217,7 +217,7 @@ export function checkVictory(world: BattleWorld): void {
   switch (world.config.victoryMode) {
     case 'capture':      checkCapture(world); break;
     case 'annihilation': checkAnnihilation(world); break;
-    case 'morale':       checkMorale(world); break;
+    case 'cohesion':     checkCohesion(world); break;
   }
 }
 
@@ -265,11 +265,11 @@ function checkCapture(world: BattleWorld): void {
   }
 }
 
-function checkMorale(world: BattleWorld): void {
+function checkCohesion(world: BattleWorld): void {
   for (const faction of ['blue', 'red'] as BattleFaction[]) {
     const current = getBattleFactionStrength(world, faction);
     const starting = world.startingStrength.get(faction) ?? 1;
-    if (current <= 0 || current / starting < MORALE_BREAK_THRESHOLD) {
+    if (current <= 0 || current / starting < COHESION_BREAK_THRESHOLD) {
       world.phase = 'victory';
       world.winner = faction === 'blue' ? 'red' : 'blue';
       return;

@@ -4,7 +4,7 @@ export type BattleFaction = 'blue' | 'red';
 export type BattlePhase = 'fighting' | 'victory' | 'draw';
 export type UnitRole = 'vanguard' | 'reserve' | 'guard';
 export type LieutenantOrder = 'auto' | 'attack' | 'defend' | 'skirmish' | 'mobile';
-export type VictoryMode = 'morale' | 'annihilation' | 'capture';
+export type VictoryMode = 'cohesion' | 'annihilation' | 'capture';
 
 /**
  * Movement AI profile key — picks a `MovementFn` from `MOVEMENT_PROFILES`
