@@ -699,26 +699,7 @@ export function NodeMapScreen() {
             .join('\n'))
     : undefined;
 
-  // FT-SUP: supply status for the chip + army bar. Color codes by sufficiency:
-  // red when already taking attrition, amber when the remaining route will
-  // exhaust supplies, default otherwise.
   const supplies = spoke.boundArmy?.supplies ?? 0;
-  const supplyStreak = spoke.boundArmy?.supplyDeficitStreak ?? 0;
-  const cohortCount = spoke.boundArmy?.cohorts.length ?? 0;
-  const unresolvedNodes = spoke.nodes.filter((n) => !n.resolved).length;
-  const suppliesNeeded = cohortCount * unresolvedNodes;
-  const supplyColor = supplyStreak > 0
-    ? 'var(--color-danger)'
-    : (cohortCount > 0 && supplies < suppliesNeeded)
-      ? '#d48b3a'
-      : 'var(--color-text-secondary)';
-  const supplyTooltip = spoke.boundArmy
-    ? (supplyStreak > 0
-        ? `Supplies: ${supplies} — deficit streak ${supplyStreak}. Cohorts losing HP and morale each traversal.`
-        : cohortCount > 0 && supplies < suppliesNeeded
-          ? `Supplies: ${supplies}. Need ${suppliesNeeded} to finish the route (${cohortCount} × ${unresolvedNodes} nodes). ${suppliesNeeded - supplies} short.`
-          : `Supplies: ${supplies}. Route fully provisioned (${cohortCount} × ${unresolvedNodes} nodes = ${suppliesNeeded}).`)
-    : undefined;
 
   return (
     <div style={{
@@ -744,15 +725,8 @@ export function NodeMapScreen() {
                 </span>
               )}
               {spoke.boundArmy && (
-                <span
-                  class="ornate-stat-chip"
-                  title={supplyTooltip}
-                  style={{ color: supplyColor }}
-                >
+                <span class="ornate-stat-chip" title="Supplies">
                   📦 <strong>{supplies}</strong>
-                  {cohortCount > 0 && unresolvedNodes > 0 && (
-                    <span style={{ opacity: 0.6, marginLeft: 4 }}>/ {suppliesNeeded}</span>
-                  )}
                 </span>
               )}
               <span class="ornate-stat-chip" title="Posture" style={{ color: spoke.posture === 'attacking' ? '#e07050' : '#60a8d0' }}>
@@ -854,10 +828,7 @@ export function NodeMapScreen() {
           >
             ⚔ {spoke.boundArmy.cohorts.length} cohort{spoke.boundArmy.cohorts.length !== 1 ? 's' : ''}
             {spoke.boundLegate ? ` · ${spoke.boundLegate.name.split(' ')[0]}` : ''}
-            {' · '}
-            <span style={{ color: supplyColor }}>
-              📦 {supplies}
-            </span>
+            {' · '}📦 {supplies}
             {morale && (
               <>
                 {' · '}
