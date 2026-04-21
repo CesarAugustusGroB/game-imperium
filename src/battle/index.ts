@@ -232,6 +232,7 @@ export class BattleMode {
     const blueArmy: ArmyData = {
       id: -1, owner: 'quick-battle', name: 'Legio Romana',
       size: romanCohorts.length, cohorts: romanCohorts, legateId: null,
+      supplies: 0,
       provinceIndex: -1, targetProvinceIndex: null, progress: 0, path: [],
       inCombat: false, combatTarget: null, lastRoll: 0,
     };
@@ -277,6 +278,7 @@ export class BattleMode {
     const redArmy: ArmyData = {
       id: -1, owner: 'quick-battle', name: 'Polemos Hellenos',
       size: greekCohorts.length, cohorts: greekCohorts, legateId: null,
+      supplies: 0,
       provinceIndex: -1, targetProvinceIndex: null, progress: 0, path: [],
       inCombat: false, combatTarget: null, lastRoll: 0,
     };

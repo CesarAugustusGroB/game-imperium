@@ -8,6 +8,9 @@ import type { Posture } from '../council/advisor';
 import { collectProvinceIncome, type ProvinceIncomeResult } from '../province/province-store';
 import type { ArmyData } from '../../types/index';
 import type { Legate } from '../army/legate';
+import { consumeTraversal, type TraversalAttritionLog } from '../army/supplies';
+
+export type { TraversalAttritionLog } from '../army/supplies';
 
 // ── Node types (S2-01) ──
 
@@ -98,23 +101,40 @@ export function resetSpoke(): void {
 }
 
 /** Mark the current node as resolved and advance to the next one.
- *  Returns { spokeComplete, seasonTicked } — check seasonTicked for season boundary UI.
+ *  Returns { spokeComplete, seasonTicked, supplyLog } — check seasonTicked for
+ *  season boundary UI; supplyLog reports supply attrition on this traversal.
  *  Safe to call multiple times — resolved nodes are skipped. */
 export function advanceNode(): AdvanceNodeResult {
   const spoke = currentSpoke.value;
-  if (!spoke) return { spokeComplete: false, seasonTicked: null };
+  if (!spoke) return { spokeComplete: false, seasonTicked: null, supplyLog: null };
   const idx = currentNodeIndex.value;
   const node = spoke.nodes[idx];
-  if (!node) return { spokeComplete: true, seasonTicked: null };
+  if (!node) return { spokeComplete: true, seasonTicked: null, supplyLog: null };
 
   // Guard: already resolved — don't double-advance
-  if (node.resolved) return { spokeComplete: idx + 1 >= spoke.nodes.length, seasonTicked: null };
+  if (node.resolved) return { spokeComplete: idx + 1 >= spoke.nodes.length, seasonTicked: null, supplyLog: null };
+
+  // FT-SUP: consume supplies for this traversal BEFORE advancing. Attrition
+  // (HP damage + morale penalty) is applied when supplies run short. Cohorts
+  // reduced to 0 HP are removed from the roster here so the next battle
+  // spawns the shrunken army.
+  let supplyLog: TraversalAttritionLog | null = null;
+  let nextBoundArmy = spoke.boundArmy ?? null;
+  if (nextBoundArmy && nextBoundArmy.cohorts.length > 0) {
+    const result = consumeTraversal(nextBoundArmy);
+    nextBoundArmy = result.army;
+    supplyLog = result.log;
+  }
 
   // Create new node object to avoid in-place mutation
   const updatedNodes = spoke.nodes.map((n, i) =>
     i === idx ? { ...n, resolved: true } : n,
   );
-  currentSpoke.value = { ...spoke, nodes: updatedNodes };
+  currentSpoke.value = {
+    ...spoke,
+    nodes: updatedNodes,
+    boundArmy: nextBoundArmy,
+  };
   const next = idx + 1;
   currentNodeIndex.value = next;
 
@@ -135,7 +155,7 @@ export function advanceNode(): AdvanceNodeResult {
     }
   }
 
-  return { spokeComplete, seasonTicked };
+  return { spokeComplete, seasonTicked, supplyLog };
 }
 
 /** Mark the spoke as completed and reset. */
@@ -248,5 +268,8 @@ export function tickSeason(): SeasonTickResult | null {
 export interface AdvanceNodeResult {
   spokeComplete: boolean;
   seasonTicked: SeasonTickResult | null;
+  /** FT-SUP: supply attrition applied to the bound army on this traversal,
+   *  or null when there's no army (or no-op). UI can surface kills/damage. */
+  supplyLog: TraversalAttritionLog | null;
 }
 

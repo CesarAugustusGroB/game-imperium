@@ -29,8 +29,9 @@ export interface ArmyData {
   /**
    * Current effective size (troop count). On creation, initialized as the
    * sum of cohort HP via `computeArmySize`. Legacy strategic-map combat
-   * (src/game/map/army.ts) subtracts damage directly from this field;
-   * cohort-level HP tracking is deferred to a future sprint.
+   * subtracts damage directly from this field; the FT-SUP spoke attrition
+   * loop instead edits per-cohort `currentHp` and leaves `size` untouched
+   * between full resyncs (see `computeArmySize` in cohort.ts).
    */
   size: number;
   /**
@@ -44,6 +45,24 @@ export interface ArmyData {
    * in `src/game/army/legate-pool.ts` (S14-02).
    */
   legateId: string | null;
+  /**
+   * FT-SUP: current supply stockpile carried into a spoke. Bought pre-embark
+   * from the Forum's Exercitus tab with gold, decremented by `1 × cohortCount`
+   * per node traversal in `spoke.advanceNode`.
+   */
+  supplies: number;
+  /**
+   * FT-SUP: absolute morale penalty (>= 0) accumulated from consecutive
+   * deficit traversals. Undefined/0 means no penalty. Cleared the instant
+   * supplies go positive again on a traversal (instant morale recovery).
+   * Consumed by `supplyDeficitContributor` in `morale.ts`.
+   */
+  supplyMoralePenalty?: number;
+  /**
+   * FT-SUP: consecutive un-supplied traversals counter. Resets to 0 on any
+   * fully-supplied traversal. Used for UI scaling / future escalation.
+   */
+  supplyDeficitStreak?: number;
   provinceIndex: number;       // Current province (or origin during movement)
   targetProvinceIndex: number | null;  // Destination province during movement
   progress: number;            // 0-1 interpolation during movement

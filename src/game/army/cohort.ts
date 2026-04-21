@@ -51,6 +51,15 @@ export interface Cohort {
    * Keys must exist in `MOVEMENT_PROFILES` (see `src/battle/movements/profiles.ts`).
    */
   movementProfile?: MovementProfileId;
+  /**
+   * FT-SUP: carried-over current HP. Undefined means the cohort is at full
+   * health (`stats.hp`). Decremented by the spoke supply-attrition loop in
+   * `supplies.consumeTraversal`. Read by `battle/deployment.ts` when
+   * spawning BattleUnits so HP damage persists from strategic layer to
+   * tactical layer. `stats.hp` is NEVER decremented — it remains the max
+   * HP of the spawned BattleUnit so the health bar renders correctly.
+   */
+  currentHp?: number;
 }
 
 /**

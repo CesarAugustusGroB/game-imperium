@@ -125,6 +125,74 @@ export function ArmyDetailHUD({ army, legate, morale, onClose }: ArmyDetailHUDPr
           )}
         </div>
 
+        {/* ── Supplies — FT-SUP: always rendered; army.supplies is guaranteed a number by Agent A ── */}
+        <div class="army-hud-section">
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '8px',
+          }}>
+            <div style={{
+              fontSize: 'var(--font-size-xs)', fontWeight: 700, color: 'var(--color-text-muted)',
+              letterSpacing: '2px', textTransform: 'uppercase',
+            }}>
+              Supplies
+            </div>
+            {cohortCount > 0 && (
+              <div style={{
+                fontSize: '8px', color: 'var(--color-text-muted)',
+                letterSpacing: '1px', textTransform: 'uppercase',
+              }}>
+                {cohortCount} / node
+              </div>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '8px' }}>
+            <span style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '32px', fontWeight: 700, lineHeight: 1,
+              color: army.supplies === 0 ? 'var(--color-danger)' : 'var(--color-gold-secondary)',
+            }}>
+              {army.supplies ?? 0}
+            </span>
+            <span style={{
+              fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)',
+              letterSpacing: '1px', textTransform: 'uppercase',
+            }}>
+              stock
+            </span>
+          </div>
+          {/* Supply deficit badges */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {(army.supplyMoralePenalty ?? 0) > 0 && (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                padding: '2px 8px',
+                background: 'rgba(194, 74, 58, 0.18)',
+                border: '1px solid rgba(194, 74, 58, 0.5)',
+                borderRadius: 10,
+                fontSize: '9px', color: 'var(--color-danger)',
+                fontFamily: 'var(--font-family)',
+                fontWeight: 700,
+              }}>
+                −{army.supplyMoralePenalty} morale (supply deficit)
+              </div>
+            )}
+            {(army.supplyDeficitStreak ?? 0) > 0 && (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center',
+                padding: '2px 8px',
+                background: 'rgba(80, 70, 50, 0.3)',
+                border: '1px solid rgba(212, 168, 67, 0.2)',
+                borderRadius: 10,
+                fontSize: '9px', color: 'var(--color-text-muted)',
+                fontFamily: 'var(--font-family)',
+              }}>
+                {army.supplyDeficitStreak} streak
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* ── Morale (S24-05) — only rendered when a spoke context provides pre-battle morale ── */}
         {morale && (
           <div class="army-hud-section">

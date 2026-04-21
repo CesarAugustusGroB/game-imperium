@@ -256,10 +256,15 @@ function tryAdd(
   const hex = offsetToAxialFlatTop(col, row);
   if (!state.isValidHex(hex)) return false;
   if (state.getUnitAt(hex)) return false;
-  state.addUnit(
+  // FT-SUP: carry spoke-supply HP damage into battle. Max HP (stats.hp) stays
+  // full so the health bar reads "damaged", not "smaller pool".
+  const unit = state.addUnit(
     faction, hex, cohort.name, cohort.role,
     { ...cohort.stats }, cohort.spriteId, cohort.movementProfile,
   );
+  if (cohort.currentHp !== undefined && cohort.currentHp < cohort.stats.hp) {
+    unit.currentHp = cohort.currentHp;
+  }
   return true;
 }
 

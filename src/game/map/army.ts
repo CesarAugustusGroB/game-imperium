@@ -44,6 +44,7 @@ export class ArmyManager {
       size: computeArmySize(cohorts),
       cohorts,
       legateId,
+      supplies: 0,
       provinceIndex,
       targetProvinceIndex: null,
       progress: 0,
