@@ -1,6 +1,6 @@
 {
   "$schema": "./soldiers.schema.json",
-  "description": "Catalog of soldier sprites used by the battle renderer and UI. Each entry describes the visual content of the artwork so designers and engineers can pick the right sprite without opening the file. Rarity and format fields are authoritative — see style-guide.json for the per-rarity art-treatment rules.",
+  "description": "Catalog of soldier sprites used by the battle renderer and UI. Each entry describes the visual content of the artwork so designers and engineers can pick the right sprite without opening the file. Rarity and format fields are authoritative — see style-guide.json for the per-rarity art-treatment rules. SOURCE-OF-TRUTH RULE: this file is the single authority on which sprites exist. Enemy roster (src/game/army/enemy-cohort-data.ts) and ally pool (derived from src/game/army/cohort-data.ts) must reference only sprite ids declared here. Sprite ids listed in GOLD_RESERVED_SPRITE_IDS (src/game/army/cohort-data.ts) are fully-gold coin-style sprites reserved for narrative use and must NOT appear in normal enemy/ally rosters — currently spartan_royal_super_rare and companion_super_rare.",
   "conventions": {
     "shape": "Circle sprites are designed to be displayed inside a circular clip with ~4% margin. Card sprites (leader tier) use 5:7 portrait orientation with full-art bleed.",
     "orientation": "Facing-forward framing (character centered, head and shield/weapon visible).",
@@ -116,6 +116,31 @@
       },
       "usedFor": [],
       "tags": ["punic", "carthaginian", "phoenician", "line", "common", "tanit"]
+    },
+    {
+      "id": "roman_militia_common",
+      "cohortId": "militia",
+      "file": "roman_militia_common_soldier.png",
+      "width": 738,
+      "height": 615,
+      "bytes": 514468,
+      "rarity": "common",
+      "format": "circle",
+      "culture": "Roman Civic Militia",
+      "era": "Early Roman Republic — Servian civic levy (6th–4th c. BCE)",
+      "role": "line-infantry",
+      "weapon": "iron-leaf-tipped hasta spear couched at the hip",
+      "armor": "no body armor — rough undyed natural-wool short tunic with a plain oiled-leather belt",
+      "helm": "undyed felt pilleus citizen's cap (no metal helm)",
+      "shield": "plain round wooden clipeus with iron boss and a crudely painted brick-red Capitoline Wolf silhouette on an oatmeal field",
+      "palette": ["oatmeal wool", "weathered leather brown", "rough iron", "brick-red wolf-paint"],
+      "culturalMotif": {
+        "primary":   "crude painted Capitoline Wolf (Lupa Romana) on the round clipeus — Rome's protective mother answering the civic call",
+        "secondary": null,
+        "family":    "roman"
+      },
+      "usedFor": [],
+      "tags": ["roman", "militia", "civic-levy", "adsiduus", "servian", "republic", "common", "capitoline-wolf"]
     },
     {
       "id": "roman_hastatii_common",

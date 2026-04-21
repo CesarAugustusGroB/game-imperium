@@ -15,6 +15,17 @@ import type { Cohort } from './cohort';
  */
 export const COHORT_CATALOG: readonly Cohort[] = [
   {
+    id: 'militia',
+    name: 'Militia',
+    role: 'vanguard',
+    stats: { atk: 100, def: 30, hp: 800, agi: 35 },
+    aurumCost: 20,
+    rarity: 'common',
+    spriteId: 'roman_militia_common',
+    description: 'Servian civic levy — smallholders called from the plow. Cheap, fragile, but fills the line.',
+    movementProfile: 'vanguard-march',
+  },
+  {
     id: 'hastati',
     name: 'Hastati',
     role: 'vanguard',
@@ -85,4 +96,32 @@ export const COHORT_CATALOG: readonly Cohort[] = [
 /** Lookup a cohort definition by id, or `undefined` if not found. */
 export function getCohortById(id: string): Cohort | undefined {
   return COHORT_CATALOG.find(c => c.id === id);
+}
+
+/**
+ * Sprite ids that are reserved for special/narrative use and must NOT appear
+ * in the regular ally roster (or random enemy rosters). These are the
+ * "fully-gold coin" medallion sprites — see `soldiers.json`.
+ */
+export const GOLD_RESERVED_SPRITE_IDS: ReadonlySet<string> = new Set([
+  'spartan_royal_super_rare',
+  'companion_super_rare',
+]);
+
+/**
+ * Ally recruitment pool — mirrors the player's Exercitus tab roster (all
+ * cohorts in `COHORT_CATALOG`) minus any sprite id in `GOLD_RESERVED_SPRITE_IDS`.
+ *
+ * Consumed by the Augustus "Web of Alliances" perk and the `ally-units`
+ * doctrine effect to spawn flavorful, stats-appropriate allied reinforcements
+ * instead of generic placeholder units.
+ */
+export const ALLY_COHORT_POOL: readonly Cohort[] = COHORT_CATALOG.filter(
+  c => !c.spriteId || !GOLD_RESERVED_SPRITE_IDS.has(c.spriteId),
+);
+
+/** Pick a random cohort from the ally pool. Returns `null` if the pool is empty. */
+export function pickAllyCohort(): Cohort | null {
+  if (ALLY_COHORT_POOL.length === 0) return null;
+  return ALLY_COHORT_POOL[Math.floor(Math.random() * ALLY_COHORT_POOL.length)];
 }

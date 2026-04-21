@@ -1,75 +1,101 @@
 import type { Cohort } from './cohort';
 
 /**
- * Barbarian unit catalog for S15 enemy army generation.
+ * Enemy unit catalog — rebuilt from `public/asset/soldiers/soldiers.json`.
  *
- * Stats are intentionally below player equivalents before the post-spawn
- * threat multiplier (+5%/level to HP+ATK) is applied. Players also benefit
- * from legate traits and doctrine buffs on top.
+ * `soldiers.json` is the source of truth for every sprite that exists on
+ * disk; each entry here references one of those sprite ids so the battle
+ * renderer can draw the matching artwork.
  *
- * Tiers:
- *  basic     — appear at any threat level
- *  elite     — introduced as threat rises (eliteRatio formula in generator)
- *  boss-only — reserved for boss nodes / final invasion
+ * Reserved "gold-coin" sprites that must NOT appear in the regular enemy
+ * roster (used only when explicitly requested):
+ *   - `spartan_royal_super_rare`
+ *   - `companion_super_rare`
+ *
+ * The ids (`barbarian-warrior` / `barbarian-raider` / …) are kept so the
+ * role-based generator in `enemy-army-generator.ts` continues to work; the
+ * display names and sprites are now drawn from the cultural catalog.
+ *
+ * Stats are tuned to stay below player equivalents before the post-spawn
+ * threat multiplier in `applyThreatScaling()` is applied.
  */
 export const ENEMY_COHORTS: readonly Cohort[] = [
   {
     id: 'barbarian-warrior',
-    name: 'Barbarian Warrior',
+    name: 'Gallic Warband',
     role: 'vanguard',
-    stats: { atk: 120, def: 30, hp: 900, agi: 50 },
+    stats: { atk: 125, def: 25, hp: 850, agi: 55 },
     aurumCost: 0,
-    description: 'Ferocious tribesmen charging headlong into the front line.',
+    rarity: 'common',
+    spriteId: 'gallic_common',
+    description: 'Woad-painted Celtic shock infantry charging headlong at the line.',
+    movementProfile: 'vanguard-march',
   },
   {
     id: 'barbarian-raider',
-    name: 'Barbarian Raider',
+    name: 'Norse Raider',
     role: 'reserve',
-    stats: { atk: 115, def: 35, hp: 720, agi: 85 },
+    stats: { atk: 120, def: 30, hp: 780, agi: 85 },
     aurumCost: 0,
-    description: 'Fast-moving warbands that harry the flanks and exploit gaps.',
+    rarity: 'common',
+    spriteId: 'viking_common',
+    description: 'Dane-axe raiders that harry the flanks and exploit gaps in the shield wall.',
+    movementProfile: 'flanker',
   },
   {
     id: 'barbarian-shieldbearer',
-    name: 'Barbarian Shieldbearer',
+    name: 'Punic Citizen-Soldier',
     role: 'guard',
-    stats: { atk: 80, def: 72, hp: 1100, agi: 28 },
+    stats: { atk: 95, def: 75, hp: 1150, agi: 30 },
     aurumCost: 0,
-    description: 'Heavy shield wall — slow but nearly immovable under assault.',
+    rarity: 'common',
+    spriteId: 'punic_common',
+    description: 'Carthaginian linothorax spearmen — slow but nearly immovable behind the Tanit shield.',
+    movementProfile: 'vanguard-march',
   },
   {
     id: 'barbarian-champion',
-    name: 'Barbarian Champion',
+    name: 'Samurai Bushi',
     role: 'vanguard',
-    stats: { atk: 165, def: 45, hp: 1200, agi: 45 },
+    stats: { atk: 170, def: 45, hp: 1200, agi: 70 },
     aurumCost: 0,
-    description: 'Battle-hardened warriors who have earned glory through slaughter.',
+    rarity: 'uncommon',
+    spriteId: 'samurai_uncommon',
+    description: 'Dual-blade veterans whose iaijutsu strike cleaves through the front rank.',
+    movementProfile: 'vanguard-march',
   },
   {
     id: 'barbarian-chieftain',
-    name: 'Barbarian Chieftain',
+    name: 'Spartan Hoplite',
     role: 'guard',
-    stats: { atk: 125, def: 90, hp: 1400, agi: 30 },
+    stats: { atk: 145, def: 85, hp: 1400, agi: 40 },
     aurumCost: 0,
-    description: 'Tribal leaders whose presence steadies the warband around them.',
+    rarity: 'rare',
+    spriteId: 'spartan_rare',
+    description: 'Bronze-cuirass phalanx that anchors the enemy line — the lambda shield will not break first.',
+    movementProfile: 'vanguard-march',
   },
   {
     id: 'barbarian-warlord',
-    name: 'Barbarian Warlord',
+    name: 'Athenian Elite Hoplite',
     role: 'vanguard',
-    stats: { atk: 200, def: 60, hp: 1600, agi: 40 },
+    stats: { atk: 195, def: 70, hp: 1550, agi: 55 },
     aurumCost: 0,
-    description: 'A warlord who has united the tribes. Reserved for the fiercest confrontations.',
+    rarity: 'super-rare',
+    spriteId: 'athen_hoplite_elite_super_rare',
+    description: 'Gilded-cuirass elite with Athena\'s owl on the aspis — reserved for the fiercest confrontations.',
+    movementProfile: 'vanguard-march',
   },
   {
     id: 'makedon-hetairoi',
     name: 'Makedon Hetairoi',
     role: 'vanguard',
-    stats: { atk: 180, def: 55, hp: 1500, agi: 85 },
+    stats: { atk: 185, def: 60, hp: 1500, agi: 85 },
     aurumCost: 0,
-    description: "Alexander's royal Companion Cavalry. Heavy xyston-armed horse that crashes through lines.",
+    rarity: 'secret-rare',
     spriteId: 'makedon_hetairoi_secret_rare',
-    movementProfile: 'vanguard-march',
+    description: 'Alexander\'s royal Companion Cavalry. Heavy xyston-armed horse that crashes through lines.',
+    movementProfile: 'flanker',
   },
 ] as const;
 

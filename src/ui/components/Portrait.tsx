@@ -85,7 +85,9 @@ export function Portrait({
     borderRadius: 'var(--radius-sm)',
     boxShadow: selected
       ? `0 0 0 3px var(--color-gold-primary), 0 0 16px rgba(240, 208, 128, 0.3)`
-      : undefined,
+      : factionColor
+        ? `0 0 12px ${factionColor}33`
+        : undefined,
     transition: `box-shadow var(--duration-normal) var(--ease-default), border-color var(--duration-normal) var(--ease-default)`,
   };
 
@@ -164,6 +166,8 @@ export function Portrait({
           class="portrait-img"
           src={src}
           alt={alt}
+          decoding="async"
+          loading="eager"
           onError={() => { setImgFailed(true); }}
           style={{
             width: '100%',
@@ -171,8 +175,7 @@ export function Portrait({
             objectFit: 'cover',
             objectPosition: 'center 20%',
             display: 'block',
-            imageRendering: 'auto',
-            filter: `drop-shadow(0 0 8px ${(factionColor ?? 'transparent') + '40'})`,
+            imageRendering: 'high-quality',
           }}
         />
       )}
