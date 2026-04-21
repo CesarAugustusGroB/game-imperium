@@ -64,13 +64,16 @@ export const captureBlueProgress = signal(0);
 export const captureRedProgress  = signal(0);
 export const allUnits        = signal<BattleUnitSummary[]>([]);
 
-// Derived: morale percentages (0-100)
-export const blueMorale = computed(() => {
+// Derived: cohesion percentages (0-100) — faction remaining-strength as a share
+// of starting strength. Used for the army-strength comparison bar and the
+// cohesion-break victory check. Distinct from the per-army `morale` stat in
+// `src/game/army/morale.ts`, which modifies combat effectiveness.
+export const blueCohesion = computed(() => {
   const s = blueSummary.value;
   return s.maxHp > 0 ? Math.round((s.currentHp / s.maxHp) * 100) : 0;
 });
 
-export const redMorale = computed(() => {
+export const redCohesion = computed(() => {
   const s = redSummary.value;
   return s.maxHp > 0 ? Math.round((s.currentHp / s.maxHp) * 100) : 0;
 });

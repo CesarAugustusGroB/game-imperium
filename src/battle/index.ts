@@ -14,12 +14,33 @@ import { applyProgressionEffects, computeIsFinalBattle } from './progression-bri
 import { CAVALRY_FLANKED_SPAWN, CENTRAL_SPAWN, deployArmy } from './deployment';
 import { resetReserveAIState } from './movements';
 import type { ArmyData, Cohort } from '../types/index';
+import {
+  computeArmyMorale, getTierMultipliers, NEUTRAL_MORALE,
+} from '../game/army/morale';
+import type { TierMultipliers } from '../game/army/morale';
+import type { BattleFaction } from './battle-types';
 
 /** S7-11: True when the current battle is the final invasion (season >= MAX_SEASONS). */
 export const isFinalBattle = signal(false);
 
 /** S15-05: Snapshot of the generated enemy army for PostBattleScreen display. */
 export const lastEnemyArmy = signal<ArmyData | null>(null);
+
+/**
+ * S24-03: Stash the army's pre-battle morale multipliers onto every spawned
+ * unit of the given faction. Called once per faction after deployment —
+ * values are frozen for the whole battle (FR-5).
+ */
+function applyMoraleMultipliers(
+  state: BattleState,
+  faction: BattleFaction,
+  multipliers: TierMultipliers,
+): void {
+  for (const unit of state.getBattleFactionUnits(faction)) {
+    unit.moraleDamageMult = multipliers.damage;
+    unit.moraleDefenseMult = multipliers.defense;
+  }
+}
 
 
 export class BattleMode {
@@ -85,6 +106,13 @@ export class BattleMode {
     lastEnemyArmy.value = redArmy;
     this._state.placeStartingUnits(blueArmy, redArmy, blueLegate, null);
 
+    // S24-03: snapshot blue army morale from the spoke and stash multipliers
+    // onto every blue unit. Red stays at neutral (no enemy-side contributors
+    // in the MVP). No-op spoke → neutral too.
+    const blueMorale = spoke ? computeArmyMorale(spoke) : NEUTRAL_MORALE;
+    applyMoraleMultipliers(this._state, 'blue', getTierMultipliers(blueMorale.tier));
+    applyMoraleMultipliers(this._state, 'red',  getTierMultipliers(NEUTRAL_MORALE.tier));
+
     // Progression integration — all threat scaling, commander perks,
     // doctrines, crusade, war cry, mandatum conversions live here.
     applyProgressionEffects(this._state);
@@ -143,6 +171,13 @@ export class BattleMode {
 
     // Apply Legate traits (V1 used to do this inside placeFactionUnits)
     if (blueLegate) this._state.applyLegateTraits('blue', blueLegate);
+
+    // S24-03: snapshot blue army morale from the spoke and stash multipliers
+    // onto every blue unit. Red stays at neutral (no enemy-side contributors
+    // in the MVP). No-op spoke → neutral too.
+    const blueMoraleV2 = spoke ? computeArmyMorale(spoke) : NEUTRAL_MORALE;
+    applyMoraleMultipliers(this._state, 'blue', getTierMultipliers(blueMoraleV2.tier));
+    applyMoraleMultipliers(this._state, 'red',  getTierMultipliers(NEUTRAL_MORALE.tier));
 
     // All progression effects — threat scaling, doctrines, crusade, etc.
     applyProgressionEffects(this._state);

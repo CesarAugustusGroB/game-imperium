@@ -8,7 +8,7 @@
  *     standGround, pathToStar, intercept
  *   - Combinators: when, whenEngaged, sequence, fallback, prioritize
  *   - Conditions: isLowHP, enemyAdjacent, inEnemyZone, inOwnZone, hasEngaged,
- *     isOutnumbered, hasMorale, hasAttackedThisTick, not/all/any/always
+ *     isOutnumbered, hasCohesion, hasAttackedThisTick, not/all/any/always
  *   - Profiles: VANGUARD_AI, RESERVE_AI, GUARD_AI, BERSERKER_AI,
  *     SKIRMISHER_AI, FLANKER_AI, plus `MOVEMENT_PROFILES` dispatch registry
  *   - Helpers (re-exported for AI authors): pickWeakest, handlePinned,

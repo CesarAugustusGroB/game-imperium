@@ -23,6 +23,8 @@ import { getExtraEventChoices } from '../../game/items/doctrine-store';
 import { manipulateUsesLeft, consumeManipulateUse } from '../../game/progression/strategic-store';
 import { councilSlots, grantAdvisorXp, tierUpNotices } from '../../game/council/council-store';
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
+import { computeArmyMorale } from '../../game/army/morale';
+import type { MoraleTier } from '../../game/army/morale';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('node-map-styles')) {
@@ -221,6 +223,19 @@ const NODE_STYLES: Record<NodeType, { color: string; glow: string; hoverLabel: s
   event:  { color: '#d4a843', glow: '#d4a84360', hoverLabel: 'Make a Choice',       hint: 'Something stirs ahead...' },
   boss:   { color: '#8a4ac2', glow: '#8a4ac260', hoverLabel: 'Face the Boss',       hint: 'The final challenge awaits...' },
 };
+
+// S24-05: tier → badge color (matches ArmyDetailHUD palette).
+const MORALE_TIER_COLOR: Record<MoraleTier, string> = {
+  broken:   'var(--color-danger)',
+  shaken:   '#d48b3a',
+  steady:   'var(--color-text-secondary)',
+  resolute: 'var(--color-gold-secondary)',
+  inspired: 'var(--color-gold-primary)',
+};
+
+function moraleTierLabel(tier: MoraleTier): string {
+  return tier.charAt(0).toUpperCase() + tier.slice(1);
+}
 
 const NODE_SIZE_REGULAR = 68;
 const NODE_SIZE_BOSS = 82;
@@ -669,6 +684,21 @@ export function NodeMapScreen() {
   const resolvedCount = spoke.nodes.filter(n => n.resolved).length;
   const progressPct = Math.round((resolvedCount / spoke.nodes.length) * 100);
 
+  // S24-05: pre-battle morale for the bound army. Surfaced as a header pill
+  // chip + an inline segment on the army bar. Breakdown lives in the modal
+  // (ArmyDetailHUD).
+  const morale = spoke.boundArmy ? computeArmyMorale(spoke) : null;
+  const moraleTooltip = morale
+    ? (morale.modifiers.length === 0
+        ? `Morale — ${moraleTierLabel(morale.tier)} (${morale.total}). No modifiers active.`
+        : `Morale — ${moraleTierLabel(morale.tier)} (${morale.total})\n` +
+          morale.modifiers
+            .slice()
+            .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+            .map((m) => `  ${m.delta >= 0 ? '+' : ''}${m.delta}  ${m.label}`)
+            .join('\n'))
+    : undefined;
+
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -683,6 +713,15 @@ export function NodeMapScreen() {
           titleSize="md"
           rightSlot={(
             <>
+              {morale && (
+                <span
+                  class="ornate-stat-chip"
+                  title={moraleTooltip}
+                  style={{ color: MORALE_TIER_COLOR[morale.tier] }}
+                >
+                  🔥 <strong>{moraleTierLabel(morale.tier)} {morale.total}</strong>
+                </span>
+              )}
               <span class="ornate-stat-chip" title="Posture" style={{ color: spoke.posture === 'attacking' ? '#e07050' : '#60a8d0' }}>
                 {spoke.posture === 'attacking' ? '⚔' : '🛡'} <strong>{spoke.posture === 'attacking' ? 'Attacking' : 'Defending'}</strong>
               </span>
@@ -782,6 +821,14 @@ export function NodeMapScreen() {
           >
             ⚔ {spoke.boundArmy.cohorts.length} cohort{spoke.boundArmy.cohorts.length !== 1 ? 's' : ''}
             {spoke.boundLegate ? ` · ${spoke.boundLegate.name.split(' ')[0]}` : ''}
+            {morale && (
+              <>
+                {' · '}
+                <span style={{ color: MORALE_TIER_COLOR[morale.tier] }}>
+                  🔥 {moraleTierLabel(morale.tier)} {morale.total}
+                </span>
+              </>
+            )}
           </button>
         )}
 
@@ -1156,6 +1203,7 @@ export function NodeMapScreen() {
         <ArmyDetailHUD
           army={spoke.boundArmy}
           legate={spoke.boundLegate ?? null}
+          morale={computeArmyMorale(spoke)}
           onClose={() => { showArmyHUDOnMap.value = false; }}
         />
       )}

@@ -66,6 +66,10 @@ export function addUnit(
     hasEngaged: false,
     spriteId,
     movementProfile: resolvedProfile,
+    // S24-02: neutral defaults. S24-03 overwrites these at deploy time with
+    // the army's tier multipliers.
+    moraleDamageMult: 1.0,
+    moraleDefenseMult: 1.0,
   };
   applyRangedProfile(unit, resolvedProfile);
   world.units.set(unit.id, unit);
