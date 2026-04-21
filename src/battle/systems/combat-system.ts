@@ -165,6 +165,7 @@ export function resolveProjectileImpact(world: BattleWorld, projectile: Projecti
       crackSeed: 0, reviveThreshold: 0,
       hasRevived: false, hasEngaged: false,
       movementProfile: 'vanguard-march' as const,
+      moraleDamageMult: 1.0, moraleDefenseMult: 1.0,
     }),
     // Always use snapshot stats so an archer death doesn't void shots in flight.
     stats: { atk: projectile.atkSnapshot, def: 0, hp: 1, agi: projectile.agiSnapshot },
