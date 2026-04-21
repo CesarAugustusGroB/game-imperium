@@ -1,15 +1,24 @@
 /**
- * morale — pre-battle army morale system (S24).
+ * morale — army morale system (S24, extended by FT-SUP).
  *
  * Morale is a scalar on an army, starting at `BASE_MORALE` (100) and shifted by
- * strategic-layer contributor sources (legatus traits, council advisors,
- * doctrines, home-soil fighting, etc). The army's final morale maps to a tier,
- * and the tier's damage/defense multipliers are stashed on every spawned
- * `BattleUnit` at deploy time (see `src/battle/index.ts` and S24-03).
+ * contributors of two flavors:
  *
- * Morale is a PRE-BATTLE value — it does NOT change during combat. The player
- * reads the tier in the spoke view before clicking fight and commits to those
- * odds for the whole battle.
+ *  1. **Strategic-layer contributors** (legatus traits, council advisors,
+ *     doctrines, home-soil fighting): resolved once per `computeArmyMorale`
+ *     call from relatively stable state.
+ *  2. **Dynamic spoke-layer contributors** (FT-SUP supply deficit): read
+ *     per-army mutable state such as `supplyMoralePenalty` that changes as
+ *     the army traverses nodes. The same function call on different ticks
+ *     will emit different modifiers.
+ *
+ * The army's final morale maps to a tier, and the tier's damage/defense
+ * multipliers are stashed on every spawned `BattleUnit` at deploy time
+ * (see `src/battle/index.ts` and S24-03). The snapshot into `BattleUnit`
+ * multipliers is still frozen for the whole battle — morale does NOT
+ * change during combat. What FT-SUP adds is that the *pre-battle tier*
+ * itself may shift as the player moves through the spoke: running out of
+ * supplies drops it, resupplying restores it instantly.
  *
  * Distinct from the faction `blueCohesion`/`redCohesion` signals in
  * `battle-signals.ts`, which track faction HP% for victory detection.
@@ -136,10 +145,27 @@ function homeSoilContributor(_spoke: Spoke): MoraleModifier[] {
   return [];
 }
 
+/**
+ * FT-SUP: dynamic spoke-layer contributor. Reads `spoke.boundArmy.supplyMoralePenalty`
+ * and emits a negative modifier when > 0. The penalty is set/cleared by
+ * `supplies.consumeTraversal` as the army moves through the spoke, so the
+ * tier derived from `computeArmyMorale` moves in step with supply state.
+ */
+function supplyDeficitContributor(spoke: Spoke): MoraleModifier[] {
+  const penalty = spoke.boundArmy?.supplyMoralePenalty ?? 0;
+  if (penalty <= 0) return [];
+  return [{
+    source: 'supply-deficit',
+    label: 'Supply deficit',
+    delta: -penalty,
+  }];
+}
+
 registerMoraleContributor(legatusContributor);
 registerMoraleContributor(consiliumContributor);
 registerMoraleContributor(doctrinaeContributor);
 registerMoraleContributor(homeSoilContributor);
+registerMoraleContributor(supplyDeficitContributor);
 
 // ── Public API ─────────────────────────────────────────────────────────────
 

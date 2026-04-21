@@ -6,6 +6,7 @@ import type { Legate } from '../army/legate';
 import { getCohortById } from '../army/cohort-data';
 import { computeArmySize } from '../army/cohort';
 import { rollHiringPool, rollLegateCandidate } from '../army/legate-pool';
+import { SUPPLIES_PER_GOLD, SUPPLIES_STARTING_STOCK, SUPPLY_MAX_CARRY } from '../../config/game-config';
 
 // ── State signals ──
 
@@ -199,11 +200,33 @@ export function ensurePreparedArmy(): ArmyData {
   const owner = selectedCommander.value?.faction ?? 'rome';
   const shell: ArmyData = {
     id: 0, owner, name: 'Legio I', size: 0, cohorts: [], legateId: null,
+    supplies: SUPPLIES_STARTING_STOCK,
     provinceIndex: 0, targetProvinceIndex: null, progress: 0, path: [],
     inCombat: false, combatTarget: null, lastRoll: 0,
   };
   preparedArmy.value = shell;
   return shell;
+}
+
+/**
+ * FT-SUP: buy `qty` supplies with gold. Clamps to remaining cap; spends
+ * gold only for the clamped quantity. Returns false if nothing can be
+ * bought (at cap, or not enough gold for even 1 unit).
+ */
+export function buySupplies(qty: number): boolean {
+  if (qty <= 0) return false;
+  const army = ensurePreparedArmy();
+  const room = SUPPLY_MAX_CARRY - army.supplies;
+  if (room <= 0) return false;
+  const buyable = Math.min(qty, room);
+  // Cost rounds UP — buying 1 supply still costs 1 gold (buying 2 is the
+  // efficient increment). Multiples of SUPPLIES_PER_GOLD are fully efficient.
+  const cost = Math.ceil(buyable / SUPPLIES_PER_GOLD);
+  if (cost <= 0) return false;
+  if (!canAfford('gold', cost)) return false;
+  if (!spendResource('gold', cost)) return false;
+  preparedArmy.value = { ...army, supplies: army.supplies + buyable };
+  return true;
 }
 
 /**

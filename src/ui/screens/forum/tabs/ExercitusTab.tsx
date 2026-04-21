@@ -4,6 +4,7 @@ import {
   preparedArmy, preparedLegate, legateHiringPool,
   ensurePreparedArmy, recruitCohort, removeCohort,
   ensureLegatePool, hireLegate, dismissLegate,
+  buySupplies,
 } from '../../../../game/progression/strategic-store';
 import { getLegateTraitById } from '../../../../game/army/legate-traits';
 import { playSfx } from '../../../sound/sfx';
@@ -11,6 +12,10 @@ import type { UnitRole } from '../../../../battle/battle-types';
 import { OrnatePanel } from '../../../components/OrnatePanel';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
+import {
+  SUPPLIES_PER_GOLD,
+  SUPPLY_MAX_CARRY,
+} from '../../../../config/game-config';
 
 const LEGATE_HIRE_COST = 80;
 
@@ -59,10 +64,27 @@ export function ExercitusTab() {
   const sizeLabel = totalSize >= 1000 ? `${(totalSize / 1000).toFixed(1)}K` : `${totalSize}`;
   const subtitle = `${cohorts.length} cohort${cohorts.length === 1 ? '' : 's'} · ${sizeLabel} HP · ${legate ? `Legate ${legate.name.split(' ').slice(-1)[0]}` : 'No legate'}`;
 
+  // ── Supplies ──
+  const currentSupplies = army?.supplies ?? 0;
+  const supplyRatio = SUPPLY_MAX_CARRY > 0 ? currentSupplies / SUPPLY_MAX_CARRY : 0;
+  const coversNodes = cohorts.length > 0 ? Math.floor(currentSupplies / cohorts.length) : 0;
+  const maxBuyable = Math.min(
+    currentGold * SUPPLIES_PER_GOLD,
+    SUPPLY_MAX_CARRY - currentSupplies,
+  );
+  const atCap = currentSupplies >= SUPPLY_MAX_CARRY;
+
   function handleRecruit(id: string) { if (recruitCohort(id)) playSfx('ui_equip'); }
   function handleRemove(id: string)  { removeCohort(id); playSfx('ui_sell'); }
   function handleHire(id: string)    { if (hireLegate(id, LEGATE_HIRE_COST)) playSfx('ui_equip'); }
   function handleDismiss()           { dismissLegate(); playSfx('ui_sell'); }
+
+  function handleBuySupplies(qty: number) {
+    if (buySupplies(qty)) playSfx('ui_equip');
+  }
+  function handleBuyMax() {
+    if (maxBuyable > 0) handleBuySupplies(maxBuyable);
+  }
 
   return (
     <>
@@ -167,6 +189,108 @@ export function ExercitusTab() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </OrnatePanel>
+
+          {/* ── Supplies ── */}
+          <OrnatePanel accent={accent}>
+            <SectionHeader
+              title="Supplies"
+              accent={accent}
+              right={<span style={{
+                fontFamily: 'var(--imp-font-mono)',
+                fontSize: 11, color: 'var(--imp-text-mid)',
+              }}>
+                {currentSupplies} / {SUPPLY_MAX_CARRY}
+              </span>}
+            />
+
+            {/* Progress bar */}
+            <div style={{
+              position: 'relative',
+              height: 8,
+              background: 'rgba(20, 18, 32, 0.7)',
+              border: '1px solid rgba(212, 168, 67, 0.25)',
+              borderRadius: 2,
+              overflow: 'hidden',
+              marginBottom: 10,
+            }}>
+              <div style={{
+                position: 'absolute', top: 0, left: 0, bottom: 0,
+                width: `${Math.min(supplyRatio * 100, 100)}%`,
+                background: supplyRatio > 0.5
+                  ? `linear-gradient(90deg, ${accent} 0%, #f0d080 100%)`
+                  : supplyRatio > 0.2
+                    ? 'linear-gradient(90deg, #d48b3a 0%, #e8a848 100%)'
+                    : 'linear-gradient(90deg, #c24a3a 0%, #d4604a 100%)',
+                transition: 'width 300ms ease',
+                borderRadius: 2,
+              }} />
+            </div>
+
+            {/* Quick-buy buttons */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+              {([2, 10] as const).map((qty) => {
+                const goldCost = Math.ceil(qty / SUPPLIES_PER_GOLD);
+                const canBuy = !atCap && currentGold >= goldCost && currentSupplies + qty <= SUPPLY_MAX_CARRY;
+                return (
+                  <button
+                    key={qty}
+                    onClick={() => handleBuySupplies(qty)}
+                    disabled={!canBuy}
+                    style={{
+                      flex: 1, padding: '6px 0',
+                      background: canBuy
+                        ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`
+                        : 'rgba(80, 70, 50, 0.3)',
+                      border: 'none', borderRadius: 2,
+                      color: canBuy ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
+                      fontFamily: 'var(--imp-font-display)',
+                      fontSize: 11, fontWeight: 700, letterSpacing: 1,
+                      cursor: canBuy ? 'pointer' : 'not-allowed',
+                      transition: 'all 160ms',
+                    }}
+                  >
+                    +{qty}
+                  </button>
+                );
+              })}
+              <button
+                onClick={handleBuyMax}
+                disabled={maxBuyable <= 0}
+                style={{
+                  flex: 1.5, padding: '6px 0',
+                  background: maxBuyable > 0
+                    ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`
+                    : 'rgba(80, 70, 50, 0.3)',
+                  border: 'none', borderRadius: 2,
+                  color: maxBuyable > 0 ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
+                  fontFamily: 'var(--imp-font-display)',
+                  fontSize: 11, fontWeight: 700, letterSpacing: 1,
+                  cursor: maxBuyable > 0 ? 'pointer' : 'not-allowed',
+                  transition: 'all 160ms',
+                }}
+              >
+                Max{maxBuyable > 0 ? ` (+${maxBuyable})` : ''}
+              </button>
+            </div>
+
+            {/* Cost info + estimate */}
+            <div style={{
+              fontSize: 9, color: 'var(--imp-text-lo)',
+              fontFamily: 'var(--imp-font-serif)',
+              letterSpacing: 0.5,
+            }}>
+              1⚜ = {SUPPLIES_PER_GOLD} supplies · 1 supply per cohort per node
+            </div>
+            {cohorts.length > 0 && (
+              <div style={{
+                marginTop: 4, fontSize: 10,
+                color: coversNodes > 2 ? 'var(--imp-text-mid)' : '#d48b3a',
+                fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic',
+              }}>
+                Covers ≈ {coversNodes} node{coversNodes !== 1 ? 's' : ''}
               </div>
             )}
           </OrnatePanel>

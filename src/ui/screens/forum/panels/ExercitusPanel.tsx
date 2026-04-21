@@ -3,6 +3,7 @@ import { getLegateTraitById } from '../../../../game/army/legate-traits';
 import { OrnatePanel } from '../../../components/OrnatePanel';
 import { SectionHeader, LinkButton, ROLE_COLORS } from '../components/SectionHeader';
 import { setForumTab } from '../state';
+import { SUPPLY_MAX_CARRY } from '../../../../config/game-config';
 
 interface ExercitusPanelProps {
   accent?: string;
@@ -12,6 +13,8 @@ export function ExercitusPanel({ accent = '#d4a843' }: ExercitusPanelProps) {
   const army = preparedArmy.value;
   const legate = preparedLegate.value;
   const cohorts = army?.cohorts ?? [];
+  const supplies = army?.supplies ?? 0;
+  const supplyLow = SUPPLY_MAX_CARRY > 0 && supplies < SUPPLY_MAX_CARRY * 0.25;
 
   return (
     <OrnatePanel accent={accent}>
@@ -57,6 +60,27 @@ export function ExercitusPanel({ accent = '#d4a843' }: ExercitusPanelProps) {
           </div>
         ))}
       </div>
+      {/* ── Supply chip ── */}
+      <div style={{
+        marginTop: 8, display: 'flex', alignItems: 'center', gap: 8,
+      }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+          padding: '2px 7px',
+          background: supplyLow ? 'rgba(194, 74, 58, 0.15)' : 'rgba(212, 168, 67, 0.1)',
+          border: `1px solid ${supplyLow ? 'rgba(194, 74, 58, 0.45)' : 'rgba(212, 168, 67, 0.3)'}`,
+          borderRadius: 10,
+          fontSize: 9,
+          color: supplyLow ? '#d48b3a' : 'var(--imp-text-mid)',
+          fontFamily: 'var(--imp-font-mono)',
+          letterSpacing: 0.5,
+          title: `Supplies: ${supplies} / ${SUPPLY_MAX_CARRY}`,
+        }}>
+          <span>📦</span>
+          <span>{supplies}/{SUPPLY_MAX_CARRY}</span>
+        </div>
+      </div>
+
       {legate && (
         <div style={{
           marginTop: 10, paddingTop: 10,

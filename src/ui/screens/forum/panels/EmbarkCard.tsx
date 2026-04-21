@@ -1,4 +1,5 @@
 import { plannedSpoke, startSpokeFromCouncil } from '../../../../game/council/council-store';
+import { preparedArmy } from '../../../../game/progression/strategic-store';
 import { navigateTo } from '../../../screens';
 import { OrnatePanel } from '../../../components/OrnatePanel';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
@@ -10,10 +11,18 @@ interface EmbarkCardProps {
 
 export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
   const spoke = plannedSpoke.value;
+  const army = preparedArmy.value;
 
   const campaignTitle = spoke?.label ?? 'No campaign planned';
   const nodes = spoke?.nodes ?? [];
   const canEmbark = !!spoke && nodes.length > 0;
+
+  // Supply warning: how many supplies are needed for the unresolved nodes
+  const unresolvedNodes = nodes.filter((n) => !n.resolved);
+  const cohortCount = army?.cohorts?.length ?? 0;
+  const suppliesHave = army?.supplies ?? 0;
+  const suppliesNeeded = cohortCount * unresolvedNodes.length;
+  const supplyWarning = canEmbark && cohortCount > 0 && suppliesHave < suppliesNeeded;
 
   function handleEmbark() {
     if (!canEmbark) return;
@@ -78,6 +87,29 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
           })}
         </div>
       )}
+      {/* ── Supply warning ── */}
+      {supplyWarning && (
+        <div style={{
+          marginBottom: 10,
+          padding: '8px 12px',
+          background: 'rgba(212, 139, 58, 0.12)',
+          border: '1px solid rgba(212, 139, 58, 0.5)',
+          borderRadius: 2,
+          display: 'flex', alignItems: 'flex-start', gap: 8,
+        }}>
+          <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1.4 }}>⚠</span>
+          <div style={{
+            fontSize: 10,
+            color: '#d48b3a',
+            fontFamily: 'var(--imp-font-serif)',
+            fontStyle: 'italic',
+            lineHeight: 1.5,
+          }}>
+            Supplies: {suppliesHave}/{suppliesNeeded} — cohorts will take HP & morale attrition
+          </div>
+        </div>
+      )}
+
       <button
         onClick={handleEmbark}
         disabled={!canEmbark}

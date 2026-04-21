@@ -174,6 +174,7 @@ export function generateEnemyArmy(
     size: computeArmySize(cohorts),
     cohorts,
     legateId: null,
+    supplies: 0,
     provinceIndex: 0,
     targetProvinceIndex: null,
     progress: 0,

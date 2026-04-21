@@ -699,6 +699,8 @@ export function NodeMapScreen() {
             .join('\n'))
     : undefined;
 
+  const supplies = spoke.boundArmy?.supplies ?? 0;
+
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -720,6 +722,11 @@ export function NodeMapScreen() {
                   style={{ color: MORALE_TIER_COLOR[morale.tier] }}
                 >
                   🔥 <strong>{moraleTierLabel(morale.tier)} {morale.total}</strong>
+                </span>
+              )}
+              {spoke.boundArmy && (
+                <span class="ornate-stat-chip" title="Supplies">
+                  📦 <strong>{supplies}</strong>
                 </span>
               )}
               <span class="ornate-stat-chip" title="Posture" style={{ color: spoke.posture === 'attacking' ? '#e07050' : '#60a8d0' }}>
@@ -821,6 +828,7 @@ export function NodeMapScreen() {
           >
             ⚔ {spoke.boundArmy.cohorts.length} cohort{spoke.boundArmy.cohorts.length !== 1 ? 's' : ''}
             {spoke.boundLegate ? ` · ${spoke.boundLegate.name.split(' ')[0]}` : ''}
+            {' · '}📦 {supplies}
             {morale && (
               <>
                 {' · '}

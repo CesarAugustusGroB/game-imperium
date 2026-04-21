@@ -280,3 +280,27 @@ export const ECONOMY = {
   /** Maximum investment discount (prevents free buildings). */
   maxInvestmentDiscount: 90,
 };
+
+// ══════════════════════════════════════════════
+//  ARMY SUPPLIES (FT-SUP)
+// ══════════════════════════════════════════════
+
+/** Supply units received per 1 gold spent in the Exercitus tab.
+ *  Purchase gold = ceil(qty / SUPPLIES_PER_GOLD), so buying is most efficient
+ *  in multiples of this number. */
+export const SUPPLIES_PER_GOLD = 2;
+
+/** Starting supply stock given to a freshly composed army at the Hub. */
+export const SUPPLIES_STARTING_STOCK = 10;
+
+/** Cap on supplies an army can carry into a spoke. */
+export const SUPPLY_MAX_CARRY = 40;
+
+/** Fraction of max HP each cohort loses on a deficit node traversal. */
+export const SUPPLY_HP_DAMAGE_PCT = 0.20;
+
+/** Absolute morale points lost per deficit traversal (accumulates). */
+export const SUPPLY_MORALE_PENALTY_PER_DEFICIT = 8;
+
+/** Cap on the cumulative morale penalty from supply deficit. */
+export const SUPPLY_MORALE_PENALTY_CAP = 40;

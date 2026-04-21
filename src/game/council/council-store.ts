@@ -423,11 +423,21 @@ export function startSpokeFromCouncil(): void {
   // S14-06: snapshot the player's prepared army + Legate into the spoke.
   // The shallow clone freezes the cohort list at embark time so subsequent
   // mutations to `preparedArmy` (e.g. between runs) don't leak into this run.
+  // FT-SUP: initialize each cohort's currentHp to stats.hp so the spoke
+  // starts with everyone at full health; the attrition loop will decrement
+  // it as supplies run out. Supplies pass through untouched.
   const armyForRun = preparedArmy.value;
   const legateForRun = preparedLegate.value;
   spoke = {
     ...spoke,
-    boundArmy: armyForRun ? { ...armyForRun, cohorts: [...armyForRun.cohorts] } : null,
+    boundArmy: armyForRun
+      ? {
+          ...armyForRun,
+          cohorts: armyForRun.cohorts.map((c) => ({ ...c, currentHp: c.stats.hp })),
+          supplyMoralePenalty: undefined,
+          supplyDeficitStreak: 0,
+        }
+      : null,
     boundLegate: legateForRun,
   };
 
