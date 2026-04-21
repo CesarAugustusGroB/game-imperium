@@ -13,7 +13,7 @@ import { OrnatePanel } from '../../../components/OrnatePanel';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 import {
-  SUPPLIES_COST_GOLD,
+  SUPPLIES_PER_GOLD,
   SUPPLY_MAX_CARRY,
 } from '../../../../config/game-config';
 
@@ -69,7 +69,7 @@ export function ExercitusTab() {
   const supplyRatio = SUPPLY_MAX_CARRY > 0 ? currentSupplies / SUPPLY_MAX_CARRY : 0;
   const coversNodes = cohorts.length > 0 ? Math.floor(currentSupplies / cohorts.length) : 0;
   const maxBuyable = Math.min(
-    Math.floor(currentGold / SUPPLIES_COST_GOLD),
+    currentGold * SUPPLIES_PER_GOLD,
     SUPPLY_MAX_CARRY - currentSupplies,
   );
   const atCap = currentSupplies >= SUPPLY_MAX_CARRY;
@@ -231,8 +231,9 @@ export function ExercitusTab() {
 
             {/* Quick-buy buttons */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-              {([1, 5] as const).map((qty) => {
-                const canBuy = !atCap && currentGold >= qty * SUPPLIES_COST_GOLD && currentSupplies + qty <= SUPPLY_MAX_CARRY;
+              {([2, 10] as const).map((qty) => {
+                const goldCost = Math.ceil(qty / SUPPLIES_PER_GOLD);
+                const canBuy = !atCap && currentGold >= goldCost && currentSupplies + qty <= SUPPLY_MAX_CARRY;
                 return (
                   <button
                     key={qty}
@@ -281,7 +282,7 @@ export function ExercitusTab() {
               fontFamily: 'var(--imp-font-serif)',
               letterSpacing: 0.5,
             }}>
-              {SUPPLIES_COST_GOLD}⚜ per supply · 1 supply per cohort per node
+              1⚜ = {SUPPLIES_PER_GOLD} supplies · 1 supply per cohort per node
             </div>
             {cohorts.length > 0 && (
               <div style={{

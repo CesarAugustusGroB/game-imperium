@@ -285,8 +285,13 @@ export const ECONOMY = {
 //  ARMY SUPPLIES (FT-SUP)
 // ══════════════════════════════════════════════
 
-/** Gold cost per supply unit bought in the Exercitus tab. */
-export const SUPPLIES_COST_GOLD = 1;
+/** Supply units received per 1 gold spent in the Exercitus tab.
+ *  Purchase gold = ceil(qty / SUPPLIES_PER_GOLD), so buying is most efficient
+ *  in multiples of this number. */
+export const SUPPLIES_PER_GOLD = 2;
+
+/** Starting supply stock given to a freshly composed army at the Hub. */
+export const SUPPLIES_STARTING_STOCK = 10;
 
 /** Cap on supplies an army can carry into a spoke. */
 export const SUPPLY_MAX_CARRY = 40;
