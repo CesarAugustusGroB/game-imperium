@@ -11,10 +11,26 @@ interface MastheadProps {
 
 export function Masthead({ title, subtitle, accent = '#d4a843' }: MastheadProps) {
   const chips: StatChipData[] = [
-    { key: 'gold',      glyph: '⚜', value: gold.value,      color: '#d4a843' },
-    { key: 'faith',     glyph: '✦', value: faith.value,     color: '#c8b080' },
-    { key: 'influence', glyph: '◈', value: influence.value, color: '#9fb8d0' },
-    { key: 'momentum',  glyph: '⚡', value: momentum.value,  color: '#e07a50' },
+    {
+      key: 'gold', glyph: '⚜', value: gold.value, color: '#d4a843',
+      label: 'Gold',
+      description: 'Primary income for all factions. Spent on unit upkeep, upgrades, and investments. Purple commanders earn 2× gold.',
+    },
+    {
+      key: 'faith', glyph: '✦', value: faith.value, color: '#c8b080',
+      label: 'Faith',
+      description: 'Primary resource of the Gold (Religious) faction. Drives crusade and miracle abilities. Gold commanders earn 2× faith.',
+    },
+    {
+      key: 'influence', glyph: '◈', value: influence.value, color: '#9fb8d0',
+      label: 'Influence',
+      description: 'Primary resource of the Blue (Diplomat) faction. Powers negotiation and manipulation. Blue commanders earn 2× influence.',
+    },
+    {
+      key: 'momentum', glyph: '⚡', value: momentum.value, color: '#e07a50',
+      label: 'Momentum',
+      description: 'Primary resource of the Red (Warlord) faction. Fuels aggressive tactics and berserk stances. Red commanders earn 2× momentum.',
+    },
   ];
 
   return (

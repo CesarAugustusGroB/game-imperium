@@ -38,7 +38,7 @@ interface PortraitProps {
 }
 
 const SIZE_MAP: Record<'large' | 'medium' | 'small', { width: string; height: string }> = {
-  large:  { width: '188px', height: '210px' },
+  large:  { width: '210px', height: '280px' },
   medium: { width: '96px',  height: '112px' },
   small:  { width: '60px',  height: '72px'  },
 };
@@ -169,8 +169,9 @@ export function Portrait({
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            objectPosition: 'center top',
+            objectPosition: 'center 20%',
             display: 'block',
+            imageRendering: 'auto',
             filter: `drop-shadow(0 0 8px ${(factionColor ?? 'transparent') + '40'})`,
           }}
         />
