@@ -75,10 +75,17 @@ export function performStrike(world: BattleWorld, attacker: BattleUnit, defender
   // Damage roll × ATK − DEF, minimum 1
   const roll = rollD6();
   let damage = Math.max(1, roll * attacker.stats.atk - defender.stats.def);
+  // S24-03: pre-battle morale tier — attacker's damage-dealt mult × defender's
+  // damage-taken mult. Both stashed at deploy (src/battle/index.ts), constant
+  // for the whole battle. Neutral multipliers are 1.0 so pre-S24 behavior is
+  // preserved when no spoke context is present.
+  damage *= attacker.moraleDamageMult;
+  damage *= defender.moraleDefenseMult;
   // Boudicca veteran bonus on blue units
   if (attacker.faction === 'blue' && world.veteranBonus > 0) {
     damage = Math.floor(damage * (1 + world.veteranBonus));
   }
+  damage = Math.max(1, Math.round(damage));
   defender.currentHp -= damage;
 
   // Hit animations
