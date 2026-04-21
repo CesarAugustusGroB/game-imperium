@@ -9,7 +9,7 @@ import { useSignal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import {
   battlePhase, battleWinner, battleRound, selectedUnit,
-  blueSummary, redSummary, blueMorale, redMorale,
+  blueSummary, redSummary, blueCohesion, redCohesion,
   captureBlueProgress, captureRedProgress,
   requestBattleExit,
 } from '../../battle/battle-signals';
@@ -117,10 +117,10 @@ const FACTION_COLOR: Record<'blue' | 'red', string> = {
 
 // ── Sub-components ──
 
-function ArmyPanel({ faction, summary, morale, captureProgress }: {
+function ArmyPanel({ faction, summary, cohesion, captureProgress }: {
   faction: 'blue' | 'red';
   summary: BattleFactionSummary;
-  morale: number;
+  cohesion: number;
   captureProgress: number;
 }) {
   const color = FACTION_COLOR[faction];
@@ -165,7 +165,7 @@ function ArmyPanel({ faction, summary, morale, captureProgress }: {
         </span>
       </div>
 
-      {/* Morale bar */}
+      {/* Cohesion bar (faction strength as HP %) */}
       <div style={{ marginBottom: '10px' }}>
         <div style={{
           display: 'flex', justifyContent: 'space-between', marginBottom: '3px',
@@ -179,7 +179,7 @@ function ArmyPanel({ faction, summary, morale, captureProgress }: {
           <span style={{
             fontSize: '8px', color: color, fontWeight: 700,
           }}>
-            {morale}%
+            {cohesion}%
           </span>
         </div>
         <div style={{
@@ -190,7 +190,7 @@ function ArmyPanel({ faction, summary, morale, captureProgress }: {
           border: '1px solid rgba(80, 80, 80, 0.2)',
         }}>
           <div style={{
-            width: `${morale}%`,
+            width: `${cohesion}%`,
             height: '100%',
             background: `linear-gradient(90deg, ${color}90, ${color})`,
             borderRadius: 'var(--radius-sm)',
@@ -481,10 +481,10 @@ function PhaseOverlay() {
 }
 
 function StrengthComparison() {
-  const bMorale = blueMorale.value;
-  const rMorale = redMorale.value;
-  const total = bMorale + rMorale;
-  const bluePct = total > 0 ? (bMorale / total) * 100 : 50;
+  const bCohesion = blueCohesion.value;
+  const rCohesion = redCohesion.value;
+  const total = bCohesion + rCohesion;
+  const bluePct = total > 0 ? (bCohesion / total) * 100 : 50;
 
   return (
     <div style={{
@@ -503,7 +503,7 @@ function StrengthComparison() {
         marginBottom: '3px',
       }}>
         <span style={{ color: FACTION_COLOR.blue, fontWeight: 700 }}>
-          {bMorale}%
+          {bCohesion}%
         </span>
         <span style={{
           color: 'var(--color-text-muted)',
@@ -513,7 +513,7 @@ function StrengthComparison() {
           Strength
         </span>
         <span style={{ color: FACTION_COLOR.red, fontWeight: 700 }}>
-          {rMorale}%
+          {rCohesion}%
         </span>
       </div>
 
@@ -660,8 +660,8 @@ export function BattleScreenV2() {
   const unit = selectedUnit.value;
   const blue = blueSummary.value;
   const red = redSummary.value;
-  const bMorale = blueMorale.value;
-  const rMorale = redMorale.value;
+  const bCohesion = blueCohesion.value;
+  const rCohesion = redCohesion.value;
   const capBlue = captureBlueProgress.value;
   const capRed = captureRedProgress.value;
   const settingsOpen = useSignal(false);
@@ -698,13 +698,13 @@ export function BattleScreenV2() {
       <ArmyPanel
         faction="blue"
         summary={blue}
-        morale={bMorale}
+        cohesion={bCohesion}
         captureProgress={capRed}
       />
       <ArmyPanel
         faction="red"
         summary={red}
-        morale={rMorale}
+        cohesion={rCohesion}
         captureProgress={capBlue}
       />
 

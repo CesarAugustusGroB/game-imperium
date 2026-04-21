@@ -1,4 +1,5 @@
 import { Corners } from '../../components/motifs/Corners';
+import { Tooltip } from '../../components/Tooltip';
 
 export interface StatChipData {
   key: string;
@@ -6,6 +7,8 @@ export interface StatChipData {
   value: number;
   delta?: number;
   color: string;
+  label?: string;
+  description?: string;
 }
 
 interface StatChipProps {
@@ -16,7 +19,7 @@ interface StatChipProps {
 export function StatChip({ r, accent = '#d4a843' }: StatChipProps) {
   const deltaColor = (r.delta ?? 0) >= 0 ? '#7a9a6a' : '#c24a3a';
   const sign = (r.delta ?? 0) >= 0 ? '+' : '';
-  return (
+  const chip = (
     <div
       style={{
         display: 'flex', alignItems: 'center', gap: 6,
@@ -46,5 +49,34 @@ export function StatChip({ r, accent = '#d4a843' }: StatChipProps) {
         </span>
       )}
     </div>
+  );
+
+  if (!r.label && !r.description) return chip;
+
+  return (
+    <Tooltip
+      variant="rich"
+      position="below"
+      content={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 180 }}>
+          {r.label && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, color: r.color }}>
+              <span>{r.glyph}</span>
+              <span>{r.label}</span>
+              <span style={{ marginLeft: 'auto', fontFamily: 'var(--imp-font-mono)', color: 'var(--imp-text-hi)' }}>
+                {r.value.toLocaleString()}
+              </span>
+            </div>
+          )}
+          {r.description && (
+            <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.4 }}>
+              {r.description}
+            </div>
+          )}
+        </div>
+      }
+    >
+      {chip}
+    </Tooltip>
   );
 }

@@ -4,7 +4,7 @@ export type BattleFaction = 'blue' | 'red';
 export type BattlePhase = 'fighting' | 'victory' | 'draw';
 export type UnitRole = 'vanguard' | 'reserve' | 'guard';
 export type LieutenantOrder = 'auto' | 'attack' | 'defend' | 'skirmish' | 'mobile';
-export type VictoryMode = 'morale' | 'annihilation' | 'capture';
+export type VictoryMode = 'cohesion' | 'annihilation' | 'capture';
 
 /**
  * Movement AI profile key — picks a `MovementFn` from `MOVEMENT_PROFILES`
@@ -74,6 +74,14 @@ export interface BattleUnit {
   movementProfile: MovementProfileId;
   // Ranged weapon definition. Presence of this field marks the unit as ranged.
   ranged?: { range: number; cooldown: number };
+  // S24-02: morale multipliers — snapshotted at deploy from the army's
+  // pre-battle morale tier and constant for the whole battle (see S24-03).
+  // Defaults are 1.0 (neutral) so units created outside the spoke/battle
+  // bootstrap (projectile proxies, tests) behave as before S24.
+  /** Damage-dealt multiplier from pre-battle morale tier. 1.0 = neutral. */
+  moraleDamageMult: number;
+  /** Damage-taken multiplier from pre-battle morale tier. 1.0 = neutral. */
+  moraleDefenseMult: number;
 }
 
 export interface Projectile {

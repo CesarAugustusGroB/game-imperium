@@ -9,7 +9,7 @@ import { hexDistance, offsetToAxial, offsetToAxialFlatTop } from '../hex';
 import type { BattleFaction, BattleUnit, Projectile } from '../battle-types';
 import {
   CAPTURE_DURATION, DODGE_AGI_FACTOR, DODGE_MAX, DOUBLE_STRIKE_RATIO,
-  FLASH_DURATION, LUNGE_DURATION, MORALE_BREAK_THRESHOLD,
+  FLASH_DURATION, LUNGE_DURATION, COHESION_BREAK_THRESHOLD,
   SCREEN_SHAKE_DURATION, SHAKE_DURATION, HIT_PARTICLE_COUNT, DEATH_PARTICLE_COUNT,
 } from '../battle-config';
 import { playSfx } from '../../ui/sound/sfx';
@@ -75,10 +75,17 @@ export function performStrike(world: BattleWorld, attacker: BattleUnit, defender
   // Damage roll × ATK − DEF, minimum 1
   const roll = rollD6();
   let damage = Math.max(1, roll * attacker.stats.atk - defender.stats.def);
+  // S24-03: pre-battle morale tier — attacker's damage-dealt mult × defender's
+  // damage-taken mult. Both stashed at deploy (src/battle/index.ts), constant
+  // for the whole battle. Neutral multipliers are 1.0 so pre-S24 behavior is
+  // preserved when no spoke context is present.
+  damage *= attacker.moraleDamageMult;
+  damage *= defender.moraleDefenseMult;
   // Boudicca veteran bonus on blue units
   if (attacker.faction === 'blue' && world.veteranBonus > 0) {
     damage = Math.floor(damage * (1 + world.veteranBonus));
   }
+  damage = Math.max(1, Math.round(damage));
   defender.currentHp -= damage;
 
   // Hit animations
@@ -165,6 +172,7 @@ export function resolveProjectileImpact(world: BattleWorld, projectile: Projecti
       crackSeed: 0, reviveThreshold: 0,
       hasRevived: false, hasEngaged: false,
       movementProfile: 'vanguard-march' as const,
+      moraleDamageMult: 1.0, moraleDefenseMult: 1.0,
     }),
     // Always use snapshot stats so an archer death doesn't void shots in flight.
     stats: { atk: projectile.atkSnapshot, def: 0, hp: 1, agi: projectile.agiSnapshot },
@@ -217,7 +225,7 @@ export function checkVictory(world: BattleWorld): void {
   switch (world.config.victoryMode) {
     case 'capture':      checkCapture(world); break;
     case 'annihilation': checkAnnihilation(world); break;
-    case 'morale':       checkMorale(world); break;
+    case 'cohesion':     checkCohesion(world); break;
   }
 }
 
@@ -265,11 +273,11 @@ function checkCapture(world: BattleWorld): void {
   }
 }
 
-function checkMorale(world: BattleWorld): void {
+function checkCohesion(world: BattleWorld): void {
   for (const faction of ['blue', 'red'] as BattleFaction[]) {
     const current = getBattleFactionStrength(world, faction);
     const starting = world.startingStrength.get(faction) ?? 1;
-    if (current <= 0 || current / starting < MORALE_BREAK_THRESHOLD) {
+    if (current <= 0 || current / starting < COHESION_BREAK_THRESHOLD) {
       world.phase = 'victory';
       world.winner = faction === 'blue' ? 'red' : 'blue';
       return;

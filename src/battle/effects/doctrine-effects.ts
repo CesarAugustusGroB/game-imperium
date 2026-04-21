@@ -10,6 +10,7 @@
 import type { DoctrineEffect } from '../../game/items/doctrine';
 import { ALLY_SPAWN_HP_RATIO, MILITIA_SPAWN_HP_RATIO } from '../battle-config';
 import { findReinforcementHex } from '../deployment';
+import { pickAllyCohort } from '../../game/army/cohort-data';
 import { EffectRegistry, type EffectContext } from './EffectRegistry';
 
 export const doctrineRegistry = new EffectRegistry<DoctrineEffect>();
@@ -56,12 +57,16 @@ export function registerDoctrineEffects(): void {
   });
 
   // ── ally-units: allied reserves ──
+  // Each ally is drawn from the player's recruitable roster (minus gold-reserved sprites).
   doctrineRegistry.register('ally-units', (effect, ctx) => {
     const { engine } = ctx;
     for (let i = 0; i < effect.count; i++) {
       const hex = findReinforcementHex(engine, 'blue');
       if (!hex) break;
-      const u = engine.addUnit('blue', hex, `Allied ${i + 1}`, 'reserve');
+      const ally = pickAllyCohort();
+      const u = ally
+        ? engine.addUnit('blue', hex, `${ally.name} (Allied)`, ally.role, { ...ally.stats }, ally.spriteId, ally.movementProfile)
+        : engine.addUnit('blue', hex, `Allied ${i + 1}`, 'reserve');
       u.currentHp = Math.floor(u.stats.hp * ALLY_SPAWN_HP_RATIO);
     }
   });

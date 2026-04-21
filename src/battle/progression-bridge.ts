@@ -26,6 +26,7 @@ import type { DoctrineEffect } from '../game/items/doctrine';
 import { doctrineRegistry } from './effects';
 import { getProvinceEffects, provinces } from '../game/province/province-store';
 import { consumeCrusadeBattle, warCryActive, pendingEnemyConversions } from '../game/progression/strategic-store';
+import { pickAllyCohort } from '../game/army/cohort-data';
 import { isFinalBattle } from './index';
 
 /** Apply every progression-driven effect on top of a freshly-deployed BattleState. */
@@ -91,13 +92,17 @@ function applyCommanderPerks(state: BattleState): void {
     state.veteranBonus = capped * VETERAN_BONUS_PER_STACK + excess * VETERAN_BONUS_ABOVE_CAP;
   }
 
-  // Augustus — extra allied units per alliance (up to 4)
+  // Augustus — extra allied units per alliance (up to 4).
+  // Each ally is drawn from the player's recruitable roster (minus gold-reserved sprites).
   if (selectedCommander.value?.id === 'augustus') {
     const extraUnits = Math.min(allianceCount.value, 4);
     for (let i = 0; i < extraUnits; i++) {
       const hex = findReinforcementHex(state, 'blue');
       if (!hex) break;
-      const unit = state.addUnit('blue', hex, `Allied ${i + 1}`, 'reserve');
+      const ally = pickAllyCohort();
+      const unit = ally
+        ? state.addUnit('blue', hex, `${ally.name} (Allied)`, ally.role, { ...ally.stats }, ally.spriteId, ally.movementProfile)
+        : state.addUnit('blue', hex, `Allied ${i + 1}`, 'reserve');
       unit.currentHp = Math.floor(unit.stats.hp * ALLY_SPAWN_HP_RATIO);
     }
   }

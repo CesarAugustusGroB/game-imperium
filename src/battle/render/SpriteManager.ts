@@ -43,8 +43,11 @@ export class SpriteManager {
     bg.src = bgSrc;
 
     // Default faction:role sprites (fallback when a unit has no spriteId).
+    // IMPORTANT: must NEVER reference a "fully-gold coin" sprite listed in
+    // GOLD_RESERVED_SPRITE_IDS (src/game/army/cohort-data.ts) — those are
+    // narrative-reserved and must not appear as a random fallback.
     this.loadShield('/asset/soldiers/spartan_rare_soldier.png',               (c) => { this.shields.set('blue:vanguard', c); });
-    this.loadShield('/asset/soldiers/spartan_royal_super-rare_soldier.png',   (c) => { this.shields.set('blue:reserve',  c); });
+    this.loadShield('/asset/soldiers/roman_legionary_uncommon_soldier.png',   (c) => { this.shields.set('blue:reserve',  c); });
     this.loadShield('/asset/soldiers/athens_hoplite_uncommon_soldier.png',    (c) => { this.shields.set('blue:guard',    c); });
     this.loadShield('/asset/soldiers/persian_immortal_uncommon_soldier.png',  (c) => { this.shields.set('red:vanguard',  c); });
     this.loadShield('/asset/soldiers/persian_immortal_uncommon_soldier.png',  (c) => { this.shields.set('red:reserve',   c); });
@@ -61,6 +64,7 @@ export class SpriteManager {
       samurai_uncommon:         '/asset/soldiers/samurai_uncommon_soldier.png',
       roman_legionary_uncommon: '/asset/soldiers/roman_legionary_uncommon_soldier.png',
       roman_hastatii_common:    '/asset/soldiers/roman_hastatii_common_soldier.png',
+      roman_militia_common:     '/asset/soldiers/roman_militia_common_soldier.png',
       roman_velite_uncommon:    '/asset/soldiers/roman_velite_uncommon_soldier.png',
       roman_princeps_rare:      '/asset/soldiers/roman_princeps_rare_soldier.png',
       roman_triarii_super_rare: '/asset/soldiers/roman_triarii_super-rare_soldier.png',

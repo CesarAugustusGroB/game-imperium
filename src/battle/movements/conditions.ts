@@ -56,8 +56,8 @@ export function isOutnumbered(radius = 2): UnitPredicate {
   };
 }
 
-/** True while this faction's remaining strength is above `fraction` of starting. */
-export function hasMorale(fraction: number): UnitPredicate {
+/** True while this faction's remaining strength is above `fraction` of starting (faction cohesion — HP-based, distinct from per-army morale stat). */
+export function hasCohesion(fraction: number): UnitPredicate {
   return (engine, unit) => {
     const current = engine.getBattleFactionStrength(unit.faction);
     // Engine doesn't expose startingStrength; approximate via sum of max HP.

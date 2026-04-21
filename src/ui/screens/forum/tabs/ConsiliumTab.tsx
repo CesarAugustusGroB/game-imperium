@@ -12,6 +12,7 @@ import { OrnatePanel } from '../../../components/OrnatePanel';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
+import { EmbarkCard } from '../panels/EmbarkCard';
 
 /** Static slot-position labels — flavor, not state. */
 const SLOT_LABELS = ['Consiliarius', 'Legatus', 'Augur'];
@@ -117,28 +118,41 @@ export function ConsiliumTab() {
           </OrnatePanel>
         </div>
 
-        {/* ── RIGHT: detail ── */}
-        <OrnatePanel
-          accent={accent}
-          style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto' }}
-        >
-          {currentSelection ? (
-            <AdvisorDetail
-              advisor={currentSelection.advisor}
-              slotIndex={currentSelection.slotIndex}
-              anyEmptySeat={slots.some((s) => s === null)}
-              onOfferSeat={() => handleOfferSeat(currentSelection.advisor)}
-              onDismiss={() => {
-                if (currentSelection.slotIndex !== null) {
-                  handleDismiss(currentSelection.slotIndex);
-                }
-              }}
-              accent={accent}
-            />
-          ) : (
-            <EmptyDetail accent={accent} />
-          )}
-        </OrnatePanel>
+        {/* ── RIGHT: detail (top) + campaign preview + embark (bottom) ── */}
+        <div style={{
+          display: 'flex', flexDirection: 'column', gap: 12,
+          minHeight: 0,
+        }}>
+          <OrnatePanel
+            accent={accent}
+            style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'auto' }}
+          >
+            {currentSelection ? (
+              <AdvisorDetail
+                advisor={currentSelection.advisor}
+                slotIndex={currentSelection.slotIndex}
+                anyEmptySeat={slots.some((s) => s === null)}
+                onOfferSeat={() => handleOfferSeat(currentSelection.advisor)}
+                onDismiss={() => {
+                  if (currentSelection.slotIndex !== null) {
+                    handleDismiss(currentSelection.slotIndex);
+                  }
+                }}
+                accent={accent}
+              />
+            ) : (
+              <EmptyDetail accent={accent} />
+            )}
+          </OrnatePanel>
+
+          {/* Campaign preview + Embark — pinned to the bottom of the right column.
+              EmbarkCard renders the planned spoke (all nodes as a chip row) and
+              owns the embark handler. Disabled state flows through naturally
+              when plannedSpoke is null or empty. */}
+          <div style={{ flexShrink: 0 }}>
+            <EmbarkCard accent={accent} />
+          </div>
+        </div>
       </div>
     </>
   );

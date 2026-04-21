@@ -2,8 +2,8 @@ import type { BattleConfig, UnitStats, UnitRole } from './battle-types';
 import { HEX_SIZE } from './hex';
 
 // ── Combat ──
-/** Fraction of starting HP below which a faction's morale breaks and they lose (morale victory mode). */
-export const MORALE_BREAK_THRESHOLD = 0.3;
+/** Fraction of starting HP below which a faction's cohesion breaks and they lose (cohesion victory mode). */
+export const COHESION_BREAK_THRESHOLD = 0.3;
 /** Damage multiplier per Boudicca veteran stack (0.04 = +4%/stack). S9-08: reduced from 0.05, soft-capped above 12. */
 export const VETERAN_BONUS_PER_STACK = 0.04;
 /** Stacks at which veteran bonus hits diminishing returns (+1%/stack above this). */

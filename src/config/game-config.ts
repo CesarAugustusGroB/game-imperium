@@ -245,10 +245,10 @@ export const ASSETS = {
     commander: '/asset/soldiers/commander_leader_card.png',
   },
   commanders: {
-    pope:     '/asset/characters/char_pope_innocent.png',
-    boudicca: '/asset/characters/char_boudicca.png',
-    augustus:  '/asset/characters/char_caesar_augustus.png',
-    crassus:  '/asset/characters/char_marcus_crassus.png',
+    pope:     '/asset/characters/char_pope_leo.png',
+    boudicca: '/asset/characters/char_boudicca_v2.png',
+    augustus:  '/asset/characters/char_caesar_augustus_v2.png',
+    crassus:  '/asset/characters/char_marcus_crassus_v2.jpeg',
   },
   ui: {
     curtainLeft: '/asset/ui/cortina_izq.png',
