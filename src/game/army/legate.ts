@@ -30,6 +30,16 @@ export type LegateEffect =
   | {
       type: 'random-rally';
       multiplier: number;
+    }
+  /**
+   * Additive shift to the attached army's pre-battle morale (S24). Consumed
+   * by the `legatusContributor` in `src/game/army/morale.ts`, NOT by the
+   * in-battle effect pipeline — the in-battle handler is a no-op.
+   * `amount` is a signed integer delta from `BASE_MORALE` (100).
+   */
+  | {
+      type: 'morale-bonus';
+      amount: number;
     };
 
 /**

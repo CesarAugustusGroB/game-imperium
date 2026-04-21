@@ -58,6 +58,18 @@ export const LEGATE_TRAITS: readonly LegateTrait[] = [
     description: '+25% to all stats of one random friendly unit at battle start.',
     effect: { type: 'random-rally', multiplier: 0.25 },
   },
+  {
+    id: 'charismatic',
+    name: 'Charismatic',
+    description: '+15 pre-battle morale. Pushes a neutral army into Resolute.',
+    effect: { type: 'morale-bonus', amount: 15 },
+  },
+  {
+    id: 'inspiring',
+    name: 'Inspiring',
+    description: '+25 pre-battle morale. The troops fight for a beloved commander.',
+    effect: { type: 'morale-bonus', amount: 25 },
+  },
 ] as const;
 
 /** Lookup a trait definition by id, or `undefined` if not found. */

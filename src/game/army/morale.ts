@@ -16,6 +16,7 @@
  */
 
 import type { Spoke } from '../progression/spoke';
+import { getLegateTraitById } from './legate-traits';
 
 // ── Tier table ─────────────────────────────────────────────────────────────
 
@@ -92,10 +93,33 @@ export function __resetMoraleContributors(): void {
   contributors.length = 0;
 }
 
-// ── Stub contributors (MVP wiring; concrete sources plug in via later tickets) ──
-//
-// Legatus is intentionally NOT registered here — S24-04 wires it once the
-// legate trait schema supports morale bonuses.
+// ── Built-in contributors ──────────────────────────────────────────────────
+
+/**
+ * S24-04: legatus trait contributor. Reads the spoke's bound legate, resolves
+ * each `traitId` via the `LEGATE_TRAITS` catalog, and emits a `MoraleModifier`
+ * for every trait whose effect is `morale-bonus`. Other effect types (stat-
+ * bonus, lieutenant-preset, random-rally) are handled by the in-battle legate
+ * effect pipeline and ignored here.
+ */
+function legatusContributor(spoke: Spoke): MoraleModifier[] {
+  const legate = spoke.boundLegate;
+  if (!legate) return [];
+  const modifiers: MoraleModifier[] = [];
+  for (const traitId of legate.traitIds) {
+    const trait = getLegateTraitById(traitId);
+    if (!trait) continue;
+    if (trait.effect.type !== 'morale-bonus') continue;
+    modifiers.push({
+      source: 'legatus',
+      label: `Legatus: ${trait.name}`,
+      delta: trait.effect.amount,
+    });
+  }
+  return modifiers;
+}
+
+// ── Stub contributors (future tickets wire them) ──
 
 function consiliumContributor(_spoke: Spoke): MoraleModifier[] {
   // Future: advisor opinions, mandate, crisis state.
@@ -112,6 +136,7 @@ function homeSoilContributor(_spoke: Spoke): MoraleModifier[] {
   return [];
 }
 
+registerMoraleContributor(legatusContributor);
 registerMoraleContributor(consiliumContributor);
 registerMoraleContributor(doctrinaeContributor);
 registerMoraleContributor(homeSoilContributor);

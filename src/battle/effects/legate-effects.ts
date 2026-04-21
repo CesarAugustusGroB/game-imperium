@@ -49,6 +49,14 @@ export function registerLegateEffects(): void {
     pick.stats.agi = Math.max(1, Math.floor(pick.stats.agi * (1 + effect.multiplier)));
     pick.currentHp = pick.stats.hp;
   });
+
+  // ── morale-bonus: S24 pre-battle morale shift ──
+  // No-op in the in-battle pipeline. This trait type is consumed by
+  // `legatusContributor` in `src/game/army/morale.ts` at spoke-view / battle-
+  // entry time — by the time we reach here the tier is already stashed on
+  // every unit's `moraleDamageMult` / `moraleDefenseMult`. Registering an
+  // explicit no-op silences the "no handler" registry warning.
+  legateRegistry.register('morale-bonus', () => {});
 }
 
 /** Apply one Legate trait effect to `faction`'s units. */
