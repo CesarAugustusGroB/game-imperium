@@ -25,6 +25,7 @@ import { TERRAIN_DATA } from '../../data/terrain-data';
 import type { TerrainType } from '../../data/terrain-data';
 import { getTradeGoodsForTerrain, TRADE_GOOD_DATA } from '../../data/trade-goods';
 import type { TradeGoodType } from '../../data/trade-goods';
+import { IUNIORES } from '../../config/game-config';
 
 // ── Province signals ──
 
@@ -306,6 +307,13 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
       if (good.flatGold > 0)     provIncome.gold     = (provIncome.gold     ?? 0) + good.flatGold;
       if (good.flatFaith > 0)    provIncome.faith    = (provIncome.faith    ?? 0) + good.flatFaith;
       if (good.flatMomentum > 0) provIncome.momentum = (provIncome.momentum ?? 0) + good.flatMomentum;
+    }
+
+    // Iuniores: population × per-pop ratio (S25-02 / FT-IUN).
+    // Placed before governor income-bonus so future iuniores-targeting traits can enhance yield.
+    const iunioresYield = Math.floor(prov.population * IUNIORES.perPop);
+    if (iunioresYield > 0) {
+      provIncome.iuniores = iunioresYield;
     }
 
     // Governor income-bonus trait applied after multipliers
