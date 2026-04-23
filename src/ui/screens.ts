@@ -1,13 +1,13 @@
 import { signal } from '@preact/signals';
 import { selectedCommander } from '../game/core/game-state';
 import { playSfx } from './sound/sfx';
-import { switchTrackForScreen } from './sound/music';
 import { activeForumTab } from './screens/forum/state';
 import type { ForumTab } from './screens/forum/state';
 
 export type ScreenName =
   | 'title'
   | 'commander-select'
+  | 'quick-battle'
   | 'forum'
   | 'hub'
   | 'doctrine'
@@ -22,7 +22,7 @@ export type ScreenName =
   | 'victory'
   | 'defeat';
 
-const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'node-map', 'battle', 'battleV2', 'post-battle', 'victory', 'defeat'];
+const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'quick-battle', 'forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'node-map', 'battle', 'battleV2', 'post-battle', 'victory', 'defeat'];
 const REQUIRES_RUN: ScreenName[] = ['forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'node-map', 'post-battle', 'victory', 'defeat'];
 
 /**
@@ -100,7 +100,6 @@ export function navigateTo(screen: ScreenName): void {
     currentScreen.value = screen;
     window.location.hash = screen;
     applyScreenDOM(screen);
-    switchTrackForScreen(screen);
     playSfx('ui_navigate');
     return;
   }
@@ -114,7 +113,6 @@ export function navigateTo(screen: ScreenName): void {
     currentScreen.value = screen;
     window.location.hash = screen;
     applyScreenDOM(screen);
-    switchTrackForScreen(screen);
     transitionState.value = 'entering';
     window.setTimeout(() => {
       transitionState.value = 'idle';

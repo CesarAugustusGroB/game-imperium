@@ -77,6 +77,11 @@ export class SpriteManager {
       companion_super_rare:     '/asset/soldiers/companion_super-rare_soldier.png',
       athen_hoplite_elite_super_rare: '/asset/soldiers/athen_hoplite-elite_super-rare_soldier.png',
       makedon_hetairoi_secret_rare: '/asset/soldiers/makedon_hetairoi_secret-rare_cavalry.png',
+      gallic_clansmen_common:       '/asset/soldiers/gallic_clansmen_common_soldier.png',
+      gallic_neitos_uncommon:       '/asset/soldiers/gallic_neitos_uncommon_soldier.png',
+      gallic_gaesatae_rare:         '/asset/soldiers/gallic_gaesatae_rare_soldier.png',
+      gallic_noble_horse_rare:      '/asset/soldiers/gallic_noble_horse_rare_cavalry.png',
+      gallic_vergobret_super_rare:  '/asset/soldiers/gallic_vergobret_super-rare_soldier.png',
     };
     for (const [id, path] of Object.entries(soldiers)) {
       this.loadShield(path, (c) => { this.shields.set(id, c); });

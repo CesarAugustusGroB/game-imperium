@@ -26,6 +26,28 @@ export const COMMANDERS: Commander[] = [
       cooldown: 'unlimited',
     },
     startingResources: { gold: 3, faith: 2, influence: 0, momentum: 0 },
+    archetype: 'Religious',
+    archetypeDescription: 'Faith guides my people. Through devotion and righteousness, we will build the greatest civilization the world has ever known.',
+    startingBonuses: [
+      '+1 Faith at spoke start',
+      'Bonus Faith from prayer and relic nodes',
+      'Deus Vult ability unlocked',
+    ],
+    playstyleFocus: ['Faith', 'Culture', 'Unity'],
+    strategicAbilities: [
+      { name: 'Call Crusade', description: 'Rally religious armies to your cause.', stars: 3 },
+      { name: 'Miracle', description: 'Inspire your people with divine intervention.', stars: 2 },
+    ],
+    uniqueUnits: [
+      { name: 'Templar Knights', description: 'Elite religious cavalry with unwavering faith.' },
+      { name: 'Grand Cathedral', description: 'Spreads faith and increases cultural influence.' },
+    ],
+    victoryPaths: [
+      { name: 'Domination', description: 'Spread your faith through conquest.', progress: 2 },
+      { name: 'Religious', description: 'Convert the world to your faith.', progress: 3 },
+      { name: 'Cultural', description: 'Build wonders that inspire generations.', progress: 3 },
+    ],
+    portraitPosition: 'center top',
   },
   {
     id: 'boudicca',
@@ -52,13 +74,35 @@ export const COMMANDERS: Commander[] = [
       cooldown: 'once-per-battle',
     },
     startingResources: { gold: 2, faith: 0, influence: 0, momentum: 3 },
+    archetype: 'Warlord',
+    archetypeDescription: 'Iron and fire forge nations. The strong rule, the weak serve, and every battle makes my people more formidable than the last.',
+    startingBonuses: [
+      '+3 Momentum at run start',
+      'Each victory grants Veteran Stacks (+5% damage)',
+      'War Cry ability unlocked',
+    ],
+    playstyleFocus: ['Combat', 'Momentum', 'Raiding'],
+    strategicAbilities: [
+      { name: 'War Cry', description: 'All units strike first — no cooldown on opening round.', stars: 3 },
+      { name: 'Fury Charge', description: 'Lunge forward and crush the enemy line.', stars: 2 },
+    ],
+    uniqueUnits: [
+      { name: 'Gaesatae Berserkers', description: 'Naked shock infantry that hit harder as wounds mount.' },
+      { name: 'Oppidum Stronghold', description: 'Tribal fortress that stockpiles Momentum between battles.' },
+    ],
+    victoryPaths: [
+      { name: 'Domination', description: 'Crush every civilization that opposes you.', progress: 4 },
+      { name: 'Raiding', description: 'Plunder the known world for glory and gold.', progress: 3 },
+      { name: 'Cultural', description: 'Force your warrior code onto others.', progress: 1 },
+    ],
+    portraitPosition: 'center top',
   },
   {
     id: 'augustus',
     name: 'Augustus',
     faction: 'blue',
     culture: 'Roman / Imperial',
-    portrait: '/asset/characters/char_caesar_augustus_v2.png',
+    portrait: '/asset/characters/char_caesar_augustus_v3.png',
     quote: 'Why fight when others can fight for you?',
     passive: {
       name: 'Web of Alliances',
@@ -78,13 +122,35 @@ export const COMMANDERS: Commander[] = [
       cooldown: 'once-per-battle',
     },
     startingResources: { gold: 2, faith: 0, influence: 2, momentum: 0 },
+    archetype: 'Diplomat',
+    archetypeDescription: 'Empires are not built by swords alone. The right word in the right ear buys a legion and costs no blood.',
+    startingBonuses: [
+      '+2 Influence at run start',
+      'Each alliance grants a free allied unit in battle',
+      'Manipulate ability unlocked',
+    ],
+    playstyleFocus: ['Diplomacy', 'Intrigue', 'Alliances'],
+    strategicAbilities: [
+      { name: 'Manipulate', description: 'Rewrite a node outcome — redirect wars and reveal paths.', stars: 3 },
+      { name: 'Turncoat', description: 'Turn an enemy unit to your banner mid-battle.', stars: 2 },
+    ],
+    uniqueUnits: [
+      { name: 'Praetorian Guard', description: 'Elite bodyguard that grows stronger with each alliance.' },
+      { name: 'Imperial Forum', description: 'Broadcasts Influence and sways neighbouring provinces.' },
+    ],
+    victoryPaths: [
+      { name: 'Diplomatic', description: 'Unite the world under a single banner.', progress: 4 },
+      { name: 'Cultural', description: 'Let Rome\'s shadow fall over every court.', progress: 3 },
+      { name: 'Domination', description: 'Conquer only what refuses to kneel.', progress: 2 },
+    ],
+    portraitPosition: 'center top',
   },
   {
     id: 'crassus',
     name: 'Marcus Crassus',
     faction: 'purple',
     culture: 'Roman / Patrician',
-    portrait: '/asset/characters/char_marcus_crassus_v2.jpeg',
+    portrait: '/asset/characters/char_marcus_crassus_v3.png',
     quote: 'Everything has a price, and I can afford all of it.',
     passive: {
       name: 'War Profiteer',
@@ -104,5 +170,27 @@ export const COMMANDERS: Commander[] = [
       cooldown: 'unlimited',
     },
     startingResources: { gold: 8, faith: 0, influence: 0, momentum: 0 },
+    archetype: 'Merchant',
+    archetypeDescription: 'Gold buys legions, gold buys senators, gold buys history itself. Everything has a price — and I can afford all of it.',
+    startingBonuses: [
+      '+8 Gold at run start',
+      '+50% gold from all sources',
+      'Better shop prices and options',
+    ],
+    playstyleFocus: ['Economy', 'Mercenaries', 'Trade'],
+    strategicAbilities: [
+      { name: 'Golden Opportunity', description: 'Unlock a bonus trade spoke brimming with wealth.', stars: 3 },
+      { name: 'Buy Reinforcements', description: 'Deploy mercenaries mid-battle when gold allows.', stars: 2 },
+    ],
+    uniqueUnits: [
+      { name: 'Mercenary Veterans', description: 'Hired blades that deploy at 70% HP for a price.' },
+      { name: 'Patrician Villa', description: 'Gold estate that compounds wealth every spoke.' },
+    ],
+    victoryPaths: [
+      { name: 'Economic', description: 'Own every trade route on the map.', progress: 4 },
+      { name: 'Diplomatic', description: 'Buy loyalty where conquest would fail.', progress: 2 },
+      { name: 'Domination', description: 'Bankroll the largest army history has seen.', progress: 3 },
+    ],
+    portraitPosition: 'center top',
   },
 ];

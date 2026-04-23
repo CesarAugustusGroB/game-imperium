@@ -12,7 +12,6 @@ import {
   FLASH_DURATION, LUNGE_DURATION, COHESION_BREAK_THRESHOLD,
   SCREEN_SHAKE_DURATION, SHAKE_DURATION, HIT_PARTICLE_COUNT, DEATH_PARTICLE_COUNT,
 } from '../battle-config';
-import { playSfx } from '../../ui/sound/sfx';
 import {
   getBattleFactionStrength, getBattleFactionUnits, getUnitAt, spawnParticles,
 } from './unit-system';
@@ -52,7 +51,6 @@ export function resolveCombat(
       text: 'CRIT!!', hex: { q: attacker.hex.q, r: attacker.hex.r },
       color: '#ffdd00', timer: FLOAT_TEXT_DURATION, duration: FLOAT_TEXT_DURATION,
     });
-    playSfx('crit');
     performStrike(world, attacker, defender);
   }
 }
@@ -68,7 +66,6 @@ export function performStrike(world: BattleWorld, attacker: BattleUnit, defender
       text: 'DODGE!', hex: { q: defender.hex.q, r: defender.hex.r },
       color: '#44ddff', timer: FLOAT_TEXT_DURATION, duration: FLOAT_TEXT_DURATION,
     });
-    playSfx('dodge');
     return;
   }
 
@@ -93,7 +90,6 @@ export function performStrike(world: BattleWorld, attacker: BattleUnit, defender
   attacker.flashTimer = FLASH_DURATION;
   defender.shakeTimer = SHAKE_DURATION;
   defender.flashTimer = FLASH_DURATION;
-  playSfx('hit');
   spawnParticles(world, defender.hex, HIT_PARTICLE_COUNT, '#ffaa44', Math.PI * 2, 30, 0.5);
 
   applyDeathCheck(world, defender);
@@ -215,7 +211,6 @@ export function applyDeathCheck(world: BattleWorld, unit: BattleUnit): void {
   spawnParticles(world, unit.hex, DEATH_PARTICLE_COUNT,
     unit.faction === 'blue' ? '#5588dd' : '#dd5555', Math.PI * 2, 60, 1.2);
   world.screenShake = SCREEN_SHAKE_DURATION;
-  playSfx('death');
 }
 
 // ── Victory ──

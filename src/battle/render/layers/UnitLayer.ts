@@ -45,22 +45,47 @@ export class UnitLayer implements Layer {
 
       // Veteran flames (Boudicca bonus — blue units only).
       if (unit.faction === 'blue' && state.veteranBonus > 0) {
-        const flames = Math.floor(state.veteranBonus / 0.10);
-        if (flames > 0) {
-          const { ctx } = rc;
-          ctx.save();
-          ctx.font      = '10px sans-serif';
-          ctx.textAlign = 'center';
-          for (let f = 0; f < Math.min(flames, 5); f++) {
-            ctx.fillText('\uD83D\uDD25', center.x - 8 + f * 8, center.y - size * 0.6);
-          }
-          ctx.restore();
-        }
+        const flames = Math.min(5, Math.floor(state.veteranBonus / 0.10));
+        if (flames > 0) this.drawVeteranFlames(rc.ctx, center.x, center.y - size * 0.6, flames);
       }
     }
   }
 
   // ── Private helpers ──
+
+  /** Cached flame emoji offscreen canvas — built lazily on first use. */
+  private flameSprite: HTMLCanvasElement | null = null;
+  private static readonly FLAME_SIZE = 14;
+
+  private drawVeteranFlames(
+    ctx: CanvasRenderingContext2D,
+    cx: number,
+    cy: number,
+    flames: number,
+  ): void {
+    const sprite = this.flameSprite ?? this.buildFlameSprite();
+    const s = UnitLayer.FLAME_SIZE;
+    const startX = cx - 8 - s / 2;
+    for (let f = 0; f < flames; f++) {
+      ctx.drawImage(sprite, startX + f * 8, cy - s / 2, s, s);
+    }
+  }
+
+  private buildFlameSprite(): HTMLCanvasElement {
+    const s = UnitLayer.FLAME_SIZE;
+    const dpr = window.devicePixelRatio || 1;
+    const cv = document.createElement('canvas');
+    cv.width  = Math.round(s * dpr);
+    cv.height = Math.round(s * dpr);
+    const cctx = cv.getContext('2d')!;
+    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cctx.font         = '10px sans-serif';
+    cctx.textAlign    = 'center';
+    cctx.textBaseline = 'middle';
+    cctx.fillText('🔥', s / 2, s / 2);
+    this.flameSprite = cv;
+    return cv;
+  }
 
   private drawUnit(rc: RenderContext, unit: BattleUnit, center: Point): void {
     const { ctx, state, sprites } = rc;

@@ -3,9 +3,18 @@
 WebGL2 grand strategy map renderer (EU4/CK3 style) with dice-based combat and AI armies.
 
 ## Tech Stack
-- Raw WebGL2 + custom GLSL uber-shader (5-layer compositing)
-- Vite + TypeScript
-- No runtime dependencies
+- Raw WebGL2 + custom GLSL uber-shader (5-layer compositing) for the map renderer
+- Vite + TypeScript, Preact for UI
+
+### UI stack (cinematic/menu layer)
+- Canvas particle effects via `src/ui/components/GoldDust.tsx` — hand-rolled RAF loop (~90 lines, 0 deps), pauses on `document.hidden`, gates on `prefers-reduced-motion`. Used on TitleScreen; reusable anywhere (`<GoldDust count={14} className="..." />`). `@tsparticles/*` was tried and removed — class component via `preact/compat` froze the page in dev.
+- `@floating-ui/dom` — framework-agnostic tooltip/popover positioning (tooltips on action buttons, contextual popovers). No Preact wrapper exists; wire via `computePosition` + small custom hook when needed.
+- `class-variance-authority` + `clsx` — button/card variant system; use when a component has 3+ visual variants instead of CSS-in-JS strings.
+- `vite-imagetools` (dev dep) — generates AVIF/WebP + srcset at build time. **Heavy raster assets live in `src/assets/`** (not `public/`) so the plugin can transform them. Import pattern: `import pic from '../assets/foo.png?w=1600;2400&format=avif;webp;png&as=picture'` → `{ sources, img }` for a `<picture>` element. Type shim: `src/types/imagetools.d.ts`.
+- `lucide-preact` — icon set (bottom bar, inline icons).
+- Design tokens in `src/ui/design-tokens.css`; global animations in `src/ui/globals.css`; per-screen animations inline via `<style>` tags (see `TitleScreen.tsx`).
+- Fonts: Cinzel / EB Garamond / Cormorant / Inter Tight / JetBrains Mono loaded from Google Fonts in `index.html`.
+- Motion policy: pure CSS `@keyframes` + hand-rolled canvas for ambient effects. No framer-motion/gsap/tsparticles.
 
 ## Commands
 - `npm run dev` — start dev server (http://localhost:5173/)
@@ -22,7 +31,9 @@ WebGL2 grand strategy map renderer (EU4/CK3 style) with dice-based combat and AI
 - `src/ui/` — Preact screens + shared components
 - `src/ui/screens/forum/` — Imperium Forum shell (S22): sidebar, masthead, and all 6 domain tabs (Overview/Provinciae/Consilium/Exercitus/Doctrinae/Decreta)
 - `src/ui/components/motifs/` — SVG primitives for the Forum aesthetic (Laurel, LaurelWreath, Corners, MosaicBand, textures)
+- `src/assets/` — raster assets processed by vite-imagetools (e.g. `src/assets/backgrounds/roman_background.png`). Keep here, not in `public/`, for AVIF/WebP/srcset generation.
 - `public/textures/` — terrain_map.png (source of truth), id-map.png, heightmap.png, normalmap.png, borders.png
+- `public/asset/` — pre-sized, format-fixed raster assets served as-is (character portraits, soldier sprites, audio); skip for anything that should be format-optimized.
 - `public/data/` — provinces.json, nations.json, topology.json
 - `tools/` — Python texture generator, MCP server
 

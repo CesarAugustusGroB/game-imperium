@@ -1,5 +1,4 @@
 import { getAudioContext, sfxMuted, sfxVolume } from './sound';
-import { musicMuted } from './music';
 
 export type SfxName =
   | 'hit' | 'crit' | 'dodge' | 'death'
@@ -9,7 +8,7 @@ export type SfxName =
 
 /** Play a procedurally synthesized sound effect by name. */
 export function playSfx(name: SfxName, volume?: number): void {
-  if (musicMuted.value || sfxMuted.value) return;
+  if (sfxMuted.value) return;
 
   const ctx = getAudioContext();
   const vol = volume ?? 1.0;

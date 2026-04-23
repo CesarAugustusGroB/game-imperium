@@ -2,7 +2,8 @@ import type { BattleState } from '../battle-state';
 import type { Layer } from './Layer';
 import { Camera } from './Camera';
 import { SpriteManager } from './SpriteManager';
-import { buildRenderContext } from './RenderContext';
+import type { RenderContext } from './RenderContext';
+import { createRenderContext, updateRenderContext } from './RenderContext';
 import { spriteReloadTrigger } from '../battle-settings';
 
 import { BackgroundLayer }    from './layers/BackgroundLayer';
@@ -44,6 +45,16 @@ export class BattleRenderer {
 
   private hoveredHex: { q: number; r: number } | null = null;
   private lastSpriteReload = 0;
+
+  /** EMA per-layer cost in ms (key = layer.name). Read by FpsLayer. */
+  private perfStats = new Map<string, number>();
+  /** EMA total frame render cost in ms. */
+  private frameMsEma = 0;
+  /** EMA smoothing factor — lower = smoother but laggier. */
+  private static readonly PERF_EMA_ALPHA = 0.1;
+
+  /** Reused per-frame RenderContext — mutated in place to avoid allocations. */
+  private rc: RenderContext = createRenderContext();
 
   /** Toggle hex coordinate labels (mutated by BattleMode). */
   showCoords = false;
@@ -111,6 +122,11 @@ export class BattleRenderer {
     this.canvas.style.width  = width  + 'px';
     this.canvas.style.height = height + 'px';
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // imageSmoothing is part of the persistent drawing state — setting it
+    // once after setTransform is enough; no layer toggles it without a save/
+    // restore pair, so it stays in effect until the next resize.
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.imageSmoothingQuality = 'high';
 
     // Notify layers that support resize (e.g. GridLayer marks cache dirty)
     for (const layer of this.layers) {
@@ -134,11 +150,11 @@ export class BattleRenderer {
     }
 
     const { ctx } = this;
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
     ctx.clearRect(0, 0, this.w, this.h);
 
-    const rc = buildRenderContext(
+    const frameStart = performance.now();
+    updateRenderContext(
+      this.rc,
       ctx,
       this.state,
       this.w,
@@ -147,23 +163,57 @@ export class BattleRenderer {
       this.hoveredHex,
       this.showCoords,
       this.suppressVictoryOverlay,
+      frameStart,
     );
+    const rc = this.rc;
+    rc.perfStats = this.perfStats;
+    rc.frameMs   = this.frameMsEma;
+
+    const alpha = BattleRenderer.PERF_EMA_ALPHA;
 
     // ── World-space layers (translated by camera, optional screen shake) ──
     const restoreCamera = this.camera.begin(ctx, this.state.screenShake);
     for (const layer of this.layers) {
       if (layer.fixed) continue;
-      if (layer.enabled && layer.enabled(rc) === false) continue;
+      if (layer.enabled && layer.enabled(rc) === false) {
+        // Layer was skipped this frame — decay its recorded cost toward zero
+        // so the HUD doesn't show stale ms for disabled layers.
+        const prev = this.perfStats.get(layer.name) ?? 0;
+        if (prev > 0.001) this.perfStats.set(layer.name, prev * (1 - alpha));
+        continue;
+      }
+      const t0 = performance.now();
       layer.render(rc);
+      const dt = performance.now() - t0;
+      const prev = this.perfStats.get(layer.name) ?? dt;
+      this.perfStats.set(layer.name, prev + (dt - prev) * alpha);
     }
     restoreCamera();
 
     // ── Screen-space / HUD layers (drawn outside camera transform) ──
     for (const layer of this.layers) {
       if (!layer.fixed) continue;
-      if (layer.enabled && layer.enabled(rc) === false) continue;
+      if (layer.enabled && layer.enabled(rc) === false) {
+        const prev = this.perfStats.get(layer.name) ?? 0;
+        if (prev > 0.001) this.perfStats.set(layer.name, prev * (1 - alpha));
+        continue;
+      }
+      // Skip self-timing the FPS/HUD layer: its cost would be measuring itself.
+      if (layer.name === 'fps') {
+        layer.render(rc);
+        continue;
+      }
+      const t0 = performance.now();
       layer.render(rc);
+      const dt = performance.now() - t0;
+      const prev = this.perfStats.get(layer.name) ?? dt;
+      this.perfStats.set(layer.name, prev + (dt - prev) * alpha);
     }
+
+    const frameMs = performance.now() - frameStart;
+    this.frameMsEma = this.frameMsEma === 0
+      ? frameMs
+      : this.frameMsEma + (frameMs - this.frameMsEma) * alpha;
   }
 
   destroy(): void {

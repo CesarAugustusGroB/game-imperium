@@ -30,7 +30,7 @@ export class StarLayer implements Layer {
       // Hex highlight — faction tint, pulses while being captured.
       const baseAlpha  = 0.12 + captureRatio * 0.2;
       const pulseAlpha = captureRatio > 0
-        ? baseAlpha + 0.1 * Math.sin(Date.now() / 150)
+        ? baseAlpha + 0.1 * Math.sin(rc.time / 150)
         : baseAlpha;
       const color = faction === 'blue' ? '80, 140, 255' : '255, 80, 80';
       rc.fillHex(center, size, `rgba(${color}, ${pulseAlpha})`);

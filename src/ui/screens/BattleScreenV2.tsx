@@ -16,7 +16,7 @@ import {
 import type { BattleFactionSummary, BattleUnitSummary } from '../../battle/battle-signals';
 import type { UnitRole } from '../../battle/battle-types';
 import { CAPTURE_DURATION } from '../../battle/battle-config';
-import { gfxShadows, gfxCracks, gfxParticles, gfxHighRes, spriteReloadTrigger } from '../../battle/battle-settings';
+import { gfxShadows, gfxCracks, gfxParticles, gfxHighRes, gfxPerfHud, spriteReloadTrigger } from '../../battle/battle-settings';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('battle-v2-styles')) {
@@ -545,6 +545,26 @@ function StrengthComparison() {
 
 // ── Settings ──
 
+/** Inline Feather-style eye icon. `open` shows an open eye; `!open` adds a slash. */
+function EyeIcon({ open }: { open: boolean }) {
+  if (open) {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    );
+  }
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
 function ToggleRow({ label, description, value, onChange }: {
   label: string;
   description: string;
@@ -649,6 +669,12 @@ function SettingsPanel({ open }: { open: { value: boolean } }) {
           spriteReloadTrigger.value++;
         }}
       />
+      <ToggleRow
+        label="Perf HUD"
+        description="Frame ms + per-layer render cost"
+        value={gfxPerfHud.value}
+        onChange={(v) => { gfxPerfHud.value = v; }}
+      />
     </div>
   );
 }
@@ -665,6 +691,7 @@ export function BattleScreenV2() {
   const capBlue = captureBlueProgress.value;
   const capRed = captureRedProgress.value;
   const settingsOpen = useSignal(false);
+  const hudHidden    = useSignal(false);
 
   // Hide the old HTML battle HUD — this overlay replaces the top title/round
   // block and the coords dev button. The bottom bar stays visible: it carries
@@ -688,39 +715,67 @@ export function BattleScreenV2() {
       zIndex: 15,
       fontFamily: 'var(--font-family)',
     }}>
-      {/* Top bar: title + round */}
-      <TopBar />
+      {/* Hide-able UI — wrapped so the eye toggle removes every overlay and
+          lets the raw battle canvas (sprites + map) show in full glory. */}
+      {!hudHidden.value && (
+        <>
+          {/* Top bar: title + round */}
+          <TopBar />
 
-      {/* Strength comparison bar */}
-      <StrengthComparison />
+          {/* Strength comparison bar */}
+          <StrengthComparison />
 
-      {/* Army panels */}
-      <ArmyPanel
-        faction="blue"
-        summary={blue}
-        cohesion={bCohesion}
-        captureProgress={capRed}
-      />
-      <ArmyPanel
-        faction="red"
-        summary={red}
-        cohesion={rCohesion}
-        captureProgress={capBlue}
-      />
+          {/* Army panels */}
+          <ArmyPanel
+            faction="blue"
+            summary={blue}
+            cohesion={bCohesion}
+            captureProgress={capRed}
+          />
+          <ArmyPanel
+            faction="red"
+            summary={red}
+            cohesion={rCohesion}
+            captureProgress={capBlue}
+          />
 
-      {/* Selected unit info */}
-      {unit && !unit.isDying && (
-        <UnitInfoPanel unit={unit} />
+          {/* Selected unit info */}
+          {unit && !unit.isDying && (
+            <UnitInfoPanel unit={unit} />
+          )}
+        </>
       )}
 
-      {/* Settings gear button + panel */}
+      {/* Bottom-right controls — eye (hide UI) + gear (settings). Always
+          visible so the user can toggle the UI back on. */}
       <div style={{
         position: 'fixed',
         bottom: '16px',
         right: '16px',
         zIndex: 30,
         pointerEvents: 'auto',
+        display: 'flex',
+        gap: '8px',
       }}>
+        <button
+          onClick={() => { hudHidden.value = !hudHidden.value; }}
+          style={{
+            width: '36px', height: '36px',
+            borderRadius: 'var(--radius-sm)',
+            background: hudHidden.value
+              ? 'rgba(240, 208, 128, 0.15)'
+              : 'rgba(10, 10, 20, 0.7)',
+            border: `1px solid ${hudHidden.value ? 'rgba(240, 208, 128, 0.4)' : 'rgba(80, 80, 80, 0.3)'}`,
+            color: hudHidden.value ? 'var(--color-gold-primary)' : 'var(--color-text-muted)',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'all 0.15s ease',
+          }}
+          title={hudHidden.value ? 'Show UI' : 'Hide UI'}
+          aria-label={hudHidden.value ? 'Show UI' : 'Hide UI'}
+        >
+          <EyeIcon open={!hudHidden.value} />
+        </button>
         <button
           onClick={() => { settingsOpen.value = !settingsOpen.value; }}
           style={{
@@ -741,7 +796,7 @@ export function BattleScreenV2() {
           {'\u2699'}
         </button>
       </div>
-      <SettingsPanel open={settingsOpen} />
+      {!hudHidden.value && <SettingsPanel open={settingsOpen} />}
 
       {/* Phase overlay (victory/defeat/draw) */}
       {phase !== 'fighting' && <PhaseOverlay />}

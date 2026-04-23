@@ -20,6 +20,14 @@ export interface Commander {
   strategicAbility: CommanderAbility;
   tacticalAbility: CommanderAbility;
   startingResources: Record<ResourceType, number>;
+  archetype: 'Religious' | 'Warlord' | 'Diplomat' | 'Merchant';
+  archetypeDescription: string;
+  startingBonuses: string[];
+  playstyleFocus: string[];
+  strategicAbilities: Array<{ name: string; description: string; stars: number }>;
+  uniqueUnits: Array<{ name: string; description: string }>;
+  victoryPaths: Array<{ name: string; description: string; progress: number }>;
+  portraitPosition?: string;
 }
 
 /** Faction display colors for UI theming. */
@@ -29,6 +37,14 @@ export const FACTION_COLORS: Record<Faction, string> = {
   blue: '#4a7cc2',
   purple: '#8a5cc2',
   white: '#c0b8a8',
+};
+
+/** Archetype display colors for UI theming. */
+export const ARCHETYPE_COLORS: Record<Commander['archetype'], string> = {
+  Religious: '#d4a843',
+  Warlord:   '#c24a3a',
+  Diplomat:  '#4a7cc2',
+  Merchant:  '#8a5cc2',
 };
 
 /** Map each faction to its primary resource (earns 2x). White has no primary — universal access instead. */

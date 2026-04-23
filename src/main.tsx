@@ -1,5 +1,6 @@
 import './ui/design-tokens.css';
 import './ui/globals.css';
+import './ui/sound/music';
 import { render } from 'preact';
 import { effect } from '@preact/signals';
 import { App } from './ui/screens/App';

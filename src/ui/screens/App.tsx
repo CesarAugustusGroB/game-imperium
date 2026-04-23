@@ -2,9 +2,11 @@ import { currentScreen, navigateTo, transitionState } from '../screens';
 import type { ScreenName } from '../screens';
 import { ResourceBar } from '../components/ResourceBar';
 import { NotificationFeed } from '../components/NotificationFeed';
+import { MusicToggle } from '../components/MusicToggle';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TitleScreen } from './TitleScreen';
 import { CommanderSelectScreen } from './CommanderSelectScreen';
+import { QuickBattleScreen } from './QuickBattleScreen';
 import { NodeMapScreen } from './NodeMapScreen';
 import { PostBattleScreen } from './PostBattleScreen';
 import { VictoryScreen } from './VictoryScreen';
@@ -20,12 +22,13 @@ loadMetaSave();
  * Screens that should not render the global ResourceBar. The Forum shell
  * provides its own resource chips in the Masthead, so `forum` is bare too.
  */
-const BARE_SCREENS: ReadonlySet<ScreenName> = new Set(['title', 'commander-select', 'forum', 'battle', 'battleV2']);
+const BARE_SCREENS: ReadonlySet<ScreenName> = new Set(['title', 'commander-select', 'quick-battle', 'forum', 'battle', 'battleV2']);
 
 /** Map of screen id → component. Order matches navigation flow. */
 const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> = {
   'title': TitleScreen,
   'commander-select': CommanderSelectScreen,
+  'quick-battle': QuickBattleScreen,
   'forum': ForumShell,
   // Legacy routes — resolveScreen() in screens.ts rewrites them to `forum`
   // with the correct active tab. Entries kept here as safe fallbacks if the
@@ -95,6 +98,7 @@ export function App() {
         </div>
       </ErrorBoundary>
       <NotificationFeed />
+      <MusicToggle />
     </>
   );
 }

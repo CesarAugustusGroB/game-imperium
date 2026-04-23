@@ -14,3 +14,6 @@ export const gfxHighRes = signal(false);
 
 /** Bumped when sprites need reloading (renderer watches this). */
 export const spriteReloadTrigger = signal(0);
+
+/** Per-layer profiling HUD: expands the FPS counter with ms/layer + entity counts. */
+export const gfxPerfHud = signal(false);

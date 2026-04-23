@@ -14,7 +14,6 @@ import { EffectRegistry, type EffectContext } from './EffectRegistry';
 import {
   ABILITY_PARTICLE_COUNT, FLASH_DURATION, ROLE_STATS, SHAKE_DURATION,
 } from '../battle-config';
-import { playSfx } from '../../ui/sound/sfx';
 
 /** Ability effects identified by their in-game display name. */
 export type AbilityEffect =
@@ -40,7 +39,6 @@ export function registerAbilityEffects(): void {
         color: '#ffd700', timer: 0.8, duration: 0.8,
       });
       engine.spawnParticles(targetUnit.hex, ABILITY_PARTICLE_COUNT, '#ffd700', Math.PI * 2, 25, 1.0);
-      playSfx('ability_heal');
     } else {
       // Smite enemy — 2000 damage
       targetUnit.currentHp -= 2000;
@@ -51,7 +49,6 @@ export function registerAbilityEffects(): void {
         color: '#ffd700', timer: 0.8, duration: 0.8,
       });
       engine.spawnParticles(targetUnit.hex, ABILITY_PARTICLE_COUNT, '#ffd700', Math.PI * 2, 50, 0.8);
-      playSfx('ability_fire');
       engine.applyDeathCheck(targetUnit);
     }
   });
@@ -102,7 +99,6 @@ export function registerAbilityEffects(): void {
       hex: { q: Math.floor(cols / 2), r: Math.floor(rows / 2) },
       color: '#ff4444', timer: 1.0, duration: 1.0,
     });
-    playSfx('charge');
   });
 
   // ── Turncoat (Augustus) — convert enemy to blue at 50% HP ──

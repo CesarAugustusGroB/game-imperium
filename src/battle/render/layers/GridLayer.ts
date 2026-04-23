@@ -19,12 +19,17 @@ export class GridLayer implements Layer {
   private gridBlitX = 0;
   private gridBlitY = 0;
 
+  private coordCache: HTMLCanvasElement | null = null;
+  private coordCacheDirty = true;
+
   markDirty(): void {
     this.gridCacheDirty = true;
+    this.coordCacheDirty = true;
   }
 
   resize(_w: number, _h: number): void {
     this.gridCacheDirty = true;
+    this.coordCacheDirty = true;
   }
 
   render(rc: RenderContext): void {
@@ -37,8 +42,14 @@ export class GridLayer implements Layer {
     const ch = this.gridCache!.height / dpr;
     rc.ctx.drawImage(this.gridCache!, this.gridBlitX, this.gridBlitY, cw, ch);
 
-    // Live per-hex coord labels (debug) — drawn on top of the cache each frame
-    if (rc.showCoords) this.drawCoordLabels(rc);
+    // Debug coord labels — baked into a separate cache the first time they're
+    // requested, then blitted in a single drawImage per frame.
+    if (rc.showCoords) {
+      if (this.coordCacheDirty || !this.coordCache) this.buildCoordCache(rc);
+      const ccw = this.coordCache!.width / dpr;
+      const cch = this.coordCache!.height / dpr;
+      rc.ctx.drawImage(this.coordCache!, this.gridBlitX, this.gridBlitY, ccw, cch);
+    }
   }
 
   private buildCache(rc: RenderContext): void {
@@ -159,20 +170,39 @@ export class GridLayer implements Layer {
     this.gridCacheDirty = false;
   }
 
-  private drawCoordLabels(rc: RenderContext): void {
-    const { ctx, state, origin } = rc;
-    const size = state.config.hexSize;
+  /**
+   * Pre-render every hex's offset-coord label into an offscreen canvas that
+   * shares origin math with the main `gridCache`.  Lets the live render path
+   * replace thousands of `fillText` calls per frame with one `drawImage`.
+   */
+  private buildCoordCache(rc: RenderContext): void {
+    const dpr = window.devicePixelRatio || 1;
+    const size = rc.state.config.hexSize;
+    const { cols, rows } = rc.state.config;
     const isVertical = rc.flatTop;
 
-    ctx.font = '8px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+    const cacheW = (cols + 3) * size * 2;
+    const cacheH = (rows + 3) * size * 2;
+    const cacheOrigin = { x: size * 2, y: size * 2 };
 
-    for (const hex of state.gridHexes) {
-      const center = hexToPixel(hex, size, origin, isVertical);
-      const col = hex.q + Math.floor(hex.r / 2);
-      ctx.fillText(`${col},${hex.r}`, center.x, center.y);
+    const cache = document.createElement('canvas');
+    cache.width = Math.round(cacheW * dpr);
+    cache.height = Math.round(cacheH * dpr);
+    const cctx = cache.getContext('2d')!;
+    cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    cctx.font         = '8px monospace';
+    cctx.textAlign    = 'center';
+    cctx.textBaseline = 'middle';
+    cctx.fillStyle    = 'rgba(0, 0, 0, 0.75)';
+
+    for (const hex of rc.state.gridHexes) {
+      const center = hexToPixel(hex, size, cacheOrigin, isVertical);
+      const col    = hex.q + Math.floor(hex.r / 2);
+      cctx.fillText(`${col},${hex.r}`, center.x, center.y);
     }
+
+    this.coordCache = cache;
+    this.coordCacheDirty = false;
   }
 }
