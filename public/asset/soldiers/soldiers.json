@@ -202,6 +202,33 @@
       "tags": ["gallic", "celtic", "noble", "cavalry", "marcacoi", "iron-age", "rare", "cernunnos", "epona"]
     },
     {
+      "id": "gallic_noble_horse_super_rare",
+      "cohortId": "gallic-noble-horse-elite",
+      "file": "gallic_noble_horse_super-rare_cavalry.png",
+      "width": 0,
+      "height": 0,
+      "bytes": 0,
+      "rarity": "super-rare",
+      "format": "cavalry",
+      "culture": "Gallic Noble Horse — War-Leader (Marcacoi Elite)",
+      "era": "Late Iron Age Gaul (3rd c. BCE – 1st c. CE)",
+      "role": "elite-heavy-cavalry",
+      "weapon": "long La Tène iron longsword with gold-chased anthropomorphic hilt raised overhead + short iron dirk sheathed at the right hip",
+      "armor": "gilded iron mail hauberk with bronze shoulder-plates chased with Celtic knotwork over a blood-crimson padded arming tunic, gold hero-torc at the throat, crimson cloak pinned at the shoulder",
+      "helm": "gilded Celtic parade helm with Cernunnos stag-horn finials at the temples and a blood-crimson plume",
+      "shield": "small oval Celtic cavalry pelta with a gilded bronze rim, woad-blue field, and an embossed gold Epona mare-head boss",
+      "mount": "black stallion with dark mane and tail in three-quarter charge, bronze-and-gold studded leather tack",
+      "palette": ["gilded gold", "woad blue", "blood crimson", "weathered bronze", "iron-grey mail", "black stallion"],
+      "culturalMotif": {
+        "primary":   "Cernunnos stag-horn finials on the gilded parade helm — the horned god's mark on the war-leader of the mounted nobility",
+        "secondary": "Epona mare-head boss on the pelta + gold hero-torc at the throat (three echoing placements per the super-rare rule)",
+        "family":    "germanic"
+      },
+      "circleFrame": "super-rare thick ornate gold ring with a continuous laurel-leaf scroll and four small gold rosette bosses at the cardinal points",
+      "usedFor": [],
+      "tags": ["gallic", "celtic", "noble", "cavalry", "marcacoi", "war-leader", "iron-age", "super-rare", "cernunnos", "epona"]
+    },
+    {
       "id": "gallic_vergobret_super_rare",
       "cohortId": "vergobret",
       "file": "gallic_vergobret_super-rare_soldier.png",

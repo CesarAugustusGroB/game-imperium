@@ -146,6 +146,17 @@ export const ENEMY_COHORTS: readonly Cohort[] = [
     movementProfile: 'flanker',
   },
   {
+    id: 'gallic-noble-horse-elite',
+    name: 'Gallic War-Leader',
+    role: 'guard',
+    stats: { atk: 175, def: 65, hp: 1100, agi: 85 },
+    aurumCost: 0,
+    rarity: 'super-rare',
+    spriteId: 'gallic_noble_horse_super_rare',
+    description: 'Marcacoi war-leader — the gilded hero-cavalry who rides at the head of the noble horse.',
+    movementProfile: 'flanker',
+  },
+  {
     id: 'gallic-vergobret',
     name: 'Vergobret',
     role: 'guard',

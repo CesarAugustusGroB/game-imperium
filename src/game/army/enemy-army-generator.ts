@@ -24,7 +24,7 @@ const SHOCK_VANGUARDS  = ['barbarian-champion', 'gallic-gaesatae'];
 const ELITE_VANGUARDS  = ['barbarian-warlord', 'gallic-gaesatae'];
 const RESERVES         = ['barbarian-raider', 'gallic-neitos'];
 const LOW_GUARDS       = ['barbarian-shieldbearer'];
-const ELITE_GUARDS     = ['barbarian-chieftain', 'gallic-noble-horse', 'gallic-vergobret'];
+const ELITE_GUARDS     = ['barbarian-chieftain', 'gallic-noble-horse', 'gallic-noble-horse-elite', 'gallic-vergobret'];
 
 function pick(pool: readonly string[]): Cohort {
   return get(pool[Math.floor(Math.random() * pool.length)]);
