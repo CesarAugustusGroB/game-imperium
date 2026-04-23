@@ -62,6 +62,7 @@ const RESOURCE_LABELS: Record<ResourceType, string> = {
   faith: 'Faith',
   influence: 'Influence',
   momentum: 'Momentum',
+  iuniores: 'Iuniores',
 };
 
 // ── Props ──

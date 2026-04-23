@@ -13,7 +13,7 @@ import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 
 const RESOURCE_GLYPH: Record<ResourceType, string> = {
-  gold: '⚜', faith: '✦', influence: '◈', momentum: '⚡',
+  gold: '⚜', faith: '✦', influence: '◈', momentum: '⚡', iuniores: '🛡',
 };
 
 export function DecretaTab() {

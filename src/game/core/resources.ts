@@ -32,6 +32,7 @@ export interface Resources {
   faith: number;
   influence: number;
   momentum: number;
+  iuniores: number;
 }
 
 /** Reactive resource signals. */
@@ -39,9 +40,10 @@ export const gold = signal(0);
 export const faith = signal(0);
 export const influence = signal(0);
 export const momentum = signal(0);
+export const iuniores = signal(0);
 
 const resourceSignals: Record<ResourceType, typeof gold> = {
-  gold, faith, influence, momentum,
+  gold, faith, influence, momentum, iuniores,
 };
 
 /** Initialize resources from starting values. */
@@ -50,6 +52,7 @@ export function initResources(starting: Resources): void {
   faith.value = starting.faith;
   influence.value = starting.influence;
   momentum.value = starting.momentum;
+  iuniores.value = starting.iuniores;
 }
 
 /** Get current value of a resource. */

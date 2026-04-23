@@ -1,5 +1,5 @@
 export type Faction = 'gold' | 'red' | 'blue' | 'purple' | 'white';
-export type ResourceType = 'gold' | 'faith' | 'influence' | 'momentum';
+export type ResourceType = 'gold' | 'faith' | 'influence' | 'momentum' | 'iuniores';
 
 export interface CommanderAbility {
   name: string;
@@ -71,4 +71,5 @@ export const RESOURCE_INFO: Record<ResourceType, { icon: string; label: string; 
   faith: { icon: '\u2B50', label: 'Faith', color: '#e8c84a' },
   influence: { icon: '\uD83D\uDC51', label: 'Influence', color: '#4a7cc2' },
   momentum: { icon: '\uD83D\uDD25', label: 'Momentum', color: '#c24a3a' },
+  iuniores: { icon: '\uD83D\uDEE1\uFE0F', label: 'Iuniores', color: '#a88b5c' },
 };

@@ -12,7 +12,7 @@ import {
 import type { Doctrine } from '../../../../game/items/doctrine';
 import { FACTION_COLORS } from '../../../../game/core/commander';
 import type { ResourceType } from '../../../../game/core/commander';
-import { gold, faith, influence, momentum } from '../../../../game/core/resources';
+import { gold, faith, influence, momentum, iuniores } from '../../../../game/core/resources';
 import { playSfx } from '../../../sound/sfx';
 import { OrnatePanel } from '../../../components/OrnatePanel';
 import { Corners } from '../../../components/motifs/Corners';
@@ -21,7 +21,7 @@ import { SectionHeader } from '../components/SectionHeader';
 
 const ROMAN: readonly string[] = ['I', 'II', 'III'];
 const RESOURCE_GLYPH: Record<ResourceType, string> = {
-  gold: '⚜', faith: '✦', influence: '◈', momentum: '⚡',
+  gold: '⚜', faith: '✦', influence: '◈', momentum: '⚡', iuniores: '🛡',
 };
 
 export function DoctrinaeTab() {
@@ -630,6 +630,7 @@ function resourceValue(type: ResourceType): number {
     case 'faith':     return faith.value;
     case 'influence': return influence.value;
     case 'momentum':  return momentum.value;
+    case 'iuniores':  return iuniores.value;
   }
 }
 

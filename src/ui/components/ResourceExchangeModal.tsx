@@ -4,7 +4,7 @@ import { selectedCommander } from '../../game/core/game-state';
 import { FACTION_PRIMARY_RESOURCE, RESOURCE_INFO } from '../../game/core/commander';
 import type { ResourceType } from '../../game/core/commander';
 import { exchangeResources, getExchangePreview } from '../../game/core/resources';
-import { gold, faith, influence, momentum } from '../../game/core/resources';
+import { gold, faith, influence, momentum, iuniores } from '../../game/core/resources';
 import { OrnateFrame, OrnateHeader } from './OrnateFrame';
 
 // ── One-time CSS injection ──
@@ -87,6 +87,7 @@ export function ResourceExchangeModal({ onClose }: Props) {
     faith:     faith.value,
     influence: influence.value,
     momentum:  momentum.value,
+    iuniores:  iuniores.value,
   };
 
   const from    = selectedFrom.value;
