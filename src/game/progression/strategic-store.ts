@@ -6,7 +6,7 @@ import type { Legate } from '../army/legate';
 import { getCohortById } from '../army/cohort-data';
 import { computeArmySize } from '../army/cohort';
 import { rollHiringPool, rollLegateCandidate } from '../army/legate-pool';
-import { SUPPLIES_PER_GOLD, SUPPLIES_STARTING_STOCK, SUPPLY_MAX_CARRY } from '../../config/game-config';
+import { SUPPLIES_PER_GOLD, SUPPLIES_STARTING_STOCK, SUPPLY_MAX_CARRY, IUNIORES } from '../../config/game-config';
 
 // ── State signals ──
 
@@ -230,14 +230,38 @@ export function buySupplies(qty: number): boolean {
 }
 
 /**
- * Recruit one cohort by id into the prepared army.
- * Deducts the cohort's aurumCost from gold. Returns true on success.
+ * Result of a recruitment attempt. `ok: true` means both gold and iuniores
+ * were deducted and the cohort was appended. `ok: false` carries a typed
+ * reason that S25-07 will use to show a specific disabled tooltip.
  */
-export function recruitCohort(cohortId: string): boolean {
+export type RecruitResult =
+  | { ok: true }
+  | { ok: false; reason: 'unknown-cohort' | 'insufficient-gold' | 'insufficient-iuniores' };
+
+/**
+ * Recruit one cohort by id into the prepared army.
+ *
+ * Two-resource gate: requires both `cohort.aurumCost` in gold AND
+ * `IUNIORES.recruitCost` (1000) iuniores. Both resources are pre-checked
+ * via `canAfford` before either is spent, so no partial-spend state is
+ * possible — if the function reaches the `spendResource` calls, both
+ * will succeed.
+ *
+ * Returns a typed `RecruitResult` discriminated union. S25-07 will consume
+ * the `reason` field to show resource-specific disabled tooltips in the
+ * Exercitus catalog.
+ */
+export function recruitCohort(cohortId: string): RecruitResult {
   const cohort = getCohortById(cohortId);
-  if (!cohort) return false;
-  if (!canAfford('gold', cohort.aurumCost)) return false;
-  if (!spendResource('gold', cohort.aurumCost)) return false;
+  if (!cohort) return { ok: false, reason: 'unknown-cohort' };
+  if (!canAfford('gold', cohort.aurumCost)) return { ok: false, reason: 'insufficient-gold' };
+  if (!canAfford('iuniores', IUNIORES.recruitCost)) return { ok: false, reason: 'insufficient-iuniores' };
+
+  // Atomic spend — guarded by the canAfford pre-checks above, so both
+  // spendResource calls are guaranteed to succeed.
+  spendResource('gold', cohort.aurumCost);
+  spendResource('iuniores', IUNIORES.recruitCost);
+
   const army = ensurePreparedArmy();
   const updated: ArmyData = {
     ...army,
@@ -245,12 +269,13 @@ export function recruitCohort(cohortId: string): boolean {
   };
   updated.size = computeArmySize(updated.cohorts);
   preparedArmy.value = updated;
-  return true;
+  return { ok: true };
 }
 
 /**
  * Remove the last cohort of the given type from the prepared army.
- * Refunds the cohort's aurumCost to gold.
+ * Refunds both `aurumCost` in gold and `IUNIORES.recruitCost` iuniores
+ * (pre-embark undo; matches the two-resource gate in recruitCohort).
  */
 export function removeCohort(cohortId: string): void {
   const army = preparedArmy.value;
@@ -260,6 +285,7 @@ export function removeCohort(cohortId: string): void {
   if (lastIdx === -1) return;
   const [removed] = cohorts.splice(lastIdx, 1);
   addResource('gold', removed.aurumCost);
+  addResource('iuniores', IUNIORES.recruitCost);
   preparedArmy.value = { ...army, cohorts, size: computeArmySize(cohorts) };
 }
 

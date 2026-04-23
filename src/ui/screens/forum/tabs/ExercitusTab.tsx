@@ -74,7 +74,7 @@ export function ExercitusTab() {
   );
   const atCap = currentSupplies >= SUPPLY_MAX_CARRY;
 
-  function handleRecruit(id: string) { if (recruitCohort(id)) playSfx('ui_equip'); }
+  function handleRecruit(id: string) { if (recruitCohort(id).ok) playSfx('ui_equip'); }
   function handleRemove(id: string)  { removeCohort(id); playSfx('ui_sell'); }
   function handleHire(id: string)    { if (hireLegate(id, LEGATE_HIRE_COST)) playSfx('ui_equip'); }
   function handleDismiss()           { dismissLegate(); playSfx('ui_sell'); }
