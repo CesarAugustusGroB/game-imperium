@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Commander } from './commander';
-import { initResources, setWarProfiler, setIncomeModifierFn, setExchangeBonusFn } from './resources';
+import { initResources, iuniores, setWarProfiler, setIncomeModifierFn, setExchangeBonusFn } from './resources';
 import { addDecretum, resetDecretumHand } from '../items/decretum-store';
 import { resetDoctrineStore, getIncomeModifier, addDoctrineToCollection } from '../items/doctrine-store';
 import { STARTER_DECRETUM } from '../../data/decretum-data';
@@ -19,7 +19,7 @@ import { computeArmySize } from '../army/cohort';
 import { recordRunStart } from './meta-save';
 import { STARTER_ADVISORS } from '../../data/advisor-data';
 import { initFeaturePool, resetFeaturePool } from '../province/feature-store';
-import { SEASON } from '../../config/game-config';
+import { SEASON, IUNIORES } from '../../config/game-config';
 
 // ── Core run state ──
 export const selectedCommander = signal<Commander | null>(null);
@@ -108,6 +108,7 @@ export function startNewRun(commander: Commander): void {
 
   selectedCommander.value = commander;
   initResources(commander.startingResources);
+  iuniores.value = IUNIORES.startingSeed;
   setWarProfiler(commander.id === 'crassus');
   setIncomeModifierFn(getIncomeModifier);
   setExchangeBonusFn(getMarketExchangeBonus);
@@ -159,7 +160,7 @@ export function startNewRun(commander: Commander): void {
   initFeaturePool();
 
   // Create the home province first (no territory claimed yet — topology not loaded)
-  conquerProvince('Roma', { gold: 2, faith: 1, influence: 1, momentum: 0 }, 1);
+  conquerProvince('Roma', { gold: 2, faith: 1, influence: 1, momentum: 0, iuniores: 0 }, 1);
 
   // Load topology, then retroactively claim territory for Roma
   initProvinceMapStore().then(() => {
@@ -180,7 +181,7 @@ export function startNewRun(commander: Commander): void {
  */
 export function resetRun(): void {
   selectedCommander.value = null;
-  initResources({ gold: 0, faith: 0, influence: 0, momentum: 0 });
+  initResources({ gold: 0, faith: 0, influence: 0, momentum: 0, iuniores: 0 });
   setWarProfiler(false);
   setIncomeModifierFn(null);
   setExchangeBonusFn(null);

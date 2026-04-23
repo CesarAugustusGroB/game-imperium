@@ -90,6 +90,7 @@ export function buildEventContext(faction: Faction): EventContext {
       faith: getResource('faith'),
       influence: getResource('influence'),
       momentum: getResource('momentum'),
+      iuniores: getResource('iuniores'),
     },
     investments: Array.from(investmentSet),
     flags: consequenceFlags.value,

@@ -304,3 +304,21 @@ export const SUPPLY_MORALE_PENALTY_PER_DEFICIT = 8;
 
 /** Cap on the cumulative morale penalty from supply deficit. */
 export const SUPPLY_MORALE_PENALTY_CAP = 40;
+
+// ══════════════════════════════════════════════
+//  IUNIORES (FT-IUN / S25)
+// ══════════════════════════════════════════════
+
+/**
+ * S25-01: Iuniores (manpower) — the 5th strategic resource.
+ * Population generates iuniores into a national pool; recruitment and rest-node
+ * replenishment consume from it. See FT-IUN for the full design.
+ */
+export const IUNIORES = {
+  /** Iuniores generated per province population point per season. Used by S25-02. */
+  perPop: 10,
+  /** Flat iuniores cost per cohort recruitment. Used by S25-03. */
+  recruitCost: 1000,
+  /** Initial pool seeded at the start of a new run. */
+  startingSeed: 2000,
+};
