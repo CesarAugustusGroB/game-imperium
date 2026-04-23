@@ -97,6 +97,65 @@ export const ENEMY_COHORTS: readonly Cohort[] = [
     description: 'Alexander\'s royal Companion Cavalry. Heavy xyston-armed horse that crashes through lines.',
     movementProfile: 'flanker',
   },
+
+  // ── Gallic Confederation (campaign-roll entries) ──────────────────────
+  // Stats mirror GALLIC_COHORT_POOL but shaved ~10% to stay under player
+  // equivalents before applyThreatScaling().
+  {
+    id: 'gallic-clansmen',
+    name: 'Gallic Clansmen',
+    role: 'vanguard',
+    stats: { atk: 95, def: 25, hp: 780, agi: 45 },
+    aurumCost: 0,
+    rarity: 'common',
+    spriteId: 'gallic_clansmen_common',
+    description: 'Teuta levy — smallholders answering the war-horn under the Taranis thunder-wheel.',
+    movementProfile: 'vanguard-march',
+  },
+  {
+    id: 'gallic-neitos',
+    name: 'Gallic Neitos',
+    role: 'reserve',
+    stats: { atk: 115, def: 20, hp: 660, agi: 95 },
+    aurumCost: 0,
+    rarity: 'uncommon',
+    spriteId: 'gallic_neitos_uncommon',
+    description: 'Javelineer war-champions under Lugh\'s sunburst — open with a sheaf of gaesum, then kite.',
+    movementProfile: 'ranged-skirmisher',
+  },
+  {
+    id: 'gallic-gaesatae',
+    name: 'Gaesatae',
+    role: 'vanguard',
+    stats: { atk: 180, def: 20, hp: 900, agi: 70 },
+    aurumCost: 0,
+    rarity: 'rare',
+    spriteId: 'gallic_gaesatae_rare',
+    description: 'Naked Telamon-line berserkers. Lime-washed, torc-clad, the Cernunnos war-band.',
+    movementProfile: 'berserker',
+  },
+  {
+    id: 'gallic-noble-horse',
+    name: 'Gallic Noble Horse',
+    role: 'guard',
+    stats: { atk: 150, def: 55, hp: 900, agi: 85 },
+    aurumCost: 0,
+    rarity: 'rare',
+    spriteId: 'gallic_noble_horse_rare',
+    description: 'Marcacoi — mounted aristocracy with Cernunnos stag-horns and Epona on the pelta.',
+    movementProfile: 'flanker',
+  },
+  {
+    id: 'gallic-vergobret',
+    name: 'Vergobret',
+    role: 'guard',
+    stats: { atk: 145, def: 75, hp: 1200, agi: 50 },
+    aurumCost: 0,
+    rarity: 'super-rare',
+    spriteId: 'gallic_vergobret_super_rare',
+    description: 'The elected war-king of the Aedui — a hero-charge last line, gold-torc at the throat.',
+    movementProfile: 'reserve-intercept',
+  },
 ] as const;
 
 /** Lookup an enemy cohort definition by id, or `undefined` if not found. */

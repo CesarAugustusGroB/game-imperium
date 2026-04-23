@@ -7,12 +7,35 @@ import type { ArmyData } from '../../types/index';
 
 const COHORT_MAP = new Map<string, Cohort>(ENEMY_COHORTS.map(c => [c.id, c]));
 
-function warrior(): Cohort     { return COHORT_MAP.get('barbarian-warrior')!; }
-function raider(): Cohort      { return COHORT_MAP.get('barbarian-raider')!; }
-function shieldbearer(): Cohort { return COHORT_MAP.get('barbarian-shieldbearer')!; }
-function champion(): Cohort    { return COHORT_MAP.get('barbarian-champion')!; }
-function chieftain(): Cohort   { return COHORT_MAP.get('barbarian-chieftain')!; }
-function warlord(): Cohort     { return COHORT_MAP.get('barbarian-warlord')!; }
+function get(id: string): Cohort {
+  const c = COHORT_MAP.get(id);
+  if (!c) throw new Error(`enemy-army-generator: unknown ENEMY_COHORTS id "${id}"`);
+  return c;
+}
+
+/**
+ * Role pools — one random pick per slot so enemy armies vary in culture and
+ * sprite rather than repeating the same entry. Commons and low-elite picks
+ * blend Gaul/Norse/Punic; high-elite picks include the Gallic Gaesatae and
+ * the Spartan chieftain.
+ */
+const COMMON_VANGUARDS = ['barbarian-warrior', 'gallic-clansmen'];
+const SHOCK_VANGUARDS  = ['barbarian-champion', 'gallic-gaesatae'];
+const ELITE_VANGUARDS  = ['barbarian-warlord', 'gallic-gaesatae'];
+const RESERVES         = ['barbarian-raider', 'gallic-neitos'];
+const LOW_GUARDS       = ['barbarian-shieldbearer'];
+const ELITE_GUARDS     = ['barbarian-chieftain', 'gallic-noble-horse', 'gallic-vergobret'];
+
+function pick(pool: readonly string[]): Cohort {
+  return get(pool[Math.floor(Math.random() * pool.length)]);
+}
+
+function warrior(): Cohort      { return pick(COMMON_VANGUARDS); }
+function raider(): Cohort       { return pick(RESERVES); }
+function shieldbearer(): Cohort { return pick(LOW_GUARDS); }
+function champion(): Cohort     { return pick(SHOCK_VANGUARDS); }
+function chieftain(): Cohort    { return pick(ELITE_GUARDS); }
+function warlord(): Cohort      { return pick(ELITE_VANGUARDS); }
 
 // ── Scaling helpers ─────────────────────────────────────────────────────────
 

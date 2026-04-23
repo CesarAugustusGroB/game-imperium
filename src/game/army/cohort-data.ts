@@ -91,12 +91,26 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     description: 'Expert archers from Crete. Holds range, kites melee, fires arrows up to 3 hexes.',
     movementProfile: 'ranged-skirmisher',
   },
+] as const;
 
-  // ─── Gallic Confederation ──────────────────────────────────────────────
-  // Mirrors Rome's 2-common / 1-uncommon / 2-rare / 1-super-rare shape but
-  // trades armor for attack + agility — shock culture first, line discipline
-  // second. Divine motifs per style-guide.json culturalMaskMotifs.germanic
-  // (Cernunnos, Taranis, Epona, Lugh).
+/** Lookup a Roman-catalog cohort definition by id, or `undefined` if not found. */
+export function getCohortById(id: string): Cohort | undefined {
+  return COHORT_CATALOG.find(c => c.id === id);
+}
+
+/**
+ * Gallic Confederation pool — the enemy-culture counterpart to the Roman
+ * `COHORT_CATALOG`. Mirrors Rome's 2-common / 1-uncommon / 2-rare / 1-super-rare
+ * shape but trades armor for attack + agility (shock culture first, line
+ * discipline second). Divine motifs per style-guide.json culturalMaskMotifs.germanic
+ * (Cernunnos, Taranis, Epona, Lugh).
+ *
+ * NOT exposed in the Exercitus recruit list and NOT part of `ALLY_COHORT_POOL` —
+ * Gauls are antagonists. Consumed by the Rome-vs-Gaul quick-battle scenario and
+ * the campaign enemy-army generator (via `ENEMY_COHORTS` entries that reference
+ * the same sprite ids).
+ */
+export const GALLIC_COHORT_POOL: readonly Cohort[] = [
   {
     id: 'clansmen',
     name: 'Clansmen',
@@ -165,9 +179,9 @@ export const COHORT_CATALOG: readonly Cohort[] = [
   },
 ] as const;
 
-/** Lookup a cohort definition by id, or `undefined` if not found. */
-export function getCohortById(id: string): Cohort | undefined {
-  return COHORT_CATALOG.find(c => c.id === id);
+/** Lookup a Gallic pool cohort definition by id, or `undefined` if not found. */
+export function getGallicCohortById(id: string): Cohort | undefined {
+  return GALLIC_COHORT_POOL.find(c => c.id === id);
 }
 
 /**

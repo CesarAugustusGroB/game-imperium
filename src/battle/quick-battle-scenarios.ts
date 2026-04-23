@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import { COHORT_CATALOG } from '../game/army/cohort-data';
+import { COHORT_CATALOG, GALLIC_COHORT_POOL } from '../game/army/cohort-data';
 import { ENEMY_COHORTS } from '../game/army/enemy-cohort-data';
 import type { Cohort } from '../types/index';
 
@@ -15,6 +15,12 @@ export interface QuickBattleScenario {
 function getCohort(id: string): Cohort {
   const c = COHORT_CATALOG.find(x => x.id === id);
   if (!c) throw new Error(`Quick-battle: unknown COHORT_CATALOG id "${id}"`);
+  return c;
+}
+
+function getGallicCohort(id: string): Cohort {
+  const c = GALLIC_COHORT_POOL.find(x => x.id === id);
+  if (!c) throw new Error(`Quick-battle: unknown GALLIC_COHORT_POOL id "${id}"`);
   return c;
 }
 
@@ -99,12 +105,12 @@ export const QUICK_BATTLE_SCENARIOS: readonly QuickBattleScenario[] = [
       ]; // 40
     },
     buildRedCohorts: () => {
-      const neitos     = getCohort('neitos');
-      const clansmen   = getCohort('clansmen');
-      const warband    = getCohort('warband');
-      const gaesatae   = getCohort('gaesatae');
-      const vergobret  = getCohort('vergobret');
-      const nobleHorse = getCohort('noble_horse');
+      const neitos     = getGallicCohort('neitos');
+      const clansmen   = getGallicCohort('clansmen');
+      const warband    = getGallicCohort('warband');
+      const gaesatae   = getGallicCohort('gaesatae');
+      const vergobret  = getGallicCohort('vergobret');
+      const nobleHorse = getGallicCohort('noble_horse');
       return [
         ...Array(6).fill(neitos),      // javelineer screen
         ...Array(8).fill(clansmen),    // teuta levy
