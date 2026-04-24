@@ -25,6 +25,7 @@ import { councilSlots, grantAdvisorXp, tierUpNotices } from '../../game/council/
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 import { computeArmyMorale } from '../../game/army/morale';
 import type { MoraleTier } from '../../game/army/morale';
+import { replenishBoundArmy } from '../../game/army/army-replenishment';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('node-map-styles')) {
@@ -555,6 +556,9 @@ export function NodeMapScreen() {
     }
 
     restGains.value = gains;
+    // S25-04: Replenish army HP from iuniores pool. Summary stored in
+    // `lastReplenishmentSummary` for S25-08's UI to render later.
+    replenishBoundArmy();
     showRestModal.value = true;
   }
 
