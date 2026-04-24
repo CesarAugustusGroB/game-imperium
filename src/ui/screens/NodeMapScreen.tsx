@@ -25,7 +25,8 @@ import { councilSlots, grantAdvisorXp, tierUpNotices } from '../../game/council/
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 import { computeArmyMorale } from '../../game/army/morale';
 import type { MoraleTier } from '../../game/army/morale';
-import { replenishBoundArmy } from '../../game/army/army-replenishment';
+import { previewReplenishment, replenishBoundArmy } from '../../game/army/army-replenishment';
+import type { ReplenishmentPreview } from '../../game/army/army-replenishment';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('node-map-styles')) {
@@ -266,6 +267,7 @@ const TRADE_GOOD_ICON: Record<TradeGoodType, string> = {
 const showRetreatConfirm = signal(false);
 const showRestModal = signal(false);
 const restGains = signal<{ type: ResourceType; actual: number; isPrimary: boolean }[]>([]);
+const restPreview = signal<ReplenishmentPreview | null>(null);
 const showEventModal = signal(false);
 const activeEvent = signal<GameEvent | null>(null);
 const showSpokeCompleteModal = signal(false);
@@ -556,14 +558,23 @@ export function NodeMapScreen() {
     }
 
     restGains.value = gains;
-    // S25-04: Replenish army HP from iuniores pool. Summary stored in
-    // `lastReplenishmentSummary` for S25-08's UI to render later.
-    replenishBoundArmy();
+    const boundArmy = currentSpoke.value?.boundArmy;
+    restPreview.value = boundArmy
+      ? previewReplenishment(boundArmy.cohorts, getResource('iuniores'))
+      : null;
     showRestModal.value = true;
+  }
+
+  function handleRestReplenish() {
+    if (restPreview.value && restPreview.value.iunioresSpent > 0) {
+      replenishBoundArmy();
+    }
+    handleRestContinue();
   }
 
   function handleRestContinue() {
     showRestModal.value = false;
+    restPreview.value = null;
     justResolvedIndex.value = nodeIdx;
     setTimeout(() => { justResolvedIndex.value = null; }, 400);
     const result = advanceNode();
@@ -859,8 +870,13 @@ export function NodeMapScreen() {
       {/* Rest modal */}
       {showRestModal.value && (
         <NodeModal title="Your Army Rests" onClose={handleRestContinue}>
+          {(() => {
+            const preview = restPreview.value;
+            const canReplenish = !!preview && preview.iunioresSpent > 0;
+            return (
+              <>
           <div style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-text-muted)', lineHeight: '1.5', marginBottom: '16px' }}>
-            Your forces recover their strength.
+            Choose whether to spend iuniores on replenishment before moving on. Rest rewards below are already secured.
           </div>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '20px' }}>
             {restGains.value.map((g) => (
@@ -876,11 +892,177 @@ export function NodeMapScreen() {
               </div>
             ))}
           </div>
-          <button class="modal-action-btn ornate-btn" onClick={handleRestContinue} style={{
-            padding: '10px 24px',
-          }}>
-            Continue
-          </button>
+          {(() => {
+            if (!preview || preview.perCohort.length === 0) {
+              return (
+                <div style={{
+                  fontSize: 'var(--font-size-sm)',
+                  color: 'var(--color-text-muted)',
+                  fontStyle: 'italic',
+                  textAlign: 'center',
+                  marginBottom: '20px',
+                }}>
+                  No bound army is present at this rest node.
+                </div>
+              );
+            }
+
+            const damagedCohorts = preview.perCohort.filter(c => c.missingHp > 0);
+            const remainingDamage = preview.totalIunioresNeeded > preview.iunioresSpent
+              ? damagedCohorts.reduce((sum, c) => sum + (c.maxHp - c.newCurrentHp), 0)
+              : 0;
+
+            return (
+              <div style={{
+                marginBottom: '20px',
+                padding: '14px 16px',
+                background: 'rgba(28, 26, 40, 0.82)',
+                border: '1px solid rgba(212, 168, 67, 0.18)',
+                borderRadius: 'var(--radius-sm)',
+              }}>
+                <div style={{
+                  fontSize: 'var(--font-size-xs)',
+                  fontWeight: 700,
+                  color: 'var(--color-text-muted)',
+                  letterSpacing: '2px',
+                  textTransform: 'uppercase',
+                  marginBottom: '10px',
+                }}>
+                  Replenishment Preview
+                </div>
+                {damagedCohorts.length === 0 ? (
+                  <div style={{
+                    fontSize: 'var(--font-size-sm)',
+                    color: 'var(--color-text-secondary)',
+                    lineHeight: 1.5,
+                  }}>
+                    Army at full strength. No iuniores will be spent.
+                  </div>
+                ) : preview.partialHeal ? (
+                  <div style={{
+                    fontSize: 'var(--font-size-sm)',
+                    color: 'var(--color-text-secondary)',
+                    lineHeight: 1.6,
+                    marginBottom: '12px',
+                  }}>
+                    Pool has <span style={{ color: '#a88b5c', fontWeight: 700 }}>{preview.iunioresAvailable} iuniores</span>; partial heal will restore{' '}
+                    <span style={{ color: 'var(--color-gold-secondary)', fontWeight: 700 }}>{preview.hpRestored} HP</span> across{' '}
+                    <span style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>{damagedCohorts.length} cohorts</span>.{' '}
+                    <span style={{ color: '#c27a52', fontWeight: 700 }}>{remainingDamage} HP</span> remains damaged.
+                  </div>
+                ) : (
+                  <div style={{
+                    fontSize: 'var(--font-size-sm)',
+                    color: 'var(--color-text-secondary)',
+                    lineHeight: 1.6,
+                    marginBottom: '12px',
+                  }}>
+                    Replenish army: <span style={{ color: '#a88b5c', fontWeight: 700 }}>{preview.iunioresSpent} iuniores</span> to restore{' '}
+                    <span style={{ color: 'var(--color-gold-secondary)', fontWeight: 700 }}>{preview.hpRestored} HP</span> across{' '}
+                    <span style={{ color: 'var(--color-text-primary)', fontWeight: 700 }}>{damagedCohorts.length} cohorts</span>.
+                  </div>
+                )}
+
+                {damagedCohorts.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {damagedCohorts.map((c, i) => {
+                      const beforePct = c.maxHp > 0 ? (c.currentHp / c.maxHp) * 100 : 0;
+                      const afterPct = c.maxHp > 0 ? (c.newCurrentHp / c.maxHp) * 100 : 0;
+                      return (
+                        <div key={`${c.cohortId}-${i}`} style={{
+                          padding: '8px 10px',
+                          background: 'rgba(12, 12, 18, 0.35)',
+                          border: '1px solid rgba(212, 168, 67, 0.12)',
+                          borderRadius: 'var(--radius-sm)',
+                        }}>
+                          <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            gap: '12px',
+                            marginBottom: '6px',
+                            alignItems: 'baseline',
+                          }}>
+                            <span style={{
+                              fontSize: 'var(--font-size-sm)',
+                              color: 'var(--color-text-primary)',
+                              fontWeight: 600,
+                            }}>
+                              {c.cohortName}
+                            </span>
+                            <span style={{
+                              fontSize: 'var(--font-size-xs)',
+                              color: '#a88b5c',
+                              letterSpacing: '1px',
+                              textTransform: 'uppercase',
+                            }}>
+                              {c.iunioresSpent} 🛡
+                            </span>
+                          </div>
+                          <div style={{
+                            position: 'relative',
+                            height: '8px',
+                            background: 'rgba(60, 56, 80, 0.55)',
+                            borderRadius: '999px',
+                            overflow: 'hidden',
+                            marginBottom: '6px',
+                          }}>
+                            <div style={{
+                              position: 'absolute',
+                              inset: 0,
+                              width: `${beforePct}%`,
+                              background: 'rgba(120, 92, 76, 0.85)',
+                            }} />
+                            <div style={{
+                              position: 'absolute',
+                              inset: 0,
+                              width: `${afterPct}%`,
+                              background: 'linear-gradient(90deg, #4a9a6a 0%, #7ecf97 100%)',
+                              opacity: 0.85,
+                            }} />
+                          </div>
+                          <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            gap: '8px',
+                            fontSize: 'var(--font-size-xs)',
+                            color: 'var(--color-text-muted)',
+                          }}>
+                            <span>{c.currentHp}/{c.maxHp} HP</span>
+                            <span>+{c.hpRestored} HP</span>
+                            <span>{c.newCurrentHp}/{c.maxHp} HP</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <button class="modal-action-btn ornate-btn-ghost" onClick={handleRestContinue} style={{
+              padding: '10px 24px',
+            }}>
+              Continue Without Replenishing
+            </button>
+            <button
+              class="modal-action-btn ornate-btn"
+              onClick={handleRestReplenish}
+              disabled={!canReplenish}
+              style={{
+                padding: '10px 24px',
+                opacity: canReplenish ? 1 : 0.6,
+                cursor: canReplenish ? 'pointer' : 'not-allowed',
+              }}
+              title={canReplenish ? 'Spend iuniores and restore HP.' : 'Army at full strength.'}
+            >
+              Replenish And Continue
+            </button>
+          </div>
+              </>
+            );
+          })()}
         </NodeModal>
       )}
 
