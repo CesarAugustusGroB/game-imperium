@@ -111,7 +111,7 @@ export function ExercitusTab() {
     const color = ROLE_COLORS[c.role];
     const badgeColor = c.mercenary ? '#c99245' : color;
     const disabledCopy = recruitFailure === 'insufficient-iuniores'
-      ? 'Insufficient iuniores. Recruit from rest nodes or acquire more provinces.'
+      ? 'Insufficient iuniores. Gain more provinces or wait for a season tick.'
       : recruitFailure === 'insufficient-gold'
         ? `Needs ${c.aurumCost} gold`
         : null;
