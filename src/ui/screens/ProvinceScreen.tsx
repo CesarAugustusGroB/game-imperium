@@ -27,7 +27,7 @@ import {
 import { TRADE_GOOD_DATA } from '../../data/trade-goods';
 import { TERRAIN_DATA, TERRAIN_AVAILABLE_BUILDINGS } from '../../data/terrain-data';
 import { nextInvestmentDiscount } from '../../game/progression/strategic-store';
-import { FOOD } from '../../config/game-config';
+import { FOOD, IUNIORES } from '../../config/game-config';
 import { ROMAN, formatCost } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
 import { Tooltip } from '../components/Tooltip';
@@ -2047,7 +2047,12 @@ function IncomeLedger({ province }: { province: Province }) {
       if (base > 0) nonGoldIncome[trait.resource] = Math.floor(base * (1 + trait.percent / 100));
     }
   }
-  const iunioresYield = getProvinceIncome(province, traits).iuniores ?? 0;
+  let iunioresYield = Math.floor(province.population * IUNIORES.perPop);
+  for (const trait of traits) {
+    if (trait.type === 'income-bonus' && trait.resource === 'iuniores' && iunioresYield > 0) {
+      iunioresYield = Math.floor(iunioresYield * (1 + trait.percent / 100));
+    }
+  }
 
   // Gold total: tax revenue + building gold + subsistence + trade
   let goldTotal = taxRevenue + rawBuildingGold + subsistence + tradeGoodGold;
