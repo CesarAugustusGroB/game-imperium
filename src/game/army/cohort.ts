@@ -52,6 +52,11 @@ export interface Cohort {
    */
   movementProfile?: MovementProfileId;
   /**
+   * Mercenary cohorts are hired for gold only. They bypass the standard
+   * iuniores recruitment gate but otherwise behave like normal cohorts.
+   */
+  mercenary?: boolean;
+  /**
    * FT-SUP: carried-over current HP. Undefined means the cohort is at full
    * health (`stats.hp`). Decremented by the spoke supply-attrition loop in
    * `supplies.consumeTraversal`. Read by `battle/deployment.ts` when

@@ -88,8 +88,21 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     aurumCost: 70,
     rarity: 'rare',
     spriteId: 'cretan_archer_rare',
-    description: 'Expert archers from Crete. Holds range, kites melee, fires arrows up to 3 hexes.',
+    description: 'Expert archers from Crete. Gold-hired mercenaries who keep ranged pressure online when citizen levies run dry.',
     movementProfile: 'ranged-skirmisher',
+    mercenary: true,
+  },
+  {
+    id: 'gallic_warband_merc',
+    name: 'Gallic Warband',
+    role: 'vanguard',
+    stats: { atk: 135, def: 25, hp: 870, agi: 55 },
+    aurumCost: 45,
+    rarity: 'common',
+    spriteId: 'gallic_common',
+    description: 'Foreign hill-warriors fighting for plunder and pay. Harder-hitting than militia, but available only as a gold contract.',
+    movementProfile: 'vanguard-march',
+    mercenary: true,
   },
 ] as const;
 
