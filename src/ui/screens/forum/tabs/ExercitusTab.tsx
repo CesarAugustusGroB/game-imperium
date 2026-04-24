@@ -54,14 +54,28 @@ export function ExercitusTab() {
   const mercenaryCohorts = COHORT_CATALOG.filter(c => c.mercenary);
 
   // Grouped composition (same cohort id folded into one row with count)
-  const groupMap = new Map<string, { name: string; role: UnitRole; count: number; hp: number }>();
+  const groupMap = new Map<string, {
+    name: string;
+    role: UnitRole;
+    count: number;
+    hp: number;
+    aurumCost: number;
+    mercenary: boolean;
+  }>();
   for (const c of cohorts) {
     const g = groupMap.get(c.id);
     if (g) {
       g.count++;
       g.hp += c.stats.hp;
     } else {
-      groupMap.set(c.id, { name: c.name, role: c.role, count: 1, hp: c.stats.hp });
+      groupMap.set(c.id, {
+        name: c.name,
+        role: c.role,
+        count: 1,
+        hp: c.stats.hp,
+        aurumCost: c.aurumCost,
+        mercenary: c.mercenary === true,
+      });
     }
   }
   const groups = Array.from(groupMap.entries());
@@ -97,7 +111,7 @@ export function ExercitusTab() {
     const color = ROLE_COLORS[c.role];
     const badgeColor = c.mercenary ? '#c99245' : color;
     const disabledCopy = recruitFailure === 'insufficient-iuniores'
-      ? `Needs ${IUNIORES.recruitCost} iuniores`
+      ? 'Insufficient iuniores. Recruit from rest nodes or acquire more provinces.'
       : recruitFailure === 'insufficient-gold'
         ? `Needs ${c.aurumCost} gold`
         : null;
@@ -142,6 +156,7 @@ export function ExercitusTab() {
                 borderRadius: 2,
                 letterSpacing: 1, textTransform: 'uppercase',
                 fontFamily: 'var(--imp-font-display)', fontWeight: 600,
+                cursor: 'help',
               }}>
                 Gold Only
               </div>
@@ -203,7 +218,7 @@ export function ExercitusTab() {
           <button
             onClick={() => handleRecruit(c.id)}
             disabled={!canBuy}
-            title={disabledCopy ?? `Recruit ${c.name}`}
+            title={c.mercenary ? 'Mercenary cohort — gold only.' : (disabledCopy ?? `Recruit ${c.name}`)}
             style={{
               marginTop: 4,
               padding: '5px 10px',
@@ -300,6 +315,22 @@ export function ExercitusTab() {
                           fontStyle: 'italic',
                         }}>
                           {ROLE_LABELS[g.role]} · {g.hp} HP
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          gap: 8,
+                          flexWrap: 'wrap',
+                          marginTop: 4,
+                          fontFamily: 'var(--imp-font-mono)',
+                          fontSize: 9,
+                          color: 'var(--imp-text-lo)',
+                        }}>
+                          <span>{g.aurumCost}⚜</span>
+                          {g.mercenary ? (
+                            <span title="Mercenary cohort — gold only.">Mercenary</span>
+                          ) : (
+                            <span>{IUNIORES.recruitCost}🛡</span>
+                          )}
                         </div>
                       </div>
                       <div style={{

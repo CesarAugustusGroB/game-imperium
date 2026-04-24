@@ -282,8 +282,8 @@ export function getRecruitCohortFailure(cohortId: string): RecruitCohortFailure 
 }
 
 function getRecruitFailureForCohort(cohort: Cohort): RecruitCohortFailure | null {
-  if (!canAfford('gold', cohort.aurumCost)) return 'insufficient-gold';
   if (!cohort.mercenary && !canAfford('iuniores', IUNIORES.recruitCost)) return 'insufficient-iuniores';
+  if (!canAfford('gold', cohort.aurumCost)) return 'insufficient-gold';
   return null;
 }
 
