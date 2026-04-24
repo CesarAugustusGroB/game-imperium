@@ -2047,6 +2047,7 @@ function IncomeLedger({ province }: { province: Province }) {
       if (base > 0) nonGoldIncome[trait.resource] = Math.floor(base * (1 + trait.percent / 100));
     }
   }
+  const iunioresYield = getProvinceIncome(province, traits).iuniores ?? 0;
 
   // Gold total: tax revenue + building gold + subsistence + trade
   let goldTotal = taxRevenue + rawBuildingGold + subsistence + tradeGoodGold;
@@ -2149,6 +2150,12 @@ function IncomeLedger({ province }: { province: Province }) {
           {nonGoldEntries.map(([res, amt]) => (
             <LedgerRow key={res} label={RESOURCE_INFO[res].label} value={`+${amt} ${RESOURCE_INFO[res].icon}`} positive />
           ))}
+          <LedgerRow
+            label="Iuniores / season"
+            value={`+${iunioresYield} ${RESOURCE_INFO.iuniores.icon}`}
+            positive={iunioresYield > 0}
+            detail={`Population ${province.population}`}
+          />
 
           {/* Total income */}
           <div class="ledger-divider" />
