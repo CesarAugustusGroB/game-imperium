@@ -1,8 +1,9 @@
 import { COHORT_CATALOG } from '../../../../game/army/cohort-data';
-import { gold, canAfford } from '../../../../game/core/resources';
+import type { Cohort } from '../../../../game/army/cohort';
+import { gold, iuniores } from '../../../../game/core/resources';
 import {
   preparedArmy, preparedLegate, legateHiringPool,
-  ensurePreparedArmy, recruitCohort, removeCohort,
+  ensurePreparedArmy, recruitCohort, removeCohort, getRecruitCohortFailure,
   ensureLegatePool, hireLegate, dismissLegate,
   buySupplies,
 } from '../../../../game/progression/strategic-store';
@@ -13,6 +14,7 @@ import { OrnatePanel } from '../../../components/OrnatePanel';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 import {
+  IUNIORES,
   SUPPLIES_PER_GOLD,
   SUPPLY_MAX_CARRY,
 } from '../../../../config/game-config';
@@ -42,11 +44,14 @@ export function ExercitusTab() {
   ensureLegatePool();
 
   const currentGold = gold.value;
+  const currentIuniores = iuniores.value;
   const army = preparedArmy.value;
   const cohorts = army?.cohorts ?? [];
   const legate = preparedLegate.value;
   const pool = legateHiringPool.value;
   const accent = '#d4a843';
+  const recruitableCohorts = COHORT_CATALOG.filter(c => !c.mercenary);
+  const mercenaryCohorts = COHORT_CATALOG.filter(c => c.mercenary);
 
   // Grouped composition (same cohort id folded into one row with count)
   const groupMap = new Map<string, { name: string; role: UnitRole; count: number; hp: number }>();
@@ -84,6 +89,142 @@ export function ExercitusTab() {
   }
   function handleBuyMax() {
     if (maxBuyable > 0) handleBuySupplies(maxBuyable);
+  }
+
+  function renderRecruitCard(c: Cohort) {
+    const recruitFailure = getRecruitCohortFailure(c.id);
+    const canBuy = recruitFailure === null;
+    const color = ROLE_COLORS[c.role];
+    const badgeColor = c.mercenary ? '#c99245' : color;
+    const disabledCopy = recruitFailure === 'insufficient-iuniores'
+      ? `Needs ${IUNIORES.recruitCost} iuniores`
+      : recruitFailure === 'insufficient-gold'
+        ? `Needs ${c.aurumCost} gold`
+        : null;
+
+    return (
+      <div key={c.id} style={{
+        padding: '10px 12px',
+        background: c.mercenary ? 'rgba(44, 28, 16, 0.58)' : 'rgba(20, 18, 32, 0.5)',
+        border: '1px solid rgba(212, 168, 67, 0.15)',
+        borderLeft: `3px solid ${badgeColor}`,
+        borderRadius: 2,
+        display: 'flex', alignItems: 'center', gap: 10,
+        opacity: canBuy ? 1 : 0.72,
+      }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{
+              fontFamily: 'var(--imp-font-display)',
+              fontSize: 12, color: 'var(--imp-text-hi)',
+              letterSpacing: 1.5, textTransform: 'uppercase',
+              fontWeight: 600,
+            }}>
+              {c.name}
+            </div>
+            <div style={{
+              fontSize: 8, padding: '1px 6px',
+              border: `1px solid ${badgeColor}66`,
+              background: `${badgeColor}18`,
+              color: badgeColor,
+              borderRadius: 2,
+              letterSpacing: 1, textTransform: 'uppercase',
+              fontFamily: 'var(--imp-font-display)', fontWeight: 600,
+            }}>
+              {c.mercenary ? 'Mercenary' : ROLE_LABELS[c.role]}
+            </div>
+            {c.mercenary && (
+              <div style={{
+                fontSize: 8, padding: '1px 6px',
+                border: '1px solid rgba(232, 192, 112, 0.5)',
+                background: 'rgba(232, 192, 112, 0.12)',
+                color: '#f0d080',
+                borderRadius: 2,
+                letterSpacing: 1, textTransform: 'uppercase',
+                fontFamily: 'var(--imp-font-display)', fontWeight: 600,
+              }}>
+                Gold Only
+              </div>
+            )}
+          </div>
+          <div style={{
+            fontSize: 10, color: 'var(--imp-text-mid)',
+            fontStyle: 'italic', fontFamily: 'var(--imp-font-serif)',
+            marginTop: 2,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {c.description}
+          </div>
+          <div style={{
+            display: 'flex', gap: 10,
+            marginTop: 4,
+            fontFamily: 'var(--imp-font-mono)', fontSize: 9,
+            color: 'var(--imp-text-lo)',
+            flexWrap: 'wrap',
+          }}>
+            <span>ATK {c.stats.atk}</span>
+            <span>DEF {c.stats.def}</span>
+            <span>HP {c.stats.hp}</span>
+            <span>AGI {c.stats.agi}</span>
+            <span>{c.aurumCost}⚜</span>
+            {!c.mercenary && <span>{IUNIORES.recruitCost}🛡</span>}
+          </div>
+          {disabledCopy && (
+            <div style={{
+              marginTop: 4,
+              fontSize: 9,
+              color: recruitFailure === 'insufficient-iuniores' ? '#d48b3a' : '#c27a52',
+              letterSpacing: 0.4,
+              fontFamily: 'var(--imp-font-serif)',
+              fontStyle: 'italic',
+            }}>
+              {disabledCopy}
+            </div>
+          )}
+        </div>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{
+            fontFamily: 'var(--imp-font-display)',
+            fontSize: 13, fontWeight: 700,
+            color: canBuy ? accent : 'var(--imp-text-lo)',
+          }}>
+            {c.aurumCost}⚜
+          </div>
+          {!c.mercenary && (
+            <div style={{
+              marginTop: 2,
+              fontFamily: 'var(--imp-font-mono)',
+              fontSize: 9,
+              color: canBuy ? '#b89a66' : 'var(--imp-text-lo)',
+            }}>
+              {IUNIORES.recruitCost}🛡
+            </div>
+          )}
+          <button
+            onClick={() => handleRecruit(c.id)}
+            disabled={!canBuy}
+            title={disabledCopy ?? `Recruit ${c.name}`}
+            style={{
+              marginTop: 4,
+              padding: '5px 10px',
+              background: canBuy
+                ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`
+                : 'rgba(80, 70, 50, 0.3)',
+              border: 'none',
+              borderRadius: 2,
+              color: canBuy ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
+              fontSize: 9, fontWeight: 700,
+              letterSpacing: 1.5, textTransform: 'uppercase',
+              fontFamily: 'var(--imp-font-display)',
+              cursor: canBuy ? 'pointer' : 'not-allowed',
+              transition: 'all 160ms',
+            }}
+          >
+            Recruit
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -303,97 +444,44 @@ export function ExercitusTab() {
                 fontSize: 9, color: 'var(--imp-text-lo)',
                 letterSpacing: 1, textTransform: 'uppercase',
               }}>
-                ⚜ {currentGold}
+                ⚜ {currentGold} · 🛡 {currentIuniores}
               </span>}
             />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {COHORT_CATALOG.map((c) => {
-                const canBuy = currentGold >= c.aurumCost;
-                const color = ROLE_COLORS[c.role];
-                return (
-                  <div key={c.id} style={{
-                    padding: '10px 12px',
-                    background: 'rgba(20, 18, 32, 0.5)',
-                    border: '1px solid rgba(212, 168, 67, 0.15)',
-                    borderLeft: `3px solid ${color}`,
-                    borderRadius: 2,
-                    display: 'flex', alignItems: 'center', gap: 10,
+              {recruitableCohorts.map(renderRecruitCard)}
+              {mercenaryCohorts.length > 0 && (
+                <>
+                  <div style={{
+                    marginTop: 6,
+                    paddingTop: 10,
+                    borderTop: '1px solid rgba(212, 168, 67, 0.18)',
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    justifyContent: 'space-between',
+                    gap: 12,
                   }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{
-                          fontFamily: 'var(--imp-font-display)',
-                          fontSize: 12, color: 'var(--imp-text-hi)',
-                          letterSpacing: 1.5, textTransform: 'uppercase',
-                          fontWeight: 600,
-                        }}>
-                          {c.name}
-                        </div>
-                        <div style={{
-                          fontSize: 8, padding: '1px 6px',
-                          border: `1px solid ${color}66`,
-                          background: `${color}18`,
-                          color,
-                          borderRadius: 2,
-                          letterSpacing: 1, textTransform: 'uppercase',
-                          fontFamily: 'var(--imp-font-display)', fontWeight: 600,
-                        }}>
-                          {ROLE_LABELS[c.role]}
-                        </div>
-                      </div>
-                      <div style={{
-                        fontSize: 10, color: 'var(--imp-text-mid)',
-                        fontStyle: 'italic', fontFamily: 'var(--imp-font-serif)',
-                        marginTop: 2,
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>
-                        {c.description}
-                      </div>
-                      <div style={{
-                        display: 'flex', gap: 10,
-                        marginTop: 4,
-                        fontFamily: 'var(--imp-font-mono)', fontSize: 9,
-                        color: 'var(--imp-text-lo)',
-                      }}>
-                        <span>ATK {c.stats.atk}</span>
-                        <span>DEF {c.stats.def}</span>
-                        <span>HP {c.stats.hp}</span>
-                        <span>AGI {c.stats.agi}</span>
-                      </div>
+                    <div style={{
+                      fontFamily: 'var(--imp-font-display)',
+                      fontSize: 11,
+                      letterSpacing: 1.8,
+                      textTransform: 'uppercase',
+                      color: '#f0d080',
+                    }}>
+                      Mercenary Contracts
                     </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{
-                        fontFamily: 'var(--imp-font-display)',
-                        fontSize: 13, fontWeight: 700,
-                        color: canBuy ? accent : 'var(--imp-text-lo)',
-                      }}>
-                        {c.aurumCost}⚜
-                      </div>
-                      <button
-                        onClick={() => handleRecruit(c.id)}
-                        disabled={!canBuy}
-                        style={{
-                          marginTop: 4,
-                          padding: '5px 10px',
-                          background: canBuy
-                            ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`
-                            : 'rgba(80, 70, 50, 0.3)',
-                          border: 'none',
-                          borderRadius: 2,
-                          color: canBuy ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
-                          fontSize: 9, fontWeight: 700,
-                          letterSpacing: 1.5, textTransform: 'uppercase',
-                          fontFamily: 'var(--imp-font-display)',
-                          cursor: canBuy ? 'pointer' : 'not-allowed',
-                          transition: 'all 160ms',
-                        }}
-                      >
-                        Recruit
-                      </button>
+                    <div style={{
+                      fontSize: 9,
+                      color: 'var(--imp-text-lo)',
+                      fontFamily: 'var(--imp-font-serif)',
+                      fontStyle: 'italic',
+                      textAlign: 'right',
+                    }}>
+                      Remain recruitable when citizen cohorts fail the iuniores gate.
                     </div>
                   </div>
-                );
-              })}
+                  {mercenaryCohorts.map(renderRecruitCard)}
+                </>
+              )}
             </div>
           </OrnatePanel>
         </div>
@@ -519,7 +607,7 @@ export function ExercitusTab() {
                   </div>
                 )}
                 {pool.map((candidate) => {
-                  const affordable = canAfford('gold', LEGATE_HIRE_COST);
+                  const affordable = currentGold >= LEGATE_HIRE_COST;
                   return (
                     <div key={candidate.id} style={{
                       padding: '10px 12px',

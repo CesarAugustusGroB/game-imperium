@@ -2,6 +2,7 @@ import { signal } from '@preact/signals';
 import { selectedCommander, completedSpokes } from '../core/game-state';
 import { spendResource, addResource, canAfford } from '../core/resources';
 import type { ArmyData } from '../../types/index';
+import type { Cohort } from '../army/cohort';
 import type { Legate } from '../army/legate';
 import { getCohortById } from '../army/cohort-data';
 import { computeArmySize } from '../army/cohort';
@@ -67,6 +68,8 @@ export const armyEmbarkCount = signal(0);
  * Reset to [] by resetStrategicStore (new run).
  */
 export const legateHiringPool = signal<Legate[]>([]);
+
+export type RecruitCohortFailure = 'unknown-cohort' | 'insufficient-gold' | 'insufficient-iuniores';
 
 // ── Derived checks ──
 
@@ -254,13 +257,13 @@ export type RecruitResult =
 export function recruitCohort(cohortId: string): RecruitResult {
   const cohort = getCohortById(cohortId);
   if (!cohort) return { ok: false, reason: 'unknown-cohort' };
-  if (!canAfford('gold', cohort.aurumCost)) return { ok: false, reason: 'insufficient-gold' };
-  if (!canAfford('iuniores', IUNIORES.recruitCost)) return { ok: false, reason: 'insufficient-iuniores' };
+  const failure = getRecruitFailureForCohort(cohort);
+  if (failure) return { ok: false, reason: failure };
 
   // Atomic spend — guarded by the canAfford pre-checks above, so both
   // spendResource calls are guaranteed to succeed.
   spendResource('gold', cohort.aurumCost);
-  spendResource('iuniores', IUNIORES.recruitCost);
+  if (!cohort.mercenary) spendResource('iuniores', IUNIORES.recruitCost);
 
   const army = ensurePreparedArmy();
   const updated: ArmyData = {
@@ -272,10 +275,22 @@ export function recruitCohort(cohortId: string): RecruitResult {
   return { ok: true };
 }
 
+export function getRecruitCohortFailure(cohortId: string): RecruitCohortFailure | null {
+  const cohort = getCohortById(cohortId);
+  if (!cohort) return 'unknown-cohort';
+  return getRecruitFailureForCohort(cohort);
+}
+
+function getRecruitFailureForCohort(cohort: Cohort): RecruitCohortFailure | null {
+  if (!canAfford('gold', cohort.aurumCost)) return 'insufficient-gold';
+  if (!cohort.mercenary && !canAfford('iuniores', IUNIORES.recruitCost)) return 'insufficient-iuniores';
+  return null;
+}
+
 /**
  * Remove the last cohort of the given type from the prepared army.
- * Refunds both `aurumCost` in gold and `IUNIORES.recruitCost` iuniores
- * (pre-embark undo; matches the two-resource gate in recruitCohort).
+ * Refunds the cohort's aurumCost to gold. Regular citizen cohorts also refund
+ * their iuniores recruit cost while still in the Hub-prep roster.
  */
 export function removeCohort(cohortId: string): void {
   const army = preparedArmy.value;
@@ -285,7 +300,7 @@ export function removeCohort(cohortId: string): void {
   if (lastIdx === -1) return;
   const [removed] = cohorts.splice(lastIdx, 1);
   addResource('gold', removed.aurumCost);
-  addResource('iuniores', IUNIORES.recruitCost);
+  if (!removed.mercenary) addResource('iuniores', IUNIORES.recruitCost);
   preparedArmy.value = { ...army, cohorts, size: computeArmySize(cohorts) };
 }
 
