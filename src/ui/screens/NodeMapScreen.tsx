@@ -870,6 +870,11 @@ export function NodeMapScreen() {
       {/* Rest modal */}
       {showRestModal.value && (
         <NodeModal title="Your Army Rests" onClose={handleRestContinue}>
+          {(() => {
+            const preview = restPreview.value;
+            const canReplenish = !!preview && preview.iunioresSpent > 0;
+            return (
+              <>
           <div style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-text-muted)', lineHeight: '1.5', marginBottom: '16px' }}>
             Choose whether to spend iuniores on replenishment before moving on. Rest rewards below are already secured.
           </div>
@@ -888,7 +893,6 @@ export function NodeMapScreen() {
             ))}
           </div>
           {(() => {
-            const preview = restPreview.value;
             if (!preview || preview.perCohort.length === 0) {
               return (
                 <div style={{
@@ -961,11 +965,11 @@ export function NodeMapScreen() {
 
                 {damagedCohorts.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {damagedCohorts.map((c) => {
+                    {damagedCohorts.map((c, i) => {
                       const beforePct = c.maxHp > 0 ? (c.currentHp / c.maxHp) * 100 : 0;
                       const afterPct = c.maxHp > 0 ? (c.newCurrentHp / c.maxHp) * 100 : 0;
                       return (
-                        <div key={`${c.cohortId}-${c.currentHp}-${c.newCurrentHp}`} style={{
+                        <div key={`${c.cohortId}-${i}`} style={{
                           padding: '8px 10px',
                           background: 'rgba(12, 12, 18, 0.35)',
                           border: '1px solid rgba(212, 168, 67, 0.12)',
@@ -1045,17 +1049,20 @@ export function NodeMapScreen() {
             <button
               class="modal-action-btn ornate-btn"
               onClick={handleRestReplenish}
-              disabled={!restPreview.value || restPreview.value.iunioresSpent === 0}
+              disabled={!canReplenish}
               style={{
                 padding: '10px 24px',
-                opacity: !restPreview.value || restPreview.value.iunioresSpent === 0 ? 0.6 : 1,
-                cursor: !restPreview.value || restPreview.value.iunioresSpent === 0 ? 'not-allowed' : 'pointer',
+                opacity: canReplenish ? 1 : 0.6,
+                cursor: canReplenish ? 'pointer' : 'not-allowed',
               }}
-              title={!restPreview.value || restPreview.value.iunioresSpent === 0 ? 'Army at full strength.' : 'Spend iuniores and restore HP.'}
+              title={canReplenish ? 'Spend iuniores and restore HP.' : 'Army at full strength.'}
             >
               Replenish And Continue
             </button>
           </div>
+              </>
+            );
+          })()}
         </NodeModal>
       )}
 
