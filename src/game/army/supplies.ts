@@ -18,7 +18,7 @@
  */
 
 import type { ArmyData, Cohort } from '../../types/index';
-import { computeArmySize } from './cohort';
+import { computeArmySize, cohortInstanceKey } from './cohort';
 import {
   SUPPLY_HP_DAMAGE_PCT,
   SUPPLY_MORALE_PENALTY_PER_DEFICIT,
@@ -94,7 +94,7 @@ export function consumeTraversal(
     if (after <= 0) {
       // Spoke-bound rosters are normalized at embark, so instanceId is set.
       // Fall back to catalog id only as a defensive guard against malformed input.
-      cohortsKilled.push(c.instanceId ?? c.id);
+      cohortsKilled.push(cohortInstanceKey(c));
       continue;
     }
     nextCohorts.push({ ...c, currentHp: after });

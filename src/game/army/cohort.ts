@@ -111,6 +111,44 @@ export function createCohortInstance(cohort: Cohort): Cohort {
 }
 
 /**
+ * Returns the stable lookup key for a cohort, falling back to the catalog id
+ * when `instanceId` is missing (legacy / pre-S26-01 saves). Use this anywhere
+ * that builds a Map keyed by cohort identity for write-back or replenishment.
+ */
+export function cohortInstanceKey(cohort: Cohort): string {
+  return cohort.instanceId ?? cohort.id;
+}
+
+/**
+ * Build a Cohort with updated HP/outOfAction state, preserving reference
+ * stability when the inputs already match. Strips `currentHp` when at maxHp
+ * (FT-SUP convention: undefined = full health) and strips `outOfAction`
+ * when false. Always returns a fresh object when something changed.
+ */
+export function applyCohortHealthState(
+  cohort: Cohort,
+  newCurrentHp: number,
+  outOfAction: boolean,
+): Cohort {
+  const maxHp = cohort.stats.hp;
+  const targetCurrentHp = newCurrentHp >= maxHp ? undefined : newCurrentHp;
+  const targetOutOfAction = outOfAction ? true : undefined;
+
+  if (cohort.currentHp === targetCurrentHp && (cohort.outOfAction === true) === outOfAction) {
+    return cohort;
+  }
+
+  const { currentHp: _currentHp, outOfAction: _outOfAction, ...rest } = cohort;
+  void _currentHp;
+  void _outOfAction;
+
+  const next: Cohort = { ...rest };
+  if (targetCurrentHp !== undefined) next.currentHp = targetCurrentHp;
+  if (targetOutOfAction !== undefined) next.outOfAction = targetOutOfAction;
+  return next;
+}
+
+/**
  * Normalize a roster so every cohort has a unique stable instanceId.
  *
  * This backfills legacy saves and also defends against accidental duplicate

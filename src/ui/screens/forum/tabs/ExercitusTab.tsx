@@ -595,9 +595,10 @@ export function ExercitusTab() {
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
+                  flexWrap: 'wrap',
                   gap: 12,
                 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ flex: '1 1 220px', minWidth: 0 }}>
                     <div style={{
                       fontFamily: 'var(--imp-font-display)',
                       fontSize: 10,

@@ -27,6 +27,7 @@
 import { signal } from '@preact/signals';
 import type { BattleUnit } from './battle-types';
 import type { Cohort } from '../game/army/cohort';
+import { applyCohortHealthState } from '../game/army/cohort';
 import { VICTORY_CAP_RATIO } from '../config/game-config';
 
 /** Surviving HP > 0 and not in death animation. */
@@ -97,12 +98,12 @@ export function extractCohortHpSnapshot(
     if (isAlive(unit)) {
       // Surviving cohort: clear any prior outOfAction, write back HP.
       const newCurrentHp = Math.max(0, Math.min(maxHp, unit.currentHp));
-      return applyCohortState(cohort, newCurrentHp, false);
+      return applyCohortHealthState(cohort, newCurrentHp, false);
     }
 
     // 0-HP or dying: mark out of action, hold at 1 HP so the cohort stays in
     // the roster but is not deployable until healed.
-    return applyCohortState(cohort, 1, true);
+    return applyCohortHealthState(cohort, 1, true);
   });
 }
 
@@ -180,7 +181,7 @@ export function applyVictoryCap(
     });
 
     const finalHp = preHp - cappedLoss;
-    return applyCohortState(post, finalHp, false);
+    return applyCohortHealthState(post, finalHp, false);
   });
 
   return {
@@ -189,32 +190,4 @@ export function applyVictoryCap(
     totalAbsorbedHp,
     unitLossRatio: clampedRatio,
   };
-}
-
-/**
- * Build the next cohort shape, preserving the reference when nothing changed.
- * Strips `currentHp` when at max (FT-SUP convention: undefined = full health)
- * and strips `outOfAction` when false (only set when truly OoA).
- */
-function applyCohortState(
-  cohort: Cohort,
-  newCurrentHp: number,
-  outOfAction: boolean,
-): Cohort {
-  const maxHp = cohort.stats.hp;
-  const targetCurrentHp = newCurrentHp >= maxHp ? undefined : newCurrentHp;
-  const targetOutOfAction = outOfAction ? true : undefined;
-
-  if (cohort.currentHp === targetCurrentHp && (cohort.outOfAction === true) === outOfAction) {
-    return cohort;
-  }
-
-  const { currentHp: _currentHp, outOfAction: _outOfAction, ...rest } = cohort;
-  void _currentHp;
-  void _outOfAction;
-
-  const next: Cohort = { ...rest };
-  if (targetCurrentHp !== undefined) next.currentHp = targetCurrentHp;
-  if (targetOutOfAction !== undefined) next.outOfAction = targetOutOfAction;
-  return next;
 }
