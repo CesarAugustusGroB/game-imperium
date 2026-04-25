@@ -322,3 +322,15 @@ export const IUNIORES = {
   /** Initial pool seeded at the start of a new run. */
   startingSeed: 2000,
 };
+
+// ══════════════════════════════════════════════
+//  VICTORY DAMAGE CAP (FT-HEAL FR-11 / S26-04)
+// ══════════════════════════════════════════════
+
+/**
+ * Maximum fraction of `maxHp` a cohort can lose on a victorious battle,
+ * scaled by `unitsKilled / unitsDeployed`. A crushing win (0% units lost)
+ * absorbs all HP loss; a pyrrhic win (100% units lost) caps loss at
+ * `VICTORY_CAP_RATIO * maxHp`. Defeats and retreats bypass the cap.
+ */
+export const VICTORY_CAP_RATIO = 0.5;

@@ -9,7 +9,7 @@ import { BattleMode, isFinalBattle } from './battle/index';
 import { currentSpoke, lastBattleResult } from './game/progression/spoke';
 import { selectedCommander, veteranStacks, spokesSinceLastBattle, battlesWon } from './game/core/game-state';
 import { syncBattleSignals, resetBattleSignals, battleActive, requestBattleExit } from './battle/battle-signals';
-import { extractCohortHpSnapshot } from './battle/casualties';
+import { extractCohortHpSnapshot, applyVictoryCap, lastVictoryCapSummary } from './battle/casualties';
 
 // Mount Preact UI
 const appRoot = document.getElementById('app-root');
@@ -39,15 +39,32 @@ const battleMode = new BattleMode(() => {
   // S26-03 / FT-HEAL: project per-unit battle HP back onto the bound army's
   // cohort roster so damage carries into the next battle and surfaces in the
   // Hub heal panel between spokes. Runs on all 3 outcomes (victory / defeat /
-  // retreat); the victory cap (FR-11) is layered on top in S26-04.
+  // retreat). On victory, S26-04's cap layer reduces HP loss further per
+  // unitsKilled / unitsDeployed.
   const spoke = currentSpoke.value;
   if (spoke?.boundArmy) {
     const playerUnits = battleMode.state.getBattleFactionUnits('blue');
-    const nextCohorts = extractCohortHpSnapshot(playerUnits, spoke.boundArmy.cohorts);
+    const preBattleCohorts = spoke.boundArmy.cohorts;
+    let nextCohorts = extractCohortHpSnapshot(playerUnits, preBattleCohorts);
+
+    // S26-04 / FT-HEAL FR-11: victory damage cap. Defeats and retreats bypass.
+    if (lastBattleResult.value === 'victory') {
+      const totalUnits = playerUnits.length;
+      const killedUnits = playerUnits.filter(u => u.isDying || u.currentHp <= 0).length;
+      const unitLossRatio = totalUnits > 0 ? killedUnits / totalUnits : 0;
+      const capResult = applyVictoryCap(preBattleCohorts, nextCohorts, unitLossRatio);
+      nextCohorts = capResult.cohorts;
+      lastVictoryCapSummary.value = capResult;
+    } else {
+      lastVictoryCapSummary.value = null;
+    }
+
     currentSpoke.value = {
       ...spoke,
       boundArmy: { ...spoke.boundArmy, cohorts: nextCohorts },
     };
+  } else {
+    lastVictoryCapSummary.value = null;
   }
 
   // S7-11: Final invasion — route to victory/defeat screens instead of post-battle

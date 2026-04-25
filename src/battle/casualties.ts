@@ -24,13 +24,49 @@
  * "did the unit survive?" question.
  */
 
+import { signal } from '@preact/signals';
 import type { BattleUnit } from './battle-types';
 import type { Cohort } from '../game/army/cohort';
+import { VICTORY_CAP_RATIO } from '../config/game-config';
 
 /** Surviving HP > 0 and not in death animation. */
 function isAlive(unit: BattleUnit): boolean {
   return !unit.isDying && unit.currentHp > 0;
 }
+
+/**
+ * Per-cohort breakdown of how much HP loss the victory cap absorbed.
+ * S26-08's post-battle UI reads this to render the "Field Recovery" line.
+ */
+export interface VictoryCapAbsorption {
+  cohortInstanceId: string;
+  cohortName: string;
+  /** Raw HP loss before the cap was applied (post-battle currentHp delta). */
+  rawLoss: number;
+  /** HP loss after the cap. ≤ rawLoss. */
+  cappedLoss: number;
+  /** rawLoss − cappedLoss. Zero when the cap didn't bind. */
+  absorbedHp: number;
+}
+
+export interface VictoryCapResult {
+  /** Final cohort roster after the cap was applied. */
+  cohorts: Cohort[];
+  /** Per-cohort breakdown for the post-battle UI. */
+  absorbedPerCohort: VictoryCapAbsorption[];
+  /** Total HP absorbed across all cohorts. */
+  totalAbsorbedHp: number;
+  /** unitsKilled / unitsDeployed at the moment the cap was computed. */
+  unitLossRatio: number;
+}
+
+/**
+ * Last applied victory cap result. Set by `src/main.tsx` on a victorious
+ * battle, read by S26-08's post-battle "Field Recovery" panel. Cleared
+ * before the next battle (no-op for defeats / retreats — the cap is
+ * never applied on those outcomes).
+ */
+export const lastVictoryCapSummary = signal<VictoryCapResult | null>(null);
 
 /**
  * Project per-unit battle HP back onto a cohort roster. Returns a new array
@@ -68,6 +104,91 @@ export function extractCohortHpSnapshot(
     // the roster but is not deployable until healed.
     return applyCohortState(cohort, 1, true);
   });
+}
+
+/**
+ * Compute the victory damage cap for a battle the player won (FT-HEAL FR-11).
+ *
+ * Pure: takes the pre-battle cohorts (input to `extractCohortHpSnapshot`),
+ * the post-battle cohorts (output of `extractCohortHpSnapshot`), and the
+ * unit-loss ratio (player units killed / deployed across the whole faction,
+ * including allies). Returns a final cohort roster where each non-OoA cohort
+ * has its HP loss reduced by `min(rawLoss, maxHp × VICTORY_CAP_RATIO ×
+ * unitLossRatio)`.
+ *
+ * Behavior:
+ *   - **Crushing win** (unitLossRatio = 0): every cohort's loss is absorbed,
+ *     HP restored to its pre-battle value.
+ *   - **Pyrrhic win** (unitLossRatio = 1): cap binds at `0.5 × maxHp`; cohorts
+ *     never lose more than half their max in a single battle.
+ *   - **Out-of-action cohorts** (R-8): the cap does NOT rescue them. A 0-HP
+ *     cohort that triggered `outOfAction` in `extractCohortHpSnapshot` stays
+ *     at 1 HP outOfAction. Only fractional damage is softened.
+ *   - **Cohorts that didn't take damage**: passed through unchanged with
+ *     reference stability preserved.
+ *
+ * Caller responsibilities (`src/main.tsx`):
+ *   1. Run `extractCohortHpSnapshot` first → raw post-battle cohorts
+ *   2. Compute `unitLossRatio` from `BattleState.getBattleFactionUnits('blue')`
+ *   3. Call this function ONLY on victory outcomes
+ *   4. Stash result in `lastVictoryCapSummary` for S26-08
+ */
+export function applyVictoryCap(
+  preBattle: readonly Cohort[],
+  postBattle: readonly Cohort[],
+  unitLossRatio: number,
+): VictoryCapResult {
+  const clampedRatio = Math.max(0, Math.min(1, unitLossRatio));
+  const lossFactor = VICTORY_CAP_RATIO * clampedRatio;
+
+  // Build pre-battle lookup so cap math is correct even if the post-battle
+  // ordering ever diverges from the pre-battle ordering (it shouldn't today,
+  // but the helper stays robust against future write-back changes).
+  const preByInstance = new Map<string, Cohort>();
+  for (const c of preBattle) {
+    if (c.instanceId !== undefined) preByInstance.set(c.instanceId, c);
+  }
+
+  const absorbedPerCohort: VictoryCapAbsorption[] = [];
+  let totalAbsorbedHp = 0;
+
+  const cohorts = postBattle.map((post) => {
+    if (post.outOfAction) return post; // R-8: cap never overrides OoA
+    if (post.instanceId === undefined) return post;
+
+    const pre = preByInstance.get(post.instanceId);
+    if (!pre) return post;
+
+    const maxHp = post.stats.hp;
+    const preHp = pre.currentHp ?? maxHp;
+    const postHp = post.currentHp ?? maxHp;
+    const rawLoss = Math.max(0, preHp - postHp);
+    if (rawLoss === 0) return post;
+
+    const maxAllowedLoss = Math.floor(maxHp * lossFactor);
+    const cappedLoss = Math.min(rawLoss, maxAllowedLoss);
+    const absorbed = rawLoss - cappedLoss;
+    if (absorbed === 0) return post;
+
+    totalAbsorbedHp += absorbed;
+    absorbedPerCohort.push({
+      cohortInstanceId: post.instanceId,
+      cohortName: post.name,
+      rawLoss,
+      cappedLoss,
+      absorbedHp: absorbed,
+    });
+
+    const finalHp = preHp - cappedLoss;
+    return applyCohortState(post, finalHp, false);
+  });
+
+  return {
+    cohorts,
+    absorbedPerCohort,
+    totalAbsorbedHp,
+    unitLossRatio: clampedRatio,
+  };
 }
 
 /**
