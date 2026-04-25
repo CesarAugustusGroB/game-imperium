@@ -129,13 +129,19 @@ const legacyInstanceIdRaw = JSON.stringify({
 });
 
 const migratedInstanceIds = parseMetaSave(legacyInstanceIdRaw);
+const migratedPreparedId = migratedInstanceIds.activeRun?.preparedArmy?.cohorts[0]?.instanceId;
+const migratedBoundId = migratedInstanceIds.activeRun?.currentSpoke?.boundArmy?.cohorts[0]?.instanceId;
 assert(
-  typeof migratedInstanceIds.activeRun?.preparedArmy?.cohorts[0]?.instanceId === 'string',
-  'Legacy preparedArmy cohorts should receive migrated instance ids',
+  typeof migratedPreparedId === 'string' && migratedPreparedId.startsWith(`${legacyCohort.id}-`) && migratedPreparedId.length > legacyCohort.id.length + 1,
+  'Legacy preparedArmy cohorts should receive a non-empty migrated instance id namespaced by catalog id',
 );
 assert(
-  typeof migratedInstanceIds.activeRun?.currentSpoke?.boundArmy?.cohorts[0]?.instanceId === 'string',
-  'Legacy boundArmy cohorts should receive migrated instance ids',
+  typeof migratedBoundId === 'string' && migratedBoundId.startsWith(`${legacyCohort.id}-`) && migratedBoundId.length > legacyCohort.id.length + 1,
+  'Legacy boundArmy cohorts should receive a non-empty migrated instance id namespaced by catalog id',
+);
+assert(
+  migratedPreparedId !== migratedBoundId,
+  'preparedArmy and boundArmy cohorts should receive distinct instance ids',
 );
 
 // Full restore integration check.

@@ -433,7 +433,7 @@ export async function restoreActiveRun(): Promise<boolean> {
     councilSlots.value = snapshot.councilSlots;
     advisorPool.value = snapshot.advisorPool;
     tierUpNotices.value = snapshot.tierUpNotices;
-    plannedSpoke.value = snapshot.plannedSpoke;
+    plannedSpoke.value = normalizeSpokeSnapshot(snapshot.plannedSpoke);
 
     currentSpoke.value = normalizeSpokeSnapshot(snapshot.currentSpoke);
     currentNodeIndex.value = snapshot.currentNodeIndex;
