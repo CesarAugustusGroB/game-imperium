@@ -15,7 +15,7 @@ import { resetEventStore } from '../events/event-store';
 import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyIds, registerFactionSyncCallback } from '../progression/npc-faction-store';
 import { resetStrategicStore, ensurePreparedArmy, preparedArmy } from '../progression/strategic-store';
 import { getCohortById } from '../army/cohort-data';
-import { computeArmySize } from '../army/cohort';
+import { computeArmySize, createCohortInstance } from '../army/cohort';
 import { clearActiveRunSave, recordRunStart } from './meta-save';
 import { STARTER_ADVISORS } from '../../data/advisor-data';
 import { initFeaturePool, resetFeaturePool } from '../province/feature-store';
@@ -169,7 +169,7 @@ export function startNewRun(commander: Commander, options?: StartRunOptions): vo
   const startingArmy = ensurePreparedArmy();
   const hastati = getCohortById('hastati');
   if (hastati) {
-    startingArmy.cohorts = [{ ...hastati }, { ...hastati }];
+    startingArmy.cohorts = [createCohortInstance(hastati), createCohortInstance(hastati)];
     startingArmy.size = computeArmySize(startingArmy.cohorts);
     preparedArmy.value = { ...startingArmy };
   }

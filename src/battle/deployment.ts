@@ -260,7 +260,7 @@ function tryAdd(
   // full so the health bar reads "damaged", not "smaller pool".
   const unit = state.addUnit(
     faction, hex, cohort.name, cohort.role,
-    { ...cohort.stats }, cohort.spriteId, cohort.movementProfile,
+    { ...cohort.stats }, cohort.spriteId, cohort.movementProfile, cohort.instanceId,
   );
   if (cohort.currentHp !== undefined && cohort.currentHp < cohort.stats.hp) {
     unit.currentHp = cohort.currentHp;

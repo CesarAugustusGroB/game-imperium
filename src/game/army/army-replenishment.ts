@@ -33,6 +33,7 @@ import { iuniores, spendResource } from '../core/resources';
 import { currentSpoke } from '../progression/spoke';
 
 export interface CohortReplenishment {
+  cohortInstanceId: string;
   cohortId: string;
   cohortName: string;
   maxHp: number;
@@ -117,6 +118,7 @@ export function previewReplenishment(
     hpRestored += healed;
 
     perCohort.push({
+      cohortInstanceId: c.instanceId ?? c.id,
       cohortId: c.id,
       cohortName: c.name,
       maxHp,

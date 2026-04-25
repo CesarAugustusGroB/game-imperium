@@ -32,7 +32,12 @@ export interface TraversalAttritionLog {
   hpDamagePerCohortPct: number;
   /** Absolute amount added to `supplyMoralePenalty` this traversal. */
   moralePenaltyDelta: number;
-  /** Ids of cohorts whose currentHp hit 0 and were removed from the roster. */
+  /**
+   * Stable `instanceId`s of cohorts whose currentHp hit 0 and were removed
+   * from the roster. Spoke-bound armies are always normalized at embark
+   * (`startSpokeFromCouncil`), so every entry here is an instanceId — never
+   * a bare catalog id.
+   */
   cohortsKilled: string[];
 }
 
@@ -87,7 +92,9 @@ export function consumeTraversal(
     const damage = Math.max(1, Math.floor(maxHp * SUPPLY_HP_DAMAGE_PCT));
     const after = current - damage;
     if (after <= 0) {
-      cohortsKilled.push(c.id);
+      // Spoke-bound rosters are normalized at embark, so instanceId is set.
+      // Fall back to catalog id only as a defensive guard against malformed input.
+      cohortsKilled.push(c.instanceId ?? c.id);
       continue;
     }
     nextCohorts.push({ ...c, currentHp: after });

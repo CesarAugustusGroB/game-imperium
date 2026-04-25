@@ -37,6 +37,8 @@ export interface UnitStats {
 
 export interface BattleUnit {
   id: number;
+  /** Stable roster identity of the source cohort, when spawned from an army cohort. */
+  cohortInstanceId?: string;
   faction: BattleFaction;
   role: UnitRole;
   hex: Hex;

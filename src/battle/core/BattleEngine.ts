@@ -96,8 +96,17 @@ export class BattleEngine {
 
   // ── Units ──
 
-  addUnit(faction: BattleFaction, hex: Hex, name: string, role: UnitRole = 'vanguard', stats?: UnitStats, spriteId?: string, movementProfile?: MovementProfileId): BattleUnit {
-    return units.addUnit(this.world, faction, hex, name, role, stats, spriteId, movementProfile);
+  addUnit(
+    faction: BattleFaction,
+    hex: Hex,
+    name: string,
+    role: UnitRole = 'vanguard',
+    stats?: UnitStats,
+    spriteId?: string,
+    movementProfile?: MovementProfileId,
+    cohortInstanceId?: string,
+  ): BattleUnit {
+    return units.addUnit(this.world, faction, hex, name, role, stats, spriteId, movementProfile, cohortInstanceId);
   }
   getUnitAt(hex: Hex): BattleUnit | null { return units.getUnitAt(this.world, hex); }
   moveUnit(unitId: number, target: Hex): boolean { return units.moveUnit(this.world, unitId, target); }

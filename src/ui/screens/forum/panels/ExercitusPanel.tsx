@@ -35,7 +35,7 @@ export function ExercitusPanel({ accent = '#d4a843' }: ExercitusPanelProps) {
           </div>
         )}
         {cohorts.map((c) => (
-          <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div key={c.instanceId ?? c.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
               width: 6, height: 16,
               background: ROLE_COLORS[c.role] ?? accent,

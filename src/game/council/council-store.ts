@@ -15,6 +15,7 @@ import {
   preparedLegate,
   armyEmbarkCount,
 } from '../progression/strategic-store';
+import { normalizeCohortRoster } from '../army/cohort';
 import { addNotification } from '../../ui/notifications/notification-store';
 
 // ── Council signals ──
@@ -423,9 +424,8 @@ export function startSpokeFromCouncil(): void {
   // S14-06: snapshot the player's prepared army + Legate into the spoke.
   // The shallow clone freezes the cohort list at embark time so subsequent
   // mutations to `preparedArmy` (e.g. between runs) don't leak into this run.
-  // FT-SUP: initialize each cohort's currentHp to stats.hp so the spoke
-  // starts with everyone at full health; the attrition loop will decrement
-  // it as supplies run out. Supplies pass through untouched.
+  // S26-01 / FT-HEAL prerequisite: preserve carried-over HP verbatim and make
+  // sure every roster entry has a stable instanceId before tactical deploy.
   const armyForRun = preparedArmy.value;
   const legateForRun = preparedLegate.value;
   spoke = {
@@ -433,7 +433,7 @@ export function startSpokeFromCouncil(): void {
     boundArmy: armyForRun
       ? {
           ...armyForRun,
-          cohorts: armyForRun.cohorts.map((c) => ({ ...c, currentHp: c.stats.hp })),
+          cohorts: normalizeCohortRoster(armyForRun.cohorts),
           supplyMoralePenalty: undefined,
           supplyDeficitStreak: 0,
         }

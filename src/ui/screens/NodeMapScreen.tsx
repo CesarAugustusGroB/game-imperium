@@ -965,11 +965,11 @@ export function NodeMapScreen() {
 
                 {damagedCohorts.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {damagedCohorts.map((c, i) => {
+                    {damagedCohorts.map((c) => {
                       const beforePct = c.maxHp > 0 ? (c.currentHp / c.maxHp) * 100 : 0;
                       const afterPct = c.maxHp > 0 ? (c.newCurrentHp / c.maxHp) * 100 : 0;
                       return (
-                        <div key={`${c.cohortId}-${i}`} style={{
+                        <div key={c.cohortInstanceId} style={{
                           padding: '8px 10px',
                           background: 'rgba(12, 12, 18, 0.35)',
                           border: '1px solid rgba(212, 168, 67, 0.12)',

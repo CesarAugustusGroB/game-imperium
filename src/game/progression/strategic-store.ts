@@ -5,7 +5,7 @@ import type { ArmyData } from '../../types/index';
 import type { Cohort } from '../army/cohort';
 import type { Legate } from '../army/legate';
 import { getCohortById } from '../army/cohort-data';
-import { computeArmySize } from '../army/cohort';
+import { computeArmySize, createCohortInstance } from '../army/cohort';
 import { rollHiringPool, rollLegateCandidate } from '../army/legate-pool';
 import { SUPPLIES_PER_GOLD, SUPPLIES_STARTING_STOCK, SUPPLY_MAX_CARRY, IUNIORES } from '../../config/game-config';
 
@@ -268,7 +268,7 @@ export function recruitCohort(cohortId: string): RecruitResult {
   const army = ensurePreparedArmy();
   const updated: ArmyData = {
     ...army,
-    cohorts: [...army.cohorts, { ...cohort }],
+    cohorts: [...army.cohorts, createCohortInstance(cohort)],
   };
   updated.size = computeArmySize(updated.cohorts);
   preparedArmy.value = updated;
@@ -296,9 +296,11 @@ export function removeCohort(cohortId: string): void {
   const army = preparedArmy.value;
   if (!army) return;
   const cohorts = [...army.cohorts];
-  const lastIdx = cohorts.map(c => c.id).lastIndexOf(cohortId);
-  if (lastIdx === -1) return;
-  const [removed] = cohorts.splice(lastIdx, 1);
+  const exactIdx = cohorts.findIndex(c => c.instanceId === cohortId);
+  const lastTypeIdx = exactIdx === -1 ? cohorts.map(c => c.id).lastIndexOf(cohortId) : -1;
+  const removeIdx = exactIdx !== -1 ? exactIdx : lastTypeIdx;
+  if (removeIdx === -1) return;
+  const [removed] = cohorts.splice(removeIdx, 1);
   addResource('gold', removed.aurumCost);
   if (!removed.mercenary) addResource('iuniores', IUNIORES.recruitCost);
   preparedArmy.value = { ...army, cohorts, size: computeArmySize(cohorts) };
