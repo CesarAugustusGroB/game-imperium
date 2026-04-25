@@ -76,6 +76,12 @@ export interface Cohort {
    * HP of the spawned BattleUnit so the health bar renders correctly.
    */
   currentHp?: number;
+  /**
+   * FT-HEAL: cohort survived battle but is unavailable for deployment until
+   * replenished in the Hub. Healing APIs clear this flag automatically once
+   * HP is restored to a deployable state.
+   */
+  outOfAction?: boolean;
 }
 
 /**
