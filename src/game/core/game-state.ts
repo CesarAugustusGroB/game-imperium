@@ -96,16 +96,12 @@ export function syncFactionSignals(): void {
 // when setFactionRelation is called mid-run, without creating a circular import.
 registerFactionSyncCallback(syncFactionSignals);
 
-/**
- * Start a new run with the given commander.
- * Initializes all signals to fresh state.
- */
-export function startNewRun(commander: Commander): void {
-  // Runtime guard: warn if an unrecognized commander ID is used (data integrity check)
-  if (!KNOWN_COMMANDER_IDS.has(commander.id)) {
-    console.warn(`[startNewRun] Unknown commander ID: "${commander.id}". Expected one of: ${[...KNOWN_COMMANDER_IDS].join(', ')}`);
-  }
+interface StartRunOptions {
+  recordRunStart?: boolean;
+  seedHomeProvince?: boolean;
+}
 
+function initializeRunScaffold(commander: Commander): void {
   selectedCommander.value = commander;
   initResources(commander.startingResources);
   iuniores.value = IUNIORES.startingSeed;
@@ -146,6 +142,28 @@ export function startNewRun(commander: Commander): void {
   resetProvinceStore();
   resetEventStore();
   resetStrategicStore();
+  initGovernorStore();
+  initFeaturePool();
+  resetProvinceMapStore();
+
+  for (const a of STARTER_ADVISORS) {
+    hireAdvisor({ ...a, currentTier: 1, xp: 0 });
+  }
+}
+
+/**
+ * Start a new run with the given commander.
+ * Initializes all signals to fresh state.
+ */
+export function startNewRun(commander: Commander, options?: StartRunOptions): void {
+  const { recordRunStart: shouldRecordRunStart = true, seedHomeProvince = true } = options ?? {};
+
+  // Runtime guard: warn if an unrecognized commander ID is used (data integrity check)
+  if (!KNOWN_COMMANDER_IDS.has(commander.id)) {
+    console.warn(`[startNewRun] Unknown commander ID: "${commander.id}". Expected one of: ${[...KNOWN_COMMANDER_IDS].join(', ')}`);
+  }
+
+  initializeRunScaffold(commander);
 
   // Starting army: 2 Hastati (free — no gold cost)
   const startingArmy = ensurePreparedArmy();
@@ -156,23 +174,20 @@ export function startNewRun(commander: Commander): void {
     preparedArmy.value = { ...startingArmy };
   }
 
-  initGovernorStore();
-  initFeaturePool();
+  if (seedHomeProvince) {
+    // Create the home province first (no territory claimed yet — topology not loaded)
+    conquerProvince('Roma', { gold: 2, faith: 1, influence: 1, momentum: 0, iuniores: 0 }, 1);
 
-  // Create the home province first (no territory claimed yet — topology not loaded)
-  conquerProvince('Roma', { gold: 2, faith: 1, influence: 1, momentum: 0, iuniores: 0 }, 1);
-
-  // Load topology, then retroactively claim territory for Roma
-  initProvinceMapStore().then(() => {
-    const roma = provinces.value.find(p => p.name === 'Roma');
-    if (roma) claimTerritory(roma.id);
-  });
-
-  for (const a of STARTER_ADVISORS) {
-    hireAdvisor({ ...a, currentTier: 1, xp: 0 });
+    // Load topology, then retroactively claim territory for Roma
+    initProvinceMapStore().then(() => {
+      const roma = provinces.value.find(p => p.name === 'Roma');
+      if (roma) claimTerritory(roma.id);
+    });
   }
 
-  recordRunStart();
+  if (shouldRecordRunStart) {
+    recordRunStart();
+  }
 }
 
 /**
