@@ -144,6 +144,51 @@ assert(
   'preparedArmy and boundArmy cohorts should receive distinct instance ids',
 );
 
+// ── S26-09: damage-state parse-only round-trip ─────────────────
+// A v2 save carrying currentHp + outOfAction must deserialize with both
+// fields intact. JSON does the heavy lifting; this guards against any
+// future migration helper accidentally stripping optional fields.
+const damageRaw = JSON.stringify({
+  version: 2,
+  runs: [],
+  totalRunsStarted: 0,
+  victories: 0,
+  highScore: 0,
+  commanderWins: [],
+  activeRun: {
+    commanderId: 'augustus',
+    resources: { gold: 0, faith: 0, influence: 0, momentum: 0, iuniores: 1000 },
+    iunioresSeeded: true,
+    preparedArmy: {
+      id: 0,
+      owner: 'rome',
+      name: 'Legio I',
+      size: legacyCohort.stats.hp * 2,
+      cohorts: [
+        { ...legacyCohort, instanceId: 'damage-1', currentHp: 600 },
+        { ...legacyCohort, instanceId: 'damage-2', currentHp: 1, outOfAction: true },
+      ],
+      legateId: null,
+      supplies: 4,
+      provinceIndex: 0,
+      targetProvinceIndex: null,
+      progress: 0,
+      path: [],
+      inCombat: false,
+      combatTarget: null,
+      lastRoll: 0,
+    },
+  },
+});
+
+const damageParsed = parseMetaSave(damageRaw);
+const damageCohorts = damageParsed.activeRun?.preparedArmy?.cohorts ?? [];
+assert(damageCohorts.length === 2, 'Damage round-trip should preserve cohort count');
+assert(damageCohorts[0].currentHp === 600, 'currentHp on cohort 1 must round-trip exactly');
+assert(damageCohorts[0].outOfAction === undefined, 'Cohort with no outOfAction field must NOT default to true');
+assert(damageCohorts[1].currentHp === 1, 'currentHp on outOfAction cohort must round-trip exactly');
+assert(damageCohorts[1].outOfAction === true, 'outOfAction flag must round-trip on the wounded cohort');
+
 // Full restore integration check.
 topologyData.value = {
   centers: { '27': [0.5, 0.5] },
@@ -157,13 +202,17 @@ threatLevel.value = 3;
 globalSeason.value = 5;
 
 const savedInstanceId = 'verify-hastati-1';
+const ooaInstanceId = 'verify-hastati-ooa';
 const savedPreparedArmy = preparedArmy.value;
-assert(savedPreparedArmy && savedPreparedArmy.cohorts.length >= 1, 'Starter army should exist for verification');
+assert(savedPreparedArmy && savedPreparedArmy.cohorts.length >= 2, 'Starter army should have at least 2 cohorts for verification');
+const damagedHp = Math.floor(savedPreparedArmy.cohorts[0].stats.hp * 0.6);
 preparedArmy.value = {
   ...savedPreparedArmy,
-  cohorts: savedPreparedArmy.cohorts.map((cohort, index) => (
-    index === 0 ? { ...cohort, instanceId: savedInstanceId, currentHp: Math.floor(cohort.stats.hp * 0.6) } : cohort
-  )),
+  cohorts: savedPreparedArmy.cohorts.map((cohort, index) => {
+    if (index === 0) return { ...cohort, instanceId: savedInstanceId, currentHp: damagedHp };
+    if (index === 1) return { ...cohort, instanceId: ooaInstanceId, currentHp: 1, outOfAction: true };
+    return cohort;
+  }),
 };
 
 const sampleProvince: Province = {
@@ -228,6 +277,15 @@ assert(currentSpoke.value?.label === 'Verifier Spoke', 'Restore should recover t
 assert(currentNodeIndex.value === 1, 'Restore should recover the active node index');
 assert(preparedArmy.value?.cohorts[0]?.instanceId === savedInstanceId, 'Restore should preserve preparedArmy cohort instance ids');
 assert(currentSpoke.value?.boundArmy?.cohorts[0]?.instanceId === savedInstanceId, 'Restore should preserve boundArmy cohort instance ids');
+
+// S26-09: damage-state integration round-trip
+const restoredCohort0 = preparedArmy.value?.cohorts[0];
+const restoredCohort1 = preparedArmy.value?.cohorts[1];
+assert(restoredCohort0?.currentHp === damagedHp, 'AC-11: damaged cohort currentHp must survive save → restore exactly');
+assert(restoredCohort0?.outOfAction === undefined, 'AC-11: undamaged-flag cohort must NOT acquire outOfAction during round-trip');
+assert(restoredCohort1?.instanceId === ooaInstanceId, 'AC-11: outOfAction cohort instance id preserved');
+assert(restoredCohort1?.currentHp === 1, 'AC-11: outOfAction cohort currentHp pinned at 1 after restore');
+assert(restoredCohort1?.outOfAction === true, 'AC-11: outOfAction flag survives save → restore');
 assert(JSON.stringify(metaSave.value.activeRun) === savedJson, 'Restore should preserve the serialized snapshot contents');
 assert(JSON.stringify(ZERO_GAINS) === JSON.stringify({ gold: 0, faith: 0, influence: 0, momentum: 0, iuniores: 0 }), 'ZERO_GAINS contract changed unexpectedly');
 
