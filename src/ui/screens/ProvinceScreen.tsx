@@ -2047,12 +2047,7 @@ function IncomeLedger({ province }: { province: Province }) {
       if (base > 0) nonGoldIncome[trait.resource] = Math.floor(base * (1 + trait.percent / 100));
     }
   }
-  let iunioresYield = Math.floor(province.population * IUNIORES.perPop);
-  for (const trait of traits) {
-    if (trait.type === 'income-bonus' && trait.resource === 'iuniores' && iunioresYield > 0) {
-      iunioresYield = Math.floor(iunioresYield * (1 + trait.percent / 100));
-    }
-  }
+  const iunioresYield = Math.floor(province.population * IUNIORES.perPop);
 
   // Gold total: tax revenue + building gold + subsistence + trade
   let goldTotal = taxRevenue + rawBuildingGold + subsistence + tradeGoodGold;
@@ -2159,7 +2154,7 @@ function IncomeLedger({ province }: { province: Province }) {
             label="Iuniores / season"
             value={`+${iunioresYield} ${RESOURCE_INFO.iuniores.icon}`}
             positive={iunioresYield > 0}
-            detail={`Population ${province.population}`}
+            detail={`${province.population} pop × ${IUNIORES.perPop}/pop = ${iunioresYield}`}
           />
 
           {/* Total income */}
