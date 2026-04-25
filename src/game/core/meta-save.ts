@@ -1,6 +1,55 @@
-import { signal } from '@preact/signals';
+import { effect, signal } from '@preact/signals';
+import type { ArmyData } from '../../types';
+import { IUNIORES } from '../../config/game-config';
+import { COMMANDERS } from '../../data/commanders';
+import type { ResourceType } from '../core/commander';
+import type { Advisor } from '../council/advisor';
+import { advisorPool, councilSlots, plannedSpoke, tierUpNotices } from '../council/council-store';
+import type { Decretum } from '../items/decretum';
+import { decretumHand, maxHandSize } from '../items/decretum-store';
+import type { Doctrine } from '../items/doctrine';
+import { doctrineCollection, equippedDoctrines } from '../items/doctrine-store';
+import { consequenceFlags, seenEventsThisSpoke } from '../events/event-store';
+import type { NPCFaction } from '../progression/npc-faction-store';
+import { npcFactions } from '../progression/npc-faction-store';
+import { currentNodeIndex, currentSpoke, spokeGains, type Spoke, ZERO_GAINS } from '../progression/spoke';
+import {
+  crusadeBattlesLeft,
+  goldenOpportunityPending,
+  legateHiringPool,
+  manipulateUsesLeft,
+  nextInvestmentDiscount,
+  pendingEnemyConversions,
+  preparedArmy,
+  preparedLegate,
+  warCryActive,
+  warCryLastUsedSpoke,
+} from '../progression/strategic-store';
+import type { Governor } from '../province/governor';
+import type { ProvinceFeature } from '../../data/province-features';
+import { featurePool } from '../province/feature-store';
+import type { Province } from '../province/province';
+import { governorAssignments, governorPool, type GovernorAssignment } from '../province/governor-store';
+import { provinces } from '../province/province-store';
+import { claimedIndices, loadTopology, territoryMap, topologyData } from '../province/province-map-store';
+import {
+  allianceCount,
+  allies,
+  battlesWon,
+  completedSpokes,
+  enemies,
+  globalSeason,
+  selectedCommander,
+  spokesSinceLastBattle,
+  startNewRun,
+  syncFactionSignals,
+  threatLevel,
+  veteranStacks,
+} from './game-state';
+import { faith, gold, influence, initResources, iuniores, momentum, type Resources } from './resources';
+import type { Legate } from '../army/legate';
 
-// ── Types ──
+// —— Types ——
 
 export interface RunRecord {
   /** ISO timestamp of run completion. */
@@ -21,9 +70,53 @@ export interface RunRecord {
   score: number;
 }
 
+type SavedResources = Omit<Resources, 'iuniores'> & { iuniores?: number };
+
+export interface ActiveRunSave {
+  commanderId: string;
+  resources: SavedResources;
+  iunioresSeeded?: boolean;
+  completedSpokes: number;
+  threatLevel: number;
+  spokesSinceLastBattle: number;
+  globalSeason: number;
+  veteranStacks: number;
+  battlesWon: number;
+  provinces: Province[];
+  governorPool: Governor[];
+  governorAssignments: Record<string, GovernorAssignment>;
+  territoryEntries: Array<[string, number]>;
+  claimedIndices: number[];
+  featurePool: ProvinceFeature[];
+  councilSlots: (Advisor | null)[];
+  advisorPool: Advisor[];
+  tierUpNotices: string[];
+  plannedSpoke: Spoke | null;
+  currentSpoke: Spoke | null;
+  currentNodeIndex: number;
+  spokeGains: Record<ResourceType, number>;
+  consequenceFlags: string[];
+  seenEventsThisSpoke: string[];
+  npcFactions: NPCFaction[];
+  crusadeBattlesLeft: number;
+  warCryLastUsedSpoke: number;
+  warCryActive: boolean;
+  manipulateUsesLeft: number;
+  goldenOpportunityPending: number;
+  pendingEnemyConversions: number;
+  nextInvestmentDiscount: number;
+  preparedArmy: ArmyData | null;
+  preparedLegate: Legate | null;
+  legateHiringPool: Legate[];
+  doctrineCollection: Doctrine[];
+  equippedDoctrines: (Doctrine | null)[];
+  decretumHand: Decretum[];
+  maxHandSize: number;
+}
+
 export interface MetaSave {
   /** Version for migration support. */
-  version: 1;
+  version: 2;
   /** Completed run history (most recent first). */
   runs: RunRecord[];
   /** Total runs started (includes incomplete). */
@@ -34,49 +127,135 @@ export interface MetaSave {
   highScore: number;
   /** Commander IDs that have won at least once. */
   commanderWins: string[];
+  /** Current in-progress run snapshot for Continue. */
+  activeRun: ActiveRunSave | null;
 }
 
-// ── Constants ──
+// —— Constants ——
 
 const STORAGE_KEY = 'imperium-meta-save';
 const MAX_RUN_HISTORY = 50;
+const SAVE_DEBOUNCE_MS = 500;
 
-// ── Default state ──
+// —— Default state ——
 
 function createDefaultSave(): MetaSave {
   return {
-    version: 1,
+    version: 2,
     runs: [],
     totalRunsStarted: 0,
     victories: 0,
     highScore: 0,
     commanderWins: [],
+    activeRun: null,
   };
 }
 
-// ── Signals ──
+// —— Signals ——
 
 export const metaSave = signal<MetaSave>(createDefaultSave());
 
-// ── Persistence ──
+// —— Serialization helpers ——
+
+function normalizeResources(resources: Partial<SavedResources> | null | undefined): Resources {
+  const normalized: Resources = {
+    gold: typeof resources?.gold === 'number' ? resources.gold : 0,
+    faith: typeof resources?.faith === 'number' ? resources.faith : 0,
+    influence: typeof resources?.influence === 'number' ? resources.influence : 0,
+    momentum: typeof resources?.momentum === 'number' ? resources.momentum : 0,
+    iuniores: typeof resources?.iuniores === 'number' ? resources.iuniores : 0,
+  };
+  return normalized;
+}
+
+function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
+  if (!rawRun || typeof rawRun !== 'object') return null;
+
+  const run = rawRun as Partial<ActiveRunSave> & { resources?: Partial<SavedResources> | null };
+  if (typeof run.commanderId !== 'string' || run.commanderId.length === 0) return null;
+
+  const resources = normalizeResources(run.resources);
+  let iunioresSeeded = run.iunioresSeeded === true;
+  const hasSavedIuniores = typeof run.resources?.iuniores === 'number';
+  if (!hasSavedIuniores && !iunioresSeeded) {
+    resources.iuniores = IUNIORES.startingSeed;
+    iunioresSeeded = true;
+  }
+
+  return {
+    commanderId: run.commanderId,
+    resources,
+    iunioresSeeded,
+    completedSpokes: typeof run.completedSpokes === 'number' ? run.completedSpokes : 0,
+    threatLevel: typeof run.threatLevel === 'number' ? run.threatLevel : 0,
+    spokesSinceLastBattle: typeof run.spokesSinceLastBattle === 'number' ? run.spokesSinceLastBattle : 0,
+    globalSeason: typeof run.globalSeason === 'number' ? run.globalSeason : 0,
+    veteranStacks: typeof run.veteranStacks === 'number' ? run.veteranStacks : 0,
+    battlesWon: typeof run.battlesWon === 'number' ? run.battlesWon : 0,
+    provinces: Array.isArray(run.provinces) ? run.provinces : [],
+    governorPool: Array.isArray(run.governorPool) ? run.governorPool : [],
+    governorAssignments: run.governorAssignments && typeof run.governorAssignments === 'object' ? run.governorAssignments : {},
+    territoryEntries: Array.isArray(run.territoryEntries) ? run.territoryEntries : [],
+    claimedIndices: Array.isArray(run.claimedIndices) ? run.claimedIndices : [],
+    featurePool: Array.isArray(run.featurePool) ? run.featurePool : [],
+    councilSlots: Array.isArray(run.councilSlots) ? run.councilSlots : [null, null, null],
+    advisorPool: Array.isArray(run.advisorPool) ? run.advisorPool : [],
+    tierUpNotices: Array.isArray(run.tierUpNotices) ? run.tierUpNotices : [],
+    plannedSpoke: run.plannedSpoke ?? null,
+    currentSpoke: run.currentSpoke ?? null,
+    currentNodeIndex: typeof run.currentNodeIndex === 'number' ? run.currentNodeIndex : 0,
+    spokeGains: { ...ZERO_GAINS, ...(run.spokeGains ?? {}) },
+    consequenceFlags: Array.isArray(run.consequenceFlags) ? run.consequenceFlags : [],
+    seenEventsThisSpoke: Array.isArray(run.seenEventsThisSpoke) ? run.seenEventsThisSpoke : [],
+    npcFactions: Array.isArray(run.npcFactions) ? run.npcFactions : [],
+    crusadeBattlesLeft: typeof run.crusadeBattlesLeft === 'number' ? run.crusadeBattlesLeft : 0,
+    warCryLastUsedSpoke: typeof run.warCryLastUsedSpoke === 'number' ? run.warCryLastUsedSpoke : -99,
+    warCryActive: run.warCryActive === true,
+    manipulateUsesLeft: typeof run.manipulateUsesLeft === 'number' ? run.manipulateUsesLeft : 0,
+    goldenOpportunityPending: typeof run.goldenOpportunityPending === 'number' ? run.goldenOpportunityPending : 0,
+    pendingEnemyConversions: typeof run.pendingEnemyConversions === 'number' ? run.pendingEnemyConversions : 0,
+    nextInvestmentDiscount: typeof run.nextInvestmentDiscount === 'number' ? run.nextInvestmentDiscount : 0,
+    preparedArmy: run.preparedArmy ?? null,
+    preparedLegate: run.preparedLegate ?? null,
+    legateHiringPool: Array.isArray(run.legateHiringPool) ? run.legateHiringPool : [],
+    doctrineCollection: Array.isArray(run.doctrineCollection) ? run.doctrineCollection : [],
+    equippedDoctrines: Array.isArray(run.equippedDoctrines) ? run.equippedDoctrines : [null, null, null, null],
+    decretumHand: Array.isArray(run.decretumHand) ? run.decretumHand : [],
+    maxHandSize: typeof run.maxHandSize === 'number' ? run.maxHandSize : 5,
+  };
+}
+
+function migrateMetaSave(rawSave: unknown): MetaSave {
+  if (!rawSave || typeof rawSave !== 'object') return createDefaultSave();
+
+  const parsed = rawSave as Record<string, unknown>;
+  if (parsed.version !== 1 && parsed.version !== 2) return createDefaultSave();
+
+  return {
+    version: 2,
+    runs: Array.isArray(parsed.runs) ? parsed.runs as RunRecord[] : [],
+    totalRunsStarted: typeof parsed.totalRunsStarted === 'number' ? parsed.totalRunsStarted : 0,
+    victories: typeof parsed.victories === 'number' ? parsed.victories : 0,
+    highScore: typeof parsed.highScore === 'number' ? parsed.highScore : 0,
+    commanderWins: Array.isArray(parsed.commanderWins) ? parsed.commanderWins as string[] : [],
+    activeRun: migrateActiveRun(parsed.activeRun),
+  };
+}
+
+export function parseMetaSave(raw: string | null | undefined): MetaSave {
+  if (!raw) return createDefaultSave();
+  try {
+    return migrateMetaSave(JSON.parse(raw));
+  } catch {
+    return createDefaultSave();
+  }
+}
+
+// —— Persistence ——
 
 /** Load meta-save from localStorage. Safe — returns defaults on any error. */
 export function loadMetaSave(): void {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      metaSave.value = createDefaultSave();
-      return;
-    }
-    const parsed = JSON.parse(raw) as MetaSave;
-    if (parsed.version === 1) {
-      metaSave.value = parsed;
-    } else {
-      metaSave.value = createDefaultSave();
-    }
-  } catch {
-    metaSave.value = createDefaultSave();
-  }
+  metaSave.value = parseMetaSave(localStorage.getItem(STORAGE_KEY));
 }
 
 /** Persist current meta-save to localStorage. */
@@ -88,7 +267,206 @@ function persist(): void {
   }
 }
 
-// ── Actions ──
+function buildActiveRunSnapshot(): ActiveRunSave | null {
+  const commander = selectedCommander.value;
+  if (!commander) return null;
+
+  return {
+    commanderId: commander.id,
+    resources: {
+      gold: gold.value,
+      faith: faith.value,
+      influence: influence.value,
+      momentum: momentum.value,
+      iuniores: iuniores.value,
+    },
+    iunioresSeeded: true,
+    completedSpokes: completedSpokes.value,
+    threatLevel: threatLevel.value,
+    spokesSinceLastBattle: spokesSinceLastBattle.value,
+    globalSeason: globalSeason.value,
+    veteranStacks: veteranStacks.value,
+    battlesWon: battlesWon.value,
+    provinces: provinces.value,
+    governorPool: governorPool.value,
+    governorAssignments: governorAssignments.value,
+    territoryEntries: Array.from(territoryMap.value.entries()),
+    claimedIndices: Array.from(claimedIndices.value),
+    featurePool: featurePool.value,
+    councilSlots: councilSlots.value,
+    advisorPool: advisorPool.value,
+    tierUpNotices: tierUpNotices.value,
+    plannedSpoke: plannedSpoke.value,
+    currentSpoke: currentSpoke.value,
+    currentNodeIndex: currentNodeIndex.value,
+    spokeGains: spokeGains.value,
+    consequenceFlags: Array.from(consequenceFlags.value),
+    seenEventsThisSpoke: Array.from(seenEventsThisSpoke.value),
+    npcFactions: npcFactions.value,
+    crusadeBattlesLeft: crusadeBattlesLeft.value,
+    warCryLastUsedSpoke: warCryLastUsedSpoke.value,
+    warCryActive: warCryActive.value,
+    manipulateUsesLeft: manipulateUsesLeft.value,
+    goldenOpportunityPending: goldenOpportunityPending.value,
+    pendingEnemyConversions: pendingEnemyConversions.value,
+    nextInvestmentDiscount: nextInvestmentDiscount.value,
+    preparedArmy: preparedArmy.value,
+    preparedLegate: preparedLegate.value,
+    legateHiringPool: legateHiringPool.value,
+    doctrineCollection: doctrineCollection.value,
+    equippedDoctrines: equippedDoctrines.value,
+    decretumHand: decretumHand.value,
+    maxHandSize: maxHandSize.value,
+  };
+}
+
+export function hasActiveRunSave(): boolean {
+  return metaSave.value.activeRun !== null;
+}
+
+export function saveActiveRunSnapshot(): void {
+  if (isRestoringActiveRun) return;
+  const snapshot = buildActiveRunSnapshot();
+  if (!snapshot) return;
+  metaSave.value = {
+    ...metaSave.value,
+    activeRun: snapshot,
+  };
+  persist();
+}
+
+export function clearActiveRunSave(): void {
+  if (metaSave.value.activeRun === null) return;
+  metaSave.value = {
+    ...metaSave.value,
+    activeRun: null,
+  };
+  persist();
+}
+
+let persistenceDisposer: (() => void) | null = null;
+let isRestoringActiveRun = false;
+let pendingPersistTimer: ReturnType<typeof setTimeout> | null = null;
+
+function flushPendingPersist(): void {
+  if (pendingPersistTimer !== null) {
+    clearTimeout(pendingPersistTimer);
+    pendingPersistTimer = null;
+  }
+}
+
+export function startActiveRunPersistence(): () => void {
+  if (persistenceDisposer) return persistenceDisposer;
+
+  const stop = effect(() => {
+    if (!selectedCommander.value) return;
+    flushPendingPersist();
+    pendingPersistTimer = setTimeout(() => {
+      pendingPersistTimer = null;
+      saveActiveRunSnapshot();
+    }, SAVE_DEBOUNCE_MS);
+  });
+
+  persistenceDisposer = () => {
+    stop();
+    flushPendingPersist();
+    persistenceDisposer = null;
+  };
+
+  return persistenceDisposer;
+}
+
+export async function restoreActiveRun(): Promise<boolean> {
+  const snapshot = metaSave.value.activeRun;
+  if (!snapshot) return false;
+
+  const commander = COMMANDERS.find(c => c.id === snapshot.commanderId);
+  if (!commander) {
+    clearActiveRunSave();
+    return false;
+  }
+
+  isRestoringActiveRun = true;
+  try {
+    startNewRun(commander, { recordRunStart: false, seedHomeProvince: false });
+
+    if (!topologyData.value) {
+      await loadTopology();
+    }
+
+    initResources(normalizeResources(snapshot.resources));
+    completedSpokes.value = snapshot.completedSpokes;
+    threatLevel.value = snapshot.threatLevel;
+    spokesSinceLastBattle.value = snapshot.spokesSinceLastBattle;
+    globalSeason.value = snapshot.globalSeason;
+    veteranStacks.value = snapshot.veteranStacks;
+    battlesWon.value = snapshot.battlesWon;
+
+    provinces.value = snapshot.provinces;
+    governorPool.value = snapshot.governorPool;
+    governorAssignments.value = snapshot.governorAssignments;
+    territoryMap.value = new Map(snapshot.territoryEntries);
+    claimedIndices.value = new Set(snapshot.claimedIndices);
+    featurePool.value = snapshot.featurePool;
+
+    councilSlots.value = snapshot.councilSlots;
+    advisorPool.value = snapshot.advisorPool;
+    tierUpNotices.value = snapshot.tierUpNotices;
+    plannedSpoke.value = snapshot.plannedSpoke;
+
+    currentSpoke.value = snapshot.currentSpoke;
+    currentNodeIndex.value = snapshot.currentNodeIndex;
+    spokeGains.value = { ...ZERO_GAINS, ...snapshot.spokeGains };
+
+    consequenceFlags.value = new Set(snapshot.consequenceFlags);
+    seenEventsThisSpoke.value = new Set(snapshot.seenEventsThisSpoke);
+    npcFactions.value = snapshot.npcFactions;
+    syncFactionSignals();
+    allianceCount.value = snapshot.npcFactions.filter(f => f.relation === 'friendly').length;
+    enemies.value = snapshot.npcFactions.filter(f => f.relation === 'hostile').map(f => f.id);
+    allies.value = snapshot.npcFactions.filter(f => f.relation === 'friendly').map(f => f.id);
+
+    crusadeBattlesLeft.value = snapshot.crusadeBattlesLeft;
+    warCryLastUsedSpoke.value = snapshot.warCryLastUsedSpoke;
+    warCryActive.value = snapshot.warCryActive;
+    manipulateUsesLeft.value = snapshot.manipulateUsesLeft;
+    goldenOpportunityPending.value = snapshot.goldenOpportunityPending;
+    pendingEnemyConversions.value = snapshot.pendingEnemyConversions;
+    nextInvestmentDiscount.value = snapshot.nextInvestmentDiscount;
+    preparedArmy.value = snapshot.preparedArmy;
+    preparedLegate.value = snapshot.preparedLegate;
+    legateHiringPool.value = snapshot.legateHiringPool;
+
+    doctrineCollection.value = snapshot.doctrineCollection;
+    equippedDoctrines.value = snapshot.equippedDoctrines;
+    decretumHand.value = snapshot.decretumHand;
+    maxHandSize.value = snapshot.maxHandSize;
+
+    metaSave.value = {
+      ...metaSave.value,
+      activeRun: {
+        ...snapshot,
+        resources: {
+          gold: gold.value,
+          faith: faith.value,
+          influence: influence.value,
+          momentum: momentum.value,
+          iuniores: iuniores.value,
+        },
+        iunioresSeeded: true,
+      },
+    };
+    persist();
+    return true;
+  } catch (error) {
+    console.warn('[meta-save] Failed to restore active run', error);
+    return false;
+  } finally {
+    isRestoringActiveRun = false;
+  }
+}
+
+// —— Actions ——
 
 /** Record a new run start (increments totalRunsStarted). */
 export function recordRunStart(): void {
@@ -152,6 +530,7 @@ export function recordRunComplete(
     victories,
     highScore,
     commanderWins,
+    activeRun: null,
   };
 
   persist();

@@ -3,6 +3,8 @@ import { navigateTo } from '../screens';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { GoldDust } from '../components/GoldDust';
 import bgPicture from '../../assets/backgrounds/roman_background.png?w=1600;2400&format=avif;webp;png&as=picture';
+import { hasActiveRunSave, restoreActiveRun } from '../../game/core/meta-save';
+import { currentSpoke } from '../../game/progression/spoke';
 
 const STYLES = `
   .title-screen {
@@ -219,6 +221,14 @@ export function TitleScreen() {
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
   }, []);
 
+  const canContinue = hasActiveRunSave();
+
+  async function handleContinue() {
+    const restored = await restoreActiveRun();
+    if (!restored) return;
+    navigateTo(currentSpoke.value ? 'node-map' : 'forum');
+  }
+
   return (
     <div class="title-screen" onMouseMove={reduceMotion ? undefined : handleMove}>
       <style>{STYLES}</style>
@@ -283,7 +293,8 @@ export function TitleScreen() {
               <button
                 class="ornate-btn-ghost title-screen__btn-2"
                 style={{ padding: '14px 24px', fontSize: 'var(--font-size-lg)', letterSpacing: '2px' }}
-                disabled
+                disabled={!canContinue}
+                onClick={handleContinue}
               >
                 Continue
               </button>

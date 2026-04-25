@@ -1,3 +1,4 @@
+import { useEffect } from 'preact/hooks';
 import { currentScreen, navigateTo, transitionState } from '../screens';
 import type { ScreenName } from '../screens';
 import { ResourceBar } from '../components/ResourceBar';
@@ -13,7 +14,7 @@ import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
 import { BattleScreenV2 } from './BattleScreenV2';
 import { ForumShell } from './forum';
-import { loadMetaSave } from '../../game/core/meta-save';
+import { loadMetaSave, startActiveRunPersistence } from '../../game/core/meta-save';
 
 // Load meta-save from localStorage on startup
 loadMetaSave();
@@ -88,6 +89,10 @@ export function App() {
   const screen = currentScreen.value;
   const exiting = transitionState.value === 'exiting';
   const showResourceBar = !BARE_SCREENS.has(screen);
+
+  useEffect(() => {
+    return startActiveRunPersistence();
+  }, []);
 
   return (
     <>
