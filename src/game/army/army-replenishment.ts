@@ -224,6 +224,7 @@ export function previewHubReplenishment(
     hpRestored += healed;
 
     perCohort.push({
+      cohortInstanceId: entry.cohort.instanceId ?? entry.cohort.id,
       cohortId: entry.cohort.id,
       cohortName: entry.cohort.name,
       maxHp: entry.maxHp,
@@ -367,6 +368,7 @@ export function healCohortInRoster(cohortIdx: number): CohortReplenishment | nul
   };
 
   return {
+    cohortInstanceId: cohort.instanceId ?? cohort.id,
     cohortId: cohort.id,
     cohortName: cohort.name,
     maxHp,
