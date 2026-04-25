@@ -27,7 +27,7 @@ import {
 import { TRADE_GOOD_DATA } from '../../data/trade-goods';
 import { TERRAIN_DATA, TERRAIN_AVAILABLE_BUILDINGS } from '../../data/terrain-data';
 import { nextInvestmentDiscount } from '../../game/progression/strategic-store';
-import { FOOD } from '../../config/game-config';
+import { FOOD, IUNIORES } from '../../config/game-config';
 import { ROMAN, formatCost } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
 import { Tooltip } from '../components/Tooltip';
@@ -2047,6 +2047,7 @@ function IncomeLedger({ province }: { province: Province }) {
       if (base > 0) nonGoldIncome[trait.resource] = Math.floor(base * (1 + trait.percent / 100));
     }
   }
+  const iunioresYield = Math.floor(province.population * IUNIORES.perPop);
 
   // Gold total: tax revenue + building gold + subsistence + trade
   let goldTotal = taxRevenue + rawBuildingGold + subsistence + tradeGoodGold;
@@ -2149,6 +2150,12 @@ function IncomeLedger({ province }: { province: Province }) {
           {nonGoldEntries.map(([res, amt]) => (
             <LedgerRow key={res} label={RESOURCE_INFO[res].label} value={`+${amt} ${RESOURCE_INFO[res].icon}`} positive />
           ))}
+          <LedgerRow
+            label="Iuniores / season"
+            value={`+${iunioresYield} ${RESOURCE_INFO.iuniores.icon}`}
+            positive={iunioresYield > 0}
+            detail={`${province.population} pop × ${IUNIORES.perPop}/pop = ${iunioresYield}`}
+          />
 
           {/* Total income */}
           <div class="ledger-divider" />
