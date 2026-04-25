@@ -7,6 +7,11 @@ import {
   ensureLegatePool, hireLegate, dismissLegate,
   buySupplies,
 } from '../../../../game/progression/strategic-store';
+import {
+  previewHubReplenishment,
+  replenishHubRoster,
+  healCohortInRoster,
+} from '../../../../game/army/army-replenishment';
 import { getLegateTraitById } from '../../../../game/army/legate-traits';
 import { playSfx } from '../../../sound/sfx';
 import type { UnitRole } from '../../../../battle/battle-types';
@@ -97,6 +102,54 @@ export function ExercitusTab() {
   function handleRemove(id: string)  { removeCohort(id); playSfx('ui_sell'); }
   function handleHire(id: string)    { if (hireLegate(id, LEGATE_HIRE_COST)) playSfx('ui_equip'); }
   function handleDismiss()           { dismissLegate(); playSfx('ui_sell'); }
+  function handleHealOne(idx: number) { if (healCohortInRoster(idx) !== null) playSfx('ui_equip'); }
+  function handleReplenishAll() {
+    const result = replenishHubRoster();
+    if (result && result.iunioresSpent > 0) playSfx('ui_equip');
+  }
+
+  // ── S26-07: Roster Health panel data ──
+  // Per-instance (not grouped): each damaged or outOfAction cohort gets its own
+  // row so the player can target individual heals. We carry the array index so
+  // healCohortInRoster() can address the right slot.
+  type RosterHealthEntry = {
+    cohort: Cohort;
+    index: number;
+    currentHp: number;
+    maxHp: number;
+    missingHp: number;
+    isMerc: boolean;
+    isOoA: boolean;
+    fullCost: number;        // iuniores; meaningless for mercs
+    canFullyAfford: boolean; // citizen with enough iuniores in pool
+  };
+  const rosterHealthEntries: RosterHealthEntry[] = cohorts.flatMap((c, index) => {
+    const maxHp = c.stats.hp;
+    const isOoA = c.outOfAction === true;
+    const currentHp = c.currentHp ?? (isOoA ? 1 : maxHp);
+    const missingHp = Math.max(0, maxHp - currentHp);
+    if (missingHp === 0 && !isOoA) return [];
+    const isMerc = c.mercenary === true;
+    const fullCost = Math.round((missingHp * 1000) / maxHp);
+    return [{
+      cohort: c,
+      index,
+      currentHp,
+      maxHp,
+      missingHp,
+      isMerc,
+      isOoA,
+      fullCost,
+      canFullyAfford: !isMerc && currentIuniores >= fullCost,
+    }];
+  });
+  const damagedCitizens = rosterHealthEntries.filter(e => !e.isMerc);
+  const damagedMercs = rosterHealthEntries.filter(e => e.isMerc);
+  const ooaCount = rosterHealthEntries.filter(e => e.isOoA).length;
+  const hubPreview = damagedCitizens.length > 0
+    ? previewHubReplenishment(cohorts, currentIuniores)
+    : null;
+  const showRosterHealth = rosterHealthEntries.length > 0;
 
   function handleBuySupplies(qty: number) {
     if (buySupplies(qty)) playSfx('ui_equip');
@@ -242,6 +295,157 @@ export function ExercitusTab() {
     );
   }
 
+  function renderHealthCard(entry: RosterHealthEntry) {
+    const { cohort: c, index, currentHp, maxHp, isMerc, isOoA, fullCost, canFullyAfford } = entry;
+    const hpRatio = maxHp > 0 ? currentHp / maxHp : 0;
+    const role = ROLE_COLORS[c.role];
+    const ooaColor = '#c24a3a';
+    const accentBar = isOoA ? ooaColor : role;
+    const tone = isMerc
+      ? '#c99245'                          // mercenary: amber
+      : canFullyAfford
+        ? accent                            // ready to heal: gold
+        : 'var(--imp-text-lo)';             // can't afford: muted
+    const buttonLabel = isMerc ? 'Gold Heal — S27' : 'Heal';
+    const disabledTooltip = isMerc
+      ? 'Mercenary cohorts heal with gold — coming in S27.'
+      : canFullyAfford
+        ? `Spend ${fullCost} iuniores to fully restore.`
+        : currentIuniores > 0
+          ? `Insufficient iuniores. Need ${fullCost - currentIuniores} more for a full heal (partial heal will apply ${currentIuniores}).`
+          : 'Insufficient iuniores. Pool is empty.';
+    // Citizen heal is enabled whenever the pool has *any* iuniores — partial
+    // heals are valid and surfaced via the formula tooltip.
+    const buttonEnabled = !isMerc && currentIuniores > 0;
+
+    return (
+      <div key={`health-${c.instanceId ?? c.id}-${index}`} style={{
+        padding: '10px 12px',
+        background: isOoA ? 'rgba(50, 18, 22, 0.55)' : 'rgba(20, 18, 32, 0.5)',
+        border: '1px solid rgba(212, 168, 67, 0.18)',
+        borderLeft: `3px solid ${accentBar}`,
+        borderRadius: 2,
+        display: 'flex', alignItems: 'center', gap: 12,
+      }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Title row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{
+              fontFamily: 'var(--imp-font-display)',
+              fontSize: 12, color: 'var(--imp-text-hi)',
+              letterSpacing: 1.5, textTransform: 'uppercase',
+              fontWeight: 600,
+            }}>
+              {c.name}
+            </div>
+            <div style={{
+              fontSize: 8, padding: '1px 6px',
+              border: `1px solid ${role}66`,
+              background: `${role}18`,
+              color: role,
+              borderRadius: 2,
+              letterSpacing: 1, textTransform: 'uppercase',
+              fontFamily: 'var(--imp-font-display)', fontWeight: 600,
+            }}>
+              {ROLE_LABELS[c.role]}
+            </div>
+            {isOoA && (
+              <div title="Out of action — cannot deploy until healed." style={{
+                fontSize: 8, padding: '1px 6px',
+                border: '1px solid rgba(194, 74, 58, 0.6)',
+                background: 'rgba(194, 74, 58, 0.18)',
+                color: '#e88858',
+                borderRadius: 2,
+                letterSpacing: 1, textTransform: 'uppercase',
+                fontFamily: 'var(--imp-font-display)', fontWeight: 700,
+              }}>
+                ⚕ Out of Action
+              </div>
+            )}
+            {isMerc && (
+              <div title="Mercenary cohort — gold-only heal pending in S27." style={{
+                fontSize: 8, padding: '1px 6px',
+                border: '1px solid rgba(232, 192, 112, 0.5)',
+                background: 'rgba(232, 192, 112, 0.12)',
+                color: '#f0d080',
+                borderRadius: 2,
+                letterSpacing: 1, textTransform: 'uppercase',
+                fontFamily: 'var(--imp-font-display)', fontWeight: 600,
+              }}>
+                Mercenary
+              </div>
+            )}
+          </div>
+
+          {/* HP bar — dual layer: red baseline + colored fill */}
+          <div style={{
+            position: 'relative',
+            height: 8,
+            background: 'rgba(60, 56, 80, 0.55)',
+            borderRadius: 999,
+            overflow: 'hidden',
+            marginTop: 6,
+          }}>
+            <div style={{
+              position: 'absolute', inset: 0,
+              width: `${hpRatio * 100}%`,
+              background: isOoA
+                ? 'linear-gradient(90deg, #c24a3a 0%, #d4604a 100%)'
+                : hpRatio > 0.6
+                  ? 'linear-gradient(90deg, #4a9a6a 0%, #7ecf97 100%)'
+                  : hpRatio > 0.3
+                    ? 'linear-gradient(90deg, #d48b3a 0%, #e8a848 100%)'
+                    : 'linear-gradient(90deg, #c24a3a 0%, #d4604a 100%)',
+              transition: 'width 200ms ease',
+            }} />
+          </div>
+
+          {/* HP text + cost */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: 8,
+            marginTop: 4,
+            fontFamily: 'var(--imp-font-mono)',
+            fontSize: 9,
+            color: 'var(--imp-text-lo)',
+          }}>
+            <span>{currentHp} / {maxHp} HP</span>
+            <span style={{ color: tone }}>
+              {isMerc ? 'Gold heal pending' : `${fullCost}🛡 to full`}
+            </span>
+          </div>
+        </div>
+
+        {/* Heal button */}
+        <div style={{ flexShrink: 0 }}>
+          <button
+            onClick={() => handleHealOne(index)}
+            disabled={!buttonEnabled}
+            title={disabledTooltip}
+            style={{
+              padding: '6px 12px',
+              background: buttonEnabled
+                ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`
+                : 'rgba(80, 70, 50, 0.3)',
+              border: 'none',
+              borderRadius: 2,
+              color: buttonEnabled ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
+              fontSize: 9, fontWeight: 700,
+              letterSpacing: 1.5, textTransform: 'uppercase',
+              fontFamily: 'var(--imp-font-display)',
+              cursor: buttonEnabled ? 'pointer' : 'not-allowed',
+              transition: 'all 160ms',
+              minWidth: 96,
+            }}
+          >
+            {buttonLabel}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Masthead title="Exercitus" subtitle={subtitle} accent={accent} />
@@ -364,6 +568,104 @@ export function ExercitusTab() {
               </div>
             )}
           </OrnatePanel>
+
+          {/* ── Roster Health (S26-07) ── */}
+          {showRosterHealth && (
+            <OrnatePanel accent={accent}>
+              <SectionHeader
+                title="Roster Health"
+                accent={accent}
+                right={<span style={{
+                  fontFamily: 'var(--imp-font-mono)',
+                  fontSize: 11, color: 'var(--imp-text-mid)',
+                }}>
+                  {damagedCitizens.length} damaged
+                  {ooaCount > 0 && <span style={{ color: '#e88858' }}> · {ooaCount} ⚕</span>}
+                  {damagedMercs.length > 0 && <span style={{ color: '#f0d080' }}> · {damagedMercs.length} merc</span>}
+                </span>}
+              />
+
+              {/* Bulk replenish header */}
+              {hubPreview && hubPreview.perCohort.length > 0 && (
+                <div style={{
+                  padding: '10px 12px',
+                  marginBottom: 8,
+                  background: 'rgba(28, 26, 40, 0.7)',
+                  border: '1px solid rgba(212, 168, 67, 0.22)',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontFamily: 'var(--imp-font-display)',
+                      fontSize: 10,
+                      color: 'var(--imp-text-mid)',
+                      letterSpacing: 2,
+                      textTransform: 'uppercase',
+                    }}>
+                      Bulk Replenish
+                    </div>
+                    <div style={{
+                      marginTop: 4,
+                      fontSize: 11,
+                      fontFamily: 'var(--imp-font-serif)',
+                      color: 'var(--imp-text-secondary, var(--imp-text-mid))',
+                      lineHeight: 1.5,
+                    }}>
+                      {hubPreview.partialHeal ? (
+                        <>
+                          <span style={{ color: '#a88b5c', fontWeight: 700 }}>{hubPreview.iunioresSpent}🛡</span> spends now —{' '}
+                          <span style={{ color: '#7ecf97', fontWeight: 700 }}>{hubPreview.hpRestored} HP</span> across{' '}
+                          {hubPreview.perCohort.filter(p => p.iunioresSpent > 0).length} cohort
+                          {hubPreview.perCohort.filter(p => p.iunioresSpent > 0).length === 1 ? '' : 's'}.
+                          Pool short by{' '}
+                          <span style={{ color: '#c27a52', fontWeight: 700 }}>{hubPreview.totalIunioresNeeded - hubPreview.iunioresSpent}🛡</span>.
+                        </>
+                      ) : (
+                        <>
+                          Full restore: <span style={{ color: '#a88b5c', fontWeight: 700 }}>{hubPreview.iunioresSpent}🛡</span> for{' '}
+                          <span style={{ color: '#7ecf97', fontWeight: 700 }}>{hubPreview.hpRestored} HP</span> across{' '}
+                          {hubPreview.perCohort.length} cohort{hubPreview.perCohort.length === 1 ? '' : 's'}.
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleReplenishAll}
+                    disabled={hubPreview.iunioresSpent === 0}
+                    title={hubPreview.iunioresSpent === 0
+                      ? 'No iuniores in the pool — heal nothing.'
+                      : `Spend ${hubPreview.iunioresSpent} iuniores now.`}
+                    style={{
+                      padding: '8px 14px',
+                      background: hubPreview.iunioresSpent > 0
+                        ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`
+                        : 'rgba(80, 70, 50, 0.3)',
+                      border: 'none',
+                      borderRadius: 2,
+                      color: hubPreview.iunioresSpent > 0 ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
+                      fontSize: 10, fontWeight: 700,
+                      letterSpacing: 1.5, textTransform: 'uppercase',
+                      fontFamily: 'var(--imp-font-display)',
+                      cursor: hubPreview.iunioresSpent > 0 ? 'pointer' : 'not-allowed',
+                      transition: 'all 160ms',
+                      minWidth: 140,
+                      flexShrink: 0,
+                    }}
+                  >
+                    Replenish Roster
+                  </button>
+                </div>
+              )}
+
+              {/* Per-cohort heal cards */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {rosterHealthEntries.map(renderHealthCard)}
+              </div>
+            </OrnatePanel>
+          )}
 
           {/* ── Supplies ── */}
           <OrnatePanel accent={accent}>
