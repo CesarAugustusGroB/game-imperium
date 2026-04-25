@@ -7,8 +7,10 @@ import type { DoctrineEffect } from '../items/doctrine';
 import type { Posture } from '../council/advisor';
 import { collectProvinceIncome, type ProvinceIncomeResult } from '../province/province-store';
 import type { ArmyData } from '../../types/index';
+import { computeArmySize } from '../army/cohort';
 import type { Legate } from '../army/legate';
 import { consumeTraversal, type TraversalAttritionLog } from '../army/supplies';
+import { preparedArmy } from './strategic-store';
 
 export type { TraversalAttritionLog } from '../army/supplies';
 
@@ -158,10 +160,31 @@ export function advanceNode(): AdvanceNodeResult {
   return { spokeComplete, seasonTicked, supplyLog };
 }
 
-/** Mark the spoke as completed and reset. */
+/** Mark the spoke as completed and reset.
+ *
+ *  S26-05 / FT-HEAL FR-3: project the wounded `boundArmy.cohorts` (with their
+ *  `currentHp` + `outOfAction` flags from S26-03's battle write-back) onto the
+ *  Hub roster `preparedArmy` so wounds carry across spokes and surface in the
+ *  Hub heal panel (S26-07). Cohorts removed by FT-SUP supply attrition during
+ *  the spoke also disappear from preparedArmy because the boundArmy roster
+ *  *replaces* the prepared roster wholesale — no merge.
+ */
 export function completeSpoke(): void {
   const spoke = currentSpoke.value;
   if (spoke) {
+    // S26-05: write back the post-spoke army state before tearing the spoke
+    // down. Other ArmyData fields (legateId, supplies, movement state) stay
+    // on preparedArmy as their pre-embark snapshot — only the cohort roster
+    // (and recomputed size) propagates back.
+    if (spoke.boundArmy && preparedArmy.value) {
+      const finalCohorts = spoke.boundArmy.cohorts;
+      preparedArmy.value = {
+        ...preparedArmy.value,
+        cohorts: finalCohorts,
+        size: computeArmySize(finalCohorts),
+      };
+    }
+
     // Trigger reactivity with a new object instead of in-place mutation
     currentSpoke.value = { ...spoke, completed: true };
   }
