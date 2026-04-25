@@ -152,9 +152,14 @@ export function previewReplenishment(
     });
 
     // Only attach currentHp if it differs from maxHp (supplies.ts convention:
-    // undefined means full health).
+    // undefined means full health). FT-HEAL extension: also normalize cohorts
+    // that arrived at the rest node already at full HP but still carrying a
+    // stale `currentHp = maxHp` field or a leftover `outOfAction` flag — those
+    // are cleaned up here so downstream consumers see a canonical shape.
     const shouldNormalize = healed > 0 || (missingHp === 0 && (c.currentHp !== undefined || c.outOfAction));
-    nextCohorts.push(shouldNormalize ? applyHealedState(c, newCurrentHp) : { ...c });
+    // Preserve reference for untouched cohorts so Preact memoization downstream
+    // doesn't see a spurious change.
+    nextCohorts.push(shouldNormalize ? applyHealedState(c, newCurrentHp) : c);
   }
 
   return {
@@ -181,7 +186,9 @@ export function previewHubReplenishment(
   let iunioresSpent = 0;
   let hpRestored = 0;
   let poolRemaining = Math.max(0, iunioresAvailable);
-  const nextCohorts: Cohort[] = cohorts.map((cohort) => ({ ...cohort }));
+  // Shallow-copy the array but preserve cohort references; only touched
+  // entries are replaced below. Mirrors the rest-node preview's no-op path.
+  const nextCohorts: Cohort[] = cohorts.slice();
   const eligible = cohorts
     .map((cohort, index) => {
       if (cohort.mercenary) return null;
@@ -319,36 +326,53 @@ export function replenishHubRoster(): ReplenishmentPreview | null {
  * Heal a single cohort in the Hub roster, spending up to its full citizen
  * replenishment cost. If the pool is short, applies a partial heal.
  *
- * `cohortIdx` addresses `preparedArmy.cohorts` directly.
+ * `cohortIdx` addresses `preparedArmy.cohorts` directly. Returns the per-cohort
+ * replenishment summary on success (caller parity with `replenishHubRoster`),
+ * or null when nothing was healed (out-of-bounds, mercenary, full HP, empty pool).
+ *
+ * NOTE: index-based addressing is fragile against roster reorders; once the
+ * S26-01 `instanceId` lands on this branch, switch to instance-based lookup.
  */
-export function healCohortInRoster(cohortIdx: number): boolean {
+export function healCohortInRoster(cohortIdx: number): CohortReplenishment | null {
   const army = preparedArmy.value;
-  if (!army) return false;
-  if (cohortIdx < 0 || cohortIdx >= army.cohorts.length) return false;
+  if (!army) return null;
+  if (cohortIdx < 0 || cohortIdx >= army.cohorts.length) return null;
 
   const cohort = army.cohorts[cohortIdx];
-  if (cohort.mercenary) return false;
+  if (cohort.mercenary) return null;
 
   const maxHp = cohort.stats.hp;
   const currentHp = getCohortCurrentHp(cohort);
   const missingHp = Math.max(0, maxHp - currentHp);
-  if (missingHp <= 0) return false;
+  if (missingHp <= 0) return null;
 
   const fullCost = Math.round((missingHp * 1000) / maxHp);
   const spend = Math.min(fullCost, iuniores.value);
-  if (spend <= 0) return false;
+  if (spend <= 0) return null;
 
   const healed = Math.min(missingHp, Math.floor((spend * maxHp) / 1000));
-  if (healed <= 0) return false;
+  if (healed <= 0) return null;
 
   spendResource('iuniores', spend);
 
+  const newCurrentHp = currentHp + healed;
   const nextCohorts = [...army.cohorts];
-  nextCohorts[cohortIdx] = applyHealedState(cohort, currentHp + healed);
+  nextCohorts[cohortIdx] = applyHealedState(cohort, newCurrentHp);
   preparedArmy.value = {
     ...army,
     cohorts: nextCohorts,
     size: computeArmySize(nextCohorts),
   };
-  return true;
+
+  return {
+    cohortId: cohort.id,
+    cohortName: cohort.name,
+    maxHp,
+    currentHp,
+    missingHp,
+    iunioresToFullHeal: fullCost,
+    iunioresSpent: spend,
+    hpRestored: healed,
+    newCurrentHp,
+  };
 }
