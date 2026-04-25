@@ -9,6 +9,7 @@ import { BattleMode, isFinalBattle } from './battle/index';
 import { currentSpoke, lastBattleResult } from './game/progression/spoke';
 import { selectedCommander, veteranStacks, spokesSinceLastBattle, battlesWon } from './game/core/game-state';
 import { syncBattleSignals, resetBattleSignals, battleActive, requestBattleExit } from './battle/battle-signals';
+import { extractCohortHpSnapshot } from './battle/casualties';
 
 // Mount Preact UI
 const appRoot = document.getElementById('app-root');
@@ -33,6 +34,20 @@ const battleMode = new BattleMode(() => {
       veteranStacks.value += 1;
       spokesSinceLastBattle.value = 0;
     }
+  }
+
+  // S26-03 / FT-HEAL: project per-unit battle HP back onto the bound army's
+  // cohort roster so damage carries into the next battle and surfaces in the
+  // Hub heal panel between spokes. Runs on all 3 outcomes (victory / defeat /
+  // retreat); the victory cap (FR-11) is layered on top in S26-04.
+  const spoke = currentSpoke.value;
+  if (spoke?.boundArmy) {
+    const playerUnits = battleMode.state.getBattleFactionUnits('blue');
+    const nextCohorts = extractCohortHpSnapshot(playerUnits, spoke.boundArmy.cohorts);
+    currentSpoke.value = {
+      ...spoke,
+      boundArmy: { ...spoke.boundArmy, cohorts: nextCohorts },
+    };
   }
 
   // S7-11: Final invasion — route to victory/defeat screens instead of post-battle
