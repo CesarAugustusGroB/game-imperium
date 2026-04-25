@@ -2,6 +2,7 @@ import { effect, signal } from '@preact/signals';
 import type { ArmyData } from '../../types';
 import { IUNIORES } from '../../config/game-config';
 import { COMMANDERS } from '../../data/commanders';
+import type { ResourceType } from '../core/commander';
 import type { Advisor } from '../council/advisor';
 import { advisorPool, councilSlots, plannedSpoke, tierUpNotices } from '../council/council-store';
 import type { Decretum } from '../items/decretum';
@@ -93,7 +94,7 @@ export interface ActiveRunSave {
   plannedSpoke: Spoke | null;
   currentSpoke: Spoke | null;
   currentNodeIndex: number;
-  spokeGains: Record<'gold' | 'faith' | 'influence' | 'momentum' | 'iuniores', number>;
+  spokeGains: Record<ResourceType, number>;
   consequenceFlags: string[];
   seenEventsThisSpoke: string[];
   npcFactions: NPCFaction[];
@@ -134,6 +135,7 @@ export interface MetaSave {
 
 const STORAGE_KEY = 'imperium-meta-save';
 const MAX_RUN_HISTORY = 50;
+const SAVE_DEBOUNCE_MS = 500;
 
 // —— Default state ——
 
@@ -344,17 +346,30 @@ export function clearActiveRunSave(): void {
 
 let persistenceDisposer: (() => void) | null = null;
 let isRestoringActiveRun = false;
+let pendingPersistTimer: ReturnType<typeof setTimeout> | null = null;
+
+function flushPendingPersist(): void {
+  if (pendingPersistTimer !== null) {
+    clearTimeout(pendingPersistTimer);
+    pendingPersistTimer = null;
+  }
+}
 
 export function startActiveRunPersistence(): () => void {
   if (persistenceDisposer) return persistenceDisposer;
 
   const stop = effect(() => {
     if (!selectedCommander.value) return;
-    saveActiveRunSnapshot();
+    flushPendingPersist();
+    pendingPersistTimer = setTimeout(() => {
+      pendingPersistTimer = null;
+      saveActiveRunSnapshot();
+    }, SAVE_DEBOUNCE_MS);
   });
 
   persistenceDisposer = () => {
     stop();
+    flushPendingPersist();
     persistenceDisposer = null;
   };
 
@@ -443,7 +458,8 @@ export async function restoreActiveRun(): Promise<boolean> {
     };
     persist();
     return true;
-  } catch {
+  } catch (error) {
+    console.warn('[meta-save] Failed to restore active run', error);
     return false;
   } finally {
     isRestoringActiveRun = false;

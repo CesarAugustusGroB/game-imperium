@@ -16,7 +16,7 @@ import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyI
 import { resetStrategicStore, ensurePreparedArmy, preparedArmy } from '../progression/strategic-store';
 import { getCohortById } from '../army/cohort-data';
 import { computeArmySize } from '../army/cohort';
-import { recordRunStart } from './meta-save';
+import { clearActiveRunSave, recordRunStart } from './meta-save';
 import { STARTER_ADVISORS } from '../../data/advisor-data';
 import { initFeaturePool, resetFeaturePool } from '../province/feature-store';
 import { SEASON, IUNIORES } from '../../config/game-config';
@@ -195,6 +195,7 @@ export function startNewRun(commander: Commander, options?: StartRunOptions): vo
  * @note Callers must also call navigateTo('title') after this function to return the player to the title screen.
  */
 export function resetRun(): void {
+  clearActiveRunSave();
   selectedCommander.value = null;
   initResources({ gold: 0, faith: 0, influence: 0, momentum: 0, iuniores: 0 });
   setWarProfiler(false);
