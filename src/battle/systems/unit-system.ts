@@ -48,12 +48,13 @@ export function addUnit(
   stats?: UnitStats,
   spriteId?: string,
   movementProfile?: MovementProfileId,
+  cohortInstanceId?: string,
 ): BattleUnit {
   const id = world.nextId++;
   const unitStats = stats ?? ROLE_STATS[role];
   const resolvedProfile = movementProfile ?? defaultProfileForRole(role);
   const unit: BattleUnit = {
-    id, faction, role, hex, stats: unitStats, currentHp: unitStats.hp, name,
+    id, cohortInstanceId, faction, role, hex, stats: unitStats, currentHp: unitStats.hp, name,
     prevHex: null, moveProgress: 1, path: [],
     shakeTimer: 0, flashTimer: 0,
     lungeTarget: null, lungeTimer: 0,

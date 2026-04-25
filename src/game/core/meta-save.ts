@@ -48,6 +48,7 @@ import {
 } from './game-state';
 import { faith, gold, influence, initResources, iuniores, momentum, type Resources } from './resources';
 import type { Legate } from '../army/legate';
+import { normalizeCohortRoster } from '../army/cohort';
 
 // —— Types ——
 
@@ -168,6 +169,22 @@ function normalizeResources(resources: Partial<SavedResources> | null | undefine
   return normalized;
 }
 
+function normalizeArmySnapshot(army: ArmyData | null | undefined): ArmyData | null {
+  if (!army) return null;
+  return {
+    ...army,
+    cohorts: normalizeCohortRoster(army.cohorts),
+  };
+}
+
+function normalizeSpokeSnapshot(spoke: Spoke | null | undefined): Spoke | null {
+  if (!spoke) return null;
+  return {
+    ...spoke,
+    boundArmy: normalizeArmySnapshot(spoke.boundArmy ?? null),
+  };
+}
+
 function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
   if (!rawRun || typeof rawRun !== 'object') return null;
 
@@ -181,6 +198,10 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     resources.iuniores = IUNIORES.startingSeed;
     iunioresSeeded = true;
   }
+
+  const plannedSpoke = normalizeSpokeSnapshot(run.plannedSpoke ?? null);
+  const currentSpokeSnapshot = normalizeSpokeSnapshot(run.currentSpoke ?? null);
+  const preparedArmySnapshot = normalizeArmySnapshot(run.preparedArmy ?? null);
 
   return {
     commanderId: run.commanderId,
@@ -201,8 +222,8 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     councilSlots: Array.isArray(run.councilSlots) ? run.councilSlots : [null, null, null],
     advisorPool: Array.isArray(run.advisorPool) ? run.advisorPool : [],
     tierUpNotices: Array.isArray(run.tierUpNotices) ? run.tierUpNotices : [],
-    plannedSpoke: run.plannedSpoke ?? null,
-    currentSpoke: run.currentSpoke ?? null,
+    plannedSpoke,
+    currentSpoke: currentSpokeSnapshot,
     currentNodeIndex: typeof run.currentNodeIndex === 'number' ? run.currentNodeIndex : 0,
     spokeGains: { ...ZERO_GAINS, ...(run.spokeGains ?? {}) },
     consequenceFlags: Array.isArray(run.consequenceFlags) ? run.consequenceFlags : [],
@@ -215,7 +236,7 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     goldenOpportunityPending: typeof run.goldenOpportunityPending === 'number' ? run.goldenOpportunityPending : 0,
     pendingEnemyConversions: typeof run.pendingEnemyConversions === 'number' ? run.pendingEnemyConversions : 0,
     nextInvestmentDiscount: typeof run.nextInvestmentDiscount === 'number' ? run.nextInvestmentDiscount : 0,
-    preparedArmy: run.preparedArmy ?? null,
+    preparedArmy: preparedArmySnapshot,
     preparedLegate: run.preparedLegate ?? null,
     legateHiringPool: Array.isArray(run.legateHiringPool) ? run.legateHiringPool : [],
     doctrineCollection: Array.isArray(run.doctrineCollection) ? run.doctrineCollection : [],
@@ -296,8 +317,8 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     councilSlots: councilSlots.value,
     advisorPool: advisorPool.value,
     tierUpNotices: tierUpNotices.value,
-    plannedSpoke: plannedSpoke.value,
-    currentSpoke: currentSpoke.value,
+    plannedSpoke: normalizeSpokeSnapshot(plannedSpoke.value),
+    currentSpoke: normalizeSpokeSnapshot(currentSpoke.value),
     currentNodeIndex: currentNodeIndex.value,
     spokeGains: spokeGains.value,
     consequenceFlags: Array.from(consequenceFlags.value),
@@ -310,7 +331,7 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     goldenOpportunityPending: goldenOpportunityPending.value,
     pendingEnemyConversions: pendingEnemyConversions.value,
     nextInvestmentDiscount: nextInvestmentDiscount.value,
-    preparedArmy: preparedArmy.value,
+    preparedArmy: normalizeArmySnapshot(preparedArmy.value),
     preparedLegate: preparedLegate.value,
     legateHiringPool: legateHiringPool.value,
     doctrineCollection: doctrineCollection.value,
@@ -414,7 +435,7 @@ export async function restoreActiveRun(): Promise<boolean> {
     tierUpNotices.value = snapshot.tierUpNotices;
     plannedSpoke.value = snapshot.plannedSpoke;
 
-    currentSpoke.value = snapshot.currentSpoke;
+    currentSpoke.value = normalizeSpokeSnapshot(snapshot.currentSpoke);
     currentNodeIndex.value = snapshot.currentNodeIndex;
     spokeGains.value = { ...ZERO_GAINS, ...snapshot.spokeGains };
 
@@ -433,7 +454,7 @@ export async function restoreActiveRun(): Promise<boolean> {
     goldenOpportunityPending.value = snapshot.goldenOpportunityPending;
     pendingEnemyConversions.value = snapshot.pendingEnemyConversions;
     nextInvestmentDiscount.value = snapshot.nextInvestmentDiscount;
-    preparedArmy.value = snapshot.preparedArmy;
+    preparedArmy.value = normalizeArmySnapshot(snapshot.preparedArmy);
     preparedLegate.value = snapshot.preparedLegate;
     legateHiringPool.value = snapshot.legateHiringPool;
 
@@ -454,6 +475,9 @@ export async function restoreActiveRun(): Promise<boolean> {
           iuniores: iuniores.value,
         },
         iunioresSeeded: true,
+        plannedSpoke: normalizeSpokeSnapshot(plannedSpoke.value),
+        currentSpoke: normalizeSpokeSnapshot(currentSpoke.value),
+        preparedArmy: normalizeArmySnapshot(preparedArmy.value),
       },
     };
     persist();

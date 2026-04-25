@@ -23,6 +23,17 @@ export type CohortRarity = 'common' | 'uncommon' | 'rare' | 'super-rare' | 'secr
 export interface Cohort {
   /** Unique identifier for the cohort type (e.g. "hastati"). */
   id: string;
+  /**
+   * Stable per-instance identity for this recruited roster entry.
+   *
+   * Multiple cohorts may share the same catalog `id` (e.g. two Hastati), so
+   * downstream systems that need to track one specific roster entry across
+   * embark/save/battle must key on `instanceId` instead of the cohort type.
+   *
+   * Optional for migration: legacy saves/older roster creators may omit it,
+   * and `normalizeCohortRoster()` will backfill a value.
+   */
+  instanceId?: string;
   /** Display name (e.g. "Hastati"). */
   name: string;
   /** BattleUnit role this cohort maps to when spawned on the hex grid. */
@@ -73,4 +84,40 @@ export interface Cohort {
  */
 export function computeArmySize(cohorts: readonly Cohort[]): number {
   return cohorts.reduce((sum, c) => sum + c.stats.hp, 0);
+}
+
+function buildCohortInstanceId(cohortId: string): string {
+  const suffix = globalThis.crypto?.randomUUID?.()
+    ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${cohortId}-${suffix}`;
+}
+
+/**
+ * Clone a catalog cohort into a distinct roster instance with its own stable
+ * identity. Use this for recruitment/starter armies instead of spreading the
+ * catalog object directly.
+ */
+export function createCohortInstance(cohort: Cohort): Cohort {
+  return {
+    ...cohort,
+    instanceId: buildCohortInstanceId(cohort.id),
+  };
+}
+
+/**
+ * Normalize a roster so every cohort has a unique stable instanceId.
+ *
+ * This backfills legacy saves and also defends against accidental duplicate
+ * instance ids inside the same roster.
+ */
+export function normalizeCohortRoster(cohorts: readonly Cohort[]): Cohort[] {
+  const seen = new Set<string>();
+  return cohorts.map((cohort) => {
+    const candidate = cohort.instanceId;
+    const instanceId = candidate && !seen.has(candidate)
+      ? candidate
+      : buildCohortInstanceId(cohort.id);
+    seen.add(instanceId);
+    return cohort.instanceId === instanceId ? { ...cohort } : { ...cohort, instanceId };
+  });
 }

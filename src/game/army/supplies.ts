@@ -32,7 +32,7 @@ export interface TraversalAttritionLog {
   hpDamagePerCohortPct: number;
   /** Absolute amount added to `supplyMoralePenalty` this traversal. */
   moralePenaltyDelta: number;
-  /** Ids of cohorts whose currentHp hit 0 and were removed from the roster. */
+  /** Stable instance ids of cohorts whose currentHp hit 0 and were removed from the roster. */
   cohortsKilled: string[];
 }
 
@@ -87,7 +87,7 @@ export function consumeTraversal(
     const damage = Math.max(1, Math.floor(maxHp * SUPPLY_HP_DAMAGE_PCT));
     const after = current - damage;
     if (after <= 0) {
-      cohortsKilled.push(c.id);
+      cohortsKilled.push(c.instanceId ?? c.id);
       continue;
     }
     nextCohorts.push({ ...c, currentHp: after });
