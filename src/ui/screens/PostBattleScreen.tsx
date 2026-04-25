@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { useEffect, useMemo } from 'preact/hooks';
 import { navigateTo } from '../screens';
-import { lastBattleResult, advanceNode, grantSpokeResource } from '../../game/progression/spoke';
+import { lastBattleResult, advanceNode, grantSpokeResource, currentSpoke } from '../../game/progression/spoke';
 import type { BattleResult } from '../../game/progression/spoke';
 import { selectedCommander } from '../../game/core/game-state';
 import { FACTION_COLORS, RESOURCE_INFO } from '../../game/core/commander';
@@ -15,6 +15,7 @@ import { addDecretum } from '../../game/items/decretum-store';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { lastEnemyArmy } from '../../battle/index';
 import { threatLevel } from '../../game/core/game-state';
+import { lastVictoryCapSummary } from '../../battle/casualties';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('post-battle-styles')) {
@@ -272,6 +273,155 @@ export function PostBattleScreen() {
               }}>
                 {Array.from(groups.values()).map(g => `${g.count} ${g.name}${g.count > 1 ? 's' : ''}`).join(' · ')}
               </div>
+            </div>
+          );
+        })()}
+
+        {/* S26-08: Casualties panel — post-battle HP write-back surface +
+            Field Recovery line driven by S26-04's victory cap absorption. */}
+        {(() => {
+          const spokeArmy = currentSpoke.value?.boundArmy;
+          if (!spokeArmy || spokeArmy.cohorts.length === 0) return null;
+
+          const damagedCohorts = spokeArmy.cohorts.filter((c) => {
+            const maxHp = c.stats.hp;
+            const isOoA = c.outOfAction === true;
+            const currentHp = c.currentHp ?? (isOoA ? 1 : maxHp);
+            return currentHp < maxHp || isOoA;
+          });
+
+          const cap = isVictory ? lastVictoryCapSummary.value : null;
+          const absorbedById = new Map<string, number>();
+          if (cap) {
+            for (const entry of cap.absorbedPerCohort) {
+              absorbedById.set(entry.cohortInstanceId, entry.absorbedHp);
+            }
+          }
+
+          // Empty state: only show the panel if there are casualties OR the
+          // cap actually absorbed damage (rare crushing-win edge where every
+          // cohort ended at full HP but the absorbed delta is still relevant).
+          const totalAbsorbed = cap?.totalAbsorbedHp ?? 0;
+          if (damagedCohorts.length === 0 && totalAbsorbed === 0) return null;
+
+          return (
+            <div style={{
+              width: '100%', marginBottom: '16px', padding: '12px 16px',
+              background: 'rgba(40, 30, 50, 0.35)',
+              border: '1px solid rgba(160, 140, 100, 0.22)',
+              borderRadius: 'var(--radius-md)',
+            }}>
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                marginBottom: 8,
+              }}>
+                <span style={{
+                  fontSize: 'var(--font-size-xs)', fontWeight: 700,
+                  color: 'var(--color-text-muted)', letterSpacing: '2px', textTransform: 'uppercase',
+                }}>
+                  Casualties
+                </span>
+                {isVictory && totalAbsorbed > 0 && (
+                  <span style={{
+                    fontSize: 'var(--font-size-xs)',
+                    color: '#7ecf97',
+                    letterSpacing: '1px',
+                    fontStyle: 'italic',
+                    fontFamily: 'var(--font-display)',
+                  }}>
+                    ⊕ Field Recovery: {totalAbsorbed} HP absorbed
+                  </span>
+                )}
+              </div>
+
+              {damagedCohorts.length === 0 ? (
+                <div style={{
+                  fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)',
+                  fontStyle: 'italic', lineHeight: 1.5,
+                }}>
+                  Clean victory — the cap absorbed every wound. No cohorts return damaged.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {damagedCohorts.map((c) => {
+                    const maxHp = c.stats.hp;
+                    const isOoA = c.outOfAction === true;
+                    const currentHp = c.currentHp ?? (isOoA ? 1 : maxHp);
+                    const hpRatio = maxHp > 0 ? currentHp / maxHp : 0;
+                    const absorbed = c.instanceId !== undefined ? absorbedById.get(c.instanceId) ?? 0 : 0;
+                    return (
+                      <div key={`cas-${c.instanceId ?? c.id}`} style={{
+                        padding: '6px 10px',
+                        background: isOoA ? 'rgba(60, 22, 28, 0.45)' : 'rgba(20, 18, 32, 0.4)',
+                        border: '1px solid rgba(160, 140, 100, 0.15)',
+                        borderRadius: 'var(--radius-sm)',
+                      }}>
+                        <div style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                          marginBottom: 4, gap: 8, flexWrap: 'wrap',
+                        }}>
+                          <span style={{
+                            fontSize: 'var(--font-size-sm)', fontWeight: 700,
+                            color: 'var(--color-text-primary)',
+                            fontFamily: 'var(--font-display)', letterSpacing: '0.6px',
+                          }}>
+                            {c.name}
+                            {isOoA && (
+                              <span style={{
+                                marginLeft: 8,
+                                fontSize: 8, padding: '1px 6px',
+                                border: '1px solid rgba(194, 74, 58, 0.6)',
+                                background: 'rgba(194, 74, 58, 0.18)',
+                                color: '#e88858',
+                                borderRadius: 2,
+                                letterSpacing: 1, textTransform: 'uppercase',
+                                fontWeight: 700,
+                              }}>
+                                ⚕ Out of Action
+                              </span>
+                            )}
+                          </span>
+                          <span style={{
+                            fontSize: 'var(--font-size-xs)',
+                            color: 'var(--color-text-muted)',
+                            fontFamily: 'var(--font-mono, monospace)',
+                          }}>
+                            {currentHp} / {maxHp} HP
+                          </span>
+                        </div>
+                        <div style={{
+                          position: 'relative', height: 6,
+                          background: 'rgba(60, 56, 80, 0.55)',
+                          borderRadius: 999, overflow: 'hidden',
+                        }}>
+                          <div style={{
+                            position: 'absolute', inset: 0,
+                            width: `${hpRatio * 100}%`,
+                            background: isOoA
+                              ? 'linear-gradient(90deg, #c24a3a 0%, #d4604a 100%)'
+                              : hpRatio > 0.6
+                                ? 'linear-gradient(90deg, #4a9a6a 0%, #7ecf97 100%)'
+                                : hpRatio > 0.3
+                                  ? 'linear-gradient(90deg, #d48b3a 0%, #e8a848 100%)'
+                                  : 'linear-gradient(90deg, #c24a3a 0%, #d4604a 100%)',
+                          }} />
+                        </div>
+                        {absorbed > 0 && (
+                          <div style={{
+                            marginTop: 4,
+                            fontSize: 'var(--font-size-xs)',
+                            color: '#7ecf97',
+                            fontStyle: 'italic',
+                            letterSpacing: '0.4px',
+                          }}>
+                            ⊕ Field Recovery: −{absorbed} HP damage absorbed
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })()}
