@@ -179,6 +179,10 @@ function normalizeArmySnapshot(army: ArmyData | null | undefined): ArmyData | nu
 
 function normalizeSpokeSnapshot(spoke: Spoke | null | undefined): Spoke | null {
   if (!spoke) return null;
+  // S27-02: SpokeNode gained optional Itinerarium fields (landmarkType,
+  // encounterType, revealed, effects, …). The spread copy preserves whatever
+  // is on each node — undefined for legacy saves, set for Itinerarium spokes —
+  // so older saves load without migration code. Readers must tolerate absence.
   return {
     ...spoke,
     boundArmy: normalizeArmySnapshot(spoke.boundArmy ?? null),
