@@ -505,55 +505,72 @@ export interface LandmarkSpokeOptions {
  */
 export function generateLandmarkSpoke(opts: LandmarkSpokeOptions): Spoke {
   const { duration, posture, threatLevel: threat = 0, rng = Math.random } = opts;
-  const totalNodes = duration * 3 + 1;
 
-  // At least 3 mid-slots are needed for the required invariants (rest, watchtower, supply).
-  // With duration=1, totalNodes=4: index 0=start, index 3=boss → 2 mid-slots.
-  // We'll pack invariants as tightly as possible; unknowns share slots with invariants
-  // only when the chain is too short to fit both.
+  // Mid-chain invariants demand four distinct factory roles (rest, supply,
+  // watchtower, morale). duration=1 yields midCount=2, which can't satisfy
+  // them — fail loud at the boundary instead of silently overflowing midCount
+  // and producing a spoke whose length and boss.position don't match the
+  // documented `duration * 3 + 1` contract.
+  if (duration < 2) {
+    throw new Error(
+      `generateLandmarkSpoke: duration must be >= 2 (got ${duration}); ` +
+      `mid-chain invariants require 4 slots for rest/supply/watchtower/morale.`,
+    );
+  }
+
+  const totalNodes = duration * 3 + 1;
   const midCount = totalNodes - 2; // excludes start (0) and boss (last)
 
-  // ── Required mid-nodes ──
-  // Always place these; order will be shuffled into the mid-slot sequence.
-  const requiredNodes: Array<(idx: number) => SpokeNode> = [
+  // ── Required mid-nodes (4 factories, one per invariant) ──
+  const factories: Array<(idx: number) => SpokeNode> = [
     idx => buildRestNode(idx, rng),
     idx => buildWatchtowerNode(idx, rng),
     idx => buildSupplyNode(idx, rng),
     idx => buildMoraleNode(idx, rng),
   ];
 
-  // Unknown nodes: always 2, but only when midCount allows them alongside required nodes.
-  // If midCount < 4, we still guarantee at least 1 unknown (the minimum that has semantic
-  // meaning); at midCount < 2 we skip them to avoid violating required-node invariants.
-  const unknownCount = midCount >= 6 ? 2 : midCount >= 3 ? 1 : 0;
-  for (let u = 0; u < unknownCount; u++) {
-    requiredNodes.push(idx => buildUnknownNode(idx, rng));
+  // ── Optional adds gated by remaining capacity ──
+  // Every push from here on checks `factories.length < midCount` before adding
+  // so we can never overflow midCount and de-sync boss.position from its
+  // array index. Priority order: unknowns → elite → filler.
+  const desiredUnknowns = midCount >= 6 ? 2 : midCount >= 3 ? 1 : 0;
+  for (let u = 0; u < desiredUnknowns && factories.length < midCount; u++) {
+    factories.push(idx => buildUnknownNode(idx, rng));
   }
 
-  // Optional elite node: ~30% probability
-  const includeElite = rng() < 0.3;
-  if (includeElite) {
-    requiredNodes.push(idx => buildEliteNode(idx, rng));
+  // Optional elite — ~30% probability, but only when there's still a slot.
+  // At duration=2 the four required + one unknown already fill midCount=5,
+  // so elite is suppressed to preserve the length contract.
+  if (factories.length < midCount && rng() < 0.3) {
+    factories.push(idx => buildEliteNode(idx, rng));
   }
 
-  // ── Fill remaining mid-slots from pool ──
-  const fillerCount = Math.max(0, midCount - requiredNodes.length);
-  for (let f = 0; f < fillerCount; f++) {
+  // Filler from the pool until we hit midCount exactly.
+  while (factories.length < midCount) {
     const factory = pick(MID_POOL, rng);
-    requiredNodes.push(idx => factory(idx, rng));
+    factories.push(idx => factory(idx, rng));
+  }
+
+  // Hard guard — would only fire if a future edit pushed past `midCount`
+  // outside the gated paths above. Keeps the public length contract honest.
+  if (factories.length !== midCount) {
+    throw new Error(
+      `generateLandmarkSpoke: internal — factories.length (${factories.length}) ` +
+      `!== midCount (${midCount}) for duration ${duration}.`,
+    );
   }
 
   // Shuffle mid-node factories (Fisher-Yates) so required nodes aren't always in same order
-  for (let i = requiredNodes.length - 1; i > 0; i--) {
+  for (let i = factories.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
-    [requiredNodes[i], requiredNodes[j]] = [requiredNodes[j], requiredNodes[i]];
+    [factories[i], factories[j]] = [factories[j], factories[i]];
   }
 
   // ── Assemble node list ──
   const nodes: SpokeNode[] = [];
   nodes.push(buildStartCamp(rng));
-  for (let i = 0; i < requiredNodes.length; i++) {
-    nodes.push(requiredNodes[i](i + 1));
+  for (let i = 0; i < factories.length; i++) {
+    nodes.push(factories[i](i + 1));
   }
   nodes.push(buildBossNode(totalNodes - 1, threat, rng));
 
