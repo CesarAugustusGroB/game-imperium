@@ -2,11 +2,11 @@ import './ui/design-tokens.css';
 import './ui/globals.css';
 import './ui/sound/music';
 import { render } from 'preact';
-import { effect } from '@preact/signals';
+import { effect, untracked } from '@preact/signals';
 import { App } from './ui/screens/App';
 import { currentScreen, navigateTo } from './ui/screens';
 import { BattleMode, isFinalBattle } from './battle/index';
-import { currentSpoke, lastBattleResult } from './game/progression/spoke';
+import { currentSpoke, lastBattleResult, syncPreparedFromBoundArmy } from './game/progression/spoke';
 import { selectedCommander, veteranStacks, spokesSinceLastBattle, battlesWon } from './game/core/game-state';
 import { syncBattleSignals, resetBattleSignals, battleActive, requestBattleExit } from './battle/battle-signals';
 import { extractCohortHpSnapshot, applyVictoryCap, lastVictoryCapSummary } from './battle/casualties';
@@ -64,10 +64,12 @@ const battleMode = new BattleMode(() => {
       lastVictoryCapSummary.value = null;
     }
 
+    const nextBoundArmy = { ...spoke.boundArmy, cohorts: nextCohorts };
     currentSpoke.value = {
       ...spoke,
-      boundArmy: { ...spoke.boundArmy, cohorts: nextCohorts },
+      boundArmy: nextBoundArmy,
     };
+    syncPreparedFromBoundArmy(nextBoundArmy);
   } else {
     lastVictoryCapSummary.value = null;
   }
@@ -118,25 +120,33 @@ if (isBattleScreen(initialScreen)) {
   if (battleScreen) battleScreen.style.display = 'none';
 }
 
-// Enter/exit battle when currentScreen signal changes
+// Enter/exit battle when currentScreen signal changes.
+// Only `currentScreen` is tracked — the body runs inside `untracked()` so the
+// many signals read by `enterFromSpoke()` (currentSpoke, threatLevel, …) and
+// the writes performed by the post-battle HP write-back don't re-trigger this
+// effect mid-exit. Without this guard, writing `currentSpoke.value` from the
+// exit callback re-fires the effect, calls `enterFromSpoke()` again with a
+// fresh BattleState (phase='fighting'), and the next screen change runs the
+// exit branch a second time — clobbering `lastBattleResult` with 'defeat'.
 effect(() => {
   const screen = currentScreen.value;
-  if (isBattleScreen(screen) && !isBattleActive) {
-    isBattleActive = true;
-    battleActive.value = true;
-    // L2: clear stale victory-cap summary from any prior battle before entry.
-    lastVictoryCapSummary.value = null;
-    if (currentSpoke.value) {
-      battleMode.enterFromSpoke();
-    } else {
-      battleMode.enterQuickBattle();
+  untracked(() => {
+    if (isBattleScreen(screen) && !isBattleActive) {
+      isBattleActive = true;
+      battleActive.value = true;
+      lastVictoryCapSummary.value = null;
+      if (currentSpoke.value) {
+        battleMode.enterFromSpoke();
+      } else {
+        battleMode.enterQuickBattle();
+      }
+    } else if (!isBattleScreen(screen) && isBattleActive) {
+      isBattleActive = false;
+      battleActive.value = false;
+      resetBattleSignals();
+      battleMode.exit();
     }
-  } else if (!isBattleScreen(screen) && isBattleActive) {
-    isBattleActive = false;
-    battleActive.value = false;
-    resetBattleSignals();
-    battleMode.exit();
-  }
+  });
 });
 
 // Resize
