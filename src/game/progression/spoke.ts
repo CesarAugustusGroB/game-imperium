@@ -131,9 +131,19 @@ export function getCurrentNode(): SpokeNode | null {
 }
 
 /**
- * Mirror the spoke's wounded/healed cohort roster onto the persistent Hub
- * roster (`preparedArmy`). Call after every mutation of `boundArmy.cohorts`
- * so Hub views always see live state mid-spoke and on retreat.
+ * Mirror the spoke's mutable army state onto the persistent Hub roster
+ * (`preparedArmy`). Call after every mutation of `boundArmy.cohorts` or
+ * `boundArmy.supplies` so Hub views always see live state mid-spoke and
+ * any logistical gains/losses survive spoke completion or retreat.
+ *
+ * Persisted fields:
+ *   - cohorts (HP, outOfAction, casualties)
+ *   - size (recomputed)
+ *   - supplies (forage / depot / hazard outcomes from S27-03 effects)
+ *
+ * Transient fields like `supplyMoralePenalty`, `consecutiveDeficitCount`,
+ * and `campaignMoraleDelta` are NOT mirrored — they are spoke-scoped and
+ * should reset on the next embark.
  */
 export function syncPreparedFromBoundArmy(boundArmy: ArmyData | null | undefined): void {
   if (!boundArmy || !preparedArmy.value) return;
@@ -141,6 +151,7 @@ export function syncPreparedFromBoundArmy(boundArmy: ArmyData | null | undefined
     ...preparedArmy.value,
     cohorts: boundArmy.cohorts,
     size: computeArmySize(boundArmy.cohorts),
+    supplies: boundArmy.supplies,
   };
 }
 

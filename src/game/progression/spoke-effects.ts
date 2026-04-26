@@ -15,8 +15,8 @@
  */
 
 import type { Spoke } from './spoke';
-import { currentSpoke, currentNodeIndex, syncPreparedFromBoundArmy } from './spoke';
-import { iuniores, addResource, spendResource } from '../core/resources';
+import { currentSpoke, currentNodeIndex, grantSpokeResource, syncPreparedFromBoundArmy } from './spoke';
+import { iuniores, spendResource } from '../core/resources';
 import { threatLevel } from '../core/game-state';
 import { computeArmyMorale, type MoraleTier } from '../army/morale';
 import { addNotification } from '../../ui/notifications/notification-store';
@@ -85,11 +85,17 @@ export function applySpokeEffects(effects: readonly SpokeEffect[]): void {
 
       case 'iuniores': {
         if (effect.delta > 0) {
-          addResource('iuniores', effect.delta);
+          // Route positive gains through grantSpokeResource so campaign
+          // recruit/forage outcomes are tracked in spokeGains alongside
+          // node rewards (consumed by the post-spoke summary).
+          grantSpokeResource('iuniores', effect.delta);
         } else if (effect.delta < 0) {
           // Partial drain — campaign penalties take whatever the player has,
           // never going below zero. `spendResource` is all-or-nothing, so
-          // clamp to the current balance first.
+          // clamp to the current balance first. Losses are intentionally
+          // NOT subtracted from spokeGains: gains and losses are accounted
+          // separately and the summary shows net resource state, not net
+          // delta.
           const drain = Math.min(iuniores.value, -effect.delta);
           if (drain > 0) spendResource('iuniores', drain);
         }
@@ -97,13 +103,20 @@ export function applySpokeEffects(effects: readonly SpokeEffect[]): void {
       }
 
       case 'reveal': {
+        // Reveal also bumps scoutedLevel to at least 1 (Scouted) per
+        // GDD §9.1: Unknown(0) → Scouted(1) → Full Recon(2). The two fields
+        // stay in lockstep so UI can never show a node as `revealed: true`
+        // but still at intel level 0. Higher tiers (full recon) come from
+        // future explicit scoutedLevel: 2 effects, not from radius reveals.
         const lo = Math.max(0, idx - effect.radius);
         const hi = Math.min(next.nodes.length - 1, idx + effect.radius);
         let touched = false;
         const nodes = next.nodes.map((n, i) => {
-          if (i < lo || i > hi || n.revealed === true) return n;
+          if (i < lo || i > hi) return n;
+          const minLevel = Math.max(n.scoutedLevel ?? 0, 1) as 0 | 1 | 2;
+          if (n.revealed === true && (n.scoutedLevel ?? 0) >= 1) return n;
           touched = true;
-          return { ...n, revealed: true };
+          return { ...n, revealed: true, scoutedLevel: minLevel };
         });
         if (touched) {
           next = { ...next, nodes };
