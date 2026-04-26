@@ -103,6 +103,9 @@ export class BattleMode {
     lastEnemyArmy.value = redArmy;
     this._state.placeStartingUnits(blueArmy, redArmy, blueLegate, null);
 
+    // L1: snapshot blue deployment count right after placement.
+    this._state.recordInitialDeployment();
+
     // S24-03: snapshot blue army morale from the spoke and stash multipliers
     // onto every blue unit. Red stays at neutral (no enemy-side contributors
     // in the MVP). No-op spoke → neutral too.
@@ -164,6 +167,11 @@ export class BattleMode {
     deployArmy(this._state, 'blue', blueArmy, CENTRAL_SPAWN);
     deployArmy(this._state, 'red', redArmy, CENTRAL_SPAWN);
     this._state.placeStarsAndStrength();
+
+    // L1: snapshot blue deployment count AFTER all blue units are placed so
+    // main.tsx can use it as the unitLossRatio denominator instead of the
+    // (smaller) end-of-battle count that excludes fully-despawned units.
+    this._state.recordInitialDeployment();
 
     // Apply Legate traits (V1 used to do this inside placeFactionUnits)
     if (blueLegate) this._state.applyLegateTraits('blue', blueLegate);

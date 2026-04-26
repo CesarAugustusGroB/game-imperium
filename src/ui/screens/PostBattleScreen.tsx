@@ -324,7 +324,7 @@ export function PostBattleScreen() {
                 {isVictory && totalAbsorbed > 0 && (
                   <span style={{
                     fontSize: 'var(--font-size-xs)',
-                    color: '#7ecf97',
+                    color: 'var(--color-success)',
                     letterSpacing: '1px',
                     fontStyle: 'italic',
                     fontFamily: 'var(--font-display)',
@@ -410,7 +410,7 @@ export function PostBattleScreen() {
                           <div style={{
                             marginTop: 4,
                             fontSize: 'var(--font-size-xs)',
-                            color: '#7ecf97',
+                            color: 'var(--color-success)',
                             fontStyle: 'italic',
                             letterSpacing: '0.4px',
                           }}>

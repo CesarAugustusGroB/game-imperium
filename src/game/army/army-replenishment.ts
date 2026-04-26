@@ -28,7 +28,7 @@
 import { signal } from '@preact/signals';
 import type { Cohort } from './cohort';
 import type { ArmyData } from '../../types/index';
-import { computeArmySize } from './cohort';
+import { computeArmySize, applyCohortHealthState, cohortInstanceKey } from './cohort';
 import { iuniores, spendResource } from '../core/resources';
 import { currentSpoke } from '../progression/spoke';
 import { preparedArmy } from '../progression/strategic-store';
@@ -67,26 +67,11 @@ export interface ReplenishmentPreview {
 }
 
 function getCohortCurrentHp(cohort: Cohort): number {
-  if (cohort.currentHp !== undefined) return cohort.currentHp;
   if (cohort.outOfAction) return 1;
+  if (cohort.currentHp !== undefined) return cohort.currentHp;
   return cohort.stats.hp;
 }
 
-function applyHealedState(cohort: Cohort, newCurrentHp: number): Cohort {
-  const maxHp = cohort.stats.hp;
-  const { currentHp: _currentHp, outOfAction: _outOfAction, ...rest } = cohort;
-  void _currentHp;
-  void _outOfAction;
-
-  if (newCurrentHp >= maxHp) {
-    return rest;
-  }
-
-  return {
-    ...rest,
-    currentHp: newCurrentHp,
-  };
-}
 
 /**
  * Compute the replenishment outcome for a given cohort roster and pool size.
@@ -141,7 +126,7 @@ export function previewReplenishment(
     hpRestored += healed;
 
     perCohort.push({
-      cohortInstanceId: c.instanceId ?? c.id,
+      cohortInstanceId: cohortInstanceKey(c),
       cohortId: c.id,
       cohortName: c.name,
       maxHp,
@@ -158,10 +143,16 @@ export function previewReplenishment(
     // that arrived at the rest node already at full HP but still carrying a
     // stale `currentHp = maxHp` field or a leftover `outOfAction` flag — those
     // are cleaned up here so downstream consumers see a canonical shape.
-    const shouldNormalize = healed > 0 || (missingHp === 0 && (c.currentHp !== undefined || c.outOfAction));
+    // Edge case: a malformed cohort with outOfAction=true but currentHp >= maxHp
+    // (both OoA and full-HP simultaneously) is also normalized to canonical full-health.
+    const isOoAWithFullHp = !!c.outOfAction && (c.currentHp === undefined || c.currentHp >= maxHp);
+    const shouldNormalize = healed > 0
+      || isOoAWithFullHp
+      || (missingHp === 0 && (c.currentHp !== undefined || c.outOfAction));
     // Preserve reference for untouched cohorts so Preact memoization downstream
     // doesn't see a spurious change.
-    nextCohorts.push(shouldNormalize ? applyHealedState(c, newCurrentHp) : c);
+    const normalizedHp = isOoAWithFullHp ? maxHp : newCurrentHp;
+    nextCohorts.push(shouldNormalize ? applyCohortHealthState(c, normalizedHp, false) : c);
   }
 
   return {
@@ -224,7 +215,7 @@ export function previewHubReplenishment(
     hpRestored += healed;
 
     perCohort.push({
-      cohortInstanceId: entry.cohort.instanceId ?? entry.cohort.id,
+      cohortInstanceId: cohortInstanceKey(entry.cohort),
       cohortId: entry.cohort.id,
       cohortName: entry.cohort.name,
       maxHp: entry.maxHp,
@@ -237,7 +228,7 @@ export function previewHubReplenishment(
     });
 
     if (healed > 0) {
-      nextCohorts[entry.index] = applyHealedState(entry.cohort, newCurrentHp);
+      nextCohorts[entry.index] = applyCohortHealthState(entry.cohort, newCurrentHp, false);
     }
   }
 
@@ -360,7 +351,7 @@ export function healCohortInRoster(cohortIdx: number): CohortReplenishment | nul
 
   const newCurrentHp = currentHp + healed;
   const nextCohorts = [...army.cohorts];
-  nextCohorts[cohortIdx] = applyHealedState(cohort, newCurrentHp);
+  nextCohorts[cohortIdx] = applyCohortHealthState(cohort, newCurrentHp, false);
   preparedArmy.value = {
     ...army,
     cohorts: nextCohorts,
@@ -368,7 +359,7 @@ export function healCohortInRoster(cohortIdx: number): CohortReplenishment | nul
   };
 
   return {
-    cohortInstanceId: cohort.instanceId ?? cohort.id,
+    cohortInstanceId: cohortInstanceKey(cohort),
     cohortId: cohort.id,
     cohortName: cohort.name,
     maxHp,

@@ -44,10 +44,26 @@ export class BattleEngine {
   /** The pure data model. Keep private to force callers through the facade. */
   private world: BattleWorld;
 
+  /**
+   * Snapshot of how many blue units were deployed at battle start (L1 fix).
+   * Used by `src/main.tsx` as the `unitLossRatio` denominator for the victory
+   * damage cap so fully-despawned units aren't excluded from the count.
+   * Reset to 0 on construction; set via `recordInitialDeployment()`.
+   */
+  initialBlueDeployedCount = 0;
+
   constructor(config?: Partial<BattleConfig>) {
     this.world = new BattleWorld(config);
     // Idempotent — ensures registries are populated before any effect dispatch.
     registerAllEffects();
+  }
+
+  /**
+   * Snapshot the current blue unit count as the deployment baseline.
+   * Call this ONCE per battle, right after all blue units have been placed.
+   */
+  recordInitialDeployment(): void {
+    this.initialBlueDeployedCount = this.getBattleFactionUnits('blue').length;
   }
 
   // ── Read-only accessors (mirror the old BattleState public fields) ──

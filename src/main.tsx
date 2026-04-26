@@ -49,7 +49,12 @@ const battleMode = new BattleMode(() => {
 
     // S26-04 / FT-HEAL FR-11: victory damage cap. Defeats and retreats bypass.
     if (lastBattleResult.value === 'victory') {
-      const totalUnits = playerUnits.length;
+      // L1: use the deployment-time snapshot as the denominator so fully-
+      // despawned units (removed from the array during death animation) are
+      // not silently excluded, which would bias the ratio low and over-absorb.
+      const totalUnits = battleMode.state.initialBlueDeployedCount > 0
+        ? battleMode.state.initialBlueDeployedCount
+        : playerUnits.length;
       const killedUnits = playerUnits.filter(u => u.isDying || u.currentHp <= 0).length;
       const unitLossRatio = totalUnits > 0 ? killedUnits / totalUnits : 0;
       const capResult = applyVictoryCap(preBattleCohorts, nextCohorts, unitLossRatio);
@@ -98,6 +103,8 @@ if (isBattleScreen(initialScreen)) {
   if (battleScreen) battleScreen.style.display = 'block';
   isBattleActive = true;
   battleActive.value = true;
+  // L2: clear stale victory-cap summary from any prior battle before entry.
+  lastVictoryCapSummary.value = null;
   // Entry point is picked by whether a spoke is active, not by screen name —
   // NodeMapScreen now routes spoke battles through 'battleV2' so the Preact
   // overlay (settings, unit-info, army panels, strength bar) mounts on top.
@@ -117,6 +124,8 @@ effect(() => {
   if (isBattleScreen(screen) && !isBattleActive) {
     isBattleActive = true;
     battleActive.value = true;
+    // L2: clear stale victory-cap summary from any prior battle before entry.
+    lastVictoryCapSummary.value = null;
     if (currentSpoke.value) {
       battleMode.enterFromSpoke();
     } else {
