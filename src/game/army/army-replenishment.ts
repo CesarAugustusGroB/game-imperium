@@ -30,7 +30,7 @@ import type { Cohort } from './cohort';
 import type { ArmyData } from '../../types/index';
 import { computeArmySize, applyCohortHealthState, cohortInstanceKey } from './cohort';
 import { iuniores, spendResource } from '../core/resources';
-import { currentSpoke } from '../progression/spoke';
+import { currentSpoke, syncPreparedFromBoundArmy } from '../progression/spoke';
 import { preparedArmy } from '../progression/strategic-store';
 
 export interface CohortReplenishment {
@@ -289,6 +289,7 @@ export function replenishBoundArmy(): ReplenishmentPreview | null {
     size: computeArmySize(preview.nextCohorts),  // maxHp-based, unchanged by healing but safe to recompute
   };
   currentSpoke.value = { ...spoke, boundArmy: nextArmy };
+  syncPreparedFromBoundArmy(nextArmy);
 
   lastReplenishmentSummary.value = preview;
   return preview;

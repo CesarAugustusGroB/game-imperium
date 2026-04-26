@@ -95,8 +95,25 @@ export function getCurrentNode(): SpokeNode | null {
   return spoke.nodes[currentNodeIndex.value] ?? null;
 }
 
+/**
+ * Mirror the spoke's wounded/healed cohort roster onto the persistent Hub
+ * roster (`preparedArmy`). Call after every mutation of `boundArmy.cohorts`
+ * so Hub views always see live state mid-spoke and on retreat.
+ */
+export function syncPreparedFromBoundArmy(boundArmy: ArmyData | null | undefined): void {
+  if (!boundArmy || !preparedArmy.value) return;
+  preparedArmy.value = {
+    ...preparedArmy.value,
+    cohorts: boundArmy.cohorts,
+    size: computeArmySize(boundArmy.cohorts),
+  };
+}
+
 /** Clear spoke state (called on retreat or spoke completion). */
 export function resetSpoke(): void {
+  // Sync casualties to preparedArmy before tearing down the spoke (handles retreat).
+  const finalBound = currentSpoke.value?.boundArmy ?? null;
+  syncPreparedFromBoundArmy(finalBound);
   currentSpoke.value = null;
   currentNodeIndex.value = 0;
   spokeGains.value = { ...ZERO_GAINS };
@@ -137,6 +154,7 @@ export function advanceNode(): AdvanceNodeResult {
     nodes: updatedNodes,
     boundArmy: nextBoundArmy,
   };
+  syncPreparedFromBoundArmy(nextBoundArmy);
   const next = idx + 1;
   currentNodeIndex.value = next;
 
@@ -173,17 +191,8 @@ export function completeSpoke(): void {
   const spoke = currentSpoke.value;
   if (spoke) {
     // S26-05: write back the post-spoke army state before tearing the spoke
-    // down. Other ArmyData fields (legateId, supplies, movement state) stay
-    // on preparedArmy as their pre-embark snapshot — only the cohort roster
-    // (and recomputed size) propagates back.
-    if (spoke.boundArmy && preparedArmy.value) {
-      const finalCohorts = spoke.boundArmy.cohorts;
-      preparedArmy.value = {
-        ...preparedArmy.value,
-        cohorts: finalCohorts,
-        size: computeArmySize(finalCohorts),
-      };
-    }
+    // down. Delegate to the shared helper (idempotent with resetSpoke's sync).
+    syncPreparedFromBoundArmy(spoke.boundArmy);
 
     // Trigger reactivity with a new object instead of in-place mutation
     currentSpoke.value = { ...spoke, completed: true };
