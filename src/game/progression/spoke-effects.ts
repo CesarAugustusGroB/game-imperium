@@ -18,6 +18,8 @@ import type { Spoke } from './spoke';
 import { currentSpoke, currentNodeIndex, syncPreparedFromBoundArmy } from './spoke';
 import { iuniores, addResource, spendResource } from '../core/resources';
 import { threatLevel } from '../core/game-state';
+import { computeArmyMorale, type MoraleTier } from '../army/morale';
+import { addNotification } from '../../ui/notifications/notification-store';
 import type { BattleTerrainModifier } from './battle-terrain-modifiers';
 
 export type SpokeEffect =
@@ -47,6 +49,11 @@ export function applySpokeEffects(effects: readonly SpokeEffect[]): void {
   if (effects.length === 0) return;
   const initial = currentSpoke.value;
   if (!initial) return;
+
+  // Snapshot pre-application morale tier so we can fire a transition
+  // notification if the cumulative deltas push the army across a threshold.
+  // Skipped when there's no bound army (no morale to compare).
+  const preMorale = initial.boundArmy ? computeArmyMorale(initial) : null;
 
   let next: Spoke = initial;
   let dirty = false;
@@ -131,4 +138,37 @@ export function applySpokeEffects(effects: readonly SpokeEffect[]): void {
     currentSpoke.value = next;
     if (next.boundArmy) syncPreparedFromBoundArmy(next.boundArmy);
   }
+
+  // Fire a tier-transition notification when the cumulative morale delta
+  // pushes the army across a threshold. Only meaningful when both pre and
+  // post sample a real bound army.
+  if (preMorale && next.boundArmy) {
+    const postMorale = computeArmyMorale(next);
+    if (postMorale.tier !== preMorale.tier) {
+      notifyMoraleTierChange(preMorale.tier, postMorale.tier, postMorale.total);
+    }
+  }
+}
+
+const TIER_LABEL: Record<MoraleTier, string> = {
+  broken:   'Broken',
+  shaken:   'Shaken',
+  steady:   'Steady',
+  resolute: 'Resolute',
+  inspired: 'Inspired',
+};
+
+const TIER_RANK: Record<MoraleTier, number> = {
+  broken: 0, shaken: 1, steady: 2, resolute: 3, inspired: 4,
+};
+
+function notifyMoraleTierChange(prev: MoraleTier, curr: MoraleTier, total: number): void {
+  const rose = TIER_RANK[curr] > TIER_RANK[prev];
+  addNotification({
+    kind: 'toast',
+    icon: rose ? '🔥' : '💔',
+    title: rose ? 'Army morale rises' : 'Army morale falters',
+    message: `${TIER_LABEL[prev]} → ${TIER_LABEL[curr]} (${total})`,
+    color: rose ? 'var(--color-gold-primary)' : 'var(--color-danger)',
+  });
 }
