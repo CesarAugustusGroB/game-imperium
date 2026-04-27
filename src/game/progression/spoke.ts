@@ -14,7 +14,7 @@ import { preparedArmy } from './strategic-store';
 import type { LandmarkType, EncounterType, BattleTerrain } from './landmark-types';
 import type { SpokeEffect } from './spoke-effects';
 import { applySpokeEffects } from './spoke-effects';
-import type { BattleTerrainModifier } from './battle-terrain-modifiers';
+import type { BattleTerrainModifier, BattleContext } from './battle-terrain-modifiers';
 
 export type { TraversalAttritionLog } from '../army/supplies';
 
@@ -144,6 +144,37 @@ export function getCurrentNode(): SpokeNode | null {
   const spoke = currentSpoke.value;
   if (!spoke) return null;
   return spoke.nodes[currentNodeIndex.value] ?? null;
+}
+
+/**
+ * S27-10: derive the battle context from the current spoke + node. Returned
+ * shape is what BattleV2's entry path stamps onto `currentBattleContext` so
+ * the battle screen can render terrain/modifier UI without reading game
+ * state directly. Returns null when there is no active node — quick battles
+ * use that path to stay neutral.
+ */
+export function deriveBattleContextFromCurrentSpoke(): BattleContext | null {
+  const spoke = currentSpoke.value;
+  if (!spoke) return null;
+  const node = spoke.nodes[currentNodeIndex.value];
+  if (!node) return null;
+  return {
+    sourceNodeId: node.id,
+    encounterType: node.encounterType ?? legacyEncounterFromNodeType(node.type),
+    terrain: node.terrain ?? null,
+    modifiers: node.battleModifiers ?? [],
+    enemyStrength: node.enemyStrength ?? null,
+    landmarkName: node.name ?? null,
+  };
+}
+
+function legacyEncounterFromNodeType(t: NodeType): EncounterType {
+  // Legacy spokes only have NodeType. Map to the closest EncounterType so
+  // the banner still has something sensible to show.
+  if (t === 'boss') return 'boss';
+  if (t === 'rest') return 'rest';
+  if (t === 'event') return 'event';
+  return 'battle';
 }
 
 /**
