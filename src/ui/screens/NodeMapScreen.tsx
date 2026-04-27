@@ -3,18 +3,10 @@ import { signal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { navigateTo } from '../screens';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
-import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../../game/progression/spoke';
+import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains, applyNodeEffectsNow, legacyEncounterFromNodeType } from '../../game/progression/spoke';
 import type { SpokeNode, NodeType, SeasonTickResult } from '../../game/progression/spoke';
 import type { SpokeEffect } from '../../game/progression/spoke-effects';
 import type { EncounterType } from '../../game/progression/landmark-types';
-import { applyNodeEffectsNow } from '../../game/progression/spoke';
-
-function legacyEncFromType(t: NodeType): EncounterType {
-  if (t === 'boss') return 'boss';
-  if (t === 'rest') return 'rest';
-  if (t === 'event') return 'event';
-  return 'battle';
-}
 import { selectedCommander, completedSpokes, threatLevel } from '../../game/core/game-state';
 import { conquerProvince, assignProvinceIdentity, getProvinceEffects } from '../../game/province/province-store';
 import { getCandidateIndices, PROVINCE_NAMES } from '../../game/province/province-map-store';
@@ -459,6 +451,16 @@ export function NodeMapScreen() {
   const color = commander ? FACTION_COLORS[commander.faction] : '#f0d080';
   const spokeComplete = spoke ? nodeIdx >= spoke.nodes.length : false;
 
+  // L1: clear per-spoke UI state when the spoke is torn down so stale node
+  // selections / open modals from the previous spoke never bleed in.
+  useEffect(() => {
+    if (!spoke) {
+      selectedNodeId.value = null;
+      outcomeModalNode.value = null;
+      outcomeModalKind.value = null;
+    }
+  }, [spoke]);
+
   if (!spoke) {
     return (
       <div style={{
@@ -494,7 +496,7 @@ export function NodeMapScreen() {
     // sent any node with type='battle' to BattleV2 even when its
     // encounterType was 'forage' / 'scout' / 'hazard' / 'ambush' — fixed
     // by collapsing to a single resolved encounter discriminator.
-    const enc: EncounterType = node.encounterType ?? legacyEncFromType(node.type);
+    const enc: EncounterType = node.encounterType ?? legacyEncounterFromNodeType(node.type);
     switch (enc) {
       case 'battle':
       case 'elite_battle':

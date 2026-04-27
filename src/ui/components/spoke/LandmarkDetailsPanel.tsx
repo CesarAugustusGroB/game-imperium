@@ -183,6 +183,31 @@ const THREAT_COLOR: Record<NonNullable<SpokeNode['threatHint']>, string> = {
 // S27-10: BATTLE_MODIFIER_LABELS now lives in battle-terrain-modifiers so the
 // BattleContextBanner can share the same source of truth.
 
+function ThreatTerrainPills({ threatHint, terrain }: { threatHint?: NonNullable<SpokeNode['threatHint']>; terrain?: string }) {
+  return (
+    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+      {threatHint && (
+        <span class="landmark-pill" style={{
+          background: `${THREAT_COLOR[threatHint]}20`,
+          border: `1px solid ${THREAT_COLOR[threatHint]}60`,
+          color: THREAT_COLOR[threatHint],
+        }}>
+          Threat: {threatHint}
+        </span>
+      )}
+      {terrain && (
+        <span class="landmark-pill" style={{
+          background: 'rgba(40, 60, 80, 0.5)',
+          border: '1px solid rgba(100, 140, 180, 0.3)',
+          color: 'rgba(140, 180, 220, 0.8)',
+        }}>
+          Terrain: {capitalize(terrain)}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function actionLabel(intel: NodeIntel): string {
   if (intel.level === 0) return 'Approach';
   const enc = intel.encounterType;
@@ -221,26 +246,7 @@ export function LandmarkDetailsPanel({ node, isCurrent, onAction, accentColor = 
       {intel.level === 0 && (
         <>
           <p class="landmark-unknown-body">❓ Hidden encounter — scout for details</p>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
-            {intel.threatHint && (
-              <span class="landmark-pill" style={{
-                background: `${THREAT_COLOR[intel.threatHint]}20`,
-                border: `1px solid ${THREAT_COLOR[intel.threatHint]}60`,
-                color: THREAT_COLOR[intel.threatHint],
-              }}>
-                Threat: {intel.threatHint}
-              </span>
-            )}
-            {intel.terrain && (
-              <span class="landmark-pill" style={{
-                background: 'rgba(40, 60, 80, 0.5)',
-                border: '1px solid rgba(100, 140, 180, 0.3)',
-                color: 'rgba(140, 180, 220, 0.8)',
-              }}>
-                Terrain: {capitalize(intel.terrain)}
-              </span>
-            )}
-          </div>
+          <ThreatTerrainPills threatHint={intel.threatHint} terrain={intel.terrain} />
         </>
       )}
 
@@ -253,26 +259,7 @@ export function LandmarkDetailsPanel({ node, isCurrent, onAction, accentColor = 
               </span>
             </div>
           )}
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
-            {intel.threatHint && (
-              <span class="landmark-pill" style={{
-                background: `${THREAT_COLOR[intel.threatHint]}20`,
-                border: `1px solid ${THREAT_COLOR[intel.threatHint]}60`,
-                color: THREAT_COLOR[intel.threatHint],
-              }}>
-                Threat: {intel.threatHint}
-              </span>
-            )}
-            {intel.terrain && (
-              <span class="landmark-pill" style={{
-                background: 'rgba(40, 60, 80, 0.5)',
-                border: '1px solid rgba(100, 140, 180, 0.3)',
-                color: 'rgba(140, 180, 220, 0.8)',
-              }}>
-                Terrain: {capitalize(intel.terrain)}
-              </span>
-            )}
-          </div>
+          <ThreatTerrainPills threatHint={intel.threatHint} terrain={intel.terrain} />
           {intel.approximateReward && intel.approximateReward.length > 0 && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
               {intel.approximateReward.map((r, i) => (
@@ -300,26 +287,7 @@ export function LandmarkDetailsPanel({ node, isCurrent, onAction, accentColor = 
               </span>
             </div>
           )}
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
-            {intel.threatHint && (
-              <span class="landmark-pill" style={{
-                background: `${THREAT_COLOR[intel.threatHint]}20`,
-                border: `1px solid ${THREAT_COLOR[intel.threatHint]}60`,
-                color: THREAT_COLOR[intel.threatHint],
-              }}>
-                Threat: {intel.threatHint}
-              </span>
-            )}
-            {intel.terrain && (
-              <span class="landmark-pill" style={{
-                background: 'rgba(40, 60, 80, 0.5)',
-                border: '1px solid rgba(100, 140, 180, 0.3)',
-                color: 'rgba(140, 180, 220, 0.8)',
-              }}>
-                Terrain: {capitalize(intel.terrain)}
-              </span>
-            )}
-          </div>
+          <ThreatTerrainPills threatHint={intel.threatHint} terrain={intel.terrain} />
           {intel.reward && intel.reward.length > 0 && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
               {intel.reward.map((r, i) => (

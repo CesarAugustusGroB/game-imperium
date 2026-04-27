@@ -289,9 +289,9 @@ export function LandmarkNode({ node, isCurrent, isSelected, isReachable, color, 
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       role="button"
-      aria-label={`${isHidden ? 'Unknown' : displayName} ${enc ? `— ${enc.replace('_', ' ')}` : ''}`}
+      aria-label={[isHidden ? 'Unknown' : displayName, enc ? `— ${enc.replace('_', ' ')}` : ''].filter(Boolean).join(' ')}
       aria-pressed={isSelected}
-      tabIndex={0}
+      tabIndex={isLocked && !node.resolved ? -1 : 0}
       onKeyDown={handleKeyDown}
       style={{
         '--lm-glow': `${color}55`,
