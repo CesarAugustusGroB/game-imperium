@@ -161,11 +161,27 @@ function supplyDeficitContributor(spoke: Spoke): MoraleModifier[] {
   }];
 }
 
+/**
+ * S27-03 / Itinerarium: signed morale delta accumulated from campaign-event
+ * effects (rest, ambush, shrine blessing, …). Mutated by `applySpokeEffects`
+ * via `boundArmy.campaignMoraleDelta`. Undefined/0 contributes nothing.
+ */
+function campaignEffectsContributor(spoke: Spoke): MoraleModifier[] {
+  const delta = spoke.boundArmy?.campaignMoraleDelta ?? 0;
+  if (delta === 0) return [];
+  return [{
+    source: 'campaign',
+    label: 'Campaign events',
+    delta,
+  }];
+}
+
 registerMoraleContributor(legatusContributor);
 registerMoraleContributor(consiliumContributor);
 registerMoraleContributor(doctrinaeContributor);
 registerMoraleContributor(homeSoilContributor);
 registerMoraleContributor(supplyDeficitContributor);
+registerMoraleContributor(campaignEffectsContributor);
 
 // ── Public API ─────────────────────────────────────────────────────────────
 

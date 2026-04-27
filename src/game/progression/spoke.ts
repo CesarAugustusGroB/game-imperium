@@ -11,6 +11,9 @@ import { computeArmySize } from '../army/cohort';
 import type { Legate } from '../army/legate';
 import { consumeTraversal, type TraversalAttritionLog } from '../army/supplies';
 import { preparedArmy } from './strategic-store';
+import type { LandmarkType, EncounterType, BattleTerrain } from './landmark-types';
+import type { SpokeEffect } from './spoke-effects';
+import type { BattleTerrainModifier } from './battle-terrain-modifiers';
 
 export type { TraversalAttritionLog } from '../army/supplies';
 
@@ -32,6 +35,38 @@ export interface SpokeNode {
   resolved: boolean;
   /** Pre-set reward, or null when reward depends on player choice (events). */
   reward: NodeReward | null;
+
+  // ── S27 Itinerarium metadata (all optional during migration) ──
+  // Legacy spokes built by `council-store.generateSpokeFromCouncil` leave these
+  // unset. New Itinerarium spokes populate them; readers must handle absence.
+  // The legacy `type` field stays the canonical encounter discriminator until
+  // the migration to `encounterType` lands in S27-05.
+
+  /** Physical place this node represents (forest, hill, village, …). */
+  landmarkType?: LandmarkType;
+  /** Player-facing landmark name (e.g. "Blackwood Forest"). */
+  name?: string;
+  /** Battle-arena terrain when this node hosts a battle. */
+  terrain?: BattleTerrain;
+  /** Itinerarium-aware encounter discriminator. Coexists with legacy `type`. */
+  encounterType?: EncounterType;
+
+  /** Fog state. `undefined` = treat as revealed (legacy default). */
+  revealed?: boolean;
+  /** 0=unknown, 1=scouted, 2=full recon. See GDD §9.1. */
+  scoutedLevel?: 0 | 1 | 2;
+
+  /** Army-side consequences applied on resolution (morale/supplies/iuniores/…). */
+  effects?: SpokeEffect[];
+  /** Tactical modifiers passed to BattleV2 when this node hosts a battle. */
+  battleModifiers?: BattleTerrainModifier[];
+
+  /** Coarse threat tier for the unknown-state UI. Refined by scouting. */
+  threatHint?: 'low' | 'medium' | 'high' | 'deadly';
+  /** Optional explicit enemy strength for boss/elite tuning. */
+  enemyStrength?: number;
+  /** Free-form route tags for branching paths. Controlled vocabulary in S27-04. */
+  routeTags?: string[];
 }
 
 // ── Spoke container (S2-02) ──
@@ -96,9 +131,19 @@ export function getCurrentNode(): SpokeNode | null {
 }
 
 /**
- * Mirror the spoke's wounded/healed cohort roster onto the persistent Hub
- * roster (`preparedArmy`). Call after every mutation of `boundArmy.cohorts`
- * so Hub views always see live state mid-spoke and on retreat.
+ * Mirror the spoke's mutable army state onto the persistent Hub roster
+ * (`preparedArmy`). Call after every mutation of `boundArmy.cohorts` or
+ * `boundArmy.supplies` so Hub views always see live state mid-spoke and
+ * any logistical gains/losses survive spoke completion or retreat.
+ *
+ * Persisted fields:
+ *   - cohorts (HP, outOfAction, casualties)
+ *   - size (recomputed)
+ *   - supplies (forage / depot / hazard outcomes from S27-03 effects)
+ *
+ * Transient fields like `supplyMoralePenalty`, `consecutiveDeficitCount`,
+ * and `campaignMoraleDelta` are NOT mirrored — they are spoke-scoped and
+ * should reset on the next embark.
  */
 export function syncPreparedFromBoundArmy(boundArmy: ArmyData | null | undefined): void {
   if (!boundArmy || !preparedArmy.value) return;
@@ -106,6 +151,7 @@ export function syncPreparedFromBoundArmy(boundArmy: ArmyData | null | undefined
     ...preparedArmy.value,
     cohorts: boundArmy.cohorts,
     size: computeArmySize(boundArmy.cohorts),
+    supplies: boundArmy.supplies,
   };
 }
 

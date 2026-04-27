@@ -59,6 +59,13 @@ export interface ArmyData {
    */
   supplyMoralePenalty?: number;
   /**
+   * S27-03 / Itinerarium: cumulative morale delta from campaign-event effects
+   * (rest, ambush, shrine blessing, …). Signed — positives raise morale,
+   * negatives lower it. Mutated by `applySpokeEffects` and consumed by
+   * `campaignEffectsContributor` in `morale.ts`. Undefined treated as 0.
+   */
+  campaignMoraleDelta?: number;
+  /**
    * FT-SUP: consecutive un-supplied traversals counter. Resets to 0 on any
    * fully-supplied traversal. Used for UI scaling / future escalation.
    */

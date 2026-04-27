@@ -240,6 +240,13 @@ function rewardForType(type: NodeType): SpokeNode['reward'] {
 /**
  * Merge spoke templates from all seated advisors and generate a new Spoke.
  * Falls back to equal weights when no advisors are seated.
+ *
+ * Legacy linear-chain generator. The Itinerarium successor is
+ * `generateLandmarkSpoke` in `progression/spoke-generation.ts`, which
+ * produces nodes with full landmark metadata (terrain, encounters,
+ * effects, battle modifiers). UI screens opt into the new generator in
+ * later S27 tasks; this function stays as the production code path
+ * until then.
  */
 export function generateSpokeFromCouncil(): Spoke {
   const seated = councilSlots.value.filter((a): a is Advisor => a !== null);
