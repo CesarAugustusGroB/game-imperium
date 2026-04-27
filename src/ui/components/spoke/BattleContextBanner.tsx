@@ -15,11 +15,14 @@ if (typeof document !== 'undefined' && !document.getElementById('battle-context-
   el.id = 'battle-context-banner-styles';
   el.textContent = `
     .battle-context-banner {
+      /* Anchored below TopBar (which sits at top:12px and runs ~64px tall:
+         title + round chip on row 1, instructions on row 2). Same z-index
+         as the rest of the battle HUD so it stays in-layer. */
       position: fixed;
-      top: 12px;
+      top: 88px;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 40;
+      z-index: 20;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -33,6 +36,12 @@ if (typeof document !== 'undefined' && !document.getElementById('battle-context-
       pointer-events: auto;
       max-width: min(720px, 92vw);
       box-sizing: border-box;
+    }
+    @media (max-width: 720px) {
+      /* On narrow viewports the army panels at top-left/right come closer
+         to center; nudge the banner further down so it doesn't visually
+         crowd the TopBar's wrapped instructions line. */
+      .battle-context-banner { top: 108px; }
     }
     .battle-context-eyebrow {
       font-family: var(--font-display);
