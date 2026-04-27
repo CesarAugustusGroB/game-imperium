@@ -5,7 +5,8 @@ import { BattleInput } from './battle-input';
 import { tickAI } from './battle-ai';
 import { initAbilityBar, updateAbilityBar, destroyAbilityBar, initDecretumBar, updateDecretumBar, destroyDecretumBar } from './ability-ui';
 import { threatLevel, globalSeason, completedSpokes } from '../game/core/game-state';
-import { currentSpoke, currentNodeIndex } from '../game/progression/spoke';
+import { currentSpoke, currentNodeIndex, deriveBattleContextFromCurrentSpoke } from '../game/progression/spoke';
+import { currentBattleContext } from './battle-signals';
 import { generateEnemyArmy } from '../game/army/enemy-army-generator';
 import { getQuickBattleScenario, selectedQuickBattleScenarioId } from './quick-battle-scenarios';
 import { applyProgressionEffects, computeIsFinalBattle } from './progression-bridge';
@@ -138,6 +139,10 @@ export class BattleMode {
     this._isVisible = true;
     resetReserveAIState();
 
+    // S27-10: derive campaign context once on entry. UI reads it via
+    // BattleContextBanner to surface terrain/modifier flavor.
+    currentBattleContext.value = deriveBattleContextFromCurrentSpoke();
+
     // V2 grid: 50×30 vertical, annihilation mode
     this._state = new BattleState({
       cols: 50,
@@ -205,6 +210,8 @@ export class BattleMode {
   enterQuickBattle(): void {
     this._isVisible = true;
     resetReserveAIState();
+    // S27-10: quick battles stay neutral — no campaign context.
+    currentBattleContext.value = null;
 
     this._state = new BattleState({
       cols: 50,

@@ -18,7 +18,7 @@
 
 import type { SpokeNode } from '../../../game/progression/spoke';
 import type { EncounterType, LandmarkType } from '../../../game/progression/landmark-types';
-import type { BattleTerrainModifier } from '../../../game/progression/battle-terrain-modifiers';
+import { BATTLE_MODIFIER_LABELS } from '../../../game/progression/battle-terrain-modifiers';
 import { getNodeIntel, type NodeIntel } from '../../../game/progression/spoke-scouting';
 import { RESOURCE_INFO } from '../../../game/core/commander';
 
@@ -180,18 +180,8 @@ const THREAT_COLOR: Record<NonNullable<SpokeNode['threatHint']>, string> = {
   deadly: '#c24a3a',
 };
 
-const BATTLE_MODIFIER_LABELS: Record<BattleTerrainModifier, { icon: string; label: string; description: string }> = {
-  forest_cover:       { icon: '🌲', label: 'Forest Cover',       description: 'Ranged attacks lose accuracy; ambushes favor the defender.' },
-  dense_trees:        { icon: '🌳', label: 'Dense Trees',        description: 'Movement slowed; cavalry charges blunted.' },
-  high_ground:        { icon: '⛰',  label: 'High Ground',        description: 'Defenders gain a positional advantage on attack rolls.' },
-  open_field:         { icon: '🌾', label: 'Open Field',         description: 'Cavalry charges devastate; no cover for skirmishers.' },
-  river_crossing:     { icon: '🌊', label: 'River Crossing',     description: 'Crossing units fight at a severe disadvantage.' },
-  urban_fighting:     { icon: '🏛',  label: 'Urban Fighting',     description: 'Cohesion breaks; infantry fights in fragments.' },
-  mud:                { icon: '🌧',  label: 'Mud',                description: 'All movement slowed; heavy units suffer most.' },
-  narrow_pass:        { icon: '🏔',  label: 'Narrow Pass',        description: 'Frontage limited; numbers count for less.' },
-  sacred_ground:      { icon: '✨', label: 'Sacred Ground',      description: 'Morale steady; the gods watch this field.' },
-  fortified_position: { icon: '🛡',  label: 'Fortified Position', description: 'Defenders entrenched behind walls and ditches.' },
-};
+// S27-10: BATTLE_MODIFIER_LABELS now lives in battle-terrain-modifiers so the
+// BattleContextBanner can share the same source of truth.
 
 function actionLabel(intel: NodeIntel): string {
   if (intel.level === 0) return 'Approach';
