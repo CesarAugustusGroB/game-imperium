@@ -21,12 +21,21 @@ import { threatLevel } from '../core/game-state';
 import { computeArmyMorale, type MoraleTier } from '../army/morale';
 import { addNotification } from '../../ui/notifications/notification-store';
 import type { BattleTerrainModifier } from './battle-terrain-modifiers';
+import { applyScoutReveal } from './spoke-scouting';
 
 export type SpokeEffect =
   | { type: 'morale';           delta: number; label: string }
   | { type: 'supplies';         delta: number; label: string }
   | { type: 'iuniores';         delta: number; label: string }
-  | { type: 'reveal';           radius: number; label: string }
+  // `reveal` is the legacy radius reveal — bumps intel to level 1 (Scouted)
+  // by default. Pass `toLevel: 2` to grant Full Recon directly. Watchtower
+  // and dedicated scout encounters should prefer the `scout` variant below
+  // so the intent is explicit at the call site.
+  | { type: 'reveal';           radius: number; toLevel?: 1 | 2; label: string }
+  // S27-06: explicit scout encounter. Same shape as `reveal` but always
+  // requires `toLevel` so generators can't accidentally grant fog clearing
+  // without committing to a tier.
+  | { type: 'scout';            radius: number; toLevel: 1 | 2; label: string }
   | { type: 'battle-modifier';  modifierId: BattleTerrainModifier; label: string }
   | { type: 'threat';           delta: number; label: string };
 
@@ -102,24 +111,16 @@ export function applySpokeEffects(effects: readonly SpokeEffect[]): void {
         break;
       }
 
-      case 'reveal': {
-        // Reveal also bumps scoutedLevel to at least 1 (Scouted) per
-        // GDD §9.1: Unknown(0) → Scouted(1) → Full Recon(2). The two fields
-        // stay in lockstep so UI can never show a node as `revealed: true`
-        // but still at intel level 0. Higher tiers (full recon) come from
-        // future explicit scoutedLevel: 2 effects, not from radius reveals.
-        const lo = Math.max(0, idx - effect.radius);
-        const hi = Math.min(next.nodes.length - 1, idx + effect.radius);
-        let touched = false;
-        const nodes = next.nodes.map((n, i) => {
-          if (i < lo || i > hi) return n;
-          const minLevel = Math.max(n.scoutedLevel ?? 0, 1) as 0 | 1 | 2;
-          if (n.revealed === true && (n.scoutedLevel ?? 0) >= 1) return n;
-          touched = true;
-          return { ...n, revealed: true, scoutedLevel: minLevel };
-        });
-        if (touched) {
-          next = { ...next, nodes };
+      case 'reveal':
+      case 'scout': {
+        // Both variants delegate to the scouting module. The helper
+        // skips resolved nodes, never lowers intel, and returns the same
+        // spoke ref when nothing would change — so we can detect a no-op
+        // by reference comparison instead of a separate `touched` flag.
+        const toLevel = effect.type === 'scout' ? effect.toLevel : (effect.toLevel ?? 1);
+        const after = applyScoutReveal(next, idx, effect.radius, toLevel);
+        if (after !== next) {
+          next = after;
           dirty = true;
         }
         break;
