@@ -5,6 +5,16 @@ import { navigateTo } from '../screens';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../../game/progression/spoke';
 import type { SpokeNode, NodeType, SeasonTickResult } from '../../game/progression/spoke';
+import type { SpokeEffect } from '../../game/progression/spoke-effects';
+import type { EncounterType } from '../../game/progression/landmark-types';
+import { applyNodeEffectsNow } from '../../game/progression/spoke';
+
+function legacyEncFromType(t: NodeType): EncounterType {
+  if (t === 'boss') return 'boss';
+  if (t === 'rest') return 'rest';
+  if (t === 'event') return 'event';
+  return 'battle';
+}
 import { selectedCommander, completedSpokes, threatLevel } from '../../game/core/game-state';
 import { conquerProvince, assignProvinceIdentity, getProvinceEffects } from '../../game/province/province-store';
 import { getCandidateIndices, PROVINCE_NAMES } from '../../game/province/province-map-store';
@@ -277,6 +287,16 @@ const showArmyHUDOnMap = signal(false);
  *  rather than index so branch nodes (S27-08) are addressable. */
 const selectedNodeId = signal<string | null>(null);
 
+/** S27-09: encounter outcome modal — used for forage/recruit/scout/ambush/
+ *  hazard/unknown encounters. Shows the effects about to be applied; on
+ *  Continue, advanceNode runs (which applies them). For ambush, Continue
+ *  routes to BattleV2 instead. */
+type OutcomeKind = 'forage' | 'recruit' | 'scout' | 'ambush' | 'hazard' | 'unknown';
+const outcomeModalNode = signal<SpokeNode | null>(null);
+const outcomeModalKind = signal<OutcomeKind | null>(null);
+
+// Legacy NodeCircle / ConnectingLine deleted by S27-08; LandmarkNode +
+// RouteLine own the chain rendering now.
 
 function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
   useEffect(() => {
@@ -338,6 +358,100 @@ function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; o
   );
 }
 
+// ── S27-09: encounter outcome preview ──
+
+const OUTCOME_TITLES: Record<OutcomeKind, string> = {
+  forage:  'Forage the Land',
+  recruit: 'Volunteers Rally',
+  scout:   'Survey the Route',
+  ambush:  'Ambush!',
+  hazard:  'Hazard Underfoot',
+  unknown: 'A Strange Sight',
+};
+
+const OUTCOME_FLAVOR: Record<OutcomeKind, string> = {
+  forage:  'Your foragers fan out to gather what they can.',
+  recruit: 'Locals press forward, eager to swell the ranks.',
+  scout:   'From this vantage you can see far ahead.',
+  ambush:  'Hidden enemies fall on your column. Steel yourselves.',
+  hazard:  'The terrain itself bites at your column.',
+  unknown: 'The air shifts. Something here is not yet plain.',
+};
+
+function outcomeModalTitle(kind: OutcomeKind): string {
+  return OUTCOME_TITLES[kind];
+}
+
+function EncounterOutcomePreview({ node, kind, onContinue }: {
+  node: SpokeNode;
+  kind: OutcomeKind;
+  onContinue: () => void;
+}) {
+  const effects = node.effects ?? [];
+  const continueLabel = kind === 'ambush' ? 'Brace and Fight' : 'Continue';
+  return (
+    <>
+      <div style={{
+        fontSize: 'var(--font-size-md)', color: 'var(--color-text-muted)',
+        lineHeight: '1.5', marginBottom: '16px', fontStyle: 'italic',
+      }}>
+        {OUTCOME_FLAVOR[kind]}
+      </div>
+      {node.name && (
+        <div style={{
+          fontFamily: 'var(--font-display)', fontSize: 'var(--font-size-md)',
+          color: 'var(--color-gold-secondary)', letterSpacing: '2px',
+          textTransform: 'uppercase', textAlign: 'center', marginBottom: '14px',
+        }}>
+          {node.name}
+        </div>
+      )}
+      {effects.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '20px' }}>
+          {effects.map((e, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              fontSize: 'var(--font-size-sm)',
+              color: outcomeEffectColor(e),
+            }}>
+              {outcomeEffectLine(e)}
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <button class="modal-action-btn ornate-btn" onClick={onContinue} style={{ padding: '10px 24px' }}>
+          {continueLabel}
+        </button>
+      </div>
+    </>
+  );
+}
+
+function outcomeEffectColor(e: SpokeEffect): string {
+  if (e.type === 'morale' || e.type === 'supplies' || e.type === 'iuniores') {
+    return e.delta < 0 ? 'var(--color-danger)' : '#6ab87a';
+  }
+  if (e.type === 'threat') return e.delta > 0 ? 'var(--color-danger)' : '#6ab87a';
+  return 'var(--color-text-secondary)';
+}
+
+function outcomeEffectLine(e: SpokeEffect): string {
+  switch (e.type) {
+    case 'morale':   return `${signed(e.delta)} 🔥 Morale — ${e.label}`;
+    case 'supplies': return `${signed(e.delta)} 📦 Supplies — ${e.label}`;
+    case 'iuniores': return `${signed(e.delta)} 🛡 Iuniores — ${e.label}`;
+    case 'threat':   return `${signed(e.delta)} ⚠ Threat — ${e.label}`;
+    case 'reveal':
+    case 'scout':    return `🔭 ${e.label}`;
+    case 'battle-modifier': return `⚔ ${e.label}`;
+  }
+}
+
+function signed(n: number): string {
+  return n > 0 ? `+${n}` : `${n}`;
+}
+
 export function NodeMapScreen() {
   const spoke = currentSpoke.value;
   const nodeIdx = currentNodeIndex.value;
@@ -375,12 +489,37 @@ export function NodeMapScreen() {
   }
 
   function handleNodeActivate(node: SpokeNode) {
-    if (node.type === 'battle' || node.type === 'boss') {
-      navigateTo('battleV2');
-    } else if (node.type === 'rest') {
-      openRestModal();
-    } else if (node.type === 'event') {
-      openEventModal();
+    // S27-09: dispatch ONLY by `enc` (encounterType, with legacy node.type
+    // mapping for pre-Itinerarium spokes). The earlier OR-fallback wrongly
+    // sent any node with type='battle' to BattleV2 even when its
+    // encounterType was 'forage' / 'scout' / 'hazard' / 'ambush' — fixed
+    // by collapsing to a single resolved encounter discriminator.
+    const enc: EncounterType = node.encounterType ?? legacyEncFromType(node.type);
+    switch (enc) {
+      case 'battle':
+      case 'elite_battle':
+      case 'boss':
+      case 'siege':
+        navigateTo('battleV2');
+        return;
+      case 'ambush':
+        openOutcomeModal(node, 'ambush');
+        return;
+      case 'rest':
+        openRestModal();
+        return;
+      case 'forage':
+      case 'recruit':
+      case 'scout':
+      case 'hazard':
+      case 'unknown':
+        openOutcomeModal(node, enc);
+        return;
+      case 'event':
+      case 'merchant':
+      default:
+        openEventModal();
+        return;
     }
   }
 
@@ -401,6 +540,37 @@ export function NodeMapScreen() {
   function handleSelectedAction() {
     if (isCurrentSelected && selectedNodeForPanel) {
       handleNodeActivate(selectedNodeForPanel);
+    }
+  }
+
+  function openOutcomeModal(node: SpokeNode, kind: OutcomeKind) {
+    outcomeModalNode.value = node;
+    outcomeModalKind.value = kind;
+  }
+
+  function handleOutcomeContinue() {
+    const kind = outcomeModalKind.value;
+    const node = outcomeModalNode.value;
+    outcomeModalNode.value = null;
+    outcomeModalKind.value = null;
+
+    // Ambush: apply the negative effects BEFORE the battle so the hit
+    // (morale loss, iuniores damage) actually biases the engagement.
+    // applyNodeEffectsNow marks the node's effects as pre-applied so
+    // PostBattleScreen's advanceNode does not double-apply on return.
+    if (kind === 'ambush') {
+      if (node) applyNodeEffectsNow(node);
+      navigateTo('battleV2');
+      return;
+    }
+
+    // Non-battle outcomes: animate the resolve flash and advance.
+    justResolvedIndex.value = nodeIdx;
+    setTimeout(() => { justResolvedIndex.value = null; }, 400);
+    const result = advanceNode();
+    if (result.seasonTicked) {
+      lastSeasonTick.value = result.seasonTicked;
+      showSeasonModal.value = true;
     }
   }
 
@@ -1025,6 +1195,20 @@ export function NodeMapScreen() {
             </div>
           )}
         </>
+      )}
+
+      {/* S27-09: encounter outcome modal — shows what's about to happen
+          for forage/recruit/scout/ambush/hazard/unknown encounters. The
+          modal does NOT apply effects directly; advanceNode() does that
+          (single application site, idempotent on resolved nodes). */}
+      {outcomeModalNode.value && outcomeModalKind.value && (
+        <NodeModal title={outcomeModalTitle(outcomeModalKind.value)} onClose={handleOutcomeContinue}>
+          <EncounterOutcomePreview
+            node={outcomeModalNode.value}
+            kind={outcomeModalKind.value}
+            onContinue={handleOutcomeContinue}
+          />
+        </NodeModal>
       )}
 
       {/* Spoke completion summary modal */}

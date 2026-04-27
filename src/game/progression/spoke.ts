@@ -13,6 +13,7 @@ import { consumeTraversal, type TraversalAttritionLog } from '../army/supplies';
 import { preparedArmy } from './strategic-store';
 import type { LandmarkType, EncounterType, BattleTerrain } from './landmark-types';
 import type { SpokeEffect } from './spoke-effects';
+import { applySpokeEffects } from './spoke-effects';
 import type { BattleTerrainModifier } from './battle-terrain-modifiers';
 
 export type { TraversalAttritionLog } from '../army/supplies';
@@ -170,6 +171,27 @@ export function syncPreparedFromBoundArmy(boundArmy: ArmyData | null | undefined
   };
 }
 
+/**
+ * S27-09 fix: ids of nodes whose data-driven effects have already been
+ * applied (e.g. ambush damage applied pre-battle). advanceNode skips the
+ * apply step when the current node is in this set so effects never
+ * double-apply. Cleared on retreat / completion.
+ */
+const preAppliedEffectNodeIds = new Set<string>();
+
+/** Mark a node's effects as already-applied so advanceNode skips them. */
+export function markNodeEffectsApplied(nodeId: string): void {
+  preAppliedEffectNodeIds.add(nodeId);
+}
+
+/** Apply a node's effects right now and mark them as applied. Used by
+ *  ambush flow so the negative hit lands BEFORE the battle, not after. */
+export function applyNodeEffectsNow(node: SpokeNode): void {
+  if (!node.effects || node.effects.length === 0) return;
+  applySpokeEffects(node.effects);
+  preAppliedEffectNodeIds.add(node.id);
+}
+
 /** Clear spoke state (called on retreat or spoke completion). */
 export function resetSpoke(): void {
   // Sync casualties to preparedArmy before tearing down the spoke (handles retreat).
@@ -178,6 +200,7 @@ export function resetSpoke(): void {
   currentSpoke.value = null;
   currentNodeIndex.value = 0;
   spokeGains.value = { ...ZERO_GAINS };
+  preAppliedEffectNodeIds.clear();
 }
 
 /** Mark the current node as resolved and advance to the next one.
@@ -191,15 +214,29 @@ export function advanceNode(): AdvanceNodeResult {
   const node = spoke.nodes[idx];
   if (!node) return { spokeComplete: true, seasonTicked: null, supplyLog: null };
 
-  // Guard: already resolved — don't double-advance
+  // Guard: already resolved — don't double-advance. Tied to this guard,
+  // applySpokeEffects() below runs exactly once per node — re-clicks and
+  // rerenders cannot double-apply (S27-09 AC7).
   if (node.resolved) return { spokeComplete: idx + 1 >= spoke.nodes.length, seasonTicked: null, supplyLog: null };
+
+  // S27-09: apply this node's data-driven effects (morale/supplies/iuniores/
+  // reveal/scout/battle-modifier/threat) at the resolved transition. Centered
+  // on currentNodeIndex which still points at this node. applySpokeEffects
+  // mutates `currentSpoke.value`, so we re-read after.
+  // The pre-applied set is consulted so flows like ambush (which apply
+  // effects BEFORE the battle to bias it) don't double-apply on return.
+  if (node.effects && node.effects.length > 0 && !preAppliedEffectNodeIds.has(node.id)) {
+    applySpokeEffects(node.effects);
+  }
+  preAppliedEffectNodeIds.delete(node.id);
+  const spokeAfterEffects = currentSpoke.value ?? spoke;
 
   // FT-SUP: consume supplies for this traversal BEFORE advancing. Attrition
   // (HP damage + morale penalty) is applied when supplies run short. Cohorts
   // reduced to 0 HP are removed from the roster here so the next battle
   // spawns the shrunken army.
   let supplyLog: TraversalAttritionLog | null = null;
-  let nextBoundArmy = spoke.boundArmy ?? null;
+  let nextBoundArmy = spokeAfterEffects.boundArmy ?? null;
   if (nextBoundArmy && nextBoundArmy.cohorts.length > 0) {
     const result = consumeTraversal(nextBoundArmy);
     nextBoundArmy = result.army;
@@ -207,11 +244,11 @@ export function advanceNode(): AdvanceNodeResult {
   }
 
   // Create new node object to avoid in-place mutation
-  const updatedNodes = spoke.nodes.map((n, i) =>
+  const updatedNodes = spokeAfterEffects.nodes.map((n, i) =>
     i === idx ? { ...n, resolved: true } : n,
   );
   currentSpoke.value = {
-    ...spoke,
+    ...spokeAfterEffects,
     nodes: updatedNodes,
     boundArmy: nextBoundArmy,
   };
@@ -219,7 +256,7 @@ export function advanceNode(): AdvanceNodeResult {
   const next = idx + 1;
   currentNodeIndex.value = next;
 
-  const spokeComplete = next >= spoke.nodes.length;
+  const spokeComplete = next >= spokeAfterEffects.nodes.length;
 
   // Check season boundary
   let seasonTicked: SeasonTickResult | null = null;
