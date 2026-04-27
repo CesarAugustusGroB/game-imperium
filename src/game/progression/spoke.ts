@@ -168,9 +168,7 @@ export function deriveBattleContextFromCurrentSpoke(): BattleContext | null {
   };
 }
 
-function legacyEncounterFromNodeType(t: NodeType): EncounterType {
-  // Legacy spokes only have NodeType. Map to the closest EncounterType so
-  // the banner still has something sensible to show.
+export function legacyEncounterFromNodeType(t: NodeType): EncounterType {
   if (t === 'boss') return 'boss';
   if (t === 'rest') return 'rest';
   if (t === 'event') return 'event';
@@ -209,11 +207,6 @@ export function syncPreparedFromBoundArmy(boundArmy: ArmyData | null | undefined
  * double-apply. Cleared on retreat / completion.
  */
 const preAppliedEffectNodeIds = new Set<string>();
-
-/** Mark a node's effects as already-applied so advanceNode skips them. */
-export function markNodeEffectsApplied(nodeId: string): void {
-  preAppliedEffectNodeIds.add(nodeId);
-}
 
 /** Apply a node's effects right now and mark them as applied. Used by
  *  ambush flow so the negative hit lands BEFORE the battle, not after. */

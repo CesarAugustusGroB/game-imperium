@@ -117,6 +117,10 @@ export function BattleContextBanner() {
   const ctx = currentBattleContext.value;
   if (!ctx) return null;
 
+  // Suppress for legacy spokes that carry no Itinerarium metadata — the
+  // banner would be a near-empty frame with just an encounter label.
+  if (!ctx.landmarkName && !ctx.terrain && ctx.modifiers.length === 0 && ctx.enemyStrength === null) return null;
+
   const encounterLabel = ENCOUNTER_LABEL[ctx.encounterType] ?? capitalize(ctx.encounterType.replace(/_/g, ' '));
 
   return (
