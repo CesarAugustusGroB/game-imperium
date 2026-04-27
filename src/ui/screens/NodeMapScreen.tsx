@@ -1,6 +1,6 @@
 import { Fragment } from 'preact';
 import { signal } from '@preact/signals';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect } from 'preact/hooks';
 import { navigateTo } from '../screens';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../../game/progression/spoke';
@@ -27,6 +27,8 @@ import { computeArmyMorale } from '../../game/army/morale';
 import type { MoraleTier } from '../../game/army/morale';
 import { SpokeTopBar } from '../components/spoke/SpokeTopBar';
 import { LandmarkDetailsPanel } from '../components/spoke/LandmarkDetailsPanel';
+import { LandmarkNode } from '../components/spoke/LandmarkNode';
+import { RouteLine, type RouteLineState } from '../components/spoke/RouteLine';
 import { previewReplenishment, replenishBoundArmy } from '../../game/army/army-replenishment';
 import type { ReplenishmentPreview } from '../../game/army/army-replenishment';
 
@@ -205,20 +207,7 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
   document.head.appendChild(el);
 }
 
-// ── Icons per node type ──
-const NODE_ICONS: Record<NodeType, string> = {
-  battle: '\u2694\uFE0F',
-  rest:   '\uD83C\uDFD5\uFE0F',
-  event:  '\uD83D\uDCDC',
-  boss:   '\uD83D\uDC80',
-};
 
-const NODE_LABELS: Record<NodeType, string> = {
-  battle: 'Battle',
-  rest: 'Rest',
-  event: 'Event',
-  boss: 'Boss',
-};
 
 // ── Node type visual styles ──
 const NODE_STYLES: Record<NodeType, { color: string; glow: string; hoverLabel: string; hint: string }> = {
@@ -241,8 +230,6 @@ function moraleTierLabel(tier: MoraleTier): string {
   return tier.charAt(0).toUpperCase() + tier.slice(1);
 }
 
-const NODE_SIZE_REGULAR = 68;
-const NODE_SIZE_BOSS = 82;
 
 // ── City choice types & state ──
 
@@ -284,178 +271,12 @@ const justResolvedIndex = signal<number | null>(null);
 /** Army Detail HUD visibility on the node map. */
 const showArmyHUDOnMap = signal(false);
 
-/** S27-07: index of the node whose details panel is shown. Tracks the
- *  player's current node by default; clicking any revealed node selects it
- *  without activating it. `null` falls back to the current index. */
-const selectedNodeIndex = signal<number | null>(null);
+/** S27-07/08: id of the node whose details panel is shown. Tracks the
+ *  player's current node by default; clicking any node selects it without
+ *  activating it. `null` falls back to the current main-chain node. Id
+ *  rather than index so branch nodes (S27-08) are addressable. */
+const selectedNodeId = signal<string | null>(null);
 
-function NodeCircle({ node, isCurrent, isSelected, color, onActivate, onSelect }: {
-  node: SpokeNode;
-  isCurrent: boolean;
-  isSelected: boolean;
-  color: string;
-  onActivate: () => void;
-  onSelect: () => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const typeStyle = NODE_STYLES[node.type];
-  const isBoss = node.type === 'boss';
-  const size = isBoss ? NODE_SIZE_BOSS : NODE_SIZE_REGULAR;
-  const stateClass = node.resolved
-    ? 'node-resolved'
-    : isCurrent
-      ? `node-current${isBoss ? ' node-boss' : ''}`
-      : 'node-future';
-
-  function handleClick() {
-    // Always update selection so the details panel can preview any node;
-    // only activate when this is the player's current unresolved node.
-    onSelect();
-    if (!isCurrent || node.resolved) return;
-    onActivate();
-  }
-
-  // Compute background
-  const bg = node.resolved
-    ? `linear-gradient(135deg, rgba(40, 38, 55, 0.9), rgba(30, 28, 45, 0.95))`
-    : isCurrent
-      ? `linear-gradient(135deg, ${typeStyle.color}30, ${typeStyle.color}10)`
-      : `linear-gradient(135deg, ${typeStyle.color}12, ${typeStyle.color}06)`;
-
-  // Compute border color
-  const borderColor = node.resolved
-    ? 'rgba(212, 168, 67, 0.35)'
-    : isCurrent
-      ? typeStyle.color
-      : `${typeStyle.color}25`;
-
-  // Tooltip text
-  const tooltipText = node.resolved
-    ? 'Completed'
-    : isCurrent
-      ? typeStyle.hoverLabel
-      : node.reward
-        ? `${NODE_LABELS[node.type]} \u2014 ${node.reward.map(r => `${RESOURCE_INFO[r.resource].icon}${r.amount}`).join(' ')}`
-        : NODE_LABELS[node.type];
-
-  return (
-    <div
-      class={`node-circle ${stateClass}`}
-      onClick={handleClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      role="button"
-      aria-label={
-        isCurrent && !node.resolved
-          ? `Activate ${NODE_LABELS[node.type]} node`
-          : `Inspect ${NODE_LABELS[node.type]} node`
-      }
-      aria-pressed={isSelected}
-      tabIndex={0}
-      onKeyDown={(e: KeyboardEvent) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onSelect();
-          if (isCurrent && !node.resolved) onActivate();
-        }
-      }}
-      style={{
-        '--glow': isCurrent ? typeStyle.glow : color + '60',
-        '--type-glow': typeStyle.glow,
-        width: `${size}px`,
-        height: `${size}px`,
-        borderRadius: '50%',
-        background: bg,
-        border: `${isCurrent ? 3 : 2}px solid ${borderColor}`,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        flexShrink: '0',
-        outline: isSelected ? '2px solid var(--color-gold-primary)' : 'none',
-        outlineOffset: isSelected ? '4px' : '0',
-        cursor: 'pointer',
-      } as Record<string, string>}
-    >
-      {/* Icon */}
-      {node.resolved ? (
-        <>
-          <span style={{ fontSize: isBoss ? '22px' : '18px', lineHeight: '1', opacity: 0.3 }}>
-            {NODE_ICONS[node.type]}
-          </span>
-          <span class="checkmark-overlay" style={{
-            position: 'absolute',
-            fontSize: 'var(--font-size-lg)',
-            lineHeight: '1',
-            color: 'var(--color-gold-secondary)',
-            textShadow: '0 0 8px rgba(212, 168, 67, 0.5)',
-          }}>
-            {'\u2714'}
-          </span>
-        </>
-      ) : (
-        <span style={{
-          fontSize: isBoss ? '28px' : '22px',
-          lineHeight: '1',
-          filter: isCurrent ? `drop-shadow(0 0 4px ${typeStyle.glow})` : 'none',
-        }}>
-          {NODE_ICONS[node.type]}
-        </span>
-      )}
-
-      {/* Label below circle */}
-      <div style={{
-        position: 'absolute',
-        bottom: '-22px',
-        fontSize: 'var(--font-size-xs)',
-        letterSpacing: '1px',
-        textTransform: 'uppercase',
-        color: isCurrent ? typeStyle.color : node.resolved ? 'rgba(212, 168, 67, 0.6)' : `${typeStyle.color}80`,
-        whiteSpace: 'nowrap',
-        fontWeight: isCurrent ? '600' : '400',
-      }}>
-        {NODE_LABELS[node.type]}
-      </div>
-
-      {/* Tooltip on hover */}
-      {hovered && (
-        <div class="node-tooltip" style={{
-          color: node.resolved ? 'var(--color-gold-secondary)' : isCurrent ? typeStyle.color : 'var(--color-text-secondary)',
-        }}>
-          {tooltipText}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ConnectingLine({ resolved, color, isNextActive }: {
-  resolved: boolean;
-  color: string;
-  isNextActive: boolean;
-}) {
-  const lineClass = isNextActive ? 'line-next-active' : '';
-  return (
-    <div
-      class={lineClass}
-      aria-hidden="true"
-      style={{
-        '--faction-color': color,
-        width: '64px',
-        height: '3px',
-        borderRadius: '1.5px',
-        background: resolved
-          ? `linear-gradient(90deg, ${color}60, ${color}35)`
-          : 'repeating-linear-gradient(90deg, rgba(100,100,100,0.2) 0px, rgba(100,100,100,0.2) 6px, transparent 6px, transparent 12px)',
-        flexShrink: '0',
-        alignSelf: 'center',
-        position: 'relative',
-        boxShadow: resolved ? `0 0 6px ${color}30` : 'none',
-      } as Record<string, string>}
-    />
-  );
-}
 
 function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
   useEffect(() => {
@@ -563,12 +384,22 @@ export function NodeMapScreen() {
     }
   }
 
-  // S27-07: panel action button only fires when the selected node is the
-  // current one — non-current selections are inspect-only.
-  const selectedIdx = selectedNodeIndex.value ?? nodeIdx;
-  const selectedNodeForPanel = spoke.nodes[selectedIdx] ?? null;
+  // S27-08: id-based selection. Falls back to the current main-chain node
+  // when nothing is explicitly selected. Branch nodes (Spoke.branches) are
+  // addressable by id but never advance progression — their action button
+  // is disabled in the panel since `isCurrentSelected` is false for them.
+  const currentMainNode = spoke.nodes[nodeIdx] ?? null;
+  const selectedId = selectedNodeId.value ?? currentMainNode?.id ?? null;
+  const selectedNodeForPanel = (() => {
+    if (!selectedId) return currentMainNode;
+    const main = spoke.nodes.find(n => n.id === selectedId);
+    if (main) return main;
+    const br = spoke.branches?.find(b => b.node.id === selectedId);
+    return br?.node ?? currentMainNode;
+  })();
+  const isCurrentSelected = selectedNodeForPanel?.id === currentMainNode?.id;
   function handleSelectedAction() {
-    if (selectedIdx === nodeIdx && selectedNodeForPanel) {
+    if (isCurrentSelected && selectedNodeForPanel) {
       handleNodeActivate(selectedNodeForPanel);
     }
   }
@@ -762,33 +593,97 @@ export function NodeMapScreen() {
         {/* Node map body */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
-        {/* Node chain */}
+        {/* S27-08: campaign-map node chain — landmark tiles + state-aware
+            route lines. Per-node Y jitter gives the chain a winding path
+            feel rather than a perfectly straight button row. */}
         <div
           class="node-chain-scroll"
-          style={{ width: '100%', overflowX: 'auto', padding: '52px 0 36px' }}
+          style={{ width: '100%', overflowX: 'auto', padding: '64px 0 56px' }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', margin: '0 auto', padding: `0 clamp(12px, 5vw, 32px)`, width: 'max-content', minWidth: '100%', justifyContent: 'center' }}>
-            {spoke.nodes.map((node, i) => (
-              <Fragment key={node.id}>
-                {i > 0 && (
-                  <ConnectingLine
-                    resolved={spoke.nodes[i - 1].resolved}
-                    color={color}
-                    isNextActive={i === nodeIdx && spoke.nodes[i - 1].resolved}
-                  />
-                )}
-                <div class={justResolvedIndex.value === i ? 'node-resolving' : undefined} style={{ borderRadius: '50%' }}>
-                  <NodeCircle
-                    node={node}
-                    isCurrent={i === nodeIdx}
-                    isSelected={(selectedNodeIndex.value ?? nodeIdx) === i}
-                    color={color}
-                    onActivate={() => handleNodeActivate(node)}
-                    onSelect={() => { selectedNodeIndex.value = i; }}
-                  />
-                </div>
-              </Fragment>
-            ))}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            margin: '0 auto',
+            padding: `0 clamp(12px, 5vw, 32px)`,
+            width: 'max-content',
+            minWidth: '100%',
+            justifyContent: 'center',
+            gap: '14px',
+          }}>
+            {spoke.nodes.map((node, i) => {
+              // Subtle vertical jitter — start/boss stay on axis, mid-nodes
+              // ride a sine wave so the chain reads as a winding route.
+              const isEdge = i === 0 || i === spoke.nodes.length - 1;
+              const jitterY = isEdge ? 0 : Math.sin(i * 0.85) * 8;
+
+              const lineState: RouteLineState = i === 0
+                ? 'reachable' // unused (no line before index 0)
+                : spoke.nodes[i - 1].resolved && node.resolved
+                  ? 'resolved'
+                  : i === nodeIdx
+                    ? 'current'
+                    : i <= nodeIdx + 1
+                      ? 'reachable'
+                      : 'locked';
+
+              const isReachable = node.resolved || i === nodeIdx || i === nodeIdx + 1;
+              const branchesHere = spoke.branches?.filter(b => b.attachAfter === i) ?? [];
+
+              return (
+                <Fragment key={node.id}>
+                  {i > 0 && (
+                    <RouteLine state={lineState} color={color} />
+                  )}
+                  <div
+                    class={justResolvedIndex.value === i ? 'node-resolving' : undefined}
+                    style={{ transform: `translateY(${jitterY}px)`, position: 'relative' }}
+                  >
+                    <LandmarkNode
+                      node={node}
+                      isCurrent={i === nodeIdx}
+                      isSelected={selectedId === node.id}
+                      isReachable={isReachable}
+                      color={color}
+                      onActivate={() => handleNodeActivate(node)}
+                      onSelect={() => { selectedNodeId.value = node.id; }}
+                    />
+                    {/* S27-08: render branches attached to this node as a
+                        side-route below the main chain. Decorative + selectable;
+                        does not advance progression (AC4). */}
+                    {branchesHere.map((b) => {
+                      const branchReachable = i === nodeIdx;
+                      const branchLineState: RouteLineState = branchReachable ? 'reachable' : 'locked';
+                      return (
+                        <div
+                          key={b.node.id}
+                          style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: '50%',
+                            transform: 'translate(-30%, 36px)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            pointerEvents: 'auto',
+                          }}
+                        >
+                          <RouteLine state={branchLineState} color={color} direction="down-right" length={48} />
+                          <LandmarkNode
+                            node={b.node}
+                            isCurrent={false}
+                            isSelected={selectedId === b.node.id}
+                            isReachable={branchReachable}
+                            color={color}
+                            onActivate={() => { /* branches are inspect-only in MVP */ }}
+                            onSelect={() => { selectedNodeId.value = b.node.id; }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Fragment>
+              );
+            })}
           </div>
         </div>
 
@@ -859,7 +754,7 @@ export function NodeMapScreen() {
         {!spokeComplete && selectedNodeForPanel && (
           <LandmarkDetailsPanel
             node={selectedNodeForPanel}
-            isCurrent={selectedIdx === nodeIdx}
+            isCurrent={isCurrentSelected}
             onAction={handleSelectedAction}
             accentColor={color}
           />

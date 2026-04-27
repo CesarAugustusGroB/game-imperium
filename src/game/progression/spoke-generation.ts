@@ -493,6 +493,8 @@ export interface LandmarkSpokeOptions {
   threatLevel?: number;
   /** Injected RNG for deterministic testing. Defaults to Math.random. */
   rng?: () => number;
+  /** S27-08: emit one decorative side-route off a mid-chain node. */
+  includeBranch?: boolean;
 }
 
 /**
@@ -577,6 +579,13 @@ export function generateLandmarkSpoke(opts: LandmarkSpokeOptions): Spoke {
   // ── Invariant checks (throw loudly on violation) ──
   assertInvariants(nodes);
 
+  // ── Optional decorative bifurcation (S27-08) ──
+  // Attaches one side-route off a random mid-chain index. Branch nodes
+  // are inspectable but never advance progression.
+  const branches = opts.includeBranch
+    ? buildSingleBranch(midCount, rng)
+    : undefined;
+
   return {
     nodes,
     label: pick(SPOKE_LABELS, rng),
@@ -586,7 +595,18 @@ export function generateLandmarkSpoke(opts: LandmarkSpokeOptions): Spoke {
     posture,
     boundArmy: null,
     boundLegate: null,
+    branches,
   };
+}
+
+function buildSingleBranch(midCount: number, rng: () => number): { attachAfter: number; node: SpokeNode }[] {
+  // Attach to a random mid-chain index (skip start_camp and boss).
+  const attachAfter = 1 + Math.floor(rng() * midCount);
+  const node = buildSupplyNode(0, rng);
+  return [{
+    attachAfter,
+    node: { ...node, id: `branch-${attachAfter}`, position: -1 },
+  }];
 }
 
 // ── Invariant verification ──
