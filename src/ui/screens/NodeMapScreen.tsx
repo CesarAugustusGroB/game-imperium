@@ -6,6 +6,15 @@ import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../../game/progression/spoke';
 import type { SpokeNode, NodeType, SeasonTickResult } from '../../game/progression/spoke';
 import type { SpokeEffect } from '../../game/progression/spoke-effects';
+import type { EncounterType } from '../../game/progression/landmark-types';
+import { applyNodeEffectsNow } from '../../game/progression/spoke';
+
+function legacyEncFromType(t: NodeType): EncounterType {
+  if (t === 'boss') return 'boss';
+  if (t === 'rest') return 'rest';
+  if (t === 'event') return 'event';
+  return 'battle';
+}
 import { selectedCommander, completedSpokes, threatLevel } from '../../game/core/game-state';
 import { conquerProvince, assignProvinceIdentity, getProvinceEffects } from '../../game/province/province-store';
 import { getCandidateIndices, PROVINCE_NAMES } from '../../game/province/province-map-store';
@@ -657,43 +666,38 @@ export function NodeMapScreen() {
   }
 
   function handleNodeActivate(node: SpokeNode) {
-    // S27-09: dispatch by encounterType when present, fall back to legacy
-    // node.type for spokes built by generateSpokeFromCouncil. Effects are
-    // applied centrally in advanceNode at the resolved transition — every
-    // path here just routes to the appropriate UI flow and lets the modal's
-    // continue handler call advanceNode.
-    const enc = node.encounterType;
-    if (enc === 'battle' || enc === 'elite_battle' || enc === 'boss' ||
-        node.type === 'battle' || node.type === 'boss') {
-      navigateTo('battleV2');
-      return;
-    }
-    if (enc === 'ambush') {
-      // Ambush: outcome modal previews the hit (negative effects on the
-      // node), then routes to BattleV2. advanceNode runs after the battle
-      // returns via PostBattleScreen, applying the effects exactly once.
-      openOutcomeModal(node, 'ambush');
-      return;
-    }
-    if (enc === 'rest' || node.type === 'rest') {
-      openRestModal();
-      return;
-    }
-    if (enc === 'event' || node.type === 'event') {
-      // Shrine/recruit/forage/scout/hazard land here for legacy event-typed
-      // nodes. Use the rich encounter when encounterType says so; otherwise
-      // legacy event modal.
-      if (enc === 'forage' || enc === 'recruit' || enc === 'scout' ||
-          enc === 'hazard' || enc === 'unknown') {
+    // S27-09: dispatch ONLY by `enc` (encounterType, with legacy node.type
+    // mapping for pre-Itinerarium spokes). The earlier OR-fallback wrongly
+    // sent any node with type='battle' to BattleV2 even when its
+    // encounterType was 'forage' / 'scout' / 'hazard' / 'ambush' — fixed
+    // by collapsing to a single resolved encounter discriminator.
+    const enc: EncounterType = node.encounterType ?? legacyEncFromType(node.type);
+    switch (enc) {
+      case 'battle':
+      case 'elite_battle':
+      case 'boss':
+      case 'siege':
+        navigateTo('battleV2');
+        return;
+      case 'ambush':
+        openOutcomeModal(node, 'ambush');
+        return;
+      case 'rest':
+        openRestModal();
+        return;
+      case 'forage':
+      case 'recruit':
+      case 'scout':
+      case 'hazard':
+      case 'unknown':
         openOutcomeModal(node, enc);
-      } else {
+        return;
+      case 'event':
+      case 'merchant':
+      default:
         openEventModal();
-      }
-      return;
+        return;
     }
-    // Out-of-MVP encounters (merchant/siege) and any unknown shape fall
-    // through to the legacy event modal so the spoke can still progress.
-    openEventModal();
   }
 
   // S27-07: panel action button only fires when the selected node is the
@@ -713,12 +717,16 @@ export function NodeMapScreen() {
 
   function handleOutcomeContinue() {
     const kind = outcomeModalKind.value;
+    const node = outcomeModalNode.value;
     outcomeModalNode.value = null;
     outcomeModalKind.value = null;
 
-    // Ambush routes to battle; effects apply via advanceNode after the
-    // battle returns, ensuring the negative hit lands exactly once.
+    // Ambush: apply the negative effects BEFORE the battle so the hit
+    // (morale loss, iuniores damage) actually biases the engagement.
+    // applyNodeEffectsNow marks the node's effects as pre-applied so
+    // PostBattleScreen's advanceNode does not double-apply on return.
     if (kind === 'ambush') {
+      if (node) applyNodeEffectsNow(node);
       navigateTo('battleV2');
       return;
     }

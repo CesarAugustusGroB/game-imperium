@@ -156,6 +156,27 @@ export function syncPreparedFromBoundArmy(boundArmy: ArmyData | null | undefined
   };
 }
 
+/**
+ * S27-09 fix: ids of nodes whose data-driven effects have already been
+ * applied (e.g. ambush damage applied pre-battle). advanceNode skips the
+ * apply step when the current node is in this set so effects never
+ * double-apply. Cleared on retreat / completion.
+ */
+const preAppliedEffectNodeIds = new Set<string>();
+
+/** Mark a node's effects as already-applied so advanceNode skips them. */
+export function markNodeEffectsApplied(nodeId: string): void {
+  preAppliedEffectNodeIds.add(nodeId);
+}
+
+/** Apply a node's effects right now and mark them as applied. Used by
+ *  ambush flow so the negative hit lands BEFORE the battle, not after. */
+export function applyNodeEffectsNow(node: SpokeNode): void {
+  if (!node.effects || node.effects.length === 0) return;
+  applySpokeEffects(node.effects);
+  preAppliedEffectNodeIds.add(node.id);
+}
+
 /** Clear spoke state (called on retreat or spoke completion). */
 export function resetSpoke(): void {
   // Sync casualties to preparedArmy before tearing down the spoke (handles retreat).
@@ -164,6 +185,7 @@ export function resetSpoke(): void {
   currentSpoke.value = null;
   currentNodeIndex.value = 0;
   spokeGains.value = { ...ZERO_GAINS };
+  preAppliedEffectNodeIds.clear();
 }
 
 /** Mark the current node as resolved and advance to the next one.
@@ -186,9 +208,12 @@ export function advanceNode(): AdvanceNodeResult {
   // reveal/scout/battle-modifier/threat) at the resolved transition. Centered
   // on currentNodeIndex which still points at this node. applySpokeEffects
   // mutates `currentSpoke.value`, so we re-read after.
-  if (node.effects && node.effects.length > 0) {
+  // The pre-applied set is consulted so flows like ambush (which apply
+  // effects BEFORE the battle to bias it) don't double-apply on return.
+  if (node.effects && node.effects.length > 0 && !preAppliedEffectNodeIds.has(node.id)) {
     applySpokeEffects(node.effects);
   }
+  preAppliedEffectNodeIds.delete(node.id);
   const spokeAfterEffects = currentSpoke.value ?? spoke;
 
   // FT-SUP: consume supplies for this traversal BEFORE advancing. Attrition
