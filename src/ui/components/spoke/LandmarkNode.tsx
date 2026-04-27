@@ -268,7 +268,10 @@ export function LandmarkNode({ node, isCurrent, isSelected, isReachable, color, 
   function handleClick() {
     if (isLocked && !node.resolved) return;
     onSelect();
-    onActivate();
+    // Activation is strictly gated to the player's current unresolved
+    // node — clicking the next reachable node only selects it for the
+    // details panel, never starts its encounter ahead of currentNodeIndex.
+    if (isCurrent && !node.resolved) onActivate();
   }
 
   function handleKeyDown(e: KeyboardEvent) {
