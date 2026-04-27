@@ -25,6 +25,8 @@ import { councilSlots, grantAdvisorXp, tierUpNotices } from '../../game/council/
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 import { computeArmyMorale } from '../../game/army/morale';
 import type { MoraleTier } from '../../game/army/morale';
+import { SpokeTopBar } from '../components/spoke/SpokeTopBar';
+import { LandmarkDetailsPanel } from '../components/spoke/LandmarkDetailsPanel';
 import { previewReplenishment, replenishBoundArmy } from '../../game/army/army-replenishment';
 import type { ReplenishmentPreview } from '../../game/army/army-replenishment';
 
@@ -282,11 +284,18 @@ const justResolvedIndex = signal<number | null>(null);
 /** Army Detail HUD visibility on the node map. */
 const showArmyHUDOnMap = signal(false);
 
-function NodeCircle({ node, isCurrent, color, onActivate }: {
+/** S27-07: index of the node whose details panel is shown. Tracks the
+ *  player's current node by default; clicking any revealed node selects it
+ *  without activating it. `null` falls back to the current index. */
+const selectedNodeIndex = signal<number | null>(null);
+
+function NodeCircle({ node, isCurrent, isSelected, color, onActivate, onSelect }: {
   node: SpokeNode;
   isCurrent: boolean;
+  isSelected: boolean;
   color: string;
   onActivate: () => void;
+  onSelect: () => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const typeStyle = NODE_STYLES[node.type];
@@ -299,6 +308,9 @@ function NodeCircle({ node, isCurrent, color, onActivate }: {
       : 'node-future';
 
   function handleClick() {
+    // Always update selection so the details panel can preview any node;
+    // only activate when this is the player's current unresolved node.
+    onSelect();
     if (!isCurrent || node.resolved) return;
     onActivate();
   }
@@ -332,10 +344,21 @@ function NodeCircle({ node, isCurrent, color, onActivate }: {
       onClick={handleClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      role={isCurrent && !node.resolved ? 'button' : undefined}
-      aria-label={isCurrent && !node.resolved ? `Activate ${NODE_LABELS[node.type]} node` : undefined}
-      tabIndex={isCurrent && !node.resolved ? 0 : undefined}
-      onKeyDown={isCurrent && !node.resolved ? (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onActivate(); } } : undefined}
+      role="button"
+      aria-label={
+        isCurrent && !node.resolved
+          ? `Activate ${NODE_LABELS[node.type]} node`
+          : `Inspect ${NODE_LABELS[node.type]} node`
+      }
+      aria-pressed={isSelected}
+      tabIndex={0}
+      onKeyDown={(e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+          if (isCurrent && !node.resolved) onActivate();
+        }
+      }}
       style={{
         '--glow': isCurrent ? typeStyle.glow : color + '60',
         '--type-glow': typeStyle.glow,
@@ -350,7 +373,9 @@ function NodeCircle({ node, isCurrent, color, onActivate }: {
         justifyContent: 'center',
         position: 'relative',
         flexShrink: '0',
-        outline: 'none',
+        outline: isSelected ? '2px solid var(--color-gold-primary)' : 'none',
+        outlineOffset: isSelected ? '4px' : '0',
+        cursor: 'pointer',
       } as Record<string, string>}
     >
       {/* Icon */}
@@ -538,6 +563,16 @@ export function NodeMapScreen() {
     }
   }
 
+  // S27-07: panel action button only fires when the selected node is the
+  // current one — non-current selections are inspect-only.
+  const selectedIdx = selectedNodeIndex.value ?? nodeIdx;
+  const selectedNodeForPanel = spoke.nodes[selectedIdx] ?? null;
+  function handleSelectedAction() {
+    if (selectedIdx === nodeIdx && selectedNodeForPanel) {
+      handleNodeActivate(selectedNodeForPanel);
+    }
+  }
+
   function openRestModal() {
     const faction = commander?.faction;
     const allTypes: ResourceType[] = ['gold', 'faith', 'influence', 'momentum'];
@@ -699,21 +734,10 @@ export function NodeMapScreen() {
   const resolvedCount = spoke.nodes.filter(n => n.resolved).length;
   const progressPct = Math.round((resolvedCount / spoke.nodes.length) * 100);
 
-  // S24-05: pre-battle morale for the bound army. Surfaced as a header pill
-  // chip + an inline segment on the army bar. Breakdown lives in the modal
-  // (ArmyDetailHUD).
+  // S24-05: pre-battle morale for the bound army. Surfaced inline on the
+  // army bar; the SpokeTopBar (S27-07) renders the chip + tooltip in the
+  // header. Breakdown lives in the modal (ArmyDetailHUD).
   const morale = spoke.boundArmy ? computeArmyMorale(spoke) : null;
-  const moraleTooltip = morale
-    ? (morale.modifiers.length === 0
-        ? `Morale — ${moraleTierLabel(morale.tier)} (${morale.total}). No modifiers active.`
-        : `Morale — ${moraleTierLabel(morale.tier)} (${morale.total})\n` +
-          morale.modifiers
-            .slice()
-            .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
-            .map((m) => `  ${m.delta >= 0 ? '+' : ''}${m.delta}  ${m.label}`)
-            .join('\n'))
-    : undefined;
-
   const supplies = spoke.boundArmy?.supplies ?? 0;
 
   return (
@@ -728,38 +752,12 @@ export function NodeMapScreen() {
           eyebrow="Spoke"
           title={spoke.label}
           titleSize="md"
-          rightSlot={(
-            <>
-              {morale && (
-                <span
-                  class="ornate-stat-chip"
-                  title={moraleTooltip}
-                  style={{ color: MORALE_TIER_COLOR[morale.tier] }}
-                >
-                  🔥 <strong>{moraleTierLabel(morale.tier)} {morale.total}</strong>
-                </span>
-              )}
-              {spoke.boundArmy && (
-                <span class="ornate-stat-chip" title="Supplies">
-                  📦 <strong>{supplies}</strong>
-                </span>
-              )}
-              <span class="ornate-stat-chip" title="Posture" style={{ color: spoke.posture === 'attacking' ? '#e07050' : '#60a8d0' }}>
-                {spoke.posture === 'attacking' ? '⚔' : '🛡'} <strong>{spoke.posture === 'attacking' ? 'Attacking' : 'Defending'}</strong>
-              </span>
-              <span class="ornate-stat-chip" title="Progress">
-                🚩 <strong>{resolvedCount}/{spoke.nodes.length}</strong>
-              </span>
-              {spoke.duration > 1 && (
-                <span class="ornate-stat-chip" title="Season">
-                  🌿 <strong>S{spoke.currentSeason}/{spoke.duration}</strong>
-                </span>
-              )}
-            </>
-          )}
           onClose={() => navigateTo('hub')}
           accentColor={color}
         />
+
+        {/* S27-07: campaign stats bar (military focus — no hub resources) */}
+        <SpokeTopBar />
 
         {/* Node map body */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -783,8 +781,10 @@ export function NodeMapScreen() {
                   <NodeCircle
                     node={node}
                     isCurrent={i === nodeIdx}
+                    isSelected={(selectedNodeIndex.value ?? nodeIdx) === i}
                     color={color}
                     onActivate={() => handleNodeActivate(node)}
+                    onSelect={() => { selectedNodeIndex.value = i; }}
                   />
                 </div>
               </Fragment>
@@ -853,6 +853,16 @@ export function NodeMapScreen() {
               </>
             )}
           </button>
+        )}
+
+        {/* S27-07: selected-landmark details panel */}
+        {!spokeComplete && selectedNodeForPanel && (
+          <LandmarkDetailsPanel
+            node={selectedNodeForPanel}
+            isCurrent={selectedIdx === nodeIdx}
+            onAction={handleSelectedAction}
+            accentColor={color}
+          />
         )}
 
         {/* Retreat button — bottom of frame */}
