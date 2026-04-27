@@ -94,6 +94,21 @@ export interface Spoke {
    * the trait pass in `BattleState.placeStartingUnits` (see S14-05).
    */
   boundLegate?: Legate | null;
+  /**
+   * S27-08: optional decorative bifurcations off the main chain. Each
+   * branch is a single side-route node attached to a main-chain index
+   * (`attachAfter`). Branch nodes are inspectable via the details panel
+   * but do NOT advance progression — `currentNodeIndex` always points at
+   * the main `nodes[]` array. A future task wires actual traversal.
+   */
+  branches?: SpokeBranch[];
+}
+
+/** S27-08: a side-route attached to a main-chain index. */
+export interface SpokeBranch {
+  /** Index in `Spoke.nodes` after which this branch forks. */
+  attachAfter: number;
+  node: SpokeNode;
 }
 
 /** The active spoke, or null when the player is at the hub. */
