@@ -36,6 +36,7 @@ const ROMAN: readonly string[] = ['I', 'II', 'III'];
 const CONSILIUM_ACCENT = '#d4a843';
 
 type AdvisorSource = 'seat' | 'market';
+type MarketView = 'market' | 'available';
 type MarketFilter = 'all' | 'diplomatic' | 'economic' | 'intrigue' | 'military';
 type MarketSort = 'cost' | 'name' | 'tier';
 
@@ -125,6 +126,7 @@ if (typeof document !== 'undefined' && !document.getElementById('consilium-3col-
 
 export function ConsiliumTab() {
   const selectedId = useSignal<string | null>(null);
+  const marketView = useSignal<MarketView>('market');
   const marketFilter = useSignal<MarketFilter>('all');
   const marketSort = useSignal<MarketSort>('cost');
   const slots = councilSlots.value;
@@ -182,11 +184,6 @@ export function ConsiliumTab() {
               selectedId={currentSelection?.advisor.id ?? null}
               onSelect={selectAdvisor}
             />
-            <MarketBrowsePanel
-              market={market}
-              selectedId={currentSelection?.advisor.id ?? null}
-              onSelect={selectAdvisor}
-            />
           </aside>
 
           <OrnatePanel
@@ -216,12 +213,15 @@ export function ConsiliumTab() {
 
         <PoliticalMarketPanel
           market={filteredMarket}
+          availableMarket={market}
           totalOffers={market.length}
           currentGold={currentGold}
           emptySlotIndex={slots.findIndex((slot) => slot === null)}
           selectedId={currentSelection?.advisor.id ?? null}
+          view={marketView.value}
           filter={marketFilter.value}
           sort={marketSort.value}
+          onViewChange={(view) => { marketView.value = view; }}
           onFilterChange={(filter) => { marketFilter.value = filter; }}
           onSortChange={(sort) => { marketSort.value = sort; }}
           onSelect={selectAdvisor}
@@ -314,82 +314,6 @@ function SeatRow({ advisor, label, selected, onSelect }: SeatRowProps) {
       </div>
       <TierBadge tier={advisor.currentTier} />
     </button>
-  );
-}
-
-interface MarketBrowsePanelProps {
-  market: Advisor[];
-  selectedId: string | null;
-  onSelect: (advisor: Advisor) => void;
-}
-
-function MarketBrowsePanel({ market, selectedId, onSelect }: MarketBrowsePanelProps) {
-  return (
-    <OrnatePanel accent={CONSILIUM_ACCENT}>
-      <SectionHeader
-        title="Available Advisors"
-        accent={CONSILIUM_ACCENT}
-        right={<span style={countPillStyle}>{market.length} offers</span>}
-      />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {market.length === 0 && (
-          <div style={{
-            padding: '10px 4px',
-            fontFamily: 'var(--imp-font-serif)',
-            fontStyle: 'italic',
-            fontSize: 11,
-            color: 'var(--imp-text-lo)',
-          }}>
-            The political market is quiet.
-          </div>
-        )}
-        {market.map((advisor) => (
-          <button
-            key={advisor.id}
-            type="button"
-            class="consilium-selectable"
-            onClick={() => onSelect(advisor)}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '8px 9px',
-              border: `1px solid ${advisor.id === selectedId ? CONSILIUM_ACCENT : 'var(--imp-gold-faint)'}`,
-              borderRadius: 2,
-              background: advisor.id === selectedId ? 'rgba(80, 60, 20, 0.25)' : 'rgba(13, 11, 20, 0.46)',
-              color: 'inherit',
-              cursor: 'pointer',
-              textAlign: 'left',
-            }}
-          >
-            <MiniPortrait advisor={advisor} size={34} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={rowNameStyle}>{advisor.name}</div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                marginTop: 4,
-                minWidth: 0,
-              }}>
-                {advisor.traits.slice(0, 3).map((trait) => (
-                  <TraitGlyph key={trait} trait={trait} size={17} />
-                ))}
-              </div>
-            </div>
-            <div style={{
-              color: CONSILIUM_ACCENT,
-              fontFamily: 'var(--imp-font-mono)',
-              fontSize: 11,
-              fontWeight: 800,
-            }}>
-              {advisor.cost}g
-            </div>
-          </button>
-        ))}
-      </div>
-    </OrnatePanel>
   );
 }
 
@@ -725,12 +649,15 @@ function ReservedColumn({ slots }: { slots: (Advisor | null)[] }) {
 
 interface PoliticalMarketPanelProps {
   market: Advisor[];
+  availableMarket: Advisor[];
   totalOffers: number;
   currentGold: number;
   emptySlotIndex: number;
   selectedId: string | null;
+  view: MarketView;
   filter: MarketFilter;
   sort: MarketSort;
+  onViewChange: (view: MarketView) => void;
   onFilterChange: (filter: MarketFilter) => void;
   onSortChange: (sort: MarketSort) => void;
   onSelect: (advisor: Advisor) => void;
@@ -739,12 +666,15 @@ interface PoliticalMarketPanelProps {
 
 function PoliticalMarketPanel({
   market,
+  availableMarket,
   totalOffers,
   currentGold,
   emptySlotIndex,
   selectedId,
+  view,
   filter,
   sort,
+  onViewChange,
   onFilterChange,
   onSortChange,
   onSelect,
@@ -768,6 +698,21 @@ function PoliticalMarketPanel({
           marginBottom: 12,
         }}>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {MARKET_VIEWS.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                class="consilium-filter-chip"
+                onClick={() => onViewChange(item.value)}
+                style={chipButtonStyle(view === item.value)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          {view === 'market' && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {MARKET_FILTERS.map((item) => (
               <button
                 key={item.value}
@@ -780,7 +725,9 @@ function PoliticalMarketPanel({
               </button>
             ))}
           </div>
+          )}
 
+          {view === 'market' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <span style={{
               color: 'var(--imp-text-lo)',
@@ -804,9 +751,16 @@ function PoliticalMarketPanel({
               </button>
             ))}
           </div>
+          )}
         </div>
 
-        {market.length === 0 ? (
+        {view === 'available' ? (
+          <AvailableAdvisorList
+            market={availableMarket}
+            selectedId={selectedId}
+            onSelect={onSelect}
+          />
+        ) : market.length === 0 ? (
           <div style={{
             minHeight: 118,
             display: 'flex',
@@ -842,6 +796,88 @@ function PoliticalMarketPanel({
           </div>
         )}
       </OrnatePanel>
+    </div>
+  );
+}
+
+interface AvailableAdvisorListProps {
+  market: Advisor[];
+  selectedId: string | null;
+  onSelect: (advisor: Advisor) => void;
+}
+
+function AvailableAdvisorList({ market, selectedId, onSelect }: AvailableAdvisorListProps) {
+  if (market.length === 0) {
+    return (
+      <div style={{
+        minHeight: 118,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '1px dashed var(--imp-gold-faint)',
+        background: 'rgba(13, 11, 20, 0.44)',
+        color: 'var(--imp-text-lo)',
+        fontFamily: 'var(--imp-font-serif)',
+        fontSize: 13,
+        fontStyle: 'italic',
+      }}>
+        The political market is quiet.
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+      gap: 8,
+    }}>
+      {market.map((advisor) => (
+        <button
+          key={advisor.id}
+          type="button"
+          class="consilium-selectable"
+          onClick={() => onSelect(advisor)}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 9px',
+            border: `1px solid ${advisor.id === selectedId ? CONSILIUM_ACCENT : 'var(--imp-gold-faint)'}`,
+            borderRadius: 2,
+            background: advisor.id === selectedId ? 'rgba(80, 60, 20, 0.25)' : 'rgba(13, 11, 20, 0.46)',
+            color: 'inherit',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
+          <MiniPortrait advisor={advisor} size={34} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={rowNameStyle}>{advisor.name}</div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              marginTop: 4,
+              minWidth: 0,
+            }}>
+              {advisor.traits.slice(0, 3).map((trait) => (
+                <TraitGlyph key={trait} trait={trait} size={17} />
+              ))}
+            </div>
+          </div>
+          <div style={{
+            color: CONSILIUM_ACCENT,
+            fontFamily: 'var(--imp-font-mono)',
+            fontSize: 11,
+            fontWeight: 800,
+            whiteSpace: 'nowrap',
+          }}>
+            {advisor.cost}g
+          </div>
+        </button>
+      ))}
     </div>
   );
 }
@@ -1008,6 +1044,11 @@ const MARKET_SORTS: Array<{ value: MarketSort; label: string }> = [
   { value: 'cost', label: 'Cost' },
   { value: 'name', label: 'Name' },
   { value: 'tier', label: 'Tier' },
+];
+
+const MARKET_VIEWS: Array<{ value: MarketView; label: string }> = [
+  { value: 'market', label: 'Political Market' },
+  { value: 'available', label: 'Available Advisors' },
 ];
 
 const smallCapsStyle: preact.JSX.CSSProperties = {
