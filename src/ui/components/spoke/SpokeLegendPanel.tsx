@@ -10,6 +10,8 @@
  * is cheaper than the cross-file coupling a shared module would force.
  */
 
+import { ENCOUNTER_ICON, ENCOUNTER_BADGE_COLOR } from './landmark-presentation';
+
 if (typeof document !== 'undefined' && !document.getElementById('spoke-legend-styles')) {
   const el = document.createElement('style');
   el.id = 'spoke-legend-styles';
@@ -88,22 +90,24 @@ interface EncounterEntry {
   hint?: string;
 }
 
-// Aligned with LandmarkMapNode's ENCOUNTER_ICON / ENCOUNTER_BADGE_COLOR.
+// Icons and badge colors sourced from landmark-presentation (T4.1) so the
+// legend stays automatically consistent with the map-node renderings.
 // Roman fort vs enemy fort: same `fort` landmark tile — the framing
 // difference (player-held vs hostile) lives in the tooltip + the dynamic
 // border color the map applies; the legend surfaces both for clarity.
 const ENCOUNTER_ENTRIES: readonly EncounterEntry[] = [
-  { icon: '⚔️', color: '#c24a3a', label: 'Battle' },
-  { icon: '🏹', color: '#c24a3a', label: 'Elite Battle' },
-  { icon: '💀', color: '#8a4ac2', label: 'Boss' },
-  { icon: '🗡',  color: '#c24a3a', label: 'Ambush', hint: 'Penalty applied before combat' },
-  { icon: '🏕', color: '#4a9a6a', label: 'Rest / Camp' },
-  { icon: '🌾', color: '#9aa84a', label: 'Forage / Supplies' },
-  { icon: '🔭', color: '#60a8d0', label: 'Scout', hint: 'Reveals fog around the node' },
-  { icon: '📜', color: '#d4a843', label: 'Event' },
-  { icon: '⚠',  color: '#c24a3a', label: 'Hazard' },
-  { icon: '🏰', color: '#d4a843', label: 'Roman Fort', hint: 'Friendly garrison — bonus on defense' },
-  { icon: '🏰', color: '#a83a3a', label: 'Enemy Fort', hint: 'Hostile stronghold — heavy assault' },
+  { icon: ENCOUNTER_ICON.battle,       color: ENCOUNTER_BADGE_COLOR.battle       ?? '#c24a3a', label: 'Battle' },
+  { icon: ENCOUNTER_ICON.elite_battle, color: ENCOUNTER_BADGE_COLOR.elite_battle ?? '#c24a3a', label: 'Elite Battle' },
+  { icon: ENCOUNTER_ICON.boss,         color: ENCOUNTER_BADGE_COLOR.boss         ?? '#8a4ac2', label: 'Boss' },
+  { icon: ENCOUNTER_ICON.ambush,       color: ENCOUNTER_BADGE_COLOR.ambush       ?? '#c24a3a', label: 'Ambush', hint: 'Penalty applied before combat' },
+  { icon: ENCOUNTER_ICON.rest,         color: ENCOUNTER_BADGE_COLOR.rest         ?? '#4a9a6a', label: 'Rest / Camp' },
+  { icon: ENCOUNTER_ICON.forage,       color: ENCOUNTER_BADGE_COLOR.forage       ?? '#9aa84a', label: 'Forage / Supplies' },
+  { icon: ENCOUNTER_ICON.scout,        color: ENCOUNTER_BADGE_COLOR.scout        ?? '#60a8d0', label: 'Scout', hint: 'Reveals fog around the node' },
+  { icon: ENCOUNTER_ICON.event,        color: ENCOUNTER_BADGE_COLOR.event        ?? '#d4a843', label: 'Event' },
+  { icon: ENCOUNTER_ICON.hazard,       color: ENCOUNTER_BADGE_COLOR.hazard       ?? '#c24a3a', label: 'Hazard' },
+  // Siege icon reused for both Roman and enemy fort entries; colour distinguishes them.
+  { icon: ENCOUNTER_ICON.siege,        color: '#d4a843',                                       label: 'Roman Fort', hint: 'Friendly garrison — bonus on defense' },
+  { icon: ENCOUNTER_ICON.siege,        color: '#a83a3a',                                       label: 'Enemy Fort', hint: 'Hostile stronghold — heavy assault' },
 ];
 
 interface IntelEntry {

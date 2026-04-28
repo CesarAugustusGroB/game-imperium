@@ -44,6 +44,9 @@ export function deriveRouteState(
   const { fromNode, toNode, toIndex } = segment;
 
   // Both endpoints already played → resolved trail.
+  // T2.2: This also covers the spoke-complete state (nodeIdx >= nodes.length)
+  // because every node will be resolved before completeSpoke() fires, so
+  // all segments naturally fall into this branch. No special-case needed.
   if (fromNode.resolved && toNode.resolved) return 'resolved';
 
   // The boss path always wins over reachable so the player sees the climax

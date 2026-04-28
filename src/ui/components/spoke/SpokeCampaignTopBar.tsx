@@ -18,6 +18,7 @@ import { currentSpoke, currentNodeIndex } from '../../../game/progression/spoke'
 import { gold, influence } from '../../../game/core/resources';
 import { computeArmyMorale, type MoraleTier } from '../../../game/army/morale';
 import { supplyCostForNodes } from '../../../game/army/supplies';
+import { RESOURCE_INFO } from '../../../game/core/commander';
 
 if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-topbar-styles')) {
   const el = document.createElement('style');
@@ -268,12 +269,12 @@ export function SpokeCampaignTopBar() {
       )}
 
       <div class="sct-resource-group">
-        <span class="sct-resource" title="Gold reserves">
-          <span class="sct-chip-icon">🜚</span>
+        <span class="sct-resource" title={`Gold — ${RESOURCE_INFO.gold.label}`}>
+          <span class="sct-chip-icon">{RESOURCE_INFO.gold.icon}</span>
           <span class="sct-resource-value">{gold.value}</span>
         </span>
-        <span class="sct-resource" title="Influence">
-          <span class="sct-chip-icon">◈</span>
+        <span class="sct-resource" title={`Influence — ${RESOURCE_INFO.influence.label}`}>
+          <span class="sct-chip-icon">{RESOURCE_INFO.influence.icon}</span>
           <span class="sct-resource-value">{influence.value}</span>
         </span>
       </div>

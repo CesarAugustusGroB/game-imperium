@@ -182,6 +182,11 @@ export function LandmarkMap({
             const root = (e.currentTarget as HTMLImageElement).closest('.landmark-map');
             root?.setAttribute('data-bg-loaded', 'true');
           }}
+          onError={(e) => {
+            // T2.1: Silently suppress 404 — the parchment CSS fallback is
+            // already rendered; no need to propagate the error to the console.
+            (e.currentTarget as HTMLImageElement).setAttribute('data-bg-loaded', 'false');
+          }}
         />
       )}
 

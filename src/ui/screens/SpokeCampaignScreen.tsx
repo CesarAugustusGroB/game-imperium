@@ -13,13 +13,14 @@
  * (`resetSpoke`, `threatLevel`, `navigateTo`).
  */
 
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 import { navigateTo } from '../screens';
 import {
   currentSpoke,
   currentNodeIndex,
   resetSpoke,
   advanceNode,
+  completeSpoke,
   applyNodeEffectsNow,
   legacyEncounterFromNodeType,
 } from '../../game/progression/spoke';
@@ -97,43 +98,6 @@ if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-
     .spoke-campaign-zone--legend    { grid-area: legend; }
     .spoke-campaign-zone--army      { grid-area: army; min-height: 96px; }
 
-    .spoke-campaign-placeholder {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      gap: 6px;
-      color: var(--color-text-muted);
-      font-family: var(--font-display);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      text-align: center;
-    }
-    .spoke-campaign-placeholder-eyebrow {
-      font-size: var(--font-size-xs);
-      color: var(--color-gold-dim);
-      letter-spacing: 2px;
-    }
-    .spoke-campaign-placeholder-title {
-      font-size: var(--font-size-md);
-      color: var(--color-text-secondary);
-    }
-    .spoke-campaign-placeholder-hint {
-      font-size: var(--font-size-xs);
-      color: var(--color-text-muted);
-      letter-spacing: 1px;
-      text-transform: none;
-    }
-
-    .spoke-campaign-actions {
-      position: absolute;
-      top: 14px;
-      right: 18px;
-      display: flex;
-      gap: 8px;
-      z-index: 5;
-    }
     .spoke-campaign-action-btn {
       padding: 6px 14px;
       background: rgba(14, 12, 28, 0.85);
@@ -180,6 +144,53 @@ export function SpokeCampaignScreen() {
   const [showArmyHUD, setShowArmyHUD] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
+  // T1.1: Detect spoke completion (all nodes resolved) and call completeSpoke()
+  // so the store can do housekeeping (XP, resource grants, navigation triggers).
+  // Mirrors NodeMapScreen's spokeComplete → handleReturnToHub pathway, simplified
+  // for the campaign screen MVP (no city-choice modal yet — navigates directly).
+  const spokeComplete = spoke ? nodeIdx >= spoke.nodes.length : false;
+  useEffect(() => {
+    if (spokeComplete && spoke) {
+      completeSpoke();
+      navigateTo('hub');
+    }
+  }, [spokeComplete, spoke]);
+
+  // T1.2: Clear per-spoke UI state when the spoke tears down so stale node
+  // selections / open HUDs from the previous spoke never bleed into the next.
+  useEffect(() => {
+    if (!spoke) {
+      setSelectedNodeId(null);
+      setShowArmyHUD(false);
+    }
+  }, [spoke]);
+
+  // Define handleRetreat before the keyboard useEffect so the closure captures it.
+  function handleRetreat() {
+    threatLevel.value += 1;
+    resetSpoke();
+    navigateTo('hub');
+  }
+
+  // T1.3: Keyboard bindings — ESC closes army HUD or retreats; 'a' toggles HUD.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        if (showArmyHUD) {
+          setShowArmyHUD(false);
+        } else {
+          handleRetreat();
+        }
+      } else if (e.key === 'a' && spoke?.boundArmy) {
+        setShowArmyHUD((prev) => !prev);
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showArmyHUD, spoke]);
+
   if (!spoke) {
     return (
       <div style={{
@@ -200,12 +211,6 @@ export function SpokeCampaignScreen() {
         </button>
       </div>
     );
-  }
-
-  function handleRetreat() {
-    threatLevel.value += 1;
-    resetSpoke();
-    navigateTo('hub');
   }
 
   const currentNode = spoke.nodes[nodeIdx] ?? null;

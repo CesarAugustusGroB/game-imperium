@@ -23,7 +23,13 @@
 
 import { useState } from 'preact/hooks';
 import type { SpokeNode } from '../../../game/progression/spoke';
-import type { LandmarkType, EncounterType } from '../../../game/progression/landmark-types';
+import type { LandmarkType } from '../../../game/progression/landmark-types';
+import {
+  LANDMARK_LABEL,
+  ENCOUNTER_ICON,
+  ENCOUNTER_BADGE,
+  ENCOUNTER_BADGE_COLOR,
+} from './landmark-presentation';
 
 if (typeof document !== 'undefined' && !document.getElementById('landmark-map-node-styles')) {
   const el = document.createElement('style');
@@ -143,33 +149,8 @@ const TILE_BG: Record<LandmarkType | 'default', string> = {
   default:         'linear-gradient(135deg, rgba(60, 55, 80, 0.75), rgba(40, 36, 55, 0.92))',
 };
 
-const ENCOUNTER_ICON: Record<EncounterType, string> = {
-  battle: '⚔️', elite_battle: '🏹', boss: '💀',
-  rest: '🏕', event: '📜', scout: '🔭',
-  forage: '🌾', recruit: '🚩', ambush: '🗡',
-  merchant: '🪙', siege: '🏰', hazard: '⚠', unknown: '❓',
-};
-
-const ENCOUNTER_BADGE: Partial<Record<EncounterType, string>> = {
-  battle: 'B', elite_battle: 'E', boss: 'Bo',
-  rest: 'R', event: 'Ev', scout: 'Sc', forage: 'Fo',
-  recruit: 'Re', ambush: 'Am', siege: 'Si', hazard: 'Hz',
-};
-
-const ENCOUNTER_BADGE_COLOR: Partial<Record<EncounterType, string>> = {
-  battle: '#c24a3a', elite_battle: '#c24a3a', boss: '#8a4ac2',
-  rest: '#4a9a6a', event: '#d4a843', scout: '#60a8d0',
-  forage: '#9aa84a', recruit: '#d48b3a', ambush: '#c24a3a',
-  siege: '#8a4ac2', hazard: '#c24a3a',
-};
-
-const LANDMARK_LABEL: Record<LandmarkType, string> = {
-  start_camp: 'Start Camp', battlefield: 'Battlefield', forest: 'Forest',
-  hill: 'Hill', village: 'Village', farm: 'Farm', city: 'City',
-  fort: 'Fort', camp: 'Camp', shrine: 'Shrine', river_crossing: 'River Crossing',
-  ruins: 'Ruins', road: 'Road', marsh: 'Marsh', mountain_pass: 'Mountain Pass',
-  watchtower: 'Watchtower', supply_depot: 'Supply Depot',
-};
+// ENCOUNTER_ICON, ENCOUNTER_BADGE, ENCOUNTER_BADGE_COLOR, LANDMARK_LABEL
+// sourced from ./landmark-presentation (T4.1 consolidation).
 
 const SIZE_REGULAR = 52;
 const SIZE_BOSS = 64;
