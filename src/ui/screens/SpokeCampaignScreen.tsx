@@ -34,6 +34,7 @@ import { LandmarkMap } from '../components/spoke/LandmarkMap';
 import { LandmarkMapNode } from '../components/spoke/LandmarkMapNode';
 import { LandmarkRoute } from '../components/spoke/LandmarkRoute';
 import { SpokeLegendPanel } from '../components/spoke/SpokeLegendPanel';
+import { ArmyCampaignPanel } from '../components/spoke/ArmyCampaignPanel';
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 
 if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-styles')) {
@@ -239,22 +240,6 @@ export function SpokeCampaignScreen() {
       <div class="spoke-campaign-grid">
         <div class="spoke-campaign-zone spoke-campaign-zone--topbar">
           <SpokeCampaignTopBar />
-          <div class="spoke-campaign-actions">
-            <button
-              class="spoke-campaign-action-btn"
-              onClick={() => setShowArmyHUD(true)}
-              disabled={!spoke.boundArmy}
-              title={spoke.boundArmy ? 'View army roster' : 'No army bound'}
-            >
-              Army
-            </button>
-            <button
-              class="spoke-campaign-action-btn spoke-campaign-action-btn--danger"
-              onClick={handleRetreat}
-            >
-              Retreat
-            </button>
-          </div>
         </div>
 
         <aside class="spoke-campaign-zone spoke-campaign-zone--details">
@@ -304,13 +289,13 @@ export function SpokeCampaignScreen() {
         </aside>
 
         <section class="spoke-campaign-zone spoke-campaign-zone--army">
-          <div class="spoke-campaign-placeholder">
-            <span class="spoke-campaign-placeholder-eyebrow">Legion</span>
-            <span class="spoke-campaign-placeholder-title">
-              {spoke.boundArmy ? `${spoke.boundArmy.cohorts.length} cohorts bound` : 'No army bound'}
-            </span>
-            <span class="spoke-campaign-placeholder-hint">Legion campaign panel · S29-09</span>
-          </div>
+          <ArmyCampaignPanel
+            spoke={spoke}
+            morale={morale}
+            legateName={spoke.boundLegate?.name ?? null}
+            onOpenDetails={() => setShowArmyHUD(true)}
+            onRetreat={handleRetreat}
+          />
         </section>
       </div>
 
