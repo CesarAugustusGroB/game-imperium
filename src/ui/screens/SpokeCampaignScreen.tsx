@@ -19,7 +19,7 @@ import { currentSpoke, currentNodeIndex, resetSpoke } from '../../game/progressi
 import { threatLevel, selectedCommander } from '../../game/core/game-state';
 import { FACTION_COLORS } from '../../game/core/commander';
 import { computeArmyMorale } from '../../game/army/morale';
-import { SpokeTopBar } from '../components/spoke/SpokeTopBar';
+import { SpokeCampaignTopBar } from '../components/spoke/SpokeCampaignTopBar';
 import { LandmarkDetailsPanel } from '../components/spoke/LandmarkDetailsPanel';
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 
@@ -173,7 +173,7 @@ export function SpokeCampaignScreen() {
     <div style={{ background: 'var(--color-bg-primary)', minHeight: '100vh' }}>
       <div class="spoke-campaign-grid">
         <div class="spoke-campaign-zone spoke-campaign-zone--topbar">
-          <SpokeTopBar />
+          <SpokeCampaignTopBar />
           <div class="spoke-campaign-actions">
             <button
               class="spoke-campaign-action-btn"
