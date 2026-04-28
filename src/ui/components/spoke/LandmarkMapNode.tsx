@@ -51,9 +51,9 @@ if (typeof document !== 'undefined' && !document.getElementById('landmark-map-no
       transition: filter var(--duration-fast) var(--ease-default),
                   transform var(--duration-fast) var(--ease-default);
     }
-    .lmn:hover { filter: brightness(1.18); transform: translate(-50%, calc(-50% - 2px)); }
+    .lmn:hover { filter: brightness(1.18); transform: translateY(-2px); }
     .lmn-locked { filter: brightness(0.5) saturate(0.35); cursor: default; }
-    .lmn-locked:hover { transform: translate(-50%, -50%); filter: brightness(0.5) saturate(0.35); }
+    .lmn-locked:hover { transform: none; filter: brightness(0.5) saturate(0.35); }
     .lmn-resolved { opacity: 0.65; }
 
     /* Intel halos — outer ring around the tile. */
