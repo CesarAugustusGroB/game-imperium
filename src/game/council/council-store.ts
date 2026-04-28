@@ -24,9 +24,6 @@ import { addNotification } from '../../ui/notifications/notification-store';
 /** The 3 advisor slots. null = empty seat. */
 export const councilSlots = signal<(Advisor | null)[]>([null, null, null]);
 
-/** Advisors owned but not currently seated. */
-export const advisorPool = signal<Advisor[]>([]);
-
 /** Purchasable advisor offers. These are not owned until hired. */
 export const advisorMarket = signal<Advisor[]>([]);
 
@@ -39,40 +36,39 @@ export const plannedSpoke = signal<Spoke | null>(null);
 // ── Slot management ──
 
 /**
- * Seat an advisor from the pool into the given slot (0–2).
- * If the slot is occupied, the displaced advisor returns to the pool.
- * Removes the advisor from the pool.
+ * Seat an advisor into the given slot (0–2).
+ * Internal/test helper: UI hiring should use hireAndSeatAdvisor.
+ * If the slot is occupied, the displaced advisor returns to the market.
+ * Removes the incoming advisor from the market if present.
  * Returns false if slotIndex is out of range.
  */
 export function seatAdvisor(slotIndex: number, advisor: Advisor): boolean {
   if (slotIndex < 0 || slotIndex > 2) return false;
 
   const slots = councilSlots.value.slice() as (Advisor | null)[];
-  const pool = advisorPool.value.slice();
+  const market = advisorMarket.value.slice();
 
-  // Displace currently seated advisor back to pool
   const displaced = slots[slotIndex];
   if (displaced !== null) {
-    pool.push(displaced);
+    market.push(displaced);
   }
 
-  // Remove the incoming advisor from the pool
-  const poolIndex = pool.findIndex(a => a.id === advisor.id);
-  if (poolIndex !== -1) {
-    pool.splice(poolIndex, 1);
+  const marketIndex = market.findIndex(a => a.id === advisor.id);
+  if (marketIndex !== -1) {
+    market.splice(marketIndex, 1);
   }
 
   slots[slotIndex] = advisor;
 
   councilSlots.value = slots;
-  advisorPool.value = pool;
+  advisorMarket.value = market;
 
   regeneratePlannedSpoke();
   return true;
 }
 
 /**
- * Move the advisor in the given slot back to the pool.
+ * Move the advisor in the given slot back to the market.
  * No-op if slot is empty or index is invalid.
  */
 export function unseatAdvisor(slotIndex: number): void {
@@ -82,19 +78,14 @@ export function unseatAdvisor(slotIndex: number): void {
   const advisor = slots[slotIndex];
   if (advisor === null) return;
 
-  const pool = advisorPool.value.slice();
-  pool.push(advisor);
+  const market = advisorMarket.value.slice();
+  market.push(advisor);
   slots[slotIndex] = null;
 
   councilSlots.value = slots;
-  advisorPool.value = pool;
+  advisorMarket.value = market;
 
   regeneratePlannedSpoke();
-}
-
-/** Add an advisor to the pool (e.g. from hire/reward). */
-export function hireAdvisor(advisor: Advisor): void {
-  advisorPool.value = [...advisorPool.value, advisor];
 }
 
 /** Replace the current political market offers. */
@@ -113,53 +104,28 @@ function getAdvisorCost(advisor: Advisor): { resource: ResourceType; amount: num
 }
 
 /**
- * Buy an advisor from the political market and add them to the owned pool.
- * Returns the hired advisor, or null if the offer is missing/ unaffordable.
- */
-export function hireAdvisorFromMarket(advisorId: string): Advisor | null {
-  const market = advisorMarket.value.slice();
-  const offerIndex = market.findIndex(a => a.id === advisorId);
-  if (offerIndex === -1) return null;
-
-  const offer = market[offerIndex];
-  const cost = getAdvisorCost(offer);
-  if (cost.amount > 0 && !spendResource(cost.resource, cost.amount)) return null;
-
-  market.splice(offerIndex, 1);
-  advisorMarket.value = market;
-
-  const hired = { ...offer };
-  hireAdvisor(hired);
-  return hired;
-}
-
-/**
  * Buy an advisor from the political market and seat them immediately.
- * If the target seat is occupied, the displaced advisor returns to the pool.
+ * Returns false and mutates nothing if the offer is missing, unaffordable,
+ * the slot is invalid, or the target seat is occupied.
  */
-export function hireAndSeatAdvisor(advisorId: string, slotIndex: number): boolean {
+export function hireAndSeatAdvisor(advisor: Advisor, slotIndex: number): boolean {
   if (slotIndex < 0 || slotIndex > 2) return false;
 
+  const slots = councilSlots.value.slice() as (Advisor | null)[];
+  if (slots[slotIndex] !== null) return false;
+
   const market = advisorMarket.value.slice();
-  const offerIndex = market.findIndex(a => a.id === advisorId);
+  const offerIndex = market.findIndex(a => a.id === advisor.id);
   if (offerIndex === -1) return false;
 
   const offer = market[offerIndex];
   const cost = getAdvisorCost(offer);
   if (cost.amount > 0 && !spendResource(cost.resource, cost.amount)) return false;
 
-  const slots = councilSlots.value.slice() as (Advisor | null)[];
-  const pool = advisorPool.value.slice();
-  const displaced = slots[slotIndex];
-  if (displaced !== null) {
-    pool.push(displaced);
-  }
-
   slots[slotIndex] = { ...offer };
   market.splice(offerIndex, 1);
 
   councilSlots.value = slots;
-  advisorPool.value = pool;
   advisorMarket.value = market;
 
   regeneratePlannedSpoke();
@@ -167,23 +133,23 @@ export function hireAndSeatAdvisor(advisorId: string, slotIndex: number): boolea
 }
 
 /**
- * Remove an advisor from the pool (NOT from a seated slot) and sell for gold.
+ * Remove an advisor from the market (NOT from a seated slot) and sell for gold.
  * Sell price = 4 + (currentTier - 1) * 2.
- * Returns gold gained, or 0 if not found in pool or if the advisor is seated.
+ * Returns gold gained, or 0 if not found in market or if the advisor is seated.
  */
 export function fireAdvisor(advisorId: string): number {
   // Refuse to fire a seated advisor
   if (councilSlots.value.some(a => a?.id === advisorId)) return 0;
 
-  const pool = advisorPool.value.slice();
-  const index = pool.findIndex(a => a.id === advisorId);
+  const market = advisorMarket.value.slice();
+  const index = market.findIndex(a => a.id === advisorId);
   if (index === -1) return 0;
 
-  const advisor = pool[index];
+  const advisor = market[index];
   const goldGained = 4 + (advisor.currentTier - 1) * 2;
 
-  pool.splice(index, 1);
-  advisorPool.value = pool;
+  market.splice(index, 1);
+  advisorMarket.value = market;
 
   // Selling bypasses spoke-gain tracking — use addResource directly
   addResource('gold', goldGained);
@@ -199,7 +165,7 @@ export function fireAdvisor(advisorId: string): number {
 export function grantAdvisorXp(advisorId: string, amount: number): boolean {
   if (amount <= 0) return false;
   const slots = councilSlots.value.slice() as (Advisor | null)[];
-  const pool = advisorPool.value.slice();
+  const market = advisorMarket.value.slice();
 
   let found = false;
   let tieredUp = false;
@@ -217,13 +183,13 @@ export function grantAdvisorXp(advisorId: string, amount: number): boolean {
   }
 
   if (!found) {
-    for (let i = 0; i < pool.length; i++) {
-      const a = pool[i];
+    for (let i = 0; i < market.length; i++) {
+      const a = market[i];
       if (a.id === advisorId) {
         const newXp = a.xp + amount;
         const newTier = getTierForXp(newXp);
         tieredUp = newTier > a.currentTier;
-        pool[i] = { ...a, xp: newXp, currentTier: newTier };
+        market[i] = { ...a, xp: newXp, currentTier: newTier };
         found = true;
         break;
       }
@@ -233,13 +199,13 @@ export function grantAdvisorXp(advisorId: string, amount: number): boolean {
   if (!found) return false;
 
   councilSlots.value = slots;
-  advisorPool.value = pool;
+  advisorMarket.value = market;
 
   if (tieredUp) {
     // Find the advisor's updated tier from slots or pool
     const updated =
       slots.find(a => a?.id === advisorId) ??
-      pool.find(a => a.id === advisorId);
+      market.find(a => a.id === advisorId);
     if (updated) {
       const newTierRoman = (['I', 'II', 'III'] as const)[updated.currentTier - 1] ?? 'III';
       addNotification({
@@ -476,7 +442,6 @@ export function startSpokeFromCouncil(): void {
 /** Reset all council state (called on run end / title screen return). */
 export function resetCouncilStore(): void {
   councilSlots.value = [null, null, null];
-  advisorPool.value = [];
   advisorMarket.value = [];
   tierUpNotices.value = [];
   plannedSpoke.value = null;

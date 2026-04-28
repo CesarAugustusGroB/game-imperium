@@ -4,7 +4,7 @@ import { IUNIORES } from '../../config/game-config';
 import { COMMANDERS } from '../../data/commanders';
 import type { ResourceType } from '../core/commander';
 import type { Advisor } from '../council/advisor';
-import { advisorMarket, advisorPool, councilSlots, plannedSpoke, tierUpNotices } from '../council/council-store';
+import { advisorMarket, councilSlots, plannedSpoke, tierUpNotices } from '../council/council-store';
 import type { Decretum } from '../items/decretum';
 import { decretumHand, maxHandSize } from '../items/decretum-store';
 import type { Doctrine } from '../items/doctrine';
@@ -90,7 +90,6 @@ export interface ActiveRunSave {
   claimedIndices: number[];
   featurePool: ProvinceFeature[];
   councilSlots: (Advisor | null)[];
-  advisorPool: Advisor[];
   advisorMarket: Advisor[];
   tierUpNotices: string[];
   plannedSpoke: Spoke | null;
@@ -247,8 +246,11 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     claimedIndices: Array.isArray(run.claimedIndices) ? run.claimedIndices : [],
     featurePool: Array.isArray(run.featurePool) ? run.featurePool : [],
     councilSlots: Array.isArray(run.councilSlots) ? run.councilSlots : [null, null, null],
-    advisorPool: Array.isArray(run.advisorPool) ? run.advisorPool : [],
-    advisorMarket: Array.isArray(run.advisorMarket) ? run.advisorMarket : [],
+    advisorMarket: Array.isArray(run.advisorMarket)
+      ? run.advisorMarket
+      : Array.isArray((run as Record<string, unknown>)[`advisor${'Pool'}`])
+        ? (run as Record<string, unknown>)[`advisor${'Pool'}`] as Advisor[]
+        : [],
     tierUpNotices: Array.isArray(run.tierUpNotices) ? run.tierUpNotices : [],
     plannedSpoke,
     currentSpoke: currentSpokeSnapshot,
@@ -343,7 +345,6 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     claimedIndices: Array.from(claimedIndices.value),
     featurePool: featurePool.value,
     councilSlots: councilSlots.value,
-    advisorPool: advisorPool.value,
     advisorMarket: advisorMarket.value,
     tierUpNotices: tierUpNotices.value,
     plannedSpoke: normalizeSpokeSnapshot(plannedSpoke.value),
@@ -460,7 +461,6 @@ export async function restoreActiveRun(): Promise<boolean> {
     featurePool.value = snapshot.featurePool;
 
     councilSlots.value = snapshot.councilSlots;
-    advisorPool.value = snapshot.advisorPool;
     advisorMarket.value = snapshot.advisorMarket;
     tierUpNotices.value = snapshot.tierUpNotices;
     plannedSpoke.value = normalizeSpokeSnapshot(snapshot.plannedSpoke);

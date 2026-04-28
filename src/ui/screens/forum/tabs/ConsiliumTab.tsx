@@ -1,7 +1,7 @@
 import { useSignal } from '@preact/signals';
 import {
-  councilSlots, advisorPool,
-  seatAdvisor, unseatAdvisor,
+  councilSlots, advisorMarket,
+  hireAndSeatAdvisor, unseatAdvisor,
 } from '../../../../game/council/council-store';
 import {
   type Advisor, type AdvisorPassive,
@@ -21,28 +21,29 @@ const ROMAN: readonly string[] = ['I', 'II', 'III'];
 export function ConsiliumTab() {
   const selectedId = useSignal<string | null>(null);
   const slots = councilSlots.value;
-  const pool = advisorPool.value;
+  const market = advisorMarket.value;
   const seatedCount = slots.filter((s) => s !== null).length;
   const accent = '#d4a843';
 
-  // Resolve currently-selected advisor (may be seated or in pool)
+  // Resolve currently-selected advisor (may be seated or in market)
   const allAdvisors: Array<{ advisor: Advisor; slotIndex: number | null }> = [
     ...slots.map((a, i) => (a ? { advisor: a, slotIndex: i } : null)),
-    ...pool.map((a) => ({ advisor: a, slotIndex: null })),
+    ...market.map((a) => ({ advisor: a, slotIndex: null })),
   ].filter((x): x is { advisor: Advisor; slotIndex: number | null } => x !== null);
 
-  // Default selection: first seated advisor, else first pool advisor
+  // Default selection: first seated advisor, else first market offer
   const currentSelection = selectedId.value
     ? allAdvisors.find((x) => x.advisor.id === selectedId.value) ?? null
     : allAdvisors[0] ?? null;
 
-  const subtitle = `${seatedCount} of ${slots.length} seated · ${pool.length} in the pool`;
+  const subtitle = `${seatedCount} of ${slots.length} seated · ${market.length} in the market`;
 
   function handleOfferSeat(advisor: Advisor) {
     const emptyIdx = slots.findIndex((s) => s === null);
     if (emptyIdx === -1) return;
-    seatAdvisor(emptyIdx, advisor);
-    selectedId.value = advisor.id;
+    if (hireAndSeatAdvisor(advisor, emptyIdx)) {
+      selectedId.value = advisor.id;
+    }
   }
 
   function handleDismiss(slotIndex: number) {
@@ -59,7 +60,7 @@ export function ConsiliumTab() {
         display: 'grid', gridTemplateColumns: '340px 1fr', gap: 14,
       }}>
 
-        {/* ── LEFT: seats + pool ── */}
+        {/* ── LEFT: seats + market ── */}
         <div style={{
           display: 'flex', flexDirection: 'column', gap: 12,
           minHeight: 0, overflow: 'auto',
@@ -83,27 +84,27 @@ export function ConsiliumTab() {
 
           <OrnatePanel accent={accent}>
             <SectionHeader
-              title="Advisor Pool"
+              title="Political Market"
               accent={accent}
               right={<span style={{
                 fontSize: 9, color: 'var(--imp-text-lo)',
                 letterSpacing: 1, textTransform: 'uppercase',
               }}>
-                {pool.length} available
+                {market.length} available
               </span>}
             />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {pool.length === 0 && (
+              {market.length === 0 && (
                 <div style={{
                   padding: '10px 4px',
                   fontFamily: 'var(--imp-font-serif)',
                   fontStyle: 'italic', fontSize: 11,
                   color: 'var(--imp-text-lo)',
                 }}>
-                  The pool is empty.
+                  No councilors are available for hire.
                 </div>
               )}
-              {pool.map((advisor) => (
+              {market.map((advisor) => (
                 <AdvisorRow
                   key={advisor.id}
                   advisor={advisor}
@@ -243,7 +244,7 @@ function AdvisorRow({ advisor, role, accent, selected, onClick, seated }: Adviso
           {advisor.name}
         </div>
         <div style={{ fontSize: 10, color: 'var(--imp-text-lo)', fontStyle: 'italic' }}>
-          {seated ? role ?? 'Seated' : 'Free agent'}
+          {seated ? role ?? 'Seated' : `${advisor.cost} gold`}
         </div>
       </div>
       <div style={{
@@ -314,7 +315,7 @@ function AdvisorDetail({ advisor, slotIndex, anyEmptySeat, onOfferSeat, onDismis
             textAlign: 'center', textTransform: 'uppercase',
             letterSpacing: 1, fontWeight: 600,
           }}>
-            {isSeated ? SLOT_LABELS[slotIndex] ?? 'Seated' : 'Free Agent'}
+            {isSeated ? SLOT_LABELS[slotIndex] ?? 'Seated' : 'Market Offer'}
           </div>
         </div>
 
@@ -325,7 +326,7 @@ function AdvisorDetail({ advisor, slotIndex, anyEmptySeat, onOfferSeat, onDismis
             color: 'var(--imp-text-lo)',
             textTransform: 'uppercase', marginBottom: 4,
           }}>
-            Tier {ROMAN[advisor.currentTier - 1] ?? '—'} · {isSeated ? 'Seated' : 'Available'}
+            Tier {ROMAN[advisor.currentTier - 1] ?? '—'} · {isSeated ? 'Seated' : `${advisor.cost} Gold`}
           </div>
           <div style={{
             fontFamily: 'var(--imp-font-display)',
@@ -387,7 +388,7 @@ function AdvisorDetail({ advisor, slotIndex, anyEmptySeat, onOfferSeat, onDismis
                 disabled={!anyEmptySeat}
                 style={btnPrimary(accent, !anyEmptySeat)}
               >
-                {anyEmptySeat ? 'Offer a Seat' : 'All seats filled'}
+                {anyEmptySeat ? 'Hire & Seat' : 'All seats filled'}
               </button>
             )}
           </div>
@@ -441,7 +442,7 @@ function EmptyDetail({ accent }: { accent: string }) {
         No advisors
       </div>
       <div style={{ fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic' }}>
-        The pool will repopulate as you progress.
+        The market will repopulate as you progress.
       </div>
     </div>
   );
