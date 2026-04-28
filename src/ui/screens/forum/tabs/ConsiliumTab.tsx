@@ -1,18 +1,26 @@
 import { useSignal } from '@preact/signals';
-import { advisorMarket, councilSlots, unseatAdvisor } from '../../../../game/council/council-store';
+import {
+  advisorMarket,
+  councilSlots,
+  hireAndSeatAdvisor,
+  unseatAdvisor,
+} from '../../../../game/council/council-store';
 import {
   type Advisor,
   type AdvisorPassive,
+  type AdvisorTrait,
   getCurrentTier,
   XP_TIER_2,
   XP_TIER_3,
 } from '../../../../game/council/advisor';
 import { FACTION_COLORS } from '../../../../game/core/commander';
+import { gold } from '../../../../game/core/resources';
 import { OrnatePanel } from '../../../components/OrnatePanel';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 import {
+  AdvisorMarketCard,
   BonusCard,
   CeremonialTrack,
   SPQREmblem,
@@ -26,6 +34,8 @@ const ROMAN: readonly string[] = ['I', 'II', 'III'];
 const CONSILIUM_ACCENT = '#d4a843';
 
 type AdvisorSource = 'seat' | 'market';
+type MarketFilter = 'all' | 'diplomatic' | 'economic' | 'intrigue' | 'military';
+type MarketSort = 'cost' | 'name' | 'tier';
 
 interface AdvisorSelection {
   advisor: Advisor;
@@ -38,7 +48,7 @@ if (typeof document !== 'undefined' && !document.getElementById('consilium-3col-
   el.id = 'consilium-3col-styles';
   el.textContent = `
     .consilium-command-grid {
-      flex: 1;
+      flex: 1 1 auto;
       min-height: 0;
       overflow: hidden;
       padding: 20px 32px 24px;
@@ -69,8 +79,26 @@ if (typeof document !== 'undefined' && !document.getElementById('consilium-3col-
       background: rgba(194, 74, 58, 0.12);
     }
     .consilium-danger-btn:active:not(:disabled),
-    .consilium-selectable:active {
+    .consilium-selectable:active,
+    .consilium-filter-chip:active {
       transform: translateY(0);
+    }
+    .consilium-filter-chip {
+      transition: border-color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
+    }
+    .consilium-filter-chip:hover {
+      border-color: var(--imp-gold);
+      color: var(--imp-text-hi);
+      background: rgba(80, 60, 20, 0.22);
+    }
+    .consilium-filter-chip:focus-visible {
+      outline: 1px solid var(--imp-gold-hi);
+      outline-offset: 2px;
+    }
+    .consilium-market-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
     }
     @media (max-width: 1180px) {
       .consilium-command-grid {
@@ -95,8 +123,11 @@ if (typeof document !== 'undefined' && !document.getElementById('consilium-3col-
 
 export function ConsiliumTab() {
   const selectedId = useSignal<string | null>(null);
+  const marketFilter = useSignal<MarketFilter>('all');
+  const marketSort = useSignal<MarketSort>('cost');
   const slots = councilSlots.value;
   const market = advisorMarket.value;
+  const currentGold = gold.value;
   const seatedCount = slots.filter((s) => s !== null).length;
 
   const seatedSelections: AdvisorSelection[] = slots.flatMap((advisor, index) => (
@@ -124,47 +155,76 @@ export function ConsiliumTab() {
     selectedId.value = null;
   }
 
+  function hireFromMarket(advisor: Advisor) {
+    const slotIndex = slots.findIndex((slot) => slot === null);
+    if (slotIndex === -1) return;
+
+    const hired = hireAndSeatAdvisor(advisor.id, slotIndex);
+    if (hired) selectedId.value = advisor.id;
+  }
+
+  const filteredMarket = sortMarket(
+    market.filter((advisor) => marketFilter.value === 'all' || getAdvisorSchool(advisor) === marketFilter.value),
+    marketSort.value,
+  );
+
   return (
     <>
       <Masthead title="Consilium" subtitle={subtitle} accent={CONSILIUM_ACCENT} />
 
-      <div class="consilium-command-grid">
-        <aside class="consilium-scroll" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <SeatsPanel
-            slots={slots}
-            selectedId={currentSelection?.advisor.id ?? null}
-            onSelect={selectAdvisor}
-          />
-          <MarketBrowsePanel
-            market={market}
-            selectedId={currentSelection?.advisor.id ?? null}
-            onSelect={selectAdvisor}
-          />
-        </aside>
-
-        <OrnatePanel
-          accent={CONSILIUM_ACCENT}
-          padding="0"
-          style={{
-            minHeight: 0,
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {currentSelection ? (
-            <AdvisorHero
-              selection={currentSelection}
-              onDismiss={dismissAdvisor}
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div class="consilium-command-grid">
+          <aside class="consilium-scroll" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <SeatsPanel
+              slots={slots}
+              selectedId={currentSelection?.advisor.id ?? null}
+              onSelect={selectAdvisor}
             />
-          ) : (
-            <EmptyHero />
-          )}
-        </OrnatePanel>
+            <MarketBrowsePanel
+              market={market}
+              selectedId={currentSelection?.advisor.id ?? null}
+              onSelect={selectAdvisor}
+            />
+          </aside>
 
-        <aside class="consilium-reserve-column consilium-scroll">
-          <ReservedColumn />
-        </aside>
+          <OrnatePanel
+            accent={CONSILIUM_ACCENT}
+            padding="0"
+            style={{
+              minHeight: 0,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {currentSelection ? (
+              <AdvisorHero
+                selection={currentSelection}
+                onDismiss={dismissAdvisor}
+              />
+            ) : (
+              <EmptyHero />
+            )}
+          </OrnatePanel>
+
+          <aside class="consilium-reserve-column consilium-scroll">
+            <ReservedColumn />
+          </aside>
+        </div>
+
+        <PoliticalMarketPanel
+          market={filteredMarket}
+          totalOffers={market.length}
+          currentGold={currentGold}
+          emptySlotIndex={slots.findIndex((slot) => slot === null)}
+          selectedId={currentSelection?.advisor.id ?? null}
+          filter={marketFilter.value}
+          sort={marketSort.value}
+          onFilterChange={(filter) => { marketFilter.value = filter; }}
+          onSortChange={(sort) => { marketSort.value = sort; }}
+          onSelect={selectAdvisor}
+          onHire={hireFromMarket}
+        />
       </div>
     </>
   );
@@ -603,6 +663,129 @@ function ReservedColumn() {
   );
 }
 
+interface PoliticalMarketPanelProps {
+  market: Advisor[];
+  totalOffers: number;
+  currentGold: number;
+  emptySlotIndex: number;
+  selectedId: string | null;
+  filter: MarketFilter;
+  sort: MarketSort;
+  onFilterChange: (filter: MarketFilter) => void;
+  onSortChange: (sort: MarketSort) => void;
+  onSelect: (advisor: Advisor) => void;
+  onHire: (advisor: Advisor) => void;
+}
+
+function PoliticalMarketPanel({
+  market,
+  totalOffers,
+  currentGold,
+  emptySlotIndex,
+  selectedId,
+  filter,
+  sort,
+  onFilterChange,
+  onSortChange,
+  onSelect,
+  onHire,
+}: PoliticalMarketPanelProps) {
+  return (
+    <div style={{ flex: '0 0 auto', padding: '0 32px 24px' }}>
+      <OrnatePanel accent={CONSILIUM_ACCENT} padding="14px 16px">
+        <SectionHeader
+          title="Political Market"
+          accent={CONSILIUM_ACCENT}
+          right={<span style={countPillStyle}>{totalOffers} offers · {currentGold}g</span>}
+        />
+
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 12,
+          flexWrap: 'wrap',
+          marginBottom: 12,
+        }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {MARKET_FILTERS.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                class="consilium-filter-chip"
+                onClick={() => onFilterChange(item.value)}
+                style={chipButtonStyle(filter === item.value)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{
+              color: 'var(--imp-text-lo)',
+              fontFamily: 'var(--imp-font-body)',
+              fontSize: 9,
+              fontWeight: 800,
+              letterSpacing: 1.2,
+              textTransform: 'uppercase',
+            }}>
+              Sort
+            </span>
+            {MARKET_SORTS.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                class="consilium-filter-chip"
+                onClick={() => onSortChange(item.value)}
+                style={chipButtonStyle(sort === item.value)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {market.length === 0 ? (
+          <div style={{
+            minHeight: 118,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px dashed var(--imp-gold-faint)',
+            background: 'rgba(13, 11, 20, 0.44)',
+            color: 'var(--imp-text-lo)',
+            fontFamily: 'var(--imp-font-serif)',
+            fontSize: 13,
+            fontStyle: 'italic',
+          }}>
+            No political offers match this school.
+          </div>
+        ) : (
+          <div class="consilium-market-grid">
+            {market.map((advisor) => {
+              const reason = getHireBlockReason(advisor, currentGold, emptySlotIndex);
+              return (
+                <AdvisorMarketCard
+                  key={advisor.id}
+                  advisor={advisor}
+                  accent={CONSILIUM_ACCENT}
+                  selected={advisor.id === selectedId}
+                  disabled={reason !== null}
+                  unavailableReason={reason ?? undefined}
+                  actionLabel={reason ?? 'Hire & Seat'}
+                  onSelect={onSelect}
+                  onHire={onHire}
+                />
+              );
+            })}
+          </div>
+        )}
+      </OrnatePanel>
+    </div>
+  );
+}
+
 function MiniPortrait({ advisor, size }: { advisor: Advisor; size: number }) {
   const color = FACTION_COLORS[advisor.color];
   return (
@@ -675,6 +858,63 @@ function heroLine(p: AdvisorPassive, source: AdvisorSource): string {
     : 'A seated voice shapes the next campaign:';
   return `${prefix} ${describePassive(p)}`;
 }
+
+function getHireBlockReason(advisor: Advisor, currentGold: number, emptySlotIndex: number): string | null {
+  if (emptySlotIndex === -1) return 'All seats filled';
+  if (currentGold < advisor.cost) return `Need ${advisor.cost - currentGold} gold`;
+  return null;
+}
+
+function getAdvisorSchool(advisor: Advisor): MarketFilter {
+  if (hasAnyTrait(advisor.traits, ['Strategist', 'Veteran', 'Zealot'])) return 'military';
+  if (hasAnyTrait(advisor.traits, ['Schemer', 'Mastermind'])) return 'intrigue';
+  if (hasAnyTrait(advisor.traits, ['Coin-Keeper', 'Financier', 'Logistician'])) return 'economic';
+  return 'diplomatic';
+}
+
+function hasAnyTrait(traits: AdvisorTrait[], matches: AdvisorTrait[]): boolean {
+  return traits.some((trait) => matches.includes(trait));
+}
+
+function sortMarket(market: Advisor[], sort: MarketSort): Advisor[] {
+  const sorted = market.slice();
+  sorted.sort((a, b) => {
+    if (sort === 'name') return a.name.localeCompare(b.name);
+    if (sort === 'tier') return b.currentTier - a.currentTier || a.cost - b.cost || a.name.localeCompare(b.name);
+    return a.cost - b.cost || a.name.localeCompare(b.name);
+  });
+  return sorted;
+}
+
+function chipButtonStyle(active: boolean): preact.JSX.CSSProperties {
+  return {
+    padding: '5px 9px',
+    border: `1px solid ${active ? CONSILIUM_ACCENT : 'var(--imp-gold-faint)'}`,
+    borderRadius: 999,
+    background: active ? 'rgba(80, 60, 20, 0.34)' : 'rgba(13, 11, 20, 0.52)',
+    color: active ? 'var(--imp-text-hi)' : 'var(--imp-text-mid)',
+    cursor: 'pointer',
+    fontFamily: 'var(--imp-font-body)',
+    fontSize: 9,
+    fontWeight: 800,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  };
+}
+
+const MARKET_FILTERS: Array<{ value: MarketFilter; label: string }> = [
+  { value: 'all', label: 'All' },
+  { value: 'diplomatic', label: 'Diplomatic' },
+  { value: 'economic', label: 'Economic' },
+  { value: 'intrigue', label: 'Intrigue' },
+  { value: 'military', label: 'Military' },
+];
+
+const MARKET_SORTS: Array<{ value: MarketSort; label: string }> = [
+  { value: 'cost', label: 'Cost' },
+  { value: 'name', label: 'Name' },
+  { value: 'tier', label: 'Tier' },
+];
 
 const smallCapsStyle: preact.JSX.CSSProperties = {
   color: 'var(--imp-text-mid)',
