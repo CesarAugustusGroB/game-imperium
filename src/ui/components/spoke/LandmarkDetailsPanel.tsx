@@ -225,9 +225,20 @@ interface LandmarkDetailsPanelProps {
   isCurrent: boolean;
   onAction?: () => void;
   accentColor?: string;
+  /** Override the auto-derived action button label (S29-07). */
+  actionLabel?: string;
+  /** Tooltip shown when the action button is disabled (S29-07). */
+  actionDisabledReason?: string;
 }
 
-export function LandmarkDetailsPanel({ node, isCurrent, onAction, accentColor = 'var(--color-gold-primary)' }: LandmarkDetailsPanelProps) {
+export function LandmarkDetailsPanel({
+  node,
+  isCurrent,
+  onAction,
+  accentColor = 'var(--color-gold-primary)',
+  actionLabel: actionLabelOverride,
+  actionDisabledReason,
+}: LandmarkDetailsPanelProps) {
   if (!node) return null;
 
   const intel = getNodeIntel(node);
@@ -236,7 +247,7 @@ export function LandmarkDetailsPanel({ node, isCurrent, onAction, accentColor = 
     ? LANDMARK_LABEL[intel.landmarkType] ?? capitalize(intel.landmarkType.replace(/_/g, ' '))
     : 'Unknown';
   const title = intel.name ?? '???';
-  const btnLabel = actionLabel(intel);
+  const btnLabel = actionLabelOverride ?? actionLabel(intel);
 
   return (
     <div class="landmark-details-panel">
@@ -359,7 +370,7 @@ export function LandmarkDetailsPanel({ node, isCurrent, onAction, accentColor = 
           class="landmark-action-btn"
           onClick={isCurrent && onAction ? onAction : undefined}
           disabled={!isCurrent}
-          title={!isCurrent ? 'Not current node' : undefined}
+          title={!isCurrent ? (actionDisabledReason ?? 'Not current node') : undefined}
         >
           {btnLabel}
         </button>

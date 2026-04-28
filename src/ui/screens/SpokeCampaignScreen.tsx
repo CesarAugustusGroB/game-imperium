@@ -15,7 +15,16 @@
 
 import { useState } from 'preact/hooks';
 import { navigateTo } from '../screens';
-import { currentSpoke, currentNodeIndex, resetSpoke } from '../../game/progression/spoke';
+import {
+  currentSpoke,
+  currentNodeIndex,
+  resetSpoke,
+  advanceNode,
+  applyNodeEffectsNow,
+  legacyEncounterFromNodeType,
+} from '../../game/progression/spoke';
+import type { SpokeNode } from '../../game/progression/spoke';
+import type { EncounterType } from '../../game/progression/landmark-types';
 import { threatLevel, selectedCommander } from '../../game/core/game-state';
 import { FACTION_COLORS } from '../../game/core/commander';
 import { computeArmyMorale } from '../../game/army/morale';
@@ -174,6 +183,56 @@ export function SpokeCampaignScreen() {
   const currentNode = spoke.nodes[nodeIdx] ?? null;
   const morale = spoke.boundArmy ? computeArmyMorale(spoke) : null;
 
+  // Selected node — falls back to current main-chain node when nothing is
+  // explicitly selected so the details panel always has something to show.
+  const selectedNode = selectedNodeId
+    ? spoke.nodes.find((n) => n.id === selectedNodeId) ?? currentNode
+    : currentNode;
+  const selectedIsCurrent =
+    !!selectedNode && !!currentNode && selectedNode.id === currentNode.id && !selectedNode.resolved;
+
+  function dispatchEncounter(node: SpokeNode) {
+    const enc: EncounterType = node.encounterType ?? legacyEncounterFromNodeType(node.type);
+    switch (enc) {
+      case 'battle':
+      case 'elite_battle':
+      case 'boss':
+      case 'siege':
+        navigateTo('battleV2');
+        return;
+      case 'ambush':
+        // Apply the ambush penalties before the engagement so the hit
+        // (morale loss / iuniores damage) biases the battle, matching
+        // the legacy NodeMapScreen contract. advanceNode on return
+        // skips re-applying because applyNodeEffectsNow records the id.
+        applyNodeEffectsNow(node);
+        navigateTo('battleV2');
+        return;
+      // Non-combat encounters: progress through using the existing
+      // resolve pipeline. NodeMapScreen wraps this in rich modals
+      // (rest preview, event picker, outcome flash); the campaign
+      // screen MVP keeps the single primary action and lets the
+      // store handle effect application + resolution + season tick.
+      default:
+        advanceNode();
+        return;
+    }
+  }
+
+  function handleAction() {
+    if (!selectedNode || !selectedIsCurrent) return;
+    dispatchEncounter(selectedNode);
+  }
+
+  const actionLabel = selectedNode ? actionLabelFor(selectedNode) : 'Resolve';
+  const disabledReason = !selectedNode
+    ? undefined
+    : selectedNode.resolved
+      ? 'Already resolved'
+      : !selectedIsCurrent
+        ? 'Select your current landmark to act'
+        : undefined;
+
   return (
     <div style={{ background: 'var(--color-bg-primary)', minHeight: '100vh' }}>
       <div class="spoke-campaign-grid">
@@ -199,9 +258,12 @@ export function SpokeCampaignScreen() {
 
         <aside class="spoke-campaign-zone spoke-campaign-zone--details">
           <LandmarkDetailsPanel
-            node={currentNode}
-            isCurrent={true}
+            node={selectedNode}
+            isCurrent={selectedIsCurrent}
             accentColor={accent}
+            actionLabel={actionLabel}
+            actionDisabledReason={disabledReason}
+            onAction={handleAction}
           />
         </aside>
 
@@ -264,4 +326,30 @@ export function SpokeCampaignScreen() {
       )}
     </div>
   );
+}
+
+// Encounter-keyed action verbs for the details panel button. Hidden nodes
+// (`scoutedLevel === 0`) collapse to "Advance Blind" so the player still
+// has a single primary action they can commit to without scouting first.
+function actionLabelFor(node: SpokeNode): string {
+  const intel = node.scoutedLevel ?? (node.revealed === false ? 0 : 2);
+  if (intel === 0) return 'Advance Blind';
+  const enc: EncounterType = node.encounterType ?? legacyEncounterFromNodeType(node.type);
+  switch (enc) {
+    case 'battle':
+    case 'elite_battle':
+    case 'siege':
+      return 'Prepare Battle';
+    case 'boss':       return 'Engage Boss';
+    case 'ambush':     return 'Spring the Ambush';
+    case 'rest':       return 'Make Camp';
+    case 'forage':     return 'Forage';
+    case 'recruit':    return 'Recruit Locals';
+    case 'scout':      return 'Send Scouts';
+    case 'hazard':     return 'Press Through';
+    case 'event':      return 'Resolve';
+    case 'merchant':   return 'Approach';
+    case 'unknown':    return 'Advance Blind';
+    default:           return 'Resolve';
+  }
 }
