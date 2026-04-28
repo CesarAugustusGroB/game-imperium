@@ -54,6 +54,10 @@ if (typeof document !== 'undefined' && !document.getElementById('landmark-map-no
       flex-shrink: 0;
       cursor: pointer;
       outline: none;
+      /* Drop-shadow so tiles read clearly against the painted map bg. */
+      box-shadow:
+        0 4px 14px rgba(0, 0, 0, 0.55),
+        0 1px 3px rgba(0, 0, 0, 0.7);
       transition: filter var(--duration-fast) var(--ease-default),
                   transform var(--duration-fast) var(--ease-default);
     }

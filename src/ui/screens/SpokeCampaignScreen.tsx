@@ -43,66 +43,138 @@ if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-
   el.id = 'spoke-campaign-styles';
   el.textContent = `
     @keyframes spoke-campaign-fade-in {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
     @keyframes spoke-campaign-detail-swap {
       from { opacity: 0.3; transform: translateX(-4px); }
       to   { opacity: 1; transform: translateX(0); }
     }
 
+    /* ── Root: full-bleed painted-map stage ──────────────────────────── */
+    .spoke-campaign-stage {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background-color: #0d0a14;
+      isolation: isolate;
+      animation: spoke-campaign-fade-in 400ms var(--ease-default, ease) both;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .spoke-campaign-stage { animation: none; }
+    }
+    .spoke-campaign-stage::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url('/asset/promesa/node_map_promesa.png') center/cover no-repeat;
+      filter: saturate(0.85) brightness(0.55) contrast(1.05);
+      z-index: 0;
+    }
+    /* Painterly vignette on top of the bg so center pops. */
+    .spoke-campaign-stage::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 55%, transparent 38%, rgba(8, 6, 16, 0.65) 92%),
+        linear-gradient(180deg, rgba(8, 6, 16, 0.55) 0%, transparent 18%, transparent 78%, rgba(8, 6, 16, 0.65) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── Grid sits on top of the painted stage ─────────────────────── */
     .spoke-campaign-grid {
+      position: relative;
+      z-index: 2;
       display: grid;
-      grid-template-columns: minmax(260px, 300px) 1fr minmax(240px, 280px);
+      grid-template-columns: minmax(280px, 340px) 1fr minmax(240px, 280px);
       grid-template-rows: auto 1fr auto;
       grid-template-areas:
         "topbar    topbar     topbar"
         "details   map        legend"
         "army      army       army";
-      gap: 14px;
-      width: min(1600px, 96vw);
-      height: calc(100vh - 32px);
-      margin: 16px auto;
+      gap: 0;
+      width: 100vw;
+      height: 100vh;
       box-sizing: border-box;
-      animation: spoke-campaign-fade-in var(--duration-normal, 300ms) var(--ease-default, ease) both;
     }
-    @media (prefers-reduced-motion: reduce) {
-      .spoke-campaign-grid { animation: none; }
-    }
-    /* Mid-size desktop: give the map slightly more breathing room. */
     @media (min-width: 1280px) {
       .spoke-campaign-grid {
-        grid-template-columns: minmax(280px, 320px) 1fr minmax(260px, 300px);
-        gap: 16px;
+        grid-template-columns: minmax(320px, 360px) 1fr minmax(260px, 300px);
       }
     }
+
+    /* ── Zones are transparent — components carry their own painted skin */
+    .spoke-campaign-zone {
+      box-sizing: border-box;
+      position: relative;
+      overflow: visible;
+    }
+    .spoke-campaign-zone--topbar  { grid-area: topbar; }
+    .spoke-campaign-zone--details { grid-area: details; padding: 22px 18px 22px 22px; overflow-y: auto; }
+    .spoke-campaign-zone--map     { grid-area: map; padding: 12px 8px; min-height: 320px; }
+    .spoke-campaign-zone--legend  { grid-area: legend; padding: 22px 22px 22px 18px; overflow-y: auto; }
+    .spoke-campaign-zone--army    { grid-area: army; }
+
+    /* Detail-swap animation on selection change. */
     .spoke-campaign-zone--details > * {
       animation: spoke-campaign-detail-swap var(--duration-fast, 150ms) var(--ease-default, ease) both;
     }
     @media (prefers-reduced-motion: reduce) {
       .spoke-campaign-zone--details > * { animation: none; }
     }
-    .spoke-campaign-zone {
-      background: rgba(14, 12, 28, 0.72);
-      border: 1px solid rgba(180, 160, 100, 0.22);
-      border-radius: var(--radius-md);
-      padding: 12px 16px;
-      box-sizing: border-box;
-      overflow: auto;
-      position: relative;
-    }
-    .spoke-campaign-zone--topbar    { grid-area: topbar; padding: 8px 12px; }
-    .spoke-campaign-zone--details   { grid-area: details; }
-    .spoke-campaign-zone--map       { grid-area: map; min-height: 320px; }
-    .spoke-campaign-zone--map-flush { padding: 0; overflow: hidden; }
-    .spoke-campaign-zone--legend    { grid-area: legend; }
-    .spoke-campaign-zone--army      { grid-area: army; min-height: 96px; }
 
+    /* ── Painted card frame — used by side panels and the army strip */
+    .spoke-painted-card {
+      position: relative;
+      background:
+        linear-gradient(180deg, rgba(28, 22, 36, 0.96) 0%, rgba(18, 14, 24, 0.96) 100%);
+      border: 1px solid rgba(186, 152, 88, 0.55);
+      border-radius: 6px;
+      box-shadow:
+        0 0 0 1px rgba(8, 6, 14, 0.8),
+        0 18px 40px rgba(0, 0, 0, 0.6),
+        inset 0 0 0 1px rgba(212, 168, 67, 0.1);
+      padding: 18px 18px 22px;
+    }
+    .spoke-painted-card::before,
+    .spoke-painted-card::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid rgba(212, 168, 67, 0.8);
+      pointer-events: none;
+    }
+    .spoke-painted-card::before {
+      top: 4px; left: 4px;
+      border-right: none; border-bottom: none;
+    }
+    .spoke-painted-card::after {
+      bottom: 4px; right: 4px;
+      border-left: none; border-top: none;
+    }
+    /* Strip nested panel chrome so the painted-card frame is the only border. */
+    .spoke-painted-card .landmark-details-panel {
+      background: none;
+      border: none;
+      box-shadow: none;
+      margin: 0;
+      padding: 0;
+      max-width: none;
+    }
+    .spoke-painted-card .landmark-details-panel::before { display: none; }
+    .spoke-painted-card .spoke-legend {
+      gap: 14px;
+    }
+
+    /* Empty-state button kept for the no-spoke fallback. */
     .spoke-campaign-action-btn {
       padding: 6px 14px;
       background: rgba(14, 12, 28, 0.85);
       border: 1px solid rgba(180, 160, 100, 0.4);
-      border-radius: var(--radius-sm);
+      border-radius: 4px;
       color: var(--color-gold-dim);
       font-family: var(--font-family);
       font-size: var(--font-size-xs);
@@ -115,11 +187,8 @@ if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-
       color: var(--color-gold-primary);
       border-color: rgba(212, 168, 67, 0.7);
     }
-    .spoke-campaign-action-btn--danger:hover {
-      color: var(--color-danger, #d96a6a);
-      border-color: rgba(217, 106, 106, 0.7);
-    }
 
+    /* ── Narrow-screen collapse ─────────────────────────────────────── */
     @media (max-width: 1100px) {
       .spoke-campaign-grid {
         grid-template-columns: 1fr;
@@ -130,7 +199,11 @@ if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-
           "legend"
           "army";
         height: auto;
+        min-height: 100vh;
       }
+      .spoke-campaign-stage { position: relative; min-height: 100vh; }
+      .spoke-campaign-zone--details,
+      .spoke-campaign-zone--legend { padding: 16px; }
     }
   `;
   document.head.appendChild(el);
@@ -267,25 +340,27 @@ export function SpokeCampaignScreen() {
         : undefined;
 
   return (
-    <div style={{ background: 'var(--color-bg-primary)', minHeight: '100vh' }}>
+    <div class="spoke-campaign-stage">
       <div class="spoke-campaign-grid">
         <div class="spoke-campaign-zone spoke-campaign-zone--topbar">
           <SpokeCampaignTopBar />
         </div>
 
         <aside class="spoke-campaign-zone spoke-campaign-zone--details">
-          <LandmarkDetailsPanel
-            key={selectedNode?.id ?? 'empty'}
-            node={selectedNode}
-            isCurrent={selectedIsCurrent}
-            accentColor={accent}
-            actionLabel={actionLabel}
-            actionDisabledReason={disabledReason}
-            onAction={handleAction}
-          />
+          <div class="spoke-painted-card">
+            <LandmarkDetailsPanel
+              key={selectedNode?.id ?? 'empty'}
+              node={selectedNode}
+              isCurrent={selectedIsCurrent}
+              accentColor={accent}
+              actionLabel={actionLabel}
+              actionDisabledReason={disabledReason}
+              onAction={handleAction}
+            />
+          </div>
         </aside>
 
-        <section class="spoke-campaign-zone spoke-campaign-zone--map spoke-campaign-zone--map-flush">
+        <section class="spoke-campaign-zone spoke-campaign-zone--map">
           <LandmarkMap
             nodes={spoke.nodes}
             renderRoute={(segment) => (
@@ -317,7 +392,9 @@ export function SpokeCampaignScreen() {
         </section>
 
         <aside class="spoke-campaign-zone spoke-campaign-zone--legend">
-          <SpokeLegendPanel />
+          <div class="spoke-painted-card">
+            <SpokeLegendPanel />
+          </div>
         </aside>
 
         <section class="spoke-campaign-zone spoke-campaign-zone--army">

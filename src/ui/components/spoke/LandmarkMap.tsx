@@ -52,6 +52,12 @@ export interface LandmarkMapProps {
   children?: ComponentChildren;
   /** Background image URL — defaults to the (currently unshipped) Gaul map. */
   backgroundUrl?: string;
+  /**
+   * Render the parchment fallback (gradient bg + vignette + frame). Default
+   * `false` so the component is transparent and the parent's painted bg
+   * shows through. Pass `true` for standalone uses (e.g. legacy node-map).
+   */
+  withParchment?: boolean;
 }
 
 if (typeof document !== 'undefined' && !document.getElementById('landmark-map-styles')) {
@@ -61,15 +67,21 @@ if (typeof document !== 'undefined' && !document.getElementById('landmark-map-st
     .landmark-map {
       position: relative;
       width: 100%;
-      aspect-ratio: 16 / 9;
+      height: 100%;
       min-height: 280px;
+      isolation: isolate;
+      /* Default: transparent — parent owns the painted background. The
+         caller can opt into the parchment fallback via the withParchment
+         prop (legacy / standalone use). */
+      background: transparent;
+    }
+    .landmark-map--parchment {
+      aspect-ratio: 16 / 9;
       max-height: calc(100vh - 220px);
       border-radius: var(--radius-md);
       overflow: hidden;
-      isolation: isolate;
       box-shadow: inset 0 0 0 1px rgba(180, 160, 100, 0.35),
                   inset 0 0 60px rgba(0, 0, 0, 0.55);
-      /* Parchment fallback when the campaign-map asset isn't present. */
       background-color: #2a1f12;
       background-image:
         radial-gradient(ellipse at 30% 20%, rgba(150, 120, 70, 0.35), transparent 55%),
@@ -120,8 +132,8 @@ if (typeof document !== 'undefined' && !document.getElementById('landmark-map-st
       pointer-events: auto;
     }
 
-    /* Subtle vignette to mute the corners — keeps focus on the chain. */
-    .landmark-map::after {
+    /* Subtle vignette only on the parchment variant. */
+    .landmark-map--parchment::after {
       content: '';
       position: absolute;
       inset: 0;
@@ -158,6 +170,7 @@ export function LandmarkMap({
   getNodeCoord = defaultCoord,
   children,
   backgroundUrl = DEFAULT_BG_URL,
+  withParchment = false,
 }: LandmarkMapProps) {
   const total = nodes.length;
   const coords = nodes.map((n, i) => getNodeCoord(n, i, total));
@@ -170,9 +183,11 @@ export function LandmarkMap({
     ? ({ '--landmark-map-bg': `url("${backgroundUrl}")` } as preact.JSX.CSSProperties)
     : undefined;
 
+  const className = `landmark-map${withParchment ? ' landmark-map--parchment' : ''}`;
+
   return (
-    <div class="landmark-map" style={style} role="img" aria-label="Campaign map">
-      {backgroundUrl && (
+    <div class={className} style={style} role="img" aria-label="Campaign map">
+      {backgroundUrl && withParchment && (
         <img
           src={backgroundUrl}
           alt=""

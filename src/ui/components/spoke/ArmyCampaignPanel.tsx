@@ -21,21 +21,63 @@ if (typeof document !== 'undefined' && !document.getElementById('army-campaign-p
     .acp {
       display: flex;
       align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
+      gap: 22px;
       width: 100%;
+      padding: 14px 24px;
+      box-sizing: border-box;
       font-family: var(--font-family);
       color: var(--color-text-secondary);
+      background:
+        linear-gradient(180deg,
+          rgba(22, 16, 10, 0.97) 0%,
+          rgba(38, 26, 14, 0.97) 50%,
+          rgba(58, 42, 22, 0.95) 100%);
+      border-top: 1px solid rgba(212, 168, 67, 0.55);
+      box-shadow:
+        inset 0 1px 0 rgba(212, 168, 67, 0.25),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+        0 -4px 14px rgba(0, 0, 0, 0.5);
+    }
+    /* SPQR banner plate on the left edge. */
+    .acp-banner {
+      width: 64px;
+      height: 64px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 2px;
+      background:
+        radial-gradient(ellipse at center, rgba(212, 168, 67, 0.35) 0%, transparent 65%),
+        linear-gradient(180deg, rgba(80, 60, 30, 0.85) 0%, rgba(40, 28, 14, 0.95) 100%);
+      border: 1.5px solid rgba(212, 168, 67, 0.7);
+      border-radius: 4px;
+      box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+        0 2px 6px rgba(0, 0, 0, 0.6);
+      color: var(--color-gold-primary);
+    }
+    .acp-banner-eagle {
+      font-size: 22px;
+      line-height: 1;
+      filter: drop-shadow(0 0 4px rgba(212, 168, 67, 0.4));
+    }
+    .acp-banner-spqr {
+      font-family: var(--font-display);
+      font-size: 9px;
+      letter-spacing: 1.5px;
+      color: rgba(212, 168, 67, 0.85);
     }
     .acp-section {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
       min-width: 0;
     }
     .acp-section + .acp-section {
-      padding-left: 16px;
-      border-left: 1px solid rgba(180, 160, 100, 0.18);
+      padding-left: 22px;
+      border-left: 1px solid rgba(212, 168, 67, 0.18);
     }
     .acp-eyebrow {
       font-family: var(--font-display);
@@ -206,6 +248,10 @@ export function ArmyCampaignPanel({
 
   return (
     <div class="acp" role="region" aria-label="Army campaign panel">
+      <div class="acp-banner" aria-hidden="true">
+        <span class="acp-banner-eagle">𓅂</span>
+        <span class="acp-banner-spqr">SPQR</span>
+      </div>
       <div class="acp-section">
         <span class="acp-eyebrow">Legion</span>
         <span class="acp-name" title={army.name}>{army.name}</span>

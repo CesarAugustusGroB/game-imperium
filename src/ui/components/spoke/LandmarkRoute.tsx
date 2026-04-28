@@ -121,20 +121,38 @@ export function LandmarkRoute({ segment, currentNodeIdx, accent }: LandmarkRoute
   const style = styleForState(state, accent);
   const { from, to } = segment;
 
+  // Two-pass stroke: a wider dark "shadow" line behind the colored stroke
+  // so routes stay legible against the bright painted-map background.
+  const filter = style.glow
+    ? `drop-shadow(0 0 4px ${style.glow}) drop-shadow(0 1px 1px rgba(0,0,0,0.6))`
+    : 'drop-shadow(0 1px 1px rgba(0,0,0,0.6))';
+
   return (
-    <line
-      x1={from.x}
-      y1={from.y}
-      x2={to.x}
-      y2={to.y}
-      stroke={style.stroke}
-      stroke-width={style.width}
-      stroke-dasharray={style.dasharray}
-      stroke-linecap="round"
-      opacity={style.opacity}
-      vector-effect="non-scaling-stroke"
-      filter={style.glow ? `drop-shadow(0 0 4px ${style.glow})` : undefined}
-      data-route-state={state}
-    />
+    <g data-route-state={state}>
+      <line
+        x1={from.x}
+        y1={from.y}
+        x2={to.x}
+        y2={to.y}
+        stroke="rgba(0, 0, 0, 0.55)"
+        stroke-width={style.width + 1.5}
+        stroke-linecap="round"
+        opacity={Math.min(1, style.opacity + 0.1)}
+        vector-effect="non-scaling-stroke"
+      />
+      <line
+        x1={from.x}
+        y1={from.y}
+        x2={to.x}
+        y2={to.y}
+        stroke={style.stroke}
+        stroke-width={style.width}
+        stroke-dasharray={style.dasharray}
+        stroke-linecap="round"
+        opacity={style.opacity}
+        vector-effect="non-scaling-stroke"
+        filter={filter}
+      />
+    </g>
   );
 }
