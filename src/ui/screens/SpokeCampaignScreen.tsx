@@ -165,6 +165,20 @@ if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-
       max-width: none;
     }
     .spoke-painted-card .landmark-details-panel::before { display: none; }
+
+    /* Details card: pull the art header flush to the card edges. */
+    .spoke-painted-card--details {
+      padding-top: 0;
+      overflow: hidden;
+    }
+    .spoke-painted-card--details .ldp-art-header {
+      border-radius: 5px 5px 0 0;
+      margin-bottom: 0;
+    }
+    .spoke-painted-card--details .ldp-content {
+      padding: 14px 16px 0;
+    }
+
     .spoke-painted-card .spoke-legend {
       gap: 14px;
     }
@@ -347,7 +361,7 @@ export function SpokeCampaignScreen() {
         </div>
 
         <aside class="spoke-campaign-zone spoke-campaign-zone--details">
-          <div class="spoke-painted-card">
+          <div class="spoke-painted-card spoke-painted-card--details">
             <LandmarkDetailsPanel
               key={selectedNode?.id ?? 'empty'}
               node={selectedNode}

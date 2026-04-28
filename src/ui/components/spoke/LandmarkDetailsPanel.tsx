@@ -17,6 +17,7 @@
  */
 
 import type { SpokeNode } from '../../../game/progression/spoke';
+import type { EncounterType } from '../../../game/progression/landmark-types';
 import { BATTLE_MODIFIER_LABELS } from '../../../game/progression/battle-terrain-modifiers';
 import { getNodeIntel, type NodeIntel } from '../../../game/progression/spoke-scouting';
 import { RESOURCE_INFO } from '../../../game/core/commander';
@@ -120,6 +121,34 @@ if (typeof document !== 'undefined' && !document.getElementById('landmark-detail
       opacity: 0.4;
       cursor: not-allowed;
     }
+    .ldp-art-header {
+      width: 100%;
+      height: 110px;
+      border-radius: 4px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .ldp-art-header::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
+      pointer-events: none;
+    }
+    .ldp-art-icon {
+      font-size: 46px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 10px rgba(0,0,0,0.7));
+      position: relative;
+      z-index: 1;
+    }
+    /* Content wrapper — lets the art header bleed edge-to-edge in the card. */
+    .ldp-content { padding: 0 2px; }
+
     .landmark-unknown-body {
       font-style: italic;
       color: var(--color-text-muted);
@@ -139,6 +168,25 @@ if (typeof document !== 'undefined' && !document.getElementById('landmark-detail
 }
 
 // LANDMARK_LABEL, ENCOUNTER_LABEL sourced from ./landmark-presentation (T4.1).
+
+function artHeaderStyle(enc: EncounterType | undefined, intelLevel: number): { gradient: string; icon: string } {
+  if (intelLevel === 0) return { gradient: 'linear-gradient(135deg, rgba(20,15,35,1), rgba(45,32,65,1))', icon: '❓' };
+  switch (enc) {
+    case 'battle':     return { gradient: 'linear-gradient(135deg, rgba(65,18,18,1), rgba(105,28,28,1))', icon: '⚔️' };
+    case 'elite_battle': return { gradient: 'linear-gradient(135deg, rgba(80,20,20,1), rgba(120,35,30,1))', icon: '⚔️' };
+    case 'boss':       return { gradient: 'linear-gradient(135deg, rgba(55,10,55,1), rgba(100,18,35,1))', icon: '☠️' };
+    case 'rest':       return { gradient: 'linear-gradient(135deg, rgba(22,42,22,1), rgba(38,58,32,1))', icon: '⛺' };
+    case 'forage':     return { gradient: 'linear-gradient(135deg, rgba(52,42,12,1), rgba(78,62,18,1))', icon: '🌾' };
+    case 'recruit':    return { gradient: 'linear-gradient(135deg, rgba(38,28,12,1), rgba(68,48,18,1))', icon: '🛡️' };
+    case 'scout':      return { gradient: 'linear-gradient(135deg, rgba(12,32,52,1), rgba(22,55,78,1))', icon: '👁️' };
+    case 'hazard':     return { gradient: 'linear-gradient(135deg, rgba(52,28,8,1), rgba(88,48,18,1))', icon: '⚡' };
+    case 'event':      return { gradient: 'linear-gradient(135deg, rgba(42,28,58,1), rgba(68,48,88,1))', icon: '📜' };
+    case 'merchant':   return { gradient: 'linear-gradient(135deg, rgba(52,42,18,1), rgba(88,72,28,1))', icon: '💰' };
+    case 'ambush':     return { gradient: 'linear-gradient(135deg, rgba(28,22,12,1), rgba(52,38,22,1))', icon: '🗡️' };
+    case 'siege':      return { gradient: 'linear-gradient(135deg, rgba(42,38,32,1), rgba(72,62,52,1))', icon: '🏰' };
+    default:           return { gradient: 'linear-gradient(135deg, rgba(24,18,34,1), rgba(42,32,55,1))', icon: '⚔️' };
+  }
+}
 
 const THREAT_COLOR: Record<NonNullable<SpokeNode['threatHint']>, string> = {
   low:    '#4a9a6a',
@@ -233,6 +281,10 @@ export function LandmarkDetailsPanel({
   }
 
   const intel = getNodeIntel(node);
+  const artHeader = artHeaderStyle(
+    'encounterType' in intel ? intel.encounterType : undefined,
+    intel.level,
+  );
 
   const eyebrow = intel.landmarkType
     ? LANDMARK_LABEL[intel.landmarkType] ?? capitalize(intel.landmarkType.replace(/_/g, ' '))
@@ -242,6 +294,14 @@ export function LandmarkDetailsPanel({
 
   return (
     <div class="landmark-details-panel">
+      <div
+        class="ldp-art-header"
+        style={{ background: artHeader.gradient }}
+        aria-hidden="true"
+      >
+        <span class="ldp-art-icon">{artHeader.icon}</span>
+      </div>
+      <div class="ldp-content">
       <div class="landmark-panel-eyebrow">{eyebrow}</div>
       <div class="landmark-panel-title" style={{ color: accentColor }}>{title}</div>
 
@@ -365,6 +425,7 @@ export function LandmarkDetailsPanel({
         >
           {btnLabel}
         </button>
+      </div>
       </div>
     </div>
   );

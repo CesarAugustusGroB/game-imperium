@@ -98,9 +98,35 @@ if (typeof document !== 'undefined' && !document.getElementById('landmark-map-no
       justify-content: center;
     }
 
+    /* Permanent label above the tile — always visible on non-locked nodes. */
+    .lmn-label {
+      position: absolute;
+      bottom: calc(100% + 5px);
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      max-width: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: 9px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: rgba(212, 168, 67, 0.9);
+      text-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.9),
+        0 0 8px rgba(0, 0, 0, 0.7);
+      pointer-events: none;
+      line-height: 1.3;
+      transition: opacity var(--duration-fast) var(--ease-default);
+    }
+    .lmn-label--dim { color: rgba(180, 160, 100, 0.55); }
+    .lmn-label--hidden { color: rgba(180, 160, 100, 0.45); font-style: italic; }
+
     .lmn-tooltip {
       position: absolute;
-      bottom: calc(100% + 8px);
+      bottom: calc(100% + 26px);
       left: 50%;
       transform: translateX(-50%);
       background: rgba(14, 12, 28, 0.95);
@@ -272,6 +298,12 @@ export function LandmarkMapNode({
     state === 'locked'   ? 'lmn-locked'   : '',
   ].filter(Boolean).join(' ');
 
+  const labelCls =
+    state === 'locked'   ? 'lmn-label lmn-label--dim' :
+    state === 'resolved' ? 'lmn-label lmn-label--dim' :
+    state === 'hidden'   ? 'lmn-label lmn-label--hidden' :
+    'lmn-label';
+
   return (
     <div
       class={cls}
@@ -296,6 +328,10 @@ export function LandmarkMapNode({
         animation: state === 'current' ? 'lmn-pulse 2.5s ease-in-out infinite' : 'none',
       } as Record<string, string>}
     >
+      {state !== 'locked' && (
+        <span class={labelCls} aria-hidden="true">{displayName}</span>
+      )}
+
       {haloClass && <span class={haloClass} aria-hidden="true" />}
 
       <span
@@ -332,10 +368,9 @@ export function LandmarkMapNode({
         </span>
       )}
 
-      {hovered && state !== 'locked' && (
+      {hovered && state !== 'locked' && subhint && (
         <div class="lmn-tooltip" role="tooltip">
-          {displayName}
-          {subhint && <span class="lmn-tooltip-sub">{subhint}</span>}
+          {subhint}
         </div>
       )}
     </div>
