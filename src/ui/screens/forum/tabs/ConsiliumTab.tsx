@@ -688,7 +688,7 @@ function ReservedColumn({ slots }: { slots: (Advisor | null)[] }) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {seatedAdvisors.map((advisor) => {
-              const visual = getTraitVisual(advisor.traits[0]);
+              const visual = getPrimaryTraitVisual(advisor);
               const passive = getCurrentPassive(advisor);
               const passiveText = describePassive(passive);
               const bonusCopy = splitPassiveDescription(passive, passiveText);
@@ -964,6 +964,10 @@ function getAdvisorSchool(advisor: Advisor): MarketFilter {
 
 function hasAnyTrait(traits: AdvisorTrait[], matches: AdvisorTrait[]): boolean {
   return traits.some((trait) => matches.includes(trait));
+}
+
+function getPrimaryTraitVisual(advisor: Advisor) {
+  return getTraitVisual(advisor.traits[0] ?? 'Administrator');
 }
 
 function sortMarket(market: Advisor[], sort: MarketSort): Advisor[] {
