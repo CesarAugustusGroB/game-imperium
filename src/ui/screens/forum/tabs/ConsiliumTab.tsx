@@ -9,6 +9,7 @@ import {
   type Advisor,
   type AdvisorPassive,
   type AdvisorTrait,
+  getCurrentPassive,
   getCurrentTier,
   XP_TIER_2,
   XP_TIER_3,
@@ -23,6 +24,7 @@ import {
   AdvisorMarketCard,
   BonusCard,
   CeremonialTrack,
+  getTraitVisual,
   SPQREmblem,
   TraitChip,
   TraitGlyph,
@@ -208,7 +210,7 @@ export function ConsiliumTab() {
           </OrnatePanel>
 
           <aside class="consilium-reserve-column consilium-scroll">
-            <ReservedColumn />
+            <ReservedColumn slots={slots} />
           </aside>
         </div>
 
@@ -636,27 +638,85 @@ function EmptyHero() {
   );
 }
 
-function ReservedColumn() {
+function ReservedColumn({ slots }: { slots: (Advisor | null)[] }) {
+  const seatedAdvisors = slots.filter((advisor): advisor is Advisor => advisor !== null);
+
   return (
     <OrnatePanel accent={CONSILIUM_ACCENT} style={{ minHeight: '100%' }}>
       <SectionHeader title="Seated Bonuses" accent={CONSILIUM_ACCENT} />
-      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <SPQREmblem
-          size={130}
-          color={CONSILIUM_ACCENT}
-          opacity={0.08}
-          style={{ position: 'absolute', right: -8, top: 24 }}
-        />
-        <BonusCard icon="I" value="S28-08" label="Reserved" accent={CONSILIUM_ACCENT} muted />
+      <div style={{
+        minHeight: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }}>
+        {seatedAdvisors.length === 0 ? (
+          <div style={{
+            flex: 1,
+            minHeight: 220,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            color: 'var(--imp-text-mid)',
+            padding: '18px 8px 10px',
+          }}>
+            <LaurelWreath size={94} color={CONSILIUM_ACCENT} opacity={0.24} />
+            <div style={{
+              marginTop: 12,
+              color: 'var(--imp-text-hi)',
+              fontFamily: 'var(--imp-font-display)',
+              fontSize: 15,
+              letterSpacing: 2,
+              textTransform: 'uppercase',
+            }}>
+              No seated bonuses
+            </div>
+            <div style={{
+              marginTop: 5,
+              maxWidth: 180,
+              fontFamily: 'var(--imp-font-serif)',
+              fontSize: 12,
+              fontStyle: 'italic',
+              lineHeight: 1.35,
+              color: 'var(--imp-text-lo)',
+            }}>
+              Seat a councilor to surface the passive gains shaping your next campaign.
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {seatedAdvisors.map((advisor) => {
+              const visual = getTraitVisual(advisor.traits[0]);
+              const passive = getCurrentPassive(advisor);
+              const passiveText = describePassive(passive);
+              const bonusCopy = splitPassiveDescription(passive, passiveText);
+
+              return (
+                <BonusCard
+                  key={advisor.id}
+                  icon={visual.glyph}
+                  value={bonusCopy.value}
+                  label={bonusCopy.label}
+                  accent={visual.color}
+                />
+              );
+            })}
+          </div>
+        )}
+
         <div style={{
-          padding: '10px 2px',
-          color: 'var(--imp-text-lo)',
-          fontFamily: 'var(--imp-font-serif)',
-          fontSize: 12,
-          fontStyle: 'italic',
-          lineHeight: 1.4,
+          marginTop: 'auto',
+          display: 'flex',
+          justifyContent: 'center',
+          paddingTop: seatedAdvisors.length === 0 ? 4 : 12,
         }}>
-          This column is reserved for the aggregate seated-bonus stack. The hero layout claims the space now so S28-08 can plug in without reshaping the screen.
+          <SPQREmblem
+            size={130}
+            color={CONSILIUM_ACCENT}
+            opacity={0.1}
+          />
         </div>
       </div>
     </OrnatePanel>
@@ -850,6 +910,36 @@ function describePassive(p: AdvisorPassive): string {
     case 'threat-reduction': return `Enemy threat reduced by ${p.amount}.`;
     case 'loot-bonus': return `+${p.percent}% loot from battles.`;
   }
+}
+
+function splitPassiveDescription(
+  passive: AdvisorPassive,
+  description: string,
+): { value: string; label: string } {
+  switch (passive.type) {
+    case 'resource-per-spoke':
+      return { value: `+${passive.amount}`, label: `${capitalizeResource(passive.resource)} Each Spoke` };
+    case 'upkeep-reduction':
+      return { value: `${passive.percent}%`, label: 'Upkeep Relief' };
+    case 'shop-discount':
+      return { value: `${passive.percent}%`, label: 'Market Discount' };
+    case 'extra-event-choices':
+      return { value: `+${passive.count}`, label: 'Event Choices' };
+    case 'heal-between-nodes':
+      return { value: `${passive.amount} HP`, label: 'Field Recovery' };
+    case 'threat-reduction':
+      return { value: `-${passive.amount}`, label: 'Enemy Threat' };
+    case 'loot-bonus':
+      return { value: `+${passive.percent}%`, label: 'Battle Loot' };
+    default: {
+      const [value = description, ...rest] = description.split(' ');
+      return { value, label: rest.join(' ').replace(/\.$/, '') || 'Passive Bonus' };
+    }
+  }
+}
+
+function capitalizeResource(resource: string): string {
+  return resource.charAt(0).toUpperCase() + resource.slice(1);
 }
 
 function heroLine(p: AdvisorPassive, source: AdvisorSource): string {
