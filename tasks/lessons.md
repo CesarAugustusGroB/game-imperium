@@ -4,6 +4,11 @@ Rules for Claude to avoid repeating past mistakes.
 
 ---
 
+## Campaign map visual hierarchy
+**Date**: 2026-04-28
+**Mistake**: First Bellum node-map pass overused red glows, boxed labels, and equal-weight UI regions, making the screen read like an alarm/debug overlay instead of a painted campaign map.
+**Rule**: On campaign maps, reserve full red for active danger/selected destinations, keep routes as muted parchment/gold threads, render labels as terrain text or painted plaques, make the current army position visually distinct from selection, and keep legends compact.
+
 ## "Keep existing X" means only X, not everything
 **Date**: 2026-04-20
 **Mistake**: During S22 (Imperium Forum port), the user said "Provinciae should keep our current UI, just integrate as a tab." I generalized that to mean every lift-and-shift was acceptable, and applied the same OrnateFrame-strip pattern to Consilium (S22-05) and Exercitus (S22-06) instead of porting them to the new Forum design. The user had to stop me: "THE ONLY ONE THAT HAVE TO KEEP ITS WAY WAS THE PROVINCIAE!!"

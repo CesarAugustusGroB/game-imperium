@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import { selectedCommander } from '../game/core/game-state';
 import { playSfx } from './sound/sfx';
-import { activeForumTab } from './screens/forum/state';
+import { activeForumTab, sidebarCollapsed } from './screens/forum/state';
 import type { ForumTab } from './screens/forum/state';
 
 export type ScreenName =
@@ -39,6 +39,8 @@ const LEGACY_TAB_MAP: Partial<Record<ScreenName, ForumTab>> = {
   'doctrine':         'doctrinae',
   'army-recruitment': 'exercitus',
   'legate-hiring':    'exercitus',
+  'node-map':         'bellum',
+  'spoke-campaign':   'bellum',
 };
 
 /** Resolve a screen name to its real destination, applying legacy remapping. */
@@ -46,6 +48,7 @@ function resolveScreen(screen: ScreenName): ScreenName {
   const tab = LEGACY_TAB_MAP[screen];
   if (tab) {
     activeForumTab.value = tab;
+    if (tab === 'bellum') sidebarCollapsed.value = true;
     return 'forum';
   }
   return screen;
