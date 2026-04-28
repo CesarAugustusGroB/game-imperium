@@ -33,6 +33,7 @@ import { LandmarkDetailsPanel } from '../components/spoke/LandmarkDetailsPanel';
 import { LandmarkMap } from '../components/spoke/LandmarkMap';
 import { LandmarkMapNode } from '../components/spoke/LandmarkMapNode';
 import { LandmarkRoute } from '../components/spoke/LandmarkRoute';
+import { SpokeLegendPanel } from '../components/spoke/SpokeLegendPanel';
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 
 if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-styles')) {
@@ -299,10 +300,7 @@ export function SpokeCampaignScreen() {
         </section>
 
         <aside class="spoke-campaign-zone spoke-campaign-zone--legend">
-          <div class="spoke-campaign-placeholder">
-            <span class="spoke-campaign-placeholder-eyebrow">Legend &amp; Intel</span>
-            <span class="spoke-campaign-placeholder-title">Coming in S29-08</span>
-          </div>
+          <SpokeLegendPanel />
         </aside>
 
         <section class="spoke-campaign-zone spoke-campaign-zone--army">
