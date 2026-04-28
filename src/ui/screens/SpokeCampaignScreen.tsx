@@ -23,6 +23,7 @@ import { SpokeCampaignTopBar } from '../components/spoke/SpokeCampaignTopBar';
 import { LandmarkDetailsPanel } from '../components/spoke/LandmarkDetailsPanel';
 import { LandmarkMap } from '../components/spoke/LandmarkMap';
 import { LandmarkMapNode } from '../components/spoke/LandmarkMapNode';
+import { LandmarkRoute } from '../components/spoke/LandmarkRoute';
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 
 if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-styles')) {
@@ -207,6 +208,14 @@ export function SpokeCampaignScreen() {
         <section class="spoke-campaign-zone spoke-campaign-zone--map spoke-campaign-zone--map-flush">
           <LandmarkMap
             nodes={spoke.nodes}
+            renderRoute={(segment) => (
+              <LandmarkRoute
+                key={`route-${segment.toIndex}`}
+                segment={segment}
+                currentNodeIdx={nodeIdx}
+                accent={accent}
+              />
+            )}
             renderNode={(node, _coord, i) => {
               const isCurrent = i === nodeIdx;
               // Reachable = resolved tail (showable) OR the current step's
