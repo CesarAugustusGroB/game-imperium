@@ -1,492 +1,730 @@
 import { useSignal } from '@preact/signals';
+import { advisorMarket, councilSlots, unseatAdvisor } from '../../../../game/council/council-store';
 import {
-  councilSlots, advisorPool,
-  seatAdvisor, unseatAdvisor,
-} from '../../../../game/council/council-store';
-import {
-  type Advisor, type AdvisorPassive,
-  getCurrentTier, getXpToNextTier, XP_TIER_2, XP_TIER_3,
+  type Advisor,
+  type AdvisorPassive,
+  getCurrentTier,
+  XP_TIER_2,
+  XP_TIER_3,
 } from '../../../../game/council/advisor';
 import { FACTION_COLORS } from '../../../../game/core/commander';
 import { OrnatePanel } from '../../../components/OrnatePanel';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
-import { EmbarkCard } from '../panels/EmbarkCard';
+import {
+  BonusCard,
+  CeremonialTrack,
+  SPQREmblem,
+  TraitChip,
+  TraitGlyph,
+} from '../components/consilium';
 
-/** Static slot-position labels — flavor, not state. */
+/** Static slot-position labels - flavor, not state. */
 const SLOT_LABELS = ['Consiliarius', 'Legatus', 'Augur'];
 const ROMAN: readonly string[] = ['I', 'II', 'III'];
+const CONSILIUM_ACCENT = '#d4a843';
+
+type AdvisorSource = 'seat' | 'market';
+
+interface AdvisorSelection {
+  advisor: Advisor;
+  source: AdvisorSource;
+  slotIndex: number | null;
+}
+
+if (typeof document !== 'undefined' && !document.getElementById('consilium-3col-styles')) {
+  const el = document.createElement('style');
+  el.id = 'consilium-3col-styles';
+  el.textContent = `
+    .consilium-command-grid {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      padding: 20px 32px 24px;
+      display: grid;
+      grid-template-columns: minmax(210px, 240px) minmax(360px, 1fr) minmax(210px, 240px);
+      gap: 14px;
+    }
+    .consilium-scroll {
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .consilium-selectable {
+      transition: border-color var(--duration-fast) var(--ease-default), background var(--duration-fast) var(--ease-default), transform var(--duration-fast) var(--ease-default);
+    }
+    .consilium-selectable:hover {
+      transform: translateY(-1px);
+      border-color: var(--imp-gold);
+      background: rgba(80, 60, 20, 0.25);
+    }
+    .consilium-danger-btn:focus-visible,
+    .consilium-selectable:focus-visible {
+      outline: 1px solid var(--imp-gold-hi);
+      outline-offset: 2px;
+    }
+    .consilium-danger-btn:hover:not(:disabled) {
+      border-color: var(--imp-danger);
+      background: rgba(194, 74, 58, 0.12);
+    }
+    .consilium-danger-btn:active:not(:disabled),
+    .consilium-selectable:active {
+      transform: translateY(0);
+    }
+    @media (max-width: 1180px) {
+      .consilium-command-grid {
+        grid-template-columns: minmax(190px, 220px) minmax(340px, 1fr);
+      }
+      .consilium-reserve-column {
+        display: none;
+      }
+    }
+    @media (max-width: 860px) {
+      .consilium-command-grid {
+        grid-template-columns: 1fr;
+        overflow-y: auto;
+      }
+      .consilium-scroll {
+        overflow: visible;
+      }
+    }
+  `;
+  document.head.appendChild(el);
+}
 
 export function ConsiliumTab() {
   const selectedId = useSignal<string | null>(null);
   const slots = councilSlots.value;
-  const pool = advisorPool.value;
+  const market = advisorMarket.value;
   const seatedCount = slots.filter((s) => s !== null).length;
-  const accent = '#d4a843';
 
-  // Resolve currently-selected advisor (may be seated or in pool)
-  const allAdvisors: Array<{ advisor: Advisor; slotIndex: number | null }> = [
-    ...slots.map((a, i) => (a ? { advisor: a, slotIndex: i } : null)),
-    ...pool.map((a) => ({ advisor: a, slotIndex: null })),
-  ].filter((x): x is { advisor: Advisor; slotIndex: number | null } => x !== null);
+  const seatedSelections: AdvisorSelection[] = slots.flatMap((advisor, index) => (
+    advisor ? [{ advisor, source: 'seat', slotIndex: index }] : []
+  ));
+  const marketSelections: AdvisorSelection[] = market.map((advisor) => ({
+    advisor,
+    source: 'market',
+    slotIndex: null,
+  }));
+  const allAdvisors = [...seatedSelections, ...marketSelections];
 
-  // Default selection: first seated advisor, else first pool advisor
   const currentSelection = selectedId.value
-    ? allAdvisors.find((x) => x.advisor.id === selectedId.value) ?? null
+    ? allAdvisors.find((item) => item.advisor.id === selectedId.value) ?? null
     : allAdvisors[0] ?? null;
 
-  const subtitle = `${seatedCount} of ${slots.length} seated · ${pool.length} in the pool`;
+  const subtitle = `${seatedCount} of ${slots.length} seated · ${market.length} market offers`;
 
-  function handleOfferSeat(advisor: Advisor) {
-    const emptyIdx = slots.findIndex((s) => s === null);
-    if (emptyIdx === -1) return;
-    seatAdvisor(emptyIdx, advisor);
+  function selectAdvisor(advisor: Advisor) {
     selectedId.value = advisor.id;
   }
 
-  function handleDismiss(slotIndex: number) {
+  function dismissAdvisor(slotIndex: number) {
     unseatAdvisor(slotIndex);
+    selectedId.value = null;
   }
 
   return (
     <>
-      <Masthead title="Consilium" subtitle={subtitle} accent={accent} />
+      <Masthead title="Consilium" subtitle={subtitle} accent={CONSILIUM_ACCENT} />
 
-      <div style={{
-        flex: 1, minHeight: 0, overflow: 'hidden',
-        padding: '20px 32px 24px',
-        display: 'grid', gridTemplateColumns: '340px 1fr', gap: 14,
-      }}>
+      <div class="consilium-command-grid">
+        <aside class="consilium-scroll" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <SeatsPanel
+            slots={slots}
+            selectedId={currentSelection?.advisor.id ?? null}
+            onSelect={selectAdvisor}
+          />
+          <MarketBrowsePanel
+            market={market}
+            selectedId={currentSelection?.advisor.id ?? null}
+            onSelect={selectAdvisor}
+          />
+        </aside>
 
-        {/* ── LEFT: seats + pool ── */}
-        <div style={{
-          display: 'flex', flexDirection: 'column', gap: 12,
-          minHeight: 0, overflow: 'auto',
-        }}>
-          <OrnatePanel accent={accent}>
-            <SectionHeader title="The Three Seats" accent={accent} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {slots.map((advisor, i) => (
-                <AdvisorRow
-                  key={`seat-${i}`}
-                  advisor={advisor}
-                  role={SLOT_LABELS[i] ?? `Slot ${i + 1}`}
-                  accent={accent}
-                  selected={advisor?.id === currentSelection?.advisor.id}
-                  onClick={() => { if (advisor) selectedId.value = advisor.id; }}
-                  seated
-                />
-              ))}
-            </div>
-          </OrnatePanel>
-
-          <OrnatePanel accent={accent}>
-            <SectionHeader
-              title="Advisor Pool"
-              accent={accent}
-              right={<span style={{
-                fontSize: 9, color: 'var(--imp-text-lo)',
-                letterSpacing: 1, textTransform: 'uppercase',
-              }}>
-                {pool.length} available
-              </span>}
+        <OrnatePanel
+          accent={CONSILIUM_ACCENT}
+          padding="0"
+          style={{
+            minHeight: 0,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {currentSelection ? (
+            <AdvisorHero
+              selection={currentSelection}
+              onDismiss={dismissAdvisor}
             />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {pool.length === 0 && (
-                <div style={{
-                  padding: '10px 4px',
-                  fontFamily: 'var(--imp-font-serif)',
-                  fontStyle: 'italic', fontSize: 11,
-                  color: 'var(--imp-text-lo)',
-                }}>
-                  The pool is empty.
-                </div>
-              )}
-              {pool.map((advisor) => (
-                <AdvisorRow
-                  key={advisor.id}
-                  advisor={advisor}
-                  role={null}
-                  accent={accent}
-                  selected={advisor.id === currentSelection?.advisor.id}
-                  onClick={() => { selectedId.value = advisor.id; }}
-                  seated={false}
-                />
-              ))}
-            </div>
-          </OrnatePanel>
-        </div>
+          ) : (
+            <EmptyHero />
+          )}
+        </OrnatePanel>
 
-        {/* ── RIGHT: detail (top) + campaign preview + embark (bottom) ── */}
-        <div style={{
-          display: 'flex', flexDirection: 'column', gap: 12,
-          minHeight: 0,
-        }}>
-          <OrnatePanel
-            accent={accent}
-            style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'auto' }}
-          >
-            {currentSelection ? (
-              <AdvisorDetail
-                advisor={currentSelection.advisor}
-                slotIndex={currentSelection.slotIndex}
-                anyEmptySeat={slots.some((s) => s === null)}
-                onOfferSeat={() => handleOfferSeat(currentSelection.advisor)}
-                onDismiss={() => {
-                  if (currentSelection.slotIndex !== null) {
-                    handleDismiss(currentSelection.slotIndex);
-                  }
-                }}
-                accent={accent}
-              />
-            ) : (
-              <EmptyDetail accent={accent} />
-            )}
-          </OrnatePanel>
-
-          {/* Campaign preview + Embark — pinned to the bottom of the right column.
-              EmbarkCard renders the planned spoke (all nodes as a chip row) and
-              owns the embark handler. Disabled state flows through naturally
-              when plannedSpoke is null or empty. */}
-          <div style={{ flexShrink: 0 }}>
-            <EmbarkCard accent={accent} />
-          </div>
-        </div>
+        <aside class="consilium-reserve-column consilium-scroll">
+          <ReservedColumn />
+        </aside>
       </div>
     </>
   );
 }
 
-// ── AdvisorRow ───────────────────────────────────────────────────
-
-interface AdvisorRowProps {
-  advisor: Advisor | null;
-  role: string | null;
-  accent: string;
-  selected: boolean;
-  onClick: () => void;
-  seated: boolean;
+interface SeatsPanelProps {
+  slots: (Advisor | null)[];
+  selectedId: string | null;
+  onSelect: (advisor: Advisor) => void;
 }
 
-function AdvisorRow({ advisor, role, accent, selected, onClick, seated }: AdvisorRowProps) {
+function SeatsPanel({ slots, selectedId, onSelect }: SeatsPanelProps) {
+  return (
+    <OrnatePanel accent={CONSILIUM_ACCENT}>
+      <SectionHeader title="The Three Seats" accent={CONSILIUM_ACCENT} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {slots.map((advisor, index) => (
+          <SeatRow
+            key={`seat-${index}`}
+            advisor={advisor}
+            label={SLOT_LABELS[index] ?? `Slot ${index + 1}`}
+            selected={advisor?.id === selectedId}
+            onSelect={onSelect}
+          />
+        ))}
+      </div>
+    </OrnatePanel>
+  );
+}
+
+interface SeatRowProps {
+  advisor: Advisor | null;
+  label: string;
+  selected: boolean;
+  onSelect: (advisor: Advisor) => void;
+}
+
+function SeatRow({ advisor, label, selected, onSelect }: SeatRowProps) {
   if (!advisor) {
-    // Empty seat placeholder
     return (
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '10px 12px',
-        background: 'rgba(20, 18, 32, 0.3)',
-        border: '1px dashed rgba(212, 168, 67, 0.15)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 9,
+        padding: '9px 10px',
+        border: '1px dashed var(--imp-gold-faint)',
         borderRadius: 2,
+        background: 'rgba(13, 11, 20, 0.36)',
       }}>
-        <div style={{
-          width: 42, height: 42, borderRadius: '50%',
-          border: '1px dashed rgba(212, 168, 67, 0.15)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--imp-text-lo)', fontSize: 18,
-        }}>
-          +
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{
-            fontFamily: 'var(--imp-font-display)',
-            fontSize: 11, color: 'var(--imp-text-mid)',
-            letterSpacing: 2, textTransform: 'uppercase',
-          }}>
-            {role}
-          </div>
-          <div style={{ fontSize: 10, color: 'var(--imp-text-lo)', fontStyle: 'italic' }}>
-            Empty seat
-          </div>
+        <div style={emptySealStyle}>+</div>
+        <div style={{ minWidth: 0 }}>
+          <div style={smallCapsStyle}>{label}</div>
+          <div style={mutedItalicStyle}>Empty seat</div>
         </div>
       </div>
     );
   }
 
   const color = FACTION_COLORS[advisor.color];
-  const initial = advisor.name.charAt(0).toUpperCase();
 
   return (
-    <div
-      onClick={onClick}
+    <button
+      type="button"
+      class="consilium-selectable"
+      onClick={() => onSelect(advisor)}
       style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '10px 12px',
-        background: selected
-          ? 'rgba(80, 60, 20, 0.25)'
-          : 'rgba(20, 18, 32, 0.4)',
-        border: `1px solid ${selected ? accent : 'rgba(212, 168, 67, 0.15)'}`,
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 9,
+        padding: '9px 10px',
+        border: `1px solid ${selected ? CONSILIUM_ACCENT : 'var(--imp-gold-faint)'}`,
         borderLeft: `3px solid ${color}`,
-        borderRadius: 2, cursor: 'pointer',
-        transition: 'all 150ms',
+        borderRadius: 2,
+        background: selected ? 'rgba(80, 60, 20, 0.25)' : 'rgba(13, 11, 20, 0.46)',
+        color: 'inherit',
+        cursor: 'pointer',
+        textAlign: 'left',
       }}
     >
-      <div style={{
-        width: 42, height: 42, borderRadius: '50%',
-        background: `radial-gradient(circle, ${color}44 0%, var(--imp-panel) 100%)`,
-        border: `1px solid ${color}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-        fontFamily: 'var(--imp-font-display)',
-        fontSize: 16, fontWeight: 700, color,
-      }}>
-        {initial}
-      </div>
+      <MiniPortrait advisor={advisor} size={42} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontFamily: 'var(--imp-font-display)',
-          fontSize: 12, color: 'var(--imp-text-hi)',
-          letterSpacing: 1, textTransform: 'uppercase', fontWeight: 600,
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
-          {advisor.name}
-        </div>
-        <div style={{ fontSize: 10, color: 'var(--imp-text-lo)', fontStyle: 'italic' }}>
-          {seated ? role ?? 'Seated' : 'Free agent'}
-        </div>
+        <div style={rowNameStyle}>{advisor.name}</div>
+        <div style={mutedItalicStyle}>{label}</div>
       </div>
-      <div style={{
-        fontFamily: 'var(--imp-font-display)',
-        fontSize: 10, color: accent,
-        border: `1px solid ${accent}`,
-        borderRadius: 2, padding: '2px 6px',
-      }}>
-        {ROMAN[advisor.currentTier - 1] ?? '—'}
-      </div>
-    </div>
+      <TierBadge tier={advisor.currentTier} />
+    </button>
   );
 }
 
-// ── AdvisorDetail ────────────────────────────────────────────────
-
-interface AdvisorDetailProps {
-  advisor: Advisor;
-  slotIndex: number | null;
-  anyEmptySeat: boolean;
-  onOfferSeat: () => void;
-  onDismiss: () => void;
-  accent: string;
+interface MarketBrowsePanelProps {
+  market: Advisor[];
+  selectedId: string | null;
+  onSelect: (advisor: Advisor) => void;
 }
 
-function AdvisorDetail({ advisor, slotIndex, anyEmptySeat, onOfferSeat, onDismiss, accent }: AdvisorDetailProps) {
-  const isSeated = slotIndex !== null;
+function MarketBrowsePanel({ market, selectedId, onSelect }: MarketBrowsePanelProps) {
+  return (
+    <OrnatePanel accent={CONSILIUM_ACCENT}>
+      <SectionHeader
+        title="Available Advisors"
+        accent={CONSILIUM_ACCENT}
+        right={<span style={countPillStyle}>{market.length} offers</span>}
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {market.length === 0 && (
+          <div style={{
+            padding: '10px 4px',
+            fontFamily: 'var(--imp-font-serif)',
+            fontStyle: 'italic',
+            fontSize: 11,
+            color: 'var(--imp-text-lo)',
+          }}>
+            The political market is quiet.
+          </div>
+        )}
+        {market.map((advisor) => (
+          <button
+            key={advisor.id}
+            type="button"
+            class="consilium-selectable"
+            onClick={() => onSelect(advisor)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 9px',
+              border: `1px solid ${advisor.id === selectedId ? CONSILIUM_ACCENT : 'var(--imp-gold-faint)'}`,
+              borderRadius: 2,
+              background: advisor.id === selectedId ? 'rgba(80, 60, 20, 0.25)' : 'rgba(13, 11, 20, 0.46)',
+              color: 'inherit',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            <MiniPortrait advisor={advisor} size={34} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={rowNameStyle}>{advisor.name}</div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                marginTop: 4,
+                minWidth: 0,
+              }}>
+                {advisor.traits.slice(0, 3).map((trait) => (
+                  <TraitGlyph key={trait} trait={trait} size={17} />
+                ))}
+              </div>
+            </div>
+            <div style={{
+              color: CONSILIUM_ACCENT,
+              fontFamily: 'var(--imp-font-mono)',
+              fontSize: 11,
+              fontWeight: 800,
+            }}>
+              {advisor.cost}g
+            </div>
+          </button>
+        ))}
+      </div>
+    </OrnatePanel>
+  );
+}
+
+interface AdvisorHeroProps {
+  selection: AdvisorSelection;
+  onDismiss: (slotIndex: number) => void;
+}
+
+function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
+  const { advisor, source, slotIndex } = selection;
   const color = FACTION_COLORS[advisor.color];
   const currentTierData = getCurrentTier(advisor);
   const nextTierThreshold =
     advisor.currentTier === 1 ? XP_TIER_2 :
     advisor.currentTier === 2 ? XP_TIER_3 :
     null;
-  const xpToNext = getXpToNextTier(advisor);
-  const xpPct = nextTierThreshold ? Math.min(100, (advisor.xp / nextTierThreshold) * 100) : 100;
-  const initial = advisor.name.charAt(0).toUpperCase();
+  const role = source === 'seat'
+    ? SLOT_LABELS[slotIndex ?? 0] ?? 'Seated Advisor'
+    : 'Political Candidate';
 
-  return (
-    <>
-      <div style={{ display: 'flex', gap: 18, marginBottom: 18 }}>
-        {/* Portrait placeholder (circle with initial on a faction-tint radial) */}
-        <div style={{
-          width: 140, aspectRatio: '3/4',
-          border: `1.5px solid ${color}`,
-          borderRadius: 2,
-          position: 'relative',
-          flexShrink: 0,
-          overflow: 'hidden',
-          background: `radial-gradient(ellipse at center top, ${color}44 0%, rgba(13, 11, 20, 0.95) 65%)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div style={{
-            fontFamily: 'var(--imp-font-display)',
-            fontSize: 68, fontWeight: 500,
-            color, opacity: 0.6,
-          }}>
-            {initial}
-          </div>
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.85) 100%)',
-          }} />
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0,
-            padding: '24px 8px 6px',
-            fontFamily: 'var(--imp-font-display)',
-            fontSize: 10, color: 'var(--imp-text-hi)',
-            textAlign: 'center', textTransform: 'uppercase',
-            letterSpacing: 1, fontWeight: 600,
-          }}>
-            {isSeated ? SLOT_LABELS[slotIndex] ?? 'Seated' : 'Free Agent'}
-          </div>
-        </div>
-
-        {/* Name + meta + actions */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontSize: 9, letterSpacing: 2.5,
-            color: 'var(--imp-text-lo)',
-            textTransform: 'uppercase', marginBottom: 4,
-          }}>
-            Tier {ROMAN[advisor.currentTier - 1] ?? '—'} · {isSeated ? 'Seated' : 'Available'}
-          </div>
-          <div style={{
-            fontFamily: 'var(--imp-font-display)',
-            fontSize: 26, fontWeight: 500,
-            color: 'var(--imp-text-hi)',
-            letterSpacing: 2, textTransform: 'uppercase',
-            lineHeight: 1.1, marginBottom: 6,
-          }}>
-            {advisor.name}
-          </div>
-          <div style={{
-            fontFamily: 'var(--imp-font-serif)',
-            fontStyle: 'italic', fontSize: 13,
-            color: 'var(--imp-text-mid)',
-            lineHeight: 1.5, marginBottom: 14,
-          }}>
-            {currentTierData.description}
-          </div>
-
-          {/* XP bar — only if not max tier */}
-          {nextTierThreshold !== null && xpToNext !== null && (
-            <div style={{ marginBottom: 14 }}>
-              <div style={{
-                display: 'flex', justifyContent: 'space-between',
-                fontSize: 9, color: 'var(--imp-text-lo)',
-                letterSpacing: 1.5, textTransform: 'uppercase',
-                marginBottom: 4,
-              }}>
-                <span>XP to Tier {ROMAN[advisor.currentTier] ?? ''}</span>
-                <span style={{ fontFamily: 'var(--imp-font-mono)', color: 'var(--imp-text)' }}>
-                  {advisor.xp} / {nextTierThreshold}
-                </span>
-              </div>
-              <div style={{
-                height: 4, background: 'rgba(0, 0, 0, 0.5)',
-                borderRadius: 2, overflow: 'hidden',
-              }}>
-                <div style={{
-                  width: `${xpPct}%`, height: '100%',
-                  background: `linear-gradient(90deg, ${color} 0%, ${accent} 100%)`,
-                  boxShadow: `0 0 6px ${accent}60`,
-                }} />
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            {isSeated ? (
-              <button
-                onClick={onDismiss}
-                style={btnOutline(accent, '#c24a3a')}
-              >
-                Dismiss
-              </button>
-            ) : (
-              <button
-                onClick={onOfferSeat}
-                disabled={!anyEmptySeat}
-                style={btnPrimary(accent, !anyEmptySeat)}
-              >
-                {anyEmptySeat ? 'Offer a Seat' : 'All seats filled'}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Seated bonuses summary (reads real advisor data, no mocks) */}
-      <div style={{
-        borderTop: '1px solid rgba(212, 168, 67, 0.15)',
-        paddingTop: 14,
-      }}>
-        <div style={{
-          fontFamily: 'var(--imp-font-display)',
-          fontSize: 11, fontWeight: 600,
-          letterSpacing: 2.5,
-          color: accent,
-          textTransform: 'uppercase', marginBottom: 10,
-        }}>
-          Passive bonus
-        </div>
-        <div style={{
-          padding: '10px 12px',
-          background: 'rgba(20, 18, 32, 0.6)',
-          border: '1px solid rgba(212, 168, 67, 0.15)',
-          borderRadius: 2,
-          fontFamily: 'var(--imp-font-serif)',
-          fontStyle: 'italic', fontSize: 12,
-          color: 'var(--imp-text)',
-        }}>
-          {describePassive(currentTierData.passive)}
-        </div>
-      </div>
-    </>
-  );
-}
-
-function EmptyDetail({ accent }: { accent: string }) {
   return (
     <div style={{
-      textAlign: 'center', padding: 60,
-      color: 'var(--imp-text-mid)',
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      flex: 1,
+      minHeight: 0,
+      display: 'grid',
+      gridTemplateRows: 'minmax(300px, 1fr) auto',
+      background: `
+        radial-gradient(circle at 50% 8%, ${color}24 0%, transparent 42%),
+        linear-gradient(140deg, rgba(240, 208, 128, 0.08) 0%, transparent 22%),
+        linear-gradient(180deg, rgba(34, 30, 48, 0.96) 0%, rgba(13, 11, 20, 0.98) 100%)
+      `,
     }}>
-      <LaurelWreath size={100} color={accent} opacity={0.3} />
       <div style={{
-        fontFamily: 'var(--imp-font-display)',
-        fontSize: 16, color: 'var(--imp-text-hi)',
-        letterSpacing: 2, textTransform: 'uppercase',
-        marginTop: 14, marginBottom: 4,
+        position: 'relative',
+        minHeight: 0,
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'stretch',
+        justifyContent: 'center',
       }}>
-        No advisors
+        <SPQREmblem
+          size={180}
+          color={CONSILIUM_ACCENT}
+          opacity={0.1}
+          style={{ position: 'absolute', top: 28, right: 28 }}
+        />
+        {advisor.portrait ? (
+          <img
+            src={advisor.portrait}
+            alt={advisor.name}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center 18%',
+              filter: 'saturate(0.9) contrast(1.06)',
+            }}
+          />
+        ) : (
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color,
+            fontFamily: 'var(--imp-font-display)',
+            fontSize: 'clamp(120px, 18vw, 240px)',
+            fontWeight: 600,
+            opacity: 0.68,
+            textShadow: '0 8px 28px rgba(0, 0, 0, 0.7)',
+          }}>
+            {advisor.name.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: `
+            linear-gradient(90deg, rgba(13, 11, 20, 0.94) 0%, transparent 24%, transparent 72%, rgba(13, 11, 20, 0.88) 100%),
+            linear-gradient(180deg, transparent 34%, rgba(13, 11, 20, 0.98) 100%)
+          `,
+        }} />
+        <div style={{
+          position: 'absolute',
+          left: 22,
+          right: 22,
+          bottom: 18,
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
+          gap: 16,
+        }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{
+              color: 'var(--imp-text-lo)',
+              fontFamily: 'var(--imp-font-body)',
+              fontSize: 10,
+              fontWeight: 800,
+              letterSpacing: 2.4,
+              textTransform: 'uppercase',
+            }}>
+              Tier {ROMAN[advisor.currentTier - 1] ?? 'I'} · {role}
+            </div>
+            <div style={{
+              marginTop: 4,
+              color: 'var(--imp-text-hi)',
+              fontFamily: 'var(--imp-font-display)',
+              fontSize: 'clamp(28px, 4vw, 48px)',
+              fontWeight: 600,
+              letterSpacing: 2,
+              lineHeight: 0.96,
+              textTransform: 'uppercase',
+              textShadow: '0 4px 18px rgba(0, 0, 0, 0.7)',
+            }}>
+              {advisor.name}
+            </div>
+            <div style={{
+              marginTop: 7,
+              color: 'var(--imp-text-mid)',
+              fontFamily: 'var(--imp-font-serif)',
+              fontSize: 16,
+              fontStyle: 'italic',
+              lineHeight: 1.25,
+            }}>
+              {heroLine(currentTierData.passive, source)}
+            </div>
+          </div>
+          <div style={{
+            flex: '0 0 auto',
+            color: CONSILIUM_ACCENT,
+            fontFamily: 'var(--imp-font-mono)',
+            fontSize: 18,
+            fontWeight: 900,
+            padding: '7px 10px',
+            border: '1px solid var(--imp-gold-dim)',
+            background: 'rgba(13, 11, 20, 0.72)',
+          }}>
+            {source === 'market' ? `${advisor.cost}g` : 'SEATED'}
+          </div>
+        </div>
       </div>
-      <div style={{ fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic' }}>
-        The pool will repopulate as you progress.
+
+      <div style={{
+        padding: '18px 22px 20px',
+        borderTop: '1px solid var(--imp-gold-faint)',
+        background: 'rgba(13, 11, 20, 0.72)',
+      }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 14 }}>
+          {advisor.traits.map((trait) => (
+            <TraitChip key={trait} trait={trait} />
+          ))}
+        </div>
+
+        <CeremonialTrack
+          currentTier={advisor.currentTier}
+          xp={advisor.xp}
+          nextTierThreshold={nextTierThreshold}
+          accent={CONSILIUM_ACCENT}
+          factionColor={color}
+          style={{ marginBottom: 14 }}
+        />
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) auto',
+          gap: 12,
+          alignItems: 'end',
+        }}>
+          <div style={{
+            padding: '10px 12px',
+            border: '1px solid var(--imp-gold-faint)',
+            borderRadius: 2,
+            background: 'rgba(20, 18, 32, 0.62)',
+            color: 'var(--imp-text)',
+            fontFamily: 'var(--imp-font-serif)',
+            fontSize: 13,
+            fontStyle: 'italic',
+            lineHeight: 1.35,
+          }}>
+            {describePassive(currentTierData.passive)}
+          </div>
+
+          {source === 'seat' && slotIndex !== null && (
+            <button
+              type="button"
+              class="consilium-danger-btn"
+              onClick={() => onDismiss(slotIndex)}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid var(--imp-gold-dim)',
+                borderRadius: 2,
+                background: 'transparent',
+                color: 'var(--imp-danger)',
+                cursor: 'pointer',
+                fontFamily: 'var(--imp-font-body)',
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: 1.4,
+                textTransform: 'uppercase',
+              }}
+            >
+              Dismiss
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Helpers ──────────────────────────────────────────────────────
+function EmptyHero() {
+  return (
+    <div style={{
+      flex: 1,
+      minHeight: 420,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      color: 'var(--imp-text-mid)',
+      background: 'radial-gradient(circle at 50% 26%, rgba(212, 168, 67, 0.12) 0%, transparent 38%)',
+      textAlign: 'center',
+      padding: 44,
+    }}>
+      <LaurelWreath size={128} color={CONSILIUM_ACCENT} opacity={0.28} />
+      <div style={{
+        marginTop: 16,
+        color: 'var(--imp-text-hi)',
+        fontFamily: 'var(--imp-font-display)',
+        fontSize: 20,
+        letterSpacing: 2.4,
+        textTransform: 'uppercase',
+      }}>
+        No advisor selected
+      </div>
+      <div style={{
+        marginTop: 6,
+        maxWidth: 360,
+        fontFamily: 'var(--imp-font-serif)',
+        fontStyle: 'italic',
+        lineHeight: 1.4,
+      }}>
+        Select a seated councilor or political market offer to review their mandate.
+      </div>
+    </div>
+  );
+}
+
+function ReservedColumn() {
+  return (
+    <OrnatePanel accent={CONSILIUM_ACCENT} style={{ minHeight: '100%' }}>
+      <SectionHeader title="Seated Bonuses" accent={CONSILIUM_ACCENT} />
+      <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <SPQREmblem
+          size={130}
+          color={CONSILIUM_ACCENT}
+          opacity={0.08}
+          style={{ position: 'absolute', right: -8, top: 24 }}
+        />
+        <BonusCard icon="I" value="S28-08" label="Reserved" accent={CONSILIUM_ACCENT} muted />
+        <div style={{
+          padding: '10px 2px',
+          color: 'var(--imp-text-lo)',
+          fontFamily: 'var(--imp-font-serif)',
+          fontSize: 12,
+          fontStyle: 'italic',
+          lineHeight: 1.4,
+        }}>
+          This column is reserved for the aggregate seated-bonus stack. The hero layout claims the space now so S28-08 can plug in without reshaping the screen.
+        </div>
+      </div>
+    </OrnatePanel>
+  );
+}
+
+function MiniPortrait({ advisor, size }: { advisor: Advisor; size: number }) {
+  const color = FACTION_COLORS[advisor.color];
+  return (
+    <div style={{
+      width: size,
+      height: size,
+      borderRadius: '50%',
+      overflow: 'hidden',
+      border: `1px solid ${color}`,
+      background: `radial-gradient(circle, ${color}44 0%, var(--imp-panel) 100%)`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: '0 0 auto',
+      color,
+      fontFamily: 'var(--imp-font-display)',
+      fontSize: Math.round(size * 0.42),
+      fontWeight: 800,
+    }}>
+      {advisor.portrait ? (
+        <img
+          src={advisor.portrait}
+          alt=""
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }}
+        />
+      ) : (
+        advisor.name.charAt(0).toUpperCase()
+      )}
+    </div>
+  );
+}
+
+function TierBadge({ tier }: { tier: Advisor['currentTier'] }) {
+  return (
+    <div style={{
+      width: 24,
+      height: 24,
+      borderRadius: '50%',
+      border: `1px solid ${CONSILIUM_ACCENT}`,
+      color: CONSILIUM_ACCENT,
+      background: 'rgba(13, 11, 20, 0.82)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: '0 0 auto',
+      fontFamily: 'var(--imp-font-display)',
+      fontSize: 10,
+      fontWeight: 800,
+    }}>
+      {ROMAN[tier - 1] ?? 'I'}
+    </div>
+  );
+}
 
 function describePassive(p: AdvisorPassive): string {
   switch (p.type) {
-    case 'resource-per-spoke':  return `+${p.amount} ${p.resource} each spoke.`;
-    case 'upkeep-reduction':    return `${p.percent}% off upkeep costs.`;
-    case 'shop-discount':       return `${p.percent}% shop discount.`;
+    case 'resource-per-spoke': return `+${p.amount} ${p.resource} each spoke.`;
+    case 'upkeep-reduction': return `${p.percent}% off upkeep costs.`;
+    case 'shop-discount': return `${p.percent}% shop discount.`;
     case 'extra-event-choices': return `+${p.count} extra event choice(s).`;
-    case 'heal-between-nodes':  return `Restore ${p.amount} HP between nodes.`;
-    case 'threat-reduction':    return `Enemy threat reduced by ${p.amount}.`;
-    case 'loot-bonus':          return `+${p.percent}% loot from battles.`;
+    case 'heal-between-nodes': return `Restore ${p.amount} HP between nodes.`;
+    case 'threat-reduction': return `Enemy threat reduced by ${p.amount}.`;
+    case 'loot-bonus': return `+${p.percent}% loot from battles.`;
   }
 }
 
-function btnPrimary(accent: string, disabled: boolean): preact.JSX.CSSProperties {
-  return {
-    padding: '8px 16px',
-    background: disabled
-      ? 'rgba(80, 70, 50, 0.4)'
-      : `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`,
-    border: 'none', borderRadius: 2,
-    color: disabled ? 'var(--imp-text-lo)' : 'var(--imp-ink)',
-    fontSize: 11, fontWeight: 700,
-    letterSpacing: 2, textTransform: 'uppercase',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    fontFamily: 'var(--imp-font-display)',
-  };
+function heroLine(p: AdvisorPassive, source: AdvisorSource): string {
+  const prefix = source === 'market'
+    ? 'A power broker awaits invitation:'
+    : 'A seated voice shapes the next campaign:';
+  return `${prefix} ${describePassive(p)}`;
 }
 
-function btnOutline(accent: string, color: string): preact.JSX.CSSProperties {
-  return {
-    padding: '6px 12px',
-    background: 'transparent',
-    border: `1px solid ${accent}55`,
-    borderRadius: 2,
-    color,
-    fontSize: 10,
-    letterSpacing: 1.5, textTransform: 'uppercase',
-    cursor: 'pointer',
-    fontFamily: 'var(--imp-font-body)',
-    fontWeight: 600,
-  };
-}
+const smallCapsStyle: preact.JSX.CSSProperties = {
+  color: 'var(--imp-text-mid)',
+  fontFamily: 'var(--imp-font-display)',
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: 1.8,
+  textTransform: 'uppercase',
+};
+
+const rowNameStyle: preact.JSX.CSSProperties = {
+  color: 'var(--imp-text-hi)',
+  fontFamily: 'var(--imp-font-display)',
+  fontSize: 12,
+  fontWeight: 700,
+  letterSpacing: 1,
+  textTransform: 'uppercase',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+
+const mutedItalicStyle: preact.JSX.CSSProperties = {
+  color: 'var(--imp-text-lo)',
+  fontFamily: 'var(--imp-font-serif)',
+  fontSize: 10,
+  fontStyle: 'italic',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+
+const emptySealStyle: preact.JSX.CSSProperties = {
+  width: 42,
+  height: 42,
+  borderRadius: '50%',
+  border: '1px dashed var(--imp-gold-faint)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'var(--imp-text-lo)',
+  fontSize: 18,
+  flex: '0 0 auto',
+};
+
+const countPillStyle: preact.JSX.CSSProperties = {
+  color: 'var(--imp-text-lo)',
+  fontFamily: 'var(--imp-font-mono)',
+  fontSize: 9,
+  fontWeight: 800,
+  letterSpacing: 1,
+  textTransform: 'uppercase',
+};
