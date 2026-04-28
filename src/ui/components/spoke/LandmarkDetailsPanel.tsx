@@ -17,10 +17,12 @@
  */
 
 import type { SpokeNode } from '../../../game/progression/spoke';
-import type { EncounterType, LandmarkType } from '../../../game/progression/landmark-types';
+import type { EncounterType } from '../../../game/progression/landmark-types';
 import { BATTLE_MODIFIER_LABELS } from '../../../game/progression/battle-terrain-modifiers';
 import { getNodeIntel, type NodeIntel } from '../../../game/progression/spoke-scouting';
 import { RESOURCE_INFO } from '../../../game/core/commander';
+import { navigateTo } from '../../screens';
+import { LANDMARK_LABEL, ENCOUNTER_LABEL } from './landmark-presentation';
 
 if (typeof document !== 'undefined' && !document.getElementById('landmark-details-styles')) {
   const el = document.createElement('style');
@@ -119,6 +121,34 @@ if (typeof document !== 'undefined' && !document.getElementById('landmark-detail
       opacity: 0.4;
       cursor: not-allowed;
     }
+    .ldp-art-header {
+      width: 100%;
+      height: 110px;
+      border-radius: 4px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .ldp-art-header::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
+      pointer-events: none;
+    }
+    .ldp-art-icon {
+      font-size: 46px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 10px rgba(0,0,0,0.7));
+      position: relative;
+      z-index: 1;
+    }
+    /* Content wrapper — lets the art header bleed edge-to-edge in the card. */
+    .ldp-content { padding: 0 2px; }
+
     .landmark-unknown-body {
       font-style: italic;
       color: var(--color-text-muted);
@@ -137,41 +167,26 @@ if (typeof document !== 'undefined' && !document.getElementById('landmark-detail
   document.head.appendChild(el);
 }
 
-const ENCOUNTER_LABEL: Record<EncounterType, string> = {
-  battle:       'Battle',
-  elite_battle: 'Elite Battle',
-  boss:         'Boss',
-  rest:         'Rest',
-  event:        'Event',
-  scout:        'Scout',
-  forage:       'Forage',
-  recruit:      'Recruit',
-  ambush:       'Ambush',
-  merchant:     'Merchant',
-  siege:        'Siege',
-  hazard:       'Hazard',
-  unknown:      'Unknown',
-};
+// LANDMARK_LABEL, ENCOUNTER_LABEL sourced from ./landmark-presentation (T4.1).
 
-const LANDMARK_LABEL: Record<LandmarkType, string> = {
-  start_camp:      'Start Camp',
-  battlefield:     'Battlefield',
-  forest:          'Forest',
-  hill:            'Hill',
-  village:         'Village',
-  farm:            'Farm',
-  city:            'City',
-  fort:            'Fort',
-  camp:            'Camp',
-  shrine:          'Shrine',
-  river_crossing:  'River Crossing',
-  ruins:           'Ruins',
-  road:            'Road',
-  marsh:           'Marsh',
-  mountain_pass:   'Mountain Pass',
-  watchtower:      'Watchtower',
-  supply_depot:    'Supply Depot',
-};
+function artHeaderStyle(enc: EncounterType | undefined, intelLevel: number): { gradient: string; icon: string } {
+  if (intelLevel === 0) return { gradient: 'linear-gradient(135deg, rgba(20,15,35,1), rgba(45,32,65,1))', icon: '❓' };
+  switch (enc) {
+    case 'battle':     return { gradient: 'linear-gradient(135deg, rgba(65,18,18,1), rgba(105,28,28,1))', icon: '⚔️' };
+    case 'elite_battle': return { gradient: 'linear-gradient(135deg, rgba(80,20,20,1), rgba(120,35,30,1))', icon: '⚔️' };
+    case 'boss':       return { gradient: 'linear-gradient(135deg, rgba(55,10,55,1), rgba(100,18,35,1))', icon: '☠️' };
+    case 'rest':       return { gradient: 'linear-gradient(135deg, rgba(22,42,22,1), rgba(38,58,32,1))', icon: '⛺' };
+    case 'forage':     return { gradient: 'linear-gradient(135deg, rgba(52,42,12,1), rgba(78,62,18,1))', icon: '🌾' };
+    case 'recruit':    return { gradient: 'linear-gradient(135deg, rgba(38,28,12,1), rgba(68,48,18,1))', icon: '🛡️' };
+    case 'scout':      return { gradient: 'linear-gradient(135deg, rgba(12,32,52,1), rgba(22,55,78,1))', icon: '👁️' };
+    case 'hazard':     return { gradient: 'linear-gradient(135deg, rgba(52,28,8,1), rgba(88,48,18,1))', icon: '⚡' };
+    case 'event':      return { gradient: 'linear-gradient(135deg, rgba(42,28,58,1), rgba(68,48,88,1))', icon: '📜' };
+    case 'merchant':   return { gradient: 'linear-gradient(135deg, rgba(52,42,18,1), rgba(88,72,28,1))', icon: '💰' };
+    case 'ambush':     return { gradient: 'linear-gradient(135deg, rgba(28,22,12,1), rgba(52,38,22,1))', icon: '🗡️' };
+    case 'siege':      return { gradient: 'linear-gradient(135deg, rgba(42,38,32,1), rgba(72,62,52,1))', icon: '🏰' };
+    default:           return { gradient: 'linear-gradient(135deg, rgba(24,18,34,1), rgba(42,32,55,1))', icon: '⚔️' };
+  }
+}
 
 const THREAT_COLOR: Record<NonNullable<SpokeNode['threatHint']>, string> = {
   low:    '#4a9a6a',
@@ -225,21 +240,68 @@ interface LandmarkDetailsPanelProps {
   isCurrent: boolean;
   onAction?: () => void;
   accentColor?: string;
+  /** Override the auto-derived action button label (S29-07). */
+  actionLabel?: string;
+  /** Tooltip shown when the action button is disabled (S29-07). */
+  actionDisabledReason?: string;
 }
 
-export function LandmarkDetailsPanel({ node, isCurrent, onAction, accentColor = 'var(--color-gold-primary)' }: LandmarkDetailsPanelProps) {
-  if (!node) return null;
+export function LandmarkDetailsPanel({
+  node,
+  isCurrent,
+  onAction,
+  accentColor = 'var(--color-gold-primary)',
+  actionLabel: actionLabelOverride,
+  actionDisabledReason,
+}: LandmarkDetailsPanelProps) {
+  // T3.1: Defensive empty state — spoke exists but is fully resolved before
+  // the spoke-complete useEffect fires and navigates away. Show a brief
+  // completion message so the zone isn't visually blank.
+  if (!node) {
+    return (
+      <div class="landmark-details-panel" style={{ textAlign: 'center', padding: '24px 20px' }}>
+        <div class="landmark-panel-eyebrow" style={{ marginBottom: '8px' }}>Spoke</div>
+        <div class="landmark-panel-title" style={{ color: accentColor }}>Complete</div>
+        <p style={{
+          color: 'var(--color-text-muted)',
+          fontSize: 'var(--font-size-sm)',
+          margin: '8px 0 16px',
+        }}>
+          All landmarks resolved. Returning to hub…
+        </p>
+        <button
+          class="spoke-campaign-action-btn"
+          onClick={() => navigateTo('hub')}
+          style={{ padding: '8px 20px' }}
+        >
+          Return to Hub
+        </button>
+      </div>
+    );
+  }
 
   const intel = getNodeIntel(node);
+  const artHeader = artHeaderStyle(
+    'encounterType' in intel ? intel.encounterType : undefined,
+    intel.level,
+  );
 
   const eyebrow = intel.landmarkType
     ? LANDMARK_LABEL[intel.landmarkType] ?? capitalize(intel.landmarkType.replace(/_/g, ' '))
     : 'Unknown';
   const title = intel.name ?? '???';
-  const btnLabel = actionLabel(intel);
+  const btnLabel = actionLabelOverride ?? actionLabel(intel);
 
   return (
     <div class="landmark-details-panel">
+      <div
+        class="ldp-art-header"
+        style={{ background: artHeader.gradient }}
+        aria-hidden="true"
+      >
+        <span class="ldp-art-icon">{artHeader.icon}</span>
+      </div>
+      <div class="ldp-content">
       <div class="landmark-panel-eyebrow">{eyebrow}</div>
       <div class="landmark-panel-title" style={{ color: accentColor }}>{title}</div>
 
@@ -359,10 +421,11 @@ export function LandmarkDetailsPanel({ node, isCurrent, onAction, accentColor = 
           class="landmark-action-btn"
           onClick={isCurrent && onAction ? onAction : undefined}
           disabled={!isCurrent}
-          title={!isCurrent ? 'Not current node' : undefined}
+          title={!isCurrent ? (actionDisabledReason ?? 'Not current node') : undefined}
         >
           {btnLabel}
         </button>
+      </div>
       </div>
     </div>
   );

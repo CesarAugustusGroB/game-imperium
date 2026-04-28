@@ -60,17 +60,11 @@ When the user's message starts with `FIX:`:
 
 ## /sprint-polish Workflow
 End-of-sprint polish pass. Invoke with `/sprint-polish [S<N>]` or `/sprint-polish --issues "..."`.
-- **Model policy**: Opus max effort for analysis & integration; Sonnet 4.6 high effort for implementation agents
 1. **Scope** — (Opus max) scans `git diff` for all sprint-changed files, runs `tsc`, greps for code smells, queries Notion (read-only) for open bugs
 2. **Triage** — (Opus max) categorizes issues into 4 tiers (Critical → Architecture), assigns by file ownership
 3. **Spawn** — creates `fix/S<N>-polish` branch, spawns Sonnet 4.6 high-effort agents in parallel per domain (Frontend UX, Backend Arch, Battle, Infra/QA) — only for domains with changes
 4. **Integrate** — (Opus max) merges worktrees, verifies build, squashes into single commit
 5. **PR** — opens PR targeting `develop` with structured summary and verification checklist
-
-## Agent Model Policy
-- When implementing a plan (plan mode approved → execution), use **Sonnet 4.6** agents for the implementation work
-- Same applies to `/dev-task` Phase 5 (Implement): spawn Sonnet 4.6 agents for coding
-- Opus stays in the driver seat for planning, review, and coordination
 
 ## Conventions
 - Branch naming: `<type>/<task-id>-<short-slug>` (e.g. `feat/42-add-diplomacy`)

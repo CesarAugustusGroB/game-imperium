@@ -8,6 +8,7 @@ import { ExercitusTab } from './tabs/ExercitusTab';
 import { MercatorTab } from './tabs/MercatorTab';
 import { DoctrinaeTab } from './tabs/DoctrinaeTab';
 import { DecretaTab } from './tabs/DecretaTab';
+import { NodeMapScreen } from '../NodeMapScreen';
 
 // ── One-time scoped style injection ──
 // Any element inside the Forum shell gets the thin gold scrollbar
@@ -43,6 +44,7 @@ const TAB_COMPONENTS: Record<ForumTab, () => preact.JSX.Element> = {
   provinciae: ProvinciaeTab,
   consilium:  ConsiliumTab,
   exercitus:  ExercitusTab,
+  bellum:     NodeMapScreen,
   mercator:   MercatorTab,
   doctrinae:  DoctrinaeTab,
   decreta:    DecretaTab,

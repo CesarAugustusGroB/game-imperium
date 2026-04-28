@@ -609,7 +609,10 @@ export interface LandmarkSpokeOptions {
 
 /**
  * Pure generator that produces a Spoke with full Itinerarium metadata.
- * Total nodes = duration * 3 + 1 + jitter, where jitter ∈ {-1, 0, +1}.
+ * Total nodes ∈ [max(6, duration * 3), duration * 3 + 1] — the legacy
+ * contract `duration * 3 + 1` is the upper bound; downward jitter (-1)
+ * trims one node for variety, upward jitter is clamped so short-duration
+ * spokes never exceed the promised count.
  *
  * Procedural variety pass adds: theme biasing (woodland / highlands /
  * marshland / coastal / mixed), node-count jitter, and 0–3 multi-node
@@ -634,9 +637,15 @@ export function generateLandmarkSpoke(opts: LandmarkSpokeOptions): Spoke {
   }
 
   // ── Theme & jitter ──
+  // Legacy contract `duration * 3 + 1` is the upper bound on node count.
+  // Jitter rolls in {-1, 0, +1} for variety, but upward jitter is clamped to
+  // 0 so short-duration spokes never exceed the promised count (e.g.
+  // duration=2 must stay ≤ 7 nodes). Floor at 6 keeps the 4-slot mid-chain
+  // invariants satisfiable.
   const theme: SpokeTheme = opts.theme ?? pickWeighted(THEME_WEIGHTS, rng);
   const jitter = (Math.floor(rng() * 3) - 1) as -1 | 0 | 1; // {-1, 0, +1}
-  const totalNodes = Math.max(6, duration * 3 + 1 + jitter); // floor at 6 (4 mid + start + boss)
+  const promised = duration * 3 + 1;
+  const totalNodes = Math.max(6, Math.min(promised, promised + jitter));
   const midCount = totalNodes - 2;
 
   // ── Required mid-nodes (4 factories, one per invariant) ──
@@ -688,7 +697,9 @@ export function generateLandmarkSpoke(opts: LandmarkSpokeOptions): Spoke {
   for (let i = 0; i < factories.length; i++) {
     nodes.push(factories[i](i + 1));
   }
-  nodes.push(buildBossNode(totalNodes - 1, threat, theme, rng));
+  // Derive boss position from the actual array index — guarantees
+  // `boss.position === nodes.length - 1` even if anything upstream drifts.
+  nodes.push(buildBossNode(nodes.length, threat, theme, rng));
 
   // ── Invariant checks (throw loudly on violation) ──
   assertInvariants(nodes);
