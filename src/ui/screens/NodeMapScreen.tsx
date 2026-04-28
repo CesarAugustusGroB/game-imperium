@@ -3,7 +3,7 @@ import { signal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { navigateTo } from '../screens';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
-import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains, applyNodeEffectsNow, legacyEncounterFromNodeType } from '../../game/progression/spoke';
+import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains, applyNodeEffectsNow, legacyEncounterFromNodeType, chooseBranch } from '../../game/progression/spoke';
 import type { SpokeNode, NodeType, SeasonTickResult } from '../../game/progression/spoke';
 import type { SpokeEffect } from '../../game/progression/spoke-effects';
 import type { EncounterType } from '../../game/progression/landmark-types';
@@ -526,23 +526,62 @@ export function NodeMapScreen() {
   }
 
   // S27-08: id-based selection. Falls back to the current main-chain node
-  // when nothing is explicitly selected. Branch nodes (Spoke.branches) are
-  // addressable by id but never advance progression — their action button
-  // is disabled in the panel since `isCurrentSelected` is false for them.
+  // when nothing is explicitly selected. Branches attached to the current
+  // main-chain index are actionable — but only at their HEAD (nodes[0]).
+  // Tail nodes (nodes[1..]) are inspect-only until the head is committed,
+  // at which point the entire chain becomes part of the main path.
   const currentMainNode = spoke.nodes[nodeIdx] ?? null;
   const selectedId = selectedNodeId.value ?? currentMainNode?.id ?? null;
+
+  // Scan all branches' chain nodes for selection match.
+  const selectedBranchInfo = (() => {
+    if (!selectedId || !spoke.branches) return null;
+    for (const branch of spoke.branches) {
+      const chainIdx = branch.nodes.findIndex(n => n.id === selectedId);
+      if (chainIdx >= 0) {
+        return {
+          branch,
+          chainIdx,
+          isHead: chainIdx === 0,
+          isReachable: branch.attachAfter === nodeIdx,
+        };
+      }
+    }
+    return null;
+  })();
+
   const selectedNodeForPanel = (() => {
     if (!selectedId) return currentMainNode;
     const main = spoke.nodes.find(n => n.id === selectedId);
     if (main) return main;
-    const br = spoke.branches?.find(b => b.node.id === selectedId);
-    return br?.node ?? currentMainNode;
+    if (selectedBranchInfo) return selectedBranchInfo.branch.nodes[selectedBranchInfo.chainIdx];
+    return currentMainNode;
   })();
-  const isCurrentSelected = selectedNodeForPanel?.id === currentMainNode?.id;
+
+  // Action button is enabled when the player has selected the current
+  // main-chain node, OR a reachable branch's head. Tail nodes never enable
+  // the button (the head must be committed first).
+  const isReachableBranchHeadSelected =
+    !!selectedBranchInfo && selectedBranchInfo.isHead && selectedBranchInfo.isReachable;
+  const isCurrentSelected =
+    selectedNodeForPanel?.id === currentMainNode?.id || isReachableBranchHeadSelected;
+
   function handleSelectedAction() {
-    if (isCurrentSelected && selectedNodeForPanel) {
+    if (!selectedNodeForPanel) return;
+    if (isReachableBranchHeadSelected) {
+      activateBranch(selectedNodeForPanel.id);
+      return;
+    }
+    if (isCurrentSelected) {
       handleNodeActivate(selectedNodeForPanel);
     }
+  }
+  function activateBranch(branchHeadId: string) {
+    if (!chooseBranch(branchHeadId)) return;
+    const swappedNode = currentSpoke.value?.nodes[nodeIdx];
+    if (!swappedNode) return;
+    selectedNodeId.value = swappedNode.id;
+    handleNodeActivate(swappedNode);
   }
 
   function openOutcomeModal(node: SpokeNode, kind: OutcomeKind) {
@@ -799,7 +838,12 @@ export function NodeMapScreen() {
                       : 'locked';
 
               const isReachable = node.resolved || i === nodeIdx || i === nodeIdx + 1;
-              const branchesHere = spoke.branches?.filter(b => b.attachAfter === i) ?? [];
+              // Only render branches at-or-ahead of the player. Once we've
+              // walked past the fork, the unused branch is dead — hide it
+              // instead of leaving a locked tile floating on the map.
+              const branchesHere = spoke.branches?.filter(
+                b => b.attachAfter === i && b.attachAfter >= nodeIdx,
+              ) ?? [];
 
               return (
                 <Fragment key={node.id}>
@@ -820,19 +864,23 @@ export function NodeMapScreen() {
                       onSelect={() => { selectedNodeId.value = node.id; }}
                     />
                     {/* S27-08: render branches attached to this node as a
-                        side-route below the main chain. Decorative + selectable;
-                        does not advance progression (AC4). */}
-                    {branchesHere.map((b) => {
+                        chain hanging off the main path. Only the HEAD is
+                        activatable (commits the chain via chooseBranch);
+                        tail nodes are inspect-only until commitment. */}
+                    {branchesHere.map((b, branchIdx) => {
                       const branchReachable = i === nodeIdx;
                       const branchLineState: RouteLineState = branchReachable ? 'reachable' : 'locked';
+                      // Alternate vertical offset per branch so multiple
+                      // branches at adjacent indices don't fully overlap.
+                      const verticalOffset = 36 + branchIdx * 6;
                       return (
                         <div
-                          key={b.node.id}
+                          key={b.nodes[0].id}
                           style={{
                             position: 'absolute',
                             top: '100%',
                             left: '50%',
-                            transform: 'translate(-30%, 36px)',
+                            transform: `translate(-30%, ${verticalOffset}px)`,
                             display: 'flex',
                             alignItems: 'center',
                             gap: '8px',
@@ -840,15 +888,29 @@ export function NodeMapScreen() {
                           }}
                         >
                           <RouteLine state={branchLineState} color={color} direction="down-right" length={48} />
-                          <LandmarkNode
-                            node={b.node}
-                            isCurrent={false}
-                            isSelected={selectedId === b.node.id}
-                            isReachable={branchReachable}
-                            color={color}
-                            onActivate={() => { /* branches are inspect-only in MVP */ }}
-                            onSelect={() => { selectedNodeId.value = b.node.id; }}
-                          />
+                          {b.nodes.map((chainNode, chainIdx) => {
+                            const isHead = chainIdx === 0;
+                            return (
+                              <Fragment key={chainNode.id}>
+                                {chainIdx > 0 && (
+                                  <RouteLine state={branchLineState} color={color} direction="horizontal" length={32} />
+                                )}
+                                <LandmarkNode
+                                  node={chainNode}
+                                  isCurrent={false}
+                                  isSelected={selectedId === chainNode.id}
+                                  isReachable={branchReachable && isHead}
+                                  color={color}
+                                  onActivate={() => {
+                                    // Only the head commits the branch.
+                                    if (!branchReachable || !isHead) return;
+                                    activateBranch(chainNode.id);
+                                  }}
+                                  onSelect={() => { selectedNodeId.value = chainNode.id; }}
+                                />
+                              </Fragment>
+                            );
+                          })}
                         </div>
                       );
                     })}
@@ -1448,24 +1510,7 @@ export function NodeMapScreen() {
               <span style={{ color: 'rgba(200, 160, 100, 0.7)', fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
                 Threat +{lastSeasonTick.value.threatIncrease} &middot; Season {lastSeasonTick.value.globalSeason}/{24}
               </span>
-              {lastSeasonTick.value.doomUpkeep > 0 && (
-                <div style={{ fontSize: 'var(--font-size-xs)', color: 'rgba(200, 130, 130, 0.7)', marginTop: '2px' }}>
-                  Doom drain: -{lastSeasonTick.value.doomUpkeep}g
-                </div>
-              )}
             </div>
-            {lastSeasonTick.value.doomMilestone && (
-              <div style={{
-                padding: '8px 12px', borderRadius: 'var(--radius-md)',
-                background: 'rgba(140, 30, 20, 0.25)',
-                border: '1px solid rgba(200, 60, 50, 0.3)',
-                textAlign: 'center',
-              }}>
-                <span style={{ color: '#e06050', fontSize: 'var(--font-size-sm)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>
-                  {lastSeasonTick.value.doomMilestone}
-                </span>
-              </div>
-            )}
           </div>
           <button class="modal-action-btn ornate-btn" onClick={() => { showSeasonModal.value = false; }} style={{
             marginTop: '14px', padding: '10px 24px',

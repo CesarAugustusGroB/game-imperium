@@ -4,9 +4,14 @@ import { OrnatePanel } from '../../../components/OrnatePanel';
 import { SectionHeader, LinkButton, ROLE_COLORS } from '../components/SectionHeader';
 import { setForumTab } from '../state';
 import { SUPPLY_MAX_CARRY } from '../../../../config/game-config';
+import type { Cohort } from '../../../../game/army/cohort';
 
 interface ExercitusPanelProps {
   accent?: string;
+}
+
+function getCohortCurrentHp(cohort: Cohort): number {
+  return cohort.currentHp ?? (cohort.outOfAction ? 1 : cohort.stats.hp);
 }
 
 export function ExercitusPanel({ accent = '#d4a843' }: ExercitusPanelProps) {
@@ -15,6 +20,8 @@ export function ExercitusPanel({ accent = '#d4a843' }: ExercitusPanelProps) {
   const cohorts = army?.cohorts ?? [];
   const supplies = army?.supplies ?? 0;
   const supplyLow = SUPPLY_MAX_CARRY > 0 && supplies < SUPPLY_MAX_CARRY * 0.25;
+  const currentHpTotal = cohorts.reduce((sum, c) => sum + getCohortCurrentHp(c), 0);
+  const maxHpTotal = cohorts.reduce((sum, c) => sum + c.stats.hp, 0);
 
   return (
     <OrnatePanel accent={accent}>
@@ -34,31 +41,50 @@ export function ExercitusPanel({ accent = '#d4a843' }: ExercitusPanelProps) {
             No cohorts prepared.
           </div>
         )}
-        {cohorts.map((c) => (
-          <div key={c.instanceId ?? c.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              width: 6, height: 16,
-              background: ROLE_COLORS[c.role] ?? accent,
-            }} />
-            <div style={{
-              flex: 1,
-              fontSize: 12,
-              color: 'var(--imp-text)',
-              fontFamily: 'var(--imp-font-serif)',
-              fontStyle: 'italic',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
-              {c.name}
-            </div>
-            <div style={{
-              fontFamily: 'var(--imp-font-mono)',
-              fontSize: 11,
-              color: 'var(--imp-text-mid)',
-            }}>
-              hp {c.stats.hp}
-            </div>
+        {cohorts.length > 0 && (
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '2px 0 4px',
+            fontSize: 10,
+            color: 'var(--imp-text-lo)',
+            fontFamily: 'var(--imp-font-mono)',
+            letterSpacing: 0.5,
+          }}>
+            <span>{cohorts.length} unit{cohorts.length === 1 ? '' : 's'}</span>
+            <span>{currentHpTotal}/{maxHpTotal} HP</span>
           </div>
-        ))}
+        )}
+        {cohorts.map((c) => {
+          const currentHp = getCohortCurrentHp(c);
+          const maxHp = c.stats.hp;
+          const wounded = currentHp < maxHp || !!c.outOfAction;
+          return (
+            <div key={c.instanceId ?? c.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{
+                width: 6, height: 16,
+                background: ROLE_COLORS[c.role] ?? accent,
+              }} />
+              <div style={{
+                flex: 1,
+                fontSize: 12,
+                color: c.outOfAction ? 'var(--imp-danger)' : 'var(--imp-text)',
+                fontFamily: 'var(--imp-font-serif)',
+                fontStyle: 'italic',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {c.name}
+              </div>
+              <div style={{
+                fontFamily: 'var(--imp-font-mono)',
+                fontSize: 11,
+                color: wounded ? '#d48b3a' : 'var(--imp-text-mid)',
+                whiteSpace: 'nowrap',
+              }}>
+                {currentHp}/{maxHp} hp{c.outOfAction ? ' · OOA' : ''}
+              </div>
+            </div>
+          );
+        })}
       </div>
       {/* ── Supply chip ── */}
       <div style={{

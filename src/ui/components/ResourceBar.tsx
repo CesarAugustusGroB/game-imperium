@@ -1,7 +1,7 @@
 import { useRef, useEffect, useState } from 'preact/hooks';
 import type { Signal } from '@preact/signals';
 import { gold, faith, influence, momentum, iuniores } from '../../game/core/resources';
-import { selectedCommander, globalSeason, MAX_SEASONS, getDoomLevel } from '../../game/core/game-state';
+import { selectedCommander, globalSeason, MAX_SEASONS } from '../../game/core/game-state';
 import { FACTION_PRIMARY_RESOURCE, RESOURCE_INFO } from '../../game/core/commander';
 import type { ResourceType } from '../../game/core/commander';
 import { Tooltip } from './Tooltip';
@@ -14,10 +14,6 @@ if (typeof document !== 'undefined' && !document.getElementById('resource-bar-st
     @keyframes resource-delta {
       from { opacity: 1; transform: translateY(0); }
       to { opacity: 0; transform: translateY(-12px); }
-    }
-    @keyframes doom-pulse {
-      0%, 100% { box-shadow: none; }
-      50% { box-shadow: 0 0 6px 1px rgba(194,74,58,0.5); }
     }
     @media (max-width: 600px) {
       .resource-bar { gap: 12px !important; height: 34px !important; padding: 0 8px !important; }
@@ -142,9 +138,6 @@ function ResourceCounter({ type }: { type: ResourceType }) {
 export function ResourceBar() {
   if (!selectedCommander.value) return null;
 
-  const doom = getDoomLevel();
-  const seasonColor = doom >= 75 ? 'var(--color-danger)' : doom >= 50 ? 'var(--color-gold-secondary)' : 'var(--color-text-secondary)';
-
   return (
     <div class="resource-bar" style={BAR_STYLE}>
       <ResourceCounter type="gold" />
@@ -153,31 +146,17 @@ export function ResourceBar() {
       <ResourceCounter type="momentum" />
       <ResourceCounter type="iuniores" />
       <Tooltip
-        content={<div>{`Season ${globalSeason.value}. Doom ${doom}% — at 75% all unit upgrades cost double gold.`}</div>}
+        content={<div>{`Season ${globalSeason.value} of ${MAX_SEASONS}.`}</div>}
         variant="rich"
         position="below"
       >
         <div
-          aria-label={`Season ${globalSeason.value} of ${MAX_SEASONS}, doom level ${doom}%`}
-          style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid var(--color-border-subtle)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px' }}
+          aria-label={`Season ${globalSeason.value} of ${MAX_SEASONS}`}
+          style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid var(--color-border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          <span style={{ fontSize: 'var(--font-size-sm)', color: seasonColor, fontWeight: doom >= 50 ? '700' : '400', transition: `color var(--duration-slow) var(--ease-default)`, lineHeight: '1' }}>
+          <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', fontWeight: 400, lineHeight: '1' }}>
             S{globalSeason.value}/{MAX_SEASONS}
           </span>
-          {/* Doom bar — 3px strip below the season text */}
-          <div style={{
-            width: '36px', height: '3px',
-            background: 'rgba(60, 50, 70, 0.6)',
-            borderRadius: 'var(--radius-sm)', overflow: 'hidden',
-          }}>
-            <div style={{
-              width: `${doom}%`,
-              height: '100%',
-              background: doom >= 75 ? 'var(--color-danger)' : doom >= 50 ? 'var(--color-gold-secondary)' : 'rgba(160, 140, 100, 0.5)',
-              borderRadius: 'var(--radius-sm)',
-              transition: `width 0.4s var(--ease-default), background var(--duration-slow) var(--ease-default)`,
-            }} />
-          </div>
         </div>
       </Tooltip>
     </div>

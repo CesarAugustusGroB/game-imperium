@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import type { Faction, ResourceType } from '../core/commander';
 import { spendResource, addResource } from '../core/resources';
-import { threatLevel, globalSeason, getDoomUpkeep, getDoomMilestone } from '../core/game-state';
+import { threatLevel, globalSeason } from '../core/game-state';
 import { getActiveEffects } from '../items/doctrine-store';
 import type { DoctrineEffect } from '../items/doctrine';
 import type { Posture } from '../council/advisor';
@@ -96,20 +96,32 @@ export interface Spoke {
    */
   boundLegate?: Legate | null;
   /**
-   * S27-08: optional decorative bifurcations off the main chain. Each
-   * branch is a single side-route node attached to a main-chain index
-   * (`attachAfter`). Branch nodes are inspectable via the details panel
-   * but do NOT advance progression — `currentNodeIndex` always points at
-   * the main `nodes[]` array. A future task wires actual traversal.
+   * S27-08: optional bifurcations off the main chain. Each branch is a
+   * 1–3 node side-route attached to a main-chain index (`attachAfter`).
+   * The fork model: when the player picks a branch, `chooseBranch`
+   * splices the chain into `nodes[]` AT `attachAfter`, replacing the
+   * original main node there. `currentNodeIndex` then resolves the
+   * inserted chain sequentially before continuing.
    */
   branches?: SpokeBranch[];
+  /** S27 variety pass: drives landmark/boss/branch biasing at generation. */
+  theme?: SpokeTheme;
 }
 
-/** S27-08: a side-route attached to a main-chain index. */
+/** S27 variety pass: theme buckets that bias landmark/branch/boss selection. */
+export type SpokeTheme = 'woodland' | 'highlands' | 'marshland' | 'coastal' | 'mixed';
+
+/**
+ * S27-08: a side-route attached to a main-chain index. The `nodes` array is
+ * 1–3 entries long; index 0 is the head (the only node the player can pick
+ * to commit the branch). Tail nodes are inspectable but their action button
+ * is gated until commitment splices the chain into the main path.
+ */
 export interface SpokeBranch {
   /** Index in `Spoke.nodes` after which this branch forks. */
   attachAfter: number;
-  node: SpokeNode;
+  /** Branch chain. 1–3 entries; nodes[0] is the head (committable). */
+  nodes: SpokeNode[];
 }
 
 /** The active spoke, or null when the player is at the hub. */
@@ -227,6 +239,80 @@ export function resetSpoke(): void {
   preAppliedEffectNodeIds.clear();
 }
 
+/**
+ * Pure helper used by `chooseBranch` and Golden Opportunity rest insertion.
+ * Splices `inserted` into `nodes` at `insertAt`, **replacing** the slot at
+ * that index when `replaceAt` is true (branch commitment) or **inserting
+ * before** when false (Golden Opportunity adds without removing).
+ *
+ * Reindexes every node's `position` to its new array index and shifts every
+ * remaining branch's `attachAfter` so it still points at the right landmark
+ * after the splice. Branches whose attach index falls inside the inserted
+ * range (replaceAt=true case where the original main node carried a branch)
+ * would be orphaned — but the call sites already drop the committed branch
+ * before invoking this helper, so that case never reaches here.
+ *
+ * Returns a fresh `{ nodes, branches }` pair; the inputs are not mutated.
+ */
+export function reindexSpokeNodesAndBranches(
+  nodes: readonly SpokeNode[],
+  branches: readonly SpokeBranch[] | undefined,
+  insertAt: number,
+  inserted: readonly SpokeNode[],
+  replaceAt: boolean,
+): { nodes: SpokeNode[]; branches: SpokeBranch[] | undefined } {
+  // Splice
+  const before = nodes.slice(0, insertAt);
+  const after = nodes.slice(insertAt + (replaceAt ? 1 : 0));
+  const merged = [...before, ...inserted, ...after];
+
+  // Reindex positions
+  const reindexed = merged.map((n, i) => (n.position === i ? n : { ...n, position: i }));
+
+  // Shift remaining branches
+  const sizeDelta = inserted.length - (replaceAt ? 1 : 0);
+  const shifted = branches?.map(b => {
+    if (b.attachAfter <= insertAt) return b;
+    return { ...b, attachAfter: b.attachAfter + sizeDelta };
+  });
+
+  return { nodes: reindexed, branches: shifted };
+}
+
+/**
+ * S27-08 closure: commit a bifurcation. Splices the branch's full chain
+ * (1–3 nodes) into `spoke.nodes` at `attachAfter`, replacing the original
+ * main node at that index, reindexes node positions, and shifts later
+ * branches' `attachAfter` to absorb the chain's length delta. Removes the
+ * committed branch from `spoke.branches`.
+ *
+ * No-op when the branch isn't found, the player isn't standing at the fork
+ * point, the main node has already been resolved, or the chain is empty.
+ * Returns true when the commit happened so the UI can fire activation.
+ */
+export function chooseBranch(branchHeadId: string): boolean {
+  const spoke = currentSpoke.value;
+  if (!spoke || !spoke.branches || spoke.branches.length === 0) return false;
+  const branch = spoke.branches.find(b => b.nodes[0]?.id === branchHeadId);
+  if (!branch || branch.nodes.length === 0) return false;
+  if (branch.attachAfter !== currentNodeIndex.value) return false;
+  const mainNode = spoke.nodes[branch.attachAfter];
+  if (!mainNode || mainNode.resolved) return false;
+
+  // Drop the committed branch BEFORE the splice so the helper doesn't see it.
+  const remainingBranches = spoke.branches.filter(b => b !== branch);
+  const inserted = branch.nodes.map(n => ({ ...n }));
+  const { nodes, branches } = reindexSpokeNodesAndBranches(
+    spoke.nodes,
+    remainingBranches,
+    branch.attachAfter,
+    inserted,
+    true,
+  );
+  currentSpoke.value = { ...spoke, nodes, branches };
+  return true;
+}
+
 /** Mark the current node as resolved and advance to the next one.
  *  Returns { spokeComplete, seasonTicked, supplyLog } — check seasonTicked for
  *  season boundary UI; supplyLog reports supply attrition on this traversal.
@@ -337,8 +423,6 @@ export const THREAT_PER_SEASON = 1;
 export interface SeasonTickResult {
   season: number;
   globalSeason: number;
-  doomUpkeep: number;
-  doomMilestone: string | null;
   upkeepPaid: { resource: ResourceType; amount: number }[];
   upkeepShortfall: { resource: ResourceType; deficit: number }[];
   threatIncrease: number;
@@ -383,22 +467,11 @@ export function tickSeason(): SeasonTickResult | null {
     }
   }
 
-  // Doom escalation upkeep (extra gold drain)
-  const doomUpkeep = getDoomUpkeep();
-  if (doomUpkeep > 0) {
-    if (spendResource('gold', doomUpkeep)) {
-      upkeepPaid.push({ resource: 'gold', amount: doomUpkeep });
-    } else {
-      upkeepShortfall.push({ resource: 'gold', deficit: doomUpkeep });
-    }
-  }
-
   // Increment threat
   threatLevel.value += THREAT_PER_SEASON;
 
   // Advance global season clock
   globalSeason.value += 1;
-  const doomMilestone = getDoomMilestone();
 
   // Collect province income
   const provinceIncome = collectProvinceIncome();
@@ -409,8 +482,6 @@ export function tickSeason(): SeasonTickResult | null {
   return {
     season: newSeason,
     globalSeason: globalSeason.value,
-    doomUpkeep,
-    doomMilestone,
     upkeepPaid,
     upkeepShortfall,
     threatIncrease: THREAT_PER_SEASON,

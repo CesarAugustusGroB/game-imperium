@@ -15,33 +15,31 @@ if (typeof document !== 'undefined' && !document.getElementById('battle-context-
   el.id = 'battle-context-banner-styles';
   el.textContent = `
     .battle-context-banner {
-      /* Anchored below TopBar (which sits at top:12px and runs ~64px tall:
-         title + round chip on row 1, instructions on row 2). Same z-index
-         as the rest of the battle HUD so it stays in-layer. */
+      /* Anchored on the left, below the YOUR ARMY panel (which sits at
+         top:12px and runs ~110px tall). Same z-index as the rest of the
+         battle HUD so it stays in-layer. */
       position: fixed;
-      top: 88px;
-      left: 50%;
-      transform: translateX(-50%);
+      top: 140px;
+      left: 12px;
       z-index: 20;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: flex-start;
       gap: 6px;
-      padding: 10px 18px;
+      padding: 10px 14px;
       background: rgba(14, 12, 28, 0.85);
       border: 1px solid rgba(180, 160, 100, 0.32);
       border-radius: var(--radius-md);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
       pointer-events: auto;
-      max-width: min(720px, 92vw);
+      max-width: 320px;
       box-sizing: border-box;
     }
     @media (max-width: 720px) {
-      /* On narrow viewports the army panels at top-left/right come closer
-         to center; nudge the banner further down so it doesn't visually
-         crowd the TopBar's wrapped instructions line. */
-      .battle-context-banner { top: 108px; }
+      /* On narrow viewports the army panel may stack taller; push the
+         banner a bit further down so it never visually crowds it. */
+      .battle-context-banner { top: 168px; max-width: 280px; }
     }
     .battle-context-eyebrow {
       font-family: var(--font-display);
@@ -58,14 +56,14 @@ if (typeof document !== 'undefined' && !document.getElementById('battle-context-
       letter-spacing: 2px;
       text-transform: uppercase;
       line-height: 1.1;
-      text-align: center;
+      text-align: left;
     }
     .battle-context-row {
       display: flex;
       align-items: center;
       gap: 6px;
       flex-wrap: wrap;
-      justify-content: center;
+      justify-content: flex-start;
     }
     .battle-context-pill {
       display: inline-flex;

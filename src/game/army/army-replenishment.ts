@@ -250,6 +250,56 @@ export function previewHubReplenishment(
  */
 export const lastReplenishmentSummary = signal<ReplenishmentPreview | null>(null);
 
+export const POST_BATTLE_HEAL_REWARD_RATIO = 0.2;
+
+export interface PostBattleHealRewardSummary {
+  cohortsHealed: number;
+  hpRestored: number;
+}
+
+/**
+ * Reward-pick healing from the post-battle screen. Restores a small flat
+ * fraction of each damaged cohort's max HP, costs no iuniores, and clears
+ * outOfAction for cohorts that recover above the 1 HP floor.
+ */
+export function applyPostBattleHealReward(
+  ratio = POST_BATTLE_HEAL_REWARD_RATIO,
+): PostBattleHealRewardSummary | null {
+  const spoke = currentSpoke.value;
+  const army = spoke?.boundArmy;
+  if (!spoke || !army || army.cohorts.length === 0) return null;
+
+  const healRatio = Math.max(0, ratio);
+  if (healRatio <= 0) return null;
+
+  let cohortsHealed = 0;
+  let hpRestored = 0;
+  const nextCohorts = army.cohorts.map((cohort) => {
+    const maxHp = cohort.stats.hp;
+    const currentHp = getCohortCurrentHp(cohort);
+    const missingHp = Math.max(0, maxHp - currentHp);
+    if (missingHp <= 0) return cohort;
+
+    const healAmount = Math.max(1, Math.ceil(maxHp * healRatio));
+    const restored = Math.min(missingHp, healAmount);
+    cohortsHealed++;
+    hpRestored += restored;
+    return applyCohortHealthState(cohort, currentHp + restored, false);
+  });
+
+  if (hpRestored <= 0) return { cohortsHealed: 0, hpRestored: 0 };
+
+  const nextArmy: ArmyData = {
+    ...army,
+    cohorts: nextCohorts,
+    size: computeArmySize(nextCohorts),
+  };
+  currentSpoke.value = { ...spoke, boundArmy: nextArmy };
+  syncPreparedFromBoundArmy(nextArmy);
+
+  return { cohortsHealed, hpRestored };
+}
+
 /**
  * Commit a replenishment on the currently-bound army (the army traversing
  * the active spoke). Reads `currentSpoke.value.boundArmy` and the current

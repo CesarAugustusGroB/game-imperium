@@ -4,7 +4,7 @@ import { IUNIORES } from '../../config/game-config';
 import { COMMANDERS } from '../../data/commanders';
 import type { ResourceType } from '../core/commander';
 import type { Advisor } from '../council/advisor';
-import { advisorPool, councilSlots, plannedSpoke, tierUpNotices } from '../council/council-store';
+import { advisorMarket, advisorPool, councilSlots, plannedSpoke, tierUpNotices } from '../council/council-store';
 import type { Decretum } from '../items/decretum';
 import { decretumHand, maxHandSize } from '../items/decretum-store';
 import type { Doctrine } from '../items/doctrine';
@@ -12,7 +12,7 @@ import { doctrineCollection, equippedDoctrines } from '../items/doctrine-store';
 import { consequenceFlags, seenEventsThisSpoke } from '../events/event-store';
 import type { NPCFaction } from '../progression/npc-faction-store';
 import { npcFactions } from '../progression/npc-faction-store';
-import { currentNodeIndex, currentSpoke, spokeGains, type Spoke, ZERO_GAINS } from '../progression/spoke';
+import { currentNodeIndex, currentSpoke, spokeGains, type Spoke, type SpokeNode, ZERO_GAINS } from '../progression/spoke';
 import {
   crusadeBattlesLeft,
   goldenOpportunityPending,
@@ -91,6 +91,7 @@ export interface ActiveRunSave {
   featurePool: ProvinceFeature[];
   councilSlots: (Advisor | null)[];
   advisorPool: Advisor[];
+  advisorMarket: Advisor[];
   tierUpNotices: string[];
   plannedSpoke: Spoke | null;
   currentSpoke: Spoke | null;
@@ -186,7 +187,29 @@ function normalizeSpokeSnapshot(spoke: Spoke | null | undefined): Spoke | null {
   return {
     ...spoke,
     boundArmy: normalizeArmySnapshot(spoke.boundArmy ?? null),
+    branches: normalizeBranches(spoke.branches),
   };
+}
+
+/**
+ * S27 variety pass: branches changed shape from `{attachAfter, node}` to
+ * `{attachAfter, nodes: SpokeNode[]}`. Older saves carry the singular form;
+ * normalize them into single-node chains so reads never crash.
+ */
+function normalizeBranches(branches: Spoke['branches']): Spoke['branches'] {
+  if (!branches || branches.length === 0) return branches;
+  return branches.map(b => {
+    // New shape — passthrough.
+    if (Array.isArray((b as { nodes?: unknown }).nodes)) return b;
+    // Old shape — promote `node` into `nodes: [node]`. Cast through `unknown`
+    // because the legacy interface no longer exists in the type system.
+    const legacy = b as unknown as { attachAfter: number; node: SpokeNode };
+    if (legacy.node) {
+      return { attachAfter: legacy.attachAfter, nodes: [legacy.node] };
+    }
+    // Defensive: drop malformed entries.
+    return { attachAfter: 0, nodes: [] };
+  }).filter(b => b.nodes.length > 0);
 }
 
 function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
@@ -225,6 +248,7 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     featurePool: Array.isArray(run.featurePool) ? run.featurePool : [],
     councilSlots: Array.isArray(run.councilSlots) ? run.councilSlots : [null, null, null],
     advisorPool: Array.isArray(run.advisorPool) ? run.advisorPool : [],
+    advisorMarket: Array.isArray(run.advisorMarket) ? run.advisorMarket : [],
     tierUpNotices: Array.isArray(run.tierUpNotices) ? run.tierUpNotices : [],
     plannedSpoke,
     currentSpoke: currentSpokeSnapshot,
@@ -320,6 +344,7 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     featurePool: featurePool.value,
     councilSlots: councilSlots.value,
     advisorPool: advisorPool.value,
+    advisorMarket: advisorMarket.value,
     tierUpNotices: tierUpNotices.value,
     plannedSpoke: normalizeSpokeSnapshot(plannedSpoke.value),
     currentSpoke: normalizeSpokeSnapshot(currentSpoke.value),
@@ -436,6 +461,7 @@ export async function restoreActiveRun(): Promise<boolean> {
 
     councilSlots.value = snapshot.councilSlots;
     advisorPool.value = snapshot.advisorPool;
+    advisorMarket.value = snapshot.advisorMarket;
     tierUpNotices.value = snapshot.tierUpNotices;
     plannedSpoke.value = normalizeSpokeSnapshot(snapshot.plannedSpoke);
 
