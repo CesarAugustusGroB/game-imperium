@@ -41,19 +41,45 @@ if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-
   const el = document.createElement('style');
   el.id = 'spoke-campaign-styles';
   el.textContent = `
+    @keyframes spoke-campaign-fade-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spoke-campaign-detail-swap {
+      from { opacity: 0.3; transform: translateX(-4px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
     .spoke-campaign-grid {
       display: grid;
-      grid-template-columns: minmax(280px, 320px) 1fr minmax(260px, 300px);
+      grid-template-columns: minmax(260px, 300px) 1fr minmax(240px, 280px);
       grid-template-rows: auto 1fr auto;
       grid-template-areas:
         "topbar    topbar     topbar"
         "details   map        legend"
         "army      army       army";
-      gap: 16px;
+      gap: 14px;
       width: min(1600px, 96vw);
       height: calc(100vh - 32px);
       margin: 16px auto;
       box-sizing: border-box;
+      animation: spoke-campaign-fade-in var(--duration-normal, 300ms) var(--ease-default, ease) both;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .spoke-campaign-grid { animation: none; }
+    }
+    /* Mid-size desktop: give the map slightly more breathing room. */
+    @media (min-width: 1280px) {
+      .spoke-campaign-grid {
+        grid-template-columns: minmax(280px, 320px) 1fr minmax(260px, 300px);
+        gap: 16px;
+      }
+    }
+    .spoke-campaign-zone--details > * {
+      animation: spoke-campaign-detail-swap var(--duration-fast, 150ms) var(--ease-default, ease) both;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .spoke-campaign-zone--details > * { animation: none; }
     }
     .spoke-campaign-zone {
       background: rgba(14, 12, 28, 0.72);
@@ -244,6 +270,7 @@ export function SpokeCampaignScreen() {
 
         <aside class="spoke-campaign-zone spoke-campaign-zone--details">
           <LandmarkDetailsPanel
+            key={selectedNode?.id ?? 'empty'}
             node={selectedNode}
             isCurrent={selectedIsCurrent}
             accentColor={accent}
