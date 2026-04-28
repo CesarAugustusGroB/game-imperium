@@ -68,7 +68,7 @@ if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-
       position: absolute;
       inset: 0;
       background: url('/asset/promesa/node_map_promesa.png') center/cover no-repeat;
-      filter: saturate(0.85) brightness(0.55) contrast(1.05);
+      filter: saturate(0.8) brightness(0.62) contrast(1.08);
       z-index: 0;
     }
     /* Painterly vignette on top of the bg so center pops. */

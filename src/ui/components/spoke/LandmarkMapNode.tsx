@@ -47,7 +47,7 @@ if (typeof document !== 'undefined' && !document.getElementById('landmark-map-no
 
     .lmn {
       position: relative;
-      border-radius: 12px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -69,8 +69,8 @@ if (typeof document !== 'undefined' && !document.getElementById('landmark-map-no
     /* Intel halos — outer ring around the tile. */
     .lmn-halo {
       position: absolute;
-      inset: -6px;
-      border-radius: 16px;
+      inset: -7px;
+      border-radius: 50%;
       pointer-events: none;
       transition: opacity var(--duration-fast) var(--ease-default);
     }
