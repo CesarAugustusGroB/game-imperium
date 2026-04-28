@@ -109,7 +109,7 @@ export function addAdvisorMarketOffer(advisor: Advisor): void {
 }
 
 function getAdvisorCost(advisor: Advisor): { resource: ResourceType; amount: number } {
-  return advisor.cost ?? { resource: 'gold', amount: 0 };
+  return { resource: 'gold', amount: advisor.cost };
 }
 
 /**

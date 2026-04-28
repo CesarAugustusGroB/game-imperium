@@ -1,7 +1,7 @@
 import type { Advisor, AdvisorTrait } from '../game/council/advisor';
 
 function advisorMeta(traits: AdvisorTrait[], cost: number): Pick<Advisor, 'traits' | 'cost'> {
-  return { traits, cost: { resource: 'gold', amount: cost } };
+  return { traits, cost };
 }
 
 // ── Red (Military) — battle-heavy, short spokes, attacking ──

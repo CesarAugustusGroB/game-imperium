@@ -56,11 +56,6 @@ export type AdvisorTrait =
   | 'Pontifex'
   | 'Tribune';
 
-export interface AdvisorCost {
-  resource: ResourceType;
-  amount: number;
-}
-
 // ── Advisor ──
 
 /**
@@ -75,10 +70,10 @@ export interface Advisor extends GameEntity, FactionAffiliated {
   xp: number;
   /** Optional portrait asset path for Consilium presentation. */
   portrait?: string;
-  /** Optional trait chips for advisor market / hero UI. */
-  traits?: AdvisorTrait[];
-  /** Optional hire cost when this advisor appears as a market offer. */
-  cost?: AdvisorCost;
+  /** Trait chips for advisor market / hero UI. */
+  traits: AdvisorTrait[];
+  /** Gold price when this advisor appears as a market offer. */
+  cost: number;
   /** Fixed 3-tier structure: [Tier I, Tier II, Tier III]. */
   tiers: TierTuple<AdvisorTier>;
 }
