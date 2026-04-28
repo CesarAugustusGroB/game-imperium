@@ -22,6 +22,7 @@ import { computeArmyMorale } from '../../game/army/morale';
 import { SpokeCampaignTopBar } from '../components/spoke/SpokeCampaignTopBar';
 import { LandmarkDetailsPanel } from '../components/spoke/LandmarkDetailsPanel';
 import { LandmarkMap } from '../components/spoke/LandmarkMap';
+import { LandmarkMapNode } from '../components/spoke/LandmarkMapNode';
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 
 if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-styles')) {
@@ -139,6 +140,7 @@ export function SpokeCampaignScreen() {
   const commander = selectedCommander.value;
   const accent = commander ? FACTION_COLORS[commander.faction] : '#f0d080';
   const [showArmyHUD, setShowArmyHUD] = useState(false);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   if (!spoke) {
     return (
@@ -206,28 +208,19 @@ export function SpokeCampaignScreen() {
           <LandmarkMap
             nodes={spoke.nodes}
             renderNode={(node, _coord, i) => {
-              // Placeholder pin — S29-05 swaps in the real LandmarkNode visuals.
               const isCurrent = i === nodeIdx;
-              const isResolved = node.resolved;
-              const fill = isResolved
-                ? 'rgba(180, 160, 100, 0.4)'
-                : isCurrent
-                  ? accent
-                  : 'rgba(220, 200, 140, 0.85)';
+              // Reachable = resolved tail (showable) OR the current step's
+              // immediate next neighbor. Selection-only here — encounter
+              // resolution lives behind the details-panel action (S29-07).
+              const isReachable = node.resolved || isCurrent || i === nodeIdx + 1;
               return (
-                <div
-                  title={node.name ?? node.id}
-                  style={{
-                    width: isCurrent ? '20px' : '14px',
-                    height: isCurrent ? '20px' : '14px',
-                    borderRadius: '50%',
-                    background: fill,
-                    border: '2px solid rgba(20, 14, 6, 0.8)',
-                    boxShadow: isCurrent
-                      ? `0 0 12px ${accent}, 0 0 24px ${accent}`
-                      : '0 1px 3px rgba(0, 0, 0, 0.6)',
-                    transition: 'all var(--duration-fast) var(--ease-default)',
-                  }}
+                <LandmarkMapNode
+                  node={node}
+                  isCurrent={isCurrent}
+                  isReachable={isReachable}
+                  isSelected={selectedNodeId === node.id}
+                  accent={accent}
+                  onSelect={(n) => setSelectedNodeId(n.id)}
                 />
               );
             }}
