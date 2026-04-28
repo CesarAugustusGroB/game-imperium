@@ -21,7 +21,6 @@ import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 import {
-  AdvisorMarketCard,
   BonusCard,
   CeremonialTrack,
   getTraitVisual,
@@ -97,11 +96,6 @@ if (typeof document !== 'undefined' && !document.getElementById('consilium-3col-
     .consilium-filter-chip:focus-visible {
       outline: 1px solid var(--imp-gold-hi);
       outline-offset: 2px;
-    }
-    .consilium-market-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 10px;
     }
     @media (max-width: 1180px) {
       .consilium-command-grid {
@@ -776,26 +770,58 @@ function PoliticalMarketPanel({
             No political offers match this school.
           </div>
         ) : (
-          <div class="consilium-market-grid">
-            {market.map((advisor) => {
-              const reason = getHireBlockReason(advisor, currentGold, emptySlotIndex);
-              return (
-                <AdvisorMarketCard
-                  key={advisor.id}
-                  advisor={advisor}
-                  accent={CONSILIUM_ACCENT}
-                  selected={advisor.id === selectedId}
-                  disabled={reason !== null}
-                  unavailableReason={reason ?? undefined}
-                  actionLabel={reason ?? 'Hire & Seat'}
-                  onSelect={onSelect}
-                  onHire={onHire}
-                />
-              );
-            })}
-          </div>
+          <MarketAdvisorList
+            market={market}
+            selectedId={selectedId}
+            currentGold={currentGold}
+            emptySlotIndex={emptySlotIndex}
+            onSelect={onSelect}
+            onHire={onHire}
+          />
         )}
       </OrnatePanel>
+    </div>
+  );
+}
+
+interface MarketAdvisorListProps {
+  market: Advisor[];
+  selectedId: string | null;
+  currentGold: number;
+  emptySlotIndex: number;
+  onSelect: (advisor: Advisor) => void;
+  onHire: (advisor: Advisor) => void;
+}
+
+function MarketAdvisorList({
+  market,
+  selectedId,
+  currentGold,
+  emptySlotIndex,
+  onSelect,
+  onHire,
+}: MarketAdvisorListProps) {
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+      gap: 8,
+    }}>
+      {market.map((advisor) => {
+        const reason = getHireBlockReason(advisor, currentGold, emptySlotIndex);
+        return (
+          <AdvisorMarketRow
+            key={advisor.id}
+            advisor={advisor}
+            selected={advisor.id === selectedId}
+            actionLabel={reason ?? 'Hire & Seat'}
+            disabled={reason !== null}
+            unavailableReason={reason ?? undefined}
+            onSelect={onSelect}
+            onHire={onHire}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -833,51 +859,124 @@ function AvailableAdvisorList({ market, selectedId, onSelect }: AvailableAdvisor
       gap: 8,
     }}>
       {market.map((advisor) => (
-        <button
+        <AdvisorMarketRow
           key={advisor.id}
+          advisor={advisor}
+          selected={advisor.id === selectedId}
+          onSelect={onSelect}
+        />
+      ))}
+    </div>
+  );
+}
+
+interface AdvisorMarketRowProps {
+  advisor: Advisor;
+  selected: boolean;
+  actionLabel?: string;
+  disabled?: boolean;
+  unavailableReason?: string;
+  onSelect: (advisor: Advisor) => void;
+  onHire?: (advisor: Advisor) => void;
+}
+
+function AdvisorMarketRow({
+  advisor,
+  selected,
+  actionLabel,
+  disabled = false,
+  unavailableReason,
+  onSelect,
+  onHire,
+}: AdvisorMarketRowProps) {
+  function handleHire(event: MouseEvent) {
+    event.stopPropagation();
+    if (!disabled) onHire?.(advisor);
+  }
+
+  function handleRowKeyDown(event: KeyboardEvent) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    onSelect(advisor);
+  }
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      class="consilium-selectable"
+      onClick={() => onSelect(advisor)}
+      onKeyDown={handleRowKeyDown}
+      style={{
+        width: '100%',
+        minHeight: 64,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '8px 10px',
+        border: `1px solid ${selected ? CONSILIUM_ACCENT : 'var(--imp-gold-faint)'}`,
+        borderRadius: 2,
+        background: selected ? 'rgba(80, 60, 20, 0.25)' : 'rgba(13, 11, 20, 0.46)',
+        color: 'inherit',
+        cursor: 'pointer',
+        textAlign: 'left',
+      }}
+    >
+      <MiniPortrait advisor={advisor} size={38} />
+      <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+        <div style={rowNameStyle}>{advisor.name}</div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          marginTop: 4,
+          minWidth: 0,
+        }}>
+          {advisor.traits.slice(0, 3).map((trait) => (
+            <TraitGlyph key={trait} trait={trait} size={17} />
+          ))}
+        </div>
+      </div>
+      <div style={{
+        color: CONSILIUM_ACCENT,
+        fontFamily: 'var(--imp-font-mono)',
+        fontSize: 11,
+        fontWeight: 800,
+        whiteSpace: 'nowrap',
+      }}>
+        {advisor.cost}g
+      </div>
+      {actionLabel && (
+        <button
           type="button"
-          class="consilium-selectable"
-          onClick={() => onSelect(advisor)}
+          disabled={disabled}
+          title={disabled ? unavailableReason : actionLabel}
+          onClick={handleHire}
           style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '8px 9px',
-            border: `1px solid ${advisor.id === selectedId ? CONSILIUM_ACCENT : 'var(--imp-gold-faint)'}`,
+            flex: '0 0 auto',
+            maxWidth: 104,
+            padding: '7px 10px',
             borderRadius: 2,
-            background: advisor.id === selectedId ? 'rgba(80, 60, 20, 0.25)' : 'rgba(13, 11, 20, 0.46)',
-            color: 'inherit',
-            cursor: 'pointer',
-            textAlign: 'left',
+            border: disabled ? '1px solid var(--imp-gold-faint)' : 'none',
+            background: disabled
+              ? 'rgba(80, 70, 50, 0.26)'
+              : `linear-gradient(180deg, ${CONSILIUM_ACCENT} 0%, var(--imp-gold-mid) 100%)`,
+            color: disabled ? 'var(--imp-text-lo)' : 'var(--imp-ink)',
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            fontFamily: 'var(--imp-font-display)',
+            fontSize: 9,
+            fontWeight: 800,
+            letterSpacing: 1.1,
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            textAlign: 'center',
           }}
         >
-          <MiniPortrait advisor={advisor} size={34} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={rowNameStyle}>{advisor.name}</div>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              marginTop: 4,
-              minWidth: 0,
-            }}>
-              {advisor.traits.slice(0, 3).map((trait) => (
-                <TraitGlyph key={trait} trait={trait} size={17} />
-              ))}
-            </div>
-          </div>
-          <div style={{
-            color: CONSILIUM_ACCENT,
-            fontFamily: 'var(--imp-font-mono)',
-            fontSize: 11,
-            fontWeight: 800,
-            whiteSpace: 'nowrap',
-          }}>
-            {advisor.cost}g
-          </div>
+          {actionLabel}
         </button>
-      ))}
+      )}
     </div>
   );
 }
