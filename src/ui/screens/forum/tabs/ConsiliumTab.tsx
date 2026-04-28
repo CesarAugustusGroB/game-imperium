@@ -161,7 +161,7 @@ export function ConsiliumTab() {
     const slotIndex = slots.findIndex((slot) => slot === null);
     if (slotIndex === -1) return;
 
-    const hired = hireAndSeatAdvisor(advisor.id, slotIndex);
+    const hired = hireAndSeatAdvisor(advisor, slotIndex);
     if (hired) selectedId.value = advisor.id;
   }
 

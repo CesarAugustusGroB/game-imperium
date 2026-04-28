@@ -5,7 +5,7 @@ import { COMMANDERS } from '../../data/commanders';
 import { STARTER_ADVISORS } from '../../data/advisor-data';
 import type { ResourceType } from '../core/commander';
 import type { Advisor } from '../council/advisor';
-import { advisorMarket, advisorPool, councilSlots, plannedSpoke, tierUpNotices } from '../council/council-store';
+import { advisorMarket, councilSlots, plannedSpoke, tierUpNotices } from '../council/council-store';
 import type { Decretum } from '../items/decretum';
 import { decretumHand, maxHandSize } from '../items/decretum-store';
 import type { Doctrine } from '../items/doctrine';
@@ -91,7 +91,6 @@ export interface ActiveRunSave {
   claimedIndices: number[];
   featurePool: ProvinceFeature[];
   councilSlots: (Advisor | null)[];
-  advisorPool: Advisor[];
   advisorMarket: Advisor[];
   tierUpNotices: string[];
   plannedSpoke: Spoke | null;
@@ -253,6 +252,12 @@ function normalizeSavedAdvisorArray(rawAdvisors: unknown): Advisor[] {
     .filter((advisor): advisor is Advisor => advisor !== null);
 }
 
+function normalizeSavedAdvisorMarket(run: Partial<ActiveRunSave> & Record<string, unknown>): Advisor[] {
+  if (Array.isArray(run.advisorMarket)) return normalizeSavedAdvisorArray(run.advisorMarket);
+  if (Array.isArray(run.advisorPool)) return normalizeSavedAdvisorArray(run.advisorPool);
+  return [];
+}
+
 function normalizeSavedCouncilSlots(rawSlots: unknown): (Advisor | null)[] {
   if (!Array.isArray(rawSlots)) return [null, null, null];
   const normalized = rawSlots
@@ -318,8 +323,7 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     claimedIndices: Array.isArray(run.claimedIndices) ? run.claimedIndices : [],
     featurePool: Array.isArray(run.featurePool) ? run.featurePool : [],
     councilSlots: normalizeSavedCouncilSlots(run.councilSlots),
-    advisorPool: normalizeSavedAdvisorArray(run.advisorPool),
-    advisorMarket: normalizeSavedAdvisorArray(run.advisorMarket),
+    advisorMarket: normalizeSavedAdvisorMarket(run as Partial<ActiveRunSave> & Record<string, unknown>),
     tierUpNotices: Array.isArray(run.tierUpNotices) ? run.tierUpNotices : [],
     plannedSpoke,
     currentSpoke: currentSpokeSnapshot,
@@ -414,7 +418,6 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     claimedIndices: Array.from(claimedIndices.value),
     featurePool: featurePool.value,
     councilSlots: councilSlots.value,
-    advisorPool: advisorPool.value,
     advisorMarket: advisorMarket.value,
     tierUpNotices: tierUpNotices.value,
     plannedSpoke: normalizeSpokeSnapshot(plannedSpoke.value),
@@ -531,7 +534,6 @@ export async function restoreActiveRun(): Promise<boolean> {
     featurePool.value = snapshot.featurePool;
 
     councilSlots.value = snapshot.councilSlots;
-    advisorPool.value = snapshot.advisorPool;
     advisorMarket.value = snapshot.advisorMarket;
     tierUpNotices.value = snapshot.tierUpNotices;
     plannedSpoke.value = normalizeSpokeSnapshot(snapshot.plannedSpoke);
