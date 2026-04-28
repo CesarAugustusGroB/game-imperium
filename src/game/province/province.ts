@@ -868,23 +868,21 @@ export function getFamineUnrest(province: Province): number {
 
 /**
  * Net unrest change per season.
- *   base  = tax_unrest + famine + doom − 2 (natural decay) + investment/governor modifier
+ *   base  = tax_unrest + famine − 2 (natural decay) + investment/governor modifier
  *   accel = (unrest > 60) ? (unrest − 60) × 0.25 : 0
  *   total = base + accel
  *
- * `doom` is an external event pressure (default 0).
  * `getUnrestModifier()` is negative when buildings/governor suppress unrest.
  */
 export function calculateUnrestDelta(
   province: Province,
   governorTraits: GovernorTrait[] = [],
-  doom: number = 0,
 ): number {
   const taxUnrest = getLowerTaxUnrest(province.lowerTax) + getUpperTaxUnrest(province.upperTax);
   const famineUnrest = getFamineUnrest(province);
   const featureUnrest = province.uniqueFeature?.unrestPerSeason ?? 0;
   const mod = getUnrestModifier(province, governorTraits); // negative = suppresses unrest
-  const base = taxUnrest + famineUnrest + featureUnrest + doom - 2 + mod;
+  const base = taxUnrest + famineUnrest + featureUnrest - 2 + mod;
   const accel = province.unrest > 60 ? (province.unrest - 60) * 0.25 : 0;
   return base + accel;
 }

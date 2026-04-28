@@ -1,10 +1,12 @@
 import { Fragment } from 'preact';
 import { signal } from '@preact/signals';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect } from 'preact/hooks';
 import { navigateTo } from '../screens';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
-import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains } from '../../game/progression/spoke';
+import { currentSpoke, currentNodeIndex, resetSpoke, advanceNode, completeSpoke, grantSpokeResource, spokeGains, applyNodeEffectsNow, legacyEncounterFromNodeType, chooseBranch } from '../../game/progression/spoke';
 import type { SpokeNode, NodeType, SeasonTickResult } from '../../game/progression/spoke';
+import type { SpokeEffect } from '../../game/progression/spoke-effects';
+import type { EncounterType } from '../../game/progression/landmark-types';
 import { selectedCommander, completedSpokes, threatLevel } from '../../game/core/game-state';
 import { conquerProvince, assignProvinceIdentity, getProvinceEffects } from '../../game/province/province-store';
 import { getCandidateIndices, PROVINCE_NAMES } from '../../game/province/province-map-store';
@@ -25,6 +27,10 @@ import { councilSlots, grantAdvisorXp, tierUpNotices } from '../../game/council/
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 import { computeArmyMorale } from '../../game/army/morale';
 import type { MoraleTier } from '../../game/army/morale';
+import { SpokeTopBar } from '../components/spoke/SpokeTopBar';
+import { LandmarkDetailsPanel } from '../components/spoke/LandmarkDetailsPanel';
+import { LandmarkNode } from '../components/spoke/LandmarkNode';
+import { RouteLine, type RouteLineState } from '../components/spoke/RouteLine';
 import { previewReplenishment, replenishBoundArmy } from '../../game/army/army-replenishment';
 import type { ReplenishmentPreview } from '../../game/army/army-replenishment';
 
@@ -203,20 +209,7 @@ if (typeof document !== 'undefined' && !document.getElementById('node-map-styles
   document.head.appendChild(el);
 }
 
-// ── Icons per node type ──
-const NODE_ICONS: Record<NodeType, string> = {
-  battle: '\u2694\uFE0F',
-  rest:   '\uD83C\uDFD5\uFE0F',
-  event:  '\uD83D\uDCDC',
-  boss:   '\uD83D\uDC80',
-};
 
-const NODE_LABELS: Record<NodeType, string> = {
-  battle: 'Battle',
-  rest: 'Rest',
-  event: 'Event',
-  boss: 'Boss',
-};
 
 // ── Node type visual styles ──
 const NODE_STYLES: Record<NodeType, { color: string; glow: string; hoverLabel: string; hint: string }> = {
@@ -239,8 +232,6 @@ function moraleTierLabel(tier: MoraleTier): string {
   return tier.charAt(0).toUpperCase() + tier.slice(1);
 }
 
-const NODE_SIZE_REGULAR = 68;
-const NODE_SIZE_BOSS = 82;
 
 // ── City choice types & state ──
 
@@ -282,155 +273,22 @@ const justResolvedIndex = signal<number | null>(null);
 /** Army Detail HUD visibility on the node map. */
 const showArmyHUDOnMap = signal(false);
 
-function NodeCircle({ node, isCurrent, color, onActivate }: {
-  node: SpokeNode;
-  isCurrent: boolean;
-  color: string;
-  onActivate: () => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const typeStyle = NODE_STYLES[node.type];
-  const isBoss = node.type === 'boss';
-  const size = isBoss ? NODE_SIZE_BOSS : NODE_SIZE_REGULAR;
-  const stateClass = node.resolved
-    ? 'node-resolved'
-    : isCurrent
-      ? `node-current${isBoss ? ' node-boss' : ''}`
-      : 'node-future';
+/** S27-07/08: id of the node whose details panel is shown. Tracks the
+ *  player's current node by default; clicking any node selects it without
+ *  activating it. `null` falls back to the current main-chain node. Id
+ *  rather than index so branch nodes (S27-08) are addressable. */
+const selectedNodeId = signal<string | null>(null);
 
-  function handleClick() {
-    if (!isCurrent || node.resolved) return;
-    onActivate();
-  }
+/** S27-09: encounter outcome modal — used for forage/recruit/scout/ambush/
+ *  hazard/unknown encounters. Shows the effects about to be applied; on
+ *  Continue, advanceNode runs (which applies them). For ambush, Continue
+ *  routes to BattleV2 instead. */
+type OutcomeKind = 'forage' | 'recruit' | 'scout' | 'ambush' | 'hazard' | 'unknown';
+const outcomeModalNode = signal<SpokeNode | null>(null);
+const outcomeModalKind = signal<OutcomeKind | null>(null);
 
-  // Compute background
-  const bg = node.resolved
-    ? `linear-gradient(135deg, rgba(40, 38, 55, 0.9), rgba(30, 28, 45, 0.95))`
-    : isCurrent
-      ? `linear-gradient(135deg, ${typeStyle.color}30, ${typeStyle.color}10)`
-      : `linear-gradient(135deg, ${typeStyle.color}12, ${typeStyle.color}06)`;
-
-  // Compute border color
-  const borderColor = node.resolved
-    ? 'rgba(212, 168, 67, 0.35)'
-    : isCurrent
-      ? typeStyle.color
-      : `${typeStyle.color}25`;
-
-  // Tooltip text
-  const tooltipText = node.resolved
-    ? 'Completed'
-    : isCurrent
-      ? typeStyle.hoverLabel
-      : node.reward
-        ? `${NODE_LABELS[node.type]} \u2014 ${node.reward.map(r => `${RESOURCE_INFO[r.resource].icon}${r.amount}`).join(' ')}`
-        : NODE_LABELS[node.type];
-
-  return (
-    <div
-      class={`node-circle ${stateClass}`}
-      onClick={handleClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      role={isCurrent && !node.resolved ? 'button' : undefined}
-      aria-label={isCurrent && !node.resolved ? `Activate ${NODE_LABELS[node.type]} node` : undefined}
-      tabIndex={isCurrent && !node.resolved ? 0 : undefined}
-      onKeyDown={isCurrent && !node.resolved ? (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onActivate(); } } : undefined}
-      style={{
-        '--glow': isCurrent ? typeStyle.glow : color + '60',
-        '--type-glow': typeStyle.glow,
-        width: `${size}px`,
-        height: `${size}px`,
-        borderRadius: '50%',
-        background: bg,
-        border: `${isCurrent ? 3 : 2}px solid ${borderColor}`,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        flexShrink: '0',
-        outline: 'none',
-      } as Record<string, string>}
-    >
-      {/* Icon */}
-      {node.resolved ? (
-        <>
-          <span style={{ fontSize: isBoss ? '22px' : '18px', lineHeight: '1', opacity: 0.3 }}>
-            {NODE_ICONS[node.type]}
-          </span>
-          <span class="checkmark-overlay" style={{
-            position: 'absolute',
-            fontSize: 'var(--font-size-lg)',
-            lineHeight: '1',
-            color: 'var(--color-gold-secondary)',
-            textShadow: '0 0 8px rgba(212, 168, 67, 0.5)',
-          }}>
-            {'\u2714'}
-          </span>
-        </>
-      ) : (
-        <span style={{
-          fontSize: isBoss ? '28px' : '22px',
-          lineHeight: '1',
-          filter: isCurrent ? `drop-shadow(0 0 4px ${typeStyle.glow})` : 'none',
-        }}>
-          {NODE_ICONS[node.type]}
-        </span>
-      )}
-
-      {/* Label below circle */}
-      <div style={{
-        position: 'absolute',
-        bottom: '-22px',
-        fontSize: 'var(--font-size-xs)',
-        letterSpacing: '1px',
-        textTransform: 'uppercase',
-        color: isCurrent ? typeStyle.color : node.resolved ? 'rgba(212, 168, 67, 0.6)' : `${typeStyle.color}80`,
-        whiteSpace: 'nowrap',
-        fontWeight: isCurrent ? '600' : '400',
-      }}>
-        {NODE_LABELS[node.type]}
-      </div>
-
-      {/* Tooltip on hover */}
-      {hovered && (
-        <div class="node-tooltip" style={{
-          color: node.resolved ? 'var(--color-gold-secondary)' : isCurrent ? typeStyle.color : 'var(--color-text-secondary)',
-        }}>
-          {tooltipText}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ConnectingLine({ resolved, color, isNextActive }: {
-  resolved: boolean;
-  color: string;
-  isNextActive: boolean;
-}) {
-  const lineClass = isNextActive ? 'line-next-active' : '';
-  return (
-    <div
-      class={lineClass}
-      aria-hidden="true"
-      style={{
-        '--faction-color': color,
-        width: '64px',
-        height: '3px',
-        borderRadius: '1.5px',
-        background: resolved
-          ? `linear-gradient(90deg, ${color}60, ${color}35)`
-          : 'repeating-linear-gradient(90deg, rgba(100,100,100,0.2) 0px, rgba(100,100,100,0.2) 6px, transparent 6px, transparent 12px)',
-        flexShrink: '0',
-        alignSelf: 'center',
-        position: 'relative',
-        boxShadow: resolved ? `0 0 6px ${color}30` : 'none',
-      } as Record<string, string>}
-    />
-  );
-}
+// Legacy NodeCircle / ConnectingLine deleted by S27-08; LandmarkNode +
+// RouteLine own the chain rendering now.
 
 function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
   useEffect(() => {
@@ -492,12 +350,116 @@ function RetreatConfirmModal({ onConfirm, onCancel }: { onConfirm: () => void; o
   );
 }
 
+// ── S27-09: encounter outcome preview ──
+
+const OUTCOME_TITLES: Record<OutcomeKind, string> = {
+  forage:  'Forage the Land',
+  recruit: 'Volunteers Rally',
+  scout:   'Survey the Route',
+  ambush:  'Ambush!',
+  hazard:  'Hazard Underfoot',
+  unknown: 'A Strange Sight',
+};
+
+const OUTCOME_FLAVOR: Record<OutcomeKind, string> = {
+  forage:  'Your foragers fan out to gather what they can.',
+  recruit: 'Locals press forward, eager to swell the ranks.',
+  scout:   'From this vantage you can see far ahead.',
+  ambush:  'Hidden enemies fall on your column. Steel yourselves.',
+  hazard:  'The terrain itself bites at your column.',
+  unknown: 'The air shifts. Something here is not yet plain.',
+};
+
+function outcomeModalTitle(kind: OutcomeKind): string {
+  return OUTCOME_TITLES[kind];
+}
+
+function EncounterOutcomePreview({ node, kind, onContinue }: {
+  node: SpokeNode;
+  kind: OutcomeKind;
+  onContinue: () => void;
+}) {
+  const effects = node.effects ?? [];
+  const continueLabel = kind === 'ambush' ? 'Brace and Fight' : 'Continue';
+  return (
+    <>
+      <div style={{
+        fontSize: 'var(--font-size-md)', color: 'var(--color-text-muted)',
+        lineHeight: '1.5', marginBottom: '16px', fontStyle: 'italic',
+      }}>
+        {OUTCOME_FLAVOR[kind]}
+      </div>
+      {node.name && (
+        <div style={{
+          fontFamily: 'var(--font-display)', fontSize: 'var(--font-size-md)',
+          color: 'var(--color-gold-secondary)', letterSpacing: '2px',
+          textTransform: 'uppercase', textAlign: 'center', marginBottom: '14px',
+        }}>
+          {node.name}
+        </div>
+      )}
+      {effects.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '20px' }}>
+          {effects.map((e, i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              fontSize: 'var(--font-size-sm)',
+              color: outcomeEffectColor(e),
+            }}>
+              {outcomeEffectLine(e)}
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <button class="modal-action-btn ornate-btn" onClick={onContinue} style={{ padding: '10px 24px' }}>
+          {continueLabel}
+        </button>
+      </div>
+    </>
+  );
+}
+
+function outcomeEffectColor(e: SpokeEffect): string {
+  if (e.type === 'morale' || e.type === 'supplies' || e.type === 'iuniores') {
+    return e.delta < 0 ? 'var(--color-danger)' : '#6ab87a';
+  }
+  if (e.type === 'threat') return e.delta > 0 ? 'var(--color-danger)' : '#6ab87a';
+  return 'var(--color-text-secondary)';
+}
+
+function outcomeEffectLine(e: SpokeEffect): string {
+  switch (e.type) {
+    case 'morale':   return `${signed(e.delta)} 🔥 Morale — ${e.label}`;
+    case 'supplies': return `${signed(e.delta)} 📦 Supplies — ${e.label}`;
+    case 'iuniores': return `${signed(e.delta)} 🛡 Iuniores — ${e.label}`;
+    case 'threat':   return `${signed(e.delta)} ⚠ Threat — ${e.label}`;
+    case 'reveal':
+    case 'scout':    return `🔭 ${e.label}`;
+    case 'battle-modifier': return `⚔ ${e.label}`;
+  }
+}
+
+function signed(n: number): string {
+  return n > 0 ? `+${n}` : `${n}`;
+}
+
 export function NodeMapScreen() {
   const spoke = currentSpoke.value;
   const nodeIdx = currentNodeIndex.value;
   const commander = selectedCommander.value;
   const color = commander ? FACTION_COLORS[commander.faction] : '#f0d080';
   const spokeComplete = spoke ? nodeIdx >= spoke.nodes.length : false;
+
+  // L1: clear per-spoke UI state when the spoke is torn down so stale node
+  // selections / open modals from the previous spoke never bleed in.
+  useEffect(() => {
+    if (!spoke) {
+      selectedNodeId.value = null;
+      outcomeModalNode.value = null;
+      outcomeModalKind.value = null;
+    }
+  }, [spoke]);
 
   if (!spoke) {
     return (
@@ -529,12 +491,127 @@ export function NodeMapScreen() {
   }
 
   function handleNodeActivate(node: SpokeNode) {
-    if (node.type === 'battle' || node.type === 'boss') {
+    // S27-09: dispatch ONLY by `enc` (encounterType, with legacy node.type
+    // mapping for pre-Itinerarium spokes). The earlier OR-fallback wrongly
+    // sent any node with type='battle' to BattleV2 even when its
+    // encounterType was 'forage' / 'scout' / 'hazard' / 'ambush' — fixed
+    // by collapsing to a single resolved encounter discriminator.
+    const enc: EncounterType = node.encounterType ?? legacyEncounterFromNodeType(node.type);
+    switch (enc) {
+      case 'battle':
+      case 'elite_battle':
+      case 'boss':
+      case 'siege':
+        navigateTo('battleV2');
+        return;
+      case 'ambush':
+        openOutcomeModal(node, 'ambush');
+        return;
+      case 'rest':
+        openRestModal();
+        return;
+      case 'forage':
+      case 'recruit':
+      case 'scout':
+      case 'hazard':
+      case 'unknown':
+        openOutcomeModal(node, enc);
+        return;
+      case 'event':
+      case 'merchant':
+      default:
+        openEventModal();
+        return;
+    }
+  }
+
+  // S27-08: id-based selection. Falls back to the current main-chain node
+  // when nothing is explicitly selected. Branches attached to the current
+  // main-chain index are actionable — but only at their HEAD (nodes[0]).
+  // Tail nodes (nodes[1..]) are inspect-only until the head is committed,
+  // at which point the entire chain becomes part of the main path.
+  const currentMainNode = spoke.nodes[nodeIdx] ?? null;
+  const selectedId = selectedNodeId.value ?? currentMainNode?.id ?? null;
+
+  // Scan all branches' chain nodes for selection match.
+  const selectedBranchInfo = (() => {
+    if (!selectedId || !spoke.branches) return null;
+    for (const branch of spoke.branches) {
+      const chainIdx = branch.nodes.findIndex(n => n.id === selectedId);
+      if (chainIdx >= 0) {
+        return {
+          branch,
+          chainIdx,
+          isHead: chainIdx === 0,
+          isReachable: branch.attachAfter === nodeIdx,
+        };
+      }
+    }
+    return null;
+  })();
+
+  const selectedNodeForPanel = (() => {
+    if (!selectedId) return currentMainNode;
+    const main = spoke.nodes.find(n => n.id === selectedId);
+    if (main) return main;
+    if (selectedBranchInfo) return selectedBranchInfo.branch.nodes[selectedBranchInfo.chainIdx];
+    return currentMainNode;
+  })();
+
+  // Action button is enabled when the player has selected the current
+  // main-chain node, OR a reachable branch's head. Tail nodes never enable
+  // the button (the head must be committed first).
+  const isReachableBranchHeadSelected =
+    !!selectedBranchInfo && selectedBranchInfo.isHead && selectedBranchInfo.isReachable;
+  const isCurrentSelected =
+    selectedNodeForPanel?.id === currentMainNode?.id || isReachableBranchHeadSelected;
+
+  function handleSelectedAction() {
+    if (!selectedNodeForPanel) return;
+    if (isReachableBranchHeadSelected) {
+      activateBranch(selectedNodeForPanel.id);
+      return;
+    }
+    if (isCurrentSelected) {
+      handleNodeActivate(selectedNodeForPanel);
+    }
+  }
+  function activateBranch(branchHeadId: string) {
+    if (!chooseBranch(branchHeadId)) return;
+    const swappedNode = currentSpoke.value?.nodes[nodeIdx];
+    if (!swappedNode) return;
+    selectedNodeId.value = swappedNode.id;
+    handleNodeActivate(swappedNode);
+  }
+
+  function openOutcomeModal(node: SpokeNode, kind: OutcomeKind) {
+    outcomeModalNode.value = node;
+    outcomeModalKind.value = kind;
+  }
+
+  function handleOutcomeContinue() {
+    const kind = outcomeModalKind.value;
+    const node = outcomeModalNode.value;
+    outcomeModalNode.value = null;
+    outcomeModalKind.value = null;
+
+    // Ambush: apply the negative effects BEFORE the battle so the hit
+    // (morale loss, iuniores damage) actually biases the engagement.
+    // applyNodeEffectsNow marks the node's effects as pre-applied so
+    // PostBattleScreen's advanceNode does not double-apply on return.
+    if (kind === 'ambush') {
+      if (node) applyNodeEffectsNow(node);
       navigateTo('battleV2');
-    } else if (node.type === 'rest') {
-      openRestModal();
-    } else if (node.type === 'event') {
-      openEventModal();
+      return;
+    }
+
+    // Non-battle outcomes: animate the resolve flash and advance.
+    justResolvedIndex.value = nodeIdx;
+    setTimeout(() => { justResolvedIndex.value = null; }, 400);
+    const result = advanceNode();
+    if (result.seasonTicked) {
+      lastSeasonTick.value = result.seasonTicked;
+      showSeasonModal.value = true;
     }
   }
 
@@ -699,21 +776,10 @@ export function NodeMapScreen() {
   const resolvedCount = spoke.nodes.filter(n => n.resolved).length;
   const progressPct = Math.round((resolvedCount / spoke.nodes.length) * 100);
 
-  // S24-05: pre-battle morale for the bound army. Surfaced as a header pill
-  // chip + an inline segment on the army bar. Breakdown lives in the modal
-  // (ArmyDetailHUD).
+  // S24-05: pre-battle morale for the bound army. Surfaced inline on the
+  // army bar; the SpokeTopBar (S27-07) renders the chip + tooltip in the
+  // header. Breakdown lives in the modal (ArmyDetailHUD).
   const morale = spoke.boundArmy ? computeArmyMorale(spoke) : null;
-  const moraleTooltip = morale
-    ? (morale.modifiers.length === 0
-        ? `Morale — ${moraleTierLabel(morale.tier)} (${morale.total}). No modifiers active.`
-        : `Morale — ${moraleTierLabel(morale.tier)} (${morale.total})\n` +
-          morale.modifiers
-            .slice()
-            .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
-            .map((m) => `  ${m.delta >= 0 ? '+' : ''}${m.delta}  ${m.label}`)
-            .join('\n'))
-    : undefined;
-
   const supplies = spoke.boundArmy?.supplies ?? 0;
 
   return (
@@ -728,67 +794,130 @@ export function NodeMapScreen() {
           eyebrow="Spoke"
           title={spoke.label}
           titleSize="md"
-          rightSlot={(
-            <>
-              {morale && (
-                <span
-                  class="ornate-stat-chip"
-                  title={moraleTooltip}
-                  style={{ color: MORALE_TIER_COLOR[morale.tier] }}
-                >
-                  🔥 <strong>{moraleTierLabel(morale.tier)} {morale.total}</strong>
-                </span>
-              )}
-              {spoke.boundArmy && (
-                <span class="ornate-stat-chip" title="Supplies">
-                  📦 <strong>{supplies}</strong>
-                </span>
-              )}
-              <span class="ornate-stat-chip" title="Posture" style={{ color: spoke.posture === 'attacking' ? '#e07050' : '#60a8d0' }}>
-                {spoke.posture === 'attacking' ? '⚔' : '🛡'} <strong>{spoke.posture === 'attacking' ? 'Attacking' : 'Defending'}</strong>
-              </span>
-              <span class="ornate-stat-chip" title="Progress">
-                🚩 <strong>{resolvedCount}/{spoke.nodes.length}</strong>
-              </span>
-              {spoke.duration > 1 && (
-                <span class="ornate-stat-chip" title="Season">
-                  🌿 <strong>S{spoke.currentSeason}/{spoke.duration}</strong>
-                </span>
-              )}
-            </>
-          )}
           onClose={() => navigateTo('hub')}
           accentColor={color}
         />
 
+        {/* S27-07: campaign stats bar (military focus — no hub resources) */}
+        <SpokeTopBar />
+
         {/* Node map body */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
 
-        {/* Node chain */}
+        {/* S27-08: campaign-map node chain — landmark tiles + state-aware
+            route lines. Per-node Y jitter gives the chain a winding path
+            feel rather than a perfectly straight button row. */}
         <div
           class="node-chain-scroll"
-          style={{ width: '100%', overflowX: 'auto', padding: '52px 0 36px' }}
+          style={{ width: '100%', overflowX: 'auto', padding: '64px 0 56px' }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', margin: '0 auto', padding: `0 clamp(12px, 5vw, 32px)`, width: 'max-content', minWidth: '100%', justifyContent: 'center' }}>
-            {spoke.nodes.map((node, i) => (
-              <Fragment key={node.id}>
-                {i > 0 && (
-                  <ConnectingLine
-                    resolved={spoke.nodes[i - 1].resolved}
-                    color={color}
-                    isNextActive={i === nodeIdx && spoke.nodes[i - 1].resolved}
-                  />
-                )}
-                <div class={justResolvedIndex.value === i ? 'node-resolving' : undefined} style={{ borderRadius: '50%' }}>
-                  <NodeCircle
-                    node={node}
-                    isCurrent={i === nodeIdx}
-                    color={color}
-                    onActivate={() => handleNodeActivate(node)}
-                  />
-                </div>
-              </Fragment>
-            ))}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            margin: '0 auto',
+            padding: `0 clamp(12px, 5vw, 32px)`,
+            width: 'max-content',
+            minWidth: '100%',
+            justifyContent: 'center',
+            gap: '14px',
+          }}>
+            {spoke.nodes.map((node, i) => {
+              // Subtle vertical jitter — start/boss stay on axis, mid-nodes
+              // ride a sine wave so the chain reads as a winding route.
+              const isEdge = i === 0 || i === spoke.nodes.length - 1;
+              const jitterY = isEdge ? 0 : Math.sin(i * 0.85) * 8;
+
+              const lineState: RouteLineState = i === 0
+                ? 'reachable' // unused (no line before index 0)
+                : spoke.nodes[i - 1].resolved && node.resolved
+                  ? 'resolved'
+                  : i === nodeIdx
+                    ? 'current'
+                    : i <= nodeIdx + 1
+                      ? 'reachable'
+                      : 'locked';
+
+              const isReachable = node.resolved || i === nodeIdx || i === nodeIdx + 1;
+              // Only render branches at-or-ahead of the player. Once we've
+              // walked past the fork, the unused branch is dead — hide it
+              // instead of leaving a locked tile floating on the map.
+              const branchesHere = spoke.branches?.filter(
+                b => b.attachAfter === i && b.attachAfter >= nodeIdx,
+              ) ?? [];
+
+              return (
+                <Fragment key={node.id}>
+                  {i > 0 && (
+                    <RouteLine state={lineState} color={color} />
+                  )}
+                  <div
+                    class={justResolvedIndex.value === i ? 'node-resolving' : undefined}
+                    style={{ transform: `translateY(${jitterY}px)`, position: 'relative' }}
+                  >
+                    <LandmarkNode
+                      node={node}
+                      isCurrent={i === nodeIdx}
+                      isSelected={selectedId === node.id}
+                      isReachable={isReachable}
+                      color={color}
+                      onActivate={() => handleNodeActivate(node)}
+                      onSelect={() => { selectedNodeId.value = node.id; }}
+                    />
+                    {/* S27-08: render branches attached to this node as a
+                        chain hanging off the main path. Only the HEAD is
+                        activatable (commits the chain via chooseBranch);
+                        tail nodes are inspect-only until commitment. */}
+                    {branchesHere.map((b, branchIdx) => {
+                      const branchReachable = i === nodeIdx;
+                      const branchLineState: RouteLineState = branchReachable ? 'reachable' : 'locked';
+                      // Alternate vertical offset per branch so multiple
+                      // branches at adjacent indices don't fully overlap.
+                      const verticalOffset = 36 + branchIdx * 6;
+                      return (
+                        <div
+                          key={b.nodes[0].id}
+                          style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: '50%',
+                            transform: `translate(-30%, ${verticalOffset}px)`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            pointerEvents: 'auto',
+                          }}
+                        >
+                          <RouteLine state={branchLineState} color={color} direction="down-right" length={48} />
+                          {b.nodes.map((chainNode, chainIdx) => {
+                            const isHead = chainIdx === 0;
+                            return (
+                              <Fragment key={chainNode.id}>
+                                {chainIdx > 0 && (
+                                  <RouteLine state={branchLineState} color={color} direction="horizontal" length={32} />
+                                )}
+                                <LandmarkNode
+                                  node={chainNode}
+                                  isCurrent={false}
+                                  isSelected={selectedId === chainNode.id}
+                                  isReachable={branchReachable && isHead}
+                                  color={color}
+                                  onActivate={() => {
+                                    // Only the head commits the branch.
+                                    if (!branchReachable || !isHead) return;
+                                    activateBranch(chainNode.id);
+                                  }}
+                                  onSelect={() => { selectedNodeId.value = chainNode.id; }}
+                                />
+                              </Fragment>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Fragment>
+              );
+            })}
           </div>
         </div>
 
@@ -853,6 +982,16 @@ export function NodeMapScreen() {
               </>
             )}
           </button>
+        )}
+
+        {/* S27-07: selected-landmark details panel */}
+        {!spokeComplete && selectedNodeForPanel && (
+          <LandmarkDetailsPanel
+            node={selectedNodeForPanel}
+            isCurrent={isCurrentSelected}
+            onAction={handleSelectedAction}
+            accentColor={color}
+          />
         )}
 
         {/* Retreat button — bottom of frame */}
@@ -1122,6 +1261,20 @@ export function NodeMapScreen() {
         </>
       )}
 
+      {/* S27-09: encounter outcome modal — shows what's about to happen
+          for forage/recruit/scout/ambush/hazard/unknown encounters. The
+          modal does NOT apply effects directly; advanceNode() does that
+          (single application site, idempotent on resolved nodes). */}
+      {outcomeModalNode.value && outcomeModalKind.value && (
+        <NodeModal title={outcomeModalTitle(outcomeModalKind.value)} onClose={handleOutcomeContinue}>
+          <EncounterOutcomePreview
+            node={outcomeModalNode.value}
+            kind={outcomeModalKind.value}
+            onContinue={handleOutcomeContinue}
+          />
+        </NodeModal>
+      )}
+
       {/* Spoke completion summary modal */}
       {showSpokeCompleteModal.value && (
         <NodeModal title={`${spoke.label} \u2014 Complete!`} onClose={handleReturnToHub}>
@@ -1357,24 +1510,7 @@ export function NodeMapScreen() {
               <span style={{ color: 'rgba(200, 160, 100, 0.7)', fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
                 Threat +{lastSeasonTick.value.threatIncrease} &middot; Season {lastSeasonTick.value.globalSeason}/{24}
               </span>
-              {lastSeasonTick.value.doomUpkeep > 0 && (
-                <div style={{ fontSize: 'var(--font-size-xs)', color: 'rgba(200, 130, 130, 0.7)', marginTop: '2px' }}>
-                  Doom drain: -{lastSeasonTick.value.doomUpkeep}g
-                </div>
-              )}
             </div>
-            {lastSeasonTick.value.doomMilestone && (
-              <div style={{
-                padding: '8px 12px', borderRadius: 'var(--radius-md)',
-                background: 'rgba(140, 30, 20, 0.25)',
-                border: '1px solid rgba(200, 60, 50, 0.3)',
-                textAlign: 'center',
-              }}>
-                <span style={{ color: '#e06050', fontSize: 'var(--font-size-sm)', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>
-                  {lastSeasonTick.value.doomMilestone}
-                </span>
-              </div>
-            )}
           </div>
           <button class="modal-action-btn ornate-btn" onClick={() => { showSeasonModal.value = false; }} style={{
             marginTop: '14px', padding: '10px 24px',

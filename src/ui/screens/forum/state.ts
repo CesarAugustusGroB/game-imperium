@@ -5,11 +5,12 @@ export type ForumTab =
   | 'provinciae'
   | 'consilium'
   | 'exercitus'
+  | 'mercator'
   | 'doctrinae'
   | 'decreta';
 
 export const FORUM_TABS: readonly ForumTab[] = [
-  'overview', 'provinciae', 'consilium', 'exercitus', 'doctrinae', 'decreta',
+  'overview', 'provinciae', 'consilium', 'exercitus', 'mercator', 'doctrinae', 'decreta',
 ] as const;
 
 export const activeForumTab = signal<ForumTab>('overview');

@@ -45,7 +45,9 @@ const battleMode = new BattleMode(() => {
   if (spoke?.boundArmy) {
     const playerUnits = battleMode.state.getBattleFactionUnits('blue');
     const preBattleCohorts = spoke.boundArmy.cohorts;
-    let nextCohorts = extractCohortHpSnapshot(playerUnits, preBattleCohorts);
+    let nextCohorts = extractCohortHpSnapshot(playerUnits, preBattleCohorts, {
+      missingUnit: lastBattleResult.value === 'defeat' ? 'out-of-action' : 'preserve',
+    });
 
     // S26-04 / FT-HEAL FR-11: victory damage cap. Defeats and retreats bypass.
     if (lastBattleResult.value === 'victory') {

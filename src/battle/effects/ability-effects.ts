@@ -14,6 +14,9 @@ import { EffectRegistry, type EffectContext } from './EffectRegistry';
 import {
   ABILITY_PARTICLE_COUNT, FLASH_DURATION, ROLE_STATS, SHAKE_DURATION,
 } from '../battle-config';
+import type { BattleUnit } from '../battle-types';
+import type { Hex } from '../hex';
+import { offsetToAxialFlatTop } from '../hex';
 
 /** Ability effects identified by their in-game display name. */
 export type AbilityEffect =
@@ -56,7 +59,7 @@ export function registerAbilityEffects(): void {
   // ── Fury Charge (Boudicca) — all blue units charge forward 2 hexes ──
   abilityRegistry.register('Fury Charge', (_effect, ctx) => {
     const { engine } = ctx;
-    const dir = 1; // blue advances right (+q) in horizontal mode
+    const dir = engine.config.vertical ? -1 : 1;
     const blueUnits = engine.getBattleFactionUnits('blue');
 
     for (const unit of blueUnits) {
@@ -65,22 +68,13 @@ export function registerAbilityEffects(): void {
       let currentHex = unit.hex;
       let moved = 0;
       for (let step = 0; step < 2; step++) {
-        const nextHex = { q: currentHex.q + dir, r: currentHex.r };
+        const nextHex = getForwardHex(currentHex, dir, !!engine.config.vertical);
         if (!engine.isValidHex(nextHex)) break;
 
         const occupant = engine.getUnitAt(nextHex);
         if (occupant && !occupant.isDying) {
           if (occupant.faction !== 'blue') {
-            // Impact damage on enemy
-            occupant.currentHp -= 1000;
-            occupant.shakeTimer = SHAKE_DURATION;
-            occupant.flashTimer = FLASH_DURATION;
-            engine.floatingTexts.push({
-              text: 'CHARGE!', hex: { q: occupant.hex.q, r: occupant.hex.r },
-              color: '#ff4444', timer: 0.8, duration: 0.8,
-            });
-            engine.applyDeathCheck(occupant);
-            engine.spawnParticles(occupant.hex, ABILITY_PARTICLE_COUNT, '#ff6633', Math.PI, 50, 0.8);
+            applyChargeImpact(engine, occupant);
           }
           break; // blocked
         }
@@ -133,6 +127,26 @@ export function registerAbilityEffects(): void {
       color: '#d4a843', timer: 0.8, duration: 0.8,
     });
   });
+}
+
+function getForwardHex(hex: Hex, dir: number, vertical: boolean): Hex {
+  if (!vertical) return { q: hex.q + dir, r: hex.r };
+
+  const col = hex.q;
+  const row = hex.r + Math.floor(hex.q / 2);
+  return offsetToAxialFlatTop(col, row + dir);
+}
+
+function applyChargeImpact(engine: EffectContext['engine'], occupant: BattleUnit): void {
+  occupant.currentHp -= 1000;
+  occupant.shakeTimer = SHAKE_DURATION;
+  occupant.flashTimer = FLASH_DURATION;
+  engine.floatingTexts.push({
+    text: 'CHARGE!', hex: { q: occupant.hex.q, r: occupant.hex.r },
+    color: '#ff4444', timer: 0.8, duration: 0.8,
+  });
+  engine.applyDeathCheck(occupant);
+  engine.spawnParticles(occupant.hex, ABILITY_PARTICLE_COUNT, '#ff6633', Math.PI, 50, 0.8);
 }
 
 /** Apply an ability by name. Context carries targetUnit / targetHex as needed. */

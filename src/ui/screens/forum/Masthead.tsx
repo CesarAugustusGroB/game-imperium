@@ -1,4 +1,5 @@
 import { gold, faith, influence, iuniores, momentum } from '../../../game/core/resources';
+import { globalSeason, MAX_SEASONS } from '../../../game/core/game-state';
 import { MosaicBand } from '../../components/motifs/MosaicBand';
 import { StatChip } from './StatChip';
 import type { StatChipData } from './StatChip';
@@ -36,6 +37,11 @@ export function Masthead({ title, subtitle, accent = '#d4a843' }: MastheadProps)
       label: 'Iuniores',
       description: 'Citizen-soldiers drawn from your provinces. Spent to recruit regular cohorts and replenish army HP at rest nodes.',
     },
+    {
+      key: 'season', glyph: 'S', value: `${globalSeason.value}/${MAX_SEASONS}`, color: '#d4a843',
+      label: 'Season',
+      description: 'Global campaign season. The final invasion begins when the season limit is reached.',
+    },
   ];
 
   return (
@@ -64,7 +70,7 @@ export function Masthead({ title, subtitle, accent = '#d4a843' }: MastheadProps)
             {title}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
           {chips.map((c) => <StatChip key={c.key} r={c} accent={accent} />)}
         </div>
       </div>

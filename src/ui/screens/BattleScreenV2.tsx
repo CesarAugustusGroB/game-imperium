@@ -17,6 +17,7 @@ import type { BattleFactionSummary, BattleUnitSummary } from '../../battle/battl
 import type { UnitRole } from '../../battle/battle-types';
 import { CAPTURE_DURATION } from '../../battle/battle-config';
 import { gfxShadows, gfxCracks, gfxParticles, gfxHighRes, gfxPerfHud, spriteReloadTrigger } from '../../battle/battle-settings';
+import { BattleContextBanner } from '../components/spoke/BattleContextBanner';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('battle-v2-styles')) {
@@ -719,6 +720,10 @@ export function BattleScreenV2() {
           lets the raw battle canvas (sprites + map) show in full glory. */}
       {!hudHidden.value && (
         <>
+          {/* S27-10: campaign context banner — landmark name, terrain,
+              modifiers. Renders nothing in quick battles (context is null). */}
+          <BattleContextBanner />
+
           {/* Top bar: title + round */}
           <TopBar />
 

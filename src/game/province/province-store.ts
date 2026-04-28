@@ -259,7 +259,7 @@ export interface ProvinceIncomeResult {
  *  4. Tick wealth (PWG + NWG − devastation drain).
  *  5. Wealth tier is derived from wealth — no stored field.
  *  6. Tick pop growth accumulator, check threshold.
- *  7. Tick unrest (tax + doom − decay + buildings + governor + exponential accel).
+ *  7. Tick unrest (tax + famine − decay + buildings + governor + exponential accel).
  *  8. Check rebellion at threshold, apply if triggered.
  *  9. Decrement devastation and rubble timers.
  */

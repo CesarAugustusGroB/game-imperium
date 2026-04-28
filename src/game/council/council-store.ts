@@ -1,11 +1,12 @@
 import { signal } from '@preact/signals';
 import type { Advisor } from './advisor';
 import { getCurrentSpokeTemplate, getTierForXp } from './advisor';
-import type { Spoke, SpokeNode, NodeType } from '../progression/spoke';
-import { currentSpoke, currentNodeIndex, spokeGains, grantSpokeResource, ZERO_GAINS } from '../progression/spoke';
+import type { Spoke, SpokeNode, NodeType, SpokeTheme } from '../progression/spoke';
+import { currentSpoke, currentNodeIndex, spokeGains, grantSpokeResource, ZERO_GAINS, reindexSpokeNodesAndBranches } from '../progression/spoke';
+import { generateLandmarkSpoke } from '../progression/spoke-generation';
 import { selectedCommander, veteranStacks, spokesSinceLastBattle, threatLevel } from '../core/game-state';
 import { getActiveEffects } from '../items/doctrine-store';
-import { addResource } from '../core/resources';
+import { addResource, spendResource } from '../core/resources';
 import type { ResourceType } from '../core/commander';
 import { resetSpokeEvents } from '../events/event-store';
 import {
@@ -25,6 +26,9 @@ export const councilSlots = signal<(Advisor | null)[]>([null, null, null]);
 
 /** Advisors owned but not currently seated. */
 export const advisorPool = signal<Advisor[]>([]);
+
+/** Purchasable advisor offers. These are not owned until hired. */
+export const advisorMarket = signal<Advisor[]>([]);
 
 /** Names of advisors who tiered up at last spoke completion. Cleared when hub is shown. */
 export const tierUpNotices = signal<string[]>([]);
@@ -91,6 +95,75 @@ export function unseatAdvisor(slotIndex: number): void {
 /** Add an advisor to the pool (e.g. from hire/reward). */
 export function hireAdvisor(advisor: Advisor): void {
   advisorPool.value = [...advisorPool.value, advisor];
+}
+
+/** Replace the current political market offers. */
+export function setAdvisorMarket(advisors: Advisor[]): void {
+  advisorMarket.value = advisors.slice();
+}
+
+/** Add one purchasable advisor offer if it is not already present. */
+export function addAdvisorMarketOffer(advisor: Advisor): void {
+  if (advisorMarket.value.some(a => a.id === advisor.id)) return;
+  advisorMarket.value = [...advisorMarket.value, advisor];
+}
+
+function getAdvisorCost(advisor: Advisor): { resource: ResourceType; amount: number } {
+  return advisor.cost ?? { resource: 'gold', amount: 0 };
+}
+
+/**
+ * Buy an advisor from the political market and add them to the owned pool.
+ * Returns the hired advisor, or null if the offer is missing/ unaffordable.
+ */
+export function hireAdvisorFromMarket(advisorId: string): Advisor | null {
+  const market = advisorMarket.value.slice();
+  const offerIndex = market.findIndex(a => a.id === advisorId);
+  if (offerIndex === -1) return null;
+
+  const offer = market[offerIndex];
+  const cost = getAdvisorCost(offer);
+  if (cost.amount > 0 && !spendResource(cost.resource, cost.amount)) return null;
+
+  market.splice(offerIndex, 1);
+  advisorMarket.value = market;
+
+  const hired = { ...offer };
+  hireAdvisor(hired);
+  return hired;
+}
+
+/**
+ * Buy an advisor from the political market and seat them immediately.
+ * If the target seat is occupied, the displaced advisor returns to the pool.
+ */
+export function hireAndSeatAdvisor(advisorId: string, slotIndex: number): boolean {
+  if (slotIndex < 0 || slotIndex > 2) return false;
+
+  const market = advisorMarket.value.slice();
+  const offerIndex = market.findIndex(a => a.id === advisorId);
+  if (offerIndex === -1) return false;
+
+  const offer = market[offerIndex];
+  const cost = getAdvisorCost(offer);
+  if (cost.amount > 0 && !spendResource(cost.resource, cost.amount)) return false;
+
+  const slots = councilSlots.value.slice() as (Advisor | null)[];
+  const pool = advisorPool.value.slice();
+  const displaced = slots[slotIndex];
+  if (displaced !== null) {
+    pool.push(displaced);
+  }
+
+  slots[slotIndex] = { ...offer };
+  market.splice(offerIndex, 1);
+
+  councilSlots.value = slots;
+  advisorPool.value = pool;
+  advisorMarket.value = market;
+
+  regeneratePlannedSpoke();
+  return true;
 }
 
 /**
@@ -184,32 +257,19 @@ export function grantAdvisorXp(advisorId: string, amount: number): boolean {
 
 // ── Spoke generation ──
 
-const DEFAULT_WEIGHTS: Partial<Record<NodeType, number>> = {
-  battle: 3,
-  rest: 2,
-  event: 3,
-  boss: 1,
-};
-
 const ATTACKING_LABELS = ['Border War', 'Raid', 'Conquest', 'March', 'Campaign'];
 const DEFENDING_LABELS = ['Trade Route', 'Pilgrimage', 'Diplomatic Mission', 'Patrol', 'Vigil'];
 
+const THEME_LABEL_SUFFIX: Record<SpokeTheme, string | null> = {
+  woodland:  'Woodland Foray',
+  highlands: 'Highland Foray',
+  marshland: 'Fen March',
+  coastal:   'Coastal Sweep',
+  mixed:     null,
+};
+
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
-}
-
-/** Weighted random selection from a weight map (excludes 'boss'). */
-function weightedPick(weights: Partial<Record<NodeType, number>>): NodeType {
-  const entries = (Object.entries(weights) as [NodeType, number][]).filter(
-    ([type, w]) => type !== 'boss' && w > 0,
-  );
-  const total = entries.reduce((s, [, w]) => s + w, 0);
-  let roll = Math.random() * total;
-  for (const [type, w] of entries) {
-    roll -= w;
-    if (roll <= 0) return type;
-  }
-  return entries[entries.length - 1][0];
 }
 
 function rewardForType(type: NodeType): SpokeNode['reward'] {
@@ -238,34 +298,29 @@ function rewardForType(type: NodeType): SpokeNode['reward'] {
 }
 
 /**
- * Merge spoke templates from all seated advisors and generate a new Spoke.
- * Falls back to equal weights when no advisors are seated.
+ * Merge spoke posture from all seated advisors and generate a landmark spoke
+ * via `generateLandmarkSpoke`. Itinerarium is now the production code path —
+ * spokes carry landmark metadata, encounter types, fog of war, battle terrain
+ * modifiers, and one optional bifurcation. Advisor `nodeWeights` and
+ * `durationRange` still drive duration + posture; per-node-type weights are
+ * subsumed by the new generator's role-based mid-chain factories
+ * (rest / watchtower / supply / morale + filler).
  */
 export function generateSpokeFromCouncil(): Spoke {
   const seated = councilSlots.value.filter((a): a is Advisor => a !== null);
 
-  // ── Weights ──
-  const summedWeights: Partial<Record<NodeType, number>> = {};
-  if (seated.length === 0) {
-    Object.assign(summedWeights, DEFAULT_WEIGHTS);
-  } else {
-    for (const advisor of seated) {
-      const template = getCurrentSpokeTemplate(advisor);
-      for (const [type, w] of Object.entries(template.nodeWeights) as [NodeType, number][]) {
-        summedWeights[type] = (summedWeights[type] ?? 0) + w;
-      }
-    }
-  }
-
   // ── Duration ──
-  let duration = 1;
+  // Landmark generator requires duration >= 2 (mid-chain invariants need 4
+  // role slots). Clamp accordingly; legacy duration=1 advisors still get a
+  // valid 2-season spoke.
+  let duration = 2;
   if (seated.length > 0) {
     const avgMidpoint =
       seated.reduce((sum, a) => {
         const [min, max] = getCurrentSpokeTemplate(a).durationRange;
         return sum + (min + max) / 2;
       }, 0) / seated.length;
-    duration = Math.round(Math.min(4, Math.max(1, avgMidpoint)));
+    duration = Math.round(Math.min(4, Math.max(2, avgMidpoint)));
   }
 
   // ── Posture (majority vote, tie → 'attacking') ──
@@ -278,61 +333,25 @@ export function generateSpokeFromCouncil(): Spoke {
   }
   const posture = defendingVotes > attackingVotes ? 'defending' : 'attacking';
 
-  // ── Posture node bias ──
-  // Apply after weight summation so advisors' intent is preserved, then nudged by posture.
-  // Floor all weights at 1 to keep weightedPick() safe.
-  if (posture === 'attacking') {
-    summedWeights.battle = (summedWeights.battle ?? 0) + 2;
-    summedWeights.rest   = Math.max(1, (summedWeights.rest ?? 0) - 1);
-  } else {
-    summedWeights.rest   = (summedWeights.rest  ?? 0) + 2;
-    summedWeights.event  = (summedWeights.event ?? 0) + 1;
-    summedWeights.battle = Math.max(1, (summedWeights.battle ?? 0) - 1);
-  }
-
   // ── Label ──
   const labelPool = posture === 'attacking' ? ATTACKING_LABELS : DEFENDING_LABELS;
   const label = pickRandom(labelPool);
 
-  // ── Node sequence ──
-  const totalNodes = duration * 3 + 1; // 1 season = 4 nodes, 4 seasons = 13
-  const nodes: SpokeNode[] = [];
-
-  // Generate all non-boss nodes first
-  const nonBossCount = totalNodes - 1;
-  for (let i = 0; i < nonBossCount; i++) {
-    // Pacing rule: every 3rd node should be 'rest' if none in the last 3
-    let type: NodeType;
-    if (i > 0 && i % 3 === 2) {
-      const last3 = nodes.slice(Math.max(0, i - 2));
-      const hasRecentRest = last3.some(n => n.type === 'rest');
-      if (!hasRecentRest) {
-        type = 'rest';
-      } else {
-        type = weightedPick(summedWeights);
-      }
-    } else {
-      type = weightedPick(summedWeights);
-    }
-    nodes.push({
-      id: `node-${i}`,
-      type,
-      position: i,
-      resolved: false,
-      reward: rewardForType(type),
-    });
-  }
-
-  // Last node is always 'boss'
-  nodes.push({
-    id: `node-${nonBossCount}`,
-    type: 'boss',
-    position: nonBossCount,
-    resolved: false,
-    reward: rewardForType('boss'),
+  // ── Generate landmark spoke ──
+  const spoke = generateLandmarkSpoke({
+    duration,
+    posture,
+    threatLevel: threatLevel.value,
+    includeBranch: true,
   });
 
-  return { nodes, label, completed: false, duration, currentSeason: 1, posture };
+  // Theme-driven label suffix. Applied AFTER label pick so the council's
+  // posture-flavored label stays the prefix and the theme tags the spoke
+  // with its biome (e.g. "Border War — Highland Foray").
+  const suffix = spoke.theme ? THEME_LABEL_SUFFIX[spoke.theme] : null;
+  const finalLabel = suffix ? `${label} — ${suffix}` : label;
+
+  return { ...spoke, label: finalLabel };
 }
 
 /**
@@ -344,49 +363,10 @@ export function regeneratePlannedSpoke(): void {
   plannedSpoke.value = seated > 0 ? generateSpokeFromCouncil() : null;
 }
 
-// ── Chaos mutation tuning ──
-
-/** Maximum percentage of non-boss nodes that chaos can mutate. */
-const MAX_CHAOS_PERCENT = 50;
-/** Chaos scales linearly: chaosPercent = min(MAX_CHAOS_PERCENT, threat * this). */
-const CHAOS_THREAT_MULTIPLIER = 5;
-/** Threat level above which spoke duration may shift by ±1. */
-const HIGH_THREAT_THRESHOLD = 6;
-
 /**
- * Apply threat-based chaos to a spoke.
- * Preserves boss node and posture. Mutates a % of non-boss nodes based on threatLevel.
- */
-function mutateSpoke(spoke: Spoke): Spoke {
-  const threat = threatLevel.value;
-  const chaosPercent = Math.min(MAX_CHAOS_PERCENT, threat * CHAOS_THREAT_MULTIPLIER);
-
-  // Clone nodes (skip last = boss)
-  const nodes: SpokeNode[] = spoke.nodes.map((n, i) => {
-    // Never mutate boss (last node)
-    if (i === spoke.nodes.length - 1) return { ...n };
-
-    // Roll for mutation
-    if (Math.random() * 100 < chaosPercent) {
-      const newType = weightedPick(DEFAULT_WEIGHTS);
-      return { ...n, type: newType, reward: rewardForType(newType) };
-    }
-    return { ...n };
-  });
-
-  // Duration shift at high threat
-  let duration = spoke.duration;
-  if (threat > HIGH_THREAT_THRESHOLD) {
-    const shift = Math.random() < 0.5 ? -1 : 1;
-    duration = Math.max(1, Math.min(4, duration + shift));
-  }
-
-  return { ...spoke, nodes, duration, completed: false, currentSeason: 1 };
-}
-
-/**
- * Start a spoke from the planned spoke. Applies threat-based chaos mutation.
- * Falls back to fresh generation if no planned spoke is cached.
+ * Start a spoke from the planned spoke. Threat-driven variation now lives
+ * inside `generateLandmarkSpoke` (boss enemy strength + threatHint
+ * distribution) rather than a post-hoc node-type swap.
  */
 export function startSpokeFromCouncil(): void {
   spokesSinceLastBattle.value += 1;
@@ -395,30 +375,57 @@ export function startSpokeFromCouncil(): void {
     veteranStacks.value = 0;
   }
 
-  // Use planned spoke (stable preview) or generate fresh as fallback
-  const base = plannedSpoke.value ?? generateSpokeFromCouncil();
-  let spoke = mutateSpoke(base);
+  // Use planned spoke (stable preview) or generate fresh as fallback.
+  // mutateSpoke (legacy threat-chaos type swap) is intentionally NOT
+  // applied to landmark spokes — it would overwrite landmarkType,
+  // encounterType, terrain, effects, and battleModifiers with bare types.
+  // Threat now drives boss enemy strength and threatHint distribution
+  // inside generateLandmarkSpoke instead.
+  let spoke = plannedSpoke.value ?? generateSpokeFromCouncil();
 
-  // S7-12: Golden Opportunity — inject extra rest nodes
+  // S7-12: Golden Opportunity — inject extra rest nodes (landmark-aware).
+  // Each insertion goes through `reindexSpokeNodesAndBranches` so that any
+  // bifurcations carried by the spoke have their `attachAfter` correctly
+  // shifted by the insertion. Without this, branches at indices ≥ insertAt
+  // would point at the wrong landmark after Golden Opportunity fires.
   const extraRest = consumeGoldenOpportunity();
   if (extraRest > 0) {
-    // Deep-clone each existing node so the splice result shares no references with plannedSpoke.
-    const nonBoss = spoke.nodes.slice(0, -1).map(n => ({ ...n }));
-    const boss = { ...spoke.nodes[spoke.nodes.length - 1] };
+    let workingNodes: SpokeNode[] = spoke.nodes.slice();
+    let workingBranches = spoke.branches;
     for (let i = 0; i < extraRest; i++) {
-      const insertAt = Math.floor(Math.random() * nonBoss.length) + 1;
-      nonBoss.splice(insertAt, 0, {
+      // Insert anywhere between index 1 and (length - 1) so we never push
+      // before start_camp or after the boss.
+      const insertAt = 1 + Math.floor(Math.random() * (workingNodes.length - 1));
+      const goldenRest: SpokeNode = {
         id: `node-golden-${i}`,
         type: 'rest',
         position: insertAt,
         resolved: false,
         reward: rewardForType('rest'),
-      });
+        landmarkType: 'camp',
+        name: 'Reinforcement Camp',
+        encounterType: 'rest',
+        terrain: 'plains',
+        revealed: true,
+        scoutedLevel: 1,
+        effects: [
+          { type: 'morale', delta: 6, label: 'Reinforcement camp' },
+          { type: 'supplies', delta: 4, label: 'Reinforcement camp' },
+        ],
+        battleModifiers: [],
+        threatHint: 'low',
+      };
+      const result = reindexSpokeNodesAndBranches(
+        workingNodes,
+        workingBranches,
+        insertAt,
+        [goldenRest],
+        false, // insert (don't replace)
+      );
+      workingNodes = result.nodes;
+      workingBranches = result.branches;
     }
-    // Reindex positions
-    const allNodes = [...nonBoss, boss];
-    allNodes.forEach((n, idx) => { n.position = idx; });
-    spoke = { ...spoke, nodes: allNodes };
+    spoke = { ...spoke, nodes: workingNodes, branches: workingBranches };
   }
 
   // S14-06: snapshot the player's prepared army + Legate into the spoke.
@@ -470,6 +477,7 @@ export function startSpokeFromCouncil(): void {
 export function resetCouncilStore(): void {
   councilSlots.value = [null, null, null];
   advisorPool.value = [];
+  advisorMarket.value = [];
   tierUpNotices.value = [];
   plannedSpoke.value = null;
 }

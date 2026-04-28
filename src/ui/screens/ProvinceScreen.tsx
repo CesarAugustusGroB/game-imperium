@@ -1744,7 +1744,7 @@ function IdentityStrip({ province }: { province: Province }) {
 
 function UnrestSection({ province }: { province: Province }) {
   const traits = getGovernorTraits(province.id);
-  const delta         = calculateUnrestDelta(province, traits, 0);
+  const delta         = calculateUnrestDelta(province, traits);
   const rebelThreshold = getRebelThreshold(province);
 
   // Zone states

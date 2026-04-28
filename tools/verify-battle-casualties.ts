@@ -123,7 +123,34 @@ function makeCohort(overrides: {
   assert(next[1].outOfAction === true, 'Unmatched cohort flag untouched');
 }
 
-// ── Reference stability: untouched cohort keeps reference ───────
+// Defeat fallback: faded-out units missing from BattleState mark their cohorts out of action.
+{
+  const cohorts = [
+    makeCohort({ instanceId: 'defeat-missing-1', hp: 1000 }),
+    makeCohort({ instanceId: 'defeat-missing-2', hp: 1200 }),
+  ];
+  const next = extractCohortHpSnapshot([], cohorts, { missingUnit: 'out-of-action' });
+  assert(next[0].currentHp === 1, 'Missing defeated cohort 1 should be pinned at 1 HP');
+  assert(next[0].outOfAction === true, 'Missing defeated cohort 1 should be outOfAction');
+  assert(next[1].currentHp === 1, 'Missing defeated cohort 2 should be pinned at 1 HP');
+  assert(next[1].outOfAction === true, 'Missing defeated cohort 2 should be outOfAction');
+}
+
+// Defeat fallback keeps matched survivors exact, only missing cohorts become out of action.
+{
+  const cohorts = [
+    makeCohort({ instanceId: 'defeat-survivor', hp: 1000 }),
+    makeCohort({ instanceId: 'defeat-gone', hp: 1000 }),
+  ];
+  const units = [makeBattleUnit({ id: 1, cohortInstanceId: 'defeat-survivor', currentHp: 333, hp: 1000 })];
+  const next = extractCohortHpSnapshot(units, cohorts, { missingUnit: 'out-of-action' });
+  assert(next[0].currentHp === 333, 'Matched defeated survivor should persist exact HP');
+  assert(next[0].outOfAction !== true, 'Matched defeated survivor should not be outOfAction');
+  assert(next[1].currentHp === 1, 'Missing defeated cohort should be pinned at 1 HP');
+  assert(next[1].outOfAction === true, 'Missing defeated cohort should be outOfAction');
+}
+
+// Reference stability: untouched cohort keeps reference.
 {
   const cohorts = [makeCohort({ instanceId: 'inst-8', hp: 1000, currentHp: 500 })];
   // Unit reports the exact same HP — no change required.

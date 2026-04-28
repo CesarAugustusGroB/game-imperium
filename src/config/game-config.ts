@@ -9,18 +9,12 @@ import type { TerrainType } from '../data/terrain-data';
 import type { TaxLevel } from '../types/index';
 
 // ══════════════════════════════════════════════
-//  SEASON & DOOM
+//  SEASON
 // ══════════════════════════════════════════════
 
 export const SEASON = {
   /** Maximum seasons before the final invasion. */
   max: 24,
-  /** Doom upkeep thresholds: [doomLevel, goldPerSeason]. Checked high→low. */
-  doomUpkeep: [
-    { threshold: 75, gold: 3 },
-    { threshold: 50, gold: 2 },
-    { threshold: 25, gold: 1 },
-  ] as const,
 };
 
 // ══════════════════════════════════════════════

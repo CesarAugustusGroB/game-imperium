@@ -2,11 +2,11 @@ import { signal } from '@preact/signals';
 import type { Commander } from './commander';
 import { initResources, iuniores, setWarProfiler, setIncomeModifierFn, setExchangeBonusFn } from './resources';
 import { addDecretum, resetDecretumHand } from '../items/decretum-store';
-import { resetDoctrineStore, getIncomeModifier, addDoctrineToCollection } from '../items/doctrine-store';
+import { resetDoctrineStore, getIncomeModifier, addDoctrineToCollection, doctrineCollection, equipDoctrine } from '../items/doctrine-store';
 import { STARTER_DECRETUM } from '../../data/decretum-data';
 import { STARTER_DOCTRINES } from '../../data/doctrine-data';
 import { isDoctrineEquippable } from '../items/doctrine';
-import { resetCouncilStore, hireAdvisor } from '../council/council-store';
+import { resetCouncilStore, hireAdvisor, advisorPool, seatAdvisor } from '../council/council-store';
 import { resetSpoke } from '../progression/spoke';
 import { resetProvinceStore, conquerProvince, provinces, getMarketExchangeBonus } from '../province/province-store';
 import { initGovernorStore, resetGovernorStore } from '../province/governor-store';
@@ -37,39 +37,6 @@ export const MAX_SEASONS = SEASON.max;
 /** Total seasons elapsed across all spokes in this run. */
 export const globalSeason = signal(0);
 
-/**
- * Doom level (0–100). Derived from globalSeason / MAX_SEASONS.
- * Drives escalating upkeep and ultimately the final battle.
- */
-export function getDoomLevel(): number {
-  return Math.min(100, Math.floor((globalSeason.value / MAX_SEASONS) * 100));
-}
-
-/**
- * Extra gold upkeep per season from doom progression.
- * Doom 25 (season 6): +1g, Doom 50 (season 12): +2g, Doom 75 (season 18): +3g.
- */
-export function getDoomUpkeep(): number {
-  const doom = getDoomLevel();
-  for (const { threshold, gold } of SEASON.doomUpkeep) {
-    if (doom >= threshold) return gold;
-  }
-  return 0;
-}
-
-/** Get narrative doom milestone text, or null if between milestones. */
-export function getDoomMilestone(): string | null {
-  const doom = getDoomLevel();
-  const season = globalSeason.value;
-  // Only show at exact threshold crossings (check if we just crossed)
-  if (season === 6) return 'The frontier grows restless. Barbarian scouts probe your borders.';
-  if (season === 12) return 'War drums echo from the north. The tribes are uniting.';
-  if (season === 18) return 'The horde assembles. Smoke rises on every horizon.';
-  if (season === 24) return 'THE INVASION BEGINS.';
-  if (doom >= 75) return null;
-  return null;
-}
-
 // ── Relationships ──
 export const allianceCount = signal(0);
 export const enemies = signal<string[]>([]);
@@ -84,6 +51,30 @@ export const battlesWon = signal(0);
 
 /** Known valid commander IDs. Used for runtime validation in startNewRun. */
 const KNOWN_COMMANDER_IDS = new Set(['innocent', 'boudicca', 'augustus', 'crassus']);
+
+type CommanderDefaultLoadout = {
+  doctrineIds: [string, string, string, string];
+  advisorIds: [string, string, string];
+};
+
+export const COMMANDER_DEFAULT_LOADOUTS: Record<string, CommanderDefaultLoadout> = {
+  innocent: {
+    doctrineIds: ['doctrine_faith', 'doctrine_miracles', 'doctrine_pantheon', 'doctrine_divina_providentia'],
+    advisorIds: ['advisor_pontifex', 'advisor_healer', 'advisor_zealot'],
+  },
+  boudicca: {
+    doctrineIds: ['doctrine_sword', 'doctrine_blood', 'doctrine_lex_militaris', 'doctrine_vis_bellica'],
+    advisorIds: ['advisor_centurion', 'advisor_siege_master', 'advisor_raider'],
+  },
+  augustus: {
+    doctrineIds: ['doctrine_diplomacy', 'doctrine_court', 'doctrine_alliances', 'doctrine_foedus_aeternum'],
+    advisorIds: ['advisor_diplomat', 'advisor_scholar', 'advisor_spymaster'],
+  },
+  crassus: {
+    doctrineIds: ['doctrine_trade', 'doctrine_infrastructure', 'doctrine_market', 'doctrine_annona'],
+    advisorIds: ['advisor_merchant', 'advisor_quartermaster', 'advisor_smuggler'],
+  },
+};
 
 /** Sync allianceCount / enemies / allies from NPC faction state. */
 export function syncFactionSignals(): void {
@@ -149,6 +140,31 @@ function initializeRunScaffold(commander: Commander): void {
   for (const a of STARTER_ADVISORS) {
     hireAdvisor({ ...a, currentTier: 1, xp: 0 });
   }
+
+  applyCommanderDefaultLoadout(commander.id);
+}
+
+function applyCommanderDefaultLoadout(commanderId: string): void {
+  const loadout = COMMANDER_DEFAULT_LOADOUTS[commanderId];
+  if (!loadout) return;
+
+  loadout.doctrineIds.forEach((doctrineId, slotIndex) => {
+    const doctrine = doctrineCollection.value.find(d => d.id === doctrineId);
+    if (!doctrine) {
+      console.warn(`[startNewRun] Missing default doctrine "${doctrineId}" for commander "${commanderId}".`);
+      return;
+    }
+    equipDoctrine(slotIndex, doctrine);
+  });
+
+  loadout.advisorIds.forEach((advisorId, slotIndex) => {
+    const advisor = advisorPool.value.find(a => a.id === advisorId);
+    if (!advisor) {
+      console.warn(`[startNewRun] Missing default advisor "${advisorId}" for commander "${commanderId}".`);
+      return;
+    }
+    seatAdvisor(slotIndex, advisor);
+  });
 }
 
 /**

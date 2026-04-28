@@ -69,6 +69,15 @@ export interface VictoryCapResult {
  */
 export const lastVictoryCapSummary = signal<VictoryCapResult | null>(null);
 
+export interface ExtractCohortHpSnapshotOptions {
+  /**
+   * BattleState drops fully-faded dying units from the runtime unit map. On
+   * defeat/retreat, a deployed cohort with no remaining unit should therefore
+   * count as out of action instead of silently preserving full HP.
+   */
+  missingUnit?: 'preserve' | 'out-of-action';
+}
+
 /**
  * Project per-unit battle HP back onto a cohort roster. Returns a new array
  * with updated `currentHp` / `outOfAction` fields. Reference-stable for any
@@ -77,6 +86,7 @@ export const lastVictoryCapSummary = signal<VictoryCapResult | null>(null);
 export function extractCohortHpSnapshot(
   units: readonly BattleUnit[],
   cohorts: readonly Cohort[],
+  options: ExtractCohortHpSnapshotOptions = {},
 ): Cohort[] {
   // Build instance lookup once. Battle units without an instanceId (e.g.
   // Augustus allies, doctrine spawns) don't map to any cohort and are
@@ -91,7 +101,12 @@ export function extractCohortHpSnapshot(
   return cohorts.map((cohort) => {
     if (cohort.instanceId === undefined) return cohort;
     const unit = unitByInstance.get(cohort.instanceId);
-    if (!unit) return cohort;
+    if (!unit) {
+      if (options.missingUnit === 'out-of-action') {
+        return applyCohortHealthState(cohort, 1, true);
+      }
+      return cohort;
+    }
 
     const maxHp = cohort.stats.hp;
 

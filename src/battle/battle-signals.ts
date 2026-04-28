@@ -7,6 +7,15 @@
 import { signal, computed } from '@preact/signals';
 import type { BattlePhase, BattleFaction, UnitRole } from './battle-types';
 import type { BattleState } from './battle-state';
+import type { BattleContext } from '../game/progression/battle-terrain-modifiers';
+
+/**
+ * S27-10: campaign battle context — populated by `enterFromSpoke` from the
+ * active landmark node, cleared by `enterQuickBattle`. UI reads it via the
+ * `BattleContextBanner` to surface terrain/modifier flavor on entry without
+ * reaching into game state directly.
+ */
+export const currentBattleContext = signal<BattleContext | null>(null);
 
 // ── Unit summary (for selected-unit panel) ──
 

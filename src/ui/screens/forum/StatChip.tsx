@@ -4,7 +4,7 @@ import { Tooltip } from '../../components/Tooltip';
 export interface StatChipData {
   key: string;
   glyph: string;
-  value: number;
+  value: number | string;
   delta?: number;
   color: string;
   label?: string;
@@ -19,6 +19,7 @@ interface StatChipProps {
 export function StatChip({ r, accent = '#d4a843' }: StatChipProps) {
   const deltaColor = (r.delta ?? 0) >= 0 ? '#7a9a6a' : '#c24a3a';
   const sign = (r.delta ?? 0) >= 0 ? '+' : '';
+  const valueLabel = typeof r.value === 'number' ? r.value.toLocaleString() : r.value;
   const chip = (
     <div
       style={{
@@ -37,7 +38,7 @@ export function StatChip({ r, accent = '#d4a843' }: StatChipProps) {
         fontSize: 13, fontWeight: 600,
         color: 'var(--imp-text-hi)',
       }}>
-        {r.value.toLocaleString()}
+        {valueLabel}
       </span>
       {r.delta !== undefined && (
         <span style={{
@@ -64,7 +65,7 @@ export function StatChip({ r, accent = '#d4a843' }: StatChipProps) {
               <span>{r.glyph}</span>
               <span>{r.label}</span>
               <span style={{ marginLeft: 'auto', fontFamily: 'var(--imp-font-mono)', color: 'var(--imp-text-hi)' }}>
-                {r.value.toLocaleString()}
+                {valueLabel}
               </span>
             </div>
           )}
