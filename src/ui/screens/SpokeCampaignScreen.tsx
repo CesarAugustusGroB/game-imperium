@@ -21,6 +21,7 @@ import { FACTION_COLORS } from '../../game/core/commander';
 import { computeArmyMorale } from '../../game/army/morale';
 import { SpokeCampaignTopBar } from '../components/spoke/SpokeCampaignTopBar';
 import { LandmarkDetailsPanel } from '../components/spoke/LandmarkDetailsPanel';
+import { LandmarkMap } from '../components/spoke/LandmarkMap';
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 
 if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-styles')) {
@@ -53,6 +54,7 @@ if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-
     .spoke-campaign-zone--topbar    { grid-area: topbar; padding: 8px 12px; }
     .spoke-campaign-zone--details   { grid-area: details; }
     .spoke-campaign-zone--map       { grid-area: map; min-height: 320px; }
+    .spoke-campaign-zone--map-flush { padding: 0; overflow: hidden; }
     .spoke-campaign-zone--legend    { grid-area: legend; }
     .spoke-campaign-zone--army      { grid-area: army; min-height: 96px; }
 
@@ -200,14 +202,36 @@ export function SpokeCampaignScreen() {
           />
         </aside>
 
-        <section class="spoke-campaign-zone spoke-campaign-zone--map">
-          <div class="spoke-campaign-placeholder">
-            <span class="spoke-campaign-placeholder-eyebrow">Campaign Map</span>
-            <span class="spoke-campaign-placeholder-title">{spoke.label}</span>
-            <span class="spoke-campaign-placeholder-hint">
-              Illustrated map · {spoke.nodes.length} landmarks · S29-04 → S29-07
-            </span>
-          </div>
+        <section class="spoke-campaign-zone spoke-campaign-zone--map spoke-campaign-zone--map-flush">
+          <LandmarkMap
+            nodes={spoke.nodes}
+            renderNode={(node, _coord, i) => {
+              // Placeholder pin — S29-05 swaps in the real LandmarkNode visuals.
+              const isCurrent = i === nodeIdx;
+              const isResolved = node.resolved;
+              const fill = isResolved
+                ? 'rgba(180, 160, 100, 0.4)'
+                : isCurrent
+                  ? accent
+                  : 'rgba(220, 200, 140, 0.85)';
+              return (
+                <div
+                  title={node.name ?? node.id}
+                  style={{
+                    width: isCurrent ? '20px' : '14px',
+                    height: isCurrent ? '20px' : '14px',
+                    borderRadius: '50%',
+                    background: fill,
+                    border: '2px solid rgba(20, 14, 6, 0.8)',
+                    boxShadow: isCurrent
+                      ? `0 0 12px ${accent}, 0 0 24px ${accent}`
+                      : '0 1px 3px rgba(0, 0, 0, 0.6)',
+                    transition: 'all var(--duration-fast) var(--ease-default)',
+                  }}
+                />
+              );
+            }}
+          />
         </section>
 
         <aside class="spoke-campaign-zone spoke-campaign-zone--legend">
