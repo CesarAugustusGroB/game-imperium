@@ -16,14 +16,15 @@ export type ScreenName =
   | 'army-recruitment'
   | 'legate-hiring'
   | 'node-map'
+  | 'spoke-campaign'
   | 'battle'
   | 'battleV2'
   | 'post-battle'
   | 'victory'
   | 'defeat';
 
-const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'quick-battle', 'forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'node-map', 'battle', 'battleV2', 'post-battle', 'victory', 'defeat'];
-const REQUIRES_RUN: ScreenName[] = ['forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'node-map', 'post-battle', 'victory', 'defeat'];
+const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'quick-battle', 'forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'node-map', 'spoke-campaign', 'battle', 'battleV2', 'post-battle', 'victory', 'defeat'];
+const REQUIRES_RUN: ScreenName[] = ['forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'node-map', 'spoke-campaign', 'post-battle', 'victory', 'defeat'];
 
 /**
  * Legacy screen → Forum tab. `hub` and the old per-section routes (`council`,

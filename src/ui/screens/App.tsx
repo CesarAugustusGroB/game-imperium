@@ -9,6 +9,7 @@ import { TitleScreen } from './TitleScreen';
 import { CommanderSelectScreen } from './CommanderSelectScreen';
 import { QuickBattleScreen } from './QuickBattleScreen';
 import { NodeMapScreen } from './NodeMapScreen';
+import { SpokeCampaignScreen } from './SpokeCampaignScreen';
 import { PostBattleScreen } from './PostBattleScreen';
 import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
@@ -39,6 +40,7 @@ const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> =
   // land, these entries can be dropped.
   'hub': ForumShell,
   'node-map': NodeMapScreen,
+  'spoke-campaign': SpokeCampaignScreen,
   'battleV2': BattleScreenV2,
   'post-battle': PostBattleScreen,
   'victory': VictoryScreen,

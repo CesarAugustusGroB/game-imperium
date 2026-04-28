@@ -1,0 +1,241 @@
+/**
+ * SpokeCampaignScreen — S29 layout shell for the new Itinerarium UI.
+ *
+ * Sits behind the legacy `node-map` route during migration. NodeMapScreen
+ * remains the production renderer; this screen is the target layout that
+ * S29-04..09 will populate (illustrated map, route SVG, legend/intel,
+ * legion campaign panel). For now it wires the pieces that already exist
+ * (top bar, landmark details, retreat, army HUD) and drops placeholders
+ * into the zones that future tasks will fill.
+ *
+ * No game logic lives here — the screen reads `currentSpoke` /
+ * `currentNodeIndex` signals and dispatches the existing store handlers
+ * (`resetSpoke`, `threatLevel`, `navigateTo`).
+ */
+
+import { useState } from 'preact/hooks';
+import { navigateTo } from '../screens';
+import { currentSpoke, currentNodeIndex, resetSpoke } from '../../game/progression/spoke';
+import { threatLevel, selectedCommander } from '../../game/core/game-state';
+import { FACTION_COLORS } from '../../game/core/commander';
+import { computeArmyMorale } from '../../game/army/morale';
+import { SpokeTopBar } from '../components/spoke/SpokeTopBar';
+import { LandmarkDetailsPanel } from '../components/spoke/LandmarkDetailsPanel';
+import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
+
+if (typeof document !== 'undefined' && !document.getElementById('spoke-campaign-styles')) {
+  const el = document.createElement('style');
+  el.id = 'spoke-campaign-styles';
+  el.textContent = `
+    .spoke-campaign-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 320px) 1fr minmax(260px, 300px);
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas:
+        "topbar    topbar     topbar"
+        "details   map        legend"
+        "army      army       army";
+      gap: 16px;
+      width: min(1600px, 96vw);
+      height: calc(100vh - 32px);
+      margin: 16px auto;
+      box-sizing: border-box;
+    }
+    .spoke-campaign-zone {
+      background: rgba(14, 12, 28, 0.72);
+      border: 1px solid rgba(180, 160, 100, 0.22);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      box-sizing: border-box;
+      overflow: auto;
+      position: relative;
+    }
+    .spoke-campaign-zone--topbar    { grid-area: topbar; padding: 8px 12px; }
+    .spoke-campaign-zone--details   { grid-area: details; }
+    .spoke-campaign-zone--map       { grid-area: map; min-height: 320px; }
+    .spoke-campaign-zone--legend    { grid-area: legend; }
+    .spoke-campaign-zone--army      { grid-area: army; min-height: 96px; }
+
+    .spoke-campaign-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 6px;
+      color: var(--color-text-muted);
+      font-family: var(--font-display);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-align: center;
+    }
+    .spoke-campaign-placeholder-eyebrow {
+      font-size: var(--font-size-xs);
+      color: var(--color-gold-dim);
+      letter-spacing: 2px;
+    }
+    .spoke-campaign-placeholder-title {
+      font-size: var(--font-size-md);
+      color: var(--color-text-secondary);
+    }
+    .spoke-campaign-placeholder-hint {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+      letter-spacing: 1px;
+      text-transform: none;
+    }
+
+    .spoke-campaign-actions {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      display: flex;
+      gap: 8px;
+      z-index: 5;
+    }
+    .spoke-campaign-action-btn {
+      padding: 6px 14px;
+      background: rgba(14, 12, 28, 0.85);
+      border: 1px solid rgba(180, 160, 100, 0.4);
+      border-radius: var(--radius-sm);
+      color: var(--color-gold-dim);
+      font-family: var(--font-family);
+      font-size: var(--font-size-xs);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all var(--duration-fast) var(--ease-default);
+    }
+    .spoke-campaign-action-btn:hover {
+      color: var(--color-gold-primary);
+      border-color: rgba(212, 168, 67, 0.7);
+    }
+    .spoke-campaign-action-btn--danger:hover {
+      color: var(--color-danger, #d96a6a);
+      border-color: rgba(217, 106, 106, 0.7);
+    }
+
+    @media (max-width: 1100px) {
+      .spoke-campaign-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "topbar"
+          "map"
+          "details"
+          "legend"
+          "army";
+        height: auto;
+      }
+    }
+  `;
+  document.head.appendChild(el);
+}
+
+export function SpokeCampaignScreen() {
+  const spoke = currentSpoke.value;
+  const nodeIdx = currentNodeIndex.value;
+  const commander = selectedCommander.value;
+  const accent = commander ? FACTION_COLORS[commander.faction] : '#f0d080';
+  const [showArmyHUD, setShowArmyHUD] = useState(false);
+
+  if (!spoke) {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        height: '100vh', fontFamily: 'var(--font-family)',
+        background: 'var(--color-bg-primary)',
+        gap: '16px',
+      }}>
+        <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-lg)', letterSpacing: '1px' }}>
+          No active spoke
+        </div>
+        <button
+          class="spoke-campaign-action-btn"
+          onClick={() => navigateTo('hub')}
+          style={{ padding: '10px 24px' }}
+        >
+          Return to Hub
+        </button>
+      </div>
+    );
+  }
+
+  function handleRetreat() {
+    threatLevel.value += 1;
+    resetSpoke();
+    navigateTo('hub');
+  }
+
+  const currentNode = spoke.nodes[nodeIdx] ?? null;
+  const morale = spoke.boundArmy ? computeArmyMorale(spoke) : null;
+
+  return (
+    <div style={{ background: 'var(--color-bg-primary)', minHeight: '100vh' }}>
+      <div class="spoke-campaign-grid">
+        <div class="spoke-campaign-zone spoke-campaign-zone--topbar">
+          <SpokeTopBar />
+          <div class="spoke-campaign-actions">
+            <button
+              class="spoke-campaign-action-btn"
+              onClick={() => setShowArmyHUD(true)}
+              disabled={!spoke.boundArmy}
+              title={spoke.boundArmy ? 'View army roster' : 'No army bound'}
+            >
+              Army
+            </button>
+            <button
+              class="spoke-campaign-action-btn spoke-campaign-action-btn--danger"
+              onClick={handleRetreat}
+            >
+              Retreat
+            </button>
+          </div>
+        </div>
+
+        <aside class="spoke-campaign-zone spoke-campaign-zone--details">
+          <LandmarkDetailsPanel
+            node={currentNode}
+            isCurrent={true}
+            accentColor={accent}
+          />
+        </aside>
+
+        <section class="spoke-campaign-zone spoke-campaign-zone--map">
+          <div class="spoke-campaign-placeholder">
+            <span class="spoke-campaign-placeholder-eyebrow">Campaign Map</span>
+            <span class="spoke-campaign-placeholder-title">{spoke.label}</span>
+            <span class="spoke-campaign-placeholder-hint">
+              Illustrated map · {spoke.nodes.length} landmarks · S29-04 → S29-07
+            </span>
+          </div>
+        </section>
+
+        <aside class="spoke-campaign-zone spoke-campaign-zone--legend">
+          <div class="spoke-campaign-placeholder">
+            <span class="spoke-campaign-placeholder-eyebrow">Legend &amp; Intel</span>
+            <span class="spoke-campaign-placeholder-title">Coming in S29-08</span>
+          </div>
+        </aside>
+
+        <section class="spoke-campaign-zone spoke-campaign-zone--army">
+          <div class="spoke-campaign-placeholder">
+            <span class="spoke-campaign-placeholder-eyebrow">Legion</span>
+            <span class="spoke-campaign-placeholder-title">
+              {spoke.boundArmy ? `${spoke.boundArmy.cohorts.length} cohorts bound` : 'No army bound'}
+            </span>
+            <span class="spoke-campaign-placeholder-hint">Legion campaign panel · S29-09</span>
+          </div>
+        </section>
+      </div>
+
+      {showArmyHUD && spoke.boundArmy && (
+        <ArmyDetailHUD
+          army={spoke.boundArmy}
+          legate={spoke.boundLegate ?? null}
+          morale={morale}
+          onClose={() => setShowArmyHUD(false)}
+        />
+      )}
+    </div>
+  );
+}
