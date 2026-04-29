@@ -1,4 +1,5 @@
 // S30: gate the new PixiJS hex campaign map behind a compile-time flag.
-// Flip to `true` to render the Pixi sandbox in the Bellum forum tab.
-// S30-12 will retire this flag once the cutover lands.
-export const BELLUM_USE_PIXI = false;
+// Flipped true at S30-07 once HexMapView lands and the Bellum tab can
+// render the new map end-to-end. S30-12 retires the flag and removes
+// the legacy NodeMapScreen entirely.
+export const BELLUM_USE_PIXI = true;

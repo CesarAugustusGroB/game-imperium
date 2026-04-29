@@ -1,5 +1,15 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Application } from 'pixi.js';
+import {
+  campaignState,
+  hexTiles,
+  setCurrent,
+  setSelected,
+  setTiles,
+} from '../campaign/campaign-state';
+import { generateCampaignMap } from '../campaign/campaign-map-generator';
+import { updateReachableTiles } from '../campaign/movement';
+import { HexMapView } from './HexMapView';
 
 export function PixiHexMap() {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -9,9 +19,9 @@ export function PixiHexMap() {
     if (!host) return;
 
     const app = new Application();
-    let cancelled = false;
-
     let initialised = false;
+    let cancelled = false;
+    let view: HexMapView | null = null;
 
     void app
       .init({
@@ -28,10 +38,33 @@ export function PixiHexMap() {
           return;
         }
         host.appendChild(app.canvas);
+
+        // Bootstrap the campaign signals if this is the first mount.
+        if (hexTiles.value.length === 0) {
+          const tiles = generateCampaignMap(6);
+          const seeded = updateReachableTiles(
+            tiles,
+            campaignState.value.currentTileId,
+            campaignState.value.movementPoints,
+          );
+          setTiles(seeded);
+        }
+
+        view = new HexMapView({
+          app,
+          tiles: hexTiles.value,
+          state: { ...campaignState.value },
+          onTileSelected: (tile) => setSelected(tile.id),
+          onPlayerMoved: (tile) => setCurrent(tile.id),
+        });
+
+        app.stage.addChild(view.root);
       });
 
     return () => {
       cancelled = true;
+      view?.destroy();
+      view = null;
       if (initialised) app.destroy(true);
     };
   }, []);
