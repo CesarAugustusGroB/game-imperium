@@ -89,11 +89,26 @@ export function PixiHexMap() {
         // or React-style remounts, where dispose() may not have happened
         // before a stale signal write triggers this body.
         const localView = view;
-        disposeMirror = effect(() => {
+        const disposeTilesMirror = effect(() => {
           const tiles = hexTiles.value;
           if (cancelled || !localView) return;
           localView.setTiles(tiles);
         });
+
+        // Mirror campaignState signal into the view so external mutations
+        // (S31 save/load, supplies/morale decrements) keep HexMapView.state
+        // in sync. Without this, moveToTile would read a stale movementPoints
+        // from the constructor snapshot and compute wrong reachable sets.
+        const disposeStateMirror = effect(() => {
+          const state = campaignState.value;
+          if (cancelled || !localView) return;
+          localView.setState(state);
+        });
+
+        disposeMirror = () => {
+          disposeTilesMirror();
+          disposeStateMirror();
+        };
       });
 
     return () => {

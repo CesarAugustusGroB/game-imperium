@@ -1,3 +1,10 @@
+// Pixi colors are 24-bit numbers (e.g. 0xd4a843). This helper formats them
+// as 7-char hex strings for CSS — `#d4a843` etc. Used by the campaign UI
+// to mirror Pixi terrain/event colors into Preact-rendered HUD elements.
+export function colorToCss(hex: number): string {
+  return '#' + hex.toString(16).padStart(6, '0');
+}
+
 export function rgbToKey(r: number, g: number, b: number): string {
   return `${r},${g},${b}`;
 }
