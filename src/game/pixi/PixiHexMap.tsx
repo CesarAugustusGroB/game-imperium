@@ -11,6 +11,8 @@ export function PixiHexMap() {
     const app = new Application();
     let cancelled = false;
 
+    let initialised = false;
+
     void app
       .init({
         resizeTo: host,
@@ -20,6 +22,7 @@ export function PixiHexMap() {
         autoDensity: true,
       })
       .then(() => {
+        initialised = true;
         if (cancelled) {
           app.destroy(true);
           return;
@@ -29,7 +32,7 @@ export function PixiHexMap() {
 
     return () => {
       cancelled = true;
-      app.destroy(true);
+      if (initialised) app.destroy(true);
     };
   }, []);
 
