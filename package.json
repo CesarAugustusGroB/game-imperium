@@ -21,6 +21,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-preact": "^1.8.0",
+    "pixi.js": "^8.18.1",
     "preact": "^10.29.0",
     "tsx": "^4.21.0"
   }

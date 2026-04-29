@@ -9,6 +9,10 @@ import { MercatorTab } from './tabs/MercatorTab';
 import { DoctrinaeTab } from './tabs/DoctrinaeTab';
 import { DecretaTab } from './tabs/DecretaTab';
 import { NodeMapScreen } from '../NodeMapScreen';
+import { PixiHexMap } from '../../../game/pixi/PixiHexMap';
+import { BELLUM_USE_PIXI } from '../../../game/pixi/feature-flags';
+
+const BellumTab = () => (BELLUM_USE_PIXI ? <PixiHexMap /> : <NodeMapScreen />);
 
 // ── One-time scoped style injection ──
 // Any element inside the Forum shell gets the thin gold scrollbar
@@ -44,7 +48,7 @@ const TAB_COMPONENTS: Record<ForumTab, () => preact.JSX.Element> = {
   provinciae: ProvinciaeTab,
   consilium:  ConsiliumTab,
   exercitus:  ExercitusTab,
-  bellum:     NodeMapScreen,
+  bellum:     BellumTab,
   mercator:   MercatorTab,
   doctrinae:  DoctrinaeTab,
   decreta:    DecretaTab,
