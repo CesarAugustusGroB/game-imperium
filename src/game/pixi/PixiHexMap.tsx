@@ -8,7 +8,7 @@ import {
   setTiles,
 } from '../campaign/campaign-state';
 import { generateCampaignMap } from '../campaign/campaign-map-generator';
-import { updateReachableTiles } from '../campaign/movement';
+import { revealNeighbors, updateReachableTiles } from '../campaign/movement';
 import { HexMapView } from './HexMapView';
 
 export function PixiHexMap() {
@@ -40,10 +40,17 @@ export function PixiHexMap() {
         host.appendChild(app.canvas);
 
         // Bootstrap the campaign signals if this is the first mount.
+        // Mirror moveToTile: reveal the origin's neighbors first so the
+        // reachable-calc has discovered tiles to consider — without this,
+        // the legion is locked on the starting hex and the fog never lifts.
         if (hexTiles.value.length === 0) {
-          const tiles = generateCampaignMap(6);
+          const generated = generateCampaignMap(6);
+          const origin = generated.find(
+            (tile) => tile.id === campaignState.value.currentTileId,
+          );
+          const revealed = origin ? revealNeighbors(generated, origin) : generated;
           const seeded = updateReachableTiles(
-            tiles,
+            revealed,
             campaignState.value.currentTileId,
             campaignState.value.movementPoints,
           );
