@@ -1,14 +1,18 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { effect } from '@preact/signals';
 import { Application } from 'pixi.js';
 import {
+  activeEventTileId,
   campaignState,
   hexTiles,
+  setActiveEvent,
   setCurrent,
   setSelected,
   setTiles,
 } from '../campaign/campaign-state';
 import { generateCampaignMap } from '../campaign/campaign-map-generator';
 import { revealNeighbors, updateReachableTiles } from '../campaign/movement';
+import { CampaignEventModal } from '../../ui/components/CampaignEventModal';
 import { HexMapView } from './HexMapView';
 
 export function PixiHexMap() {
@@ -22,6 +26,7 @@ export function PixiHexMap() {
     let initialised = false;
     let cancelled = false;
     let view: HexMapView | null = null;
+    let disposeMirror: (() => void) | null = null;
 
     void app
       .init({
@@ -62,15 +67,35 @@ export function PixiHexMap() {
           tiles: hexTiles.value,
           state: { ...campaignState.value },
           onTileSelected: (tile) => setSelected(tile.id),
-          onPlayerMoved: (tile) => setCurrent(tile.id),
+          onPlayerMoved: (tile) => {
+            setCurrent(tile.id);
+            // Fire the encounter modal only when the legion enters a hex
+            // with an unresolved event AND no other modal is already open.
+            if (tile.event !== 'none' && activeEventTileId.value === null) {
+              setActiveEvent(tile.id);
+            }
+          },
           onTilesChanged: (tiles) => setTiles(tiles),
         });
 
         app.stage.addChild(view.root);
+
+        // Mirror hexTiles signal into the view so external mutations
+        // (e.g. consumeEvent after the modal closes) re-render the map.
+        // The first run is redundant — view was just initialised with the
+        // same tiles — but harmless. Subsequent fires are how the modal
+        // close path clears event icons from a tile.
+        const localView = view;
+        disposeMirror = effect(() => {
+          const tiles = hexTiles.value;
+          if (localView) localView.setTiles(tiles);
+        });
       });
 
     return () => {
       cancelled = true;
+      disposeMirror?.();
+      disposeMirror = null;
       view?.destroy();
       view = null;
       if (initialised) app.destroy(true);
@@ -78,9 +103,12 @@ export function PixiHexMap() {
   }, []);
 
   return (
-    <div
-      ref={hostRef}
-      style={{ position: 'absolute', inset: 0, background: '#070509' }}
-    />
+    <>
+      <div
+        ref={hostRef}
+        style={{ position: 'absolute', inset: 0, background: '#070509' }}
+      />
+      <CampaignEventModal />
+    </>
   );
 }

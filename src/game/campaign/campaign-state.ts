@@ -12,6 +12,11 @@ const INITIAL_STATE: CampaignState = {
 export const hexTiles = signal<HexTile[]>([]);
 export const campaignState = signal<CampaignState>({ ...INITIAL_STATE });
 
+// S30-10: id of the hex whose event should currently be shown in the modal.
+// null means no encounter is active. Held outside CampaignState because it's
+// purely UI flow, not gameplay state.
+export const activeEventTileId = signal<string | null>(null);
+
 export function setTiles(tiles: HexTile[]): void {
   hexTiles.value = tiles;
 }
@@ -24,7 +29,25 @@ export function setSelected(tileId: string | null): void {
   campaignState.value = { ...campaignState.value, selectedTileId: tileId };
 }
 
+export function setActiveEvent(tileId: string | null): void {
+  activeEventTileId.value = tileId;
+}
+
+/**
+ * Mark a hex's event as consumed so re-entry doesn't re-fire the modal.
+ * Also clears `activeEventTileId` if this is the tile that was being shown.
+ */
+export function consumeEvent(tileId: string): void {
+  hexTiles.value = hexTiles.value.map((tile) =>
+    tile.id === tileId ? { ...tile, event: 'none' as const } : tile,
+  );
+  if (activeEventTileId.value === tileId) {
+    activeEventTileId.value = null;
+  }
+}
+
 export function resetCampaign(): void {
   hexTiles.value = [];
   campaignState.value = { ...INITIAL_STATE };
+  activeEventTileId.value = null;
 }
