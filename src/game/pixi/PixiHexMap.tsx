@@ -85,10 +85,14 @@ export function PixiHexMap() {
         // The first run is redundant — view was just initialised with the
         // same tiles — but harmless. Subsequent fires are how the modal
         // close path clears event icons from a tile.
+        // The cancelled flag guards against zombie firings after Vite HMR
+        // or React-style remounts, where dispose() may not have happened
+        // before a stale signal write triggers this body.
         const localView = view;
         disposeMirror = effect(() => {
           const tiles = hexTiles.value;
-          if (localView) localView.setTiles(tiles);
+          if (cancelled || !localView) return;
+          localView.setTiles(tiles);
         });
       });
 

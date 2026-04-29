@@ -48,6 +48,11 @@ export class HexMapView {
   private static readonly ZOOM_MIN: number = 0.55;
   private static readonly ZOOM_MAX: number = 1.35;
 
+  // Flipped true on destroy() so zombie callbacks (signal effects firing
+  // after the wrapping component unmounted) early-out instead of touching
+  // a torn-down PIXI.Application.
+  private destroyed: boolean = false;
+
   constructor(options: HexMapViewOptions) {
     this.app = options.app;
     this.tiles = options.tiles;
@@ -67,6 +72,8 @@ export class HexMapView {
   }
 
   render(): void {
+    if (this.destroyed) return;
+
     this.tileLayer.removeChildren();
     this.pathLayer.clear();
     this.effectsLayer.removeChildren();
@@ -83,18 +90,23 @@ export class HexMapView {
    * Used when a fresh map is generated or when external state mutates the tiles.
    */
   setTiles(tiles: HexTile[]): void {
+    if (this.destroyed) return;
     this.tiles = tiles;
     this.render();
   }
 
   /**
    * Detach pulse ticker callback and the canvas wheel listener.
-   * Caller is responsible for destroying the underlying PIXI.Application.
+   * Idempotent — safe to call multiple times. Caller is responsible
+   * for destroying the underlying PIXI.Application.
    */
   destroy(): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
     this.detachPulseTicker();
     if (this.wheelHandler) {
-      this.app.canvas.removeEventListener('wheel', this.wheelHandler);
+      // app.canvas may already be gone if app.destroy() ran first.
+      this.app.canvas?.removeEventListener('wheel', this.wheelHandler);
       this.wheelHandler = null;
     }
   }
@@ -181,7 +193,9 @@ export class HexMapView {
 
   private detachPulseTicker(): void {
     if (this.pulseTickerCallback) {
-      this.app.ticker.remove(this.pulseTickerCallback);
+      // app.ticker may already be null if app.destroy() ran first;
+      // happens when a stale signal-mirror effect fires after teardown.
+      this.app.ticker?.remove(this.pulseTickerCallback);
       this.pulseTickerCallback = null;
     }
   }
@@ -203,6 +217,7 @@ export class HexMapView {
     let lastY = 0;
 
     stage.on('pointerdown', (event) => {
+      if (this.destroyed) return;
       dragging = true;
       this.dragMoved = false;
       startX = event.global.x;
@@ -220,7 +235,7 @@ export class HexMapView {
     stage.on('pointerupoutside', endDrag);
 
     stage.on('pointermove', (event) => {
-      if (!dragging) return;
+      if (this.destroyed || !dragging) return;
 
       const dx = event.global.x - lastX;
       const dy = event.global.y - lastY;
@@ -237,6 +252,7 @@ export class HexMapView {
     });
 
     const wheelHandler = (event: WheelEvent): void => {
+      if (this.destroyed) return;
       event.preventDefault();
       const zoomFactor = event.deltaY > 0 ? 0.95 : 1.05;
       const nextScale = Math.max(
