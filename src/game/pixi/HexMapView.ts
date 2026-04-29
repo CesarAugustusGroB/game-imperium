@@ -14,6 +14,10 @@ export type HexMapViewOptions = {
   state: CampaignState;
   onTileSelected: (tile: HexTile) => void;
   onPlayerMoved: (tile: HexTile) => void;
+  // Fires after moveToTile mutates the internal tile array. Callers should
+  // mirror the new array into their store of record (e.g. the hexTiles signal)
+  // so HUD readers don't observe stale state.
+  onTilesChanged: (tiles: HexTile[]) => void;
 };
 
 export class HexMapView {
@@ -32,6 +36,7 @@ export class HexMapView {
   private state: CampaignState;
   private onTileSelected: (tile: HexTile) => void;
   private onPlayerMoved: (tile: HexTile) => void;
+  private onTilesChanged: (tiles: HexTile[]) => void;
 
   // Stored so destroy() can detach it from the shared ticker.
   private pulseTickerCallback: ((ticker: Ticker) => void) | null = null;
@@ -42,6 +47,7 @@ export class HexMapView {
     this.state = options.state;
     this.onTileSelected = options.onTileSelected;
     this.onPlayerMoved = options.onPlayerMoved;
+    this.onTilesChanged = options.onTilesChanged;
 
     this.root.addChild(this.terrainLayer);
     this.root.addChild(this.pathLayer);
@@ -126,6 +132,7 @@ export class HexMapView {
     );
 
     this.onPlayerMoved(currentTile);
+    this.onTilesChanged(this.tiles);
     this.render();
   }
 

@@ -63,6 +63,7 @@ export function PixiHexMap() {
           state: { ...campaignState.value },
           onTileSelected: (tile) => setSelected(tile.id),
           onPlayerMoved: (tile) => setCurrent(tile.id),
+          onTilesChanged: (tiles) => setTiles(tiles),
         });
 
         app.stage.addChild(view.root);
