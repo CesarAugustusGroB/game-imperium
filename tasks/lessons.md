@@ -4,6 +4,14 @@ Rules for Claude to avoid repeating past mistakes.
 
 ---
 
+## TS `erasableSyntaxOnly` blocks parameter properties
+**Date**: 2026-04-29
+**Mistake**: In S30-06's `HexTileView` I used the constructor parameter-property shorthand (`constructor(public tile: HexTile, private size: number, ...)`). `tsc --noEmit` immediately failed with `TS1294: This syntax is not allowed when 'erasableSyntaxOnly' is enabled.` Parameter properties require runtime emit — the compiler can't erase them — and this project has `erasableSyntaxOnly` set in `tsconfig`.
+**Rule**: Don't use TypeScript-specific runtime syntax in `.ts` files in this repo: no `public/private/protected` parameter properties on constructors, no enums, no `namespace`, no `import =` / `export =`. Declare class fields explicitly (`public foo: T;` then assign in the constructor body) and prefer `const` unions over enums.
+**How to apply**: When writing or porting class code (especially Pixi `Container` subclasses or anything copy-pasted from external guides), default to explicit field declarations + constructor-body assignment. If you ever see TS1294 / TS1295 / TS1206, the fix is to switch to erasable-only syntax — don't toggle the tsconfig flag off.
+
+---
+
 ## Campaign map visual hierarchy
 **Date**: 2026-04-28
 **Mistake**: First Bellum node-map pass overused red glows, boxed labels, and equal-weight UI regions, making the screen read like an alarm/debug overlay instead of a painted campaign map.
