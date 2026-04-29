@@ -9,10 +9,10 @@ import { MercatorTab } from './tabs/MercatorTab';
 import { DoctrinaeTab } from './tabs/DoctrinaeTab';
 import { DecretaTab } from './tabs/DecretaTab';
 import { NodeMapScreen } from '../NodeMapScreen';
-import { PixiHexMap } from '../../../game/pixi/PixiHexMap';
+import { CampaignHexScreen } from '../CampaignHexScreen';
 import { BELLUM_USE_PIXI } from '../../../game/pixi/feature-flags';
 
-const BellumTab = () => (BELLUM_USE_PIXI ? <PixiHexMap /> : <NodeMapScreen />);
+const BellumTab = () => (BELLUM_USE_PIXI ? <CampaignHexScreen /> : <NodeMapScreen />);
 
 // ── One-time scoped style injection ──
 // Any element inside the Forum shell gets the thin gold scrollbar
