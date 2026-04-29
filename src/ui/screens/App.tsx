@@ -8,8 +8,6 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TitleScreen } from './TitleScreen';
 import { CommanderSelectScreen } from './CommanderSelectScreen';
 import { QuickBattleScreen } from './QuickBattleScreen';
-import { NodeMapScreen } from './NodeMapScreen';
-import { SpokeCampaignScreen } from './SpokeCampaignScreen';
 import { PostBattleScreen } from './PostBattleScreen';
 import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
@@ -39,8 +37,9 @@ const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> =
   // bodies pending migration into Forum tabs (S22-05/06/07). Once those
   // land, these entries can be dropped.
   'hub': ForumShell,
-  'node-map': NodeMapScreen,
-  'spoke-campaign': SpokeCampaignScreen,
+  // 'node-map' / 'spoke-campaign' resolve to 'forum' with the bellum tab via
+  // LEGACY_TAB_MAP in screens.ts, so they never reach this map. Their legacy
+  // screen bodies were retired in S30-12.
   'battleV2': BattleScreenV2,
   'post-battle': PostBattleScreen,
   'victory': VictoryScreen,
