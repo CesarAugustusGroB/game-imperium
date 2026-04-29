@@ -26,8 +26,8 @@ export function eventTypeToEncounterType(
       return 'merchant';
     case 'story':
       return 'event';
-    case 'none':
     default:
+      // 'none' and any future unmapped EventType both return null here.
       return null;
   }
 }

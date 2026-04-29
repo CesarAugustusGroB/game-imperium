@@ -96,6 +96,22 @@ export class HexMapView {
   }
 
   /**
+   * Mirror an externally-mutated CampaignState into this view and re-render.
+   * Called by PixiHexMap's campaignState signal mirror so that S31 systems
+   * (save/load, supplies/morale decrements) keep this.state in sync.
+   *
+   * Feedback-loop note: moveToTile mutates this.state.currentTileId then calls
+   * onPlayerMoved → setCurrent(tile.id) → signal write → campaignState mirror
+   * fires → setState(newState) → render() again. render() is idempotent so this
+   * produces one extra paint per move — acceptable and no logical feedback loop.
+   */
+  setState(state: CampaignState): void {
+    if (this.destroyed) return;
+    this.state = state;
+    this.render();
+  }
+
+  /**
    * Detach pulse ticker callback and the canvas wheel listener.
    * Idempotent — safe to call multiple times. Caller is responsible
    * for destroying the underlying PIXI.Application.

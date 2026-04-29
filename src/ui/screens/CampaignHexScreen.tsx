@@ -9,11 +9,13 @@
 // existing visual idiom (ornate-stat-chip, gold-bordered cards, design
 // tokens) without dragging in spoke state.
 
+import { useEffect, useState } from 'preact/hooks';
 import { campaignState, hexTiles } from '../../game/campaign/campaign-state';
 import type { EventType, HexTile, TerrainType } from '../../game/campaign/campaign-types';
 import { getTerrainColor } from '../../game/campaign/terrain';
 import { getEventColor, getEventIcon } from '../../game/campaign/events';
 import { PixiHexMap } from '../../game/pixi/PixiHexMap';
+import { colorToCss } from '../../utils/color';
 
 if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-screen-styles')) {
   const el = document.createElement('style');
@@ -37,10 +39,13 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-sc
       justify-content: center;
       padding: 0 16px;
       z-index: 10;
-      pointer-events: none;
+      pointer-events: none; /* Allow drag-pan through the bar's empty space */
     }
-    .chs-top-bar > * { pointer-events: auto; }
+    .chs-top-bar > * { pointer-events: auto; } /* Re-enable on chip children */
 
+    /* The left panel is a real info card — keep it interactive so the user
+       can read and potentially click tile info in future. This means drag-pan
+       is blocked in the panel area, which is acceptable. */
     .chs-left-panel {
       position: absolute;
       top: 70px;
@@ -55,6 +60,7 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-sc
       color: var(--imp-text);
       font-family: var(--imp-font-body);
       backdrop-filter: blur(2px);
+      pointer-events: auto; /* Panel IS interactive — intentionally blocks map drag here */
     }
     .chs-left-panel::before {
       content: '';
@@ -97,12 +103,19 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-sc
       font-weight: 600;
     }
 
-    .chs-bottom-strip {
+    /* Bottom strip outer container: pointer-events none so the player can
+       drag-pan the map across the lower edge. The strip has no interactive
+       controls today, so this is safe. Inner content (banner + stack) gets
+       auto so text remains selectable if needed. */
+    .chs-bottom-strip-outer {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
       z-index: 10;
+      pointer-events: none; /* Allow drag-pan under the strip's full footprint */
+    }
+    .chs-bottom-strip {
       display: flex;
       align-items: center;
       gap: 16px;
@@ -113,6 +126,7 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-sc
       border-top: 1px solid rgba(212, 168, 67, 0.45);
       color: var(--color-text-secondary);
       font-family: var(--imp-font-body);
+      pointer-events: auto; /* Re-enable on inner content (banner + stack) */
     }
     .chs-bottom-banner {
       width: 44px;
@@ -143,6 +157,15 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-sc
     .chs-bottom-line strong {
       color: var(--color-gold-secondary);
     }
+    /* Visually hidden — readable by screen-readers and aria-live regions */
+    .chs-visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
   `;
   document.head.appendChild(el);
 }
@@ -169,10 +192,6 @@ const EVENT_LABEL: Record<EventType, string> = {
   elite: 'Elite force',
 };
 
-function colorToCss(hex: number): string {
-  return '#' + hex.toString(16).padStart(6, '0');
-}
-
 function findTile(id: string | null): HexTile | undefined {
   if (!id) return undefined;
   return hexTiles.value.find((t) => t.id === id);
@@ -193,7 +212,8 @@ function CampaignTopBar() {
       <span class="ornate-stat-chip" title="Legion morale">
         🔥 <strong>{state.morale}</strong>
       </span>
-      <span class="ornate-stat-chip" title="Season tracker — placeholder until S31">
+      {/* 3e: tooltip is explicit that this is a placeholder */}
+      <span class="ornate-stat-chip" title="Season tracker — placeholder until S31 (not yet implemented)">
         🌿 <strong>I/IV</strong>
       </span>
     </div>
@@ -274,25 +294,63 @@ function CampaignArmyStrip() {
   const tilesDiscovered = hexTiles.value.filter((t) => t.discovered).length;
 
   return (
-    <div class="chs-bottom-strip" role="region" aria-label="Legion status">
-      <div class="chs-bottom-banner" title="Legio">SPQR</div>
-      <div class="chs-bottom-stack">
-        <div class="chs-bottom-line">
-          <span>
-            Position <strong>{state.currentTileId}</strong>
-            {current && (
-              <span style={{ color: 'var(--color-text-muted, var(--color-text-secondary))' }}>
-                {' '}· {TERRAIN_LABEL[current.terrain]}
-              </span>
-            )}
-          </span>
-        </div>
-        <div class="chs-bottom-line">
-          <span>Discovered <strong>{tilesDiscovered}</strong></span>
-          <span>Visited <strong>{tilesVisited}</strong></span>
-          <span>March pts <strong>{state.movementPoints}</strong></span>
+    // 3c: outer container is pointer-events:none so drag-pan works across the
+    // lower edge. Inner .chs-bottom-strip re-enables pointer-events for content.
+    <div class="chs-bottom-strip-outer">
+      <div class="chs-bottom-strip" role="region" aria-label="Legion status">
+        <div class="chs-bottom-banner" title="Legio">SPQR</div>
+        <div class="chs-bottom-stack">
+          <div class="chs-bottom-line">
+            <span>
+              Position <strong>{state.currentTileId}</strong>
+              {current && (
+                <span style={{ color: 'var(--color-text-muted, var(--color-text-secondary))' }}>
+                  {' '}· {TERRAIN_LABEL[current.terrain]}
+                </span>
+              )}
+            </span>
+          </div>
+          <div class="chs-bottom-line">
+            <span>Discovered <strong>{tilesDiscovered}</strong></span>
+            <span>Visited <strong>{tilesVisited}</strong></span>
+            <span>March pts <strong>{state.movementPoints}</strong></span>
+          </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── A11y live region for legion position ─────────────────────────
+
+// 3d: Announces current tile id and terrain whenever the legion moves.
+// Uses useEffect + useState watching campaignState.value.currentTileId via
+// signal subscription (components re-render when signals change).
+function LegionPositionAnnouncer() {
+  const state = campaignState.value;
+  const currentTileId = state.currentTileId;
+  const current = findTile(currentTileId);
+
+  // We only want to announce on *changes*, so track the last announced value.
+  const [announced, setAnnounced] = useState('');
+
+  useEffect(() => {
+    const terrain = current ? TERRAIN_LABEL[current.terrain] : 'Unknown';
+    const coords = current ? `${current.q},${current.r}` : currentTileId;
+    const msg = `Legion at hex ${coords} — ${terrain}`;
+    if (msg !== announced) {
+      setAnnounced(msg);
+    }
+  }, [currentTileId]);
+
+  return (
+    <div
+      class="chs-visually-hidden"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      {announced}
     </div>
   );
 }
@@ -306,6 +364,8 @@ export function CampaignHexScreen() {
       <CampaignTopBar />
       <CampaignHexInfoPanel />
       <CampaignArmyStrip />
+      {/* 3d: visually hidden aria-live region announces legion position changes */}
+      <LegionPositionAnnouncer />
     </div>
   );
 }

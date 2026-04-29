@@ -30,12 +30,11 @@ const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> =
   'commander-select': CommanderSelectScreen,
   'quick-battle': QuickBattleScreen,
   'forum': ForumShell,
-  // Legacy routes — resolveScreen() in screens.ts rewrites them to `forum`
-  // with the correct active tab. Entries kept here as safe fallbacks if the
-  // hash lands before resolution runs (e.g. a stale bookmark).
-  // Legacy route fallbacks — kept for screens that still have standalone
-  // bodies pending migration into Forum tabs (S22-05/06/07). Once those
-  // land, these entries can be dropped.
+  // Legacy hash routes (e.g. #node-map, #spoke-campaign) are rewritten to
+  // 'forum' by resolveScreen() in screens.ts so deep links keep working.
+  // The map below covers screens that still have standalone bodies
+  // (battleV2, post-battle, victory, defeat) plus a hub fallback that
+  // also resolves to ForumShell.
   'hub': ForumShell,
   // 'node-map' / 'spoke-campaign' resolve to 'forum' with the bellum tab via
   // LEGACY_TAB_MAP in screens.ts, so they never reach this map. Their legacy
