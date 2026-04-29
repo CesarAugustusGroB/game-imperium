@@ -41,6 +41,13 @@ export class HexMapView {
   // Stored so destroy() can detach it from the shared ticker.
   private pulseTickerCallback: ((ticker: Ticker) => void) | null = null;
 
+  // S30-09 camera state.
+  private wheelHandler: ((event: WheelEvent) => void) | null = null;
+  private dragMoved: boolean = false;
+  private static readonly DRAG_CLICK_THRESHOLD: number = 6;
+  private static readonly ZOOM_MIN: number = 0.55;
+  private static readonly ZOOM_MAX: number = 1.35;
+
   constructor(options: HexMapViewOptions) {
     this.app = options.app;
     this.tiles = options.tiles;
@@ -55,6 +62,7 @@ export class HexMapView {
     this.root.addChild(this.effectsLayer);
 
     this.centerMap();
+    this.setupCamera();
     this.render();
   }
 
@@ -80,16 +88,23 @@ export class HexMapView {
   }
 
   /**
-   * Detach pulse ticker callback. Caller is responsible for destroying
-   * the underlying PIXI.Application separately.
+   * Detach pulse ticker callback and the canvas wheel listener.
+   * Caller is responsible for destroying the underlying PIXI.Application.
    */
   destroy(): void {
     this.detachPulseTicker();
+    if (this.wheelHandler) {
+      this.app.canvas.removeEventListener('wheel', this.wheelHandler);
+      this.wheelHandler = null;
+    }
   }
 
   private drawTiles(): void {
     for (const tile of this.tiles) {
       const view = new HexTileView(tile, this.hexSize, (clickedTile) => {
+        // Suppress click if the user just dragged the camera past
+        // the threshold — the pointertap fires after pointerup either way.
+        if (this.dragMoved) return;
         this.handleTileClick(clickedTile);
       });
 
@@ -174,5 +189,65 @@ export class HexMapView {
   private centerMap(): void {
     this.root.x = this.app.screen.width / 2;
     this.root.y = this.app.screen.height / 2;
+  }
+
+  private setupCamera(): void {
+    const stage = this.app.stage;
+    stage.eventMode = 'static';
+    stage.hitArea = this.app.screen;
+
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let lastX = 0;
+    let lastY = 0;
+
+    stage.on('pointerdown', (event) => {
+      dragging = true;
+      this.dragMoved = false;
+      startX = event.global.x;
+      startY = event.global.y;
+      lastX = event.global.x;
+      lastY = event.global.y;
+    });
+
+    const endDrag = (): void => {
+      dragging = false;
+      // dragMoved stays true until the next pointerdown so the suppression
+      // guard in HexTileView's click callback can still see it.
+    };
+    stage.on('pointerup', endDrag);
+    stage.on('pointerupoutside', endDrag);
+
+    stage.on('pointermove', (event) => {
+      if (!dragging) return;
+
+      const dx = event.global.x - lastX;
+      const dy = event.global.y - lastY;
+      this.root.x += dx;
+      this.root.y += dy;
+      lastX = event.global.x;
+      lastY = event.global.y;
+
+      const totalDx = event.global.x - startX;
+      const totalDy = event.global.y - startY;
+      if (Math.hypot(totalDx, totalDy) > HexMapView.DRAG_CLICK_THRESHOLD) {
+        this.dragMoved = true;
+      }
+    });
+
+    const wheelHandler = (event: WheelEvent): void => {
+      event.preventDefault();
+      const zoomFactor = event.deltaY > 0 ? 0.95 : 1.05;
+      const nextScale = Math.max(
+        HexMapView.ZOOM_MIN,
+        Math.min(HexMapView.ZOOM_MAX, this.root.scale.x * zoomFactor),
+      );
+      this.root.scale.set(nextScale);
+    };
+
+    // passive:false so preventDefault() actually suppresses page-scroll.
+    this.app.canvas.addEventListener('wheel', wheelHandler, { passive: false });
+    this.wheelHandler = wheelHandler;
   }
 }
