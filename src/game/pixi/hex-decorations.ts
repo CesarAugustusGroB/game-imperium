@@ -3,9 +3,8 @@
 // sprites or null when the terrain has no decoration art. Placement is
 // deterministic from (q, r) so the same hex always renders the same details.
 //
-// Reuses textures from S31-01's HEX_ASSETS.decoration bundle. Hills and camp
-// terrain are skipped here because S31-01 doesn't ship matching art (no
-// "ridge" or "tent+smoke" key) — fold them in once those textures land.
+// S32-10: hills (ridge) and camp (tent) decoration art added to the bundle;
+// LAYOUTS now covers all terrains except plains and ruins (intentionally bare).
 
 import { Container, Sprite } from 'pixi.js';
 import type { HexTile } from '../campaign/campaign-types';
@@ -66,8 +65,9 @@ const LAYOUTS: Partial<Record<HexTile['terrain'], Layout>> = {
   mountains: { key: 'peak', minCount: 1, maxCount: 1, scale: 0.55, placement: 'center' },
   river: { key: 'ripple', minCount: 2, maxCount: 3, scale: 0.32, placement: 'horizontal-band' },
   road: { key: 'milestone', minCount: 1, maxCount: 1, scale: 0.35, placement: 'center' },
-  // hills: needs a "ridge" texture
-  // camp: needs a "tent" / "smoke" texture
+  // S32-10: ridge crests scatter across the hex; tent silhouette centered.
+  hills: { key: 'ridge', minCount: 2, maxCount: 3, scale: 0.34, placement: 'horizontal-band' },
+  camp: { key: 'tent', minCount: 1, maxCount: 1, scale: 0.5, placement: 'center' },
   // plains, ruins: intentionally bare
 };
 
