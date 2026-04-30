@@ -6,7 +6,7 @@
 
 import { useEffect } from 'preact/hooks';
 import { activeEventTileId, consumeEvent, hexTiles, setActiveEvent } from '../../game/campaign/campaign-state';
-import { getEventColor, getEventContent, getEventIcon } from '../../game/campaign/events';
+import { getEventColor, getEventContent, getEventIcon, getEventIconUrl } from '../../game/campaign/events';
 import { OrnateFrame, OrnateHeader, OrnateDivider } from './OrnateFrame';
 import { colorToCss } from '../../utils/color';
 
@@ -106,6 +106,7 @@ export function CampaignEventModal() {
 
   const accent = colorToCss(getEventColor(tile.event));
   const icon = getEventIcon(tile.event);
+  const iconUrl = getEventIconUrl(tile.event);
 
   const handleAction = (_index: number): void => {
     // S31 will dispatch the chosen action through the encounter pipeline.
@@ -162,16 +163,28 @@ export function CampaignEventModal() {
             justifyContent: 'center',
           }}
         >
-          <span
-            style={{
-              fontSize: '48px',
-              color: accent,
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))',
-              fontWeight: 'bold',
-            }}
-          >
-            {icon}
-          </span>
+          {iconUrl ? (
+            <img
+              src={iconUrl}
+              alt=""
+              style={{
+                width: '64px',
+                height: '64px',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))',
+              }}
+            />
+          ) : (
+            <span
+              style={{
+                fontSize: '48px',
+                color: accent,
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))',
+                fontWeight: 'bold',
+              }}
+            >
+              {icon}
+            </span>
+          )}
         </div>
 
         <div style={{ marginTop: '16px' }}>

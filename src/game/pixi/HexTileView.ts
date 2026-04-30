@@ -6,11 +6,11 @@
 // flat colored polygon. State (visited / reachable / current / fog) and
 // event icons render as separate layers on top.
 
-import { Container, Graphics, Sprite, Text, type Ticker } from 'pixi.js';
+import { Container, Graphics, Sprite, type Ticker } from 'pixi.js';
 import type { EventType, HexTile } from '../campaign/campaign-types';
-import { getEventColor, getEventIcon } from '../campaign/events';
+import { getEventColor } from '../campaign/events';
 import { createDangerEmitter, createGlowHalo } from './effects/event-fx';
-import { HEX_ASSETS } from './hex-assets';
+import { HEX_ASSETS, type EventAssetKey } from './hex-assets';
 
 const DANGER_EVENTS: ReadonlySet<EventType> = new Set(['battle', 'ambush', 'elite']);
 const HALO_EVENTS: ReadonlySet<EventType> = new Set(['merchant', 'supply', 'rest']);
@@ -106,7 +106,8 @@ export class HexTileView extends Container {
     }
 
     if (this.tile.event !== 'none' && this.tile.discovered) {
-      this.drawEventIcon();
+      // tile.event narrows to EventAssetKey here (Exclude<EventType,'none'>).
+      this.drawEventIcon(this.tile.event);
     }
 
     if (!this.tile.discovered) {
@@ -175,17 +176,20 @@ export class HexTileView extends Container {
     this.addChild(glow);
   }
 
-  private drawEventIcon(): void {
-    const icon = new Text({
-      text: getEventIcon(this.tile.event),
-      style: {
-        fontSize: 26,
-        fill: getEventColor(this.tile.event),
-        fontWeight: 'bold',
-      },
-    });
-    icon.anchor.set(0.5);
-    this.addChild(icon);
+  private drawEventIcon(event: EventAssetKey): void {
+    // S31-08: sprite-based event icon. Texture comes from the shared
+    // HEX_ASSETS bundle so all hexes with the same event share one upload.
+    // S31-01's placeholder PNGs are pre-tinted per event color, so no
+    // sprite.tint here — commissioned art that arrives desaturated can
+    // wire `sprite.tint = getEventColor(...)` in this same spot.
+    const texture = HEX_ASSETS.current.events[event];
+    const sprite = new Sprite(texture);
+    sprite.anchor.set(0.5);
+    // Parametric scale: event icon is ~55% of hex size on each axis.
+    const target = this.size * 1.1;
+    sprite.width = target;
+    sprite.height = target;
+    this.addChild(sprite);
   }
 
   private drawFog(points: number[]): void {
