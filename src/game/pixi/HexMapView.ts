@@ -4,6 +4,7 @@
 
 import { Application, Container, Graphics, type Ticker } from 'pixi.js';
 import type { CampaignState, HexTile } from '../campaign/campaign-types';
+import { hexDistance, findPath } from '../campaign/hex-pathfinding';
 import { revealNeighbors, updateReachableTiles } from '../campaign/movement';
 import { hexToPixel } from './hex-math';
 import { drawDecorationsForTile } from './hex-decorations';
@@ -194,7 +195,23 @@ export class HexMapView {
 
     if (!tile.reachable) return;
 
-    this.moveToTile(tile);
+    const currentTile = this.tiles.find((t) => t.id === this.state.currentTileId);
+    if (!currentTile) return;
+
+    if (hexDistance(currentTile, tile) === 1) {
+      this.moveToTile(tile);
+    } else {
+      const path = findPath(currentTile, tile, this.tiles, this.state.movementPoints);
+      if (path) this.walkPath(path);
+    }
+  }
+
+  private walkPath(path: HexTile[]): void {
+    for (let i = 1; i < path.length; i++) {
+      const step = path[i];
+      this.moveToTile(step);
+      if (step.event !== 'none') break;
+    }
   }
 
   private moveToTile(destination: HexTile): void {

@@ -36,6 +36,12 @@ Rules for Claude to avoid repeating past mistakes.
 **Mistake**: Spawned an implementation agent with `isolation: "worktree"` off `feat/ui-overhaul`, but the harness created the worktree off `main` (a much older commit line that didn't yet track `src/ui/design-tokens.css`). The agent, finding no tokens file, created one "fresh" — effectively destroying 70 lines of existing tokens when the result was copied back.
 **Rule**: When spawning a worktree agent, the agent's view of the tree may be based on a different (usually older) branch than the one you are on. Before trusting an agent's "file didn't exist, so I created it" report, verify the file's state in the **main checkout** — `git ls-tree <current-branch> -- <path>` is authoritative. If the file is tracked there but the agent reports it missing, reconcile by merging/appending in the main checkout instead of trusting the worktree output.
 
+## Worktree-isolated agent may still write to the parent checkout
+**Date**: 2026-04-30
+**Mistake**: Spawned an S31-02 agent with `isolation: "worktree"`. The worktree's base was an ancient commit that predated `src/game/campaign/`, so a `git diff` of the worktree against my branch showed -39k +9k lines of churn. I assumed the agent had hallucinated everything. In reality, the agent had written all four S31-02 files to the **parent checkout** (verified by `git status` in the parent — files staged/untracked exactly as planned), and the worktree was untouched.
+**Why**: Agents use absolute paths from CLAUDE.md context, so they can resolve and write to `C:\Users\…\Map2D\src\…` directly even when run inside `.claude/worktrees/agent-XXX`. The worktree assignment doesn't sandbox file writes.
+**How to apply**: After a worktree-isolated agent completes, verify by checking **both** locations: `git status` in the parent checkout AND `git -C <worktree-path> status`. If the worktree has zero changes but the parent has the expected files, the agent did its job — don't waste cycles cleaning up "broken" output.
+
 ## Agent briefs: "append only" must be enforced by reading first
 **Date**: 2026-04-20
 **Mistake**: Told an agent to "extend `design-tokens.css` — do not modify existing vars". The agent didn't find the file in its worktree (see lesson above) and silently created a fresh file with only the new block, reporting "created 50 lines". The wording "append new vars only" wasn't strong enough when the file appeared absent.
