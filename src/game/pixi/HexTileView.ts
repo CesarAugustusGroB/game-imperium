@@ -66,7 +66,8 @@ export class HexTileView extends Container {
     }
 
     if (this.tile.event !== 'none' && this.tile.discovered) {
-      this.drawEventIcon();
+      // tile.event narrows to EventAssetKey here (Exclude<EventType,'none'>).
+      this.drawEventIcon(this.tile.event);
     }
 
     if (!this.tile.discovered) {
@@ -107,13 +108,12 @@ export class HexTileView extends Container {
     this.addChild(glow);
   }
 
-  private drawEventIcon(): void {
+  private drawEventIcon(event: EventAssetKey): void {
     // S31-08: sprite-based event icon. Texture comes from the shared
     // HEX_ASSETS bundle so all hexes with the same event share one upload.
     // S31-01's placeholder PNGs are pre-tinted per event color, so no
     // sprite.tint here — commissioned art that arrives desaturated can
     // wire `sprite.tint = getEventColor(...)` in this same spot.
-    const event = this.tile.event as EventAssetKey;
     const texture = HEX_ASSETS.current.events[event];
     const sprite = new Sprite(texture);
     sprite.anchor.set(0.5);
