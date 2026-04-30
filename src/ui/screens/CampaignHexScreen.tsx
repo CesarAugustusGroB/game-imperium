@@ -212,8 +212,8 @@ function CampaignTopBar() {
       <span class="ornate-stat-chip" title="Legion morale">
         🔥 <strong>{state.morale}</strong>
       </span>
-      {/* 3e: tooltip is explicit that this is a placeholder */}
-      <span class="ornate-stat-chip" title="Season tracker — placeholder until S31 (not yet implemented)">
+      {/* S33-01: replace with globalSeason/MAX_SEASONS when Bellum calls the shared season tick. */}
+      <span class="ornate-stat-chip" title="Season tracker — placeholder pending S33 Bellum clock integration">
         🌿 <strong>I/IV</strong>
       </span>
     </div>

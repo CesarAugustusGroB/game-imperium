@@ -2,11 +2,11 @@
 // SpokeNode → BattleScreenV2 pipeline.
 //
 // Hex battles synthesize a 1-node Spoke labeled `__hex_encounter__` so
-// `main.tsx` can detect them on battle exit and route back to the Bellum
-// tab instead of the standard post-battle screen. The synthesized spoke's
+// `main.tsx` can detect Bellum-origin battles on exit. Normal hex battles
+// route back to the Bellum tab; Final Invasion battles must route through
+// EndScreen per docs/bellum-run-contract.md. The synthesized spoke's
 // `boundArmy` is `preparedArmy.value`, which means main.tsx's existing
-// HP/cohort write-back path already projects battle losses forward — no
-// extra plumbing needed.
+// HP/cohort write-back path already projects battle losses forward.
 
 import type { HexTile, TerrainType } from './campaign-types';
 import type { BattleTerrain, EncounterType } from '../progression/landmark-types';
@@ -82,6 +82,10 @@ export function synthesizeHexBattleSpoke(
     completed: false,
     duration: 1,
     currentSeason: 1,
+    // S33-01 contract: Bellum season/upkeep integration must reuse the
+    // canonical tick effects without manufacturing completed spokes. Posture
+    // may feed that shared tick for upkeep once S33 wires the Bellum clock.
+    //
     // S32-06 audit: posture is currently VESTIGIAL for hex battles.
     // `src/battle/index.ts:enterFromSpoke` does not read `spoke.posture`;
     // the only game-affecting consumer is `spoke.tickSeason`'s
