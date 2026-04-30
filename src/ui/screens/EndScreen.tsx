@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useRef, useState, useEffect } from 'preact/hooks';
 import { navigateTo } from '../screens';
 import { Button } from '../components/Button';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
@@ -75,10 +75,17 @@ export function EndScreen({
   const provinceCount = provinces.value.length;
   const [revealIndex, setRevealIndex] = useState(-1);
   const [showButton, setShowButton] = useState(false);
+  const runRecorded = useRef(false);
 
   useEffect(() => {
     playSfx(outcome === 'victory' ? 'victory_fanfare' : 'defeat_sting');
   }, []);
+
+  useEffect(() => {
+    if (!commander || runRecorded.current) return;
+    recordRunComplete(commander.id, commander.name, outcome, battles, seasons, provinceCount);
+    runRecorded.current = true;
+  }, [commander, outcome, battles, seasons, provinceCount]);
 
   useEffect(() => {
     const timers: number[] = [];
@@ -107,9 +114,6 @@ export function EndScreen({
   ];
 
   function handleReturn() {
-    if (commander) {
-      recordRunComplete(commander.id, commander.name, outcome, battles, seasons, provinceCount);
-    }
     resetRun();
     navigateTo('title');
   }

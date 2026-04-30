@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals';
 import type { CampaignState, HexTile } from './campaign-types';
 import { applyMoveDeltas, MORALE_MAX, SUPPLIES_MAX } from './campaign-balance';
+import { resetBellumDefeatState } from './campaign-defeat';
 
 const INITIAL_STATE: CampaignState = {
   currentTileId: '0,0',
@@ -103,4 +104,5 @@ export function resetCampaign(): void {
   campaignState.value = { ...INITIAL_STATE };
   activeEventTileId.value = null;
   visitHistory.value = [];
+  resetBellumDefeatState();
 }

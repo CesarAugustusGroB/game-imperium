@@ -10,15 +10,18 @@
 import type { HexTile } from './campaign-types';
 import { eventTypeToEncounterType } from './event-encounter-mapping';
 import type { EncounterType } from '../progression/landmark-types';
-import { addMorale, addSupplies, consumeEvent } from './campaign-state';
+import { addMorale, addSupplies, campaignState, consumeEvent } from './campaign-state';
 import { launchHexBattle } from './hex-battle';
 import { spendResource } from '../core/resources';
+import { evaluateBellumDefeat, type BellumDefeatEvaluation } from './campaign-defeat';
 
 export type EncounterOutcome = {
   /** True when the hex's event was cleared (re-entry won't re-fire). */
   consumed: boolean;
   /** Optional player-facing summary line for a notification. */
   message?: string;
+  /** Bellum defeat status after resolving this encounter. */
+  defeat?: BellumDefeatEvaluation;
 };
 
 const NOOP: EncounterOutcome = { consumed: true };
@@ -35,7 +38,8 @@ export function resolveEncounter(tile: HexTile, actionIndex: number): EncounterO
 
   const outcome = dispatch(tile, encounter, actionIndex);
   consumeEvent(tile.id);
-  return outcome;
+  const defeat = evaluateBellumDefeat(campaignState.value);
+  return { ...outcome, defeat };
 }
 
 function dispatch(

@@ -9,6 +9,7 @@
 
 import { resolveEncounter } from '../src/game/campaign/encounter-bridge';
 import { campaignState, hexTiles, setActiveEvent, setTiles } from '../src/game/campaign/campaign-state';
+import { resetBellumDefeatState } from '../src/game/campaign/campaign-defeat';
 import { gold } from '../src/game/core/resources';
 import type { HexTile, EventType } from '../src/game/campaign/campaign-types';
 
@@ -32,6 +33,7 @@ function makeTile(event: EventType): HexTile {
 }
 
 function reset(supplies: number, morale: number, goldAmount: number): void {
+  resetBellumDefeatState();
   const tile = makeTile('battle');
   setTiles([tile]);
   setActiveEvent(tile.id);

@@ -16,6 +16,7 @@ import { CampaignEventModal } from '../../ui/components/CampaignEventModal';
 import { addNotification } from '../../ui/notifications/notification-store';
 import { HexMapView } from './HexMapView';
 import { loadHexAssets } from './hex-assets';
+import { evaluateBellumDefeat } from '../campaign/campaign-defeat';
 
 export function PixiHexMap() {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -79,6 +80,7 @@ export function PixiHexMap() {
           onTileSelected: (tile) => setSelected(tile.id),
           onPlayerMoved: (tile) => {
             const { starvationTriggered } = applyMove(tile);
+            const defeat = evaluateBellumDefeat(campaignState.value, { countZeroSupplyMove: true });
             if (starvationTriggered) {
               addNotification({
                 kind: 'alert',
@@ -87,6 +89,7 @@ export function PixiHexMap() {
                 icon: '⚠️',
               });
             }
+            if (defeat.defeated) return;
             // Fire the encounter modal only when the legion enters a hex
             // with an unresolved event AND no other modal is already open.
             if (tile.event !== 'none' && activeEventTileId.value === null) {

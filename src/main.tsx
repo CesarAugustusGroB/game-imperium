@@ -11,11 +11,13 @@ import { selectedCommander, veteranStacks, spokesSinceLastBattle, battlesWon } f
 import { syncBattleSignals, resetBattleSignals, battleActive, requestBattleExit } from './battle/battle-signals';
 import { extractCohortHpSnapshot, applyVictoryCap, lastVictoryCapSummary } from './battle/casualties';
 import { applyHexBattleOutcome, isHexEncounterSpoke, setHexBattleNavigation } from './game/campaign/hex-battle';
+import { setBellumDefeatNavigation } from './game/campaign/campaign-defeat';
 
 // S31-05b: register navigateTo with hex-battle so launchHexBattle can switch
 // screens. Kept as an injected hook (not a direct import inside hex-battle)
 // so the module stays node-runnable for verify scripts.
 setHexBattleNavigation((screen) => navigateTo(screen as Parameters<typeof navigateTo>[0]));
+setBellumDefeatNavigation(() => navigateTo('defeat'));
 
 // Mount Preact UI
 const appRoot = document.getElementById('app-root');
@@ -99,9 +101,10 @@ const battleMode = new BattleMode(() => {
   // strategic-layer fallout (morale/supplies). The HP write-back above
   // already projected cohort losses onto preparedArmy via the bound army.
   if (isHexEncounterSpoke(currentSpoke.value)) {
-    applyHexBattleOutcome(lastBattleResult.value);
+    const defeat = applyHexBattleOutcome(lastBattleResult.value);
     currentSpoke.value = null;
     lastBattleResult.value = null;
+    if (defeat.defeated) return;
     navigateTo('forum');
     return;
   }

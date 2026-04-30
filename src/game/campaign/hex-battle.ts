@@ -12,7 +12,8 @@ import type { HexTile, TerrainType } from './campaign-types';
 import type { BattleTerrain, EncounterType } from '../progression/landmark-types';
 import { currentSpoke, type BattleResult, type Spoke, type SpokeNode } from '../progression/spoke';
 import { preparedArmy, preparedLegate } from '../progression/strategic-store';
-import { addMorale, addSupplies } from './campaign-state';
+import { addMorale, addSupplies, campaignState } from './campaign-state';
+import { evaluateBellumDefeat, type BellumDefeatEvaluation } from './campaign-defeat';
 
 // Navigation hook — registered by main.tsx at app boot. Kept as an injection
 // point (not a direct `navigateTo` import) so this module stays free of the
@@ -123,7 +124,7 @@ export function launchHexBattle(tile: HexTile, encounterType: EncounterType): bo
  * write-back; the deltas here represent strategic-layer fallout (morale +
  * supplies). Numbers are placeholder-tuned per the wider S31 balance pass.
  */
-export function applyHexBattleOutcome(outcome: BattleResult | null): void {
+export function applyHexBattleOutcome(outcome: BattleResult | null): BellumDefeatEvaluation {
   if (outcome === 'victory') {
     addMorale(5);
   } else if (outcome === 'defeat') {
@@ -133,5 +134,6 @@ export function applyHexBattleOutcome(outcome: BattleResult | null): void {
     // 'draw' or null (esc-exit) — modest morale knock either way.
     addMorale(-5);
   }
+  return evaluateBellumDefeat(campaignState.value, { checkArmy: true });
 }
 
