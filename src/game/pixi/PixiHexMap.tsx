@@ -79,9 +79,10 @@ export function PixiHexMap() {
           state: { ...campaignState.value },
           onTileSelected: (tile) => setSelected(tile.id),
           onPlayerMoved: (tile) => {
-            const { starvationTriggered } = applyMove(tile);
+            const move = applyMove(tile);
+            if (!move.moved) return move;
             const defeat = evaluateBellumDefeat(campaignState.value, { countZeroSupplyMove: true });
-            if (starvationTriggered) {
+            if (move.starvationTriggered) {
               addNotification({
                 kind: 'alert',
                 title: 'Out of Supplies',
@@ -89,12 +90,13 @@ export function PixiHexMap() {
                 icon: '⚠️',
               });
             }
-            if (defeat.defeated) return;
+            if (defeat.defeated) return move;
             // Fire the encounter modal only when the legion enters a hex
             // with an unresolved event AND no other modal is already open.
             if (tile.event !== 'none' && activeEventTileId.value === null) {
               setActiveEvent(tile.id);
             }
+            return move;
           },
           onTilesChanged: (tiles) => setTiles(tiles),
         });

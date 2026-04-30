@@ -1,12 +1,17 @@
 import { signal } from '@preact/signals';
 import type { CampaignState, HexTile } from './campaign-types';
-import { applyMoveDeltas, MORALE_MAX, SUPPLIES_MAX } from './campaign-balance';
+import {
+  applyMoveDeltas,
+  CAMPAIGN_MOVEMENT_POINTS_MAX,
+  MORALE_MAX,
+  SUPPLIES_MAX,
+} from './campaign-balance';
 import { resetBellumDefeatState } from './campaign-defeat';
 
 const INITIAL_STATE: CampaignState = {
   currentTileId: '0,0',
   selectedTileId: null,
-  movementPoints: 2,
+  movementPoints: CAMPAIGN_MOVEMENT_POINTS_MAX,
   supplies: 38,
   morale: 100,
 };
@@ -69,21 +74,53 @@ export function addMorale(delta: number): void {
   campaignState.value = { ...campaignState.value, morale: next };
 }
 
+/** S33-03: refresh Bellum's local movement budget. Season ticks will also call this in S33-04. */
+export function refreshMovementPoints(): void {
+  campaignState.value = {
+    ...campaignState.value,
+    movementPoints: CAMPAIGN_MOVEMENT_POINTS_MAX,
+  };
+}
+
+export type CampaignMoveResult = {
+  moved: boolean;
+  movementSpent: number;
+  movementRemaining: number;
+  starvationTriggered: boolean;
+};
+
 /**
  * S31-03: atomic move write — currentTileId, supplies, and morale updated in
  * one signal mutation so the HUD never observes a half-applied move.
  * Returns starvationTriggered so the caller can fire the warning notification.
  */
-export function applyMove(tile: HexTile): { starvationTriggered: boolean } {
+export function applyMove(tile: HexTile): CampaignMoveResult {
   const prev = campaignState.value;
+  const movementCost = Math.max(0, tile.movementCost);
+  if (movementCost > prev.movementPoints) {
+    return {
+      moved: false,
+      movementSpent: 0,
+      movementRemaining: prev.movementPoints,
+      starvationTriggered: false,
+    };
+  }
+
   const outcome = applyMoveDeltas(prev, tile.terrain);
+  const movementRemaining = Math.max(0, prev.movementPoints - movementCost);
   campaignState.value = {
     ...prev,
     currentTileId: tile.id,
+    movementPoints: movementRemaining,
     supplies: outcome.supplies,
     morale: outcome.morale,
   };
-  return { starvationTriggered: outcome.starvationTriggered };
+  return {
+    moved: true,
+    movementSpent: movementCost,
+    movementRemaining,
+    starvationTriggered: outcome.starvationTriggered,
+  };
 }
 
 /**

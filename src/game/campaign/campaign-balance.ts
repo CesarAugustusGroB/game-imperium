@@ -6,6 +6,7 @@ import type { TerrainType } from './campaign-types';
 
 export const SUPPLIES_MAX = 99;
 export const MORALE_MAX = 100;
+export const CAMPAIGN_MOVEMENT_POINTS_MAX = 2;
 export const SUPPLY_COST_BASE = 1;
 export const STARVATION_MORALE_PENALTY = 10;
 

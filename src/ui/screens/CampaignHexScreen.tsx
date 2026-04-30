@@ -203,7 +203,7 @@ function CampaignTopBar() {
   const state = campaignState.value;
   return (
     <div class="chs-top-bar" role="region" aria-label="Campaign stats">
-      <span class="ornate-stat-chip" title="Movement points this season">
+      <span class="ornate-stat-chip" title="March points remaining. Terrain spends points; bivouac encounters refresh them until the shared season tick lands.">
         🚩 <strong>{state.movementPoints}</strong>
       </span>
       <span class="ornate-stat-chip" title="Supplies remaining">

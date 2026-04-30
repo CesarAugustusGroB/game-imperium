@@ -120,10 +120,22 @@ console.log('PASS: non-array hexTiles returns null');
 {
   const raw = {
     hexTiles: [],
-    campaignState: { currentTileId: '0,0' /* missing movementPoints/supplies/morale */ },
+    campaignState: { currentTileId: '0,0', supplies: 30, morale: 75 },
     activeEventTileId: null,
   };
-  assert(migrateCampaignSnapshot(raw) === null, 'missing required fields returns null');
+  const out = migrateCampaignSnapshot(raw);
+  assert(out !== null, 'missing movementPoints still migrates');
+  assert(out!.campaignState.movementPoints === 2, 'missing movementPoints defaults to max MP');
+}
+console.log('PASS: missing movementPoints defaults during migration');
+
+{
+  const raw = {
+    hexTiles: [],
+    campaignState: { currentTileId: '0,0' /* missing supplies/morale */ },
+    activeEventTileId: null,
+  };
+  assert(migrateCampaignSnapshot(raw) === null, 'missing required supplies/morale returns null');
 }
 console.log('PASS: missing required campaignState fields returns null');
 

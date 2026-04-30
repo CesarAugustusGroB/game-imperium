@@ -10,7 +10,7 @@
 import type { HexTile } from './campaign-types';
 import { eventTypeToEncounterType } from './event-encounter-mapping';
 import type { EncounterType } from '../progression/landmark-types';
-import { addMorale, addSupplies, campaignState, consumeEvent } from './campaign-state';
+import { addMorale, addSupplies, campaignState, consumeEvent, refreshMovementPoints } from './campaign-state';
 import { launchHexBattle } from './hex-battle';
 import { spendResource } from '../core/resources';
 import { evaluateBellumDefeat, type BellumDefeatEvaluation } from './campaign-defeat';
@@ -50,7 +50,8 @@ function dispatch(
   switch (encounter) {
     case 'rest':
       addMorale(20);
-      return { consumed: true, message: 'The legion makes camp. Morale recovers.' };
+      refreshMovementPoints();
+      return { consumed: true, message: 'The legion makes camp. Morale and march points recover.' };
 
     case 'forage':
       addSupplies(10);
