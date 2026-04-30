@@ -82,23 +82,31 @@ export function loadHexAssets(): Promise<HexAssetSet> {
 
   registerBundleOnce();
 
-  pending = Assets.loadBundle(BUNDLE_NAME).then((bundle: Record<string, Texture>) => {
-    const terrain = {} as Record<TerrainType, Texture>;
-    for (const key of TERRAIN_KEYS) {
-      terrain[key] = bundle[`terrain-${key}`];
-    }
-    const events = {} as Record<EventAssetKey, Texture>;
-    for (const key of EVENT_KEYS) {
-      events[key] = bundle[`event-${key}`];
-    }
-    const decoration = {} as Record<DecorationKey, Texture>;
-    for (const key of DECORATION_KEYS) {
-      decoration[key] = bundle[`decoration-${key}`];
-    }
-    loaded = { terrain, events, decoration };
-    pending = null;
-    return loaded;
-  });
+  pending = Assets.loadBundle(BUNDLE_NAME)
+    .then((bundle: Record<string, Texture>) => {
+      const terrain = {} as Record<TerrainType, Texture>;
+      for (const key of TERRAIN_KEYS) {
+        terrain[key] = bundle[`terrain-${key}`];
+      }
+      const events = {} as Record<EventAssetKey, Texture>;
+      for (const key of EVENT_KEYS) {
+        events[key] = bundle[`event-${key}`];
+      }
+      const decoration = {} as Record<DecorationKey, Texture>;
+      for (const key of DECORATION_KEYS) {
+        decoration[key] = bundle[`decoration-${key}`];
+      }
+      loaded = { terrain, events, decoration };
+      pending = null;
+      return loaded;
+    })
+    .catch((err) => {
+      // Reset the cache so a transient failure (network blip, missing PNG)
+      // doesn't permanently break the bundle for the session — the next
+      // loadHexAssets() call will retry the bundle load fresh.
+      pending = null;
+      throw err;
+    });
 
   return pending;
 }
