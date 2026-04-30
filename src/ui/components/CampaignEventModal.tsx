@@ -112,8 +112,16 @@ export function CampaignEventModal() {
 
   const handleAction = (index: number): void => {
     // S31-05a: dispatch the chosen action through the encounter bridge.
-    // Battle/elite/ambush apply placeholder casualty deltas — full BattleScreenV2
-    // launch lands in S31-05b.
+    // Battle/elite/ambush launch BattleScreenV2 via launchHexBattle (S31-05b);
+    // others apply morale/supplies deltas directly.
+    //
+    // S32-07 audit: order is `dispatch → consumeEvent` inside resolveEncounter.
+    // For the battle path, dispatch sets currentSpoke + navigates to battleV2,
+    // then consumeEvent clears activeEventTileId. All writes are synchronous
+    // inside this click callback so Preact batches them — its next render
+    // observes the post-state of every write at once. No intermediate frame
+    // shows "modal-still-up + battle-screen-visible", so swapping the order
+    // (consume-first) is unnecessary.
     const outcome = resolveEncounter(tile, index);
     if (outcome.message) {
       addNotification({
