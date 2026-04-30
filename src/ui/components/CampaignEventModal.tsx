@@ -5,8 +5,10 @@
 // is deferred to S31's gameplay-systems sprint.
 
 import { useEffect } from 'preact/hooks';
-import { activeEventTileId, consumeEvent, hexTiles, setActiveEvent } from '../../game/campaign/campaign-state';
+import { activeEventTileId, hexTiles, setActiveEvent } from '../../game/campaign/campaign-state';
 import { getEventColor, getEventContent, getEventIcon } from '../../game/campaign/events';
+import { resolveEncounter } from '../../game/campaign/encounter-bridge';
+import { addNotification } from '../notifications/notification-store';
 import { OrnateFrame, OrnateHeader, OrnateDivider } from './OrnateFrame';
 import { colorToCss } from '../../utils/color';
 
@@ -107,10 +109,19 @@ export function CampaignEventModal() {
   const accent = colorToCss(getEventColor(tile.event));
   const icon = getEventIcon(tile.event);
 
-  const handleAction = (_index: number): void => {
-    // S31 will dispatch the chosen action through the encounter pipeline.
-    // For S30 the choice is purely narrative — clear the event and close.
-    consumeEvent(tileId);
+  const handleAction = (index: number): void => {
+    // S31-05a: dispatch the chosen action through the encounter bridge.
+    // Battle/elite/ambush apply placeholder casualty deltas — full BattleScreenV2
+    // launch lands in S31-05b.
+    const outcome = resolveEncounter(tile, index);
+    if (outcome.message) {
+      addNotification({
+        kind: 'toast',
+        message: outcome.message,
+        icon,
+        color: accent,
+      });
+    }
   };
 
   // 3a-2: backdrop click dismisses without consuming the event.
