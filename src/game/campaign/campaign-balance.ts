@@ -12,7 +12,9 @@
 
 import type { TerrainType } from './campaign-types';
 
-export const CAMPAIGN_MOVEMENT_POINTS_MAX = 2;
+// One move = one month. Three months = one season → season tick fires
+// when movementPoints hits 0 (see PixiHexMap.applyMove handler).
+export const CAMPAIGN_MOVEMENT_POINTS_MAX = 3;
 
 /**
  * Per-step morale shift from the terrain alone. Event-driven morale (rest +,

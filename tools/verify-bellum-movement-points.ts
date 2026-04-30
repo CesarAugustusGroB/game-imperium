@@ -99,7 +99,10 @@ console.log('PASS: single-hop movement spends entered-tile MP');
   const second = applyMove(makeTile(2, 0));
   assert(first.moved && second.moved, 'two-step path should fit MP budget');
   assert(campaignState.value.currentTileId === '2,0', 'multi-hop ends on second step');
-  assert(campaignState.value.movementPoints === 0, 'multi-hop spends cumulative MP');
+  assert(
+    campaignState.value.movementPoints === CAMPAIGN_MOVEMENT_POINTS_MAX - 2,
+    'multi-hop spends cumulative MP',
+  );
 }
 console.log('PASS: multi-hop movement spends cumulative entered-tile costs');
 

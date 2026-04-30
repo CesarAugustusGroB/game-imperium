@@ -5,24 +5,11 @@
 import type { TerrainType } from './campaign-types';
 
 export function getMovementCost(terrain: TerrainType): number {
-  switch (terrain) {
-    case 'road':
-    case 'plains':
-    case 'camp':
-      return 1;
-
-    case 'forest':
-    case 'hills':
-    case 'river':
-    case 'ruins':
-      return 2;
-
-    case 'mountains':
-      return 999;
-
-    default:
-      return 1;
-  }
+  // Every walkable hex costs 1 MP — one move = one month. Terrain difficulty
+  // is expressed through supplies/morale (consumeBellumTraversal), not time.
+  // Mountains stay 999 as a pathfinding sentinel for impassable terrain.
+  if (terrain === 'mountains') return 999;
+  return 1;
 }
 
 export function isBlockedTerrain(terrain: TerrainType): boolean {
