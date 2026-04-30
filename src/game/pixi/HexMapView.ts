@@ -32,6 +32,11 @@ export class HexMapView {
   private readonly tileViews: Map<string, HexTileView> = new Map();
   private readonly hexSize: number = 64;
 
+  // S31-10b: id of the tile currently under the cursor (when reachable and
+  // not the legion's own hex). Drives the brighter preview polyline drawn
+  // alongside any visit-history line in pathLayer.
+  private hoveredTileId: string | null = null;
+
   private readonly app: Application;
   private tiles: HexTile[];
   private state: CampaignState;
@@ -83,6 +88,7 @@ export class HexMapView {
     this.detachPulseTicker();
 
     this.drawTiles();
+    this.drawHoverPreview();
     this.drawCurrentPositionPulse();
   }
 
@@ -130,12 +136,17 @@ export class HexMapView {
 
   private drawTiles(): void {
     for (const tile of this.tiles) {
-      const view = new HexTileView(tile, this.hexSize, (clickedTile) => {
-        // Suppress click if the user just dragged the camera past
-        // the threshold — the pointertap fires after pointerup either way.
-        if (this.dragMoved) return;
-        this.handleTileClick(clickedTile);
-      });
+      const view = new HexTileView(
+        tile,
+        this.hexSize,
+        (clickedTile) => {
+          // Suppress click if the user just dragged the camera past
+          // the threshold — the pointertap fires after pointerup either way.
+          if (this.dragMoved) return;
+          this.handleTileClick(clickedTile);
+        },
+        (hoveredTile, isHovering) => this.handleTileHover(hoveredTile, isHovering),
+      );
 
       const position = hexToPixel(tile.q, tile.r, this.hexSize);
       view.x = position.x;
@@ -144,6 +155,61 @@ export class HexMapView {
       this.tileLayer.addChild(view);
       this.tileViews.set(tile.id, view);
     }
+  }
+
+  private handleTileHover(tile: HexTile, isHovering: boolean): void {
+    if (this.destroyed) return;
+
+    if (isHovering) {
+      // Only preview paths to reachable, non-current tiles. Hovering an
+      // unreachable tile (or the legion's own hex) leaves the layer alone.
+      if (!tile.reachable || tile.id === this.state.currentTileId) {
+        if (this.hoveredTileId !== null) {
+          this.hoveredTileId = null;
+          this.render();
+        }
+        return;
+      }
+      if (this.hoveredTileId === tile.id) return;
+      this.hoveredTileId = tile.id;
+      this.render();
+      return;
+    }
+
+    // hover-out — clear only if the leaving tile matches the stored hover
+    // (guards against pointer events firing out of order during fast moves).
+    if (this.hoveredTileId === tile.id) {
+      this.hoveredTileId = null;
+      this.render();
+    }
+  }
+
+  private drawHoverPreview(): void {
+    if (this.hoveredTileId === null) return;
+    const goal = this.tiles.find((t) => t.id === this.hoveredTileId);
+    const start = this.tiles.find((t) => t.id === this.state.currentTileId);
+    if (!goal || !start) return;
+
+    const path = findPath(start, goal, this.tiles, this.state.movementPoints);
+    if (!path || path.length < 2) return;
+
+    const points = path.map((tile) => hexToPixel(tile.q, tile.r, this.hexSize));
+
+    // Dual-stroke for soft-glow emphasis. Brighter / wider than the
+    // visit-history polyline (S31-10a) so it reads as the "future" path.
+    this.strokeHoverPolyline(points, { width: 9, alpha: 0.30 });
+    this.strokeHoverPolyline(points, { width: 5, alpha: 0.85 });
+  }
+
+  private strokeHoverPolyline(
+    points: readonly { x: number; y: number }[],
+    style: { width: number; alpha: number },
+  ): void {
+    this.pathLayer.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      this.pathLayer.lineTo(points[i].x, points[i].y);
+    }
+    this.pathLayer.stroke({ width: style.width, color: 0xffd485, alpha: style.alpha });
   }
 
   private handleTileClick(tile: HexTile): void {

@@ -11,21 +11,36 @@ export class HexTileView extends Container {
   public tile: HexTile;
   private size: number;
   private onSelect: (tile: HexTile) => void;
+  // S31-10b: bubbles hover state up to HexMapView so it can drive the
+  // hover-preview path-line. Optional so older callers keep compiling.
+  private onHover: ((tile: HexTile, isHovering: boolean) => void) | null;
 
-  constructor(tile: HexTile, size: number, onSelect: (tile: HexTile) => void) {
+  constructor(
+    tile: HexTile,
+    size: number,
+    onSelect: (tile: HexTile) => void,
+    onHover?: (tile: HexTile, isHovering: boolean) => void,
+  ) {
     super();
 
     this.tile = tile;
     this.size = size;
     this.onSelect = onSelect;
+    this.onHover = onHover ?? null;
 
     this.eventMode = 'static';
     this.cursor = tile.discovered ? 'pointer' : 'default';
 
     this.draw();
 
-    this.on('pointerover', () => this.setHover(true));
-    this.on('pointerout', () => this.setHover(false));
+    this.on('pointerover', () => {
+      this.setHover(true);
+      if (this.tile.discovered) this.onHover?.(this.tile, true);
+    });
+    this.on('pointerout', () => {
+      this.setHover(false);
+      if (this.tile.discovered) this.onHover?.(this.tile, false);
+    });
     this.on('pointertap', () => {
       if (!this.tile.discovered) return;
       this.onSelect(this.tile);
