@@ -62,9 +62,18 @@ export class HexMapView {
   // S30-09 camera state.
   private wheelHandler: ((event: WheelEvent) => void) | null = null;
   private dragMoved: boolean = false;
+  // S32 polish: promoted from setupCamera's closure scope so handleTileHover
+  // can early-return while the camera is mid-drag — avoids N renders/frame
+  // when the cursor sweeps tiles during a pan.
+  private isDragging: boolean = false;
   private static readonly DRAG_CLICK_THRESHOLD: number = 6;
   private static readonly ZOOM_MIN: number = 0.55;
   private static readonly ZOOM_MAX: number = 1.35;
+
+  // Path-line stroke colors. Visit-history is muted parchment gold; hover
+  // preview pops brighter to read as the "future" path.
+  private static readonly PATH_COLOR_VISIT: number = 0xd8aa55;
+  private static readonly PATH_COLOR_HOVER: number = 0xffd485;
 
   // Flipped true on destroy() so zombie callbacks (signal effects firing
   // after the wrapping component unmounted) early-out instead of touching
@@ -203,6 +212,10 @@ export class HexMapView {
 
   private handleTileHover(tile: HexTile, isHovering: boolean): void {
     if (this.destroyed) return;
+    // S32 polish: skip hover updates while the camera is being dragged.
+    // Pixi keeps firing pointerover/pointerout as the cursor sweeps tiles
+    // mid-drag; processing them would render() every frame for no reason.
+    if (this.isDragging) return;
 
     if (isHovering) {
       // Only preview paths to reachable, non-current tiles. Hovering an
@@ -237,23 +250,19 @@ export class HexMapView {
     const path = findPath(start, goal, this.tiles, this.state.movementPoints);
     if (!path || path.length < 2) return;
 
-    const points = path.map((tile) => hexToPixel(tile.q, tile.r, this.hexSize));
+    // S32 polish: truncate the preview at the first event-bearing tile
+    // (inclusive) so the line ends where walkPath actually stops the legion.
+    // Path[0] is the current tile — start scanning from index 1.
+    const stopIndex = path.findIndex((tile, i) => i > 0 && tile.event !== 'none');
+    const visiblePath = stopIndex === -1 ? path : path.slice(0, stopIndex + 1);
+    if (visiblePath.length < 2) return;
+
+    const points = visiblePath.map((tile) => hexToPixel(tile.q, tile.r, this.hexSize));
 
     // Dual-stroke for soft-glow emphasis. Brighter / wider than the
     // visit-history polyline (S31-10a) so it reads as the "future" path.
-    this.strokeHoverPolyline(points, { width: 9, alpha: 0.30 });
-    this.strokeHoverPolyline(points, { width: 5, alpha: 0.85 });
-  }
-
-  private strokeHoverPolyline(
-    points: readonly { x: number; y: number }[],
-    style: { width: number; alpha: number },
-  ): void {
-    this.pathLayer.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) {
-      this.pathLayer.lineTo(points[i].x, points[i].y);
-    }
-    this.pathLayer.stroke({ width: style.width, color: 0xffd485, alpha: style.alpha });
+    this.strokePolyline(points, { width: 9, alpha: 0.30, color: HexMapView.PATH_COLOR_HOVER });
+    this.strokePolyline(points, { width: 5, alpha: 0.85, color: HexMapView.PATH_COLOR_HOVER });
   }
 
   private handleTileClick(tile: HexTile): void {
@@ -331,19 +340,19 @@ export class HexMapView {
 
     // Dual-stroke glow emulation: wide outer at low alpha + thin inner at
     // higher alpha. Avoids adding pixi-filters as a dep just for a soft glow.
-    this.strokePolyline(points, { width: 9, alpha: 0.18 });
-    this.strokePolyline(points, { width: 4, alpha: 0.55 });
+    this.strokePolyline(points, { width: 9, alpha: 0.18, color: HexMapView.PATH_COLOR_VISIT });
+    this.strokePolyline(points, { width: 4, alpha: 0.55, color: HexMapView.PATH_COLOR_VISIT });
   }
 
   private strokePolyline(
     points: readonly { x: number; y: number }[],
-    style: { width: number; alpha: number },
+    style: { width: number; alpha: number; color: number },
   ): void {
     this.pathLayer.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) {
       this.pathLayer.lineTo(points[i].x, points[i].y);
     }
-    this.pathLayer.stroke({ width: style.width, color: 0xd8aa55, alpha: style.alpha });
+    this.pathLayer.stroke({ width: style.width, color: style.color, alpha: style.alpha });
   }
 
   private drawCurrentPositionPulse(): void {
@@ -393,7 +402,6 @@ export class HexMapView {
     stage.eventMode = 'static';
     stage.hitArea = this.app.screen;
 
-    let dragging = false;
     let startX = 0;
     let startY = 0;
     let lastX = 0;
@@ -401,7 +409,7 @@ export class HexMapView {
 
     stage.on('pointerdown', (event) => {
       if (this.destroyed) return;
-      dragging = true;
+      this.isDragging = true;
       this.dragMoved = false;
       startX = event.global.x;
       startY = event.global.y;
@@ -410,7 +418,7 @@ export class HexMapView {
     });
 
     const endDrag = (): void => {
-      dragging = false;
+      this.isDragging = false;
       // dragMoved stays true until the next pointerdown so the suppression
       // guard in HexTileView's click callback can still see it.
     };
@@ -418,7 +426,7 @@ export class HexMapView {
     stage.on('pointerupoutside', endDrag);
 
     stage.on('pointermove', (event) => {
-      if (this.destroyed || !dragging) return;
+      if (this.destroyed || !this.isDragging) return;
 
       const dx = event.global.x - lastX;
       const dy = event.global.y - lastY;

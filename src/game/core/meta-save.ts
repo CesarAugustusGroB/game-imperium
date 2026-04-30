@@ -481,6 +481,24 @@ function flushPendingPersist(): void {
   }
 }
 
+/**
+ * Set up the autosave effect for the active run.
+ *
+ * **Persistence scope**: this effect tracks `selectedCommander` and the three
+ * campaign signals (hexTiles, campaignState, activeEventTileId). Mutations to
+ * any of those debounce a save through `saveActiveRunSnapshot`.
+ *
+ * **Known gap**: the broader run state — provinces, councilSlots, advisorPool,
+ * decretumHand, doctrineCollection, governorAssignments, npcFactions, …
+ * — is NOT tracked here. Mutations to those signals do not trigger autosave;
+ * they only persist the next time the campaign signals or commander change
+ * (effectively whenever the player moves on the hex map).
+ *
+ * Widening the effect to track all run signals risks save loops (a save
+ * write that touches a tracked signal re-fires the effect). S32-09 will
+ * decide whether to widen with explicit re-entrancy guards or accept the
+ * current scope as the contract.
+ */
 export function startActiveRunPersistence(): () => void {
   if (persistenceDisposer) return persistenceDisposer;
 
