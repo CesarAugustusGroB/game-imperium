@@ -24,6 +24,12 @@ export const campaignState = signal<CampaignState>({ ...INITIAL_STATE });
 // purely UI flow, not gameplay state.
 export const activeEventTileId = signal<string | null>(null);
 
+// S32-05: ordered list of tile ids the legion has occupied this campaign.
+// Drives the visit-history polyline in HexMapView. Lives here (not as a
+// private field on HexMapView) so the save layer can round-trip it without
+// reaching into the view's internals.
+export const visitHistory = signal<string[]>([]);
+
 export function setTiles(tiles: HexTile[]): void {
   hexTiles.value = tiles;
 }
@@ -38,6 +44,22 @@ export function setSelected(tileId: string | null): void {
 
 export function setActiveEvent(tileId: string | null): void {
   activeEventTileId.value = tileId;
+}
+
+/** S32-05: replace the visit history wholesale (used by save restore). */
+export function setVisitHistory(ids: string[]): void {
+  visitHistory.value = ids;
+}
+
+/**
+ * S32-05: append a tile id to the visit history if it isn't already the tail
+ * entry. Skipping duplicates means a re-step onto the current hex doesn't
+ * introduce a degenerate zero-length segment in the polyline.
+ */
+export function appendVisit(id: string): void {
+  const current = visitHistory.value;
+  if (current[current.length - 1] === id) return;
+  visitHistory.value = [...current, id];
 }
 
 /** S31-05a: clamped supplies delta. Used by encounter-bridge resolutions. */
@@ -86,4 +108,5 @@ export function resetCampaign(): void {
   hexTiles.value = [];
   campaignState.value = { ...INITIAL_STATE };
   activeEventTileId.value = null;
+  visitHistory.value = [];
 }
