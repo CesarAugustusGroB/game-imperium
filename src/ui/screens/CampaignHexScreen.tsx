@@ -11,6 +11,7 @@
 
 import { useEffect, useState } from 'preact/hooks';
 import { campaignState, hexTiles } from '../../game/campaign/campaign-state';
+import { globalSeason, MAX_SEASONS, threatLevel } from '../../game/core/game-state';
 import type { EventType, HexTile, TerrainType } from '../../game/campaign/campaign-types';
 import { getTerrainColor } from '../../game/campaign/terrain';
 import { getEventColor, getEventIcon } from '../../game/campaign/events';
@@ -212,9 +213,8 @@ function CampaignTopBar() {
       <span class="ornate-stat-chip" title="Legion morale">
         🔥 <strong>{state.morale}</strong>
       </span>
-      {/* S33-01: replace with globalSeason/MAX_SEASONS when Bellum calls the shared season tick. */}
-      <span class="ornate-stat-chip" title="Season tracker — placeholder pending S33 Bellum clock integration">
-        🌿 <strong>I/IV</strong>
+      <span class="ornate-stat-chip" title={`Season ${globalSeason.value} of ${MAX_SEASONS}. Doom threat ${threatLevel.value}.`}>
+        🌿 <strong>{globalSeason.value}/{MAX_SEASONS}</strong>
       </span>
     </div>
   );

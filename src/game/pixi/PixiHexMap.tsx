@@ -17,6 +17,8 @@ import { addNotification } from '../../ui/notifications/notification-store';
 import { HexMapView } from './HexMapView';
 import { loadHexAssets } from './hex-assets';
 import { evaluateBellumDefeat } from '../campaign/campaign-defeat';
+import { advanceBellumSeason, formatResourceList } from '../campaign/campaign-season';
+import { launchHexBattle } from '../campaign/hex-battle';
 
 export function PixiHexMap() {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -91,6 +93,48 @@ export function PixiHexMap() {
               });
             }
             if (defeat.defeated) return move;
+            if (move.movementRemaining === 0) {
+              const season = advanceBellumSeason();
+              addNotification({
+                kind: 'toast',
+                title: `Season ${season.globalSeason}`,
+                message: `Doom rises +${season.threatIncrease}. Upkeep paid: ${formatResourceList(season.upkeepPaid)}.`,
+                icon: '🌿',
+                color: '#d4a843',
+                duration: 3600,
+              });
+              if (season.upkeepShortfall.length > 0) {
+                addNotification({
+                  kind: 'alert',
+                  title: 'Upkeep Shortfall',
+                  message: `Missing ${formatResourceList(season.upkeepShortfall)}.`,
+                  icon: '⚠️',
+                  color: '#c24a3a',
+                  duration: 3600,
+                });
+              }
+              if (season.provinceIncome?.incomeGained.length) {
+                addNotification({
+                  kind: 'toast',
+                  title: 'Province Income',
+                  message: `Gained ${formatResourceList(season.provinceIncome.incomeGained)}.`,
+                  icon: '🏛',
+                  color: '#f0d080',
+                  duration: 3600,
+                });
+              }
+              if (season.finalInvasionReady) {
+                addNotification({
+                  kind: 'pinned',
+                  title: 'Final Invasion',
+                  message: 'The season cap is reached. The enemy host descends on the legion.',
+                  icon: '⚔',
+                  color: '#c24a3a',
+                });
+                launchHexBattle(tile, 'boss');
+                return move;
+              }
+            }
             // Fire the encounter modal only when the legion enters a hex
             // with an unresolved event AND no other modal is already open.
             if (tile.event !== 'none' && activeEventTileId.value === null) {

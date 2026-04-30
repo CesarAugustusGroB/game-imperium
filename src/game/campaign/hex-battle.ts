@@ -68,13 +68,13 @@ export function synthesizeHexBattleSpoke(
 
   const node: SpokeNode = {
     id: '__hex_encounter_node__',
-    type: encounterType === 'elite_battle' ? 'boss' : 'battle',
+    type: encounterType === 'elite_battle' || encounterType === 'boss' ? 'boss' : 'battle',
     position: 0,
     resolved: false,
     reward: null,
     encounterType,
     terrain: terrainToBattleTerrain(tile.terrain),
-    name: 'Hex Encounter',
+    name: encounterType === 'boss' ? 'Final Invasion' : 'Hex Encounter',
   };
 
   return {
