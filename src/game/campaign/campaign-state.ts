@@ -2,6 +2,12 @@ import { signal } from '@preact/signals';
 import type { CampaignState, HexTile } from './campaign-types';
 import { applyMoveDeltas } from './campaign-balance';
 
+// S31-05a: clamps for the new addSupplies/addMorale setters. Kept local for
+// now to avoid a hard dependency on S31-03's campaign-balance module — when
+// that lands, this can switch to importing from there.
+const SUPPLIES_MAX = 99;
+const MORALE_MAX = 100;
+
 const INITIAL_STATE: CampaignState = {
   currentTileId: '0,0',
   selectedTileId: null,
@@ -32,6 +38,18 @@ export function setSelected(tileId: string | null): void {
 
 export function setActiveEvent(tileId: string | null): void {
   activeEventTileId.value = tileId;
+}
+
+/** S31-05a: clamped supplies delta. Used by encounter-bridge resolutions. */
+export function addSupplies(delta: number): void {
+  const next = Math.max(0, Math.min(SUPPLIES_MAX, campaignState.value.supplies + delta));
+  campaignState.value = { ...campaignState.value, supplies: next };
+}
+
+/** S31-05a: clamped morale delta. Used by encounter-bridge resolutions. */
+export function addMorale(delta: number): void {
+  const next = Math.max(0, Math.min(MORALE_MAX, campaignState.value.morale + delta));
+  campaignState.value = { ...campaignState.value, morale: next };
 }
 
 /**
