@@ -310,8 +310,8 @@ export function applyPostBattleHealReward(
  * null (and stores null) if there is no active spoke, no bound army, or no
  * cohorts to heal.
  *
- * Called by `NodeMapScreen.openRestModal()` when the player lands on a
- * rest node. S25-08 will add a preview-before-commit gate on top.
+ * Called by the spoke rest-node flow when the player lands on a rest node.
+ * S25-08 will add a preview-before-commit gate on top.
  */
 export function replenishBoundArmy(): ReplenishmentPreview | null {
   const spoke = currentSpoke.value;

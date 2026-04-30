@@ -9,9 +9,6 @@
  * LANDMARK_TILE_BG) — those are visually expressive and may diverge
  * between the row layout and map layout, so keeping them per-file is fine.
  *
- * NOTE: LandmarkNode.tsx (legacy — belongs to NodeMapScreen) is NOT
- * refactored here; its duplication is acceptable given it lives in a
- * separate ownership domain.
  */
 
 import type { LandmarkType, EncounterType } from '../../../game/progression/landmark-types';

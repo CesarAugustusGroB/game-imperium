@@ -132,8 +132,8 @@ if (isBattleScreen(initialScreen)) {
   // L2: clear stale victory-cap summary from any prior battle before entry.
   lastVictoryCapSummary.value = null;
   // Entry point is picked by whether a spoke is active, not by screen name —
-  // NodeMapScreen now routes spoke battles through 'battleV2' so the Preact
-  // overlay (settings, unit-info, army panels, strength bar) mounts on top.
+  // spoke battles route through 'battleV2' so the Preact overlay (settings,
+  // unit-info, army panels, strength bar) mounts on top.
   if (currentSpoke.value) {
     battleMode.enterFromSpoke();
   } else {

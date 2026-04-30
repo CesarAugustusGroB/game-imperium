@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import { useEffect, useMemo } from 'preact/hooks';
-import { navigateTo } from '../screens';
+import { navigateToBellum } from '../screens';
 import { lastBattleResult, advanceNode, grantSpokeResource, currentSpoke } from '../../game/progression/spoke';
 import type { BattleResult } from '../../game/progression/spoke';
 import { selectedCommander } from '../../game/core/game-state';
@@ -639,7 +639,7 @@ export function PostBattleScreen() {
     advanceNode();
     lastBattleResult.value = null;
     lastEnemyArmy.value = null;
-    navigateTo('node-map');
+    navigateToBellum();
   }
 
   const enemy = lastEnemyArmy.value;
