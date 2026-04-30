@@ -1,12 +1,16 @@
 // S30-06: PixiJS Container that renders one hex tile and its visual states.
 // No Preact/React imports — pure Pixi v8. Click selection bubbles up via the
 // onSelect callback so HexMapView (S30-07) owns the routing decisions.
+//
+// S31-06: terrain base layer is now a Sprite from HEX_ASSETS instead of a
+// flat colored polygon. State (visited / reachable / current / fog) and
+// event icons render as separate layers on top.
 
-import { Container, Graphics, Text, type Ticker } from 'pixi.js';
+import { Container, Graphics, Sprite, Text, type Ticker } from 'pixi.js';
 import type { EventType, HexTile } from '../campaign/campaign-types';
-import { getTerrainColor } from '../campaign/terrain';
 import { getEventColor, getEventIcon } from '../campaign/events';
 import { createDangerEmitter, createGlowHalo } from './effects/event-fx';
+import { HEX_ASSETS } from './hex-assets';
 
 const DANGER_EVENTS: ReadonlySet<EventType> = new Set(['battle', 'ambush', 'elite']);
 const HALO_EVENTS: ReadonlySet<EventType> = new Set(['merchant', 'supply', 'rest']);
@@ -58,20 +62,40 @@ export class HexTileView extends Container {
     this.removeChildren();
 
     const points = this.getHexPoints();
-    const terrainColor = getTerrainColor(this.tile.terrain);
 
-    const base = new Graphics();
-    base.poly(points);
-    base.fill({
-      color: terrainColor,
-      alpha: this.tile.discovered ? 0.42 : 0.05,
-    });
-    base.stroke({
+    // Base: painterly terrain Sprite from the shared HEX_ASSETS bundle.
+    // Texture is reused across every tile of the same terrain — Pixi caches by
+    // URL so there's no per-tile upload.
+    const texture = HEX_ASSETS.current.terrain[this.tile.terrain];
+    const sprite = new Sprite(texture);
+    sprite.anchor.set(0.5);
+    // Hex inscribed in size×2 box; placeholder textures are 128px square. The
+    // ratio is computed dynamically so commissioned art at any resolution drops in.
+    const target = this.size * 2;
+    sprite.width = target;
+    sprite.height = target;
+    sprite.alpha = this.tile.discovered ? 1 : 0.18;
+    this.addChild(sprite);
+
+    // Visited green tint — preserves the "visited" reading per S31-06 AC's
+    // "Terrain color overlay survives at low alpha for state tinting".
+    if (this.tile.discovered && this.tile.visited && !this.tile.current) {
+      const visitedTint = new Graphics();
+      visitedTint.poly(points);
+      visitedTint.fill({ color: 0x47704f, alpha: 0.18 });
+      this.addChild(visitedTint);
+    }
+
+    // Stroke (state-colored polygon outline). Drawn separately from the base
+    // sprite so the painterly texture isn't dimmed by a poly fill.
+    const stroke = new Graphics();
+    stroke.poly(points);
+    stroke.stroke({
       width: this.tile.reachable || this.tile.current ? 2 : 1,
       color: this.getStrokeColor(),
-      alpha: this.tile.discovered ? 0.65 : 0.1,
+      alpha: this.tile.discovered ? 0.75 : 0.18,
     });
-    this.addChild(base);
+    this.addChild(stroke);
 
     if (this.tile.reachable) {
       this.drawReachableOverlay(points);
