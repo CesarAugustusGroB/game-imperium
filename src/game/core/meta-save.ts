@@ -49,6 +49,14 @@ import {
 import { faith, gold, influence, initResources, iuniores, momentum, type Resources } from './resources';
 import type { Legate } from '../army/legate';
 import { normalizeCohortRoster } from '../army/cohort';
+import {
+  activeEventTileId,
+  campaignState,
+  hexTiles,
+  setActiveEvent,
+  setTiles,
+} from '../campaign/campaign-state';
+import type { CampaignState, HexTile } from '../campaign/campaign-types';
 
 // —— Types ——
 
@@ -72,6 +80,12 @@ export interface RunRecord {
 }
 
 type SavedResources = Omit<Resources, 'iuniores'> & { iuniores?: number };
+
+export interface CampaignSnapshot {
+  hexTiles: HexTile[];
+  campaignState: CampaignState;
+  activeEventTileId: string | null;
+}
 
 export interface ActiveRunSave {
   commanderId: string;
@@ -114,6 +128,8 @@ export interface ActiveRunSave {
   equippedDoctrines: (Doctrine | null)[];
   decretumHand: Decretum[];
   maxHandSize: number;
+  /** S31-04: campaign hex map state. Optional for backwards compat with pre-S31-04 saves. */
+  campaign?: CampaignSnapshot | null;
 }
 
 export interface MetaSave {
@@ -212,6 +228,60 @@ function normalizeBranches(branches: Spoke['branches']): Spoke['branches'] {
   }).filter(b => b.nodes.length > 0);
 }
 
+/**
+ * S31-04: parse a saved campaign blob back into a CampaignSnapshot.
+ * Returns null on missing, non-object, or shape-mismatched data so legacy saves
+ * (and any corruption) load cleanly with a fresh map.
+ *
+ * Spot-checks the first hexTiles element's shape so a non-empty array of
+ * non-HexTile garbage (e.g. a corrupted save with `hexTiles: [1, 2, 3]`) is
+ * rejected before HexTileView reads `tile.q` and crashes. The check assumes
+ * uniform corruption — one bad element implies the rest are too — which is
+ * how localStorage corruption realistically manifests.
+ */
+export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const obj = raw as Partial<CampaignSnapshot>;
+  if (!Array.isArray(obj.hexTiles)) return null;
+  if (!obj.campaignState || typeof obj.campaignState !== 'object') return null;
+
+  const cs = obj.campaignState as Partial<CampaignState>;
+  if (typeof cs.currentTileId !== 'string') return null;
+  if (typeof cs.movementPoints !== 'number') return null;
+  if (typeof cs.supplies !== 'number') return null;
+  if (typeof cs.morale !== 'number') return null;
+
+  if (obj.hexTiles.length > 0 && !isLikelyHexTile(obj.hexTiles[0])) return null;
+
+  const activeId =
+    typeof obj.activeEventTileId === 'string' ? obj.activeEventTileId : null;
+
+  return {
+    hexTiles: obj.hexTiles as HexTile[],
+    campaignState: {
+      currentTileId: cs.currentTileId,
+      selectedTileId:
+        typeof cs.selectedTileId === 'string' ? cs.selectedTileId : null,
+      movementPoints: cs.movementPoints,
+      supplies: cs.supplies,
+      morale: cs.morale,
+    },
+    activeEventTileId: activeId,
+  };
+}
+
+function isLikelyHexTile(value: unknown): value is HexTile {
+  if (!value || typeof value !== 'object') return false;
+  const t = value as Partial<HexTile>;
+  return (
+    typeof t.id === 'string' &&
+    typeof t.q === 'number' &&
+    typeof t.r === 'number' &&
+    typeof t.terrain === 'string' &&
+    typeof t.event === 'string'
+  );
+}
+
 function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
   if (!rawRun || typeof rawRun !== 'object') return null;
 
@@ -271,6 +341,7 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     equippedDoctrines: Array.isArray(run.equippedDoctrines) ? run.equippedDoctrines : [null, null, null, null],
     decretumHand: Array.isArray(run.decretumHand) ? run.decretumHand : [],
     maxHandSize: typeof run.maxHandSize === 'number' ? run.maxHandSize : 5,
+    campaign: migrateCampaignSnapshot(run.campaign),
   };
 }
 
@@ -367,6 +438,11 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     equippedDoctrines: equippedDoctrines.value,
     decretumHand: decretumHand.value,
     maxHandSize: maxHandSize.value,
+    campaign: {
+      hexTiles: hexTiles.value,
+      campaignState: campaignState.value,
+      activeEventTileId: activeEventTileId.value,
+    },
   };
 }
 
@@ -405,11 +481,36 @@ function flushPendingPersist(): void {
   }
 }
 
+/**
+ * Set up the autosave effect for the active run.
+ *
+ * **Persistence scope**: this effect tracks `selectedCommander` and the three
+ * campaign signals (hexTiles, campaignState, activeEventTileId). Mutations to
+ * any of those debounce a save through `saveActiveRunSnapshot`.
+ *
+ * **Known gap**: the broader run state — provinces, councilSlots, advisorPool,
+ * decretumHand, doctrineCollection, governorAssignments, npcFactions, …
+ * — is NOT tracked here. Mutations to those signals do not trigger autosave;
+ * they only persist the next time the campaign signals or commander change
+ * (effectively whenever the player moves on the hex map).
+ *
+ * Widening the effect to track all run signals risks save loops (a save
+ * write that touches a tracked signal re-fires the effect). S32-09 will
+ * decide whether to widen with explicit re-entrancy guards or accept the
+ * current scope as the contract.
+ */
 export function startActiveRunPersistence(): () => void {
   if (persistenceDisposer) return persistenceDisposer;
 
   const stop = effect(() => {
     if (!selectedCommander.value) return;
+    // S31-04: subscribe to campaign signals so setTiles/setCurrent/setSelected/
+    // consumeEvent all debounce a save. Reads are purely for tracking — the
+    // values themselves are read again inside saveActiveRunSnapshot.
+    void hexTiles.value;
+    void campaignState.value;
+    void activeEventTileId.value;
+
     flushPendingPersist();
     pendingPersistTimer = setTimeout(() => {
       pendingPersistTimer = null;
@@ -492,6 +593,12 @@ export async function restoreActiveRun(): Promise<boolean> {
     equippedDoctrines.value = snapshot.equippedDoctrines;
     decretumHand.value = snapshot.decretumHand;
     maxHandSize.value = snapshot.maxHandSize;
+
+    if (snapshot.campaign) {
+      setTiles(snapshot.campaign.hexTiles);
+      campaignState.value = snapshot.campaign.campaignState;
+      setActiveEvent(snapshot.campaign.activeEventTileId);
+    }
 
     metaSave.value = {
       ...metaSave.value,

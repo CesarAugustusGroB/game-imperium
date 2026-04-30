@@ -4,8 +4,10 @@
 
 import { Application, Container, Graphics, type Ticker } from 'pixi.js';
 import type { CampaignState, HexTile } from '../campaign/campaign-types';
+import { hexDistance, findPath } from '../campaign/hex-pathfinding';
 import { revealNeighbors, updateReachableTiles } from '../campaign/movement';
 import { hexToPixel } from './hex-math';
+import { drawDecorationsForTile } from './hex-decorations';
 import { HexTileView } from './HexTileView';
 
 export type HexMapViewOptions = {
@@ -26,10 +28,26 @@ export class HexMapView {
   private readonly terrainLayer: Container = new Container();
   private readonly tileLayer: Container = new Container();
   private readonly pathLayer: Graphics = new Graphics();
+  // S31-07: terrain decoration sprites (trees, peaks, ripples, milestones).
+  // Sits above tileLayer so decorations occlude state strokes/overlays, but
+  // below effectsLayer so the current-pulse and event icons stay readable.
+  private readonly decorationLayer: Container = new Container();
   private readonly effectsLayer: Container = new Container();
 
   private readonly tileViews: Map<string, HexTileView> = new Map();
   private readonly hexSize: number = 64;
+
+  // S31-10a: ordered list of tile ids the legion has occupied this session.
+  // Drives the gold parchment polyline in pathLayer. Seeded from any tile
+  // already flagged `visited` on first mount; appended on each `moveToTile`.
+  // Not persisted — visit order is reconstructed in tile-array order on
+  // reload, which is acceptable while save support is a follow-up.
+  private visitHistory: string[] = [];
+
+  // S31-10b: id of the tile currently under the cursor (when reachable and
+  // not the legion's own hex). Drives the brighter preview polyline drawn
+  // alongside any visit-history line in pathLayer.
+  private hoveredTileId: string | null = null;
 
   private readonly app: Application;
   private tiles: HexTile[];
@@ -44,9 +62,18 @@ export class HexMapView {
   // S30-09 camera state.
   private wheelHandler: ((event: WheelEvent) => void) | null = null;
   private dragMoved: boolean = false;
+  // S32 polish: promoted from setupCamera's closure scope so handleTileHover
+  // can early-return while the camera is mid-drag — avoids N renders/frame
+  // when the cursor sweeps tiles during a pan.
+  private isDragging: boolean = false;
   private static readonly DRAG_CLICK_THRESHOLD: number = 6;
   private static readonly ZOOM_MIN: number = 0.55;
   private static readonly ZOOM_MAX: number = 1.35;
+
+  // Path-line stroke colors. Visit-history is muted parchment gold; hover
+  // preview pops brighter to read as the "future" path.
+  private static readonly PATH_COLOR_VISIT: number = 0xd8aa55;
+  private static readonly PATH_COLOR_HOVER: number = 0xffd485;
 
   // Flipped true on destroy() so zombie callbacks (signal effects firing
   // after the wrapping component unmounted) early-out instead of touching
@@ -64,7 +91,10 @@ export class HexMapView {
     this.root.addChild(this.terrainLayer);
     this.root.addChild(this.pathLayer);
     this.root.addChild(this.tileLayer);
+    this.root.addChild(this.decorationLayer);
     this.root.addChild(this.effectsLayer);
+
+    this.visitHistory = options.tiles.filter((t) => t.visited).map((t) => t.id);
 
     this.centerMap();
     this.setupCamera();
@@ -74,14 +104,25 @@ export class HexMapView {
   render(): void {
     if (this.destroyed) return;
 
+    // S31-09: explicitly destroy old HexTileView instances before clearing
+    // the layer. Container.removeChildren() only detaches; for tiles holding
+    // ticker-driven effects (event-fx) we need destroy() to run their
+    // cleanup. Keeps app.ticker clean across renders.
+    for (const view of this.tileViews.values()) {
+      view.destroy();
+    }
+    this.tileViews.clear();
     this.tileLayer.removeChildren();
     this.pathLayer.clear();
+    this.decorationLayer.removeChildren();
     this.effectsLayer.removeChildren();
-    this.tileViews.clear();
 
     this.detachPulseTicker();
 
     this.drawTiles();
+    this.drawDecorations();
+    this.drawVisitHistory();
+    this.drawHoverPreview();
     this.drawCurrentPositionPulse();
   }
 
@@ -120,6 +161,12 @@ export class HexMapView {
     if (this.destroyed) return;
     this.destroyed = true;
     this.detachPulseTicker();
+    // S31-09: tear down per-tile event-fx ticker callbacks before component
+    // unmount so PixiHexMap's app.destroy() doesn't race with active emitters.
+    for (const view of this.tileViews.values()) {
+      view.destroy();
+    }
+    this.tileViews.clear();
     if (this.wheelHandler) {
       // app.canvas may already be gone if app.destroy() ran first.
       this.app.canvas?.removeEventListener('wheel', this.wheelHandler);
@@ -129,12 +176,18 @@ export class HexMapView {
 
   private drawTiles(): void {
     for (const tile of this.tiles) {
-      const view = new HexTileView(tile, this.hexSize, (clickedTile) => {
-        // Suppress click if the user just dragged the camera past
-        // the threshold — the pointertap fires after pointerup either way.
-        if (this.dragMoved) return;
-        this.handleTileClick(clickedTile);
-      });
+      const view = new HexTileView(
+        tile,
+        this.hexSize,
+        this.app.ticker,
+        (clickedTile) => {
+          // Suppress click if the user just dragged the camera past
+          // the threshold — the pointertap fires after pointerup either way.
+          if (this.dragMoved) return;
+          this.handleTileClick(clickedTile);
+        },
+        (hoveredTile, isHovering) => this.handleTileHover(hoveredTile, isHovering),
+      );
 
       const position = hexToPixel(tile.q, tile.r, this.hexSize);
       view.x = position.x;
@@ -145,17 +198,108 @@ export class HexMapView {
     }
   }
 
+  private drawDecorations(): void {
+    for (const tile of this.tiles) {
+      if (!tile.discovered) continue;
+      const decoration = drawDecorationsForTile(tile, this.hexSize);
+      if (!decoration) continue;
+      const position = hexToPixel(tile.q, tile.r, this.hexSize);
+      decoration.x = position.x;
+      decoration.y = position.y;
+      this.decorationLayer.addChild(decoration);
+    }
+  }
+
+  private handleTileHover(tile: HexTile, isHovering: boolean): void {
+    if (this.destroyed) return;
+    // S32 polish: skip hover updates while the camera is being dragged.
+    // Pixi keeps firing pointerover/pointerout as the cursor sweeps tiles
+    // mid-drag; processing them would render() every frame for no reason.
+    if (this.isDragging) return;
+
+    if (isHovering) {
+      // Only preview paths to reachable, non-current tiles. Hovering an
+      // unreachable tile (or the legion's own hex) leaves the layer alone.
+      if (!tile.reachable || tile.id === this.state.currentTileId) {
+        if (this.hoveredTileId !== null) {
+          this.hoveredTileId = null;
+          this.render();
+        }
+        return;
+      }
+      if (this.hoveredTileId === tile.id) return;
+      this.hoveredTileId = tile.id;
+      this.render();
+      return;
+    }
+
+    // hover-out — clear only if the leaving tile matches the stored hover
+    // (guards against pointer events firing out of order during fast moves).
+    if (this.hoveredTileId === tile.id) {
+      this.hoveredTileId = null;
+      this.render();
+    }
+  }
+
+  private drawHoverPreview(): void {
+    if (this.hoveredTileId === null) return;
+    const goal = this.tiles.find((t) => t.id === this.hoveredTileId);
+    const start = this.tiles.find((t) => t.id === this.state.currentTileId);
+    if (!goal || !start) return;
+
+    const path = findPath(start, goal, this.tiles, this.state.movementPoints);
+    if (!path || path.length < 2) return;
+
+    // S32 polish: truncate the preview at the first event-bearing tile
+    // (inclusive) so the line ends where walkPath actually stops the legion.
+    // Path[0] is the current tile — start scanning from index 1.
+    const stopIndex = path.findIndex((tile, i) => i > 0 && tile.event !== 'none');
+    const visiblePath = stopIndex === -1 ? path : path.slice(0, stopIndex + 1);
+    if (visiblePath.length < 2) return;
+
+    const points = visiblePath.map((tile) => hexToPixel(tile.q, tile.r, this.hexSize));
+
+    // Dual-stroke for soft-glow emphasis. Brighter / wider than the
+    // visit-history polyline (S31-10a) so it reads as the "future" path.
+    this.strokePolyline(points, { width: 9, alpha: 0.30, color: HexMapView.PATH_COLOR_HOVER });
+    this.strokePolyline(points, { width: 5, alpha: 0.85, color: HexMapView.PATH_COLOR_HOVER });
+  }
+
   private handleTileClick(tile: HexTile): void {
     this.state.selectedTileId = tile.id;
     this.onTileSelected(tile);
 
     if (!tile.reachable) return;
 
-    this.moveToTile(tile);
+    const currentTile = this.tiles.find((t) => t.id === this.state.currentTileId);
+    if (!currentTile) return;
+
+    if (hexDistance(currentTile, tile) === 1) {
+      this.moveToTile(tile);
+    } else {
+      const path = findPath(currentTile, tile, this.tiles, this.state.movementPoints);
+      if (path) this.walkPath(path);
+    }
+  }
+
+  private walkPath(path: HexTile[]): void {
+    for (let i = 1; i < path.length; i++) {
+      const step = path[i];
+      this.moveToTile(step);
+      if (step.event !== 'none') break;
+    }
   }
 
   private moveToTile(destination: HexTile): void {
     this.state.currentTileId = destination.id;
+
+    // S31-10a: append to visitHistory if not already the tail entry. Skipping
+    // duplicates means a re-step onto the current hex (shouldn't happen via
+    // handleTileClick today, but possible via external setState) doesn't
+    // introduce a degenerate zero-length segment.
+    if (this.visitHistory[this.visitHistory.length - 1] !== destination.id) {
+      this.visitHistory.push(destination.id);
+    }
 
     this.tiles = this.tiles.map((tile) => {
       if (tile.id === destination.id) {
@@ -177,6 +321,38 @@ export class HexMapView {
     this.onPlayerMoved(currentTile);
     this.onTilesChanged(this.tiles);
     this.render();
+  }
+
+  private drawVisitHistory(): void {
+    if (this.visitHistory.length < 2) return;
+
+    // Resolve ids → discovered tiles. Drop any history entry that is no
+    // longer in `this.tiles` (regen) or got re-fogged (defensive — doesn't
+    // happen today but matches AC's "Lines respect fog").
+    const tileById = new Map(this.tiles.map((t) => [t.id, t]));
+    const points: { x: number; y: number }[] = [];
+    for (const id of this.visitHistory) {
+      const tile = tileById.get(id);
+      if (!tile || !tile.discovered) continue;
+      points.push(hexToPixel(tile.q, tile.r, this.hexSize));
+    }
+    if (points.length < 2) return;
+
+    // Dual-stroke glow emulation: wide outer at low alpha + thin inner at
+    // higher alpha. Avoids adding pixi-filters as a dep just for a soft glow.
+    this.strokePolyline(points, { width: 9, alpha: 0.18, color: HexMapView.PATH_COLOR_VISIT });
+    this.strokePolyline(points, { width: 4, alpha: 0.55, color: HexMapView.PATH_COLOR_VISIT });
+  }
+
+  private strokePolyline(
+    points: readonly { x: number; y: number }[],
+    style: { width: number; alpha: number; color: number },
+  ): void {
+    this.pathLayer.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      this.pathLayer.lineTo(points[i].x, points[i].y);
+    }
+    this.pathLayer.stroke({ width: style.width, color: style.color, alpha: style.alpha });
   }
 
   private drawCurrentPositionPulse(): void {
@@ -226,7 +402,6 @@ export class HexMapView {
     stage.eventMode = 'static';
     stage.hitArea = this.app.screen;
 
-    let dragging = false;
     let startX = 0;
     let startY = 0;
     let lastX = 0;
@@ -234,7 +409,7 @@ export class HexMapView {
 
     stage.on('pointerdown', (event) => {
       if (this.destroyed) return;
-      dragging = true;
+      this.isDragging = true;
       this.dragMoved = false;
       startX = event.global.x;
       startY = event.global.y;
@@ -243,7 +418,7 @@ export class HexMapView {
     });
 
     const endDrag = (): void => {
-      dragging = false;
+      this.isDragging = false;
       // dragMoved stays true until the next pointerdown so the suppression
       // guard in HexTileView's click callback can still see it.
     };
@@ -251,7 +426,7 @@ export class HexMapView {
     stage.on('pointerupoutside', endDrag);
 
     stage.on('pointermove', (event) => {
-      if (this.destroyed || !dragging) return;
+      if (this.destroyed || !this.isDragging) return;
 
       const dx = event.global.x - lastX;
       const dy = event.global.y - lastY;
