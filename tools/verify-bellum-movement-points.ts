@@ -1,5 +1,8 @@
-// S33-03: Bellum movement-point economy checks.
+// S33-03 / S33-05: Bellum movement-point economy checks.
 // Run with: npx tsx tools/verify-bellum-movement-points.ts
+//
+// S33-05: CampaignState no longer carries supplies/morale. setState helper
+// updated to the slimmer shape.
 
 import {
   applyMove,
@@ -10,6 +13,8 @@ import {
 import { CAMPAIGN_MOVEMENT_POINTS_MAX } from '../src/game/campaign/campaign-balance';
 import { updateReachableTiles } from '../src/game/campaign/movement';
 import type { EventType, HexTile, TerrainType } from '../src/game/campaign/campaign-types';
+import { preparedArmy } from '../src/game/progression/strategic-store';
+import type { ArmyData, Cohort } from '../src/types';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`FAIL: ${message}`);
@@ -40,13 +45,42 @@ function setState(movementPoints: number): void {
     currentTileId: '0,0',
     selectedTileId: null,
     movementPoints,
-    supplies: 20,
-    morale: 60,
+  };
+}
+
+function makeCohort(id: string): Cohort {
+  return {
+    id,
+    instanceId: id,
+    name: id,
+    role: 'vanguard',
+    stats: { hp: 1000, atk: 100, def: 50, agi: 30 },
+    spriteId: 'hastati',
+  } as Cohort;
+}
+
+function makeArmy(supplies: number): ArmyData {
+  return {
+    id: 1,
+    owner: 'player',
+    name: 'Legio Test',
+    size: 1000,
+    cohorts: [makeCohort('a')],
+    legateId: null,
+    supplies,
+    provinceIndex: 0,
+    targetProvinceIndex: null,
+    progress: 0,
+    path: [],
+    inCombat: false,
+    combatTarget: null,
+    lastRoll: 0,
   };
 }
 
 {
   resetCampaign();
+  preparedArmy.value = makeArmy(80);
   setState(CAMPAIGN_MOVEMENT_POINTS_MAX);
   const result = applyMove(makeTile(1, 0));
   assert(result.moved, 'single-hop move should succeed');
@@ -59,6 +93,7 @@ console.log('PASS: single-hop movement spends entered-tile MP');
 
 {
   resetCampaign();
+  preparedArmy.value = makeArmy(80);
   setState(CAMPAIGN_MOVEMENT_POINTS_MAX);
   const first = applyMove(makeTile(1, 0));
   const second = applyMove(makeTile(2, 0));
@@ -70,6 +105,7 @@ console.log('PASS: multi-hop movement spends cumulative entered-tile costs');
 
 {
   resetCampaign();
+  preparedArmy.value = makeArmy(80);
   setState(0);
   const blocked = applyMove(makeTile(1, 0));
   assert(!blocked.moved, 'zero-MP movement should be blocked');
@@ -88,5 +124,7 @@ console.log('PASS: zero-MP blocks movement and reachability');
   assert(campaignState.value.movementPoints === CAMPAIGN_MOVEMENT_POINTS_MAX, 'refresh restores max MP');
 }
 console.log('PASS: movement refresh restores max MP');
+
+preparedArmy.value = null;
 
 console.log('\nAll Bellum movement-point checks passed');

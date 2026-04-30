@@ -1,19 +1,14 @@
 import { signal } from '@preact/signals';
 import type { CampaignState, HexTile } from './campaign-types';
-import {
-  applyMoveDeltas,
-  CAMPAIGN_MOVEMENT_POINTS_MAX,
-  MORALE_MAX,
-  SUPPLIES_MAX,
-} from './campaign-balance';
+import { CAMPAIGN_MOVEMENT_POINTS_MAX } from './campaign-balance';
+import { consumeBellumTraversal, type BellumTraversalResult } from './bellum-army-view';
 import { resetBellumDefeatState } from './campaign-defeat';
+import type { TraversalAttritionLog } from '../army/supplies';
 
 const INITIAL_STATE: CampaignState = {
   currentTileId: '0,0',
   selectedTileId: null,
   movementPoints: CAMPAIGN_MOVEMENT_POINTS_MAX,
-  supplies: 38,
-  morale: 100,
 };
 
 export const hexTiles = signal<HexTile[]>([]);
@@ -62,18 +57,6 @@ export function appendVisit(id: string): void {
   visitHistory.value = [...current, id];
 }
 
-/** S31-05a: clamped supplies delta. Used by encounter-bridge resolutions. */
-export function addSupplies(delta: number): void {
-  const next = Math.max(0, Math.min(SUPPLIES_MAX, campaignState.value.supplies + delta));
-  campaignState.value = { ...campaignState.value, supplies: next };
-}
-
-/** S31-05a: clamped morale delta. Used by encounter-bridge resolutions. */
-export function addMorale(delta: number): void {
-  const next = Math.max(0, Math.min(MORALE_MAX, campaignState.value.morale + delta));
-  campaignState.value = { ...campaignState.value, morale: next };
-}
-
 /** S33-03: refresh Bellum's local movement budget. Season ticks will also call this in S33-04. */
 export function refreshMovementPoints(): void {
   campaignState.value = {
@@ -87,12 +70,14 @@ export type CampaignMoveResult = {
   movementSpent: number;
   movementRemaining: number;
   starvationTriggered: boolean;
+  supplyLog: TraversalAttritionLog | null;
 };
 
 /**
- * S31-03: atomic move write — currentTileId, supplies, and morale updated in
- * one signal mutation so the HUD never observes a half-applied move.
- * Returns starvationTriggered so the caller can fire the warning notification.
+ * S33-05: atomic move write — currentTileId and movementPoints updated in
+ * one signal mutation. Supply and morale are now owned by `preparedArmy`
+ * (via `consumeBellumTraversal`). Returns a merged result so the caller can
+ * fire starvation warnings and supply-attrition notifications.
  */
 export function applyMove(tile: HexTile): CampaignMoveResult {
   const prev = campaignState.value;
@@ -103,23 +88,23 @@ export function applyMove(tile: HexTile): CampaignMoveResult {
       movementSpent: 0,
       movementRemaining: prev.movementPoints,
       starvationTriggered: false,
+      supplyLog: null,
     };
   }
 
-  const outcome = applyMoveDeltas(prev, tile.terrain);
+  const traversal: BellumTraversalResult = consumeBellumTraversal(tile.terrain);
   const movementRemaining = Math.max(0, prev.movementPoints - movementCost);
   campaignState.value = {
     ...prev,
     currentTileId: tile.id,
     movementPoints: movementRemaining,
-    supplies: outcome.supplies,
-    morale: outcome.morale,
   };
   return {
     moved: true,
     movementSpent: movementCost,
     movementRemaining,
-    starvationTriggered: outcome.starvationTriggered,
+    starvationTriggered: traversal.starvationTriggered,
+    supplyLog: traversal.supplyLog,
   };
 }
 

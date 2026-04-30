@@ -41,6 +41,4 @@ export type CampaignState = {
   currentTileId: string;
   selectedTileId: string | null;
   movementPoints: number;
-  supplies: number;
-  morale: number;
 };

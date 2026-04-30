@@ -6,11 +6,16 @@
 // which synthesizes a 1-node Spoke and navigates to BattleScreenV2. If
 // preparedArmy is null (no commander selected), we fall back to the
 // original placeholder casualty deltas so the player isn't stranded.
+//
+// S33-05: morale/supply mutations now flow through `addCampaignMorale` /
+// `addArmySupplies` from `bellum-army-view.ts` instead of the old
+// `campaignState`-scoped helpers.
 
 import type { HexTile } from './campaign-types';
 import { eventTypeToEncounterType } from './event-encounter-mapping';
 import type { EncounterType } from '../progression/landmark-types';
-import { addMorale, addSupplies, campaignState, consumeEvent, refreshMovementPoints } from './campaign-state';
+import { campaignState, consumeEvent, refreshMovementPoints } from './campaign-state';
+import { addCampaignMorale, addArmySupplies } from './bellum-army-view';
 import { launchHexBattle } from './hex-battle';
 import { spendResource } from '../core/resources';
 import { evaluateBellumDefeat, type BellumDefeatEvaluation } from './campaign-defeat';
@@ -49,20 +54,20 @@ function dispatch(
 ): EncounterOutcome {
   switch (encounter) {
     case 'rest':
-      addMorale(20);
+      addCampaignMorale(20);
       refreshMovementPoints();
       return { consumed: true, message: 'The legion makes camp. Morale and march points recover.' };
 
     case 'forage':
-      addSupplies(10);
-      addMorale(1);
+      addArmySupplies(10);
+      addCampaignMorale(1);
       return { consumed: true, message: 'Foragers return with grain and salt pork.' };
 
     case 'merchant':
       // idx 0 = Trade, idx 1 = Ignore.
       if (actionIndex === 0) {
         if (spendResource('gold', 10)) {
-          addSupplies(5);
+          addArmySupplies(5);
           return { consumed: true, message: 'Traded 10 gold for 5 supplies.' };
         }
         return { consumed: true, message: 'The merchant frowns at your empty purse.' };
@@ -80,28 +85,28 @@ function dispatch(
       // player isn't blocked.
       if (actionIndex === 0) {
         if (launchHexBattle(tile, 'battle')) return { consumed: true };
-        addMorale(-10);
-        addSupplies(-3);
+        addCampaignMorale(-10);
+        addArmySupplies(-3);
         return { consumed: true, message: 'The skirmish ends bloody but the road is clear.' };
       }
-      addMorale(-5);
+      addCampaignMorale(-5);
       return { consumed: true, message: 'The legion withdraws to safer ground.' };
 
     case 'elite_battle':
       if (actionIndex === 0) {
         if (launchHexBattle(tile, 'elite_battle')) return { consumed: true };
-        addMorale(-12);
-        addSupplies(-4);
+        addCampaignMorale(-12);
+        addArmySupplies(-4);
         return { consumed: true, message: 'A hard-won fight. Veterans paid the price.' };
       }
-      addMorale(-2);
+      addCampaignMorale(-2);
       return { consumed: true, message: 'The legion gives the elite force a wide berth.' };
 
     case 'ambush':
       // No retreat option for ambush — surprised legions fight.
       if (launchHexBattle(tile, 'ambush')) return { consumed: true };
-      addMorale(-8);
-      addSupplies(-2);
+      addCampaignMorale(-8);
+      addArmySupplies(-2);
       return { consumed: true, message: 'The ambush bloodies the column before it scatters.' };
 
     default:
@@ -112,4 +117,3 @@ function dispatch(
       return NOOP;
   }
 }
-

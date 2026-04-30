@@ -3,11 +3,8 @@
 // selected-hex info card, bottom legion strip). All data flows through
 // the campaignState + hexTiles signals from src/game/campaign/campaign-state.
 //
-// The legacy spoke HUD components (SpokeTopBar, LandmarkDetailsPanel,
-// ArmyCampaignPanel) are coupled to currentSpoke.value — a different
-// data shape — so we build slimmed equivalents here that match the
-// existing visual idiom (ornate-stat-chip, gold-bordered cards, design
-// tokens) without dragging in spoke state.
+// S33-05: CampaignTopBar and CampaignArmyStrip now read supplies/morale from
+// `preparedArmy.value` + `computeBellumMorale()` instead of `campaignState`.
 
 import { useEffect, useState } from 'preact/hooks';
 import { campaignState, hexTiles } from '../../game/campaign/campaign-state';
@@ -17,6 +14,10 @@ import { getTerrainColor } from '../../game/campaign/terrain';
 import { getEventColor, getEventIcon } from '../../game/campaign/events';
 import { PixiHexMap } from '../../game/pixi/PixiHexMap';
 import { colorToCss } from '../../utils/color';
+import { preparedArmy } from '../../game/progression/strategic-store';
+import { computeBellumMorale } from '../../game/campaign/bellum-army-view';
+import { bellumWarningState } from '../../game/campaign/campaign-defeat';
+import { SUPPLY_MAX_CARRY } from '../../config/game-config';
 
 if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-screen-styles')) {
   const el = document.createElement('style');
@@ -202,16 +203,38 @@ function findTile(id: string | null): HexTile | undefined {
 
 function CampaignTopBar() {
   const state = campaignState.value;
+  const army = preparedArmy.value;
+  const morale = computeBellumMorale();
+
+  if (!army) {
+    return (
+      <div class="chs-top-bar" role="region" aria-label="Campaign stats">
+        <span class="ornate-stat-chip" title="March points remaining.">
+          🚩 <strong>{state.movementPoints}</strong>
+        </span>
+        <span class="ornate-stat-chip" title="No legion prepared" style={{ opacity: 0.5 }}>
+          📦 <strong>—</strong>
+        </span>
+        <span class="ornate-stat-chip" title="No legion prepared" style={{ opacity: 0.5 }}>
+          🔥 <strong>—</strong>
+        </span>
+        <span class="ornate-stat-chip" title={`Season ${globalSeason.value} of ${MAX_SEASONS}. Doom threat ${threatLevel.value}.`}>
+          🌿 <strong>{globalSeason.value}/{MAX_SEASONS}</strong>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div class="chs-top-bar" role="region" aria-label="Campaign stats">
       <span class="ornate-stat-chip" title="March points remaining. Terrain spends points; bivouac encounters refresh them until the shared season tick lands.">
         🚩 <strong>{state.movementPoints}</strong>
       </span>
-      <span class="ornate-stat-chip" title="Supplies remaining">
-        📦 <strong>{state.supplies}</strong>
+      <span class="ornate-stat-chip" title={`Supplies: ${army.supplies} / ${SUPPLY_MAX_CARRY}`}>
+        📦 <strong>{army.supplies}</strong>
       </span>
-      <span class="ornate-stat-chip" title="Legion morale">
-        🔥 <strong>{state.morale}</strong>
+      <span class="ornate-stat-chip" title={`Legion morale: ${morale.total} (${morale.tier})`}>
+        🔥 <strong>{morale.total}</strong>
       </span>
       <span class="ornate-stat-chip" title={`Season ${globalSeason.value} of ${MAX_SEASONS}. Doom threat ${threatLevel.value}.`}>
         🌿 <strong>{globalSeason.value}/{MAX_SEASONS}</strong>
@@ -289,9 +312,16 @@ function CampaignHexInfoPanel() {
 
 function CampaignArmyStrip() {
   const state = campaignState.value;
+  const army = preparedArmy.value;
+  const warnings = bellumWarningState.value;
   const current = findTile(state.currentTileId);
   const tilesVisited = hexTiles.value.filter((t) => t.visited).length;
   const tilesDiscovered = hexTiles.value.filter((t) => t.discovered).length;
+
+  const morale = computeBellumMorale();
+  const hasWarning = warnings.starvationWarning || warnings.moraleCritical;
+
+  const noArmy = !army;
 
   return (
     // 3c: outer container is pointer-events:none so drag-pan works across the
@@ -309,11 +339,21 @@ function CampaignArmyStrip() {
                 </span>
               )}
             </span>
+            {hasWarning && <span title="Active warning">⚠️</span>}
           </div>
           <div class="chs-bottom-line">
             <span>Discovered <strong>{tilesDiscovered}</strong></span>
             <span>Visited <strong>{tilesVisited}</strong></span>
             <span>March pts <strong>{state.movementPoints}</strong></span>
+            {noArmy ? (
+              <span style={{ opacity: 0.5 }}>No legion prepared</span>
+            ) : (
+              <>
+                <span>Cohorts <strong>{army.cohorts.length}</strong></span>
+                <span>Supplies <strong>{army.supplies}/{SUPPLY_MAX_CARRY}</strong></span>
+                <span>Morale <strong>{morale.total}</strong> ({morale.tier})</span>
+              </>
+            )}
           </div>
         </div>
       </div>

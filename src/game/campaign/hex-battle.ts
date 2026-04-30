@@ -12,7 +12,8 @@ import type { HexTile, TerrainType } from './campaign-types';
 import type { BattleTerrain, EncounterType } from '../progression/landmark-types';
 import { currentSpoke, type BattleResult, type Spoke, type SpokeNode } from '../progression/spoke';
 import { preparedArmy, preparedLegate } from '../progression/strategic-store';
-import { addMorale, addSupplies, campaignState } from './campaign-state';
+import { campaignState } from './campaign-state';
+import { addCampaignMorale, addArmySupplies } from './bellum-army-view';
 import { evaluateBellumDefeat, type BellumDefeatEvaluation } from './campaign-defeat';
 
 // Navigation hook — registered by main.tsx at app boot. Kept as an injection
@@ -126,13 +127,13 @@ export function launchHexBattle(tile: HexTile, encounterType: EncounterType): bo
  */
 export function applyHexBattleOutcome(outcome: BattleResult | null): BellumDefeatEvaluation {
   if (outcome === 'victory') {
-    addMorale(5);
+    addCampaignMorale(5);
   } else if (outcome === 'defeat') {
-    addMorale(-15);
-    addSupplies(-5);
+    addCampaignMorale(-15);
+    addArmySupplies(-5);
   } else {
     // 'draw' or null (esc-exit) — modest morale knock either way.
-    addMorale(-5);
+    addCampaignMorale(-5);
   }
   return evaluateBellumDefeat(campaignState.value, { checkArmy: true });
 }

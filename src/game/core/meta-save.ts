@@ -250,10 +250,11 @@ export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
   if (!Array.isArray(obj.hexTiles)) return null;
   if (!obj.campaignState || typeof obj.campaignState !== 'object') return null;
 
-  const cs = obj.campaignState as Partial<CampaignState>;
+  // S33-05: `supplies` and `morale` were removed from CampaignState. Accept
+  // old saves that include them (silently ignore), and don't require them for
+  // new saves. The only required field is `currentTileId`.
+  const cs = obj.campaignState as Partial<CampaignState> & { supplies?: unknown; morale?: unknown };
   if (typeof cs.currentTileId !== 'string') return null;
-  if (typeof cs.supplies !== 'number') return null;
-  if (typeof cs.morale !== 'number') return null;
   const movementPoints = typeof cs.movementPoints === 'number'
     ? cs.movementPoints
     : CAMPAIGN_MOVEMENT_POINTS_MAX;
@@ -278,8 +279,6 @@ export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
       selectedTileId:
         typeof cs.selectedTileId === 'string' ? cs.selectedTileId : null,
       movementPoints,
-      supplies: cs.supplies,
-      morale: cs.morale,
     },
     activeEventTileId: activeId,
     visitHistory: safeHistory,

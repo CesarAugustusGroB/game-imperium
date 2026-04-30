@@ -88,8 +88,17 @@ export function PixiHexMap() {
               addNotification({
                 kind: 'alert',
                 title: 'Out of Supplies',
-                message: 'The legion is starving — morale plummets.',
+                message: 'The legion is starving — cohorts suffer attrition.',
                 icon: '⚠️',
+              });
+            }
+            if (move.supplyLog && move.supplyLog.cohortsKilled.length > 0) {
+              const n = move.supplyLog.cohortsKilled.length;
+              addNotification({
+                kind: 'alert',
+                title: 'Cohorts Lost',
+                message: `${n} cohort${n !== 1 ? 's' : ''} wiped from supply attrition.`,
+                icon: '☠️',
               });
             }
             if (defeat.defeated) return move;

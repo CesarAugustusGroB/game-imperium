@@ -285,10 +285,10 @@ export const ECONOMY = {
 export const SUPPLIES_PER_GOLD = 2;
 
 /** Starting supply stock given to a freshly composed army at the Hub. */
-export const SUPPLIES_STARTING_STOCK = 10;
+export const SUPPLIES_STARTING_STOCK = 28;
 
 /** Cap on supplies an army can carry into a spoke. */
-export const SUPPLY_MAX_CARRY = 40;
+export const SUPPLY_MAX_CARRY = 80;
 
 /** Fraction of max HP each cohort loses on a deficit node traversal. */
 export const SUPPLY_HP_DAMAGE_PCT = 0.20;

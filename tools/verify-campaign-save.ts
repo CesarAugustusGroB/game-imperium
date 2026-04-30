@@ -1,10 +1,13 @@
-// S31-04: pure migration tests for the campaign slice of the meta-save.
+// S31-04 / S33-05: pure migration tests for the campaign slice of the meta-save.
 // Run with: npx tsx tools/verify-campaign-save.ts
+//
+// S33-05: `supplies` and `morale` are no longer fields on `CampaignState`.
+// `migrateCampaignSnapshot` now silently ignores those fields from old saves
+// and no longer requires them. Tests updated accordingly.
 //
 // Note: imports `migrateCampaignSnapshot` directly. The function is pure and
 // has no signal/store side effects, so it runs in plain node without browser
-// shims. Verifying full round-trip through buildActiveRunSnapshot would require
-// the entire run-state graph to be initialized — out of scope here.
+// shims.
 
 import { migrateCampaignSnapshot } from '../src/game/core/meta-save';
 import type { HexTile } from '../src/game/campaign/campaign-types';
@@ -28,7 +31,27 @@ function makeTile(q: number, r: number): HexTile {
   };
 }
 
-// ── Valid roundtrip ─────────────────────────────────────────────────
+// ── Valid roundtrip (new shape — no supplies/morale) ────────────────
+{
+  const raw = {
+    hexTiles: [makeTile(0, 0), makeTile(1, 0)],
+    campaignState: {
+      currentTileId: '0,0',
+      selectedTileId: '1,0',
+      movementPoints: 2,
+    },
+    activeEventTileId: null,
+  };
+  const out = migrateCampaignSnapshot(raw);
+  assert(out !== null, 'valid new-shape payload migrates');
+  assert(out!.hexTiles.length === 2, 'hexTiles preserved');
+  assert(out!.campaignState.currentTileId === '0,0', 'currentTileId preserved');
+  assert(out!.activeEventTileId === null, 'activeEventTileId null preserved');
+}
+console.log('PASS: valid new-shape payload roundtrip');
+
+// ── Legacy save roundtrip (old shape — has supplies/morale) ─────────
+// Old saves include supplies/morale; migration should silently ignore them.
 {
   const raw = {
     hexTiles: [makeTile(0, 0), makeTile(1, 0)],
@@ -42,13 +65,14 @@ function makeTile(q: number, r: number): HexTile {
     activeEventTileId: null,
   };
   const out = migrateCampaignSnapshot(raw);
-  assert(out !== null, 'valid payload migrates');
-  assert(out!.hexTiles.length === 2, 'hexTiles preserved');
-  assert(out!.campaignState.currentTileId === '0,0', 'currentTileId preserved');
-  assert(out!.campaignState.supplies === 30, 'supplies preserved');
-  assert(out!.activeEventTileId === null, 'activeEventTileId null preserved');
+  assert(out !== null, 'legacy payload with supplies/morale migrates');
+  assert(out!.hexTiles.length === 2, 'hexTiles preserved in legacy save');
+  assert(out!.campaignState.currentTileId === '0,0', 'currentTileId preserved in legacy save');
+  // supplies and morale are silently dropped from CampaignState
+  assert(!('supplies' in out!.campaignState), 'supplies not present in migrated CampaignState');
+  assert(!('morale' in out!.campaignState), 'morale not present in migrated CampaignState');
 }
-console.log('PASS: valid payload roundtrip');
+console.log('PASS: legacy save with supplies/morale migrates (fields silently dropped)');
 
 // ── activeEventTileId as string ─────────────────────────────────────
 {
@@ -58,8 +82,6 @@ console.log('PASS: valid payload roundtrip');
       currentTileId: '0,0',
       selectedTileId: null,
       movementPoints: 2,
-      supplies: 30,
-      morale: 75,
     },
     activeEventTileId: '2,3',
   };
@@ -77,8 +99,6 @@ console.log('PASS: activeEventTileId as string is preserved');
       currentTileId: '0,0',
       // selectedTileId omitted
       movementPoints: 2,
-      supplies: 30,
-      morale: 75,
     },
     activeEventTileId: null,
   };
@@ -98,7 +118,7 @@ console.log('PASS: null / undefined / primitives return null');
 // ── Malformed: missing hexTiles ─────────────────────────────────────
 {
   const raw = {
-    campaignState: { currentTileId: '0,0', movementPoints: 2, supplies: 30, morale: 75 },
+    campaignState: { currentTileId: '0,0', movementPoints: 2 },
     activeEventTileId: null,
   };
   assert(migrateCampaignSnapshot(raw) === null, 'missing hexTiles returns null');
@@ -109,18 +129,29 @@ console.log('PASS: missing hexTiles returns null');
 {
   const raw = {
     hexTiles: 'oops',
-    campaignState: { currentTileId: '0,0', movementPoints: 2, supplies: 30, morale: 75 },
+    campaignState: { currentTileId: '0,0', movementPoints: 2 },
     activeEventTileId: null,
   };
   assert(migrateCampaignSnapshot(raw) === null, 'non-array hexTiles returns null');
 }
 console.log('PASS: non-array hexTiles returns null');
 
-// ── Malformed: missing campaignState fields ─────────────────────────
+// ── Malformed: missing currentTileId (still required) ─────────────────────────
 {
   const raw = {
     hexTiles: [],
-    campaignState: { currentTileId: '0,0', supplies: 30, morale: 75 },
+    campaignState: { movementPoints: 2 /* currentTileId missing */ },
+    activeEventTileId: null,
+  };
+  assert(migrateCampaignSnapshot(raw) === null, 'missing currentTileId returns null');
+}
+console.log('PASS: missing currentTileId returns null');
+
+// ── Missing movementPoints defaults to max MP ────────────────────────
+{
+  const raw = {
+    hexTiles: [],
+    campaignState: { currentTileId: '0,0' /* movementPoints omitted */ },
     activeEventTileId: null,
   };
   const out = migrateCampaignSnapshot(raw);
@@ -128,16 +159,6 @@ console.log('PASS: non-array hexTiles returns null');
   assert(out!.campaignState.movementPoints === 2, 'missing movementPoints defaults to max MP');
 }
 console.log('PASS: missing movementPoints defaults during migration');
-
-{
-  const raw = {
-    hexTiles: [],
-    campaignState: { currentTileId: '0,0' /* missing supplies/morale */ },
-    activeEventTileId: null,
-  };
-  assert(migrateCampaignSnapshot(raw) === null, 'missing required supplies/morale returns null');
-}
-console.log('PASS: missing required campaignState fields returns null');
 
 // ── Malformed: campaignState wrong type ─────────────────────────────
 {
@@ -154,7 +175,7 @@ console.log('PASS: non-object campaignState returns null');
 {
   const raw = {
     hexTiles: [1, 2, 3],
-    campaignState: { currentTileId: '0,0', movementPoints: 2, supplies: 30, morale: 75 },
+    campaignState: { currentTileId: '0,0', movementPoints: 2 },
     activeEventTileId: null,
   };
   assert(migrateCampaignSnapshot(raw) === null, 'array of non-HexTile primitives returns null');
@@ -165,7 +186,7 @@ console.log('PASS: hexTiles array of primitives returns null');
 {
   const raw = {
     hexTiles: [{ id: '0,0' /* missing q, r, terrain, event */ }],
-    campaignState: { currentTileId: '0,0', movementPoints: 2, supplies: 30, morale: 75 },
+    campaignState: { currentTileId: '0,0', movementPoints: 2 },
     activeEventTileId: null,
   };
   assert(migrateCampaignSnapshot(raw) === null, 'partial hexTile element returns null');
@@ -176,7 +197,7 @@ console.log('PASS: hexTiles element missing fields returns null');
 {
   const raw = {
     hexTiles: [makeTile(0, 0), makeTile(1, 0)],
-    campaignState: { currentTileId: '1,0', movementPoints: 2, supplies: 30, morale: 75 },
+    campaignState: { currentTileId: '1,0', movementPoints: 2 },
     activeEventTileId: null,
     visitHistory: ['0,0', '1,0'],
   };
@@ -191,7 +212,7 @@ console.log('PASS: visitHistory string array roundtrips');
 {
   const raw = {
     hexTiles: [],
-    campaignState: { currentTileId: '0,0', movementPoints: 2, supplies: 30, morale: 75 },
+    campaignState: { currentTileId: '0,0', movementPoints: 2 },
     activeEventTileId: null,
     // visitHistory omitted (legacy save)
   };
@@ -205,7 +226,7 @@ console.log('PASS: missing visitHistory defaults to []');
 {
   const raw = {
     hexTiles: [],
-    campaignState: { currentTileId: '0,0', movementPoints: 2, supplies: 30, morale: 75 },
+    campaignState: { currentTileId: '0,0', movementPoints: 2 },
     activeEventTileId: null,
     visitHistory: 'corrupted',
   };
@@ -216,7 +237,7 @@ console.log('PASS: missing visitHistory defaults to []');
 {
   const raw = {
     hexTiles: [],
-    campaignState: { currentTileId: '0,0', movementPoints: 2, supplies: 30, morale: 75 },
+    campaignState: { currentTileId: '0,0', movementPoints: 2 },
     activeEventTileId: null,
     visitHistory: ['0,0', 42, '1,0'],
   };

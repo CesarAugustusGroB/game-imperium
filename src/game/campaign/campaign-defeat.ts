@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals';
 import type { CampaignState } from './campaign-types';
 import { preparedArmy } from '../progression/strategic-store';
+import { computeBellumMorale } from './bellum-army-view';
 
 export type BellumDefeatReason =
   | 'morale-collapse'
@@ -46,8 +47,14 @@ export function resetBellumDefeatState(): void {
   bellumDefeatReason.value = null;
 }
 
+/**
+ * S33-05: supplies and morale are now read from `preparedArmy.value` and
+ * `computeBellumMorale()` respectively. The `state` parameter (CampaignState)
+ * still carries `currentTileId`/`movementPoints` for callers — but supplies
+ * and morale are no longer on that type.
+ */
 export function evaluateBellumDefeat(
-  state: CampaignState,
+  _state: CampaignState,
   opts?: {
     countZeroSupplyMove?: boolean;
     checkArmy?: boolean;
@@ -56,7 +63,11 @@ export function evaluateBellumDefeat(
   const countZeroSupplyMove = opts?.countZeroSupplyMove === true;
   const checkArmy = opts?.checkArmy === true;
 
-  const zeroSupplyMoveStreak = state.supplies > 0
+  // Supplies and morale are now owned by preparedArmy / computeBellumMorale.
+  const armySupplies = preparedArmy.value?.supplies ?? 0;
+  const moraleTotal = computeBellumMorale().total;
+
+  const zeroSupplyMoveStreak = armySupplies > 0
     ? 0
     : bellumWarningState.value.zeroSupplyMoveStreak + (countZeroSupplyMove ? 1 : 0);
 
@@ -64,12 +75,12 @@ export function evaluateBellumDefeat(
   const warning: BellumWarningState = {
     zeroSupplyMoveStreak,
     starvationWarning: zeroSupplyMoveStreak >= BELLUM_ZERO_SUPPLY_WARNING_THRESHOLD,
-    moraleCritical: state.morale > 0 && state.morale <= BELLUM_MORALE_WARNING_THRESHOLD,
+    moraleCritical: moraleTotal > 0 && moraleTotal <= BELLUM_MORALE_WARNING_THRESHOLD,
     armyWiped,
   };
   bellumWarningState.value = warning;
 
-  if (state.morale <= 0) return triggerBellumDefeat('morale-collapse', warning);
+  if (moraleTotal <= 0) return triggerBellumDefeat('morale-collapse', warning);
   if (zeroSupplyMoveStreak >= BELLUM_ZERO_SUPPLY_DEFEAT_THRESHOLD) {
     return triggerBellumDefeat('starvation-collapse', warning);
   }
