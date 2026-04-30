@@ -1,7 +1,14 @@
 """Generate placeholder PNGs for the campaign hex Pixi asset bundle (S31-01).
 
-Real painterly art replaces these in S31-06 (terrain) and S31-08 (event icons).
-Decoration art arrives whenever S31-07 lands.
+Three folders ship today, all as procedurally drawn placeholders:
+  terrain    — flat hex polygon per TerrainType
+  events     — circular badge per EventType
+  decoration — tree-cluster, peak, ripple, milestone (S31-07);
+               ridge (hills), tent (camp)             (S32-10)
+
+Real painterly art replaces these as commissioned art arrives. The keys are
+defined in src/game/pixi/hex-assets.ts; if you add a new key there, add a
+matching draw branch here and re-run the script.
 
 Run: python tools/generate-campaign-placeholders.py
 Outputs go to public/asset/campaign/{terrain,events,decoration}/.
