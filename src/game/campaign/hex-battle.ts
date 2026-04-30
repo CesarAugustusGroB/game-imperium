@@ -76,6 +76,9 @@ export function synthesizeHexBattleSpoke(
     encounterType,
     terrain: terrainToBattleTerrain(tile.terrain),
     name: encounterType === 'boss' ? 'Final Invasion' : 'Hex Encounter',
+    // S33-06: pass through battle modifiers stashed by applyBellumEffects
+    // when a `battle-modifier` SpokeEffect was applied to this tile.
+    battleModifiers: tile.battleModifiers ? [...tile.battleModifiers] : undefined,
   };
 
   return {
@@ -124,6 +127,10 @@ export function launchHexBattle(tile: HexTile, encounterType: EncounterType): bo
  * cohort losses onto preparedArmy. HP loss is paid for "for free" by that
  * write-back; the deltas here represent strategic-layer fallout (morale +
  * supplies). Numbers are placeholder-tuned per the wider S31 balance pass.
+ *
+ * S33-06 note: these outcome numbers are currently applied imperatively.
+ * Future work could route them through `applyBellumEffects` once battle
+ * outcome effects are also data-driven (backlog item).
  */
 export function applyHexBattleOutcome(outcome: BattleResult | null): BellumDefeatEvaluation {
   if (outcome === 'victory') {

@@ -11,6 +11,7 @@
 
 import { migrateCampaignSnapshot } from '../src/game/core/meta-save';
 import type { HexTile } from '../src/game/campaign/campaign-types';
+import { CAMPAIGN_MOVEMENT_POINTS_MAX } from '../src/game/campaign/campaign-balance';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`FAIL: ${message}`);
@@ -156,7 +157,10 @@ console.log('PASS: missing currentTileId returns null');
   };
   const out = migrateCampaignSnapshot(raw);
   assert(out !== null, 'missing movementPoints still migrates');
-  assert(out!.campaignState.movementPoints === 2, 'missing movementPoints defaults to max MP');
+  assert(
+    out!.campaignState.movementPoints === CAMPAIGN_MOVEMENT_POINTS_MAX,
+    'missing movementPoints defaults to max MP',
+  );
 }
 console.log('PASS: missing movementPoints defaults during migration');
 

@@ -10,15 +10,19 @@
 // S33-05: morale/supply mutations now flow through `addCampaignMorale` /
 // `addArmySupplies` from `bellum-army-view.ts` instead of the old
 // `campaignState`-scoped helpers.
+//
+// S33-06: encounter effects are now data-driven via BELLUM_ENCOUNTER_TABLE
+// and applied through applyBellumEffects. consumeEvent is called BEFORE
+// dispatch to guard against fast double-click re-fires.
 
 import type { HexTile } from './campaign-types';
 import { eventTypeToEncounterType } from './event-encounter-mapping';
-import type { EncounterType } from '../progression/landmark-types';
 import { campaignState, consumeEvent, refreshMovementPoints } from './campaign-state';
-import { addCampaignMorale, addArmySupplies } from './bellum-army-view';
 import { launchHexBattle } from './hex-battle';
 import { spendResource } from '../core/resources';
 import { evaluateBellumDefeat, type BellumDefeatEvaluation } from './campaign-defeat';
+import { applyBellumEffects, type AppliedLine } from './bellum-encounter-effects';
+import { BELLUM_ENCOUNTER_TABLE } from './encounter-effects-data';
 
 export type EncounterOutcome = {
   /** True when the hex's event was cleared (re-entry won't re-fire). */
@@ -27,93 +31,51 @@ export type EncounterOutcome = {
   message?: string;
   /** Bellum defeat status after resolving this encounter. */
   defeat?: BellumDefeatEvaluation;
+  /** One line per effect that mutated state. */
+  appliedLines?: AppliedLine[];
 };
-
-const NOOP: EncounterOutcome = { consumed: true };
 
 /**
  * Resolve the player's chosen action on the active hex encounter.
- * Always consumes the event afterwards — except when the encounter type is
- * unknown (legacy 'none' / unmapped variants) in which case we leave state
- * alone and bail.
+ * Consumes the event FIRST — a fast double-click cannot re-fire the dispatch.
+ * Returns consumed:false only when the encounter type is unknown (unmapped
+ * variants) so the caller can leave state alone.
  */
 export function resolveEncounter(tile: HexTile, actionIndex: number): EncounterOutcome {
   const encounter = eventTypeToEncounterType(tile.event);
   if (encounter === null) return { consumed: false };
 
-  const outcome = dispatch(tile, encounter, actionIndex);
+  // Consume FIRST so a fast double-click can't re-fire the dispatch.
   consumeEvent(tile.id);
-  const defeat = evaluateBellumDefeat(campaignState.value);
-  return { ...outcome, defeat };
-}
 
-function dispatch(
-  tile: HexTile,
-  encounter: EncounterType,
-  actionIndex: number,
-): EncounterOutcome {
-  switch (encounter) {
-    case 'rest':
-      addCampaignMorale(20);
-      refreshMovementPoints();
-      return { consumed: true, message: 'The legion makes camp. Morale and march points recover.' };
-
-    case 'forage':
-      addArmySupplies(10);
-      addCampaignMorale(1);
-      return { consumed: true, message: 'Foragers return with grain and salt pork.' };
-
-    case 'merchant':
-      // idx 0 = Trade, idx 1 = Ignore.
-      if (actionIndex === 0) {
-        if (spendResource('gold', 10)) {
-          addArmySupplies(5);
-          return { consumed: true, message: 'Traded 10 gold for 5 supplies.' };
-        }
-        return { consumed: true, message: 'The merchant frowns at your empty purse.' };
-      }
-      return NOOP;
-
-    case 'event':
-      // Story / inspect — flavor only, no mechanics in S31-05a.
-      return NOOP;
-
-    case 'battle':
-      // S31-05b: idx 0 = Fight → launchHexBattle; idx 1 = Retreat → small morale knock.
-      // launchHexBattle returns false when preparedArmy is null (campaign tab
-      // entered without a commander) — fall back to placeholder deltas so the
-      // player isn't blocked.
-      if (actionIndex === 0) {
-        if (launchHexBattle(tile, 'battle')) return { consumed: true };
-        addCampaignMorale(-10);
-        addArmySupplies(-3);
-        return { consumed: true, message: 'The skirmish ends bloody but the road is clear.' };
-      }
-      addCampaignMorale(-5);
-      return { consumed: true, message: 'The legion withdraws to safer ground.' };
-
-    case 'elite_battle':
-      if (actionIndex === 0) {
-        if (launchHexBattle(tile, 'elite_battle')) return { consumed: true };
-        addCampaignMorale(-12);
-        addArmySupplies(-4);
-        return { consumed: true, message: 'A hard-won fight. Veterans paid the price.' };
-      }
-      addCampaignMorale(-2);
-      return { consumed: true, message: 'The legion gives the elite force a wide berth.' };
-
-    case 'ambush':
-      // No retreat option for ambush — surprised legions fight.
-      if (launchHexBattle(tile, 'ambush')) return { consumed: true };
-      addCampaignMorale(-8);
-      addArmySupplies(-2);
-      return { consumed: true, message: 'The ambush bloodies the column before it scatters.' };
-
-    default:
-      // EncounterType has variants (boss, scout, recruit, siege, hazard,
-      // unknown) that eventTypeToEncounterType never produces today. Kept as
-      // a no-op fallback so a future EventType→EncounterType mapping change
-      // can't crash the bridge silently.
-      return NOOP;
+  const actions = BELLUM_ENCOUNTER_TABLE[encounter];
+  const action = actions[actionIndex];
+  if (!action) {
+    // Out-of-range action index — treat as no-op.
+    const defeat = evaluateBellumDefeat(campaignState.value);
+    return { consumed: true, defeat };
   }
+
+  // Special-case merchant trade gate (gold spend before applying effects).
+  let appliedLines: AppliedLine[] = [];
+  let message = action.message;
+
+  if (encounter === 'merchant' && actionIndex === 0) {
+    if (!spendResource('gold', 10)) {
+      message = 'The merchant frowns at your empty purse.';
+    } else {
+      appliedLines = applyBellumEffects(action.effects, tile);
+    }
+  } else if (action.launchesBattle && launchHexBattle(tile, encounter)) {
+    // Battle launched — defer effects to post-battle (handled in
+    // applyHexBattleOutcome). No-op here, no message yet.
+    return { consumed: true };
+  } else {
+    appliedLines = applyBellumEffects(action.effects, tile);
+  }
+
+  if (action.refreshesMovement) refreshMovementPoints();
+
+  const defeat = evaluateBellumDefeat(campaignState.value);
+  return { consumed: true, message, defeat, appliedLines };
 }
