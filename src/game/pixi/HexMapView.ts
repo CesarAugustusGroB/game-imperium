@@ -31,6 +31,13 @@ export class HexMapView {
   private readonly tileViews: Map<string, HexTileView> = new Map();
   private readonly hexSize: number = 64;
 
+  // S31-10a: ordered list of tile ids the legion has occupied this session.
+  // Drives the gold parchment polyline in pathLayer. Seeded from any tile
+  // already flagged `visited` on first mount; appended on each `moveToTile`.
+  // Not persisted — visit order is reconstructed in tile-array order on
+  // reload, which is acceptable while save support is a follow-up.
+  private visitHistory: string[] = [];
+
   private readonly app: Application;
   private tiles: HexTile[];
   private state: CampaignState;
@@ -66,6 +73,8 @@ export class HexMapView {
     this.root.addChild(this.tileLayer);
     this.root.addChild(this.effectsLayer);
 
+    this.visitHistory = options.tiles.filter((t) => t.visited).map((t) => t.id);
+
     this.centerMap();
     this.setupCamera();
     this.render();
@@ -82,6 +91,7 @@ export class HexMapView {
     this.detachPulseTicker();
 
     this.drawTiles();
+    this.drawVisitHistory();
     this.drawCurrentPositionPulse();
   }
 
@@ -157,6 +167,14 @@ export class HexMapView {
   private moveToTile(destination: HexTile): void {
     this.state.currentTileId = destination.id;
 
+    // S31-10a: append to visitHistory if not already the tail entry. Skipping
+    // duplicates means a re-step onto the current hex (shouldn't happen via
+    // handleTileClick today, but possible via external setState) doesn't
+    // introduce a degenerate zero-length segment.
+    if (this.visitHistory[this.visitHistory.length - 1] !== destination.id) {
+      this.visitHistory.push(destination.id);
+    }
+
     this.tiles = this.tiles.map((tile) => {
       if (tile.id === destination.id) {
         return { ...tile, visited: true, discovered: true, current: true };
@@ -177,6 +195,38 @@ export class HexMapView {
     this.onPlayerMoved(currentTile);
     this.onTilesChanged(this.tiles);
     this.render();
+  }
+
+  private drawVisitHistory(): void {
+    if (this.visitHistory.length < 2) return;
+
+    // Resolve ids → discovered tiles. Drop any history entry that is no
+    // longer in `this.tiles` (regen) or got re-fogged (defensive — doesn't
+    // happen today but matches AC's "Lines respect fog").
+    const tileById = new Map(this.tiles.map((t) => [t.id, t]));
+    const points: { x: number; y: number }[] = [];
+    for (const id of this.visitHistory) {
+      const tile = tileById.get(id);
+      if (!tile || !tile.discovered) continue;
+      points.push(hexToPixel(tile.q, tile.r, this.hexSize));
+    }
+    if (points.length < 2) return;
+
+    // Dual-stroke glow emulation: wide outer at low alpha + thin inner at
+    // higher alpha. Avoids adding pixi-filters as a dep just for a soft glow.
+    this.strokePolyline(points, { width: 9, alpha: 0.18 });
+    this.strokePolyline(points, { width: 4, alpha: 0.55 });
+  }
+
+  private strokePolyline(
+    points: readonly { x: number; y: number }[],
+    style: { width: number; alpha: number },
+  ): void {
+    this.pathLayer.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      this.pathLayer.lineTo(points[i].x, points[i].y);
+    }
+    this.pathLayer.stroke({ width: style.width, color: 0xd8aa55, alpha: style.alpha });
   }
 
   private drawCurrentPositionPulse(): void {
