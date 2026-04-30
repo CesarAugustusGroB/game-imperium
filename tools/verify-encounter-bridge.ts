@@ -2,8 +2,10 @@
 // Run with: npx tsx tools/verify-encounter-bridge.ts
 //
 // Hits real campaign-state signals and addResource/spendResource for the
-// merchant case — they're plain @preact/signals values with no DOM
-// dependency, so the script runs in node.
+// merchant case. hex-battle uses an injected navigation hook so the
+// transitive import chain stays node-runnable; without registering the
+// hook, launchHexBattle returns false and dispatch falls back to the
+// placeholder casualty deltas — exactly what these tests assert.
 
 import { resolveEncounter } from '../src/game/campaign/encounter-bridge';
 import { campaignState, hexTiles, setActiveEvent, setTiles } from '../src/game/campaign/campaign-state';
