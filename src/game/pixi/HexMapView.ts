@@ -83,10 +83,17 @@ export class HexMapView {
   render(): void {
     if (this.destroyed) return;
 
+    // S31-09: explicitly destroy old HexTileView instances before clearing
+    // the layer. Container.removeChildren() only detaches; for tiles holding
+    // ticker-driven effects (event-fx) we need destroy() to run their
+    // cleanup. Keeps app.ticker clean across renders.
+    for (const view of this.tileViews.values()) {
+      view.destroy();
+    }
+    this.tileViews.clear();
     this.tileLayer.removeChildren();
     this.pathLayer.clear();
     this.effectsLayer.removeChildren();
-    this.tileViews.clear();
 
     this.detachPulseTicker();
 
@@ -130,6 +137,12 @@ export class HexMapView {
     if (this.destroyed) return;
     this.destroyed = true;
     this.detachPulseTicker();
+    // S31-09: tear down per-tile event-fx ticker callbacks before component
+    // unmount so PixiHexMap's app.destroy() doesn't race with active emitters.
+    for (const view of this.tileViews.values()) {
+      view.destroy();
+    }
+    this.tileViews.clear();
     if (this.wheelHandler) {
       // app.canvas may already be gone if app.destroy() ran first.
       this.app.canvas?.removeEventListener('wheel', this.wheelHandler);
@@ -139,7 +152,7 @@ export class HexMapView {
 
   private drawTiles(): void {
     for (const tile of this.tiles) {
-      const view = new HexTileView(tile, this.hexSize, (clickedTile) => {
+      const view = new HexTileView(tile, this.hexSize, this.app.ticker, (clickedTile) => {
         // Suppress click if the user just dragged the camera past
         // the threshold — the pointertap fires after pointerup either way.
         if (this.dragMoved) return;

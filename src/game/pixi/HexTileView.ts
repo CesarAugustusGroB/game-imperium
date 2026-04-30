@@ -2,21 +2,31 @@
 // No Preact/React imports — pure Pixi v8. Click selection bubbles up via the
 // onSelect callback so HexMapView (S30-07) owns the routing decisions.
 
-import { Container, Graphics, Text } from 'pixi.js';
-import type { HexTile } from '../campaign/campaign-types';
+import { Container, Graphics, Text, type Ticker } from 'pixi.js';
+import type { EventType, HexTile } from '../campaign/campaign-types';
 import { getTerrainColor } from '../campaign/terrain';
 import { getEventColor, getEventIcon } from '../campaign/events';
+import { createDangerEmitter, createGlowHalo } from './effects/event-fx';
+
+const DANGER_EVENTS: ReadonlySet<EventType> = new Set(['battle', 'ambush', 'elite']);
+const HALO_EVENTS: ReadonlySet<EventType> = new Set(['merchant', 'supply', 'rest']);
 
 export class HexTileView extends Container {
   public tile: HexTile;
   private size: number;
   private onSelect: (tile: HexTile) => void;
+  private ticker: Ticker;
+  // S31-09: cleanup fn for the active particle/halo effect on this tile.
+  // Always reset before each draw() and on destroy() so ticker callbacks
+  // don't leak when render() rebuilds the tile views.
+  private effectCleanup: (() => void) | null = null;
 
-  constructor(tile: HexTile, size: number, onSelect: (tile: HexTile) => void) {
+  constructor(tile: HexTile, size: number, ticker: Ticker, onSelect: (tile: HexTile) => void) {
     super();
 
     this.tile = tile;
     this.size = size;
+    this.ticker = ticker;
     this.onSelect = onSelect;
 
     this.eventMode = 'static';
@@ -39,6 +49,12 @@ export class HexTileView extends Container {
   }
 
   private draw(): void {
+    // S31-09: clear any prior tick-driven effect before rebuilding the tile.
+    if (this.effectCleanup) {
+      this.effectCleanup();
+      this.effectCleanup = null;
+    }
+
     this.removeChildren();
 
     const points = this.getHexPoints();
@@ -72,6 +88,34 @@ export class HexTileView extends Container {
     if (!this.tile.discovered) {
       this.drawFog(points);
     }
+
+    // S31-09: spawn ember/halo effect for danger or important event tiles.
+    // Discovered-only per AC. Effect cleanup is registered for the next draw.
+    if (this.tile.discovered) {
+      if (DANGER_EVENTS.has(this.tile.event)) {
+        this.effectCleanup = createDangerEmitter(this, getEventColor(this.tile.event), this.ticker);
+      } else if (HALO_EVENTS.has(this.tile.event)) {
+        this.effectCleanup = createGlowHalo(
+          this,
+          getEventColor(this.tile.event),
+          this.ticker,
+          this.size * 0.5,
+        );
+      }
+    }
+  }
+
+  /**
+   * Override Container.destroy so per-tile ticker effects are torn down
+   * before the standard child destruction. HexMapView.render() calls this
+   * on every prior view before rebuilding the layer.
+   */
+  override destroy(...args: Parameters<Container['destroy']>): void {
+    if (this.effectCleanup) {
+      this.effectCleanup();
+      this.effectCleanup = null;
+    }
+    super.destroy(...args);
   }
 
   private getHexPoints(): number[] {
