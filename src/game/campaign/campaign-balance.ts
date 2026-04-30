@@ -2,7 +2,7 @@
 // All deltas live here so balance passes don't need to chase logic across
 // HexMapView and campaign-state.
 
-import type { EventType, TerrainType } from './campaign-types';
+import type { TerrainType } from './campaign-types';
 
 export const SUPPLIES_MAX = 99;
 export const MORALE_MAX = 100;
@@ -15,19 +15,18 @@ export function getSupplyCost(terrain: TerrainType): number {
   return SUPPLY_COST_BASE;
 }
 
-export function getMoraleDelta(terrain: TerrainType, event: EventType): number {
-  let delta = 0;
-
-  if (terrain === 'camp') delta += 5;
-  else if (terrain === 'ruins') delta -= 2;
-  else if (terrain === 'mountains') delta -= 3;
-  else if (terrain === 'road') delta += 1;
-
-  if (event === 'rest') delta += 5;
-  else if (event === 'ambush') delta -= 8;
-  else if (event === 'story') delta += 2;
-
-  return delta;
+/**
+ * Per-step morale shift from the terrain alone. Event-driven morale (rest +,
+ * ambush -, story +, …) lives in `encounter-bridge` (S31-05a) so each event
+ * is paid for once at resolution time, not double-counted on tile entry +
+ * encounter resolution.
+ */
+export function getMoraleDelta(terrain: TerrainType): number {
+  if (terrain === 'camp') return 5;
+  if (terrain === 'ruins') return -2;
+  if (terrain === 'mountains') return -3;
+  if (terrain === 'road') return 1;
+  return 0;
 }
 
 export type MoveOutcome = {
@@ -46,7 +45,6 @@ export type MoveOutcome = {
 export function applyMoveDeltas(
   prev: { supplies: number; morale: number },
   terrain: TerrainType,
-  event: EventType,
 ): MoveOutcome {
   const supplyCost = getSupplyCost(terrain);
   const supplies = clamp(prev.supplies - supplyCost, 0, SUPPLIES_MAX);
@@ -54,7 +52,7 @@ export function applyMoveDeltas(
   const starvationTriggered = prev.supplies > 0 && supplies === 0;
 
   const moraleDelta =
-    getMoraleDelta(terrain, event) -
+    getMoraleDelta(terrain) -
     (starvationTriggered ? STARVATION_MORALE_PENALTY : 0);
 
   const morale = clamp(prev.morale + moraleDelta, 0, MORALE_MAX);

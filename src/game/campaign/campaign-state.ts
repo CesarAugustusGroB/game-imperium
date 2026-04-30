@@ -41,7 +41,7 @@ export function setActiveEvent(tileId: string | null): void {
  */
 export function applyMove(tile: HexTile): { starvationTriggered: boolean } {
   const prev = campaignState.value;
-  const outcome = applyMoveDeltas(prev, tile.terrain, tile.event);
+  const outcome = applyMoveDeltas(prev, tile.terrain);
   campaignState.value = {
     ...prev,
     currentTileId: tile.id,
