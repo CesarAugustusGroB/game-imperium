@@ -82,6 +82,15 @@ export function synthesizeHexBattleSpoke(
     completed: false,
     duration: 1,
     currentSeason: 1,
+    // S32-06 audit: posture is currently VESTIGIAL for hex battles.
+    // `src/battle/index.ts:enterFromSpoke` does not read `spoke.posture`;
+    // the only game-affecting consumer is `spoke.tickSeason`'s
+    // ATTACKING_UPKEEP_BONUS, which the synthesized hex spoke bypasses
+    // (main.tsx routes back to Bellum on outcome, never seasons through).
+    // We still set it semantically so a future `enterFromSpoke` path can
+    // pick up "ambush = defender" / "battle = attacker" deployment bias
+    // without changing this synthesis. Tracked: S33 backlog "wire posture
+    // to BattleV2 deployment".
     posture: encounterType === 'ambush' ? 'defending' : 'attacking',
     boundArmy: army,
     boundLegate: preparedLegate.value,
