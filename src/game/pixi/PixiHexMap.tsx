@@ -3,16 +3,17 @@ import { effect } from '@preact/signals';
 import { Application } from 'pixi.js';
 import {
   activeEventTileId,
+  applyMove,
   campaignState,
   hexTiles,
   setActiveEvent,
-  setCurrent,
   setSelected,
   setTiles,
 } from '../campaign/campaign-state';
 import { generateCampaignMap } from '../campaign/campaign-map-generator';
 import { revealNeighbors, updateReachableTiles } from '../campaign/movement';
 import { CampaignEventModal } from '../../ui/components/CampaignEventModal';
+import { addNotification } from '../../ui/notifications/notification-store';
 import { HexMapView } from './HexMapView';
 
 export function PixiHexMap() {
@@ -68,7 +69,15 @@ export function PixiHexMap() {
           state: { ...campaignState.value },
           onTileSelected: (tile) => setSelected(tile.id),
           onPlayerMoved: (tile) => {
-            setCurrent(tile.id);
+            const { starvationTriggered } = applyMove(tile);
+            if (starvationTriggered) {
+              addNotification({
+                kind: 'alert',
+                title: 'Out of Supplies',
+                message: 'The legion is starving — morale plummets.',
+                icon: '⚠️',
+              });
+            }
             // Fire the encounter modal only when the legion enters a hex
             // with an unresolved event AND no other modal is already open.
             if (tile.event !== 'none' && activeEventTileId.value === null) {

@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
 import type { CampaignState, HexTile } from './campaign-types';
+import { applyMoveDeltas } from './campaign-balance';
 
 const INITIAL_STATE: CampaignState = {
   currentTileId: '0,0',
@@ -31,6 +32,23 @@ export function setSelected(tileId: string | null): void {
 
 export function setActiveEvent(tileId: string | null): void {
   activeEventTileId.value = tileId;
+}
+
+/**
+ * S31-03: atomic move write — currentTileId, supplies, and morale updated in
+ * one signal mutation so the HUD never observes a half-applied move.
+ * Returns starvationTriggered so the caller can fire the warning notification.
+ */
+export function applyMove(tile: HexTile): { starvationTriggered: boolean } {
+  const prev = campaignState.value;
+  const outcome = applyMoveDeltas(prev, tile.terrain);
+  campaignState.value = {
+    ...prev,
+    currentTileId: tile.id,
+    supplies: outcome.supplies,
+    morale: outcome.morale,
+  };
+  return { starvationTriggered: outcome.starvationTriggered };
 }
 
 /**
