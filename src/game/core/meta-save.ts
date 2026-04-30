@@ -55,6 +55,8 @@ import {
   hexTiles,
   setActiveEvent,
   setTiles,
+  setVisitHistory,
+  visitHistory,
 } from '../campaign/campaign-state';
 import type { CampaignState, HexTile } from '../campaign/campaign-types';
 
@@ -85,6 +87,8 @@ export interface CampaignSnapshot {
   hexTiles: HexTile[];
   campaignState: CampaignState;
   activeEventTileId: string | null;
+  /** S32-05: ordered list of tile ids the legion has occupied this run. */
+  visitHistory: string[];
 }
 
 export interface ActiveRunSave {
@@ -256,6 +260,14 @@ export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
   const activeId =
     typeof obj.activeEventTileId === 'string' ? obj.activeEventTileId : null;
 
+  // S32-05: visit history is decorative (drives the polyline). On any
+  // malformation, default to [] rather than rejecting the whole snapshot —
+  // the campaign state itself is more important to preserve.
+  const rawHistory = (obj as { visitHistory?: unknown }).visitHistory;
+  const safeHistory: string[] = Array.isArray(rawHistory) && rawHistory.every((id) => typeof id === 'string')
+    ? (rawHistory as string[])
+    : [];
+
   return {
     hexTiles: obj.hexTiles as HexTile[],
     campaignState: {
@@ -267,6 +279,7 @@ export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
       morale: cs.morale,
     },
     activeEventTileId: activeId,
+    visitHistory: safeHistory,
   };
 }
 
@@ -442,6 +455,7 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
       hexTiles: hexTiles.value,
       campaignState: campaignState.value,
       activeEventTileId: activeEventTileId.value,
+      visitHistory: visitHistory.value,
     },
   };
 }
@@ -598,6 +612,7 @@ export async function restoreActiveRun(): Promise<boolean> {
       setTiles(snapshot.campaign.hexTiles);
       campaignState.value = snapshot.campaign.campaignState;
       setActiveEvent(snapshot.campaign.activeEventTileId);
+      setVisitHistory(snapshot.campaign.visitHistory);
     }
 
     metaSave.value = {

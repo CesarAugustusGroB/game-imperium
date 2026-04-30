@@ -160,4 +160,58 @@ console.log('PASS: hexTiles array of primitives returns null');
 }
 console.log('PASS: hexTiles element missing fields returns null');
 
+// ── visitHistory: valid string array roundtrips ─────────────────────
+{
+  const raw = {
+    hexTiles: [makeTile(0, 0), makeTile(1, 0)],
+    campaignState: { currentTileId: '1,0', movementPoints: 2, supplies: 30, morale: 75 },
+    activeEventTileId: null,
+    visitHistory: ['0,0', '1,0'],
+  };
+  const out = migrateCampaignSnapshot(raw);
+  assert(out !== null, 'visitHistory roundtrip migrates');
+  assert(out!.visitHistory.length === 2, 'visitHistory length preserved');
+  assert(out!.visitHistory[0] === '0,0' && out!.visitHistory[1] === '1,0', 'visitHistory order preserved');
+}
+console.log('PASS: visitHistory string array roundtrips');
+
+// ── visitHistory: missing field defaults to [] ──────────────────────
+{
+  const raw = {
+    hexTiles: [],
+    campaignState: { currentTileId: '0,0', movementPoints: 2, supplies: 30, morale: 75 },
+    activeEventTileId: null,
+    // visitHistory omitted (legacy save)
+  };
+  const out = migrateCampaignSnapshot(raw);
+  assert(out !== null, 'legacy save without visitHistory still migrates');
+  assert(Array.isArray(out!.visitHistory) && out!.visitHistory.length === 0, 'visitHistory defaults to []');
+}
+console.log('PASS: missing visitHistory defaults to []');
+
+// ── visitHistory: non-array or wrong-element-type defaults to [] ────
+{
+  const raw = {
+    hexTiles: [],
+    campaignState: { currentTileId: '0,0', movementPoints: 2, supplies: 30, morale: 75 },
+    activeEventTileId: null,
+    visitHistory: 'corrupted',
+  };
+  const out = migrateCampaignSnapshot(raw);
+  assert(out !== null, 'malformed visitHistory does not reject the snapshot');
+  assert(out!.visitHistory.length === 0, 'malformed visitHistory falls back to []');
+}
+{
+  const raw = {
+    hexTiles: [],
+    campaignState: { currentTileId: '0,0', movementPoints: 2, supplies: 30, morale: 75 },
+    activeEventTileId: null,
+    visitHistory: ['0,0', 42, '1,0'],
+  };
+  const out = migrateCampaignSnapshot(raw);
+  assert(out !== null, 'mixed-type visitHistory does not reject the snapshot');
+  assert(out!.visitHistory.length === 0, 'mixed-type visitHistory falls back to []');
+}
+console.log('PASS: malformed visitHistory falls back to [] (snapshot preserved)');
+
 console.log('\nAll campaign-save migration checks passed');

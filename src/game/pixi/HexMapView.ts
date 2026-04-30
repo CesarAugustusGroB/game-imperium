@@ -6,6 +6,7 @@ import { Application, Container, Graphics, type Ticker } from 'pixi.js';
 import type { CampaignState, HexTile } from '../campaign/campaign-types';
 import { hexDistance, findPath } from '../campaign/hex-pathfinding';
 import { revealNeighbors, updateReachableTiles } from '../campaign/movement';
+import { appendVisit, setVisitHistory, visitHistory } from '../campaign/campaign-state';
 import { hexToPixel } from './hex-math';
 import { drawDecorationsForTile } from './hex-decorations';
 import { HexTileView } from './HexTileView';
@@ -36,13 +37,6 @@ export class HexMapView {
 
   private readonly tileViews: Map<string, HexTileView> = new Map();
   private readonly hexSize: number = 64;
-
-  // S31-10a: ordered list of tile ids the legion has occupied this session.
-  // Drives the gold parchment polyline in pathLayer. Seeded from any tile
-  // already flagged `visited` on first mount; appended on each `moveToTile`.
-  // Not persisted — visit order is reconstructed in tile-array order on
-  // reload, which is acceptable while save support is a follow-up.
-  private visitHistory: string[] = [];
 
   // S31-10b: id of the tile currently under the cursor (when reachable and
   // not the legion's own hex). Drives the brighter preview polyline drawn
@@ -94,7 +88,14 @@ export class HexMapView {
     this.root.addChild(this.decorationLayer);
     this.root.addChild(this.effectsLayer);
 
-    this.visitHistory = options.tiles.filter((t) => t.visited).map((t) => t.id);
+    // S32-05: visit history lives in the campaign-state signal (round-tripped
+    // through CampaignSnapshot). Seed from existing `visited` tiles only when
+    // the signal is empty — saved campaigns restore via setVisitHistory before
+    // this constructor runs, so the seeding short-circuits in that path.
+    if (visitHistory.value.length === 0) {
+      const seed = options.tiles.filter((t) => t.visited).map((t) => t.id);
+      if (seed.length > 0) setVisitHistory(seed);
+    }
 
     this.centerMap();
     this.setupCamera();
@@ -293,13 +294,10 @@ export class HexMapView {
   private moveToTile(destination: HexTile): void {
     this.state.currentTileId = destination.id;
 
-    // S31-10a: append to visitHistory if not already the tail entry. Skipping
-    // duplicates means a re-step onto the current hex (shouldn't happen via
-    // handleTileClick today, but possible via external setState) doesn't
-    // introduce a degenerate zero-length segment.
-    if (this.visitHistory[this.visitHistory.length - 1] !== destination.id) {
-      this.visitHistory.push(destination.id);
-    }
+    // S32-05: append via the campaign-state signal helper. The duplicate-tail
+    // guard from S31-10a lives inside appendVisit so a re-step onto the
+    // current hex doesn't introduce a zero-length polyline segment.
+    appendVisit(destination.id);
 
     this.tiles = this.tiles.map((tile) => {
       if (tile.id === destination.id) {
@@ -324,14 +322,15 @@ export class HexMapView {
   }
 
   private drawVisitHistory(): void {
-    if (this.visitHistory.length < 2) return;
+    const history = visitHistory.value;
+    if (history.length < 2) return;
 
     // Resolve ids → discovered tiles. Drop any history entry that is no
     // longer in `this.tiles` (regen) or got re-fogged (defensive — doesn't
     // happen today but matches AC's "Lines respect fog").
     const tileById = new Map(this.tiles.map((t) => [t.id, t]));
     const points: { x: number; y: number }[] = [];
-    for (const id of this.visitHistory) {
+    for (const id of history) {
       const tile = tileById.get(id);
       if (!tile || !tile.discovered) continue;
       points.push(hexToPixel(tile.q, tile.r, this.hexSize));
