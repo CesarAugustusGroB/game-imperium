@@ -4,6 +4,17 @@
 
 import type { EventType, HexTile } from './campaign-types';
 
+/**
+ * S31-08: public asset URL for the event icon, or null for 'none'. HTML
+ * callers (e.g. CampaignEventModal banner) use this for an `<img>` source so
+ * the same placeholder/painterly art that ships in the HEX_ASSETS Pixi bundle
+ * is reused outside the canvas without a second registry.
+ */
+export function getEventIconUrl(event: EventType): string | null {
+  if (event === 'none') return null;
+  return `/asset/campaign/events/${event}.png`;
+}
+
 export function getEventIcon(event: EventType): string {
   switch (event) {
     case 'battle':

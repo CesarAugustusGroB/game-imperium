@@ -2,10 +2,10 @@
 // No Preact/React imports — pure Pixi v8. Click selection bubbles up via the
 // onSelect callback so HexMapView (S30-07) owns the routing decisions.
 
-import { Container, Graphics, Text } from 'pixi.js';
+import { Container, Graphics, Sprite } from 'pixi.js';
 import type { HexTile } from '../campaign/campaign-types';
 import { getTerrainColor } from '../campaign/terrain';
-import { getEventColor, getEventIcon } from '../campaign/events';
+import { HEX_ASSETS, type EventAssetKey } from './hex-assets';
 
 export class HexTileView extends Container {
   public tile: HexTile;
@@ -108,16 +108,20 @@ export class HexTileView extends Container {
   }
 
   private drawEventIcon(): void {
-    const icon = new Text({
-      text: getEventIcon(this.tile.event),
-      style: {
-        fontSize: 26,
-        fill: getEventColor(this.tile.event),
-        fontWeight: 'bold',
-      },
-    });
-    icon.anchor.set(0.5);
-    this.addChild(icon);
+    // S31-08: sprite-based event icon. Texture comes from the shared
+    // HEX_ASSETS bundle so all hexes with the same event share one upload.
+    // S31-01's placeholder PNGs are pre-tinted per event color, so no
+    // sprite.tint here — commissioned art that arrives desaturated can
+    // wire `sprite.tint = getEventColor(...)` in this same spot.
+    const event = this.tile.event as EventAssetKey;
+    const texture = HEX_ASSETS.current.events[event];
+    const sprite = new Sprite(texture);
+    sprite.anchor.set(0.5);
+    // Parametric scale: event icon is ~55% of hex size on each axis.
+    const target = this.size * 1.1;
+    sprite.width = target;
+    sprite.height = target;
+    this.addChild(sprite);
   }
 
   private drawFog(points: number[]): void {
