@@ -5,22 +5,15 @@
 
 import type { HexTile } from './campaign-types';
 import { getHexNeighbors } from '../pixi/hex-math';
-import { isBlockedTerrain } from './terrain';
+import { reachableSet } from './hex-pathfinding';
 
 export function calculateReachableTiles(
   currentTile: HexTile,
   tiles: HexTile[],
   movementPoints: number,
 ): HexTile[] {
-  const neighbors = getHexNeighbors(currentTile, tiles);
-
-  return neighbors.filter((tile) => {
-    if (!tile.discovered) return false;
-    if (tile.visited) return false;
-    if (isBlockedTerrain(tile.terrain)) return false;
-    if (tile.movementCost > movementPoints) return false;
-    return true;
-  });
+  const set = reachableSet(currentTile, tiles, movementPoints);
+  return tiles.filter((t) => t.id !== currentTile.id && set.has(t.id));
 }
 
 export function updateReachableTiles(
