@@ -40,10 +40,10 @@ function warlord(): Cohort      { return pick(ELITE_VANGUARDS); }
 // ── Scaling helpers ─────────────────────────────────────────────────────────
 
 // Tuning constants — adjust here for balance
-const REGULAR_SEASON_MULTIPLIER = 1.8;   // baseCount = 1 + floor(season × this)
-const REGULAR_BASE_CAP = 10;             // max base count for regular battles
-const BOSS_SEASON_MULTIPLIER = 2.0;      // bossBase = 2 + floor(season × this)
-const BOSS_BASE_CAP = 12;                // max base count for boss battles
+const REGULAR_SEASON_MULTIPLIER = 1.0;   // baseCount = 1 + floor(season × this)
+const REGULAR_BASE_CAP = 8;              // max base count for regular battles
+const BOSS_SEASON_MULTIPLIER = 1.2;      // bossBase = 2 + floor(season × this)
+const BOSS_BASE_CAP = 9;                 // max base count for boss battles
 
 /**
  * effectiveThreat uses spoke count as a floor so players who complete many
@@ -54,22 +54,22 @@ function computeEffectiveThreat(threatLevel: number, completedSpokes: number): n
 }
 
 /**
- * eliteRatio: 0% at threat 0, ~40% at threat 10, capped at 60% at threat 15+.
+ * eliteRatio: 0% at threat 0, ~25% at threat 10, capped at 40% at threat 16+.
  */
 function computeEliteRatio(effectiveThreat: number): number {
-  return Math.min(0.6, effectiveThreat * 0.04);
+  return Math.min(0.4, effectiveThreat * 0.025);
 }
 
 /**
- * extraUnits: +1 extra unit per 3 threat levels, capped at 6.
+ * extraUnits: +1 extra unit per 5 threat levels, capped at 2.
  */
 function computeExtraUnits(effectiveThreat: number): number {
-  return Math.min(6, Math.floor(effectiveThreat / 3));
+  return Math.min(2, Math.floor(effectiveThreat / 5));
 }
 
 /**
  * Dynamic base count for regular battles.
- * Starts at 1, reaches 10 by season 5, capped at REGULAR_BASE_CAP.
+ * Starts at 1 (season 0), grows by 1 per season, capped at REGULAR_BASE_CAP (8).
  */
 function computeBaseCount(globalSeason: number): number {
   return Math.min(REGULAR_BASE_CAP, 1 + Math.floor(globalSeason * REGULAR_SEASON_MULTIPLIER));
@@ -77,7 +77,7 @@ function computeBaseCount(globalSeason: number): number {
 
 /**
  * Dynamic base count for boss battles.
- * Starts at 2, reaches 12 by season 5, capped at BOSS_BASE_CAP.
+ * Starts at 2, grows ~1.2 per season, capped at BOSS_BASE_CAP (9).
  */
 function computeBossBaseCount(globalSeason: number): number {
   return Math.min(BOSS_BASE_CAP, 2 + Math.floor(globalSeason * BOSS_SEASON_MULTIPLIER));
