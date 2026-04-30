@@ -2,14 +2,16 @@
 // Routes the modal's chosen action through encounter-type handlers that apply
 // their effects (morale/supplies/gold deltas) and consume the hex's event.
 //
-// Battle / elite / ambush get placeholder casualty deltas — the full
-// BattleScreenV2 launch (synthesized SpokeNode + post-battle return path) is
-// deferred to S31-05b, which is a Notion-tracked follow-up.
+// S31-05b: battle / elite / ambush now route through `launchHexBattle`,
+// which synthesizes a 1-node Spoke and navigates to BattleScreenV2. If
+// preparedArmy is null (no commander selected), we fall back to the
+// original placeholder casualty deltas so the player isn't stranded.
 
 import type { HexTile } from './campaign-types';
 import { eventTypeToEncounterType } from './event-encounter-mapping';
 import type { EncounterType } from '../progression/landmark-types';
 import { addMorale, addSupplies, consumeEvent } from './campaign-state';
+import { launchHexBattle } from './hex-battle';
 import { spendResource } from '../core/resources';
 
 export type EncounterOutcome = {
@@ -31,12 +33,16 @@ export function resolveEncounter(tile: HexTile, actionIndex: number): EncounterO
   const encounter = eventTypeToEncounterType(tile.event);
   if (encounter === null) return { consumed: false };
 
-  const outcome = dispatch(encounter, actionIndex);
+  const outcome = dispatch(tile, encounter, actionIndex);
   consumeEvent(tile.id);
   return outcome;
 }
 
-function dispatch(encounter: EncounterType, actionIndex: number): EncounterOutcome {
+function dispatch(
+  tile: HexTile,
+  encounter: EncounterType,
+  actionIndex: number,
+): EncounterOutcome {
   switch (encounter) {
     case 'rest':
       addMorale(20);
@@ -63,9 +69,12 @@ function dispatch(encounter: EncounterType, actionIndex: number): EncounterOutco
       return NOOP;
 
     case 'battle':
-      // S31-05b will replace this with a synthesized SpokeNode + battleV2 launch.
-      // idx 0 = Fight, idx 1 = Retreat.
+      // S31-05b: idx 0 = Fight → launchHexBattle; idx 1 = Retreat → small morale knock.
+      // launchHexBattle returns false when preparedArmy is null (campaign tab
+      // entered without a commander) — fall back to placeholder deltas so the
+      // player isn't blocked.
       if (actionIndex === 0) {
+        if (launchHexBattle(tile, 'battle')) return { consumed: true };
         addMorale(-10);
         addSupplies(-3);
         return { consumed: true, message: 'The skirmish ends bloody but the road is clear.' };
@@ -75,6 +84,7 @@ function dispatch(encounter: EncounterType, actionIndex: number): EncounterOutco
 
     case 'elite_battle':
       if (actionIndex === 0) {
+        if (launchHexBattle(tile, 'elite_battle')) return { consumed: true };
         addMorale(-12);
         addSupplies(-4);
         return { consumed: true, message: 'A hard-won fight. Veterans paid the price.' };
@@ -83,6 +93,8 @@ function dispatch(encounter: EncounterType, actionIndex: number): EncounterOutco
       return { consumed: true, message: 'The legion gives the elite force a wide berth.' };
 
     case 'ambush':
+      // No retreat option for ambush — surprised legions fight.
+      if (launchHexBattle(tile, 'ambush')) return { consumed: true };
       addMorale(-8);
       addSupplies(-2);
       return { consumed: true, message: 'The ambush bloodies the column before it scatters.' };
