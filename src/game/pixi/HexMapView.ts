@@ -6,6 +6,7 @@ import { Application, Container, Graphics, type Ticker } from 'pixi.js';
 import type { CampaignState, HexTile } from '../campaign/campaign-types';
 import { revealNeighbors, updateReachableTiles } from '../campaign/movement';
 import { hexToPixel } from './hex-math';
+import { drawDecorationsForTile } from './hex-decorations';
 import { HexTileView } from './HexTileView';
 
 export type HexMapViewOptions = {
@@ -26,6 +27,10 @@ export class HexMapView {
   private readonly terrainLayer: Container = new Container();
   private readonly tileLayer: Container = new Container();
   private readonly pathLayer: Graphics = new Graphics();
+  // S31-07: terrain decoration sprites (trees, peaks, ripples, milestones).
+  // Sits above tileLayer so decorations occlude state strokes/overlays, but
+  // below effectsLayer so the current-pulse and event icons stay readable.
+  private readonly decorationLayer: Container = new Container();
   private readonly effectsLayer: Container = new Container();
 
   private readonly tileViews: Map<string, HexTileView> = new Map();
@@ -71,6 +76,7 @@ export class HexMapView {
     this.root.addChild(this.terrainLayer);
     this.root.addChild(this.pathLayer);
     this.root.addChild(this.tileLayer);
+    this.root.addChild(this.decorationLayer);
     this.root.addChild(this.effectsLayer);
 
     this.visitHistory = options.tiles.filter((t) => t.visited).map((t) => t.id);
@@ -93,11 +99,13 @@ export class HexMapView {
     this.tileViews.clear();
     this.tileLayer.removeChildren();
     this.pathLayer.clear();
+    this.decorationLayer.removeChildren();
     this.effectsLayer.removeChildren();
 
     this.detachPulseTicker();
 
     this.drawTiles();
+    this.drawDecorations();
     this.drawVisitHistory();
     this.drawCurrentPositionPulse();
   }
@@ -165,6 +173,18 @@ export class HexMapView {
 
       this.tileLayer.addChild(view);
       this.tileViews.set(tile.id, view);
+    }
+  }
+
+  private drawDecorations(): void {
+    for (const tile of this.tiles) {
+      if (!tile.discovered) continue;
+      const decoration = drawDecorationsForTile(tile, this.hexSize);
+      if (!decoration) continue;
+      const position = hexToPixel(tile.q, tile.r, this.hexSize);
+      decoration.x = position.x;
+      decoration.y = position.y;
+      this.decorationLayer.addChild(decoration);
     }
   }
 
