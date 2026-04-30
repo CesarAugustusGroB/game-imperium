@@ -232,6 +232,12 @@ function normalizeBranches(branches: Spoke['branches']): Spoke['branches'] {
  * S31-04: parse a saved campaign blob back into a CampaignSnapshot.
  * Returns null on missing, non-object, or shape-mismatched data so legacy saves
  * (and any corruption) load cleanly with a fresh map.
+ *
+ * Spot-checks the first hexTiles element's shape so a non-empty array of
+ * non-HexTile garbage (e.g. a corrupted save with `hexTiles: [1, 2, 3]`) is
+ * rejected before HexTileView reads `tile.q` and crashes. The check assumes
+ * uniform corruption — one bad element implies the rest are too — which is
+ * how localStorage corruption realistically manifests.
  */
 export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -244,6 +250,8 @@ export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
   if (typeof cs.movementPoints !== 'number') return null;
   if (typeof cs.supplies !== 'number') return null;
   if (typeof cs.morale !== 'number') return null;
+
+  if (obj.hexTiles.length > 0 && !isLikelyHexTile(obj.hexTiles[0])) return null;
 
   const activeId =
     typeof obj.activeEventTileId === 'string' ? obj.activeEventTileId : null;
@@ -260,6 +268,18 @@ export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
     },
     activeEventTileId: activeId,
   };
+}
+
+function isLikelyHexTile(value: unknown): value is HexTile {
+  if (!value || typeof value !== 'object') return false;
+  const t = value as Partial<HexTile>;
+  return (
+    typeof t.id === 'string' &&
+    typeof t.q === 'number' &&
+    typeof t.r === 'number' &&
+    typeof t.terrain === 'string' &&
+    typeof t.event === 'string'
+  );
 }
 
 function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {

@@ -138,4 +138,26 @@ console.log('PASS: missing required campaignState fields returns null');
 }
 console.log('PASS: non-object campaignState returns null');
 
+// ── Malformed: hexTiles array of garbage (numbers) ──────────────────
+{
+  const raw = {
+    hexTiles: [1, 2, 3],
+    campaignState: { currentTileId: '0,0', movementPoints: 2, supplies: 30, morale: 75 },
+    activeEventTileId: null,
+  };
+  assert(migrateCampaignSnapshot(raw) === null, 'array of non-HexTile primitives returns null');
+}
+console.log('PASS: hexTiles array of primitives returns null');
+
+// ── Malformed: hexTiles element missing required fields ─────────────
+{
+  const raw = {
+    hexTiles: [{ id: '0,0' /* missing q, r, terrain, event */ }],
+    campaignState: { currentTileId: '0,0', movementPoints: 2, supplies: 30, morale: 75 },
+    activeEventTileId: null,
+  };
+  assert(migrateCampaignSnapshot(raw) === null, 'partial hexTile element returns null');
+}
+console.log('PASS: hexTiles element missing fields returns null');
+
 console.log('\nAll campaign-save migration checks passed');
