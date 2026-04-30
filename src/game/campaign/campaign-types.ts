@@ -21,7 +21,11 @@ export type EventType =
   | 'rest'
   | 'merchant'
   | 'story'
-  | 'elite';
+  | 'elite'
+  | 'scout'
+  | 'recruit'
+  | 'hazard'
+  | 'boss';
 
 export type HexTile = {
   id: string;

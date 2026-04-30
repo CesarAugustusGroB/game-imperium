@@ -192,6 +192,10 @@ const EVENT_LABEL: Record<EventType, string> = {
   merchant: 'Merchant',
   story: 'Marker',
   elite: 'Elite force',
+  scout: 'Vantage Hill',
+  recruit: 'Volunteers',
+  hazard: 'Hazard',
+  boss: 'Final Invasion',
 };
 
 function findTile(id: string | null): HexTile | undefined {

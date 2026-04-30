@@ -88,13 +88,56 @@ export const BELLUM_ENCOUNTER_TABLE: Record<EncounterType, BellumEncounterAction
       launchesBattle: true,
     },
   ],
-  // EncounterType has more variants (boss, scout, recruit, siege, hazard,
-  // unknown) that the legacy event mapping never produces. Empty arrays
-  // keep the lookup safe.
-  boss:    [],
-  scout:   [],
-  recruit: [],
+  scout: [
+    // idx 0: Send Outriders
+    {
+      effects: [
+        { type: 'scout',  radius: 2, toLevel: 1, label: 'Outriders sketch the road' },
+        { type: 'morale', delta: 1,              label: 'Eyes on the road' },
+      ],
+      message: 'Outriders sketch the road ahead.',
+    },
+  ],
+  recruit: [
+    // idx 0: Hire
+    {
+      effects: [
+        { type: 'iuniores', delta: 250, label: 'Local braves' },
+        { type: 'morale',   delta: 2,   label: 'Welcomed allies' },
+      ],
+      message: 'Local braves swear oaths and join the standards.',
+    },
+    // idx 1: Decline
+    {
+      effects: [
+        { type: 'morale', delta: -2, label: 'Spurned recruits' },
+      ],
+      message: 'Spurned, the recruits drift back into the woods.',
+    },
+  ],
+  hazard: [
+    // idx 0: Press On
+    {
+      effects: [
+        { type: 'morale',   delta: -5, label: 'Treacherous ground' },
+        { type: 'supplies', delta: -3, label: 'Lost mules' },
+      ],
+      message: 'Treacherous ground takes its toll on man and mule.',
+    },
+  ],
+  boss: [
+    // idx 0: Engage — launches the Final Invasion battle
+    {
+      effects: [
+        { type: 'morale',   delta: -30, label: 'Final Invasion' },
+        { type: 'supplies', delta: -15, label: 'Final Invasion' },
+      ],
+      message: 'The Final Invasion crashes against the unprepared legion.',
+      launchesBattle: true,
+    },
+  ],
+  // EncounterType has more variants (siege, unknown) that the legacy event
+  // mapping never produces. Empty arrays keep the lookup safe.
   siege:   [],
-  hazard:  [],
   unknown: [],
 };

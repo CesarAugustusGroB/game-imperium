@@ -25,6 +25,14 @@ export function eventTypeToEncounterType(
       return 'merchant';
     case 'story':
       return 'event';
+    case 'scout':
+      return 'scout';
+    case 'recruit':
+      return 'recruit';
+    case 'hazard':
+      return 'hazard';
+    case 'boss':
+      return 'boss';
     default:
       // 'none' and any future unmapped EventType both return null here.
       return null;
