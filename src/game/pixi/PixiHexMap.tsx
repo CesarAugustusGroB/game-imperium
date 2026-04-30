@@ -15,6 +15,7 @@ import { revealNeighbors, updateReachableTiles } from '../campaign/movement';
 import { CampaignEventModal } from '../../ui/components/CampaignEventModal';
 import { addNotification } from '../../ui/notifications/notification-store';
 import { HexMapView } from './HexMapView';
+import { loadHexAssets } from './hex-assets';
 
 export function PixiHexMap() {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -38,11 +39,19 @@ export function PixiHexMap() {
         autoDensity: true,
       })
       .then(() => {
+        // Mark init done BEFORE awaiting assets so that an unmount-during-load
+        // path still triggers app.destroy(true) via the cleanup below.
         initialised = true;
         if (cancelled) {
           app.destroy(true);
-          return;
+          return null;
         }
+        return loadHexAssets();
+      })
+      .then((assets) => {
+        // Either cancelled before assets arrived (null), or the unmount cleanup
+        // already destroyed the app — either way, don't mount a view.
+        if (cancelled || !assets) return;
         host.appendChild(app.canvas);
 
         // Bootstrap the campaign signals if this is the first mount.

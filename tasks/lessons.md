@@ -4,6 +4,14 @@ Rules for Claude to avoid repeating past mistakes.
 
 ---
 
+## Cancellation flag goes at the earliest cleanup-relevant point, not the end
+**Date**: 2026-04-29
+**Mistake**: When chaining multiple awaits in a Pixi `useEffect` (S31-01: `app.init()` → `loadHexAssets()` → mount view), the natural draft was to set `initialised = true` only at the very end of the chain. That leaves a window where init resolved but assets haven't yet, the component unmounts, the cleanup fires `if (initialised) app.destroy(true)` — and `initialised` is still false. The Application leaks.
+**Rule**: For any async setup chain where cleanup gates teardown on a "ready" flag, set the flag immediately after the resource that flag protects is created, not after the entire chain finishes. Each phase's cleanup-relevant flag must flip in the `.then()` of the phase that creates the resource.
+**How to apply**: When reviewing a multi-step `useEffect`, walk down the chain and ask: "if cancel fires here, what got created above that needs destroying?" Every such resource needs a flag flipped before its `await` returns.
+
+---
+
 ## TS `erasableSyntaxOnly` blocks parameter properties
 **Date**: 2026-04-29
 **Mistake**: In S30-06's `HexTileView` I used the constructor parameter-property shorthand (`constructor(public tile: HexTile, private size: number, ...)`). `tsc --noEmit` immediately failed with `TS1294: This syntax is not allowed when 'erasableSyntaxOnly' is enabled.` Parameter properties require runtime emit — the compiler can't erase them — and this project has `erasableSyntaxOnly` set in `tsconfig`.
