@@ -111,9 +111,9 @@ export function CampaignEventModal() {
   const iconUrl = getEventIconUrl(tile.event);
 
   const handleAction = (index: number): void => {
-    // S31-05a: dispatch the chosen action through the encounter bridge.
-    // Battle/elite/ambush launch BattleScreenV2 via launchHexBattle (S31-05b);
-    // others apply morale/supplies deltas directly.
+    // Dispatch the chosen action through the encounter bridge.
+    // Battle/elite/ambush launch BattleScreenV2 via launchHexBattle;
+    // others apply morale/supplies/gold deltas directly.
     //
     // S32-07 audit: order is `dispatch → consumeEvent` inside resolveEncounter.
     // For the battle path, dispatch sets currentSpoke + navigates to battleV2,

@@ -1,12 +1,6 @@
 import { signal } from '@preact/signals';
 import type { CampaignState, HexTile } from './campaign-types';
-import { applyMoveDeltas } from './campaign-balance';
-
-// S31-05a: clamps for the new addSupplies/addMorale setters. Kept local for
-// now to avoid a hard dependency on S31-03's campaign-balance module — when
-// that lands, this can switch to importing from there.
-const SUPPLIES_MAX = 99;
-const MORALE_MAX = 100;
+import { applyMoveDeltas, MORALE_MAX, SUPPLIES_MAX } from './campaign-balance';
 
 const INITIAL_STATE: CampaignState = {
   currentTileId: '0,0',
