@@ -37,7 +37,7 @@ EVENT_COLORS = {
     "elite":    (0xff, 0xcc, 0x55),
 }
 
-DECORATION_KEYS = ("tree-cluster", "peak", "ripple", "milestone")
+DECORATION_KEYS = ("tree-cluster", "peak", "ripple", "milestone", "ridge", "tent")
 
 TERRAIN_SIZE = 128
 EVENT_SIZE = 64
@@ -131,6 +131,34 @@ def write_decoration(name: str) -> Path:
         )
         draw.line((cx - 4, cy - 8, cx + 4, cy - 8), fill=(0x2a, 0x1f, 0x10, 255), width=1)
         draw.line((cx - 4, cy, cx + 4, cy), fill=(0x2a, 0x1f, 0x10, 255), width=1)
+    elif name == "ridge":
+        # S32-10: hill ridge crest — three low triangle peaks, brown-gold tone.
+        for ox in (-14, 0, 14):
+            draw.polygon(
+                [(cx + ox, cy + 4), (cx + ox - 9, cy + 14), (cx + ox + 9, cy + 14)],
+                fill=(0x7a, 0x5b, 0x32, 230),
+                outline=(0x4a, 0x36, 0x1e, 255),
+            )
+    elif name == "tent":
+        # S32-10: simple tent silhouette + smoke wisp above.
+        # Tent body: triangle with a small dark "entrance" notch at the base.
+        draw.polygon(
+            [(cx, cy - 6), (cx - 16, cy + 14), (cx + 16, cy + 14)],
+            fill=(0xc8, 0xa0, 0x60, 235),
+            outline=(0x5a, 0x40, 0x20, 255),
+        )
+        # Entrance: dark vertical slit at center base.
+        draw.polygon(
+            [(cx - 3, cy + 14), (cx + 3, cy + 14), (cx, cy + 4)],
+            fill=(0x32, 0x22, 0x10, 255),
+        )
+        # Smoke wisp: three small grey ellipses rising from above the tent peak.
+        for i, (sy, r) in enumerate(((-14, 3), (-20, 4), (-26, 5))):
+            sx_offset = 2 if i % 2 else -2
+            draw.ellipse(
+                (cx + sx_offset - r, cy + sy - r, cx + sx_offset + r, cy + sy + r),
+                fill=(0xb0, 0xb0, 0xb0, 180 - i * 30),
+            )
     else:
         raise ValueError(f"Unknown decoration: {name}")
 

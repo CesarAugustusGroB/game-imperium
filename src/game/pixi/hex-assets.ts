@@ -8,7 +8,13 @@ import { Assets, type Texture } from 'pixi.js';
 import type { EventType, TerrainType } from '../campaign/campaign-types';
 
 export type EventAssetKey = Exclude<EventType, 'none'>;
-export type DecorationKey = 'tree-cluster' | 'peak' | 'ripple' | 'milestone';
+export type DecorationKey =
+  | 'tree-cluster'
+  | 'peak'
+  | 'ripple'
+  | 'milestone'
+  | 'ridge'
+  | 'tent';
 
 export type HexAssetSet = {
   terrain: Record<TerrainType, Texture>;
@@ -44,6 +50,8 @@ const DECORATION_KEYS: DecorationKey[] = [
   'peak',
   'ripple',
   'milestone',
+  'ridge',
+  'tent',
 ];
 
 function buildBundleManifest(): Record<string, string> {
