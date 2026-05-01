@@ -11,6 +11,7 @@ import {
   activeForumTab, sidebarCollapsed, setForumTab, romanCalendar,
 } from './state';
 import type { ForumTab } from './state';
+import { tutorialDismissed, setTutorialDismissed } from '../../../game/core/meta-save';
 
 interface NavItem {
   k: ForumTab;
@@ -259,6 +260,51 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
             {cal.year}
           </div>
         </div>
+      )}
+
+      {/* S34-03: Tutorial re-trigger — only shown after the player has dismissed
+          the tutorial at least once. Non-destructive so styled in dim gold, not red. */}
+      {tutorialDismissed.value && (
+        <button
+          onClick={() => setTutorialDismissed(false)}
+          title="Show Tutorial"
+          style={{
+            display: 'flex', alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            gap: 8, padding: '6px 10px',
+            background: 'transparent',
+            border: '1px solid rgba(212, 168, 67, 0.20)',
+            borderRadius: 2,
+            color: 'rgba(212, 168, 67, 0.65)',
+            fontSize: 10, cursor: 'pointer',
+            transition: 'all 120ms',
+            fontFamily: 'var(--imp-font-body)',
+            marginBottom: 6,
+          }}
+          onMouseEnter={(e) => {
+            const t = e.currentTarget as HTMLButtonElement;
+            t.style.color = 'rgba(240, 208, 128, 0.95)';
+            t.style.borderColor = 'rgba(212, 168, 67, 0.45)';
+            t.style.background = 'rgba(212, 168, 67, 0.06)';
+          }}
+          onMouseLeave={(e) => {
+            const t = e.currentTarget as HTMLButtonElement;
+            t.style.color = 'rgba(212, 168, 67, 0.65)';
+            t.style.borderColor = 'rgba(212, 168, 67, 0.20)';
+            t.style.background = 'transparent';
+          }}
+        >
+          <span style={{ fontSize: 14, width: 14, textAlign: 'center', flexShrink: 0 }}>↻</span>
+          {!collapsed && (
+            <span style={{
+              letterSpacing: 2, textTransform: 'uppercase',
+              fontSize: 9,
+              fontFamily: 'var(--imp-font-display)',
+            }}>
+              Tutorial
+            </span>
+          )}
+        </button>
       )}
 
       {/* Collapse toggle */}

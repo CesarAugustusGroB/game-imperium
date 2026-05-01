@@ -25,8 +25,10 @@ import { bellumWarningState } from '../../game/campaign/campaign-defeat';
 import { SUPPLY_MAX_CARRY } from '../../config/game-config';
 import { CAMPAIGN_MOVEMENT_POINTS_MAX } from '../../game/campaign/campaign-balance';
 import { BellumWarningBanner } from '../components/bellum/BellumWarningBanner';
+import { BellumTutorialOverlay } from '../components/bellum/BellumTutorialOverlay';
 import { objectiveChipProps } from '../components/bellum/bellum-objective';
 import { navigateTo, navigateToBellum } from '../screens';
+import { tutorialDismissed } from '../../game/core/meta-save';
 
 if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-screen-styles')) {
   const el = document.createElement('style');
@@ -596,6 +598,9 @@ export function CampaignHexScreen() {
       <CampaignArmyStrip />
       {/* 3d: visually hidden aria-live region announces legion position changes */}
       <LegionPositionAnnouncer />
+      {/* S34-03: first-run tutorial overlay — gated on map bootstrap so it
+          doesn't flash over an empty viewport on a fresh run. */}
+      {!tutorialDismissed.value && hexTiles.value.length > 0 && <BellumTutorialOverlay />}
     </div>
   );
 }

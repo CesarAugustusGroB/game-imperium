@@ -1,4 +1,4 @@
-import { effect, signal } from '@preact/signals';
+import { computed, effect, signal } from '@preact/signals';
 import type { ArmyData } from '../../types';
 import { IUNIORES } from '../../config/game-config';
 import { COMMANDERS } from '../../data/commanders';
@@ -161,7 +161,7 @@ export interface ActiveRunSave {
 
 export interface MetaSave {
   /** Version for migration support. */
-  version: 2;
+  version: 3;
   /** Completed run history (most recent first). */
   runs: RunRecord[];
   /** Total runs started (includes incomplete). */
@@ -174,6 +174,10 @@ export interface MetaSave {
   commanderWins: string[];
   /** Current in-progress run snapshot for Continue. */
   activeRun: ActiveRunSave | null;
+  /** S34-03: whether the first-run Bellum tutorial overlay has been dismissed.
+   *  False for new players and existing players upgrading from v1/v2 so they
+   *  see the tutorial once after the upgrade. */
+  tutorialDismissed: boolean;
 }
 
 // —— Constants ——
@@ -186,13 +190,14 @@ const SAVE_DEBOUNCE_MS = 500;
 
 function createDefaultSave(): MetaSave {
   return {
-    version: 2,
+    version: 3,
     runs: [],
     totalRunsStarted: 0,
     victories: 0,
     highScore: 0,
     commanderWins: [],
     activeRun: null,
+    tutorialDismissed: false,
   };
 }
 
@@ -477,16 +482,20 @@ function migrateMetaSave(rawSave: unknown): MetaSave {
   if (!rawSave || typeof rawSave !== 'object') return createDefaultSave();
 
   const parsed = rawSave as Record<string, unknown>;
-  if (parsed.version !== 1 && parsed.version !== 2) return createDefaultSave();
+  // Accept v1 and v2 (upgrade) as well as v3 (passthrough).
+  if (parsed.version !== 1 && parsed.version !== 2 && parsed.version !== 3) return createDefaultSave();
 
   return {
-    version: 2,
+    version: 3,
     runs: Array.isArray(parsed.runs) ? parsed.runs as RunRecord[] : [],
     totalRunsStarted: typeof parsed.totalRunsStarted === 'number' ? parsed.totalRunsStarted : 0,
     victories: typeof parsed.victories === 'number' ? parsed.victories : 0,
     highScore: typeof parsed.highScore === 'number' ? parsed.highScore : 0,
     commanderWins: Array.isArray(parsed.commanderWins) ? parsed.commanderWins as string[] : [],
     activeRun: migrateActiveRun(parsed.activeRun),
+    // S34-03: default to false on v1/v2 upgrades so existing players see the
+    // tutorial once; preserve the stored value for v3 round-trips.
+    tutorialDismissed: typeof parsed.tutorialDismissed === 'boolean' ? parsed.tutorialDismissed : false,
   };
 }
 
@@ -841,6 +850,20 @@ export function getBestRun(): RunRecord | null {
 /** Check if a commander has won before. */
 export function hasCommanderWon(commanderId: string): boolean {
   return metaSave.value.commanderWins.includes(commanderId);
+}
+
+// —— S34-03: Tutorial dismissed flag ——
+
+/** Reactive accessor — true once the player has dismissed the Bellum tutorial.
+ *  Lives in the meta-save so it survives Abandon Run (per-run resets do not
+ *  touch the meta-save). */
+export const tutorialDismissed = computed(() => metaSave.value.tutorialDismissed);
+
+/** Flip the tutorial-dismissed flag and persist immediately. */
+export function setTutorialDismissed(dismissed: boolean): void {
+  if (metaSave.value.tutorialDismissed === dismissed) return;
+  metaSave.value = { ...metaSave.value, tutorialDismissed: dismissed };
+  persist();
 }
 
 /** Clear all save data. */
