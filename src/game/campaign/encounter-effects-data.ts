@@ -6,6 +6,7 @@
 
 import type { SpokeEffect } from '../progression/spoke-effects';
 import type { EncounterType } from '../progression/landmark-types';
+import type { BattleResult } from '../progression/spoke';
 
 export type BellumEncounterAction = {
   effects: SpokeEffect[];
@@ -140,4 +141,27 @@ export const BELLUM_ENCOUNTER_TABLE: Record<EncounterType, BellumEncounterAction
   // mapping never produces. Empty arrays keep the lookup safe.
   siege:   [],
   unknown: [],
+};
+
+/**
+ * Strategic-layer fallout applied AFTER a hex battle resolves. HP loss is
+ * already projected onto preparedArmy by main.tsx's write-back; these deltas
+ * are the morale/supplies fallout. Keyed on BattleResult.
+ *
+ * 'esc' covers the null outcome — ESC mid-battle.
+ */
+export const HEX_BATTLE_OUTCOME_EFFECTS: Record<BattleResult | 'esc', SpokeEffect[]> = {
+  victory: [
+    { type: 'morale', delta: 5, label: 'Victory in the field' },
+  ],
+  defeat: [
+    { type: 'morale',   delta: -15, label: 'Crushing defeat' },
+    { type: 'supplies', delta: -5,  label: 'Lost baggage train' },
+  ],
+  draw: [
+    { type: 'morale', delta: -5, label: 'Indecisive engagement' },
+  ],
+  esc: [
+    { type: 'morale', delta: -5, label: 'Withdrawal' },
+  ],
 };

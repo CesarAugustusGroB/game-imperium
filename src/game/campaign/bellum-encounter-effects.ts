@@ -6,7 +6,8 @@ import type { SpokeEffect } from '../progression/spoke-effects';
 import type { HexTile } from './campaign-types';
 import { addCampaignMorale, addArmySupplies } from './bellum-army-view';
 import { preparedArmy } from '../progression/strategic-store';
-import { iuniores, addResource, spendResource } from '../core/resources';
+import { iuniores, spendResource } from '../core/resources';
+import { grantBellumResource } from './bellum-run-gains';
 import { threatLevel } from '../core/game-state';
 import { hexTiles, setTiles } from './campaign-state';
 import { revealWithinRadius } from './hex-scouting';
@@ -50,7 +51,7 @@ export function applyBellumEffects(
 
       case 'iuniores': {
         if (effect.delta > 0) {
-          addResource('iuniores', effect.delta);
+          grantBellumResource('iuniores', effect.delta);
           lines.push({ kind: 'iuniores', label: effect.label, delta: effect.delta });
         } else if (effect.delta < 0) {
           const drain = Math.min(iuniores.value, -effect.delta);

@@ -83,7 +83,11 @@ export function PixiHexMap() {
           onPlayerMoved: (tile) => {
             const move = applyMove(tile);
             if (!move.moved) return move;
-            const defeat = evaluateBellumDefeat(campaignState.value, { countZeroSupplyMove: true });
+            const cohortsLostThisMove = move.supplyLog?.cohortsKilled.length ?? 0;
+            const defeat = evaluateBellumDefeat(
+              campaignState.value,
+              { countZeroSupplyMove: true, checkArmy: cohortsLostThisMove > 0 },
+            );
             if (move.starvationTriggered) {
               addNotification({
                 kind: 'alert',
@@ -92,8 +96,8 @@ export function PixiHexMap() {
                 icon: '⚠️',
               });
             }
-            if (move.supplyLog && move.supplyLog.cohortsKilled.length > 0) {
-              const n = move.supplyLog.cohortsKilled.length;
+            if (cohortsLostThisMove > 0) {
+              const n = cohortsLostThisMove;
               addNotification({
                 kind: 'alert',
                 title: 'Cohorts Lost',

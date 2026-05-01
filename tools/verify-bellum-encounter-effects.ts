@@ -29,6 +29,7 @@ import { threatLevel } from '../src/game/core/game-state';
 import type { HexTile, EventType } from '../src/game/campaign/campaign-types';
 import type { ArmyData, Cohort } from '../src/types';
 import { BELLUM_ENCOUNTER_TABLE } from '../src/game/campaign/encounter-effects-data';
+import { bellumGains, resetBellumGains } from '../src/game/campaign/bellum-run-gains';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`FAIL: ${message}`);
@@ -392,6 +393,50 @@ console.log('PASS 6: battle-modifier appends, deduplicates, survives second enco
   console.log(`  (${totalActions} table actions round-tripped without throwing)`);
 }
 console.log('PASS 7: encounter table coverage — every entry round-trips without throwing');
+
+// ── 8. Recruit iuniores grants flow through bellumGains tracker ──────────
+
+// 8a. Positive grant: bellumGains.iuniores tracks the gain
+{
+  resetState(20, 0, 0);
+  resetBellumGains();
+  iuniores.value = 0;
+
+  const tile = makeTile('recruit');
+  setTiles([tile]);
+  preparedArmy.value = makeArmy(20, 0);
+
+  applyBellumEffects(
+    [
+      { type: 'iuniores', delta: 250, label: 'Local braves' },
+      { type: 'morale',   delta: 2,   label: 'Welcomed allies' },
+    ],
+    tile,
+  );
+
+  assert(iuniores.value === 250, `8a: iuniores.value === 250, got ${iuniores.value}`);
+  assert(bellumGains.value.iuniores === 250, `8a: bellumGains.iuniores === 250, got ${bellumGains.value.iuniores}`);
+}
+console.log('PASS 8a: recruit iuniores grant flows through bellumGains tracker');
+
+// 8b. Negative drain: bellumGains is unchanged (gains tracker, not net P&L)
+{
+  resetState(20, 0, 0);
+  resetBellumGains();
+  iuniores.value = 100;
+
+  applyBellumEffects(
+    [{ type: 'iuniores', delta: -50, label: 'Drain test' }],
+    null,
+  );
+
+  assert(iuniores.value === 50, `8b: iuniores.value === 50 after drain, got ${iuniores.value}`);
+  assert(
+    bellumGains.value.iuniores === 0,
+    `8b: bellumGains.iuniores unchanged (0) after drain, got ${bellumGains.value.iuniores}`,
+  );
+}
+console.log('PASS 8b: negative iuniores drain does not decrement bellumGains tracker');
 
 preparedArmy.value = null;
 console.log('\nAll bellum-encounter-effects checks passed');
