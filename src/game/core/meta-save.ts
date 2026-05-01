@@ -50,6 +50,7 @@ import { faith, gold, influence, initResources, iuniores, momentum, type Resourc
 import type { Legate } from '../army/legate';
 import { normalizeCohortRoster } from '../army/cohort';
 import {
+  activeEventId,
   activeEventTileId,
   campaignState,
   hexTiles,
@@ -106,6 +107,7 @@ export interface CampaignSnapshot {
   hexTiles: HexTile[];
   campaignState: CampaignState;
   activeEventTileId: string | null;
+  activeEventId: string | null;
   /** S32-05: ordered list of tile ids the legion has occupied this run. */
   visitHistory: string[];
 }
@@ -362,11 +364,14 @@ export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
   // restoring into a non-existent tile id would crash on findTile lookup.
   // Both fail safely to null.
   const rawActiveId = typeof obj.activeEventTileId === 'string' ? obj.activeEventTileId : null;
+  const rawActiveEventId = typeof obj.activeEventId === 'string' ? obj.activeEventId : null;
   let activeId: string | null = null;
+  let activeCampaignEventId: string | null = null;
   if (rawActiveId !== null) {
     const matchingTile = sanitizedTiles.find(t => t.id === rawActiveId);
     if (matchingTile && matchingTile.event !== 'none') {
       activeId = rawActiveId;
+      activeCampaignEventId = rawActiveEventId;
     }
   }
 
@@ -387,6 +392,7 @@ export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
       movementPoints,
     },
     activeEventTileId: activeId,
+    activeEventId: activeCampaignEventId,
     visitHistory: safeHistory,
   };
 }
@@ -565,6 +571,7 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
       hexTiles: hexTiles.value,
       campaignState: campaignState.value,
       activeEventTileId: activeEventTileId.value,
+      activeEventId: activeEventId.value,
       visitHistory: visitHistory.value,
     },
   };
@@ -634,6 +641,7 @@ export function startActiveRunPersistence(): () => void {
     void hexTiles.value;
     void campaignState.value;
     void activeEventTileId.value;
+    void activeEventId.value;
 
     flushPendingPersist();
     pendingPersistTimer = setTimeout(() => {
@@ -722,7 +730,7 @@ export async function restoreActiveRun(): Promise<boolean> {
     if (snapshot.campaign) {
       setTiles(snapshot.campaign.hexTiles);
       campaignState.value = snapshot.campaign.campaignState;
-      setActiveEvent(snapshot.campaign.activeEventTileId);
+      setActiveEvent(snapshot.campaign.activeEventTileId, snapshot.campaign.activeEventId);
       setVisitHistory(snapshot.campaign.visitHistory);
     }
 

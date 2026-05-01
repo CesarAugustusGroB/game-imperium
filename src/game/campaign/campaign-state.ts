@@ -19,6 +19,7 @@ export const campaignState = signal<CampaignState>({ ...INITIAL_STATE });
 // null means no encounter is active. Held outside CampaignState because it's
 // purely UI flow, not gameplay state.
 export const activeEventTileId = signal<string | null>(null);
+export const activeEventId = signal<string | null>(null);
 
 // S32-05: ordered list of tile ids the legion has occupied this campaign.
 // Drives the visit-history polyline in HexMapView. Lives here (not as a
@@ -38,8 +39,13 @@ export function setSelected(tileId: string | null): void {
   campaignState.value = { ...campaignState.value, selectedTileId: tileId };
 }
 
-export function setActiveEvent(tileId: string | null): void {
+export function setActiveEvent(tileId: string | null, eventId: string | null = null): void {
   activeEventTileId.value = tileId;
+  activeEventId.value = tileId === null ? null : eventId;
+}
+
+export function setActiveEventId(eventId: string | null): void {
+  activeEventId.value = activeEventTileId.value === null ? null : eventId;
 }
 
 /** S32-05: replace the visit history wholesale (used by save restore). */
@@ -119,6 +125,7 @@ export function consumeEvent(tileId: string): void {
   );
   if (activeEventTileId.value === tileId) {
     activeEventTileId.value = null;
+    activeEventId.value = null;
   }
 }
 
@@ -126,6 +133,7 @@ export function resetCampaign(): void {
   hexTiles.value = [];
   campaignState.value = { ...INITIAL_STATE };
   activeEventTileId.value = null;
+  activeEventId.value = null;
   visitHistory.value = [];
   resetBellumDefeatState();
   resetBellumGains();

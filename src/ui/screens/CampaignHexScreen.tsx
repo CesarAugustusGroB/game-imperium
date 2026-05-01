@@ -18,6 +18,8 @@ import { getEventColor, getEventIcon, getEventContent } from '../../game/campaig
 import { PixiHexMap } from '../../game/pixi/PixiHexMap';
 import { colorToCss } from '../../utils/color';
 import { preparedArmy } from '../../game/progression/strategic-store';
+import { gold, momentum, iuniores } from '../../game/core/resources';
+import { FACTION_PRIMARY_RESOURCE, RESOURCE_INFO } from '../../game/core/commander';
 import { computeBellumMorale } from '../../game/campaign/bellum-army-view';
 import { bellumWarningState } from '../../game/campaign/campaign-defeat';
 import { SUPPLY_MAX_CARRY } from '../../config/game-config';
@@ -31,11 +33,20 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-sc
   el.id = 'campaign-hex-screen-styles';
   el.textContent = `
     .chs-root {
+      --chs-bottom-strip-height: 72px;
       position: relative;
       flex: 1;
       min-width: 0;
       min-height: 0;
       overflow: hidden;
+    }
+    .chs-map-host {
+      /* Fill the whole root — the bottom strip overlays the bottom 72px
+         with a 92-95% opaque gradient, hiding any canvas area below the
+         hex grid's overflow. */
+      position: absolute;
+      inset: 0;
+      background: #070509;
     }
     .chs-top-bar {
       position: absolute;
@@ -51,6 +62,13 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-sc
       pointer-events: none; /* Allow drag-pan through the bar's empty space */
     }
     .chs-top-bar > * { pointer-events: auto; } /* Re-enable on chip children */
+    .chs-resource-chip {
+      min-width: 58px;
+      justify-content: center;
+    }
+    .chs-resource-chip strong {
+      color: inherit;
+    }
 
     /* The left panel is a real info card — keep it interactive so the user
        can read and potentially click tile info in future. This means drag-pan
@@ -129,6 +147,11 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-sc
       align-items: center;
       gap: 16px;
       padding: 10px 22px;
+      /* Height reservation lives on the SOLID inner strip, not the transparent
+         outer — otherwise the gap between content and outer's min-height shows
+         the host background and reads as a dead zone. */
+      min-height: var(--chs-bottom-strip-height);
+      box-sizing: border-box;
       background: linear-gradient(180deg,
         rgba(22, 16, 10, 0.92) 0%,
         rgba(38, 26, 14, 0.95) 100%);
@@ -233,6 +256,16 @@ function eventLabel(event: EventType): string {
   return getEventContent({ event } as HexTile)?.title ?? 'Encounter';
 }
 
+// Faith and Influence are intentionally omitted from the campaign HUD —
+// they're not earned or spent on the hex map; surfacing them adds noise.
+const RESOURCE_ORDER = ['gold', 'momentum', 'iuniores'] as const;
+
+const RESOURCE_VALUES: Record<typeof RESOURCE_ORDER[number], () => number> = {
+  gold: () => gold.value,
+  momentum: () => momentum.value,
+  iuniores: () => iuniores.value,
+};
+
 function findTile(id: string | null): HexTile | undefined {
   if (!id) return undefined;
   return hexTiles.value.find((t) => t.id === id);
@@ -284,6 +317,35 @@ function BellumEmptyStateNoArmy() {
 
 // ── Top stats bar ─────────────────────────────────────────────────────────────
 
+function CampaignResourceChips() {
+  const commander = selectedCommander.value;
+  const primary = commander ? FACTION_PRIMARY_RESOURCE[commander.faction] : null;
+
+  return (
+    <>
+      {RESOURCE_ORDER.map((type) => {
+        const info = RESOURCE_INFO[type];
+        const value = RESOURCE_VALUES[type]();
+        const isPrimary = primary === type;
+
+        return (
+          <span
+            key={type}
+            class="ornate-stat-chip chs-resource-chip"
+            title={`${info.label}: ${value}${isPrimary ? '\nPrimary resource: gains are doubled.' : ''}`}
+            style={{
+              color: isPrimary ? info.color : 'var(--color-text-secondary)',
+              opacity: isPrimary ? 1 : 0.78,
+            }}
+          >
+            {info.icon} <strong>{value}</strong>
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 function CampaignTopBar() {
   const state = campaignState.value;
   const army = preparedArmy.value;
@@ -294,6 +356,7 @@ function CampaignTopBar() {
   if (!army) {
     return (
       <div class="chs-top-bar" role="region" aria-label="Campaign stats">
+        <CampaignResourceChips />
         <span
           class="ornate-stat-chip"
           title={`March points: ${state.movementPoints} / ${CAMPAIGN_MOVEMENT_POINTS_MAX}.\nOne move = one month, one MP.\nRefresh on bivouac (rest encounter) or season tick (every 3 moves).`}
@@ -321,6 +384,7 @@ function CampaignTopBar() {
 
   return (
     <div class="chs-top-bar" role="region" aria-label="Campaign stats">
+      <CampaignResourceChips />
       <span
         class="ornate-stat-chip"
         title={`March points: ${state.movementPoints} / ${CAMPAIGN_MOVEMENT_POINTS_MAX}.\nOne move = one month, one MP.\nRefresh on bivouac (rest encounter) or season tick (every 3 moves).`}

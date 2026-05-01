@@ -2,7 +2,7 @@
 // per-tile render loop. Camera (drag/zoom) is deferred to S30-09; signal
 // integration with the campaign store is deferred to S30-08/S30-11.
 
-import { Application, Container, Graphics, type Ticker } from 'pixi.js';
+import { Application, Container, Graphics, Rectangle, type Ticker } from 'pixi.js';
 import type { CampaignState, HexTile } from '../campaign/campaign-types';
 import { hexDistance, findPath } from '../campaign/hex-pathfinding';
 import { revealNeighbors, updateReachableTiles } from '../campaign/movement';
@@ -36,7 +36,10 @@ export class HexMapView {
   private readonly effectsLayer: Container = new Container();
 
   private readonly tileViews: Map<string, HexTileView> = new Map();
-  private readonly hexSize: number = 64;
+  // S33 polish: bumped from 64 → 96 so the radius-6 grid fills (and slightly
+  // overflows) the viewport. The bottom panel hides the bottom overflow,
+  // leaving no visible gap between the grid and the panel.
+  private readonly hexSize: number = 96;
 
   // S31-10b: id of the tile currently under the cursor (when reachable and
   // not the legion's own hex). Drives the brighter preview polyline drawn
@@ -56,6 +59,7 @@ export class HexMapView {
   // S30-09 camera state.
   private wheelHandler: ((event: WheelEvent) => void) | null = null;
   private dragMoved: boolean = false;
+  private cameraTouched: boolean = false;
   // S32 polish: promoted from setupCamera's closure scope so handleTileHover
   // can early-return while the camera is mid-drag — avoids N renders/frame
   // when the cursor sweeps tiles during a pan.
@@ -97,6 +101,7 @@ export class HexMapView {
       if (seed.length > 0) setVisitHistory(seed);
     }
 
+    this.fitToView();
     this.centerMap();
     this.setupCamera();
     this.render();
@@ -162,6 +167,48 @@ export class HexMapView {
       this.onTilesChanged(this.tiles);
     }
     this.render();
+  }
+
+  resizeViewport(): void {
+    if (this.destroyed) return;
+    this.updateHitArea();
+    if (!this.cameraTouched) {
+      this.fitToView();
+      this.centerMap();
+    }
+  }
+
+  /**
+   * S33 polish: compute a root scale that guarantees the radius-N hex grid
+   * fully covers the visible area (viewport minus bottom panel) regardless
+   * of monitor size. Uses the larger of the two axis ratios so the smaller
+   * axis overflows rather than leaving an empty band. Skipped once the
+   * player touches the camera (zoom wheel / pan) so manual adjustments
+   * stick across resizes.
+   */
+  private fitToView(): void {
+    const BOTTOM_PANEL_HEIGHT = 72;
+    const visibleW = this.app.screen.width;
+    const visibleH = this.app.screen.height - BOTTOM_PANEL_HEIGHT;
+    if (visibleW <= 0 || visibleH <= 0) return;
+
+    // Bounding box of a radius-N hex grid in unscaled root coords. The
+    // extra hexSize on each axis accounts for the half-hex that extends
+    // past the outermost center.
+    const radius = 6;
+    const gridW = 2 * (this.hexSize * Math.sqrt(3) * radius + this.hexSize * Math.sqrt(3) / 2);
+    const gridH = 2 * (this.hexSize * 1.5 * radius + this.hexSize);
+
+    // Floor the scale at 1 so we NEVER shrink the grid below its natural
+    // size — when the grid is already bigger than the viewport (common at
+    // 1080p with hexSize=96), the natural overflow is what hides every
+    // visible band. We only scale UP to fill bigger viewports.
+    const overflow = 1.04;
+    const scale = Math.max(
+      1,
+      Math.max(visibleW / gridW, visibleH / gridH) * overflow,
+    );
+    this.root.scale.set(scale);
   }
 
   /**
@@ -412,14 +459,23 @@ export class HexMapView {
   }
 
   private centerMap(): void {
+    // S33 polish: bias the y-center upward by half of the bottom panel's
+    // height so the grid centers in the VISIBLE area (viewport minus panel)
+    // instead of the geometric canvas center. Without this, the grid bottom
+    // sits ~36px above the panel and leaves an empty band of canvas bg.
+    const BOTTOM_PANEL_HEIGHT = 72;
     this.root.x = this.app.screen.width / 2;
-    this.root.y = this.app.screen.height / 2;
+    this.root.y = (this.app.screen.height - BOTTOM_PANEL_HEIGHT) / 2;
+  }
+
+  private updateHitArea(): void {
+    this.app.stage.hitArea = new Rectangle(0, 0, this.app.screen.width, this.app.screen.height);
   }
 
   private setupCamera(): void {
     const stage = this.app.stage;
     stage.eventMode = 'static';
-    stage.hitArea = this.app.screen;
+    this.updateHitArea();
 
     let startX = 0;
     let startY = 0;
@@ -458,6 +514,7 @@ export class HexMapView {
       const totalDy = event.global.y - startY;
       if (Math.hypot(totalDx, totalDy) > HexMapView.DRAG_CLICK_THRESHOLD) {
         this.dragMoved = true;
+        this.cameraTouched = true;
       }
     });
 
@@ -469,6 +526,7 @@ export class HexMapView {
         HexMapView.ZOOM_MIN,
         Math.min(HexMapView.ZOOM_MAX, this.root.scale.x * zoomFactor),
       );
+      if (nextScale !== this.root.scale.x) this.cameraTouched = true;
       this.root.scale.set(nextScale);
     };
 

@@ -5,12 +5,16 @@
 // is deferred to S31's gameplay-systems sprint.
 
 import { useEffect } from 'preact/hooks';
-import { activeEventTileId, hexTiles, setActiveEvent } from '../../game/campaign/campaign-state';
+import { activeEventId, activeEventTileId, hexTiles, setActiveEvent, setActiveEventId } from '../../game/campaign/campaign-state';
 import { getEventColor, getEventContent, getEventIcon, getEventIconUrl } from '../../game/campaign/events';
 import { resolveEncounter } from '../../game/campaign/encounter-bridge';
+import { getCurrentResources, resolveCampaignTileEvent } from '../../game/campaign/campaign-tile-event-engine';
+import { isCampaignTileEventType, pickCampaignTileEvent } from '../../game/campaign/campaign-tile-events';
 import { addNotification } from '../notifications/notification-store';
 import { OrnateFrame, OrnateHeader, OrnateDivider } from './OrnateFrame';
 import { colorToCss } from '../../utils/color';
+import { FACTION_COLORS, type Faction } from '../../game/core/commander';
+import { ChoiceButton } from './ChoiceButton';
 
 // Shared CSS injection (mirrors EventModal pattern).
 if (typeof document !== 'undefined' && !document.getElementById('campaign-event-modal-styles')) {
@@ -85,6 +89,9 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-event-
 
 export function CampaignEventModal() {
   const tileId = activeEventTileId.value;
+  const persistedEventId = activeEventId.value;
+  const tile = tileId ? hexTiles.value.find((t) => t.id === tileId) : null;
+  const campaignTileEvent = tile ? pickCampaignTileEvent(tile, persistedEventId) : null;
 
   // 3a-3: Escape key dismisses without consuming the event.
   useEffect(() => {
@@ -98,15 +105,22 @@ export function CampaignEventModal() {
     return () => document.removeEventListener('keydown', handler);
   }, [tileId]);
 
-  if (!tileId) return null;
+  useEffect(() => {
+    if (!tileId || !campaignTileEvent) return;
+    if (persistedEventId === campaignTileEvent.id) return;
+    setActiveEventId(campaignTileEvent.id);
+  }, [tileId, persistedEventId, campaignTileEvent?.id]);
 
-  const tile = hexTiles.value.find((t) => t.id === tileId);
+  if (!tileId) return null;
   if (!tile) return null;
 
-  const content = getEventContent(tile);
-  if (!content) return null;
+  const isCampaignTileEvent = isCampaignTileEventType(tile.event) && campaignTileEvent !== null;
+  const content = isCampaignTileEvent ? null : getEventContent(tile);
+  if (!isCampaignTileEvent && !content) return null;
 
-  const accent = colorToCss(getEventColor(tile.event));
+  const accent = isCampaignTileEvent
+    ? getCampaignTileEventAccent(campaignTileEvent.color)
+    : colorToCss(getEventColor(tile.event));
   const icon = getEventIcon(tile.event);
   const iconUrl = getEventIconUrl(tile.event);
 
@@ -122,7 +136,9 @@ export function CampaignEventModal() {
     // observes the post-state of every write at once. No intermediate frame
     // shows "modal-still-up + battle-screen-visible", so swapping the order
     // (consume-first) is unnecessary.
-    const outcome = resolveEncounter(tile, index);
+    const outcome = isCampaignTileEvent
+      ? resolveCampaignTileEvent(tile, campaignTileEvent, index)
+      : resolveEncounter(tile, index);
     if (outcome.message) {
       addNotification({
         kind: 'toast',
@@ -209,8 +225,8 @@ export function CampaignEventModal() {
         <div style={{ marginTop: '16px' }}>
           <OrnateHeader
             titleSize="md"
-            eyebrow="Encounter"
-            title={content.title}
+            eyebrow={isCampaignTileEvent ? `T${campaignTileEvent.tier} Encounter` : 'Encounter'}
+            title={isCampaignTileEvent ? campaignTileEvent.title : content!.title}
             accentColor={accent}
           />
         </div>
@@ -223,7 +239,7 @@ export function CampaignEventModal() {
             lineHeight: 1.5,
           }}
         >
-          {content.description}
+          {isCampaignTileEvent ? campaignTileEvent.description : content!.description}
         </p>
 
         <OrnateDivider />
@@ -236,18 +252,32 @@ export function CampaignEventModal() {
           }}
         >
           {/* 3b: first action is primary (filled gold-tinted); subsequent are secondary (outline). */}
-          {content.actions.map((action, i) => (
-            <button
-              key={i}
-              type="button"
-              class={i === 0 ? 'campaign-event-action campaign-event-action--primary' : 'campaign-event-action'}
-              onClick={() => handleAction(i)}
-            >
-              {action}
-            </button>
-          ))}
+          {isCampaignTileEvent
+            ? campaignTileEvent.choices.map((choice, i) => (
+                <ChoiceButton
+                  key={i}
+                  choice={choice}
+                  index={i}
+                  onSelect={handleAction}
+                  currentResources={getCurrentResources()}
+                />
+              ))
+            : content!.actions.map((action, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  class={i === 0 ? 'campaign-event-action campaign-event-action--primary' : 'campaign-event-action'}
+                  onClick={() => handleAction(i)}
+                >
+                  {action}
+                </button>
+              ))}
         </div>
       </OrnateFrame>
     </div>
   );
+}
+
+function getCampaignTileEventAccent(color: Faction | 'neutral'): string {
+  return color === 'neutral' ? 'var(--color-gold-secondary)' : FACTION_COLORS[color];
 }

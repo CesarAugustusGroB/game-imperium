@@ -90,7 +90,9 @@ export class HexTileView extends Container {
     const target = this.size * 2;
     sprite.width = target;
     sprite.height = target;
-    sprite.alpha = this.tile.discovered ? 1 : 0.18;
+    // Undiscovered: hide terrain entirely. The map's extent is read from the
+    // outline silhouette + fog overlay below, not from a leaked terrain hint.
+    sprite.alpha = this.tile.discovered ? 1 : 0;
     this.addChild(sprite);
 
     // Visited green tint — preserves the "visited" reading per S31-06 AC's
@@ -109,7 +111,9 @@ export class HexTileView extends Container {
     stroke.stroke({
       width: this.tile.reachable || this.tile.current ? 2 : 1,
       color: this.getStrokeColor(),
-      alpha: this.tile.discovered ? 0.75 : 0.18,
+      // Undiscovered: outline at ~55% so the map's full extent reads as a
+      // hex grid silhouette through the fog instead of disappearing.
+      alpha: this.tile.discovered ? 0.75 : 0.55,
     });
     this.addChild(stroke);
 
@@ -211,7 +215,9 @@ export class HexTileView extends Container {
   private drawFog(points: number[]): void {
     const fog = new Graphics();
     fog.poly(points);
-    fog.fill({ color: 0x000000, alpha: 0.68 });
+    // Lighter fog so the visible outline + parchment-tinted fill read as
+    // unexplored territory rather than as solid black canvas.
+    fog.fill({ color: 0x1a120a, alpha: 0.55 });
     this.addChild(fog);
   }
 

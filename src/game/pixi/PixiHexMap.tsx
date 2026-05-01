@@ -32,6 +32,17 @@ export function PixiHexMap() {
     let cancelled = false;
     let view: HexMapView | null = null;
     let disposeMirror: (() => void) | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+    let resizeFrame: number | null = null;
+
+    const scheduleViewportResize = () => {
+      if (resizeFrame !== null) return;
+      resizeFrame = window.requestAnimationFrame(() => {
+        resizeFrame = null;
+        if (cancelled || !view) return;
+        view.resizeViewport();
+      });
+    };
 
     void app
       .init({
@@ -159,6 +170,9 @@ export function PixiHexMap() {
         });
 
         app.stage.addChild(view.root);
+        resizeObserver = new ResizeObserver(scheduleViewportResize);
+        resizeObserver.observe(host);
+        scheduleViewportResize();
 
         // Mirror hexTiles signal into the view so external mutations
         // (e.g. consumeEvent after the modal closes) re-render the map.
@@ -193,6 +207,12 @@ export function PixiHexMap() {
 
     return () => {
       cancelled = true;
+      resizeObserver?.disconnect();
+      resizeObserver = null;
+      if (resizeFrame !== null) {
+        window.cancelAnimationFrame(resizeFrame);
+        resizeFrame = null;
+      }
       disposeMirror?.();
       disposeMirror = null;
       view?.destroy();
@@ -205,7 +225,7 @@ export function PixiHexMap() {
     <>
       <div
         ref={hostRef}
-        style={{ position: 'absolute', inset: 0, background: '#070509' }}
+        class="chs-map-host"
       />
       <CampaignEventModal />
     </>
