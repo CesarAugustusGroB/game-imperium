@@ -2,6 +2,7 @@ import { ENEMY_COHORTS } from './enemy-cohort-data';
 import { computeArmySize } from './cohort';
 import type { Cohort } from './cohort';
 import type { ArmyData } from '../../types/index';
+import type { EncounterType } from '../progression/landmark-types';
 
 // ── Cohort type references (static map — built once at module load) ─────────
 
@@ -93,10 +94,10 @@ function computeBossBaseCount(globalSeason: number): number {
  *   guard slots only appear at size ≥ 4
  *   reserve slots only appear at size ≥ 2
  */
-function buildRegularArmy(effectiveThreat: number, globalSeason: number): Cohort[] {
-  const baseCount = computeBaseCount(globalSeason);
-  const extraUnits = computeExtraUnits(effectiveThreat);
-  const totalCount = baseCount + extraUnits;
+function buildRegularArmy(effectiveThreat: number, globalSeason: number, totalCountOverride?: number): Cohort[] {
+  const totalCount = totalCountOverride !== undefined
+    ? Math.max(1, Math.min(REGULAR_BASE_CAP + 6, totalCountOverride))
+    : computeBaseCount(globalSeason) + computeExtraUnits(effectiveThreat);
   const eliteRatio = computeEliteRatio(effectiveThreat);
 
   // Proportional role split
@@ -125,15 +126,18 @@ function buildRegularArmy(effectiveThreat: number, globalSeason: number): Cohort
  * Build a boss enemy army. Separate scaling curve — always stronger than
  * regular at the same progression point.
  */
-function buildBossArmy(effectiveThreat: number, globalSeason: number, isFinalBattle: boolean): Cohort[] {
-  const extraUnits = Math.min(4, computeExtraUnits(effectiveThreat));
-
-  // Final invasion always gets max army; regular boss uses dynamic scaling
-  const bossBase = isFinalBattle
-    ? BOSS_BASE_CAP + 2  // 14 for final invasion
-    : computeBossBaseCount(globalSeason);
-
-  const totalCount = bossBase + extraUnits;
+function buildBossArmy(effectiveThreat: number, globalSeason: number, isFinalBattle: boolean, totalCountOverride?: number): Cohort[] {
+  let totalCount: number;
+  if (totalCountOverride !== undefined) {
+    totalCount = Math.max(1, Math.min(BOSS_BASE_CAP + 6, totalCountOverride));
+  } else {
+    const extraUnits = Math.min(4, computeExtraUnits(effectiveThreat));
+    // Final invasion always gets max army; regular boss uses dynamic scaling
+    const bossBase = isFinalBattle
+      ? BOSS_BASE_CAP + 2  // 14 for final invasion
+      : computeBossBaseCount(globalSeason);
+    totalCount = bossBase + extraUnits;
+  }
 
   // Role split: reserve + guard get fixed 2 each (if room), rest is vanguard
   const guardCount = Math.min(2, Math.max(0, totalCount - 1));
@@ -163,6 +167,32 @@ function buildBossArmy(effectiveThreat: number, globalSeason: number, isFinalBat
 // ── Public API ───────────────────────────────────────────────────────────────
 
 /**
+ * Compute the strength rating used by both the campaign banner and (optionally)
+ * as a strength override for `generateEnemyArmy`. Returns the same totalCount
+ * the army builders would produce — they share these formulas.
+ */
+export function computeEnemyStrengthRating(
+  encounterType: EncounterType,
+  globalSeason: number,
+  threatLevel: number,
+  completedSpokes: number,
+): number {
+  const effectiveThreat = computeEffectiveThreat(threatLevel, completedSpokes);
+  const isBoss = encounterType === 'boss';
+  if (isBoss) {
+    const extra = Math.min(4, computeExtraUnits(effectiveThreat));
+    return computeBossBaseCount(globalSeason) + extra;
+  }
+  const base = computeBaseCount(globalSeason);
+  const extra = computeExtraUnits(effectiveThreat);
+  // Elite encounters scale ~1.5×; cap at REGULAR_BASE_CAP + extra.
+  if (encounterType === 'elite_battle') {
+    return Math.min(REGULAR_BASE_CAP + extra, Math.ceil((base + extra) * 1.5));
+  }
+  return base + extra;
+}
+
+/**
  * Generate a data-driven enemy ArmyData scaled by progression.
  *
  * Army size starts at 1 (season 0) and grows between spokes, reaching
@@ -175,6 +205,7 @@ function buildBossArmy(effectiveThreat: number, globalSeason: number, isFinalBat
  * @param globalSeason     Current season (drives army size growth)
  * @param isBoss           True when current node type is 'boss'
  * @param isFinalBattle    True when globalSeason >= MAX_SEASONS
+ * @param strengthOverride Optional total cohort count override (bypasses base/extra derivation)
  */
 export function generateEnemyArmy(
   threatLevel: number,
@@ -182,11 +213,12 @@ export function generateEnemyArmy(
   globalSeason: number,
   isBoss: boolean,
   isFinalBattle: boolean,
+  strengthOverride?: number,
 ): ArmyData {
   const effectiveThreat = computeEffectiveThreat(threatLevel, completedSpokes);
   const cohorts = (isBoss || isFinalBattle)
-    ? buildBossArmy(effectiveThreat, globalSeason, isFinalBattle)
-    : buildRegularArmy(effectiveThreat, globalSeason);
+    ? buildBossArmy(effectiveThreat, globalSeason, isFinalBattle, strengthOverride)
+    : buildRegularArmy(effectiveThreat, globalSeason, strengthOverride);
 
   const name = (isBoss || isFinalBattle) ? 'Barbarian War Host' : 'Barbarian Horde';
 
