@@ -15,16 +15,14 @@ export type ScreenName =
   | 'provinces'
   | 'army-recruitment'
   | 'legate-hiring'
-  | 'node-map'
-  | 'spoke-campaign'
   | 'battle'
   | 'battleV2'
   | 'post-battle'
   | 'victory'
   | 'defeat';
 
-const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'quick-battle', 'forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'node-map', 'spoke-campaign', 'battle', 'battleV2', 'post-battle', 'victory', 'defeat'];
-const REQUIRES_RUN: ScreenName[] = ['forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'node-map', 'spoke-campaign', 'post-battle', 'victory', 'defeat'];
+const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'quick-battle', 'forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'battle', 'battleV2', 'post-battle', 'victory', 'defeat'];
+const REQUIRES_RUN: ScreenName[] = ['forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'post-battle', 'victory', 'defeat'];
 
 /**
  * Legacy screen → Forum tab. `hub` and the old per-section routes (`council`,
@@ -39,8 +37,6 @@ const LEGACY_TAB_MAP: Partial<Record<ScreenName, ForumTab>> = {
   'doctrine':         'doctrinae',
   'army-recruitment': 'exercitus',
   'legate-hiring':    'exercitus',
-  'node-map':         'bellum',
-  'spoke-campaign':   'bellum',
 };
 
 /** Resolve a screen name to its real destination, applying legacy remapping. */
@@ -48,13 +44,23 @@ function resolveScreen(screen: ScreenName): ScreenName {
   const tab = LEGACY_TAB_MAP[screen];
   if (tab) {
     activeForumTab.value = tab;
-    if (tab === 'bellum') sidebarCollapsed.value = true;
     return 'forum';
   }
   return screen;
 }
 
-// Read initial screen from URL hash (e.g., #battle, #forum, #node-map).
+/**
+ * Navigate to the Forum's Bellum tab — campaign / spoke surface. Replaces
+ * the retired `#node-map` and `#spoke-campaign` routes; sidebar collapses
+ * so the campaign view gets full width.
+ */
+export function navigateToBellum(): void {
+  activeForumTab.value = 'bellum';
+  sidebarCollapsed.value = true;
+  navigateTo('forum');
+}
+
+// Read initial screen from URL hash (e.g., #battle, #forum, #provinces).
 // Legacy hashes like `#provinces` also resolve correctly: resolveScreen
 // will rewrite them to `forum` and stamp the matching Forum tab so a
 // bookmark from before S22 still lands the user in the right place.

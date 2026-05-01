@@ -69,24 +69,32 @@ export const CAVALRY_FLANKED_SPAWN: DeploymentPlan = {
  * Place `army.cohorts` onto `state`'s grid according to `plan`.
  * If the army has no cohorts, nothing is placed — the caller is responsible
  * for upstream checks (e.g. embark gate).
+ *
+ * @param postureOffset  Optional row offset applied to frontRowOffset — does NOT
+ *   mutate `plan`. An ambush pass of -1 shifts red one row closer to blue.
  */
 export function deployArmy(
   state: BattleState,
   faction: BattleFaction,
   army: ArmyData | undefined,
   plan: DeploymentPlan,
+  postureOffset?: number,
 ): void {
   if (!army || army.cohorts.length === 0) return;
 
-  switch (plan.strategy) {
+  const adjustedPlan = postureOffset && postureOffset !== 0
+    ? { ...plan, frontRowOffset: plan.frontRowOffset + postureOffset }
+    : plan;
+
+  switch (adjustedPlan.strategy) {
     case 'central':
-      deployCentral(state, faction, army.cohorts, plan);
+      deployCentral(state, faction, army.cohorts, adjustedPlan);
       return;
     case 'flanked':
-      deployFlanked(state, faction, army.cohorts, plan);
+      deployFlanked(state, faction, army.cohorts, adjustedPlan);
       return;
     case 'cavalry-flanked':
-      deployCavalryFlanked(state, faction, army.cohorts, plan);
+      deployCavalryFlanked(state, faction, army.cohorts, adjustedPlan);
       return;
   }
 }

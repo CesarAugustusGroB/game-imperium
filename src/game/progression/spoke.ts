@@ -1,11 +1,7 @@
 import { signal } from '@preact/signals';
 import type { Faction, ResourceType } from '../core/commander';
-import { spendResource, addResource } from '../core/resources';
-import { threatLevel, globalSeason } from '../core/game-state';
-import { getActiveEffects } from '../items/doctrine-store';
-import type { DoctrineEffect } from '../items/doctrine';
+import { addResource } from '../core/resources';
 import type { Posture } from '../council/advisor';
-import { collectProvinceIncome, type ProvinceIncomeResult } from '../province/province-store';
 import type { ArmyData } from '../../types/index';
 import { computeArmySize } from '../army/cohort';
 import type { Legate } from '../army/legate';
@@ -15,6 +11,13 @@ import type { LandmarkType, EncounterType, BattleTerrain } from './landmark-type
 import type { SpokeEffect } from './spoke-effects';
 import { applySpokeEffects } from './spoke-effects';
 import type { BattleTerrainModifier, BattleContext } from './battle-terrain-modifiers';
+import {
+  BASE_UPKEEP,
+  ATTACKING_UPKEEP_BONUS,
+  THREAT_PER_SEASON,
+  runSeasonTick,
+  type SeasonTickResult,
+} from './season-tick';
 
 export type { TraversalAttritionLog } from '../army/supplies';
 
@@ -129,6 +132,7 @@ export const currentSpoke = signal<Spoke | null>(null);
 
 /** Result of the last battle (S2-05). Read by PostBattleScreen to show outcome. */
 export type BattleResult = 'victory' | 'defeat' | 'draw';
+/** S33-11: TRANSIENT — battle-exit signal, not persisted. */
 export const lastBattleResult = signal<BattleResult | null>(null);
 
 /** Index of the node the player is currently at (0-based). */
@@ -410,24 +414,7 @@ export function completeSpoke(): void {
 
 // ── Season system (S5-03) ──
 
-/** Base upkeep cost per season tick. */
-export const BASE_UPKEEP: Partial<Record<ResourceType, number>> = { gold: 2, faith: 1 };
-
-/** Additional upkeep for 'attacking' posture. */
-export const ATTACKING_UPKEEP_BONUS: Partial<Record<ResourceType, number>> = { gold: 1, momentum: 1 };
-
-/** Threat increase per season tick. */
-export const THREAT_PER_SEASON = 1;
-
-/** Result of a season tick, for the UI to display. */
-export interface SeasonTickResult {
-  season: number;
-  globalSeason: number;
-  upkeepPaid: { resource: ResourceType; amount: number }[];
-  upkeepShortfall: { resource: ResourceType; deficit: number }[];
-  threatIncrease: number;
-  provinceIncome: ProvinceIncomeResult | null;
-}
+export { BASE_UPKEEP, ATTACKING_UPKEEP_BONUS, THREAT_PER_SEASON, type SeasonTickResult };
 
 /**
  * Advance to the next season within the current spoke.
@@ -439,54 +426,12 @@ export function tickSeason(): SeasonTickResult | null {
 
   const newSeason = spoke.currentSeason + 1;
 
-  // Compute upkeep reduction from doctrines
-  const reductionPercent = getActiveEffects()
-    .filter((e): e is Extract<DoctrineEffect, { type: 'upkeep-reduction'; percent: number }> => e.type === 'upkeep-reduction' && 'percent' in e)
-    .reduce((sum, e) => sum + e.percent, 0);
-  const reductionMultiplier = Math.max(0, 1 - reductionPercent / 100);
-
-  // Compute raw upkeep
-  const rawUpkeep: Partial<Record<ResourceType, number>> = { ...BASE_UPKEEP };
-  if (spoke.posture === 'attacking') {
-    for (const [res, amt] of Object.entries(ATTACKING_UPKEEP_BONUS) as [ResourceType, number][]) {
-      rawUpkeep[res] = (rawUpkeep[res] ?? 0) + amt;
-    }
-  }
-
-  // Apply upkeep
-  const upkeepPaid: SeasonTickResult['upkeepPaid'] = [];
-  const upkeepShortfall: SeasonTickResult['upkeepShortfall'] = [];
-
-  for (const [res, rawAmt] of Object.entries(rawUpkeep) as [ResourceType, number][]) {
-    const amount = Math.floor(rawAmt * reductionMultiplier);
-    if (amount <= 0) continue;
-    if (spendResource(res, amount)) {
-      upkeepPaid.push({ resource: res, amount });
-    } else {
-      upkeepShortfall.push({ resource: res, deficit: amount });
-    }
-  }
-
-  // Increment threat
-  threatLevel.value += THREAT_PER_SEASON;
-
-  // Advance global season clock
-  globalSeason.value += 1;
-
-  // Collect province income
-  const provinceIncome = collectProvinceIncome();
+  const result = runSeasonTick(spoke.posture, newSeason);
 
   // Advance season
   currentSpoke.value = { ...spoke, currentSeason: newSeason };
 
-  return {
-    season: newSeason,
-    globalSeason: globalSeason.value,
-    upkeepPaid,
-    upkeepShortfall,
-    threatIncrease: THREAT_PER_SEASON,
-    provinceIncome,
-  };
+  return result;
 }
 
 /** Return type for advanceNode. */

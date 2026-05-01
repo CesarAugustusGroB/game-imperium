@@ -22,7 +22,8 @@ import type { BattleFaction } from './battle-types';
 /** S7-11: True when the current battle is the final invasion (season >= MAX_SEASONS). */
 export const isFinalBattle = signal(false);
 
-/** S15-05: Snapshot of the generated enemy army for PostBattleScreen display. */
+/** S15-05: Snapshot of the generated enemy army for PostBattleScreen display.
+ *  S33-11: TRANSIENT — battle-exit signal, not persisted. */
 export const lastEnemyArmy = signal<ArmyData | null>(null);
 
 /**
@@ -158,19 +159,25 @@ export class BattleMode {
     const blueArmy = spoke?.boundArmy ?? undefined;
     const blueLegate = spoke?.boundLegate ?? null;
 
-    const nodeType = spoke?.nodes[currentNodeIndex.value]?.type ?? 'battle';
+    const node = spoke?.nodes[currentNodeIndex.value];
+    const nodeType = node?.type ?? 'battle';
     const isBoss = nodeType === 'boss';
     computeIsFinalBattle();
 
+    const nodeEnemyStrength = node?.enemyStrength ?? undefined;
     const redArmy = generateEnemyArmy(
       threatLevel.value, completedSpokes.value, globalSeason.value,
-      isBoss, isFinalBattle.value,
+      isBoss, isFinalBattle.value, nodeEnemyStrength,
     );
     lastEnemyArmy.value = redArmy;
 
+    // Posture: ambush = red spawns one row closer to blue.
+    const isAmbush = spoke?.posture === 'defending';
+    const redPostureOffset = isAmbush ? -1 : undefined;
+
     // V2 deployment (central spawn) — replaces V1 placeStartingUnits
     deployArmy(this._state, 'blue', blueArmy, CENTRAL_SPAWN);
-    deployArmy(this._state, 'red', redArmy, CENTRAL_SPAWN);
+    deployArmy(this._state, 'red', redArmy, CENTRAL_SPAWN, redPostureOffset);
     this._state.placeStarsAndStrength();
 
     // L1: snapshot blue deployment count AFTER all blue units are placed so

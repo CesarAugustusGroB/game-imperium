@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import { navigateTo } from '../screens';
+import { navigateTo, navigateToBellum } from '../screens';
 import { completedSpokes, selectedCommander } from '../../game/core/game-state';
 import { playSfx } from '../sound/sfx';
 import { decretumHand, maxHandSize, sellDecretum } from '../../game/items/decretum-store';
@@ -130,7 +130,7 @@ export function HubScreen() {
     for (const d of offColorDoctrines) total += sellDoctrine(d.id);
     if (total > 0) showGoldFlash(total);
   }
-  function handleEmbark() { playSfx('ui_click'); startSpokeFromCouncil(); navigateTo('node-map'); }
+  function handleEmbark() { playSfx('ui_click'); startSpokeFromCouncil(); navigateToBellum(); }
 
   return (
     <div style={{

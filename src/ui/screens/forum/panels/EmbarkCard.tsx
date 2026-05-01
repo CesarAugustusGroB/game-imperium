@@ -1,6 +1,6 @@
 import { plannedSpoke, startSpokeFromCouncil } from '../../../../game/council/council-store';
 import { preparedArmy } from '../../../../game/progression/strategic-store';
-import { navigateTo } from '../../../screens';
+import { navigateToBellum } from '../../../screens';
 import { OrnatePanel } from '../../../components/OrnatePanel';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
 import { NODE_ICONS } from '../components/SectionHeader';
@@ -27,7 +27,7 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
   function handleEmbark() {
     if (!canEmbark) return;
     startSpokeFromCouncil();
-    navigateTo('node-map');
+    navigateToBellum();
   }
 
   return (

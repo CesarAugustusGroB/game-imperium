@@ -1,9 +1,8 @@
 // S30-10: pure mapping from the campaign hex EventType (S30 data shape)
-// to the existing EncounterType used by the legacy spoke pipeline.
-// This is a forward-compatibility bridge — S30 itself uses the lightweight
-// CampaignEventModal, but S31's gameplay-systems sprint can route through
-// the full encounter dispatch by feeding the mapped EncounterType into
-// NodeMapScreen-style logic.
+// to the existing EncounterType used by the spoke pipeline. Forward-
+// compatibility bridge — S30 itself uses the lightweight
+// CampaignEventModal, but the full encounter dispatch can be reached by
+// feeding the mapped EncounterType into the spoke-campaign flow.
 
 import type { EventType } from './campaign-types';
 import type { EncounterType } from '../progression/landmark-types';
@@ -26,6 +25,14 @@ export function eventTypeToEncounterType(
       return 'merchant';
     case 'story':
       return 'event';
+    case 'scout':
+      return 'scout';
+    case 'recruit':
+      return 'recruit';
+    case 'hazard':
+      return 'hazard';
+    case 'boss':
+      return 'boss';
     default:
       // 'none' and any future unmapped EventType both return null here.
       return null;

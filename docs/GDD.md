@@ -120,6 +120,14 @@ Hidden alignment tracked from event choices. Biases node generation in later spo
 
 Climactic boss battle at S24. Win → victory run. Lose → defeat run. Meta-progression (advisor XP) persists across runs.
 
+### 4.6 Bellum Hex-Map Contract
+
+Bellum is the hex-map presentation of the same run clock, not a separate short
+mode. It uses `globalSeason`, `MAX_SEASONS`, Doom/threat, upkeep, province
+income, BattleV2 final-invasion routing, and the same run-history recorder as
+spoke campaigns. The implementation source for S33 is
+`docs/bellum-run-contract.md`.
+
 ---
 
 ## 5. Tactical Battle — Hex Combat

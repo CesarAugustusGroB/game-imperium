@@ -56,6 +56,7 @@ export interface ArmyData {
    * deficit traversals. Undefined/0 means no penalty. Cleared the instant
    * supplies go positive again on a traversal (instant morale recovery).
    * Consumed by `supplyDeficitContributor` in `morale.ts`.
+   * S33-11: round-trips via meta-save; clamped on load.
    */
   supplyMoralePenalty?: number;
   /**
@@ -63,11 +64,13 @@ export interface ArmyData {
    * (rest, ambush, shrine blessing, …). Signed — positives raise morale,
    * negatives lower it. Mutated by `applySpokeEffects` and consumed by
    * `campaignEffectsContributor` in `morale.ts`. Undefined treated as 0.
+   * S33-11: round-trips via meta-save; clamped on load.
    */
   campaignMoraleDelta?: number;
   /**
    * FT-SUP: consecutive un-supplied traversals counter. Resets to 0 on any
    * fully-supplied traversal. Used for UI scaling / future escalation.
+   * S33-11: round-trips via meta-save; clamped on load.
    */
   supplyDeficitStreak?: number;
   provinceIndex: number;       // Current province (or origin during movement)

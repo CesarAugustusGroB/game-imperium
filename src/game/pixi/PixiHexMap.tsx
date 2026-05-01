@@ -16,6 +16,9 @@ import { CampaignEventModal } from '../../ui/components/CampaignEventModal';
 import { addNotification } from '../../ui/notifications/notification-store';
 import { HexMapView } from './HexMapView';
 import { loadHexAssets } from './hex-assets';
+import { evaluateBellumDefeat } from '../campaign/campaign-defeat';
+import { advanceBellumSeason, formatResourceList } from '../campaign/campaign-season';
+import { launchHexBattle } from '../campaign/hex-battle';
 
 export function PixiHexMap() {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -78,20 +81,75 @@ export function PixiHexMap() {
           state: { ...campaignState.value },
           onTileSelected: (tile) => setSelected(tile.id),
           onPlayerMoved: (tile) => {
-            const { starvationTriggered } = applyMove(tile);
-            if (starvationTriggered) {
+            const move = applyMove(tile);
+            if (!move.moved) return move;
+            const defeat = evaluateBellumDefeat(campaignState.value, { countZeroSupplyMove: true });
+            if (move.starvationTriggered) {
               addNotification({
                 kind: 'alert',
                 title: 'Out of Supplies',
-                message: 'The legion is starving — morale plummets.',
+                message: 'The legion is starving — cohorts suffer attrition.',
                 icon: '⚠️',
               });
+            }
+            if (move.supplyLog && move.supplyLog.cohortsKilled.length > 0) {
+              const n = move.supplyLog.cohortsKilled.length;
+              addNotification({
+                kind: 'alert',
+                title: 'Cohorts Lost',
+                message: `${n} cohort${n !== 1 ? 's' : ''} wiped from supply attrition.`,
+                icon: '☠️',
+              });
+            }
+            if (defeat.defeated) return move;
+            if (move.movementRemaining === 0) {
+              const season = advanceBellumSeason();
+              addNotification({
+                kind: 'toast',
+                title: `Season ${season.globalSeason}`,
+                message: `Doom rises +${season.threatIncrease}. Upkeep paid: ${formatResourceList(season.upkeepPaid)}.`,
+                icon: '🌿',
+                color: '#d4a843',
+                duration: 3600,
+              });
+              if (season.upkeepShortfall.length > 0) {
+                addNotification({
+                  kind: 'alert',
+                  title: 'Upkeep Shortfall',
+                  message: `Missing ${formatResourceList(season.upkeepShortfall)}.`,
+                  icon: '⚠️',
+                  color: '#c24a3a',
+                  duration: 3600,
+                });
+              }
+              if (season.provinceIncome?.incomeGained.length) {
+                addNotification({
+                  kind: 'toast',
+                  title: 'Province Income',
+                  message: `Gained ${formatResourceList(season.provinceIncome.incomeGained)}.`,
+                  icon: '🏛',
+                  color: '#f0d080',
+                  duration: 3600,
+                });
+              }
+              if (season.finalInvasionReady) {
+                addNotification({
+                  kind: 'pinned',
+                  title: 'Final Invasion',
+                  message: 'The season cap is reached. The enemy host descends on the legion.',
+                  icon: '⚔',
+                  color: '#c24a3a',
+                });
+                launchHexBattle(tile, 'boss');
+                return move;
+              }
             }
             // Fire the encounter modal only when the legion enters a hex
             // with an unresolved event AND no other modal is already open.
             if (tile.event !== 'none' && activeEventTileId.value === null) {
               setActiveEvent(tile.id);
             }
+            return move;
           },
           onTilesChanged: (tiles) => setTiles(tiles),
         });

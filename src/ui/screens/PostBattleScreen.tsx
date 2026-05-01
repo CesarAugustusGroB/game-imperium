@@ -1,8 +1,10 @@
 import { signal } from '@preact/signals';
 import { useEffect, useMemo } from 'preact/hooks';
-import { navigateTo } from '../screens';
+import { navigateToBellum } from '../screens';
 import { lastBattleResult, advanceNode, grantSpokeResource, currentSpoke } from '../../game/progression/spoke';
 import type { BattleResult } from '../../game/progression/spoke';
+import { isHexEncounterSpoke } from '../../game/campaign/hex-battle';
+import { grantBellumResource } from '../../game/campaign/bellum-run-gains';
 import { selectedCommander } from '../../game/core/game-state';
 import { FACTION_COLORS, RESOURCE_INFO } from '../../game/core/commander';
 import type { ResourceType } from '../../game/core/commander';
@@ -625,9 +627,15 @@ export function PostBattleScreen() {
     if (claimedReward.value || !selectedReward) return;
     claimedReward.value = true;
 
+    const isBellum = isHexEncounterSpoke(currentSpoke.value);
+
     if (selectedReward.kind === 'resource') {
       if (selectedReward.resource) {
-        grantSpokeResource(selectedReward.resource, getRewardAmount(selectedReward, isVictory), commander?.faction);
+        if (isBellum) {
+          grantBellumResource(selectedReward.resource, getRewardAmount(selectedReward, isVictory), commander?.faction);
+        } else {
+          grantSpokeResource(selectedReward.resource, getRewardAmount(selectedReward, isVictory), commander?.faction);
+        }
       } else {
         applyPostBattleHealReward();
       }
@@ -636,10 +644,19 @@ export function PostBattleScreen() {
       addDecretum({ ...decretum, id: decretum.id + '_' + Date.now() });
     }
 
-    advanceNode();
-    lastBattleResult.value = null;
-    lastEnemyArmy.value = null;
-    navigateTo('node-map');
+    if (isBellum) {
+      // S33-09: Bellum hex battle — skip advanceNode (there's no spoke chain to
+      // advance), clear spoke + results, then return to the Bellum tab.
+      currentSpoke.value = null;
+      lastBattleResult.value = null;
+      lastEnemyArmy.value = null;
+      navigateToBellum();
+    } else {
+      advanceNode();
+      lastBattleResult.value = null;
+      lastEnemyArmy.value = null;
+      navigateToBellum();
+    }
   }
 
   const enemy = lastEnemyArmy.value;

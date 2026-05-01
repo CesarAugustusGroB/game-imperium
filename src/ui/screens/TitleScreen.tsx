@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'preact/hooks';
-import { navigateTo } from '../screens';
+import { navigateTo, navigateToBellum } from '../screens';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { GoldDust } from '../components/GoldDust';
 import bgPicture from '../../assets/backgrounds/roman_background.png?w=1600;2400&format=avif;webp;png&as=picture';
@@ -226,7 +226,8 @@ export function TitleScreen() {
   async function handleContinue() {
     const restored = await restoreActiveRun();
     if (!restored) return;
-    navigateTo(currentSpoke.value ? 'node-map' : 'forum');
+    if (currentSpoke.value) navigateToBellum();
+    else navigateTo('forum');
   }
 
   return (

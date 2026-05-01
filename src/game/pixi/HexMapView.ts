@@ -16,7 +16,7 @@ export type HexMapViewOptions = {
   tiles: HexTile[];
   state: CampaignState;
   onTileSelected: (tile: HexTile) => void;
-  onPlayerMoved: (tile: HexTile) => void;
+  onPlayerMoved: (tile: HexTile) => { moved: boolean; movementRemaining: number };
   // Fires after moveToTile mutates the internal tile array. Callers should
   // mirror the new array into their store of record (e.g. the hexTiles signal)
   // so HUD readers don't observe stale state.
@@ -47,7 +47,7 @@ export class HexMapView {
   private tiles: HexTile[];
   private state: CampaignState;
   private onTileSelected: (tile: HexTile) => void;
-  private onPlayerMoved: (tile: HexTile) => void;
+  private onPlayerMoved: (tile: HexTile) => { moved: boolean; movementRemaining: number };
   private onTilesChanged: (tiles: HexTile[]) => void;
 
   // Stored so destroy() can detach it from the shared ticker.
@@ -149,7 +149,18 @@ export class HexMapView {
    */
   setState(state: CampaignState): void {
     if (this.destroyed) return;
+    const shouldRefreshReachability =
+      state.currentTileId !== this.state.currentTileId ||
+      state.movementPoints !== this.state.movementPoints;
     this.state = state;
+    if (shouldRefreshReachability) {
+      this.tiles = updateReachableTiles(
+        this.tiles,
+        this.state.currentTileId,
+        this.state.movementPoints,
+      );
+      this.onTilesChanged(this.tiles);
+    }
     this.render();
   }
 
@@ -286,13 +297,22 @@ export class HexMapView {
   private walkPath(path: HexTile[]): void {
     for (let i = 1; i < path.length; i++) {
       const step = path[i];
-      this.moveToTile(step);
+      const moved = this.moveToTile(step);
+      if (!moved) break;
       if (step.event !== 'none') break;
     }
   }
 
-  private moveToTile(destination: HexTile): void {
-    this.state.currentTileId = destination.id;
+  private moveToTile(destination: HexTile): boolean {
+    if (destination.movementCost > this.state.movementPoints) return false;
+    const moveResult = this.onPlayerMoved(destination);
+    if (!moveResult.moved) return false;
+
+    this.state = {
+      ...this.state,
+      currentTileId: destination.id,
+      movementPoints: moveResult.movementRemaining,
+    };
 
     // S32-05: append via the campaign-state signal helper. The duplicate-tail
     // guard from S31-10a lives inside appendVisit so a re-step onto the
@@ -307,7 +327,7 @@ export class HexMapView {
     });
 
     const currentTile = this.tiles.find((tile) => tile.id === destination.id);
-    if (!currentTile) return;
+    if (!currentTile) return false;
 
     this.tiles = revealNeighbors(this.tiles, currentTile);
     this.tiles = updateReachableTiles(
@@ -316,9 +336,9 @@ export class HexMapView {
       this.state.movementPoints,
     );
 
-    this.onPlayerMoved(currentTile);
     this.onTilesChanged(this.tiles);
     this.render();
+    return true;
   }
 
   private drawVisitHistory(): void {
