@@ -195,3 +195,22 @@ export function applyHexBattleOutcome(outcome: BattleResult | null): BellumDefea
   return evaluateBellumDefeat(campaignState.value, { checkArmy: true });
 }
 
+/**
+ * S33-09: testable hex-battle exit helper. Applies the strategic-layer
+ * outcome (morale/supplies) and evaluates the defeat condition. Returns
+ * both the defeat evaluation and the screen to navigate to next.
+ *
+ * Defeat path: `defeat.defeated === true` — `navigateToDefeat` was already
+ * called internally by `evaluateBellumDefeat`; nextScreen is null so the
+ * caller doesn't double-navigate.
+ *
+ * Victory/draw path: routes to 'post-battle' for the reward picker.
+ */
+export function handleHexBattleExit(
+  result: BattleResult | null,
+): { defeat: BellumDefeatEvaluation; nextScreen: 'post-battle' | null } {
+  const defeat = applyHexBattleOutcome(result);
+  if (defeat.defeated) return { defeat, nextScreen: null }; // defeat nav fired internally
+  return { defeat, nextScreen: 'post-battle' };
+}
+

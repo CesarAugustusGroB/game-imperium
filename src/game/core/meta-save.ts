@@ -58,6 +58,7 @@ import {
   setVisitHistory,
   visitHistory,
 } from '../campaign/campaign-state';
+import { bellumGains, setBellumGains } from '../campaign/bellum-run-gains';
 import { CAMPAIGN_MOVEMENT_POINTS_MAX } from '../campaign/campaign-balance';
 import type { CampaignState, HexTile } from '../campaign/campaign-types';
 
@@ -116,6 +117,8 @@ export interface ActiveRunSave {
   currentSpoke: Spoke | null;
   currentNodeIndex: number;
   spokeGains: Record<ResourceType, number>;
+  /** S33-09: cumulative resource gains across hex battles in the current Bellum run. Optional for backwards compat. */
+  bellumGains?: Record<ResourceType, number>;
   consequenceFlags: string[];
   seenEventsThisSpoke: string[];
   npcFactions: NPCFaction[];
@@ -189,6 +192,22 @@ function normalizeResources(resources: Partial<SavedResources> | null | undefine
     iuniores: typeof resources?.iuniores === 'number' ? resources.iuniores : 0,
   };
   return normalized;
+}
+
+/** S33-09: validate and normalize a bellumGains record from a save. Falls back to all-zeros
+ *  on any missing or malformed entry so old saves load cleanly. */
+function normalizeBellumGains(raw: unknown): Record<ResourceType, number> {
+  const ZERO: Record<ResourceType, number> = { gold: 0, faith: 0, influence: 0, momentum: 0, iuniores: 0 };
+  if (!raw || typeof raw !== 'object') return { ...ZERO };
+  const obj = raw as Partial<Record<ResourceType, unknown>>;
+  const result = { ...ZERO };
+  for (const key of Object.keys(ZERO) as ResourceType[]) {
+    const val = obj[key];
+    if (typeof val === 'number' && isFinite(val) && val >= 0) {
+      result[key] = Math.floor(val);
+    }
+  }
+  return result;
 }
 
 function normalizeArmySnapshot(army: ArmyData | null | undefined): ArmyData | null {
@@ -339,6 +358,7 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     currentSpoke: currentSpokeSnapshot,
     currentNodeIndex: typeof run.currentNodeIndex === 'number' ? run.currentNodeIndex : 0,
     spokeGains: { ...ZERO_GAINS, ...(run.spokeGains ?? {}) },
+    bellumGains: normalizeBellumGains(run.bellumGains),
     consequenceFlags: Array.isArray(run.consequenceFlags) ? run.consequenceFlags : [],
     seenEventsThisSpoke: Array.isArray(run.seenEventsThisSpoke) ? run.seenEventsThisSpoke : [],
     npcFactions: Array.isArray(run.npcFactions) ? run.npcFactions : [],
@@ -436,6 +456,7 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     currentSpoke: normalizeSpokeSnapshot(currentSpoke.value),
     currentNodeIndex: currentNodeIndex.value,
     spokeGains: spokeGains.value,
+    bellumGains: bellumGains.value,
     consequenceFlags: Array.from(consequenceFlags.value),
     seenEventsThisSpoke: Array.from(seenEventsThisSpoke.value),
     npcFactions: npcFactions.value,
@@ -585,6 +606,7 @@ export async function restoreActiveRun(): Promise<boolean> {
     currentSpoke.value = normalizeSpokeSnapshot(snapshot.currentSpoke);
     currentNodeIndex.value = snapshot.currentNodeIndex;
     spokeGains.value = { ...ZERO_GAINS, ...snapshot.spokeGains };
+    setBellumGains(snapshot.bellumGains ?? { gold: 0, faith: 0, influence: 0, momentum: 0, iuniores: 0 });
 
     consequenceFlags.value = new Set(snapshot.consequenceFlags);
     seenEventsThisSpoke.value = new Set(snapshot.seenEventsThisSpoke);

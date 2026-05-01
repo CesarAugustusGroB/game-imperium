@@ -10,7 +10,7 @@ import { currentSpoke, lastBattleResult, syncPreparedFromBoundArmy } from './gam
 import { selectedCommander, veteranStacks, spokesSinceLastBattle, battlesWon } from './game/core/game-state';
 import { syncBattleSignals, resetBattleSignals, battleActive, requestBattleExit } from './battle/battle-signals';
 import { extractCohortHpSnapshot, applyVictoryCap, lastVictoryCapSummary } from './battle/casualties';
-import { applyHexBattleOutcome, isHexEncounterSpoke, setHexBattleNavigation } from './game/campaign/hex-battle';
+import { handleHexBattleExit, isHexEncounterSpoke, setHexBattleNavigation } from './game/campaign/hex-battle';
 import { setBellumDefeatNavigation } from './game/campaign/campaign-defeat';
 
 // S31-05b: register navigateTo with hex-battle so launchHexBattle can switch
@@ -95,17 +95,22 @@ const battleMode = new BattleMode(() => {
     return;
   }
 
-  // S31-05b: campaign hex battles synthesize a 1-node spoke labeled
-  // `__hex_encounter__`. Detect that here and return the player to the
-  // Bellum tab instead of the post-battle screen, after applying
-  // strategic-layer fallout (morale/supplies). The HP write-back above
-  // already projected cohort losses onto preparedArmy via the bound army.
+  // S31-05b / S33-09: campaign hex battles synthesize a 1-node spoke labeled
+  // `__hex_encounter__`. On defeat the defeat screen is navigated to internally.
+  // On victory/draw, route through PostBattleScreen so the player gets the
+  // reward picker. Spoke stays installed so PostBattleScreen can read
+  // landmarkName/cohorts/etc.; the claim fork (isHexEncounterSpoke) handles
+  // cleanup + navigation back to the Bellum tab.
   if (isHexEncounterSpoke(currentSpoke.value)) {
-    const defeat = applyHexBattleOutcome(lastBattleResult.value);
-    currentSpoke.value = null;
-    lastBattleResult.value = null;
-    if (defeat.defeated) return;
-    navigateTo('forum');
+    const exit = handleHexBattleExit(lastBattleResult.value);
+    if (exit.defeat.defeated) {
+      // Defeat handler navigated to the defeat screen via setBellumDefeatNavigation.
+      // Clear spoke/result here so a subsequent run starts clean.
+      currentSpoke.value = null;
+      lastBattleResult.value = null;
+      return;
+    }
+    if (exit.nextScreen) navigateTo(exit.nextScreen);
     return;
   }
 

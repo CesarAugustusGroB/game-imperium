@@ -3,6 +3,7 @@ import type { CampaignState, HexTile } from './campaign-types';
 import { CAMPAIGN_MOVEMENT_POINTS_MAX } from './campaign-balance';
 import { consumeBellumTraversal, type BellumTraversalResult } from './bellum-army-view';
 import { resetBellumDefeatState } from './campaign-defeat';
+import { resetBellumGains } from './bellum-run-gains';
 import type { TraversalAttritionLog } from '../army/supplies';
 
 const INITIAL_STATE: CampaignState = {
@@ -127,4 +128,5 @@ export function resetCampaign(): void {
   activeEventTileId.value = null;
   visitHistory.value = [];
   resetBellumDefeatState();
+  resetBellumGains();
 }
