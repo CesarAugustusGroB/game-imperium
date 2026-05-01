@@ -132,6 +132,7 @@ export const currentSpoke = signal<Spoke | null>(null);
 
 /** Result of the last battle (S2-05). Read by PostBattleScreen to show outcome. */
 export type BattleResult = 'victory' | 'defeat' | 'draw';
+/** S33-11: TRANSIENT — battle-exit signal, not persisted. */
 export const lastBattleResult = signal<BattleResult | null>(null);
 
 /** Index of the node the player is currently at (0-based). */

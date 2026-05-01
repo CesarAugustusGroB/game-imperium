@@ -33,7 +33,9 @@ const EMPTY_WARNING: BellumWarningState = {
   armyWiped: false,
 };
 
+/** S33-11: TRANSIENT — re-derived on next evaluateBellumDefeat. Not persisted. */
 export const bellumWarningState = signal<BellumWarningState>({ ...EMPTY_WARNING });
+/** S33-11: TRANSIENT — re-derived on next evaluateBellumDefeat. Not persisted. */
 export const bellumDefeatReason = signal<BellumDefeatReason | null>(null);
 
 let navigateToDefeat: (() => void) | null = null;

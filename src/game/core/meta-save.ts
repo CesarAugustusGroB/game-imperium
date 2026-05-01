@@ -61,6 +61,23 @@ import {
 import { bellumGains, setBellumGains } from '../campaign/bellum-run-gains';
 import { CAMPAIGN_MOVEMENT_POINTS_MAX } from '../campaign/campaign-balance';
 import type { CampaignState, HexTile } from '../campaign/campaign-types';
+import { SUPPLY_MAX_CARRY, SUPPLY_MORALE_PENALTY_CAP } from '../../config/game-config';
+
+// —— Known Bellum field value sets (exported for verify scripts) ——
+
+export const KNOWN_TERRAINS = [
+  'plains', 'forest', 'hills', 'mountains', 'river', 'road', 'camp', 'ruins',
+] as const;
+
+export const KNOWN_EVENTS = [
+  'none', 'battle', 'supply', 'ambush', 'rest', 'merchant', 'story',
+  'elite', 'scout', 'recruit', 'hazard', 'boss',
+] as const;
+
+export const KNOWN_BATTLE_MODIFIERS = [
+  'forest_cover', 'dense_trees', 'high_ground', 'open_field', 'river_crossing',
+  'urban_fighting', 'mud', 'narrow_pass', 'sacred_ground', 'fortified_position',
+] as const;
 
 // —— Types ——
 
@@ -210,11 +227,29 @@ function normalizeBellumGains(raw: unknown): Record<ResourceType, number> {
   return result;
 }
 
-function normalizeArmySnapshot(army: ArmyData | null | undefined): ArmyData | null {
+function asFiniteNumber(v: unknown, fallback: number): number {
+  return typeof v === 'number' && isFinite(v) ? v : fallback;
+}
+
+function clamp(n: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, n));
+}
+
+export function normalizeArmySnapshot(army: ArmyData | null | undefined): ArmyData | null {
   if (!army) return null;
   return {
     ...army,
     cohorts: normalizeCohortRoster(army.cohorts),
+    supplies: clamp(asFiniteNumber(army.supplies, 0), 0, SUPPLY_MAX_CARRY),
+    supplyMoralePenalty: army.supplyMoralePenalty === undefined
+      ? undefined
+      : clamp(asFiniteNumber(army.supplyMoralePenalty, 0), 0, SUPPLY_MORALE_PENALTY_CAP),
+    supplyDeficitStreak: army.supplyDeficitStreak === undefined
+      ? undefined
+      : Math.max(0, Math.floor(asFiniteNumber(army.supplyDeficitStreak, 0))),
+    campaignMoraleDelta: army.campaignMoraleDelta === undefined
+      ? undefined
+      : asFiniteNumber(army.campaignMoraleDelta, 0),
   };
 }
 
@@ -280,8 +315,60 @@ export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
 
   if (obj.hexTiles.length > 0 && !isLikelyHexTile(obj.hexTiles[0])) return null;
 
-  const activeId =
-    typeof obj.activeEventTileId === 'string' ? obj.activeEventTileId : null;
+  // S33-11 Gap 1: sanitize each tile before stamping onto the snapshot.
+  // Unknown terrain is structural corruption → reject. Unknown event → normalize
+  // to 'none'. battleModifiers junk-filtered; empty after filter → drop field.
+  // scoutedLevel out-of-range → drop field.
+  const sanitizedTiles: HexTile[] = [];
+  for (const rawTile of obj.hexTiles) {
+    if (!isLikelyHexTile(rawTile)) return null;
+    const tile = rawTile as HexTile & { battleModifiers?: unknown; scoutedLevel?: unknown };
+
+    // terrain: unknown → reject snapshot (structural)
+    if (!(KNOWN_TERRAINS as readonly string[]).includes(tile.terrain)) return null;
+
+    // event: unknown → normalize to 'none'
+    const event = (KNOWN_EVENTS as readonly string[]).includes(tile.event)
+      ? tile.event
+      : 'none' as const;
+
+    // battleModifiers: filter to known ids; empty after filter → drop field
+    let battleModifiers: HexTile['battleModifiers'];
+    if (Array.isArray(tile.battleModifiers)) {
+      const filtered = (tile.battleModifiers as unknown[]).filter(
+        (m): m is typeof KNOWN_BATTLE_MODIFIERS[number] =>
+          (KNOWN_BATTLE_MODIFIERS as readonly unknown[]).includes(m),
+      );
+      battleModifiers = filtered.length > 0 ? filtered : undefined;
+    }
+
+    // scoutedLevel: keep only 0 | 1 | 2; otherwise drop
+    let scoutedLevel: HexTile['scoutedLevel'];
+    if (tile.scoutedLevel === 0 || tile.scoutedLevel === 1 || tile.scoutedLevel === 2) {
+      scoutedLevel = tile.scoutedLevel;
+    }
+
+    const sanitized: HexTile = {
+      ...tile,
+      event,
+      battleModifiers,
+      scoutedLevel,
+    };
+    sanitizedTiles.push(sanitized);
+  }
+
+  // S33-11 Gap 2: cross-validate activeEventTileId against sanitized tiles.
+  // Restoring into a 'none'-event tile would render the modal with no content;
+  // restoring into a non-existent tile id would crash on findTile lookup.
+  // Both fail safely to null.
+  const rawActiveId = typeof obj.activeEventTileId === 'string' ? obj.activeEventTileId : null;
+  let activeId: string | null = null;
+  if (rawActiveId !== null) {
+    const matchingTile = sanitizedTiles.find(t => t.id === rawActiveId);
+    if (matchingTile && matchingTile.event !== 'none') {
+      activeId = rawActiveId;
+    }
+  }
 
   // S32-05: visit history is decorative (drives the polyline). On any
   // malformation, default to [] rather than rejecting the whole snapshot —
@@ -292,7 +379,7 @@ export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
     : [];
 
   return {
-    hexTiles: obj.hexTiles as HexTile[],
+    hexTiles: sanitizedTiles,
     campaignState: {
       currentTileId: cs.currentTileId,
       selectedTileId:

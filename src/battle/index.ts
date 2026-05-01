@@ -22,7 +22,8 @@ import type { BattleFaction } from './battle-types';
 /** S7-11: True when the current battle is the final invasion (season >= MAX_SEASONS). */
 export const isFinalBattle = signal(false);
 
-/** S15-05: Snapshot of the generated enemy army for PostBattleScreen display. */
+/** S15-05: Snapshot of the generated enemy army for PostBattleScreen display.
+ *  S33-11: TRANSIENT — battle-exit signal, not persisted. */
 export const lastEnemyArmy = signal<ArmyData | null>(null);
 
 /**
