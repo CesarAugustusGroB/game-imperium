@@ -235,6 +235,28 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-sc
       transition: background 150ms;
     }
     .chs-empty-cta:hover { background: rgba(212, 168, 67, 0.3); }
+
+    /* S34-05: Starvation pulse — fires only when army.supplies === 0 */
+    .chs-resource-chip--starving,
+    .ornate-stat-chip.chs-resource-chip--starving {
+      color: rgba(220, 100, 90, 1);
+    }
+    @keyframes chs-supply-pulse {
+      0%, 100% {
+        color: rgba(220, 100, 90, 1);
+        text-shadow: 0 0 4px rgba(220, 100, 90, 0.4);
+      }
+      50% {
+        color: rgba(255, 150, 140, 1);
+        text-shadow: 0 0 10px rgba(255, 100, 90, 0.85);
+      }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .chs-resource-chip--starving,
+      .ornate-stat-chip.chs-resource-chip--starving {
+        animation: chs-supply-pulse 1.4s ease-in-out infinite;
+      }
+    }
   `;
   document.head.appendChild(el);
 }
@@ -392,7 +414,7 @@ function CampaignTopBar() {
         🚩 <strong>{state.movementPoints}</strong>
       </span>
       <span
-        class="ornate-stat-chip"
+        class={`ornate-stat-chip${army.supplies === 0 ? ' chs-resource-chip--starving' : ''}`}
         title={`Supplies: ${army.supplies} / ${SUPPLY_MAX_CARRY}.\nConsumes 1 × cohort count per move.\nUnder-supplied marches damage cohort HP and grow a morale penalty (cap 40).`}
       >
         📦 <strong>{army.supplies}</strong>
