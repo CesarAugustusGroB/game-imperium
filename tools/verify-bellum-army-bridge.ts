@@ -18,6 +18,12 @@ import { preparedArmy, preparedLegate } from '../src/game/progression/strategic-
 import { synthesizeHexBattleSpoke } from '../src/game/campaign/hex-battle';
 import { computeArmyMorale, getMoraleTier, BASE_MORALE, __resetMoraleContributors, registerMoraleContributor } from '../src/game/army/morale';
 import { SUPPLY_HP_DAMAGE_PCT, SUPPLY_MAX_CARRY } from '../src/config/game-config';
+import {
+  evaluateBellumDefeat,
+  resetBellumDefeatState,
+  setBellumDefeatNavigation,
+} from '../src/game/campaign/campaign-defeat';
+import { campaignState } from '../src/game/campaign/campaign-state';
 import type { ArmyData, Cohort } from '../src/types';
 import type { HexTile } from '../src/game/campaign/campaign-types';
 
@@ -196,6 +202,44 @@ console.log('PASS AC3: morale tier shifts as campaignMoraleDelta accumulates fro
   assert(brokenMorale.tier === 'broken', `AC4b: tier 'broken' at ${brokenMorale.total}, got '${brokenMorale.tier}'`);
 }
 console.log('PASS AC4: battle entry from Bellum picks up tier multipliers via synthesizeHexBattleSpoke + computeArmyMorale');
+
+// ── AC5: supply-attrition that kills the last cohort triggers army-wiped defeat ──
+{
+  resetBellumDefeatState();
+  campaignState.value = { currentTileId: '0,0', selectedTileId: null, movementPoints: 3 };
+
+  let navigateCalled = false;
+  setBellumDefeatNavigation(() => { navigateCalled = true; });
+
+  // 1 cohort at just 1 HP, 0 supplies → attrition kills it this traversal.
+  const fragile = makeCohort('fragile');
+  // Override currentHp to 1 so a single attrition tick kills it.
+  const fragileLowHp: Cohort = { ...fragile, currentHp: 1 };
+  preparedArmy.value = makeArmy([fragileLowHp], 0);
+  preparedLegate.value = null;
+
+  // Drive the cohort to 0 HP via supply traversal.
+  const traversal = consumeBellumTraversal('plains');
+
+  assert(traversal.supplyLog !== null, 'AC5: supplyLog present when army starves');
+  assert(traversal.supplyLog!.cohortsKilled.length > 0, 'AC5: at least one cohort killed by attrition');
+
+  const cohortsLostThisMove = traversal.supplyLog!.cohortsKilled.length;
+
+  // Simulate the PixiHexMap branch: checkArmy:true when cohortsLostThisMove > 0.
+  const defeat = evaluateBellumDefeat(
+    campaignState.value,
+    { countZeroSupplyMove: true, checkArmy: cohortsLostThisMove > 0 },
+  );
+
+  assert(defeat.defeated === true, 'AC5: defeat.defeated is true after army wiped');
+  assert(defeat.reason === 'army-wiped', `AC5: defeat.reason is 'army-wiped', got '${defeat.reason}'`);
+
+  // Clean up — reset navigation hook and defeat state for subsequent tests.
+  setBellumDefeatNavigation(null);
+  resetBellumDefeatState();
+}
+console.log('PASS AC5: supply-attrition that kills the last cohort triggers army-wiped defeat');
 
 // ── Null army: no-ops ──────────────────────────────────────────────────
 {

@@ -14,7 +14,7 @@ import { campaignState, hexTiles } from '../../game/campaign/campaign-state';
 import { globalSeason, MAX_SEASONS, threatLevel, selectedCommander } from '../../game/core/game-state';
 import type { EventType, HexTile, TerrainType } from '../../game/campaign/campaign-types';
 import { getTerrainColor } from '../../game/campaign/terrain';
-import { getEventColor, getEventIcon } from '../../game/campaign/events';
+import { getEventColor, getEventIcon, getEventContent } from '../../game/campaign/events';
 import { PixiHexMap } from '../../game/pixi/PixiHexMap';
 import { colorToCss } from '../../utils/color';
 import { preparedArmy } from '../../game/progression/strategic-store';
@@ -24,7 +24,7 @@ import { SUPPLY_MAX_CARRY } from '../../config/game-config';
 import { CAMPAIGN_MOVEMENT_POINTS_MAX } from '../../game/campaign/campaign-balance';
 import { BellumWarningBanner } from '../components/bellum/BellumWarningBanner';
 import { objectiveChipProps } from '../components/bellum/bellum-objective';
-import { navigateTo } from '../screens';
+import { navigateTo, navigateToBellum } from '../screens';
 
 if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-screen-styles')) {
   const el = document.createElement('style');
@@ -227,20 +227,11 @@ const TERRAIN_LABEL: Record<TerrainType, string> = {
   ruins: 'Ruins',
 };
 
-const EVENT_LABEL: Record<EventType, string> = {
-  none: 'No event',
-  battle: 'Enemy Patrol',
-  ambush: 'Ambush',
-  supply: 'Supplies',
-  rest: 'Bivouac',
-  merchant: 'Merchant',
-  story: 'Marker',
-  elite: 'Elite force',
-  scout: 'Vantage Hill',
-  recruit: 'Volunteers',
-  hazard: 'Hazard',
-  boss: 'Final Invasion',
-};
+function eventLabel(event: EventType): string {
+  if (event === 'none') return 'No event';
+  // Synthesize a tile shape just enough for getEventContent's switch.
+  return getEventContent({ event } as HexTile)?.title ?? 'Encounter';
+}
 
 function findTile(id: string | null): HexTile | undefined {
   if (!id) return undefined;
@@ -249,7 +240,7 @@ function findTile(id: string | null): HexTile | undefined {
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 
-function BellumEmptyState() {
+function BellumEmptyStateNoCommander() {
   return (
     <div class="chs-empty-state" role="region" aria-label="No legion prepared">
       <div class="chs-empty-card">
@@ -264,6 +255,27 @@ function BellumEmptyState() {
           onClick={() => navigateTo('commander-select')}
         >
           Select Commander
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BellumEmptyStateNoArmy() {
+  return (
+    <div class="chs-empty-state" role="region" aria-label="Embark the legion">
+      <div class="chs-empty-card">
+        <p class="chs-panel-eyebrow">Bellum</p>
+        <h2 class="chs-panel-title">Embark the legion</h2>
+        <p class="chs-empty-body">
+          A commander has been chosen, but the legion still needs cohorts and a legate
+          before the campaign begins. Embark from the Forum.
+        </p>
+        <button
+          class="chs-empty-cta"
+          onClick={() => navigateToBellum()}
+        >
+          Open Forum
         </button>
       </div>
     </div>
@@ -396,7 +408,7 @@ function CampaignHexInfoPanel() {
               {tile.event !== 'none' && (
                 <span style={{ marginRight: '6px' }}>{getEventIcon(tile.event)}</span>
               )}
-              {EVENT_LABEL[tile.event]}
+              {eventLabel(tile.event)}
             </span>
           </div>
         </>
@@ -497,10 +509,17 @@ function LegionPositionAnnouncer() {
 export function CampaignHexScreen() {
   const commander = selectedCommander.value;
   const army = preparedArmy.value;
-  if (!commander || !army) {
+  if (!commander) {
     return (
       <div class="chs-root">
-        <BellumEmptyState />
+        <BellumEmptyStateNoCommander />
+      </div>
+    );
+  }
+  if (!army) {
+    return (
+      <div class="chs-root">
+        <BellumEmptyStateNoArmy />
       </div>
     );
   }

@@ -14,8 +14,9 @@ import type { BattleTerrainModifier } from '../progression/battle-terrain-modifi
 import { currentSpoke, type BattleResult, type Spoke, type SpokeNode } from '../progression/spoke';
 import { preparedArmy, preparedLegate } from '../progression/strategic-store';
 import { campaignState } from './campaign-state';
-import { addCampaignMorale, addArmySupplies } from './bellum-army-view';
 import { evaluateBellumDefeat, type BellumDefeatEvaluation } from './campaign-defeat';
+import { applyBellumEffects } from './bellum-encounter-effects';
+import { HEX_BATTLE_OUTCOME_EFFECTS } from './encounter-effects-data';
 import { getEventContent } from './events';
 import { computeEnemyStrengthRating } from '../army/enemy-army-generator';
 import { threatLevel, globalSeason, completedSpokes } from '../core/game-state';
@@ -109,9 +110,11 @@ export function synthesizeHexBattleSpoke(
   const army = preparedArmy.value;
   if (!army) return null;
 
-  // Compute landmark name from event content; fall back to terrain-derived label.
-  const eventContent = getEventContent(tile);
-  const landmarkName = eventContent?.title ?? `${capitalize(tile.terrain)} Skirmish`;
+  // Final Invasion always reads "Final Invasion" regardless of tile.event.
+  // For all other encounters, derive from event content with a terrain fallback.
+  const landmarkName = encounterType === 'boss'
+    ? 'Final Invasion'
+    : (getEventContent(tile)?.title ?? `${capitalize(tile.terrain)} Skirmish`);
 
   // Merge terrain-derived auto-modifiers with any tile-stashed battle modifiers.
   const autoMods = terrainToAutoModifiers(tile.terrain, encounterType);
@@ -176,22 +179,15 @@ export function launchHexBattle(tile: HexTile, encounterType: EncounterType): bo
  * main.tsx's battle-exit callback after the HP write-back has projected
  * cohort losses onto preparedArmy. HP loss is paid for "for free" by that
  * write-back; the deltas here represent strategic-layer fallout (morale +
- * supplies). Numbers are placeholder-tuned per the wider S31 balance pass.
+ * supplies). Data-driven via HEX_BATTLE_OUTCOME_EFFECTS.
  *
- * S33-06 note: these outcome numbers are currently applied imperatively.
- * Future work could route them through `applyBellumEffects` once battle
- * outcome effects are also data-driven (backlog item).
+ * tile=null — no tile-targeting effects in this set; applyBellumEffects skips
+ * reveal/scout/battle-modifier effects when tile is null (correct behavior).
  */
 export function applyHexBattleOutcome(outcome: BattleResult | null): BellumDefeatEvaluation {
-  if (outcome === 'victory') {
-    addCampaignMorale(5);
-  } else if (outcome === 'defeat') {
-    addCampaignMorale(-15);
-    addArmySupplies(-5);
-  } else {
-    // 'draw' or null (esc-exit) — modest morale knock either way.
-    addCampaignMorale(-5);
-  }
+  const key = outcome ?? 'esc';
+  const effects = HEX_BATTLE_OUTCOME_EFFECTS[key];
+  applyBellumEffects(effects, null);
   return evaluateBellumDefeat(campaignState.value, { checkArmy: true });
 }
 
