@@ -10,8 +10,9 @@
 // rich tooltips on top-bar chips.
 
 import { useEffect, useState } from 'preact/hooks';
-import { campaignState, hexTiles } from '../../game/campaign/campaign-state';
-import { globalSeason, MAX_SEASONS, threatLevel, selectedCommander } from '../../game/core/game-state';
+import { campaignState, hexTiles, pendingPathConfirmation, bypassPathConfirmation, resolvePendingPath } from '../../game/campaign/campaign-state';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { globalSeason, MAX_SEASONS, selectedCommander } from '../../game/core/game-state';
 import type { EventType, HexTile, TerrainType } from '../../game/campaign/campaign-types';
 import { getTerrainColor } from '../../game/campaign/terrain';
 import { getEventColor, getEventIcon, getEventContent } from '../../game/campaign/events';
@@ -23,10 +24,10 @@ import { FACTION_PRIMARY_RESOURCE, RESOURCE_INFO } from '../../game/core/command
 import { computeBellumMorale } from '../../game/campaign/bellum-army-view';
 import { bellumWarningState } from '../../game/campaign/campaign-defeat';
 import { SUPPLY_MAX_CARRY } from '../../config/game-config';
-import { CAMPAIGN_MOVEMENT_POINTS_MAX } from '../../game/campaign/campaign-balance';
 import { BellumWarningBanner } from '../components/bellum/BellumWarningBanner';
 import { BellumTutorialOverlay } from '../components/bellum/BellumTutorialOverlay';
 import { objectiveChipProps } from '../components/bellum/bellum-objective';
+import { Tooltip } from '../components/Tooltip';
 import { navigateTo, navigateToBellum } from '../screens';
 import { tutorialDismissed } from '../../game/core/meta-save';
 
@@ -237,6 +238,28 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-sc
       transition: background 150ms;
     }
     .chs-empty-cta:hover { background: rgba(212, 168, 67, 0.3); }
+
+    /* S34-05: Starvation pulse — fires only when army.supplies === 0 */
+    .chs-resource-chip--starving,
+    .ornate-stat-chip.chs-resource-chip--starving {
+      color: rgba(220, 100, 90, 1);
+    }
+    @keyframes chs-supply-pulse {
+      0%, 100% {
+        color: rgba(220, 100, 90, 1);
+        text-shadow: 0 0 4px rgba(220, 100, 90, 0.4);
+      }
+      50% {
+        color: rgba(255, 150, 140, 1);
+        text-shadow: 0 0 10px rgba(255, 100, 90, 0.85);
+      }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .chs-resource-chip--starving,
+      .ornate-stat-chip.chs-resource-chip--starving {
+        animation: chs-supply-pulse 1.4s ease-in-out infinite;
+      }
+    }
   `;
   document.head.appendChild(el);
 }
@@ -359,27 +382,37 @@ function CampaignTopBar() {
     return (
       <div class="chs-top-bar" role="region" aria-label="Campaign stats">
         <CampaignResourceChips />
-        <span
-          class="ornate-stat-chip"
-          title={`March points: ${state.movementPoints} / ${CAMPAIGN_MOVEMENT_POINTS_MAX}.\nOne move = one month, one MP.\nRefresh on bivouac (rest encounter) or season tick (every 3 moves).`}
+        <Tooltip
+          placement="bottom"
+          content="Hexes you can reach in one click. Resets each turn / on pathfinding budget."
         >
-          🚩 <strong>{state.movementPoints}</strong>
-        </span>
-        <span class="ornate-stat-chip" title="No legion prepared" style={{ opacity: 0.5 }}>
-          📦 <strong>—</strong>
-        </span>
-        <span class="ornate-stat-chip" title="No legion prepared" style={{ opacity: 0.5 }}>
-          🔥 <strong>—</strong>
-        </span>
-        <span
-          class="ornate-stat-chip"
-          title={`Season ${season} of ${MAX_SEASONS}.\nDoom threat: ${threatLevel.value}.\nFinal Invasion fires when the season cap is reached.`}
+          <span class="ornate-stat-chip">
+            🚩 <strong>{state.movementPoints}</strong>
+          </span>
+        </Tooltip>
+        <Tooltip placement="bottom" content="No legion prepared">
+          <span class="ornate-stat-chip" style={{ opacity: 0.5 }}>
+            📦 <strong>—</strong>
+          </span>
+        </Tooltip>
+        <Tooltip placement="bottom" content="No legion prepared">
+          <span class="ornate-stat-chip" style={{ opacity: 0.5 }}>
+            🔥 <strong>—</strong>
+          </span>
+        </Tooltip>
+        <Tooltip
+          placement="bottom"
+          content={`Survive to Season ${MAX_SEASONS} to win the campaign.`}
         >
-          🌿 <strong>{season}/{MAX_SEASONS}</strong>
-        </span>
-        <span class="ornate-stat-chip" title={obj.title} style={obj.style as any}>
-          {obj.icon} <strong>{obj.label}</strong>
-        </span>
+          <span class="ornate-stat-chip">
+            🌿 <strong>{season}/{MAX_SEASONS}</strong>
+          </span>
+        </Tooltip>
+        <Tooltip placement="bottom" content={obj.title}>
+          <span class="ornate-stat-chip" style={obj.style as any}>
+            {obj.icon} <strong>{obj.label}</strong>
+          </span>
+        </Tooltip>
       </div>
     );
   }
@@ -387,33 +420,43 @@ function CampaignTopBar() {
   return (
     <div class="chs-top-bar" role="region" aria-label="Campaign stats">
       <CampaignResourceChips />
-      <span
-        class="ornate-stat-chip"
-        title={`March points: ${state.movementPoints} / ${CAMPAIGN_MOVEMENT_POINTS_MAX}.\nOne move = one month, one MP.\nRefresh on bivouac (rest encounter) or season tick (every 3 moves).`}
+      <Tooltip
+        placement="bottom"
+        content="Hexes you can reach in one click. Resets each turn / on pathfinding budget."
       >
-        🚩 <strong>{state.movementPoints}</strong>
-      </span>
-      <span
-        class="ornate-stat-chip"
-        title={`Supplies: ${army.supplies} / ${SUPPLY_MAX_CARRY}.\nConsumes 1 × cohort count per move.\nUnder-supplied marches damage cohort HP and grow a morale penalty (cap 40).`}
+        <span class="ornate-stat-chip">
+          🚩 <strong>{state.movementPoints}</strong>
+        </span>
+      </Tooltip>
+      <Tooltip
+        placement="bottom"
+        content={`How many moves your legion can make before running short.\n\nRoad = 0, plains = 1, river = 2.\n\nAt 0, morale plummets and the legion may starve out.`}
       >
-        📦 <strong>{army.supplies}</strong>
-      </span>
-      <span
-        class="ornate-stat-chip"
-        title={`Morale: ${morale.total} (${morale.tier}).\nBASE 100 + legate traits + supply penalty + campaign deltas.\nDefeat triggers at total ≤ 0.`}
+        <span class={`ornate-stat-chip${army.supplies === 0 ? ' chs-resource-chip--starving' : ''}`}>
+          📦 <strong>{army.supplies}</strong>
+        </span>
+      </Tooltip>
+      <Tooltip
+        placement="bottom"
+        content="Below 15 your legion is wavering; at 0 it breaks (defeat). Camp or rest hexes restore it."
       >
-        🔥 <strong>{morale.total}</strong>
-      </span>
-      <span
-        class="ornate-stat-chip"
-        title={`Season ${season} of ${MAX_SEASONS}.\nDoom threat: ${threatLevel.value}.\nFinal Invasion fires when the season cap is reached.`}
+        <span class="ornate-stat-chip">
+          🔥 <strong>{morale.total}</strong>
+        </span>
+      </Tooltip>
+      <Tooltip
+        placement="bottom"
+        content={`Survive to Season ${MAX_SEASONS} to win the campaign.`}
       >
-        🌿 <strong>{season}/{MAX_SEASONS}</strong>
-      </span>
-      <span class="ornate-stat-chip" title={obj.title} style={obj.style as any}>
-        {obj.icon} <strong>{obj.label}</strong>
-      </span>
+        <span class="ornate-stat-chip">
+          🌿 <strong>{season}/{MAX_SEASONS}</strong>
+        </span>
+      </Tooltip>
+      <Tooltip placement="bottom" content={obj.title}>
+        <span class="ornate-stat-chip" style={obj.style as any}>
+          {obj.icon} <strong>{obj.label}</strong>
+        </span>
+      </Tooltip>
     </div>
   );
 }
@@ -570,6 +613,42 @@ function LegionPositionAnnouncer() {
   );
 }
 
+// ── S34-04: Path event confirmation dialog ────────────────────────────────────
+
+// Reads the pendingPathConfirmation signal and renders a ConfirmDialog when
+// HexMapView sets it during a multi-hop walk that crosses an event tile.
+// Mounted only in the active-run branch (both commander and army present).
+function PathEventConfirmDialog() {
+  const pending = pendingPathConfirmation.value;
+  if (!pending) return null;
+
+  const eventTile = pending.eventTile;
+  const eventTitle = getEventContent(eventTile)?.title ?? 'Encounter';
+  const coords = `${eventTile.q}, ${eventTile.r}`;
+
+  return (
+    <ConfirmDialog
+      open={true}
+      title="Event in your path"
+      body={
+        <span>
+          The legion will stop at{' '}
+          <strong style={{ color: 'var(--imp-gold)' }}>{eventTitle}</strong>
+          {' '}(hex {coords}). Continue marching?
+        </span>
+      }
+      confirmLabel="March"
+      cancelLabel="Hold"
+      dontAskAgainLabel="Don't ask again this campaign"
+      onConfirm={(dontAskAgain) => {
+        if (dontAskAgain) bypassPathConfirmation.value = true;
+        resolvePendingPath(true);
+      }}
+      onCancel={() => resolvePendingPath(false)}
+    />
+  );
+}
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export function CampaignHexScreen() {
@@ -601,6 +680,8 @@ export function CampaignHexScreen() {
       {/* S34-03: first-run tutorial overlay — gated on map bootstrap so it
           doesn't flash over an empty viewport on a fresh run. */}
       {!tutorialDismissed.value && hexTiles.value.length > 0 && <BellumTutorialOverlay />}
+      {/* S34-04: multi-hop path confirmation — only active during a run */}
+      <PathEventConfirmDialog />
     </div>
   );
 }

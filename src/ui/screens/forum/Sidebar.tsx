@@ -1,4 +1,5 @@
-import { selectedCommander, completedSpokes } from '../../../game/core/game-state';
+import { useState } from 'preact/hooks';
+import { selectedCommander, completedSpokes, resetRun } from '../../../game/core/game-state';
 import { decretumHand } from '../../../game/items/decretum-store';
 import { preparedArmy } from '../../../game/progression/strategic-store';
 import { provinces } from '../../../game/province/province-store';
@@ -7,6 +8,8 @@ import { equippedDoctrines } from '../../../game/items/doctrine-store';
 import { Corners } from '../../components/motifs/Corners';
 import { MosaicBand } from '../../components/motifs/MosaicBand';
 import { NOISE_SVG } from '../../components/motifs/textures';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { navigateTo } from '../../screens';
 import {
   activeForumTab, sidebarCollapsed, setForumTab, romanCalendar,
 } from './state';
@@ -50,6 +53,7 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
   const turn = completedSpokes.value;
   const cal = romanCalendar(turn);
   const items = useNavItems();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <div style={{
@@ -307,6 +311,47 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
         </button>
       )}
 
+      {/* Abandon Run button — only when a run is active */}
+      {commander && (
+        <button
+          type="button"
+          onClick={() => setConfirmOpen(true)}
+          title="Abandon this campaign run"
+          style={{
+            display: 'flex', alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            gap: 0, padding: '6px 10px',
+            background: 'transparent',
+            border: '1px solid rgba(150, 60, 70, 0.25)',
+            borderRadius: 2,
+            color: 'rgba(200, 110, 100, 0.78)',
+            fontFamily: 'var(--imp-font-display)',
+            fontSize: 10, letterSpacing: 2,
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            transition: 'background 120ms, border-color 120ms, color 120ms',
+            marginBottom: 8, width: '100%',
+          }}
+          onMouseEnter={(e) => {
+            const t = e.currentTarget as HTMLButtonElement;
+            t.style.color = 'rgba(220, 130, 120, 1)';
+            t.style.borderColor = 'rgba(180, 80, 80, 0.5)';
+            t.style.background = 'rgba(150, 38, 50, 0.08)';
+          }}
+          onMouseLeave={(e) => {
+            const t = e.currentTarget as HTMLButtonElement;
+            t.style.color = 'rgba(200, 110, 100, 0.78)';
+            t.style.borderColor = 'rgba(150, 60, 70, 0.25)';
+            t.style.background = 'transparent';
+          }}
+        >
+          <span style={{ width: 14, textAlign: 'center', fontSize: 14, flexShrink: 0 }}>⚐</span>
+          {!collapsed && (
+            <span style={{ marginLeft: 10 }}>Abandon Run</span>
+          )}
+        </button>
+      )}
+
       {/* Collapse toggle */}
       <button
         onClick={() => { sidebarCollapsed.value = !collapsed; }}
@@ -337,6 +382,21 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
           </span>
         )}
       </button>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Abandon this campaign?"
+        body="Forfeits the run. All progress this session will be lost."
+        confirmLabel="Abandon"
+        cancelLabel="Continue Run"
+        destructive={true}
+        onConfirm={() => {
+          resetRun();
+          navigateTo('title');
+          setConfirmOpen(false);
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }
