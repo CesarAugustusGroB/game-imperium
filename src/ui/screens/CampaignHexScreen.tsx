@@ -236,6 +236,28 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-sc
       transition: background 150ms;
     }
     .chs-empty-cta:hover { background: rgba(212, 168, 67, 0.3); }
+
+    /* S34-05: Starvation pulse — fires only when army.supplies === 0 */
+    .chs-resource-chip--starving,
+    .ornate-stat-chip.chs-resource-chip--starving {
+      color: rgba(220, 100, 90, 1);
+    }
+    @keyframes chs-supply-pulse {
+      0%, 100% {
+        color: rgba(220, 100, 90, 1);
+        text-shadow: 0 0 4px rgba(220, 100, 90, 0.4);
+      }
+      50% {
+        color: rgba(255, 150, 140, 1);
+        text-shadow: 0 0 10px rgba(255, 100, 90, 0.85);
+      }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .chs-resource-chip--starving,
+      .ornate-stat-chip.chs-resource-chip--starving {
+        animation: chs-supply-pulse 1.4s ease-in-out infinite;
+      }
+    }
   `;
   document.head.appendChild(el);
 }
@@ -408,7 +430,7 @@ function CampaignTopBar() {
         placement="bottom"
         content={`How many moves your legion can make before running short.\n\nRoad = 0, plains = 1, river = 2.\n\nAt 0, morale plummets and the legion may starve out.`}
       >
-        <span class="ornate-stat-chip">
+        <span class={`ornate-stat-chip${army.supplies === 0 ? ' chs-resource-chip--starving' : ''}`}>
           📦 <strong>{army.supplies}</strong>
         </span>
       </Tooltip>

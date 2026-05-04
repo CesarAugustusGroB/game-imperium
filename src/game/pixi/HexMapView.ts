@@ -72,6 +72,9 @@ export class HexMapView {
   // preview pops brighter to read as the "future" path.
   private static readonly PATH_COLOR_VISIT: number = 0xd8aa55;
   private static readonly PATH_COLOR_HOVER: number = 0xffd485;
+  // S34-07: flanking colors for the 3-stroke visit-history layering.
+  private static readonly PATH_COLOR_VISIT_OUTER: number = 0x1a1208;
+  private static readonly PATH_COLOR_VISIT_CORE: number = 0xf0d080;
 
   // Flipped true on destroy() so zombie callbacks (signal effects firing
   // after the wrapping component unmounted) early-out instead of touching
@@ -424,10 +427,12 @@ export class HexMapView {
     }
     if (points.length < 2) return;
 
-    // Dual-stroke glow emulation: wide outer at low alpha + thin inner at
-    // higher alpha. Avoids adding pixi-filters as a dep just for a soft glow.
-    this.strokePolyline(points, { width: 9, alpha: 0.18, color: HexMapView.PATH_COLOR_VISIT });
-    this.strokePolyline(points, { width: 4, alpha: 0.55, color: HexMapView.PATH_COLOR_VISIT });
+    // S34-07: 3-stroke layer for legibility on both light and dark terrain.
+    // Dark outer anchors the line against light camp/plains/road textures;
+    // gold middle is the body; bright core highlights the centerline.
+    this.strokePolyline(points, { width: 11, alpha: 0.45, color: HexMapView.PATH_COLOR_VISIT_OUTER });
+    this.strokePolyline(points, { width: 7,  alpha: 0.55, color: HexMapView.PATH_COLOR_VISIT });
+    this.strokePolyline(points, { width: 3,  alpha: 0.85, color: HexMapView.PATH_COLOR_VISIT_CORE });
   }
 
   private strokePolyline(

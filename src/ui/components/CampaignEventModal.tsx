@@ -4,7 +4,7 @@
 // re-fire the modal. The full encounter dispatch (battle/forage/etc.)
 // is deferred to S31's gameplay-systems sprint.
 
-import { useEffect } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { activeEventId, activeEventTileId, hexTiles, setActiveEvent, setActiveEventId } from '../../game/campaign/campaign-state';
 import { getEventColor, getEventContent, getEventIcon, getEventIconUrl } from '../../game/campaign/events';
 import { resolveEncounter } from '../../game/campaign/encounter-bridge';
@@ -21,13 +21,33 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-event-
   const el = document.createElement('style');
   el.id = 'campaign-event-modal-styles';
   el.textContent = `
-    @keyframes campaign-event-modal-in {
-      from { opacity: 0; transform: scale(0.95) translateY(8px); }
-      to   { opacity: 1; transform: scale(1) translateY(0); }
-    }
     .campaign-event-modal-card {
-      animation: campaign-event-modal-in 0.25s var(--ease-default);
       position: relative;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      @keyframes campaign-event-modal-in {
+        from { opacity: 0; transform: scale(0.95) translateY(8px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+      }
+      .campaign-event-modal-card {
+        animation: campaign-event-modal-in 0.25s var(--ease-default);
+      }
+      /* S34-08: dismiss fade-out */
+      @keyframes campaign-event-modal-out {
+        from { opacity: 1; transform: scale(1); }
+        to   { opacity: 0; transform: scale(0.97); }
+      }
+      .campaign-event-modal-card--exiting {
+        animation: campaign-event-modal-out 150ms var(--ease-default) forwards;
+      }
+      /* S34-08: banner shimmer — subtle alpha pulse on the accent band */
+      @keyframes campaign-event-banner-shimmer {
+        0%, 100% { opacity: 0.85; }
+        50%      { opacity: 1; }
+      }
+      .campaign-event-banner {
+        animation: campaign-event-banner-shimmer 2.4s ease-in-out infinite;
+      }
     }
     .campaign-event-close-btn {
       position: absolute;
@@ -93,12 +113,32 @@ export function CampaignEventModal() {
   const tile = tileId ? hexTiles.value.find((t) => t.id === tileId) : null;
   const campaignTileEvent = tile ? pickCampaignTileEvent(tile, persistedEventId) : null;
 
+  // S34-08: dismiss animation state.
+  const [exiting, setExiting] = useState(false);
+
+  // S34-08: stageDismiss — plays the 150ms exit animation then calls the
+  // provided callback. Resets `exiting` after so the next mount starts clean.
+  function stageDismiss(then: () => void): void {
+    setExiting(true);
+    window.setTimeout(() => {
+      then();
+      setExiting(false);
+    }, 150);
+  }
+
+  // S34-08: if the event is cleared externally (e.g. battle navigation clears
+  // activeEventTileId without going through a button), ensure we don't leave
+  // the modal stuck in the exiting state on its next mount.
+  useEffect(() => {
+    if (!tileId) setExiting(false);
+  }, [tileId]);
+
   // 3a-3: Escape key dismisses without consuming the event.
   useEffect(() => {
     if (!tileId) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setActiveEvent(null);
+        stageDismiss(() => setActiveEvent(null));
       }
     };
     document.addEventListener('keydown', handler);
@@ -125,33 +165,37 @@ export function CampaignEventModal() {
   const iconUrl = getEventIconUrl(tile.event);
 
   const handleAction = (index: number): void => {
-    // Dispatch the chosen action through the encounter bridge.
-    // Battle/elite/ambush launch BattleScreenV2 via launchHexBattle;
-    // others apply morale/supplies/gold deltas directly.
-    //
-    // S32-07 audit: order is `dispatch → consumeEvent` inside resolveEncounter.
-    // For the battle path, dispatch sets currentSpoke + navigates to battleV2,
-    // then consumeEvent clears activeEventTileId. All writes are synchronous
-    // inside this click callback so Preact batches them — its next render
-    // observes the post-state of every write at once. No intermediate frame
-    // shows "modal-still-up + battle-screen-visible", so swapping the order
-    // (consume-first) is unnecessary.
-    const outcome = isCampaignTileEvent
-      ? resolveCampaignTileEvent(tile, campaignTileEvent, index)
-      : resolveEncounter(tile, index);
-    if (outcome.message) {
-      addNotification({
-        kind: 'toast',
-        message: outcome.message,
-        icon,
-        color: accent,
-      });
-    }
+    // S34-08: stage the dismiss animation first, then dispatch inside the
+    // callback so the exit plays before the modal unmounts.
+    stageDismiss(() => {
+      // Dispatch the chosen action through the encounter bridge.
+      // Battle/elite/ambush launch BattleScreenV2 via launchHexBattle;
+      // others apply morale/supplies/gold deltas directly.
+      //
+      // S32-07 audit: order is `dispatch → consumeEvent` inside resolveEncounter.
+      // For the battle path, dispatch sets currentSpoke + navigates to battleV2,
+      // then consumeEvent clears activeEventTileId. All writes are synchronous
+      // inside this click callback so Preact batches them — its next render
+      // observes the post-state of every write at once. No intermediate frame
+      // shows "modal-still-up + battle-screen-visible", so swapping the order
+      // (consume-first) is unnecessary.
+      const outcome = isCampaignTileEvent
+        ? resolveCampaignTileEvent(tile, campaignTileEvent, index)
+        : resolveEncounter(tile, index);
+      if (outcome.message) {
+        addNotification({
+          kind: 'toast',
+          message: outcome.message,
+          icon,
+          color: accent,
+        });
+      }
+    });
   };
 
   // 3a-2: backdrop click dismisses without consuming the event.
   const handleBackdropClick = (): void => {
-    setActiveEvent(null);
+    stageDismiss(() => setActiveEvent(null));
   };
 
   return (
@@ -169,7 +213,7 @@ export function CampaignEventModal() {
       onClick={handleBackdropClick}
     >
       <OrnateFrame
-        className="campaign-event-modal-card"
+        className={exiting ? 'campaign-event-modal-card campaign-event-modal-card--exiting' : 'campaign-event-modal-card'}
         width="min(520px, 92vw)"
         padding="compact"
         style={{ maxHeight: '85vh', overflow: 'hidden' }}
@@ -179,13 +223,15 @@ export function CampaignEventModal() {
         <button
           type="button"
           class="campaign-event-close-btn"
-          onClick={() => setActiveEvent(null)}
+          onClick={() => stageDismiss(() => setActiveEvent(null))}
           aria-label="Close encounter"
         >
           ×
         </button>
 
+        {/* S34-08: campaign-event-banner class drives the shimmer animation */}
         <div
+          class="campaign-event-banner"
           style={{
             height: '120px',
             width: 'calc(100% + 48px)',
