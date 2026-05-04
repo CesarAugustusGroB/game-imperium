@@ -27,6 +27,25 @@ export const activeEventId = signal<string | null>(null);
 // reaching into the view's internals.
 export const visitHistory = signal<string[]>([]);
 
+// S34-04: signal-based bridge for the multi-hop path-confirmation dialog.
+// HexMapView (Pixi, no Preact) writes a request here with a resolver closure;
+// CampaignHexScreen reads it and renders ConfirmDialog. The resolver is called
+// with `true` (confirmed) or `false` (cancelled) and then the signal is cleared.
+export interface PendingPathConfirmation {
+  eventTile: HexTile;
+  resolve: (confirmed: boolean) => void;
+}
+export const pendingPathConfirmation = signal<PendingPathConfirmation | null>(null);
+// When true, the confirmation dialog is skipped for the rest of this campaign run.
+export const bypassPathConfirmation = signal<boolean>(false);
+
+export function resolvePendingPath(confirmed: boolean): void {
+  const pending = pendingPathConfirmation.value;
+  if (!pending) return;
+  pendingPathConfirmation.value = null;
+  pending.resolve(confirmed);
+}
+
 export function setTiles(tiles: HexTile[]): void {
   hexTiles.value = tiles;
 }
@@ -137,4 +156,6 @@ export function resetCampaign(): void {
   visitHistory.value = [];
   resetBellumDefeatState();
   resetBellumGains();
+  pendingPathConfirmation.value = null;
+  bypassPathConfirmation.value = false;
 }

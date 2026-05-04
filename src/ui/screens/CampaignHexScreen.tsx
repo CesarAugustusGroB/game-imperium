@@ -10,7 +10,8 @@
 // rich tooltips on top-bar chips.
 
 import { useEffect, useState } from 'preact/hooks';
-import { campaignState, hexTiles } from '../../game/campaign/campaign-state';
+import { campaignState, hexTiles, pendingPathConfirmation, bypassPathConfirmation, resolvePendingPath } from '../../game/campaign/campaign-state';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { globalSeason, MAX_SEASONS, selectedCommander } from '../../game/core/game-state';
 import type { EventType, HexTile, TerrainType } from '../../game/campaign/campaign-types';
 import { getTerrainColor } from '../../game/campaign/terrain';
@@ -588,6 +589,42 @@ function LegionPositionAnnouncer() {
   );
 }
 
+// ── S34-04: Path event confirmation dialog ────────────────────────────────────
+
+// Reads the pendingPathConfirmation signal and renders a ConfirmDialog when
+// HexMapView sets it during a multi-hop walk that crosses an event tile.
+// Mounted only in the active-run branch (both commander and army present).
+function PathEventConfirmDialog() {
+  const pending = pendingPathConfirmation.value;
+  if (!pending) return null;
+
+  const eventTile = pending.eventTile;
+  const eventTitle = getEventContent(eventTile)?.title ?? 'Encounter';
+  const coords = `${eventTile.q}, ${eventTile.r}`;
+
+  return (
+    <ConfirmDialog
+      open={true}
+      title="Event in your path"
+      body={
+        <span>
+          The legion will stop at{' '}
+          <strong style={{ color: 'var(--imp-gold)' }}>{eventTitle}</strong>
+          {' '}(hex {coords}). Continue marching?
+        </span>
+      }
+      confirmLabel="March"
+      cancelLabel="Hold"
+      dontAskAgainLabel="Don't ask again this campaign"
+      onConfirm={(dontAskAgain) => {
+        if (dontAskAgain) bypassPathConfirmation.value = true;
+        resolvePendingPath(true);
+      }}
+      onCancel={() => resolvePendingPath(false)}
+    />
+  );
+}
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export function CampaignHexScreen() {
@@ -616,6 +653,8 @@ export function CampaignHexScreen() {
       <CampaignArmyStrip />
       {/* 3d: visually hidden aria-live region announces legion position changes */}
       <LegionPositionAnnouncer />
+      {/* S34-04: multi-hop path confirmation — only active during a run */}
+      <PathEventConfirmDialog />
     </div>
   );
 }

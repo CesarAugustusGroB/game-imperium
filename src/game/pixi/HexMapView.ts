@@ -6,7 +6,7 @@ import { Application, Container, Graphics, Rectangle, type Ticker } from 'pixi.j
 import type { CampaignState, HexTile } from '../campaign/campaign-types';
 import { hexDistance, findPath } from '../campaign/hex-pathfinding';
 import { revealNeighbors, updateReachableTiles } from '../campaign/movement';
-import { appendVisit, setVisitHistory, visitHistory } from '../campaign/campaign-state';
+import { appendVisit, setVisitHistory, visitHistory, pendingPathConfirmation, bypassPathConfirmation } from '../campaign/campaign-state';
 import { hexToPixel } from './hex-math';
 import { drawDecorationsForTile } from './hex-decorations';
 import { HexTileView } from './HexTileView';
@@ -335,10 +335,30 @@ export class HexMapView {
 
     if (hexDistance(currentTile, tile) === 1) {
       this.moveToTile(tile);
-    } else {
-      const path = findPath(currentTile, tile, this.tiles, this.state.movementPoints);
-      if (path) this.walkPath(path);
+      return;
     }
+
+    const path = findPath(currentTile, tile, this.tiles, this.state.movementPoints);
+    if (!path) return;
+
+    // S34-04: scan the *interior* of the path (exclude start and goal) for the
+    // first unconsumed event. If the goal itself is an event, that's an explicit
+    // click — no confirmation needed (the player chose the event). If the player
+    // already opted out via the don't-ask-again checkbox, walk directly.
+    const interior = path.slice(1, -1);
+    const eventInPath = interior.find((t) => t.event !== 'none');
+
+    if (!eventInPath || bypassPathConfirmation.value) {
+      this.walkPath(path);
+      return;
+    }
+
+    pendingPathConfirmation.value = {
+      eventTile: eventInPath,
+      resolve: (confirmed) => {
+        if (confirmed) this.walkPath(path);
+      },
+    };
   }
 
   private walkPath(path: HexTile[]): void {
