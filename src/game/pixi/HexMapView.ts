@@ -55,6 +55,7 @@ export class HexMapView {
 
   // Stored so destroy() can detach it from the shared ticker.
   private pulseTickerCallback: ((ticker: Ticker) => void) | null = null;
+  private pulseGraphic: Graphics | null = null;
 
   // S30-09 camera state.
   private wheelHandler: ((event: WheelEvent) => void) | null = null;
@@ -462,6 +463,7 @@ export class HexMapView {
     pulse.y = position.y;
 
     this.effectsLayer.addChild(pulse);
+    this.pulseGraphic = pulse;
 
     let t = 0;
     const callback = (): void => {
@@ -480,6 +482,13 @@ export class HexMapView {
       // happens when a stale signal-mirror effect fires after teardown.
       this.app.ticker?.remove(this.pulseTickerCallback);
       this.pulseTickerCallback = null;
+    }
+    // effectsLayer.removeChildren() in render() detaches the Graphics from
+    // its parent but doesn't free its GPU geometry. Destroy explicitly to
+    // avoid accumulating orphaned Graphics over a long campaign session.
+    if (this.pulseGraphic) {
+      this.pulseGraphic.destroy();
+      this.pulseGraphic = null;
     }
   }
 

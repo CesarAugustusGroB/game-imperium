@@ -129,7 +129,14 @@ export function resolveCampaignTileEvent(
   choiceIndex: number,
 ): CampaignTileEventOutcome {
   const choice = event.choices[choiceIndex];
-  if (!choice) return { consumed: false };
+  if (!choice) {
+    console.warn('[campaign-tile-event-engine] choice index out of range', {
+      eventId: event.id,
+      choiceIndex,
+      choiceCount: event.choices.length,
+    });
+    return { consumed: false };
+  }
 
   if (!canAffordEventChoice(choice)) {
     return {
