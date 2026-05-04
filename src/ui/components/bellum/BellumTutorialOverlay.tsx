@@ -3,7 +3,7 @@
 // the win condition. Persisted dismissal lives in the meta-save so it
 // survives Abandon Run. Keyboard: Esc = Skip, Enter = Next / Begin.
 
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { setTutorialDismissed } from '../../../game/core/meta-save';
 import { Corners } from '../motifs/Corners';
 
@@ -172,6 +172,8 @@ const TOTAL = STEPS.length;
 
 export function BellumTutorialOverlay() {
   const [step, setStep] = useState(1);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const primaryBtnRef = useRef<HTMLButtonElement | null>(null);
 
   const stepDef = STEPS[step - 1];
   const isLast = step === TOTAL;
@@ -190,12 +192,39 @@ export function BellumTutorialOverlay() {
     }
   }
 
+  // Auto-focus the primary action each step so Enter / Tab start inside the
+  // overlay rather than landing on whatever was focused on the map below.
+  useEffect(() => {
+    primaryBtnRef.current?.focus();
+  }, [step]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         dismiss();
-      } else if (e.key === 'Enter') {
+        return;
+      }
+      if (e.key === 'Enter') {
         advance();
+        return;
+      }
+      // Trap Tab inside the overlay so screen readers and keyboard users
+      // can't step out into the map controls behind the modal backdrop.
+      if (e.key === 'Tab' && cardRef.current) {
+        const focusables = cardRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     }
     document.addEventListener('keydown', onKey);
@@ -210,7 +239,7 @@ export function BellumTutorialOverlay() {
       aria-labelledby={titleId}
       aria-describedby={bodyId}
     >
-      <div class={`bto-card bto-card--${stepDef.position}`}>
+      <div ref={cardRef} class={`bto-card bto-card--${stepDef.position}`}>
         <Corners color="rgba(212, 168, 67, 0.45)" size={14} inset={6} thickness={1} />
 
         <p class="bto-eyebrow">Tutorial · Step {step} of {TOTAL}</p>
@@ -229,6 +258,7 @@ export function BellumTutorialOverlay() {
             </button>
             {isLast ? (
               <button
+                ref={primaryBtnRef}
                 class="bto-btn bto-btn--begin"
                 onClick={dismiss}
                 type="button"
@@ -237,6 +267,7 @@ export function BellumTutorialOverlay() {
               </button>
             ) : (
               <button
+                ref={primaryBtnRef}
                 class="bto-btn bto-btn--next"
                 onClick={() => setStep(step + 1)}
                 type="button"

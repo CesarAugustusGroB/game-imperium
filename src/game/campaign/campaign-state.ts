@@ -156,6 +156,11 @@ export function resetCampaign(): void {
   visitHistory.value = [];
   resetBellumDefeatState();
   resetBellumGains();
+  // Resolve any in-flight path confirmation as cancelled before nulling the
+  // signal so the closure runs once and any code awaiting confirmation sees a
+  // deterministic outcome instead of being orphaned across a reset.
+  const pending = pendingPathConfirmation.value;
   pendingPathConfirmation.value = null;
   bypassPathConfirmation.value = false;
+  if (pending) pending.resolve(false);
 }

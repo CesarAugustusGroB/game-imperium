@@ -19,8 +19,6 @@ import {
   type MoveContext,
 } from './movements';
 
-const FORCE_GREEDY_BATTLE_MOVEMENT = true;
-
 export function tickAI(engine: BattleEngine, faction: BattleFaction): void {
   const units = engine.getBattleFactionUnits(faction);
   if (units.length === 0) return;
@@ -48,9 +46,7 @@ export function tickAI(engine: BattleEngine, faction: BattleFaction): void {
   // pruneBusy pass) see their whole group once per tick.
   const buckets = new Map<MovementProfileId, BattleUnit[]>();
   for (const u of units) {
-    const id: MovementProfileId = FORCE_GREEDY_BATTLE_MOVEMENT
-      ? 'berserker'
-      : orderOverride ?? u.movementProfile;
+    const id = orderOverride ?? u.movementProfile;
     const bucket = buckets.get(id);
     if (bucket) bucket.push(u);
     else buckets.set(id, [u]);
