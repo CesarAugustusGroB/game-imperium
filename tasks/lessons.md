@@ -76,3 +76,11 @@ Rules for Claude to avoid repeating past mistakes.
 **Date**: 2026-03-26
 **Mistake**: Boudicca's passive was called "Blood Momentum" — confused with the Momentum resource. Players would think spending Momentum removes their damage stacks.
 **Rule**: Never name a passive buff after a spendable resource. Use distinct names (renamed to "Veteran Stacks").
+
+---
+
+## Hardcoded debug flags ride along in unrelated commits
+**Date**: 2026-05-04
+**Mistake**: S34 polish caught `FORCE_GREEDY_BATTLE_MOVEMENT = true` in `src/battle/battle-ai.ts`. The constant was added in `af730cf` (commit message: "feat(campaign): add contextual hex events") — completely unrelated to combat. It forced every unit on every faction into the `berserker` movement profile, ignoring all cohort assignments and lieutenant orders. It survived for days in production until the polish triage agent flagged it.
+**Rule**: At sprint polish time, grep changed files for `const FORCE_*`, `const DEBUG_*`, `= true; //`, and any module-scope boolean constant whose name starts with an adjective (`FORCE_`, `SKIP_`, `BYPASS_`, `MOCK_`, `FAKE_`). Treat any module-scope `const X = true` introduced in the sprint window as guilty-until-explained. The fix is two characters; missing it can silently break entire systems.
+**How to apply**: When auditing diffs in /sprint-polish Phase 1, run `git diff <sprint-base>..HEAD -- src/ | grep -E "^\+const [A-Z_]+ = (true|false)"` as a dedicated pass. If a flag is intentional, require it to be either (a) read from an env var, (b) gated by `import.meta.env.DEV`, or (c) accompanied by a TODO with a target removal date.
