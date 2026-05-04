@@ -12,7 +12,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { campaignState, hexTiles, pendingPathConfirmation, bypassPathConfirmation, resolvePendingPath } from '../../game/campaign/campaign-state';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { globalSeason, MAX_SEASONS, threatLevel, selectedCommander } from '../../game/core/game-state';
+import { globalSeason, MAX_SEASONS, selectedCommander } from '../../game/core/game-state';
 import type { EventType, HexTile, TerrainType } from '../../game/campaign/campaign-types';
 import { getTerrainColor } from '../../game/campaign/terrain';
 import { getEventColor, getEventIcon, getEventContent } from '../../game/campaign/events';
@@ -24,9 +24,9 @@ import { FACTION_PRIMARY_RESOURCE, RESOURCE_INFO } from '../../game/core/command
 import { computeBellumMorale } from '../../game/campaign/bellum-army-view';
 import { bellumWarningState } from '../../game/campaign/campaign-defeat';
 import { SUPPLY_MAX_CARRY } from '../../config/game-config';
-import { CAMPAIGN_MOVEMENT_POINTS_MAX } from '../../game/campaign/campaign-balance';
 import { BellumWarningBanner } from '../components/bellum/BellumWarningBanner';
 import { objectiveChipProps } from '../components/bellum/bellum-objective';
+import { Tooltip } from '../components/Tooltip';
 import { navigateTo, navigateToBellum } from '../screens';
 
 if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-screen-styles')) {
@@ -358,27 +358,37 @@ function CampaignTopBar() {
     return (
       <div class="chs-top-bar" role="region" aria-label="Campaign stats">
         <CampaignResourceChips />
-        <span
-          class="ornate-stat-chip"
-          title={`March points: ${state.movementPoints} / ${CAMPAIGN_MOVEMENT_POINTS_MAX}.\nOne move = one month, one MP.\nRefresh on bivouac (rest encounter) or season tick (every 3 moves).`}
+        <Tooltip
+          placement="bottom"
+          content="Hexes you can reach in one click. Resets each turn / on pathfinding budget."
         >
-          🚩 <strong>{state.movementPoints}</strong>
-        </span>
-        <span class="ornate-stat-chip" title="No legion prepared" style={{ opacity: 0.5 }}>
-          📦 <strong>—</strong>
-        </span>
-        <span class="ornate-stat-chip" title="No legion prepared" style={{ opacity: 0.5 }}>
-          🔥 <strong>—</strong>
-        </span>
-        <span
-          class="ornate-stat-chip"
-          title={`Season ${season} of ${MAX_SEASONS}.\nDoom threat: ${threatLevel.value}.\nFinal Invasion fires when the season cap is reached.`}
+          <span class="ornate-stat-chip">
+            🚩 <strong>{state.movementPoints}</strong>
+          </span>
+        </Tooltip>
+        <Tooltip placement="bottom" content="No legion prepared">
+          <span class="ornate-stat-chip" style={{ opacity: 0.5 }}>
+            📦 <strong>—</strong>
+          </span>
+        </Tooltip>
+        <Tooltip placement="bottom" content="No legion prepared">
+          <span class="ornate-stat-chip" style={{ opacity: 0.5 }}>
+            🔥 <strong>—</strong>
+          </span>
+        </Tooltip>
+        <Tooltip
+          placement="bottom"
+          content={`Survive to Season ${MAX_SEASONS} to win the campaign.`}
         >
-          🌿 <strong>{season}/{MAX_SEASONS}</strong>
-        </span>
-        <span class="ornate-stat-chip" title={obj.title} style={obj.style as any}>
-          {obj.icon} <strong>{obj.label}</strong>
-        </span>
+          <span class="ornate-stat-chip">
+            🌿 <strong>{season}/{MAX_SEASONS}</strong>
+          </span>
+        </Tooltip>
+        <Tooltip placement="bottom" content={obj.title}>
+          <span class="ornate-stat-chip" style={obj.style as any}>
+            {obj.icon} <strong>{obj.label}</strong>
+          </span>
+        </Tooltip>
       </div>
     );
   }
@@ -386,33 +396,43 @@ function CampaignTopBar() {
   return (
     <div class="chs-top-bar" role="region" aria-label="Campaign stats">
       <CampaignResourceChips />
-      <span
-        class="ornate-stat-chip"
-        title={`March points: ${state.movementPoints} / ${CAMPAIGN_MOVEMENT_POINTS_MAX}.\nOne move = one month, one MP.\nRefresh on bivouac (rest encounter) or season tick (every 3 moves).`}
+      <Tooltip
+        placement="bottom"
+        content="Hexes you can reach in one click. Resets each turn / on pathfinding budget."
       >
-        🚩 <strong>{state.movementPoints}</strong>
-      </span>
-      <span
-        class="ornate-stat-chip"
-        title={`Supplies: ${army.supplies} / ${SUPPLY_MAX_CARRY}.\nConsumes 1 × cohort count per move.\nUnder-supplied marches damage cohort HP and grow a morale penalty (cap 40).`}
+        <span class="ornate-stat-chip">
+          🚩 <strong>{state.movementPoints}</strong>
+        </span>
+      </Tooltip>
+      <Tooltip
+        placement="bottom"
+        content={`How many moves your legion can make before running short.\n\nRoad = 0, plains = 1, river = 2.\n\nAt 0, morale plummets and the legion may starve out.`}
       >
-        📦 <strong>{army.supplies}</strong>
-      </span>
-      <span
-        class="ornate-stat-chip"
-        title={`Morale: ${morale.total} (${morale.tier}).\nBASE 100 + legate traits + supply penalty + campaign deltas.\nDefeat triggers at total ≤ 0.`}
+        <span class="ornate-stat-chip">
+          📦 <strong>{army.supplies}</strong>
+        </span>
+      </Tooltip>
+      <Tooltip
+        placement="bottom"
+        content="Below 15 your legion is wavering; at 0 it breaks (defeat). Camp or rest hexes restore it."
       >
-        🔥 <strong>{morale.total}</strong>
-      </span>
-      <span
-        class="ornate-stat-chip"
-        title={`Season ${season} of ${MAX_SEASONS}.\nDoom threat: ${threatLevel.value}.\nFinal Invasion fires when the season cap is reached.`}
+        <span class="ornate-stat-chip">
+          🔥 <strong>{morale.total}</strong>
+        </span>
+      </Tooltip>
+      <Tooltip
+        placement="bottom"
+        content={`Survive to Season ${MAX_SEASONS} to win the campaign.`}
       >
-        🌿 <strong>{season}/{MAX_SEASONS}</strong>
-      </span>
-      <span class="ornate-stat-chip" title={obj.title} style={obj.style as any}>
-        {obj.icon} <strong>{obj.label}</strong>
-      </span>
+        <span class="ornate-stat-chip">
+          🌿 <strong>{season}/{MAX_SEASONS}</strong>
+        </span>
+      </Tooltip>
+      <Tooltip placement="bottom" content={obj.title}>
+        <span class="ornate-stat-chip" style={obj.style as any}>
+          {obj.icon} <strong>{obj.label}</strong>
+        </span>
+      </Tooltip>
     </div>
   );
 }
