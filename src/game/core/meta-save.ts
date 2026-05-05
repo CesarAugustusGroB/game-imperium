@@ -2,9 +2,10 @@ import { computed, effect, signal } from '@preact/signals';
 import type { ArmyData } from '../../types';
 import { IUNIORES } from '../../config/game-config';
 import { COMMANDERS } from '../../data/commanders';
+import { STARTER_ADVISORS } from '../../data/advisor-data';
 import type { ResourceType } from '../core/commander';
 import type { Advisor } from '../council/advisor';
-import { advisorMarket, advisorPool, councilSlots, plannedSpoke, tierUpNotices } from '../council/council-store';
+import { advisorMarket, councilSlots, plannedSpoke, tierUpNotices } from '../council/council-store';
 import type { Decretum } from '../items/decretum';
 import { decretumHand, maxHandSize } from '../items/decretum-store';
 import type { Doctrine } from '../items/doctrine';
@@ -129,7 +130,6 @@ export interface ActiveRunSave {
   claimedIndices: number[];
   featurePool: ProvinceFeature[];
   councilSlots: (Advisor | null)[];
-  advisorPool: Advisor[];
   advisorMarket: Advisor[];
   tierUpNotices: string[];
   plannedSpoke: Spoke | null;
@@ -185,6 +185,7 @@ export interface MetaSave {
 const STORAGE_KEY = 'imperium-meta-save';
 const MAX_RUN_HISTORY = 50;
 const SAVE_DEBOUNCE_MS = 500;
+const ADVISOR_TEMPLATE_BY_ID = new Map(STARTER_ADVISORS.map(advisor => [advisor.id, advisor] as const));
 
 // —— Default state ——
 
@@ -271,6 +272,81 @@ function normalizeSpokeSnapshot(spoke: Spoke | null | undefined): Spoke | null {
     boundArmy: normalizeArmySnapshot(spoke.boundArmy ?? null),
     branches: normalizeBranches(spoke.branches),
   };
+}
+
+function normalizeSavedAdvisor(rawAdvisor: unknown): Advisor | null {
+  if (!rawAdvisor || typeof rawAdvisor !== 'object') return null;
+
+  const advisor = rawAdvisor as Partial<Advisor> & Record<string, unknown>;
+  if (typeof advisor.id !== 'string') return null;
+
+  const template = ADVISOR_TEMPLATE_BY_ID.get(advisor.id);
+  if (!template) {
+    if (
+      typeof advisor.name !== 'string'
+      || typeof advisor.color !== 'string'
+      || !Array.isArray(advisor.tiers)
+      || typeof advisor.currentTier !== 'number'
+      || typeof advisor.xp !== 'number'
+    ) {
+      return null;
+    }
+
+    return {
+      ...advisor,
+      id: advisor.id,
+      name: advisor.name,
+      color: advisor.color as Advisor['color'],
+      currentTier: advisor.currentTier as Advisor['currentTier'],
+      xp: advisor.xp,
+      traits: Array.isArray(advisor.traits) ? advisor.traits as Advisor['traits'] : [],
+      cost: typeof advisor.cost === 'number' ? advisor.cost : 0,
+      tiers: advisor.tiers as Advisor['tiers'],
+      ...(typeof advisor.portrait === 'string' ? { portrait: advisor.portrait } : {}),
+    };
+  }
+
+  const normalized: Advisor = {
+    ...template,
+    ...advisor,
+    currentTier: typeof advisor.currentTier === 'number' ? advisor.currentTier as Advisor['currentTier'] : template.currentTier,
+    xp: typeof advisor.xp === 'number' ? advisor.xp : template.xp,
+    traits: Array.isArray(advisor.traits) ? advisor.traits as Advisor['traits'] : template.traits,
+    cost: typeof advisor.cost === 'number' ? advisor.cost : template.cost,
+    tiers: Array.isArray(advisor.tiers) ? advisor.tiers as Advisor['tiers'] : template.tiers,
+  };
+
+  if (typeof advisor.portrait === 'string') {
+    normalized.portrait = advisor.portrait;
+  } else if (template.portrait) {
+    normalized.portrait = template.portrait;
+  } else {
+    delete normalized.portrait;
+  }
+
+  return normalized;
+}
+
+function normalizeSavedAdvisorArray(rawAdvisors: unknown): Advisor[] {
+  if (!Array.isArray(rawAdvisors)) return [];
+  return rawAdvisors
+    .map(normalizeSavedAdvisor)
+    .filter((advisor): advisor is Advisor => advisor !== null);
+}
+
+function normalizeSavedAdvisorMarket(run: Partial<ActiveRunSave> & Record<string, unknown>): Advisor[] {
+  if (Array.isArray(run.advisorMarket)) return normalizeSavedAdvisorArray(run.advisorMarket);
+  if (Array.isArray(run.advisorPool)) return normalizeSavedAdvisorArray(run.advisorPool);
+  return [];
+}
+
+function normalizeSavedCouncilSlots(rawSlots: unknown): (Advisor | null)[] {
+  if (!Array.isArray(rawSlots)) return [null, null, null];
+  const normalized = rawSlots
+    .slice(0, 3)
+    .map(slot => (slot === null ? null : normalizeSavedAdvisor(slot)));
+  while (normalized.length < 3) normalized.push(null);
+  return normalized;
 }
 
 /**
@@ -448,9 +524,8 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     territoryEntries: Array.isArray(run.territoryEntries) ? run.territoryEntries : [],
     claimedIndices: Array.isArray(run.claimedIndices) ? run.claimedIndices : [],
     featurePool: Array.isArray(run.featurePool) ? run.featurePool : [],
-    councilSlots: Array.isArray(run.councilSlots) ? run.councilSlots : [null, null, null],
-    advisorPool: Array.isArray(run.advisorPool) ? run.advisorPool : [],
-    advisorMarket: Array.isArray(run.advisorMarket) ? run.advisorMarket : [],
+    councilSlots: normalizeSavedCouncilSlots(run.councilSlots),
+    advisorMarket: normalizeSavedAdvisorMarket(run as Partial<ActiveRunSave> & Record<string, unknown>),
     tierUpNotices: Array.isArray(run.tierUpNotices) ? run.tierUpNotices : [],
     plannedSpoke,
     currentSpoke: currentSpokeSnapshot,
@@ -551,7 +626,6 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     claimedIndices: Array.from(claimedIndices.value),
     featurePool: featurePool.value,
     councilSlots: councilSlots.value,
-    advisorPool: advisorPool.value,
     advisorMarket: advisorMarket.value,
     tierUpNotices: tierUpNotices.value,
     plannedSpoke: normalizeSpokeSnapshot(plannedSpoke.value),
@@ -702,7 +776,6 @@ export async function restoreActiveRun(): Promise<boolean> {
     featurePool.value = snapshot.featurePool;
 
     councilSlots.value = snapshot.councilSlots;
-    advisorPool.value = snapshot.advisorPool;
     advisorMarket.value = snapshot.advisorMarket;
     tierUpNotices.value = snapshot.tierUpNotices;
     plannedSpoke.value = normalizeSpokeSnapshot(snapshot.plannedSpoke);

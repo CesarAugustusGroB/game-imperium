@@ -6,7 +6,7 @@ import { resetDoctrineStore, getIncomeModifier, addDoctrineToCollection, doctrin
 import { STARTER_DECRETUM } from '../../data/decretum-data';
 import { STARTER_DOCTRINES } from '../../data/doctrine-data';
 import { isDoctrineEquippable } from '../items/doctrine';
-import { resetCouncilStore, hireAdvisor, advisorPool, seatAdvisor } from '../council/council-store';
+import { resetCouncilStore, advisorMarket, seatAdvisor, setAdvisorMarket } from '../council/council-store';
 import { resetSpoke } from '../progression/spoke';
 import { resetProvinceStore, conquerProvince, provinces, getMarketExchangeBonus } from '../province/province-store';
 import { initGovernorStore, resetGovernorStore } from '../province/governor-store';
@@ -138,9 +138,7 @@ function initializeRunScaffold(commander: Commander): void {
   initFeaturePool();
   resetProvinceMapStore();
 
-  for (const a of STARTER_ADVISORS) {
-    hireAdvisor({ ...a, currentTier: 1, xp: 0 });
-  }
+  setAdvisorMarket(STARTER_ADVISORS.map(a => ({ ...a, currentTier: 1, xp: 0 })));
 
   applyCommanderDefaultLoadout(commander.id);
 }
@@ -159,7 +157,7 @@ function applyCommanderDefaultLoadout(commanderId: string): void {
   });
 
   loadout.advisorIds.forEach((advisorId, slotIndex) => {
-    const advisor = advisorPool.value.find(a => a.id === advisorId);
+    const advisor = advisorMarket.value.find(a => a.id === advisorId);
     if (!advisor) {
       console.warn(`[startNewRun] Missing default advisor "${advisorId}" for commander "${commanderId}".`);
       return;
