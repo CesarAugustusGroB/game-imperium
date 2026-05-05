@@ -7,6 +7,7 @@ import type { CampaignState, HexTile } from '../campaign/campaign-types';
 import { hexDistance, findPath } from '../campaign/hex-pathfinding';
 import { revealNeighbors, updateReachableTiles } from '../campaign/movement';
 import { appendVisit, setVisitHistory, visitHistory, pendingPathConfirmation, bypassPathConfirmation } from '../campaign/campaign-state';
+import { CAMPAIGN_BOTTOM_PANEL_HEIGHT } from '../campaign/campaign-layout';
 import { hexToPixel } from './hex-math';
 import { drawDecorationsForTile } from './hex-decorations';
 import { HexTileView } from './HexTileView';
@@ -65,7 +66,12 @@ export class HexMapView {
   // can early-return while the camera is mid-drag — avoids N renders/frame
   // when the cursor sweeps tiles during a pan.
   private isDragging: boolean = false;
-  private static readonly DRAG_CLICK_THRESHOLD: number = 6;
+  // Click vs drag tolerance, in stage CSS pixels. Pixi's `event.global` is in
+  // CSS pixels (not device pixels), so this threshold doesn't scale with DPR —
+  // 6 was tight enough that ordinary click jitter on a mouse / trackpad was
+  // being classified as a drag, swallowing the first click on a hex and
+  // forcing the player to click again. 10 matches typical OS click slop.
+  private static readonly DRAG_CLICK_THRESHOLD: number = 10;
   private static readonly ZOOM_MIN: number = 0.55;
   private static readonly ZOOM_MAX: number = 1.35;
 
@@ -191,9 +197,8 @@ export class HexMapView {
    * stick across resizes.
    */
   private fitToView(): void {
-    const BOTTOM_PANEL_HEIGHT = 72;
     const visibleW = this.app.screen.width;
-    const visibleH = this.app.screen.height - BOTTOM_PANEL_HEIGHT;
+    const visibleH = this.app.screen.height - CAMPAIGN_BOTTOM_PANEL_HEIGHT;
     if (visibleW <= 0 || visibleH <= 0) return;
 
     // Bounding box of a radius-N hex grid in unscaled root coords. The
@@ -495,11 +500,10 @@ export class HexMapView {
   private centerMap(): void {
     // S33 polish: bias the y-center upward by half of the bottom panel's
     // height so the grid centers in the VISIBLE area (viewport minus panel)
-    // instead of the geometric canvas center. Without this, the grid bottom
-    // sits ~36px above the panel and leaves an empty band of canvas bg.
-    const BOTTOM_PANEL_HEIGHT = 72;
+    // instead of the geometric canvas center. Keep this paired with the
+    // DOM campaign bottom panel height.
     this.root.x = this.app.screen.width / 2;
-    this.root.y = (this.app.screen.height - BOTTOM_PANEL_HEIGHT) / 2;
+    this.root.y = (this.app.screen.height - CAMPAIGN_BOTTOM_PANEL_HEIGHT) / 2;
   }
 
   private updateHitArea(): void {

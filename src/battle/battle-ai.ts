@@ -14,6 +14,7 @@
 
 import type { BattleEngine } from './core/BattleEngine';
 import type { BattleFaction, BattleUnit, MovementProfileId } from './battle-types';
+import { forceBerserkerMovement } from './battle-settings';
 import {
   resolveMovement, MOVEMENT_PROFILES,
   type MoveContext,
@@ -41,12 +42,15 @@ export function tickAI(engine: BattleEngine, faction: BattleFaction): void {
     faction === 'blue' && engine.lieutenantOrder !== 'auto'
       ? (`lieutenant:${engine.lieutenantOrder}` as MovementProfileId)
       : null;
+  const forcedProfile: MovementProfileId | null = forceBerserkerMovement.value
+    ? 'berserker'
+    : null;
 
   // Bucket by effective profile id so stateful profiles (e.g. RESERVE_AI's
   // pruneBusy pass) see their whole group once per tick.
   const buckets = new Map<MovementProfileId, BattleUnit[]>();
   for (const u of units) {
-    const id = orderOverride ?? u.movementProfile;
+    const id = forcedProfile ?? orderOverride ?? u.movementProfile;
     const bucket = buckets.get(id);
     if (bucket) bucket.push(u);
     else buckets.set(id, [u]);

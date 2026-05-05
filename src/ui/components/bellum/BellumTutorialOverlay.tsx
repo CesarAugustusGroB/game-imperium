@@ -161,7 +161,7 @@ const STEPS: StepDef[] = [
   },
   {
     title: 'Survive to win',
-    body: '↗ Reach Season IV alive to complete the campaign. Doom rises each season — strike before it overwhelms you.',
+    body: 'Reach Season IV alive to force the Final Invasion, then win the boss battle to complete the campaign. Doom rises each season.',
     position: 'bottom',
   },
 ];

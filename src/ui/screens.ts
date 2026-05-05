@@ -8,6 +8,7 @@ export type ScreenName =
   | 'title'
   | 'commander-select'
   | 'quick-battle'
+  | 'bellum-systems'
   | 'forum'
   | 'hub'
   | 'doctrine'
@@ -21,7 +22,7 @@ export type ScreenName =
   | 'victory'
   | 'defeat';
 
-const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'quick-battle', 'forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'battle', 'battleV2', 'post-battle', 'victory', 'defeat'];
+const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'quick-battle', 'bellum-systems', 'forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'battle', 'battleV2', 'post-battle', 'victory', 'defeat'];
 const REQUIRES_RUN: ScreenName[] = ['forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'post-battle', 'victory', 'defeat'];
 
 /**
