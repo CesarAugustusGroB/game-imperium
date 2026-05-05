@@ -160,6 +160,15 @@ const STEPS: StepDef[] = [
     position: 'top',
   },
   {
+    // S35-07: surface the resource-decision loop introduced by S35-02/04/05.
+    // Players need to know that gold, iuniores, and momentum are spendable
+    // mid-campaign, otherwise they hoard them assuming they only matter for
+    // the post-run summary (the pre-S35 reality).
+    title: 'Spend to survive',
+    body: 'Choices have a price. Trade gold for supplies at merchants, spend iuniores to tend the wounded at camps, and sometimes silver buys you out of a fight.',
+    position: 'top',
+  },
+  {
     title: 'Survive to win',
     body: 'Reach Season IV alive to force the Final Invasion, then win the boss battle to complete the campaign. Doom rises each season.',
     position: 'bottom',
