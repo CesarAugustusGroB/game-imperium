@@ -20,6 +20,8 @@ import { eventTypeToEncounterType } from './event-encounter-mapping';
 import { campaignState, consumeEvent, refreshMovementPoints } from './campaign-state';
 import { launchHexBattle } from './hex-battle';
 import { canAfford } from '../core/resources';
+import type { ResourceType } from '../core/commander';
+import type { ResourceCost } from '../../types/index';
 import { evaluateBellumDefeat, type BellumDefeatEvaluation } from './campaign-defeat';
 import { applyBellumEffects, type AppliedLine } from './bellum-encounter-effects';
 import { BELLUM_ENCOUNTER_TABLE } from './encounter-effects-data';
@@ -61,24 +63,46 @@ export function resolveEncounter(tile: HexTile, actionIndex: number): EncounterO
     return { consumed: true, defeat };
   }
 
-  // Special-case merchant trade gate (gold spend before applying effects).
   let appliedLines: AppliedLine[] = [];
   let message = action.message;
   let replenishment: ReplenishmentPreview | null | undefined;
 
-  if (encounter === 'merchant' && actionIndex === 0) {
-    // S35-02: gold spend is now a first-class effect in action.effects.
-    // canAfford() gates the trade so the failure copy still fires before
-    // any effect runs (don't want a clamped half-spend giving free supplies).
-    if (!canAfford('gold', 10)) {
-      message = 'The merchant frowns at your empty purse.';
+  // S35-05: generic affordability gate. When the action declares
+  // `requiresResource`, every entry must be affordable before any effect
+  // runs (prevents the gold-clamp giving free supplies, mirrors what the
+  // merchant special-case did under S35-02). Failure surfaces the action's
+  // own `unaffordableMessage` or a generic fallback.
+  if (action.requiresResource && !canAffordCost(action.requiresResource)) {
+    const defeat = evaluateBellumDefeat(campaignState.value);
+    return {
+      consumed: true,
+      message: action.unaffordableMessage ?? 'Cannot afford that course.',
+      defeat,
+      appliedLines: [],
+    };
+  }
+
+  if (action.launchesBattle) {
+    // S35-05: when the action declares both `launchesBattle` AND
+    // `requiresResource`, its effects represent pre-paid setup — e.g.
+    // press-the-advantage spends momentum and grants a battle-modifier
+    // BEFORE the battle mounts. Apply them, then launch.
+    //
+    // Without `requiresResource`, the effects are no-army fallbacks
+    // (battle / elite / ambush / boss casualty deltas) — original
+    // S31-05b semantics — applied only when the battle fails to launch.
+    if (action.requiresResource) {
+      appliedLines = applyBellumEffects(action.effects, tile);
+      if (launchHexBattle(tile, encounter)) {
+        return { consumed: true, appliedLines };
+      }
+      // No army — effects already applied; fall through to defeat eval.
     } else {
+      if (launchHexBattle(tile, encounter)) {
+        return { consumed: true };
+      }
       appliedLines = applyBellumEffects(action.effects, tile);
     }
-  } else if (action.launchesBattle && launchHexBattle(tile, encounter)) {
-    // Battle launched — defer effects to post-battle (handled in
-    // applyHexBattleOutcome). No-op here, no message yet.
-    return { consumed: true };
   } else {
     appliedLines = applyBellumEffects(action.effects, tile);
   }
@@ -104,4 +128,12 @@ export function resolveEncounter(tile: HexTile, actionIndex: number): EncounterO
 
   const defeat = evaluateBellumDefeat(campaignState.value);
   return { consumed: true, message, defeat, appliedLines, replenishment };
+}
+
+/** S35-05: every entry in the cost map must be affordable. */
+function canAffordCost(cost: ResourceCost): boolean {
+  for (const [resource, amount] of Object.entries(cost) as [ResourceType, number][]) {
+    if (amount > 0 && !canAfford(resource, amount)) return false;
+  }
+  return true;
 }
