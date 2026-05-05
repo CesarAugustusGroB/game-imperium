@@ -95,8 +95,8 @@ export function getEventContent(tile: HexTile): EventContent | null {
     case 'battle':
       return {
         title: 'Enemy Patrol',
-        description: 'A hostile force blocks the road ahead.',
-        actions: ['Fight', 'Retreat'],
+        description: 'A hostile force blocks the road ahead. Steel, silver, or a strategic withdrawal — choose.',
+        actions: ['Fight', 'Retreat', 'Bribe Scouts (–30g)'],
       };
 
     case 'supply':
@@ -137,8 +137,8 @@ export function getEventContent(tile: HexTile): EventContent | null {
     case 'elite':
       return {
         title: 'Elite Enemy Force',
-        description: 'Veteran enemies occupy a strong position.',
-        actions: ['Engage', 'Avoid'],
+        description: 'Veteran enemies occupy a strong position. Storm them, give wide berth, or burn momentum to seize the high ground first.',
+        actions: ['Engage', 'Avoid', 'Press the Advantage (–1 momentum)'],
       };
 
     case 'scout':

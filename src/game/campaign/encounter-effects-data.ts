@@ -7,6 +7,7 @@
 import type { SpokeEffect } from '../progression/spoke-effects';
 import type { EncounterType } from '../progression/landmark-types';
 import type { BattleResult } from '../progression/spoke';
+import type { ResourceCost } from '../../types/index';
 
 export type BellumEncounterAction = {
   effects: SpokeEffect[];
@@ -22,6 +23,15 @@ export type BellumEncounterAction = {
    *  metered by the helper, so the action's `effects` list should NOT
    *  carry an `iuniores: -N` line — that would double-deduct. */
   replenishCohorts?: boolean;
+  /** S35-05: hard affordability gate. Dispatch checks every resource via
+   *  `canAfford` BEFORE running effects, launching a battle, or replenishing.
+   *  When the player can't pay, the action becomes a no-op and surfaces the
+   *  fallback `unaffordableMessage`. The actual deduction still flows through
+   *  the effect list (e.g. a `gold: -30` effect) — this field only gates. */
+  requiresResource?: ResourceCost;
+  /** Optional flavor copy for the unaffordable case (S35-05). Falls back to
+   *  a generic "cannot afford" message when omitted. */
+  unaffordableMessage?: string;
 };
 
 export const BELLUM_ENCOUNTER_TABLE: Record<EncounterType, BellumEncounterAction[]> = {
@@ -51,15 +61,19 @@ export const BELLUM_ENCOUNTER_TABLE: Record<EncounterType, BellumEncounterAction
     },
   ],
   merchant: [
-    // idx 0: Trade — gold is now a first-class effect (S35-02). Dispatch
-    // still pre-flights via canAfford('gold', 10) so the "frowns at your
-    // empty purse" failure copy fires before the effect list runs.
+    // idx 0: Trade — gold deduction is a first-class effect (S35-02).
+    // S35-05: the imperative canAfford pre-flight in encounter-bridge is now
+    // a generic `requiresResource` gate driven by this field. Same behavior,
+    // shared mechanism with the new combat-bribe and press-the-advantage
+    // actions below.
     {
       effects: [
         { type: 'gold',     delta: -10, label: 'Trader\'s price' },
         { type: 'supplies', delta:  +5, label: 'Salt pork & grain' },
       ],
       message: 'Traded 10 gold for 5 supplies.',
+      requiresResource: { gold: 10 },
+      unaffordableMessage: 'The merchant frowns at your empty purse.',
     },
     // idx 1: Ignore — no-op
     { effects: [], message: '' },
@@ -82,6 +96,17 @@ export const BELLUM_ENCOUNTER_TABLE: Record<EncounterType, BellumEncounterAction
       effects: [{ type: 'morale', delta: -5, label: 'Withdrawal' }],
       message: 'The legion withdraws to safer ground.',
     },
+    // S35-05 idx 2: Bribe Scouts — gold buys a road around the patrol. The
+    // men resent the silver (-2 morale) but the column saves time and blood.
+    {
+      effects: [
+        { type: 'gold',   delta: -30, label: 'Silver to silent tongues' },
+        { type: 'morale', delta: -2,  label: 'The men resent the bribe' },
+      ],
+      message: 'Coin changes hands. The patrol drifts back into the trees.',
+      requiresResource: { gold: 30 },
+      unaffordableMessage: 'Not enough silver to tempt the scouts.',
+    },
   ],
   elite_battle: [
     {
@@ -95,6 +120,19 @@ export const BELLUM_ENCOUNTER_TABLE: Record<EncounterType, BellumEncounterAction
     {
       effects: [{ type: 'morale', delta: -2, label: 'Avoidance march' }],
       message: 'The legion gives the elite force a wide berth.',
+    },
+    // S35-05 idx 2: Press the Advantage — burn 1 momentum to seize the high
+    // ground before the engagement, granting a battle modifier on entry.
+    // Still launches the battle — this is a setup action, not an evade.
+    {
+      effects: [
+        { type: 'momentum',         delta: -1,            label: 'Press the advantage' },
+        { type: 'battle-modifier',  modifierId: 'high_ground', label: 'High ground seized' },
+      ],
+      message: 'The legion seizes the ridge before the eagles meet.',
+      launchesBattle: true,
+      requiresResource: { momentum: 1 },
+      unaffordableMessage: 'No momentum to press the advantage — meet them on equal ground.',
     },
   ],
   ambush: [
