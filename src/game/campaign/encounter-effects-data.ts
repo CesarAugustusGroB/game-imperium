@@ -16,6 +16,12 @@ export type BellumEncounterAction = {
   launchesBattle?: boolean;
   /** When true, this action also calls refreshMovementPoints (rest only). */
   refreshesMovement?: boolean;
+  /** S35-04: when true, dispatch calls `replenishHubRoster()` to spend
+   *  iuniores from the global pool and heal damaged cohorts on
+   *  preparedArmy. The cost is dynamic (scales with missing HP) and
+   *  metered by the helper, so the action's `effects` list should NOT
+   *  carry an `iuniores: -N` line — that would double-deduct. */
+  replenishCohorts?: boolean;
 };
 
 export const BELLUM_ENCOUNTER_TABLE: Record<EncounterType, BellumEncounterAction[]> = {
@@ -24,6 +30,15 @@ export const BELLUM_ENCOUNTER_TABLE: Record<EncounterType, BellumEncounterAction
       effects: [{ type: 'morale', delta: 20, label: 'Rest at camp' }],
       message: 'The legion makes camp. Morale and march points recover.',
       refreshesMovement: true,
+    },
+    // S35-04: spend iuniores to heal damaged cohorts. Cost is computed by
+    // replenishHubRoster (cheapest-cohort-first; full pool drain on partial
+    // heal). Morale +3 reflects the boost of seeing the wounded return to
+    // the line — it's the only static effect; the iuniores spend is dynamic.
+    {
+      effects: [{ type: 'morale', delta: 3, label: 'The wounded return to the line' }],
+      message: 'Iuniores tend the wounded. Cohorts return to fighting weight.',
+      replenishCohorts: true,
     },
   ],
   forage: [
