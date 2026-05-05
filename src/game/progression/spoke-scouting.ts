@@ -241,6 +241,8 @@ function effectNegativeDelta(e: SpokeEffect): number | null {
     case 'morale':
     case 'supplies':
     case 'iuniores':
+    case 'gold':
+    case 'momentum':
       return e.delta < 0 ? e.delta : null;
     case 'threat':
       // Threat increases are bad for the player.
@@ -257,6 +259,8 @@ function formatEffectRisk(e: SpokeEffect): string {
     case 'morale':    return `Morale loss (${e.delta})`;
     case 'supplies':  return `Supply loss (${e.delta})`;
     case 'iuniores':  return `Iuniores drain (${e.delta})`;
+    case 'gold':      return `Gold cost (${e.delta})`;
+    case 'momentum':  return `Momentum cost (${e.delta})`;
     case 'threat':    return `Threat rises (+${e.delta})`;
     // Non-negative variants never reach this path; satisfy exhaustiveness.
     case 'reveal':

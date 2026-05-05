@@ -16,7 +16,7 @@
 
 import type { Spoke } from './spoke';
 import { currentSpoke, currentNodeIndex, grantSpokeResource, syncPreparedFromBoundArmy } from './spoke';
-import { iuniores, spendResource } from '../core/resources';
+import { gold, iuniores, momentum, spendResource } from '../core/resources';
 import { threatLevel } from '../core/game-state';
 import { computeArmyMorale, type MoraleTier } from '../army/morale';
 import { addNotification } from '../../ui/notifications/notification-store';
@@ -27,6 +27,13 @@ export type SpokeEffect =
   | { type: 'morale';           delta: number; label: string }
   | { type: 'supplies';         delta: number; label: string }
   | { type: 'iuniores';         delta: number; label: string }
+  // S35-02: gold and momentum can now be costs or rewards on encounter actions.
+  // Same semantics as `iuniores`: positive deltas route through the gain
+  // tracker (faction multiplier applies); negative deltas drain up to the
+  // current balance via spendResource. Unaffordable actions should be gated
+  // upstream (modal disables the button) — the clamp here is the safety net.
+  | { type: 'gold';             delta: number; label: string }
+  | { type: 'momentum';         delta: number; label: string }
   // `reveal` is the legacy radius reveal — bumps intel to level 1 (Scouted)
   // by default. Pass `toLevel: 2` to grant Full Recon directly. Watchtower
   // and dedicated scout encounters should prefer the `scout` variant below
@@ -107,6 +114,26 @@ export function applySpokeEffects(effects: readonly SpokeEffect[]): void {
           // delta.
           const drain = Math.min(iuniores.value, -effect.delta);
           if (drain > 0) spendResource('iuniores', drain);
+        }
+        break;
+      }
+
+      case 'gold': {
+        if (effect.delta > 0) {
+          grantSpokeResource('gold', effect.delta);
+        } else if (effect.delta < 0) {
+          const drain = Math.min(gold.value, -effect.delta);
+          if (drain > 0) spendResource('gold', drain);
+        }
+        break;
+      }
+
+      case 'momentum': {
+        if (effect.delta > 0) {
+          grantSpokeResource('momentum', effect.delta);
+        } else if (effect.delta < 0) {
+          const drain = Math.min(momentum.value, -effect.delta);
+          if (drain > 0) spendResource('momentum', drain);
         }
         break;
       }
