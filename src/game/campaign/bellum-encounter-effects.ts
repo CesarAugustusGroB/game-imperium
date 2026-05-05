@@ -6,7 +6,7 @@ import type { SpokeEffect } from '../progression/spoke-effects';
 import type { HexTile } from './campaign-types';
 import { addCampaignMorale, addArmySupplies } from './bellum-army-view';
 import { preparedArmy } from '../progression/strategic-store';
-import { iuniores, spendResource } from '../core/resources';
+import { gold, iuniores, momentum, spendResource } from '../core/resources';
 import { grantBellumResource } from './bellum-run-gains';
 import { threatLevel } from '../core/game-state';
 import { hexTiles, setTiles } from './campaign-state';
@@ -60,6 +60,34 @@ export function applyBellumEffects(
             lines.push({ kind: 'iuniores', label: effect.label, delta: -drain });
           }
           // drain === 0: player broke — skip the line (match applySpokeEffects no-op semantics)
+        }
+        break;
+      }
+
+      case 'gold': {
+        if (effect.delta > 0) {
+          grantBellumResource('gold', effect.delta);
+          lines.push({ kind: 'gold', label: effect.label, delta: effect.delta });
+        } else if (effect.delta < 0) {
+          const drain = Math.min(gold.value, -effect.delta);
+          if (drain > 0) {
+            spendResource('gold', drain);
+            lines.push({ kind: 'gold', label: effect.label, delta: -drain });
+          }
+        }
+        break;
+      }
+
+      case 'momentum': {
+        if (effect.delta > 0) {
+          grantBellumResource('momentum', effect.delta);
+          lines.push({ kind: 'momentum', label: effect.label, delta: effect.delta });
+        } else if (effect.delta < 0) {
+          const drain = Math.min(momentum.value, -effect.delta);
+          if (drain > 0) {
+            spendResource('momentum', drain);
+            lines.push({ kind: 'momentum', label: effect.label, delta: -drain });
+          }
         }
         break;
       }

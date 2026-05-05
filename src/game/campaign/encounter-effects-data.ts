@@ -36,11 +36,14 @@ export const BELLUM_ENCOUNTER_TABLE: Record<EncounterType, BellumEncounterAction
     },
   ],
   merchant: [
-    // idx 0: Trade — handled imperatively in dispatch (gold spend gates the
-    // supply gain). The table entry exists for the data shape but its
-    // effects are applied conditionally; see encounter-bridge.ts.
+    // idx 0: Trade — gold is now a first-class effect (S35-02). Dispatch
+    // still pre-flights via canAfford('gold', 10) so the "frowns at your
+    // empty purse" failure copy fires before the effect list runs.
     {
-      effects: [{ type: 'supplies', delta: 5, label: 'Merchant trade' }],
+      effects: [
+        { type: 'gold',     delta: -10, label: 'Trader\'s price' },
+        { type: 'supplies', delta:  +5, label: 'Salt pork & grain' },
+      ],
       message: 'Traded 10 gold for 5 supplies.',
     },
     // idx 1: Ignore — no-op

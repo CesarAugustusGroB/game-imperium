@@ -80,6 +80,10 @@ function effectSummary(effect: SpokeEffect): string {
       return `${signed(effect.delta)} supplies`;
     case 'iuniores':
       return `${signed(effect.delta)} iuniores`;
+    case 'gold':
+      return `${signed(effect.delta)} gold`;
+    case 'momentum':
+      return `${signed(effect.delta)} momentum`;
     case 'threat':
       return `${signed(effect.delta)} Doom`;
     case 'reveal':
