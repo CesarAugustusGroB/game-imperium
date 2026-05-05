@@ -22,7 +22,7 @@ import { preparedArmy, preparedLegate } from '../../game/progression/strategic-s
 import { gold, momentum, iuniores } from '../../game/core/resources';
 import { FACTION_PRIMARY_RESOURCE, RESOURCE_INFO } from '../../game/core/commander';
 import { computeBellumMorale } from '../../game/campaign/bellum-army-view';
-import { bellumWarningState } from '../../game/campaign/campaign-defeat';
+import { bellumWarningState, BELLUM_MORALE_WARNING_THRESHOLD } from '../../game/campaign/campaign-defeat';
 import { CAMPAIGN_BOTTOM_PANEL_HEIGHT } from '../../game/campaign/campaign-layout';
 import { SUPPLY_MAX_CARRY } from '../../config/game-config';
 import { BellumWarningBanner } from '../components/bellum/BellumWarningBanner';
@@ -508,6 +508,32 @@ if (typeof document !== 'undefined' && !document.getElementById('campaign-hex-sc
         animation: chs-supply-pulse 1.4s ease-in-out infinite;
       }
     }
+
+    /* S35-06: Morale-critical pulse — fires when 0 < morale <= 20.
+       Distinct hue from supply starvation so the two alarms read as
+       separate concerns: supplies pulses warm-coral, morale pulses
+       desaturated burgundy with a slower beat. The morale tier color
+       set by inline style takes precedence at base; the pulse animates
+       text-shadow + a layered gradient on top so the tier color stays
+       readable between beats. */
+    .chs-vital-morale--critical {
+      color: rgba(196, 92, 84, 1) !important;
+    }
+    @keyframes chs-morale-pulse {
+      0%, 100% {
+        color: rgba(196, 92, 84, 1);
+        text-shadow: 0 0 4px rgba(196, 92, 84, 0.35);
+      }
+      50% {
+        color: rgba(232, 132, 124, 1);
+        text-shadow: 0 0 12px rgba(232, 90, 80, 0.7);
+      }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .chs-vital-morale--critical {
+        animation: chs-morale-pulse 1.8s ease-in-out infinite;
+      }
+    }
   `;
   document.head.appendChild(el);
 }
@@ -925,7 +951,22 @@ function CampaignArmyStrip() {
             </div>
             <div class="chs-vital">
               <div class="chs-vital-label">Morale</div>
-              <div class="chs-vital-value" style={{ color: MORALE_TIER_COLOR[morale.tier] }}>
+              {/* S35-06: pulse the value when 0 < morale <= 20. Suppressed at
+                  exactly 0 because that's the defeat state — the warning banner
+                  takes over and the chip pulse stops competing with it. */}
+              <div
+                class={`chs-vital-value${morale.total > 0 && morale.total <= BELLUM_MORALE_WARNING_THRESHOLD ? ' chs-vital-morale--critical' : ''}`}
+                style={{
+                  color: morale.total > 0 && morale.total <= BELLUM_MORALE_WARNING_THRESHOLD
+                    ? undefined
+                    : MORALE_TIER_COLOR[morale.tier],
+                }}
+                title={
+                  morale.total > 0 && morale.total <= BELLUM_MORALE_WARNING_THRESHOLD
+                    ? `Morale at ${morale.total} — defeat triggers at 0. Camp or rest hexes restore it; battles erode it further.`
+                    : undefined
+                }
+              >
                 {morale.total}
               </div>
               <div class="chs-vital-sub">{morale.tier}</div>
