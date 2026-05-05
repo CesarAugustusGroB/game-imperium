@@ -5,6 +5,8 @@
 
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { setTutorialDismissed } from '../../../game/core/meta-save';
+import { MAX_SEASONS } from '../../../game/core/game-state';
+import { CAMPAIGN_MOVEMENT_POINTS_MAX } from '../../../game/campaign/campaign-balance';
 import { Corners } from '../motifs/Corners';
 
 // ── One-time style injection ──────────────────────────────────────────────────
@@ -146,7 +148,7 @@ interface StepDef {
 const STEPS: StepDef[] = [
   {
     title: 'March your legion',
-    body: '↑ Click any glowing hex to march toward it. Each move costs 1 march point and 1 turn.',
+    body: `↑ Click any glowing hex to march toward it. Each move costs 1 march point — ${CAMPAIGN_MOVEMENT_POINTS_MAX} per season.`,
     position: 'bottom',
   },
   {
@@ -161,7 +163,7 @@ const STEPS: StepDef[] = [
   },
   {
     title: 'Survive to win',
-    body: 'Reach Season IV alive to force the Final Invasion, then win the boss battle to complete the campaign. Doom rises each season.',
+    body: `Hold the frontier until Season ${MAX_SEASONS} to force the Final Invasion, then win the boss battle to complete the campaign. Doom rises each season.`,
     position: 'bottom',
   },
 ];

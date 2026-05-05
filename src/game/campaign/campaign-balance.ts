@@ -12,9 +12,14 @@
 
 import type { TerrainType } from './campaign-types';
 
-// One move = one month. Three months = one season → season tick fires
-// when movementPoints hits 0 (see PixiHexMap.applyMove handler).
-export const CAMPAIGN_MOVEMENT_POINTS_MAX = 3;
+// One move = roughly two weeks of marching. Six moves = one season → season
+// tick fires when movementPoints hits 0 (see PixiHexMap.applyMove handler).
+// S35-01: bumped 3 → 6 to give the player room for tactical decisions
+// (foraging, fighting, bribing, recruiting) inside a single season instead
+// of every move being terminal. Total campaign length scales with SEASON.max
+// in src/config/game-config.ts; total moves now ~144 vs the old 72 — the
+// S35-08 balance pass tunes whether SEASON.max should drop to compensate.
+export const CAMPAIGN_MOVEMENT_POINTS_MAX = 6;
 
 /**
  * Per-step morale shift from the terrain alone. Event-driven morale (rest +,
