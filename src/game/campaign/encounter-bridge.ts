@@ -23,6 +23,7 @@ import { spendResource } from '../core/resources';
 import { evaluateBellumDefeat, type BellumDefeatEvaluation } from './campaign-defeat';
 import { applyBellumEffects, type AppliedLine } from './bellum-encounter-effects';
 import { BELLUM_ENCOUNTER_TABLE } from './encounter-effects-data';
+import { replenishHubRoster, type ReplenishmentPreview } from '../army/army-replenishment';
 
 export type EncounterOutcome = {
   /** True when the hex's event was cleared (re-entry won't re-fire). */
@@ -33,6 +34,10 @@ export type EncounterOutcome = {
   defeat?: BellumDefeatEvaluation;
   /** One line per effect that mutated state. */
   appliedLines?: AppliedLine[];
+  /** S35-04: cohort-replenishment summary when a `replenishCohorts` action
+   *  fires. Null when the action didn't run a heal pass (no army, nothing
+   *  damaged) — the caller can fall back to the static message in that case. */
+  replenishment?: ReplenishmentPreview | null;
 };
 
 /**
@@ -59,6 +64,7 @@ export function resolveEncounter(tile: HexTile, actionIndex: number): EncounterO
   // Special-case merchant trade gate (gold spend before applying effects).
   let appliedLines: AppliedLine[] = [];
   let message = action.message;
+  let replenishment: ReplenishmentPreview | null | undefined;
 
   if (encounter === 'merchant' && actionIndex === 0) {
     if (!spendResource('gold', 10)) {
@@ -74,8 +80,25 @@ export function resolveEncounter(tile: HexTile, actionIndex: number): EncounterO
     appliedLines = applyBellumEffects(action.effects, tile);
   }
 
+  // S35-04: replenish-cohorts pass. Runs AFTER the static effects so the
+  // morale +3 from "Tend the Wounded" is visible alongside the heal summary.
+  // replenishHubRoster returns null when there's no preparedArmy or empty
+  // roster; returns a preview with iunioresSpent === 0 when nothing needed
+  // healing (or pool was empty). Both no-op cases are surfaced via the
+  // returned `replenishment` field so the modal/notification can branch.
+  if (action.replenishCohorts) {
+    replenishment = replenishHubRoster();
+    if (replenishment === null || replenishment.iunioresSpent === 0) {
+      message = 'No cohorts need tending — the legion is at fighting weight.';
+    } else if (replenishment.partialHeal) {
+      message = `Iuniores stretched thin — ${replenishment.iunioresSpent} spent, ${replenishment.hpRestored} HP restored.`;
+    } else {
+      message = `${replenishment.iunioresSpent} iuniores spent — wounded restored to fighting weight.`;
+    }
+  }
+
   if (action.refreshesMovement) refreshMovementPoints();
 
   const defeat = evaluateBellumDefeat(campaignState.value);
-  return { consumed: true, message, defeat, appliedLines };
+  return { consumed: true, message, defeat, appliedLines, replenishment };
 }

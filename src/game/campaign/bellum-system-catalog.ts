@@ -46,6 +46,8 @@ export type BellumEncounterRule = {
   actions: number;
   launchesBattle: boolean;
   refreshesMovement: boolean;
+  /** S35-04: at least one action heals damaged cohorts via iuniores. */
+  replenishesCohorts: boolean;
   effects: string[];
 };
 
@@ -104,6 +106,7 @@ function summarizeEncounter(encounter: EncounterType): BellumEncounterRule {
     actions: actions.length,
     launchesBattle: actions.some((action) => action.launchesBattle === true),
     refreshesMovement: actions.some((action) => action.refreshesMovement === true),
+    replenishesCohorts: actions.some((action) => action.replenishCohorts === true),
     effects: Array.from(new Set(effects)),
   };
 }

@@ -116,8 +116,8 @@ export function getEventContent(tile: HexTile): EventContent | null {
     case 'rest':
       return {
         title: 'Eagle Bivouac',
-        description: 'A defensible camp gives the army a chance to recover before the march continues.',
-        actions: ['Make Camp'],
+        description: 'A defensible camp gives the army a chance to recover before the march continues. Surgeons can tend the wounded if iuniores are spent on the rolls.',
+        actions: ['Make Camp', 'Tend the Wounded'],
       };
 
     case 'story':

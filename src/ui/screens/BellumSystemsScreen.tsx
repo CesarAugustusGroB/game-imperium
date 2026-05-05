@@ -316,6 +316,7 @@ function EncounterTable({ rows }: { rows: readonly BellumEncounterRule[] }) {
                   <span class="bss-pill" key={`${row.encounter}-${effect}`}>{effect}</span>
                 ))}
                 {row.refreshesMovement && <span class="bss-pill">refresh MP</span>}
+                {row.replenishesCohorts && <span class="bss-pill">heal cohorts (iuniores)</span>}
               </div>
             </td>
           </tr>
