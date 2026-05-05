@@ -276,6 +276,7 @@ function TerrainTable({ rows }: { rows: readonly BellumTerrainRule[] }) {
           <th>Terrain</th>
           <th>MP</th>
           <th>Morale</th>
+          <th>Fatigue</th>
           <th>State</th>
         </tr>
       </thead>
@@ -285,6 +286,7 @@ function TerrainTable({ rows }: { rows: readonly BellumTerrainRule[] }) {
             <td class="bss-code">{row.terrain}</td>
             <td>{row.blocked ? 'Blocked' : row.movementCost}</td>
             <td>{row.moraleDelta >= 0 ? '+' : ''}{row.moraleDelta}</td>
+            <td>{row.fatigueDelta >= 0 ? '+' : ''}{row.fatigueDelta}</td>
             <td>{row.blocked ? 'Impassable pathfinding wall' : 'Walkable traversal'}</td>
           </tr>
         ))}
