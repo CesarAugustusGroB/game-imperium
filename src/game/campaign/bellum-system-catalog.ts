@@ -3,7 +3,7 @@ import type { ResourceType } from '../core/commander';
 import type { EncounterType } from '../progression/landmark-types';
 import type { SpokeEffect } from '../progression/spoke-effects';
 import type { TerrainType } from './campaign-types';
-import { CAMPAIGN_MOVEMENT_POINTS_MAX, getMoraleDelta } from './campaign-balance';
+import { CAMPAIGN_MOVEMENT_POINTS_MAX, getMoraleDelta, getMarchFatigueDelta } from './campaign-balance';
 import { BELLUM_ENCOUNTER_TABLE, HEX_BATTLE_OUTCOME_EFFECTS } from './encounter-effects-data';
 import { getMovementCost } from './terrain';
 
@@ -38,6 +38,8 @@ export type BellumTerrainRule = {
   terrain: TerrainType;
   movementCost: number;
   moraleDelta: number;
+  /** S35-03: per-step march fatigue (passive morale decay). */
+  fatigueDelta: number;
   blocked: boolean;
 };
 
@@ -120,6 +122,7 @@ export function createBellumSystemCatalog(): BellumSystemCatalog {
       terrain,
       movementCost: getMovementCost(terrain),
       moraleDelta: getMoraleDelta(terrain),
+      fatigueDelta: getMarchFatigueDelta(terrain),
       blocked: getMovementCost(terrain) >= 999,
     })),
     encounters: ENCOUNTER_ORDER.map(summarizeEncounter),
