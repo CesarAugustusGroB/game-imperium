@@ -32,7 +32,7 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
     // Hybrid seed: soldiers from the prepared army's effective HP, gold from the run.
     const cohorts = army?.cohorts ?? [];
     const soldiers = cohorts.reduce((sum, c) => sum + (c.currentHp ?? c.stats.hp), 0);
-    startIterBelliCampaign({ soldiers, gold: getResource('gold') });
+    startIterBelliCampaign({ soldiers, gold: getResource('gold'), iuniores: getResource('iuniores') });
     navigateToIterBelli();
   }
 

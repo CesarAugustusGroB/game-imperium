@@ -1,7 +1,7 @@
 import { OrnateFrame } from '../../components/OrnateFrame';
 import { playSfx } from '../../sound/sfx';
 import { navigateTo } from '../../screens';
-import { gold } from '../../../game/core/resources';
+import { gold, iuniores } from '../../../game/core/resources';
 import { completedSpokes } from '../../../game/core/game-state';
 import { preparedArmy } from '../../../game/progression/strategic-store';
 import { computeArmySize } from '../../../game/army/cohort';
@@ -20,6 +20,7 @@ function returnToHub(): void {
   const outcome = s.outcome;
 
   gold.value = s.gold;
+  iuniores.value = s.iuniores;
   if (outcome?.victory) completedSpokes.value++;
 
   const army = preparedArmy.value;

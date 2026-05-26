@@ -167,6 +167,8 @@ export interface IterBelliState {
   discipline: number;   // clamped 1–5
   supplies: number;
   gold: number;
+  /** Recruit pool carried from the run (seeded at embark, written back on return). */
+  iuniores: number;
   threat: number;       // clamped 0–10
   timeRemaining: number;
   turnNum: number;

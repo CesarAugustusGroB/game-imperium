@@ -28,6 +28,7 @@ function freshState(): IterBelliState {
     discipline: B.START.discipline,
     supplies: B.START.supplies,
     gold: B.START.fallbackGold,
+    iuniores: 0,
     threat: B.START.threat,
     timeRemaining: B.START.timeRemaining,
     turnNum: 0,
@@ -373,6 +374,7 @@ export function applyBattleOutcome(victory: boolean, survivors: number, finalMor
 export interface CampaignSeed {
   soldiers: number;
   gold: number;
+  iuniores: number;
 }
 
 /** Begin a fresh campaign, seeded from the run's army size and gold. */
@@ -383,6 +385,7 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
   S.soldiers = soldiers;
   S.initialSoldiers = soldiers;
   S.gold = Math.max(seed.gold, 0);
+  S.iuniores = Math.max(seed.iuniores, 0);
 
   logTurn('Día 1: Inicio de la campaña');
   logEvent(`El ejército parte de la frontera. ${S.soldiers} soldados, moral ${S.morale.toFixed(1)}, disciplina ${B.ROMAN[S.discipline]}.`);
