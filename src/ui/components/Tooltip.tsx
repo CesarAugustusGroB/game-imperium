@@ -136,6 +136,15 @@ export function Tooltip({
     };
   }, []);
 
+  // Reset position when the tooltip closes. The floating card stays mounted (for a
+  // stable autoUpdate ref), so without clearing coords its styled-but-empty box
+  // would linger at the last on-screen position. Nulling coords parks it off-screen
+  // via the `translate(0, -9999px)` fallback below. Covers every close path
+  // (mouse-leave, blur, Escape).
+  useEffect(() => {
+    if (!open) setCoords(null);
+  }, [open]);
+
   // Position the card whenever open flips to true. autoUpdate re-positions on
   // scroll, resize, and ancestor layout changes — without it the tooltip stays
   // at the stale coords if the user scrolls a Forum panel after hover-in.

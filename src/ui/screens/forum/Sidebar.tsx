@@ -35,8 +35,6 @@ function useNavItems(): NavItem[] {
     { k: 'provinciae', l: 'Provinciae', g: '⬢', badge: provinces.value.length },
     { k: 'consilium',  l: 'Consilium',  g: '◎', badge: `${seatedCount}/${seatedTotal}` },
     { k: 'exercitus',  l: 'Exercitus',  g: '⚔', badge: cohortCount },
-    { k: 'bellum',     l: 'Bellum',     g: '⚑' },
-    { k: 'mercator',   l: 'Mercator',   g: 'S' },
     { k: 'doctrinae',  l: 'Doctrinae',  g: '◈', badge: `${equippedCount}/${equippedTotal}` },
     { k: 'decreta',    l: 'Decreta',    g: '❖', badge: decretumHand.value.length },
   ];

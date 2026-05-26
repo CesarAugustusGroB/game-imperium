@@ -29,16 +29,22 @@ export function setExchangeBonusFn(fn: (() => number) | null): void {
 
 export interface Resources {
   gold: number;
+  /** @deprecated No usar en este worktree — solo gold/iuniores están activos. */
   faith: number;
+  /** @deprecated No usar en este worktree — solo gold/iuniores están activos. */
   influence: number;
+  /** @deprecated No usar en este worktree — solo gold/iuniores están activos. */
   momentum: number;
   iuniores: number;
 }
 
 /** Reactive resource signals. */
 export const gold = signal(0);
+/** @deprecated No usar en este worktree — recurso oculto; solo gold/iuniores están activos. */
 export const faith = signal(0);
+/** @deprecated No usar en este worktree — recurso oculto; solo gold/iuniores están activos. */
 export const influence = signal(0);
+/** @deprecated No usar en este worktree — recurso oculto; solo gold/iuniores están activos. */
 export const momentum = signal(0);
 export const iuniores = signal(0);
 

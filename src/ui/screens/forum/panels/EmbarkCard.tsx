@@ -1,9 +1,11 @@
-import { plannedSpoke, startSpokeFromCouncil } from '../../../../game/council/council-store';
+import { plannedSpoke } from '../../../../game/council/council-store';
 import { preparedArmy } from '../../../../game/progression/strategic-store';
-import { navigateToBellum } from '../../../screens';
+import { getResource } from '../../../../game/core/resources';
+import { startIterBelliCampaign } from '../../../../game/iterBelli/iter-belli-state';
+import { navigateToIterBelli } from '../../../screens';
+import { playSfx } from '../../../sound/sfx';
 import { OrnatePanel } from '../../../components/OrnatePanel';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
-import { NODE_ICONS } from '../components/SectionHeader';
 
 interface EmbarkCardProps {
   accent?: string;
@@ -26,8 +28,12 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
 
   function handleEmbark() {
     if (!canEmbark) return;
-    startSpokeFromCouncil();
-    navigateToBellum();
+    playSfx('ui_click');
+    // Hybrid seed: soldiers from the prepared army's effective HP, gold from the run.
+    const cohorts = army?.cohorts ?? [];
+    const soldiers = cohorts.reduce((sum, c) => sum + (c.currentHp ?? c.stats.hp), 0);
+    startIterBelliCampaign({ soldiers, gold: getResource('gold') });
+    navigateToIterBelli();
   }
 
   return (
@@ -58,35 +64,6 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
       }}>
         {campaignTitle}
       </div>
-      {nodes.length > 0 && (
-        <div style={{ display: 'flex', gap: 4, marginBottom: 14 }}>
-          {nodes.map((n) => {
-            const icon = NODE_ICONS[n.type];
-            const isBoss = n.type === 'boss';
-            const color = icon?.color ?? accent;
-            return (
-              <div key={n.id} style={{
-                flex: isBoss ? 1.2 : 1,
-                padding: '6px 4px',
-                background: isBoss ? `${color}30` : `${color}15`,
-                border: `1px solid ${color}${isBoss ? '' : '60'}`,
-                borderRadius: 2,
-                textAlign: 'center',
-                opacity: n.resolved ? 0.45 : 1,
-              }}>
-                <div style={{ fontSize: 13, color, marginBottom: 2 }}>{icon?.icon ?? '•'}</div>
-                <div style={{
-                  fontSize: 8,
-                  color: 'var(--imp-text-mid)',
-                  letterSpacing: 0.5, textTransform: 'uppercase',
-                }}>
-                  {icon?.label ?? n.type}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
       {/* ── Supply warning ── */}
       {supplyWarning && (
         <div style={{

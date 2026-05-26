@@ -1,4 +1,4 @@
-import { gold, faith, influence, iuniores, momentum } from '../../../game/core/resources';
+import { gold, iuniores } from '../../../game/core/resources';
 import { globalSeason, MAX_SEASONS } from '../../../game/core/game-state';
 import { MosaicBand } from '../../components/motifs/MosaicBand';
 import { StatChip } from './StatChip';
@@ -16,21 +16,6 @@ export function Masthead({ title, subtitle, accent = '#d4a843' }: MastheadProps)
       key: 'gold', glyph: '⚜', value: gold.value, color: '#d4a843',
       label: 'Gold',
       description: 'Primary income for all factions. Spent on unit upkeep, upgrades, and investments. Purple commanders earn 2x gold.',
-    },
-    {
-      key: 'faith', glyph: '✦', value: faith.value, color: '#c8b080',
-      label: 'Faith',
-      description: 'Primary resource of the Gold (Religious) faction. Drives crusade and miracle abilities. Gold commanders earn 2x faith.',
-    },
-    {
-      key: 'influence', glyph: '◈', value: influence.value, color: '#9fb8d0',
-      label: 'Influence',
-      description: 'Primary resource of the Blue (Diplomat) faction. Powers negotiation and manipulation. Blue commanders earn 2x influence.',
-    },
-    {
-      key: 'momentum', glyph: '⚡', value: momentum.value, color: '#e07a50',
-      label: 'Momentum',
-      description: 'Primary resource of the Red (Warlord) faction. Fuels aggressive tactics and berserk stances. Red commanders earn 2x momentum.',
     },
     {
       key: 'iuniores', glyph: '🛡', value: iuniores.value, color: '#a88b5c',

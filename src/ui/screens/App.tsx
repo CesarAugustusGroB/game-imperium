@@ -14,6 +14,7 @@ import { VictoryScreen } from './VictoryScreen';
 import { DefeatScreen } from './DefeatScreen';
 import { BattleScreenV2 } from './BattleScreenV2';
 import { ForumShell } from './forum';
+import { IterBelliScreen } from './iterbelli/IterBelliScreen';
 import { loadMetaSave, startActiveRunPersistence } from '../../game/core/meta-save';
 import { loadBattleSettings } from '../../battle/battle-settings';
 
@@ -25,7 +26,7 @@ loadBattleSettings();
  * Screens that should not render the global ResourceBar. The Forum shell
  * provides its own resource chips in the Masthead, so `forum` is bare too.
  */
-const BARE_SCREENS: ReadonlySet<ScreenName> = new Set(['title', 'commander-select', 'quick-battle', 'bellum-systems', 'forum', 'battle', 'battleV2']);
+const BARE_SCREENS: ReadonlySet<ScreenName> = new Set(['title', 'commander-select', 'quick-battle', 'bellum-systems', 'forum', 'iterbelli', 'battle', 'battleV2']);
 
 /** Map of screen id → component. Order matches navigation flow. */
 const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> = {
@@ -35,6 +36,7 @@ const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> =
   'bellum-systems': BellumSystemsScreen,
   'forum': ForumShell,
   'hub': ForumShell,
+  'iterbelli': IterBelliScreen,
   'battleV2': BattleScreenV2,
   'post-battle': PostBattleScreen,
   'victory': VictoryScreen,

@@ -29,18 +29,18 @@ export const COMMANDERS: Commander[] = [
     archetype: 'Warlord',
     archetypeDescription: 'Iron and fire forge nations. The strong rule, the weak serve, and every battle makes my people more formidable than the last.',
     startingBonuses: [
-      '+3 Momentum at run start',
+      'Starting bonus to be defined',
       'Each victory grants Veteran Stacks (+5% damage)',
       'War Cry ability unlocked',
     ],
-    playstyleFocus: ['Combat', 'Momentum', 'Raiding'],
+    playstyleFocus: ['Combat', 'Raiding'],
     strategicAbilities: [
       { name: 'War Cry', description: 'All units strike first — no cooldown on opening round.', stars: 3 },
       { name: 'Fury Charge', description: 'Lunge forward and crush the enemy line.', stars: 2 },
     ],
     uniqueUnits: [
       { name: 'Gaesatae Berserkers', description: 'Naked shock infantry that hit harder as wounds mount.' },
-      { name: 'Oppidum Stronghold', description: 'Tribal fortress that stockpiles Momentum between battles.' },
+      { name: 'Oppidum Stronghold', description: 'Effect to be defined.' },
     ],
     victoryPaths: [
       { name: 'Domination', description: 'Crush every civilization that opposes you.', progress: 4 },
@@ -58,7 +58,7 @@ export const COMMANDERS: Commander[] = [
     quote: 'I am patient. God rewards the faithful.',
     passive: {
       name: 'Deus Vult',
-      description: '+1 Faith at spoke start. Bonus Faith from prayer and relic nodes.',
+      description: 'Effect to be defined.',
     },
     strategicAbility: {
       name: 'Call Crusade',
@@ -77,11 +77,10 @@ export const COMMANDERS: Commander[] = [
     archetype: 'Religious',
     archetypeDescription: 'Faith guides my people. Through devotion and righteousness, we will build the greatest civilization the world has ever known.',
     startingBonuses: [
-      '+1 Faith at spoke start',
-      'Bonus Faith from prayer and relic nodes',
+      'Starting bonus to be defined',
       'Deus Vult ability unlocked',
     ],
-    playstyleFocus: ['Faith', 'Culture', 'Unity'],
+    playstyleFocus: ['Culture', 'Unity'],
     strategicAbilities: [
       { name: 'Call Crusade', description: 'Rally religious armies to your cause.', stars: 3 },
       { name: 'Miracle', description: 'Inspire your people with divine intervention.', stars: 2 },
@@ -106,7 +105,7 @@ export const COMMANDERS: Commander[] = [
     quote: 'Why fight when others can fight for you?',
     passive: {
       name: 'Web of Alliances',
-      description: 'Each alliance = +1 allied unit in battle. Spending Influence doesn\'t reduce allies.',
+      description: 'Each alliance = +1 allied unit in battle.',
     },
     strategicAbility: {
       name: 'Manipulate',
@@ -125,7 +124,7 @@ export const COMMANDERS: Commander[] = [
     archetype: 'Diplomat',
     archetypeDescription: 'Empires are not built by swords alone. The right word in the right ear buys a legion and costs no blood.',
     startingBonuses: [
-      '+2 Influence at run start',
+      'Starting bonus to be defined',
       'Each alliance grants a free allied unit in battle',
       'Manipulate ability unlocked',
     ],
@@ -136,7 +135,7 @@ export const COMMANDERS: Commander[] = [
     ],
     uniqueUnits: [
       { name: 'Praetorian Guard', description: 'Elite bodyguard that grows stronger with each alliance.' },
-      { name: 'Imperial Forum', description: 'Broadcasts Influence and sways neighbouring provinces.' },
+      { name: 'Imperial Forum', description: 'Effect to be defined.' },
     ],
     victoryPaths: [
       { name: 'Diplomatic', description: 'Unite the world under a single banner.', progress: 4 },

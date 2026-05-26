@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect } from 'preact/hooks';
 import { OrnateFrame, OrnateDivider } from '../components/OrnateFrame';
 import { COMMANDERS } from '../../data/commanders';
 import { ARCHETYPE_COLORS } from '../../game/core/commander';
@@ -9,8 +9,6 @@ import { navigateTo } from '../screens';
 
 // ── Module-level signals (reset on mount) ──────────────────────────────────
 const selectedIndex = signal(0);
-const difficulty = signal<'easy' | 'normal' | 'hard'>('normal');
-const difficultyOpen = signal(false);
 const selecting = signal(false);
 
 // ── One-time CSS injection ──────────────────────────────────────────────────
@@ -219,38 +217,6 @@ if (typeof document !== 'undefined' && !document.getElementById('cmdr-select-sty
       display: grid;
       grid-template-columns: 1.3fr 1fr 1fr 1fr;
       gap: 20px;
-    }
-
-    .cmdr-difficulty-list {
-      position: absolute;
-      top: calc(100% + 6px);
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--color-bg-secondary, #1a1526);
-      border: 1px solid var(--color-border-default);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-      z-index: 50;
-      min-width: 120px;
-    }
-    .cmdr-difficulty-opt {
-      padding: 8px 16px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--color-gold-secondary);
-      cursor: pointer;
-      font-family: var(--font-display);
-      transition: background 0.15s ease, color 0.15s ease;
-    }
-    .cmdr-difficulty-opt:hover {
-      background: rgba(212,168,67,0.12);
-      color: var(--color-gold-primary);
-    }
-    .cmdr-difficulty-opt.active {
-      color: var(--color-gold-primary);
-      background: rgba(212,168,67,0.08);
     }
 
     .cmdr-cta-btn {
@@ -712,30 +678,12 @@ function VictoryPathsColumn({ commander }: { commander: Commander }) {
   );
 }
 
-// ── DifficultyDropdown ─────────────────────────────────────────────────────
-function DifficultyDropdown() {
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        difficultyOpen.value = false;
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const options: Array<{ value: 'easy' | 'normal' | 'hard'; label: string }> = [
-    { value: 'easy',   label: 'Easy'   },
-    { value: 'normal', label: 'Normal' },
-    { value: 'hard',   label: 'Hard'   },
-  ];
-
-  const current = difficulty.value.toUpperCase();
-
+// ── DifficultyPlaceholder ──────────────────────────────────────────────────
+// Difficulty selection is not yet wired into runs. Kept as a titled placeholder
+// (no effect) until the feature is designed.
+function DifficultyPlaceholder() {
   return (
-    <div ref={wrapRef} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div title="Coming soon" style={{ display: 'flex', alignItems: 'center', gap: 10, opacity: 0.5 }}>
       <span style={{
         fontSize: 11, letterSpacing: '2px', fontVariant: 'small-caps',
         color: 'var(--color-text-muted)', textTransform: 'uppercase',
@@ -743,33 +691,9 @@ function DifficultyDropdown() {
       }}>
         Difficulty
       </span>
-      <button
-        class="ornate-btn-ghost"
-        onClick={() => { difficultyOpen.value = !difficultyOpen.value; }}
-        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px' }}
-      >
-        <span style={{ fontFamily: 'var(--font-display)', letterSpacing: '1.5px' }}>{current}</span>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-          <path d="M2 3 L5 7 L8 3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-
-      {difficultyOpen.value && (
-        <div class="cmdr-difficulty-list">
-          {options.map(opt => (
-            <div
-              key={opt.value}
-              class={`cmdr-difficulty-opt${difficulty.value === opt.value ? ' active' : ''}`}
-              onClick={() => {
-                difficulty.value = opt.value;
-                difficultyOpen.value = false;
-              }}
-            >
-              {opt.label}
-            </div>
-          ))}
-        </div>
-      )}
+      <span style={{ fontFamily: 'var(--font-display)', letterSpacing: '1.5px', fontSize: 12, color: 'var(--color-text-muted)' }}>
+        SOON
+      </span>
     </div>
   );
 }
@@ -779,7 +703,6 @@ function beginRun() {
   if (selecting.value) return;
   const commander = COMMANDERS[selectedIndex.value];
   selecting.value = true;
-  // TODO(difficulty): difficulty.value is not yet plumbed into startNewRun
   startNewRun(commander);
   setTimeout(() => navigateTo('hub'), 300);
 }
@@ -789,8 +712,6 @@ export function CommanderSelectScreen() {
   useEffect(() => {
     // Reset stale signals from previous visit
     selectedIndex.value = 0;
-    difficulty.value = 'normal';
-    difficultyOpen.value = false;
     selecting.value = false;
 
     function handleKey(e: KeyboardEvent) {
@@ -803,8 +724,6 @@ export function CommanderSelectScreen() {
     return () => {
       window.removeEventListener('keydown', handleKey);
       selectedIndex.value = 0;
-      difficulty.value = 'normal';
-      difficultyOpen.value = false;
       selecting.value = false;
     };
   }, []);
@@ -935,8 +854,8 @@ export function CommanderSelectScreen() {
               📖 VIEW CIVILIZATION DETAILS
             </button>
 
-            {/* Center: Difficulty dropdown */}
-            <DifficultyDropdown />
+            {/* Center: Difficulty placeholder (not yet wired) */}
+            <DifficultyPlaceholder />
 
             {/* Right: CTA */}
             <button class="cmdr-cta-btn" onClick={beginRun}>

@@ -141,9 +141,6 @@ export function ResourceBar() {
   return (
     <div class="resource-bar" style={BAR_STYLE}>
       <ResourceCounter type="gold" />
-      <ResourceCounter type="faith" />
-      <ResourceCounter type="influence" />
-      <ResourceCounter type="momentum" />
       <ResourceCounter type="iuniores" />
       <Tooltip
         content={<div>{`Season ${globalSeason.value} of ${MAX_SEASONS}.`}</div>}

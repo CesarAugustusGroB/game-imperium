@@ -18,6 +18,7 @@ import { getCohortById } from '../army/cohort-data';
 import { computeArmySize, createCohortInstance } from '../army/cohort';
 import { clearActiveRunSave, recordRunStart } from './meta-save';
 import { resetCampaign } from '../campaign/campaign-state';
+import { resetIterBelli } from '../iterBelli/iter-belli-state';
 import { STARTER_ADVISORS } from '../../data/advisor-data';
 import { initFeaturePool, resetFeaturePool } from '../province/feature-store';
 import { SEASON, IUNIORES } from '../../config/game-config';
@@ -228,6 +229,7 @@ export function resetRun(): void {
   resetNPCFactions();
   resetSpoke();
   resetCampaign();
+  resetIterBelli();
 
   completedSpokes.value = 0;
   threatLevel.value = 0;

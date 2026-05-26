@@ -11,6 +11,7 @@ export type ScreenName =
   | 'bellum-systems'
   | 'forum'
   | 'hub'
+  | 'iterbelli'
   | 'doctrine'
   | 'council'
   | 'provinces'
@@ -22,8 +23,8 @@ export type ScreenName =
   | 'victory'
   | 'defeat';
 
-const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'quick-battle', 'bellum-systems', 'forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'battle', 'battleV2', 'post-battle', 'victory', 'defeat'];
-const REQUIRES_RUN: ScreenName[] = ['forum', 'hub', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'post-battle', 'victory', 'defeat'];
+const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'quick-battle', 'bellum-systems', 'forum', 'hub', 'iterbelli', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'battle', 'battleV2', 'post-battle', 'victory', 'defeat'];
+const REQUIRES_RUN: ScreenName[] = ['forum', 'hub', 'iterbelli', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'post-battle', 'victory', 'defeat'];
 
 /**
  * Legacy screen → Forum tab. `hub` and the old per-section routes (`council`,
@@ -59,6 +60,15 @@ export function navigateToBellum(): void {
   activeForumTab.value = 'bellum';
   sidebarCollapsed.value = true;
   navigateTo('forum');
+}
+
+/**
+ * Navigate to the Iter Belli campaign — the card-driven "march of war" launched
+ * on Embark. A full-screen surface with its own resource bar (see App's
+ * BARE_SCREENS). The campaign must already be seeded via startIterBelliCampaign.
+ */
+export function navigateToIterBelli(): void {
+  navigateTo('iterbelli');
 }
 
 // Read initial screen from URL hash (e.g., #battle, #forum, #provinces).

@@ -30,6 +30,7 @@ plan.md
 .claude/
 .vercel/
 .clone/
+.playwright-mcp/
 
 # Design prototypes (kept locally for reference, not version-controlled)
 Imperium/

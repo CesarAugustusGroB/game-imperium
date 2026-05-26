@@ -10,7 +10,6 @@ import { FACTION_COLORS } from '../../game/core/commander';
 import { getResource } from '../../game/core/resources';
 import { DecretumCard } from '../components/DecretumRenderer';
 import { councilSlots, startSpokeFromCouncil, plannedSpoke, tierUpNotices } from '../../game/council/council-store';
-import { ResourceExchangeModal } from '../components/ResourceExchangeModal';
 import { ArmyDetailHUD } from '../components/ArmyDetailHUD';
 import { provinces } from '../../game/province/province-store';
 import { PANEL, PANEL_TITLE } from '../ui-constants';
@@ -67,7 +66,6 @@ if (typeof document !== 'undefined' && !document.getElementById('hub-styles')) {
 }
 
 const goldFlash = signal<string | null>(null);
-const exchangeOpen = signal(false);
 const showArmyHUD = signal(false);
 let flashTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -94,9 +92,6 @@ export function HubScreen() {
 
   // Force signal reads for resource reactivity
   const gold = getResource('gold');
-  const faith = getResource('faith');
-  const influence = getResource('influence');
-  const momentum = getResource('momentum');
 
   // ── S14-10: Army + Legate summary ──
   const army = preparedArmy.value;
@@ -176,9 +171,6 @@ export function HubScreen() {
           title={(commander?.name ?? 'IMPERIUM').toUpperCase()}
           rightSlot={<>
             <span class="ornate-stat-chip" title="Gold">⚜ <strong>{gold}</strong></span>
-            <span class="ornate-stat-chip" title="Faith">✦ <strong>{faith}</strong></span>
-            <span class="ornate-stat-chip" title="Influence">◈ <strong>{influence}</strong></span>
-            <span class="ornate-stat-chip" title="Momentum">⚡ <strong>{momentum}</strong></span>
             {completedSpokes.value > 0 && (
               <span class="ornate-stat-chip" title="Completed spokes">🗺 <strong>{completedSpokes.value}</strong></span>
             )}
@@ -473,34 +465,9 @@ export function HubScreen() {
               )}
             </div>
 
-            {/* Resource Exchange */}
-            <div style={{ ...PANEL, background: 'var(--color-bg-secondary)' }}>
-              <div style={{ ...PANEL_TITLE, marginBottom: '8px' }}>Resource Exchange</div>
-              <button
-                class="hub-panel-btn"
-                onClick={() => { exchangeOpen.value = true; }}
-                style={{
-                  width: '100%', padding: '9px',
-                  background: 'var(--color-bg-tertiary)',
-                  border: '1px solid var(--color-border-default)',
-                  borderRadius: 'var(--radius-sm)',
-                  color: 'var(--color-text-secondary)',
-                  fontFamily: 'inherit', fontSize: 'var(--font-size-sm)', fontWeight: 600,
-                  letterSpacing: '1px', textTransform: 'uppercase',
-                }}
-              >
-                ⇄ Exchange Resources
-              </button>
-            </div>
-
           </div>
         </div>
       </OrnateFrame>
-
-      {/* Exchange modal */}
-      {exchangeOpen.value && (
-        <ResourceExchangeModal onClose={() => { exchangeOpen.value = false; }} />
-      )}
 
       {/* Army Detail HUD */}
       {showArmyHUD.value && army && (
