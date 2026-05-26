@@ -70,6 +70,7 @@ export function OperationCard({ card, state, onPlay }: Props) {
   let canPlay = true;
   if (cost.gold && state.gold < cost.gold) canPlay = false;
   if (cost.supplies && state.supplies < cost.supplies) canPlay = false;
+  if (cost.iuniores && state.iuniores < cost.iuniores) canPlay = false;
 
   const cardCtx = { state, loc: currentLocation() };
   const typeLabel = isCommitment ? 'Compromiso' : isGamble ? 'Arriesgada' : def.category;
@@ -94,6 +95,7 @@ export function OperationCard({ card, state, onPlay }: Props) {
         {cost.time ? <div class="ib-effect"><span class="label">Tiempo</span><span class="neg">−{cost.time}d</span></div> : null}
         {cost.supplies ? <div class="ib-effect"><span class="label">Suministros</span><span class="neg">−{cost.supplies}</span></div> : null}
         {cost.gold ? <div class="ib-effect"><span class="label">Oro</span><span class="neg">−{cost.gold}</span></div> : null}
+        {cost.iuniores ? <div class="ib-effect"><span class="label">Iuniores</span><span class="neg">−{cost.iuniores}</span></div> : null}
         {!isGamble && <EffectLines eff={opCard.effects(cardCtx)} />}
       </div>
 

@@ -39,6 +39,10 @@ function resources(s: IterBelliState): ResourceDef[] {
       tip: 'Oro de campaña (heredado del run). Paga cartas, sobornos y tributos; vuelve al hub al terminar.',
     },
     {
+      key: 'iuniores', glyph: '🛡', label: 'Iuniores', value: s.iuniores.toLocaleString('es'),
+      tip: 'Reclutas heredados del run. Gástalos con la "Leva de iuniores" para reforzar soldados; el resto vuelve al hub.',
+    },
+    {
       key: 'threat', glyph: '☠', label: 'Amenaza', value: s.threat.toFixed(1),
       tip: 'Atención enemiga (0–10). Alta amenaza dispara escaramuzas y emboscadas.',
       alert: s.threat >= ALERT.threatAlert,
