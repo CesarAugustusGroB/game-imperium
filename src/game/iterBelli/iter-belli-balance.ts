@@ -58,6 +58,12 @@ export const BATTLE_MAX_ROUNDS = 15;
 // ── Return-to-hub rewards ──
 export const VICTORY_GOLD_BONUS = 200;
 
+// ── Reinforcements (iuniores levy) ──
+/** Iuniores spent per "Leva de iuniores" card. */
+export const LEVY_IUNIORES_COST = 500;
+/** Soldiers gained per levy — 1:1 with the Hub's iuniores→cohort-HP ratio (1000 iuniores ≈ a 1000-HP cohort). */
+export const LEVY_IUNIORES_SOLDIERS = 500;
+
 // ── Clamps ──
 export const MORALE_MIN = 0;
 export const MORALE_MAX = 10;

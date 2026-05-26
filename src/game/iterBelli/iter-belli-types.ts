@@ -56,6 +56,8 @@ export interface CardCost {
   time?: number;
   gold?: number;
   supplies?: number;
+  /** Iuniores (recruit pool) spent — used by the levy card. */
+  iuniores?: number;
 }
 
 /**

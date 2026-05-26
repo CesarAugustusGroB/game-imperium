@@ -85,6 +85,7 @@ function applyChange(key: keyof IterBelliState, delta: number): void {
     case 'discipline': S.discipline = clamp(S.discipline + delta, B.DISCIPLINE_MIN, B.DISCIPLINE_MAX); break;
     case 'supplies':   S.supplies = Math.max(0, S.supplies + delta); break;
     case 'gold':       S.gold = Math.max(0, S.gold + delta); break;
+    case 'iuniores':   S.iuniores = Math.max(0, S.iuniores + delta); break;
     case 'threat':     S.threat = clamp(S.threat + delta, B.THREAT_MIN, B.THREAT_MAX); break;
     default: break;
   }
@@ -191,6 +192,7 @@ export function playCard(instanceId: number): void {
   // Costs apply regardless of gamble outcome.
   applyChange('supplies', -(cost.supplies ?? 0));
   applyChange('gold', -(cost.gold ?? 0));
+  applyChange('iuniores', -(cost.iuniores ?? 0));
 
   const isGamble = def.cardType === 'arriesgada';
   let eff: CardEffects;

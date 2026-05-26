@@ -7,6 +7,7 @@
  */
 
 import type { OperationCard } from '../game/iterBelli/iter-belli-types';
+import { LEVY_IUNIORES_COST, LEVY_IUNIORES_SOLDIERS } from '../game/iterBelli/iter-belli-balance';
 
 export const CARD_DEFS: OperationCard[] = [
   // ── LOGÍSTICA ────────────────────────────────────────────────────────────
@@ -201,6 +202,19 @@ export const CARD_DEFS: OperationCard[] = [
     expiry: 4,
     locations: ['*'],
     weight: 2,
+  },
+
+  {
+    id: 'leva_iuniores',
+    name: 'Leva de iuniores',
+    category: 'Postura',
+    desc: 'Llamar a filas a los iuniores de tus provincias. Refuerzos frescos a cambio de tu reserva de reclutas.',
+    cost: { time: 1, iuniores: LEVY_IUNIORES_COST },
+    effects: () => ({ soldiers: LEVY_IUNIORES_SOLDIERS }),
+    expiry: 4,
+    locations: ['*'],
+    requires: ({ state }) => state.iuniores >= LEVY_IUNIORES_COST,
+    weight: 3,
   },
 
   // ── OPERACIONES MAYORES ──────────────────────────────────────────────────────
