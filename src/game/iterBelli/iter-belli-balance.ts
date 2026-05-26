@@ -2,6 +2,7 @@
  * Iter Belli — tunable balance constants, ported from the prototype.
  * Centralised so the campaign/battle feel can be adjusted without touching logic.
  */
+import type { Archetype } from './iter-belli-types';
 
 // ── Starting campaign defaults (the hybrid seed fills in soldiers + gold) ──
 export const START = {
@@ -63,6 +64,20 @@ export const VICTORY_GOLD_BONUS = 200;
 export const LEVY_IUNIORES_COST = 500;
 /** Soldiers gained per levy — 1:1 with the Hub's iuniores→cohort-HP ratio (1000 iuniores ≈ a 1000-HP cohort). */
 export const LEVY_IUNIORES_SOLDIERS = 500;
+
+// ── Commander identity ──
+/** Starting discipline (1–5) by archetype; overrides START.discipline at embark. */
+export const DISCIPLINE_BY_ARCHETYPE: Record<Archetype, number> = {
+  Warlord: 2,
+  Religious: 3,
+  Merchant: 4,
+  Diplomat: 5,
+};
+/** Legate trait id → discipline contribution. Net is clamped to ±1 by the caller. */
+export const LEGATE_DISCIPLINE_TRAIT_MOD: Record<string, number> = {
+  disciplined: 1, cautious: 1, tactician: 1, stoic: 1,
+  aggressive: -1, rallying: -1,
+};
 
 // ── Clamps ──
 export const MORALE_MIN = 0;

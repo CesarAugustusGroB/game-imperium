@@ -1,7 +1,8 @@
 import { plannedSpoke } from '../../../../game/council/council-store';
-import { preparedArmy } from '../../../../game/progression/strategic-store';
+import { preparedArmy, preparedLegate } from '../../../../game/progression/strategic-store';
 import { getResource } from '../../../../game/core/resources';
-import { startIterBelliCampaign } from '../../../../game/iterBelli/iter-belli-state';
+import { selectedCommander } from '../../../../game/core/game-state';
+import { startIterBelliCampaign, computeStartingDiscipline } from '../../../../game/iterBelli/iter-belli-state';
 import { navigateToIterBelli } from '../../../screens';
 import { playSfx } from '../../../sound/sfx';
 import { OrnatePanel } from '../../../components/OrnatePanel';
@@ -32,7 +33,9 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
     // Hybrid seed: soldiers from the prepared army's effective HP, gold from the run.
     const cohorts = army?.cohorts ?? [];
     const soldiers = cohorts.reduce((sum, c) => sum + (c.currentHp ?? c.stats.hp), 0);
-    startIterBelliCampaign({ soldiers, gold: getResource('gold'), iuniores: getResource('iuniores') });
+    const archetype = selectedCommander.value?.archetype ?? null;
+    const discipline = computeStartingDiscipline(archetype, preparedLegate.value?.traitIds ?? []);
+    startIterBelliCampaign({ soldiers, gold: getResource('gold'), iuniores: getResource('iuniores'), discipline, archetype });
     navigateToIterBelli();
   }
 

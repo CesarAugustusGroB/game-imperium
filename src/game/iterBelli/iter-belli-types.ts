@@ -82,10 +82,15 @@ export interface CardEffects {
   triggerFinalBattle?: boolean;
 }
 
+/** Player archetype, mirrors Commander['archetype']. null when no commander. */
+export type Archetype = 'Religious' | 'Warlord' | 'Diplomat' | 'Merchant';
+
 /** Read-only context handed to a card's behaviour functions. */
 export interface CardContext {
   state: Readonly<IterBelliState>;
   loc: Location;
+  /** Commander archetype for this campaign; gates signature cards. */
+  archetype?: Archetype | null;
 }
 
 /** Result of a broken-commitment penalty: optional material effects + a log line. */
@@ -193,6 +198,8 @@ export interface IterBelliState {
   // Presentation / lifecycle
   phase: CampaignPhase;
   outcome: CampaignOutcome | null;
+  /** Commander archetype for this campaign (gates signature cards). */
+  archetype: Archetype | null;
 
   /** Soldiers the campaign began with — used to scale survivors back to cohorts. */
   initialSoldiers: number;

@@ -15,7 +15,7 @@ import { CARD_DEFS } from '../../data/iter-belli-cards';
 import { CRISES, LOCATIONS } from '../../data/iter-belli-locations';
 import * as B from './iter-belli-balance';
 import type {
-  CardContext, CardEffects, CardInstance, IterBelliState, Location, LogKind, LogLine,
+  Archetype, CardContext, CardEffects, CardInstance, IterBelliState, Location, LogKind, LogLine,
 } from './iter-belli-types';
 import { isCrisisDef } from './iter-belli-types';
 
@@ -43,6 +43,7 @@ function freshState(): IterBelliState {
     brokenCommitments: 0,
     phase: 'campaign',
     outcome: null,
+    archetype: null,
     initialSoldiers: B.START.fallbackSoldiers,
   };
 }
@@ -73,7 +74,7 @@ export function currentLocation(): Location {
 }
 
 function ctx(): CardContext {
-  return { state: S, loc: currentLocation() };
+  return { state: S, loc: currentLocation(), archetype: S.archetype };
 }
 
 /** Mutate one resource on the draft, applying the prototype's clamps. */
@@ -373,10 +374,26 @@ export function applyBattleOutcome(victory: boolean, survivors: number, finalMor
   commit();
 }
 
+/**
+ * Starting campaign discipline = archetype base + legate modifier (net ±1), clamped 1–5.
+ * Reads legate trait ids as plain strings; does not touch the legate/battle system.
+ */
+export function computeStartingDiscipline(
+  archetype: Archetype | null,
+  legateTraitIds: readonly string[],
+): number {
+  const base = archetype ? B.DISCIPLINE_BY_ARCHETYPE[archetype] : B.START.discipline;
+  const rawMod = legateTraitIds.reduce((sum, id) => sum + (B.LEGATE_DISCIPLINE_TRAIT_MOD[id] ?? 0), 0);
+  const legateMod = clamp(rawMod, -1, 1);
+  return clamp(base + legateMod, B.DISCIPLINE_MIN, B.DISCIPLINE_MAX);
+}
+
 export interface CampaignSeed {
   soldiers: number;
   gold: number;
   iuniores: number;
+  discipline: number;
+  archetype: Archetype | null;
 }
 
 /** Begin a fresh campaign, seeded from the run's army size and gold. */
@@ -388,6 +405,8 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
   S.initialSoldiers = soldiers;
   S.gold = Math.max(seed.gold, 0);
   S.iuniores = Math.max(seed.iuniores, 0);
+  S.discipline = clamp(seed.discipline, B.DISCIPLINE_MIN, B.DISCIPLINE_MAX);
+  S.archetype = seed.archetype;
 
   logTurn('Día 1: Inicio de la campaña');
   logEvent(`El ejército parte de la frontera. ${S.soldiers} soldados, moral ${S.morale.toFixed(1)}, disciplina ${B.ROMAN[S.discipline]}.`);
