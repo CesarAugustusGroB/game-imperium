@@ -5,7 +5,7 @@ import { isCrisisDef } from '../../../game/iterBelli/iter-belli-types';
 
 const EFFECT_LABELS: Record<string, string> = {
   soldiers: 'Soldados', morale: 'Moral', discipline: 'Disciplina', supplies: 'Suministros',
-  gold: 'Oro', threat: 'Amenaza', enemyWeaken: 'Erosión enem.', advance: 'Avance', time_bonus: 'Plazo',
+  gold: 'Oro', threat: 'Amenaza', iuniores: 'Iuniores', enemyWeaken: 'Erosión enem.', advance: 'Avance', time_bonus: 'Plazo',
 };
 
 /** A signed numeric effect is "good" unless it's threat (where less is better). */
