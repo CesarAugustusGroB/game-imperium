@@ -4,6 +4,10 @@
  */
 import { startIterBelliCampaign, resetIterBelli, iterBelliState, computeStartingDiscipline } from '../src/game/iterBelli/iter-belli-state';
 import { START } from '../src/game/iterBelli/iter-belli-balance';
+import { CARD_DEFS } from '../src/data/iter-belli-cards';
+import { LOCATIONS } from '../src/data/iter-belli-locations';
+import { SIGNATURE } from '../src/game/iterBelli/iter-belli-balance';
+import type { Archetype, CardContext } from '../src/game/iterBelli/iter-belli-types';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -31,6 +35,31 @@ check('seed applies discipline', iterBelliState.value.discipline === 5);
 check('seed applies archetype', iterBelliState.value.archetype === 'Diplomat');
 resetIterBelli();
 check('reset clears archetype to null', iterBelliState.value.archetype === null);
+
+// --- Signature cards ---
+const mkCtx = (archetype: Archetype | null, gold = 0): CardContext =>
+  ({ state: { ...iterBelliState.value, gold }, loc: LOCATIONS[0], archetype });
+
+const sig: Array<[string, Archetype]> = [
+  ['firma_furia_gala', 'Warlord'],
+  ['firma_te_deum', 'Religious'],
+  ['firma_mercenarios', 'Merchant'],
+  ['firma_tratado', 'Diplomat'],
+];
+for (const [id, arch] of sig) {
+  const card = CARD_DEFS.find((c) => c.id === id);
+  check(`${id} exists`, !!card);
+  if (card) {
+    check(`${id} gated to ${arch}`, card.requires!(mkCtx(arch, 999)) === true);
+    check(`${id} blocked for other archetype`, card.requires!(mkCtx(arch === 'Warlord' ? 'Religious' : 'Warlord', 999)) === false);
+    check(`${id} locations '*'`, card.locations.includes('*'));
+  }
+}
+check('furia gala effects', CARD_DEFS.find((c) => c.id === 'firma_furia_gala')!.effects(mkCtx('Warlord')).morale === SIGNATURE.furiaGalaMorale);
+check('te deum morale', CARD_DEFS.find((c) => c.id === 'firma_te_deum')!.effects(mkCtx('Religious')).morale === SIGNATURE.teDeumMorale);
+check('mercenarios soldiers', CARD_DEFS.find((c) => c.id === 'firma_mercenarios')!.effects(mkCtx('Merchant')).soldiers === SIGNATURE.mercenariosSoldiers);
+check('mercenarios requires gold', CARD_DEFS.find((c) => c.id === 'firma_mercenarios')!.requires!(mkCtx('Merchant', 0)) === false);
+check('tratado threat', CARD_DEFS.find((c) => c.id === 'firma_tratado')!.effects(mkCtx('Diplomat')).threat === SIGNATURE.tratadoThreat);
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll commander-identity checks passed.');

@@ -79,6 +79,16 @@ export const LEGATE_DISCIPLINE_TRAIT_MOD: Record<string, number> = {
   aggressive: -1, rallying: -1,
 };
 
+/** Signature card tuning (one card per commander). */
+export const SIGNATURE = {
+  furiaGalaMorale: 2,
+  furiaGalaThreat: 1,
+  teDeumMorale: 2.5,
+  mercenariosGold: 40,
+  mercenariosSoldiers: 600,
+  tratadoThreat: -3,
+} as const;
+
 // ── Clamps ──
 export const MORALE_MIN = 0;
 export const MORALE_MAX = 10;

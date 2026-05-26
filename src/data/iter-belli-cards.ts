@@ -7,7 +7,7 @@
  */
 
 import type { OperationCard } from '../game/iterBelli/iter-belli-types';
-import { LEVY_IUNIORES_COST, LEVY_IUNIORES_SOLDIERS } from '../game/iterBelli/iter-belli-balance';
+import { LEVY_IUNIORES_COST, LEVY_IUNIORES_SOLDIERS, SIGNATURE } from '../game/iterBelli/iter-belli-balance';
 
 export const CARD_DEFS: OperationCard[] = [
   // ── LOGÍSTICA ────────────────────────────────────────────────────────────
@@ -214,6 +214,56 @@ export const CARD_DEFS: OperationCard[] = [
     expiry: 4,
     locations: ['*'],
     requires: ({ state }) => state.iuniores >= LEVY_IUNIORES_COST,
+    weight: 3,
+  },
+
+  // ── CARTAS FIRMA (commander-gated, locations '*') ──────────────────────────
+  {
+    id: 'firma_furia_gala',
+    name: 'Furia gala',
+    category: 'Coerción',
+    desc: 'Boudicca enardece a las tribus. El ardor de combate crece, pero el clamor llega lejos.',
+    cost: { time: 1 },
+    effects: () => ({ morale: SIGNATURE.furiaGalaMorale, threat: SIGNATURE.furiaGalaThreat }),
+    expiry: 5,
+    locations: ['*'],
+    requires: ({ archetype }) => archetype === 'Warlord',
+    weight: 3,
+  },
+  {
+    id: 'firma_te_deum',
+    name: 'Te Deum',
+    category: 'Diplomacia',
+    desc: 'El Papa entona acción de gracias. La fe reanima el ánimo de las legiones.',
+    cost: { time: 1 },
+    effects: () => ({ morale: SIGNATURE.teDeumMorale }),
+    expiry: 5,
+    locations: ['*'],
+    requires: ({ archetype }) => archetype === 'Religious',
+    weight: 3,
+  },
+  {
+    id: 'firma_mercenarios',
+    name: 'Mercenarios de Craso',
+    category: 'Postura',
+    desc: 'Craso abre su bolsa: lanzas a sueldo se unen a la columna.',
+    cost: { time: 1, gold: SIGNATURE.mercenariosGold },
+    effects: () => ({ soldiers: SIGNATURE.mercenariosSoldiers }),
+    expiry: 5,
+    locations: ['*'],
+    requires: ({ archetype, state }) => archetype === 'Merchant' && state.gold >= SIGNATURE.mercenariosGold,
+    weight: 3,
+  },
+  {
+    id: 'firma_tratado',
+    name: 'Tratado romano',
+    category: 'Diplomacia',
+    desc: 'Augusto negocia: un tratado desactiva la hostilidad local.',
+    cost: { time: 1 },
+    effects: () => ({ threat: SIGNATURE.tratadoThreat }),
+    expiry: 5,
+    locations: ['*'],
+    requires: ({ archetype }) => archetype === 'Diplomat',
     weight: 3,
   },
 
