@@ -23,8 +23,9 @@ bellum/battle code; the Iter Belli logic module stays free of run-state imports.
 
 - **Scope:** connect existing progression signals **+ province conquest on victory**. Defeat
   consequences are explicitly **out of scope** (no new penalties).
-- **Province identity:** derived from the **spoke theme** (terrain) + a theme-keyed Hispanian
-  toponym pool (name), not a generic city pool or the spoke's flavor label.
+- **Province identity:** **terrain** derived from the **spoke theme**; **name** picked at random
+  from a flat pool of Roman/provincial place-names (not Hispania-specific, not terrain-keyed —
+  the names are just flavor), and not the spoke's flavor label.
 - **Province income:** **fixed** per-spoke value (not performance-scaled), for predictable
   balancing.
 
@@ -58,8 +59,8 @@ conquerProvince(name, PROVINCE_REWARD, 1, { terrain });
 - **terrain** ← derived from the spoke theme (captured at embark, §3). `conquerProvince` already
   auto-claims a free map territory via `claimTerritory`, so the province appears painted on the
   map and in the Provinciae list.
-- **name** ← `pickConquestName(terrain, takenNames)`: first unused name from the terrain's
-  toponym pool; if all are taken, append a roman-numeral suffix (e.g. `Gades II`).
+- **name** ← `pickConquestName(takenNames)`: a random unused name from a flat Roman/provincial
+  name pool; if all are taken, append a roman-numeral suffix (e.g. `Gades II`).
 - **gains** = `PROVINCE_REWARD` (fixed), passed with **`duration: 1`** so the per-spoke income
   equals the fixed value exactly (no scaling). `conquerProvince`'s `duration` param is *only* an
   income divisor, so `1` yields `baseIncome == gains`.
@@ -86,15 +87,15 @@ Self-contained: a new data/helper file + the embark/endgame bridge + a small see
   UI so it is reviewable and unit-checkable:
   - `THEME_TERRAIN: Record<string, TerrainType>` =
     `{ woodland:'forest', highlands:'mountains', marshland:'marsh', coastal:'coast', mixed:'plains' }`.
-  - `CONQUEST_TOPONYMS: Record<TerrainType, string[]>` — Hispanian names per terrain
-    (forest: *Silva Carpetana, Saltus Castulonensis, Bosques Saguntinos*; mountains: *Numantia,
-    Osca, Bilbilis*; marsh: *Ilipa, Tartessos, Lacus Ligustinus*; coast: *Gades, Carthago Nova,
-    Tarraco*; plains: *Sagunto, Ilerda, Corduba*). Unlisted terrains fall back to a generic pool.
+  - `CONQUEST_NAMES: string[]` — a flat pool of evocative Roman/provincial place-names (e.g.
+    *Numantia, Gades, Tarraco, Corduba, Ilerda, Osca, Bilbilis, Carthago Nova, Saguntum,
+    Emporiae, Carteia, Italica, …*). Not terrain-keyed; names are pure flavor and can be
+    expanded freely.
   - `PROVINCE_REWARD: Record<ResourceType, number>` = fixed gains, e.g.
     `{ gold: 5, iuniores: 2, faith: 0, influence: 0, momentum: 0 }` (gold + iuniores only; the
     deprecated resources stay 0). **Tunable.**
-  - `pickConquestName(terrain: TerrainType, taken: Set<string>): string` — pure; returns the
-    first unused pool name, else `<name> II/III/…`.
+  - `pickConquestName(taken: Set<string>): string` — returns a random name from `CONQUEST_NAMES`
+    not in `taken`; if all are taken, appends a roman-numeral suffix (`<name> II/III/…`).
 - **`src/game/iterBelli/iter-belli-types.ts`** — `CampaignSeed` + `IterBelliState` gain
   `spokeTerrain: string` and `spokeDuration: number`.
 - **`src/game/iterBelli/iter-belli-state.ts`** — `freshState` defaults; `startIterBelliCampaign`
@@ -111,15 +112,15 @@ Self-contained: a new data/helper file + the embark/endgame bridge + a small see
 `EmbarkCard` (spoke.theme → terrain via `THEME_TERRAIN`; spoke.duration) →
 `startIterBelliCampaign({ …, spokeTerrain, spokeDuration })` → `IterBelliState` →
 campaign plays out → `EndgameCard.returnToHub` reads `spokeTerrain`/`spokeDuration` →
-applies signal wiring + (on victory) `conquerProvince(pickConquestName(terrain, taken),
+applies signal wiring + (on victory) `conquerProvince(pickConquestName(taken),
 PROVINCE_REWARD, 1, { terrain })` → province painted + listed; `navigateTo('hub')`.
 
 ## Verification
 
 New `tools/verify-iter-belli-result-to-hub.ts` (run with `npx tsx`):
 - `THEME_TERRAIN` maps all five spoke themes to valid `TerrainType`s; unknown/undefined → `plains`.
-- `pickConquestName`: returns a pool name for each terrain; when the pool's first entries are in
-  `taken`, returns the next free one; when all are taken, returns a numeral-suffixed unique name.
+- `pickConquestName`: returns a name from `CONQUEST_NAMES` not in `taken`; when several are taken,
+  the result is still unused; when all are taken, returns a numeral-suffixed unique name.
 - `PROVINCE_REWARD` is gold+iuniores only (deprecated resources 0).
 - Seed round-trip: `startIterBelliCampaign` applies `spokeTerrain`/`spokeDuration`;
   `resetIterBelli` restores defaults (`'plains'` / `1`).
