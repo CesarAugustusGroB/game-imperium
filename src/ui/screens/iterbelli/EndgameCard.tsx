@@ -2,12 +2,16 @@ import { OrnateFrame } from '../../components/OrnateFrame';
 import { playSfx } from '../../sound/sfx';
 import { navigateTo } from '../../screens';
 import { gold, iuniores } from '../../../game/core/resources';
-import { completedSpokes } from '../../../game/core/game-state';
+import { completedSpokes, battlesWon, globalSeason, MAX_SEASONS, spokesSinceLastBattle } from '../../../game/core/game-state';
 import { preparedArmy } from '../../../game/progression/strategic-store';
 import { computeArmySize } from '../../../game/army/cohort';
 import { iterBelliState, resetIterBelli } from '../../../game/iterBelli/iter-belli-state';
 import { resetIterBelliBattle } from '../../../game/iterBelli/iter-belli-combat';
 import { START } from '../../../game/iterBelli/iter-belli-balance';
+import { conquerProvince, provinces } from '../../../game/province/province-store';
+import { pickConquestName, PROVINCE_REWARD } from '../../../data/iter-belli-conquest';
+import type { TerrainType } from '../../../data/terrain-data';
+import type { ResourceType } from '../../../game/core/commander';
 
 /**
  * Apply the campaign result back to the run, then return to the Hub:
@@ -21,7 +25,22 @@ function returnToHub(): void {
 
   gold.value = s.gold;
   iuniores.value = s.iuniores;
-  if (outcome?.victory) completedSpokes.value++;
+
+  // Season clock advances regardless of outcome — campaign time elapsed.
+  globalSeason.value = Math.min(MAX_SEASONS, globalSeason.value + s.spokeDuration);
+
+  if (outcome?.victory) {
+    completedSpokes.value++;
+    battlesWon.value++;             // the decisive battle was won
+    spokesSinceLastBattle.value = 0;
+
+    // Conquer a province: terrain from the spoke theme, random unused name, fixed income.
+    const taken = new Set(provinces.value.map((p) => p.name));
+    const name = pickConquestName(taken);
+    conquerProvince(name, PROVINCE_REWARD as Record<ResourceType, number>, 1, {
+      terrain: s.spokeTerrain as TerrainType,
+    });
+  }
 
   const army = preparedArmy.value;
   if (army && s.initialSoldiers > 0) {
