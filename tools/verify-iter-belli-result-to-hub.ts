@@ -5,6 +5,7 @@
 import {
   THEME_TERRAIN, themeToTerrain, CONQUEST_NAMES, pickConquestName, PROVINCE_REWARD,
 } from '../src/data/iter-belli-conquest';
+import { startIterBelliCampaign, resetIterBelli, iterBelliState } from '../src/game/iterBelli/iter-belli-state';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -40,7 +41,15 @@ check('reward has no influence', PROVINCE_REWARD.influence === undefined);
 check('reward has no momentum', PROVINCE_REWARD.momentum === undefined);
 
 // --- Seed round-trip (filled in by Task 2) ---
-// (added in Task 2)
+startIterBelliCampaign({
+  soldiers: 1000, gold: 0, iuniores: 0, discipline: 4, archetype: null,
+  spokeTerrain: 'coast', spokeDuration: 3,
+});
+check('seed applies spokeTerrain', iterBelliState.value.spokeTerrain === 'coast');
+check('seed applies spokeDuration', iterBelliState.value.spokeDuration === 3);
+resetIterBelli();
+check('reset restores spokeTerrain → plains', iterBelliState.value.spokeTerrain === 'plains');
+check('reset restores spokeDuration → 1', iterBelliState.value.spokeDuration === 1);
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed`); process.exit(1); }
 console.log('\nAll checks passed');

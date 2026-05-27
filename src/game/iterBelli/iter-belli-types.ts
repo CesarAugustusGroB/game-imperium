@@ -203,6 +203,10 @@ export interface IterBelliState {
 
   /** Soldiers the campaign began with — used to scale survivors back to cohorts. */
   initialSoldiers: number;
+  /** Conquered-province terrain (from the spoke theme); seeded at embark. */
+  spokeTerrain: string;
+  /** Spoke duration in seasons (1–4); advances the Hub season clock on return. */
+  spokeDuration: number;
 }
 
 // ── Battle ──────────────────────────────────────────────────────────────────

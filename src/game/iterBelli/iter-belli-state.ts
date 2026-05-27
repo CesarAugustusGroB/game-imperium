@@ -45,6 +45,8 @@ function freshState(): IterBelliState {
     outcome: null,
     archetype: null,
     initialSoldiers: B.START.fallbackSoldiers,
+    spokeTerrain: 'plains',
+    spokeDuration: 1,
   };
 }
 
@@ -394,6 +396,8 @@ export interface CampaignSeed {
   iuniores: number;
   discipline: number;
   archetype: Archetype | null;
+  spokeTerrain: string;
+  spokeDuration: number;
 }
 
 /** Begin a fresh campaign, seeded from the run's army size and gold. */
@@ -407,6 +411,8 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
   S.iuniores = Math.max(seed.iuniores, 0);
   S.discipline = clamp(seed.discipline, B.DISCIPLINE_MIN, B.DISCIPLINE_MAX);
   S.archetype = seed.archetype;
+  S.spokeTerrain = seed.spokeTerrain;
+  S.spokeDuration = Math.max(1, Math.floor(seed.spokeDuration));
 
   logTurn('Día 1: Inicio de la campaña');
   logEvent(`El ejército parte de la frontera. ${S.soldiers} soldados, moral ${S.morale.toFixed(1)}, disciplina ${B.ROMAN[S.discipline]}.`);
