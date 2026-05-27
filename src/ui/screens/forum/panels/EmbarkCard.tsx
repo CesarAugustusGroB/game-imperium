@@ -3,6 +3,7 @@ import { preparedArmy, preparedLegate } from '../../../../game/progression/strat
 import { getResource } from '../../../../game/core/resources';
 import { selectedCommander } from '../../../../game/core/game-state';
 import { startIterBelliCampaign, computeStartingDiscipline } from '../../../../game/iterBelli/iter-belli-state';
+import { themeToTerrain } from '../../../../data/iter-belli-conquest';
 import { navigateToIterBelli } from '../../../screens';
 import { playSfx } from '../../../sound/sfx';
 import { OrnatePanel } from '../../../components/OrnatePanel';
@@ -35,7 +36,9 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
     const soldiers = cohorts.reduce((sum, c) => sum + (c.currentHp ?? c.stats.hp), 0);
     const archetype = selectedCommander.value?.archetype ?? null;
     const discipline = computeStartingDiscipline(archetype, preparedLegate.value?.traitIds ?? []);
-    startIterBelliCampaign({ soldiers, gold: getResource('gold'), iuniores: getResource('iuniores'), discipline, archetype });
+    const spokeTerrain = themeToTerrain(spoke?.theme);
+    const spokeDuration = spoke?.duration ?? 1;
+    startIterBelliCampaign({ soldiers, gold: getResource('gold'), iuniores: getResource('iuniores'), discipline, archetype, spokeTerrain, spokeDuration });
     navigateToIterBelli();
   }
 
