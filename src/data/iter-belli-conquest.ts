@@ -17,7 +17,7 @@ export const THEME_TERRAIN: Record<string, TerrainType> = {
 
 /** Resolve a spoke theme tag to a terrain; unknown / undefined / null → 'plains'. */
 export function themeToTerrain(theme: string | undefined | null): TerrainType {
-  return (theme != null && THEME_TERRAIN[theme]) || 'plains';
+  return (theme != null ? THEME_TERRAIN[theme] : undefined) ?? 'plains';
 }
 
 /** Flat pool of evocative place-names for conquered provinces (pure flavor). */
@@ -27,6 +27,7 @@ export const CONQUEST_NAMES: string[] = [
   'Lucentum', 'Toletum', 'Segovia', 'Pallantia', 'Asturica', 'Bracara', 'Olisipo',
 ];
 
+// Starts at II — 'Base I' would imply the original was retroactively renamed; skip it.
 const ROMAN_SUFFIX = ['II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
 /**
