@@ -398,6 +398,8 @@ export interface CampaignSeed {
   archetype: Archetype | null;
   spokeTerrain: string;
   spokeDuration: number;
+  /** Supplies carried from the Hub army stock; omitted → keeps the START default. */
+  supplies?: number;
 }
 
 /** Begin a fresh campaign, seeded from the run's army size and gold. */
@@ -413,6 +415,7 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
   S.archetype = seed.archetype;
   S.spokeTerrain = seed.spokeTerrain;
   S.spokeDuration = Math.max(1, Math.floor(seed.spokeDuration));
+  if (seed.supplies != null) S.supplies = Math.max(0, Math.floor(seed.supplies));
 
   logTurn('Día 1: Inicio de la campaña');
   logEvent(`El ejército parte de la frontera. ${S.soldiers} soldados, moral ${S.morale.toFixed(1)}, disciplina ${B.ROMAN[S.discipline]}.`);
