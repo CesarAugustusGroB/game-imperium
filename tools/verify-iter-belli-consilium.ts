@@ -32,6 +32,7 @@ check('asalto true at 8 days', MISSIONS.red.condition({ ...base, turnNum: 8 }));
 check('asalto false at 9 days', !MISSIONS.red.condition({ ...base, turnNum: 9 }));
 check('botin true at 120 gold', MISSIONS.purple.condition({ ...base, gold: 120 }));
 check('cruzada false at morale 5', !MISSIONS.gold.condition({ ...base, morale: 5 }));
+check('cruzada true at morale 6', MISSIONS.gold.condition({ ...base, morale: 6 }));
 
 // --- passiveModifier ---
 check('upkeep 20% → +5 supplies', passiveModifier({ type: 'upkeep-reduction', percent: 20 }).supplies === 5);
