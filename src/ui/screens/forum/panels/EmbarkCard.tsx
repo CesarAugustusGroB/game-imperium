@@ -1,9 +1,10 @@
-import { plannedSpoke } from '../../../../game/council/council-store';
+import { plannedSpoke, councilSlots } from '../../../../game/council/council-store';
 import { preparedArmy, preparedLegate } from '../../../../game/progression/strategic-store';
 import { getResource } from '../../../../game/core/resources';
 import { selectedCommander } from '../../../../game/core/game-state';
 import { startIterBelliCampaign, computeStartingDiscipline } from '../../../../game/iterBelli/iter-belli-state';
 import { themeToTerrain } from '../../../../data/iter-belli-conquest';
+import { computeConsiliumSetup, getMissionById } from '../../../../data/iter-belli-consilium';
 import { SUPPLY_UPKEEP_PER_TURN, START } from '../../../../game/iterBelli/iter-belli-balance';
 import { SUPPLIES_STARTING_STOCK } from '../../../../config/game-config';
 import { navigateToIterBelli } from '../../../screens';
@@ -18,6 +19,15 @@ interface EmbarkCardProps {
 export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
   const spoke = plannedSpoke.value;
   const army = preparedArmy.value;
+
+  const consilium = computeConsiliumSetup(councilSlots.value);
+  const mission = getMissionById(consilium.missionId);
+  const modSummary = [
+    consilium.supplies ? `+${consilium.supplies} suministros` : null,
+    consilium.threat ? `−${consilium.threat} amenaza` : null,
+    consilium.gold ? `+${consilium.gold} oro` : null,
+    consilium.morale ? `+${consilium.morale} moral` : null,
+  ].filter(Boolean).join(' · ');
 
   const campaignTitle = spoke?.label ?? 'No campaign planned';
   const nodes = spoke?.nodes ?? [];
@@ -38,8 +48,16 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
     const discipline = computeStartingDiscipline(archetype, preparedLegate.value?.traitIds ?? []);
     const spokeTerrain = themeToTerrain(spoke?.theme);
     const spokeDuration = spoke?.duration ?? 1;
-    const supplies = army?.supplies ?? SUPPLIES_STARTING_STOCK;
-    startIterBelliCampaign({ soldiers, gold: getResource('gold'), iuniores: getResource('iuniores'), discipline, archetype, spokeTerrain, spokeDuration, supplies });
+    const supplies = (army?.supplies ?? SUPPLIES_STARTING_STOCK) + consilium.supplies;
+    startIterBelliCampaign({
+      soldiers,
+      gold: getResource('gold') + consilium.gold,
+      iuniores: getResource('iuniores'),
+      discipline, archetype, spokeTerrain, spokeDuration, supplies,
+      missionId: consilium.missionId ?? undefined,
+      startThreat: START.threat - consilium.threat,
+      startMorale: START.morale + consilium.morale,
+    });
     navigateToIterBelli();
   }
 
@@ -71,6 +89,26 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
       }}>
         {campaignTitle}
       </div>
+      {/* ── Consilium: mission + modifiers ── */}
+      {(mission || modSummary) && (
+        <div style={{
+          marginBottom: 10, padding: '8px 12px',
+          background: 'rgba(212, 168, 67, 0.08)',
+          border: '1px solid rgba(212, 168, 67, 0.35)',
+          borderRadius: 2,
+        }}>
+          {mission && (
+            <div style={{ fontFamily: 'var(--imp-font-display)', fontSize: 12, letterSpacing: 1, color: 'var(--imp-gold-hi)' }}>
+              ⚜ Misión: {mission.title} <span style={{ color: 'var(--imp-text-lo)', letterSpacing: 0 }}>— {mission.conditionDesc} (+{mission.bonusGold}⚜)</span>
+            </div>
+          )}
+          {modSummary && (
+            <div style={{ fontSize: 10, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: mission ? 4 : 0 }}>
+              Consilium: {modSummary}
+            </div>
+          )}
+        </div>
+      )}
       {/* ── Supply warning ── */}
       {supplyWarning && (
         <div style={{
