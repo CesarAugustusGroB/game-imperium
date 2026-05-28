@@ -24,7 +24,7 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
   const canEmbark = !!spoke && nodes.length > 0;
 
   // Supply warning: warn if the Hub stock is below the campaign's upkeep budget.
-  const suppliesHave = army?.supplies ?? 0;
+  const suppliesHave = army?.supplies ?? SUPPLIES_STARTING_STOCK;
   const suppliesRecommended = SUPPLY_UPKEEP_PER_TURN * START.timeRemaining;
   const supplyWarning = canEmbark && suppliesHave < suppliesRecommended;
 
