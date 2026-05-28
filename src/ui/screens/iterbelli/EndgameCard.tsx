@@ -47,6 +47,7 @@ function returnToHub(): void {
   const army = preparedArmy.value;
   if (army) {
     // Surviving soldiers scale each cohort's HP (dead cohorts drop out).
+    // When initialSoldiers is 0 (degenerate launch), cohorts pass through unmodified.
     let cohorts = army.cohorts;
     if (s.initialSoldiers > 0) {
       const ratio = Math.max(0, Math.min(1, s.soldiers / s.initialSoldiers));
