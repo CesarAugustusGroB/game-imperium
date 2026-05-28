@@ -1,0 +1,1416 @@
+{
+  "source": "commander_select_sheet_transparent.png",
+  "source_size": {
+    "width": 1254,
+    "height": 1254
+  },
+  "alpha_threshold": 18,
+  "padding": 12,
+  "count": 78,
+  "assets": [
+    {
+      "index": 1,
+      "name": "border_corner_top_left",
+      "file": "slices/001_border_corner_top_left.png",
+      "source_bbox": {
+        "x": 18,
+        "y": 22,
+        "width": 178,
+        "height": 169
+      },
+      "crop_bbox": {
+        "x": 6,
+        "y": 10,
+        "width": 202,
+        "height": 193
+      },
+      "opaque_pixels": 7436
+    },
+    {
+      "index": 2,
+      "name": "header_line_top_left",
+      "file": "slices/002_header_line_top_left.png",
+      "source_bbox": {
+        "x": 267,
+        "y": 22,
+        "width": 175,
+        "height": 7
+      },
+      "crop_bbox": {
+        "x": 255,
+        "y": 10,
+        "width": 199,
+        "height": 31
+      },
+      "opaque_pixels": 1212
+    },
+    {
+      "index": 3,
+      "name": "header_line_top_right",
+      "file": "slices/003_header_line_top_right.png",
+      "source_bbox": {
+        "x": 804,
+        "y": 22,
+        "width": 184,
+        "height": 7
+      },
+      "crop_bbox": {
+        "x": 792,
+        "y": 10,
+        "width": 208,
+        "height": 31
+      },
+      "opaque_pixels": 1276
+    },
+    {
+      "index": 4,
+      "name": "border_corner_top_right",
+      "file": "slices/004_border_corner_top_right.png",
+      "source_bbox": {
+        "x": 1050,
+        "y": 22,
+        "width": 182,
+        "height": 169
+      },
+      "crop_bbox": {
+        "x": 1038,
+        "y": 10,
+        "width": 206,
+        "height": 193
+      },
+      "opaque_pixels": 7451
+    },
+    {
+      "index": 5,
+      "name": "header_eagle_large",
+      "file": "slices/005_header_eagle_large.png",
+      "source_bbox": {
+        "x": 458,
+        "y": 32,
+        "width": 333,
+        "height": 138
+      },
+      "crop_bbox": {
+        "x": 446,
+        "y": 20,
+        "width": 357,
+        "height": 162
+      },
+      "opaque_pixels": 21330
+    },
+    {
+      "index": 6,
+      "name": "header_laurel_left_outer",
+      "file": "slices/006_header_laurel_left_outer.png",
+      "source_bbox": {
+        "x": 220,
+        "y": 45,
+        "width": 72,
+        "height": 113
+      },
+      "crop_bbox": {
+        "x": 208,
+        "y": 33,
+        "width": 96,
+        "height": 137
+      },
+      "opaque_pixels": 2849
+    },
+    {
+      "index": 7,
+      "name": "header_laurel_left_inner",
+      "file": "slices/007_header_laurel_left_inner.png",
+      "source_bbox": {
+        "x": 309,
+        "y": 45,
+        "width": 72,
+        "height": 114
+      },
+      "crop_bbox": {
+        "x": 297,
+        "y": 33,
+        "width": 96,
+        "height": 138
+      },
+      "opaque_pixels": 2867
+    },
+    {
+      "index": 8,
+      "name": "header_laurel_right_inner",
+      "file": "slices/008_header_laurel_right_inner.png",
+      "source_bbox": {
+        "x": 832,
+        "y": 45,
+        "width": 73,
+        "height": 108
+      },
+      "crop_bbox": {
+        "x": 820,
+        "y": 33,
+        "width": 97,
+        "height": 132
+      },
+      "opaque_pixels": 2383
+    },
+    {
+      "index": 9,
+      "name": "header_laurel_right_outer",
+      "file": "slices/009_header_laurel_right_outer.png",
+      "source_bbox": {
+        "x": 945,
+        "y": 45,
+        "width": 73,
+        "height": 109
+      },
+      "crop_bbox": {
+        "x": 933,
+        "y": 33,
+        "width": 97,
+        "height": 133
+      },
+      "opaque_pixels": 2419
+    },
+    {
+      "index": 10,
+      "name": "divider_line_small_left",
+      "file": "slices/010_divider_line_small_left.png",
+      "source_bbox": {
+        "x": 413,
+        "y": 148,
+        "width": 130,
+        "height": 12
+      },
+      "crop_bbox": {
+        "x": 401,
+        "y": 136,
+        "width": 154,
+        "height": 36
+      },
+      "opaque_pixels": 662
+    },
+    {
+      "index": 11,
+      "name": "divider_line_small_right",
+      "file": "slices/011_divider_line_small_right.png",
+      "source_bbox": {
+        "x": 708,
+        "y": 148,
+        "width": 114,
+        "height": 12
+      },
+      "crop_bbox": {
+        "x": 696,
+        "y": 136,
+        "width": 138,
+        "height": 36
+      },
+      "opaque_pixels": 619
+    },
+    {
+      "index": 12,
+      "name": "side_banner_left",
+      "file": "slices/012_side_banner_left.png",
+      "source_bbox": {
+        "x": 19,
+        "y": 165,
+        "width": 173,
+        "height": 503
+      },
+      "crop_bbox": {
+        "x": 7,
+        "y": 153,
+        "width": 197,
+        "height": 527
+      },
+      "opaque_pixels": 48356
+    },
+    {
+      "index": 13,
+      "name": "side_banner_right",
+      "file": "slices/013_side_banner_right.png",
+      "source_bbox": {
+        "x": 1052,
+        "y": 165,
+        "width": 175,
+        "height": 503
+      },
+      "crop_bbox": {
+        "x": 1040,
+        "y": 153,
+        "width": 199,
+        "height": 527
+      },
+      "opaque_pixels": 48314
+    },
+    {
+      "index": 14,
+      "name": "divider_line_diamond_left_long",
+      "file": "slices/014_divider_line_diamond_left_long.png",
+      "source_bbox": {
+        "x": 229,
+        "y": 172,
+        "width": 167,
+        "height": 24
+      },
+      "crop_bbox": {
+        "x": 217,
+        "y": 160,
+        "width": 191,
+        "height": 48
+      },
+      "opaque_pixels": 974
+    },
+    {
+      "index": 15,
+      "name": "divider_line_left",
+      "file": "slices/015_divider_line_left.png",
+      "source_bbox": {
+        "x": 437,
+        "y": 178,
+        "width": 159,
+        "height": 13
+      },
+      "crop_bbox": {
+        "x": 425,
+        "y": 166,
+        "width": 183,
+        "height": 37
+      },
+      "opaque_pixels": 816
+    },
+    {
+      "index": 16,
+      "name": "divider_line_right",
+      "file": "slices/016_divider_line_right.png",
+      "source_bbox": {
+        "x": 654,
+        "y": 178,
+        "width": 154,
+        "height": 13
+      },
+      "crop_bbox": {
+        "x": 642,
+        "y": 166,
+        "width": 178,
+        "height": 37
+      },
+      "opaque_pixels": 792
+    },
+    {
+      "index": 17,
+      "name": "divider_line_diamond_right_long",
+      "file": "slices/017_divider_line_diamond_right_long.png",
+      "source_bbox": {
+        "x": 845,
+        "y": 178,
+        "width": 164,
+        "height": 13
+      },
+      "crop_bbox": {
+        "x": 833,
+        "y": 166,
+        "width": 188,
+        "height": 37
+      },
+      "opaque_pixels": 843
+    },
+    {
+      "index": 18,
+      "name": "card_frame_selected_glow_left",
+      "file": "slices/018_card_frame_selected_glow_left.png",
+      "source_bbox": {
+        "x": 427,
+        "y": 204,
+        "width": 189,
+        "height": 305
+      },
+      "crop_bbox": {
+        "x": 415,
+        "y": 192,
+        "width": 213,
+        "height": 329
+      },
+      "opaque_pixels": 54037
+    },
+    {
+      "index": 19,
+      "name": "card_frame_selected_glow_right",
+      "file": "slices/019_card_frame_selected_glow_right.png",
+      "source_bbox": {
+        "x": 839,
+        "y": 211,
+        "width": 192,
+        "height": 300
+      },
+      "crop_bbox": {
+        "x": 827,
+        "y": 199,
+        "width": 216,
+        "height": 324
+      },
+      "opaque_pixels": 54975
+    },
+    {
+      "index": 20,
+      "name": "card_frame_base_left",
+      "file": "slices/020_card_frame_base_left.png",
+      "source_bbox": {
+        "x": 217,
+        "y": 216,
+        "width": 181,
+        "height": 281
+      },
+      "crop_bbox": {
+        "x": 205,
+        "y": 204,
+        "width": 205,
+        "height": 305
+      },
+      "opaque_pixels": 50855
+    },
+    {
+      "index": 21,
+      "name": "card_frame_base_right",
+      "file": "slices/021_card_frame_base_right.png",
+      "source_bbox": {
+        "x": 638,
+        "y": 216,
+        "width": 179,
+        "height": 281
+      },
+      "crop_bbox": {
+        "x": 626,
+        "y": 204,
+        "width": 203,
+        "height": 305
+      },
+      "opaque_pixels": 50289
+    },
+    {
+      "index": 22,
+      "name": "icon_archetype_warlord",
+      "file": "slices/022_icon_archetype_warlord.png",
+      "source_bbox": {
+        "x": 628,
+        "y": 524,
+        "width": 93,
+        "height": 95
+      },
+      "crop_bbox": {
+        "x": 616,
+        "y": 512,
+        "width": 117,
+        "height": 119
+      },
+      "opaque_pixels": 6927
+    },
+    {
+      "index": 23,
+      "name": "icon_archetype_religious",
+      "file": "slices/023_icon_archetype_religious.png",
+      "source_bbox": {
+        "x": 729,
+        "y": 524,
+        "width": 93,
+        "height": 95
+      },
+      "crop_bbox": {
+        "x": 717,
+        "y": 512,
+        "width": 117,
+        "height": 119
+      },
+      "opaque_pixels": 6931
+    },
+    {
+      "index": 24,
+      "name": "icon_archetype_diplomat",
+      "file": "slices/024_icon_archetype_diplomat.png",
+      "source_bbox": {
+        "x": 833,
+        "y": 524,
+        "width": 93,
+        "height": 95
+      },
+      "crop_bbox": {
+        "x": 821,
+        "y": 512,
+        "width": 117,
+        "height": 119
+      },
+      "opaque_pixels": 6944
+    },
+    {
+      "index": 25,
+      "name": "icon_archetype_merchant",
+      "file": "slices/025_icon_archetype_merchant.png",
+      "source_bbox": {
+        "x": 935,
+        "y": 524,
+        "width": 94,
+        "height": 95
+      },
+      "crop_bbox": {
+        "x": 923,
+        "y": 512,
+        "width": 118,
+        "height": 119
+      },
+      "opaque_pixels": 6952
+    },
+    {
+      "index": 26,
+      "name": "carousel_button_glow",
+      "file": "slices/026_carousel_button_glow.png",
+      "source_bbox": {
+        "x": 313,
+        "y": 536,
+        "width": 83,
+        "height": 87
+      },
+      "crop_bbox": {
+        "x": 301,
+        "y": 524,
+        "width": 107,
+        "height": 111
+      },
+      "opaque_pixels": 5670
+    },
+    {
+      "index": 27,
+      "name": "carousel_button_base",
+      "file": "slices/027_carousel_button_base.png",
+      "source_bbox": {
+        "x": 209,
+        "y": 537,
+        "width": 83,
+        "height": 83
+      },
+      "crop_bbox": {
+        "x": 197,
+        "y": 525,
+        "width": 107,
+        "height": 107
+      },
+      "opaque_pixels": 5398
+    },
+    {
+      "index": 28,
+      "name": "carousel_button_left",
+      "file": "slices/028_carousel_button_left.png",
+      "source_bbox": {
+        "x": 415,
+        "y": 545,
+        "width": 67,
+        "height": 67
+      },
+      "crop_bbox": {
+        "x": 403,
+        "y": 533,
+        "width": 91,
+        "height": 91
+      },
+      "opaque_pixels": 3501
+    },
+    {
+      "index": 29,
+      "name": "carousel_button_right",
+      "file": "slices/029_carousel_button_right.png",
+      "source_bbox": {
+        "x": 491,
+        "y": 552,
+        "width": 54,
+        "height": 54
+      },
+      "crop_bbox": {
+        "x": 479,
+        "y": 540,
+        "width": 78,
+        "height": 78
+      },
+      "opaque_pixels": 2317
+    },
+    {
+      "index": 30,
+      "name": "chevron_left_gold",
+      "file": "slices/030_chevron_left_gold.png",
+      "source_bbox": {
+        "x": 562,
+        "y": 552,
+        "width": 33,
+        "height": 53
+      },
+      "crop_bbox": {
+        "x": 550,
+        "y": 540,
+        "width": 57,
+        "height": 77
+      },
+      "opaque_pixels": 770
+    },
+    {
+      "index": 31,
+      "name": "icon_ability_sword",
+      "file": "slices/031_icon_ability_sword.png",
+      "source_bbox": {
+        "x": 158,
+        "y": 649,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 146,
+        "y": 637,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3719
+    },
+    {
+      "index": 32,
+      "name": "icon_ability_crossed_swords",
+      "file": "slices/032_icon_ability_crossed_swords.png",
+      "source_bbox": {
+        "x": 239,
+        "y": 649,
+        "width": 69,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 227,
+        "y": 637,
+        "width": 93,
+        "height": 93
+      },
+      "opaque_pixels": 3725
+    },
+    {
+      "index": 33,
+      "name": "icon_unit_helmet",
+      "file": "slices/033_icon_unit_helmet.png",
+      "source_bbox": {
+        "x": 321,
+        "y": 649,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 309,
+        "y": 637,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3707
+    },
+    {
+      "index": 34,
+      "name": "icon_unit_shield",
+      "file": "slices/034_icon_unit_shield.png",
+      "source_bbox": {
+        "x": 403,
+        "y": 649,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 391,
+        "y": 637,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3702
+    },
+    {
+      "index": 35,
+      "name": "icon_ability_banner",
+      "file": "slices/035_icon_ability_banner.png",
+      "source_bbox": {
+        "x": 483,
+        "y": 649,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 471,
+        "y": 637,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3708
+    },
+    {
+      "index": 36,
+      "name": "icon_ability_sunburst",
+      "file": "slices/036_icon_ability_sunburst.png",
+      "source_bbox": {
+        "x": 562,
+        "y": 649,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 550,
+        "y": 637,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3720
+    },
+    {
+      "index": 37,
+      "name": "icon_ability_handshake",
+      "file": "slices/037_icon_ability_handshake.png",
+      "source_bbox": {
+        "x": 654,
+        "y": 649,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 642,
+        "y": 637,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3709
+    },
+    {
+      "index": 38,
+      "name": "icon_ability_dove",
+      "file": "slices/038_icon_ability_dove.png",
+      "source_bbox": {
+        "x": 738,
+        "y": 649,
+        "width": 69,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 726,
+        "y": 637,
+        "width": 93,
+        "height": 93
+      },
+      "opaque_pixels": 3708
+    },
+    {
+      "index": 39,
+      "name": "icon_ability_scroll",
+      "file": "slices/039_icon_ability_scroll.png",
+      "source_bbox": {
+        "x": 827,
+        "y": 649,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 815,
+        "y": 637,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3700
+    },
+    {
+      "index": 40,
+      "name": "icon_victory_laurel_blue",
+      "file": "slices/040_icon_victory_laurel_blue.png",
+      "source_bbox": {
+        "x": 912,
+        "y": 649,
+        "width": 69,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 900,
+        "y": 637,
+        "width": 93,
+        "height": 93
+      },
+      "opaque_pixels": 3720
+    },
+    {
+      "index": 41,
+      "name": "icon_ability_money_bag",
+      "file": "slices/041_icon_ability_money_bag.png",
+      "source_bbox": {
+        "x": 993,
+        "y": 649,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 981,
+        "y": 637,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3696
+    },
+    {
+      "index": 42,
+      "name": "panel_divider_vertical_short",
+      "file": "slices/042_panel_divider_vertical_short.png",
+      "source_bbox": {
+        "x": 1099,
+        "y": 659,
+        "width": 22,
+        "height": 122
+      },
+      "crop_bbox": {
+        "x": 1087,
+        "y": 647,
+        "width": 46,
+        "height": 146
+      },
+      "opaque_pixels": 973
+    },
+    {
+      "index": 43,
+      "name": "panel_divider_vertical_long",
+      "file": "slices/043_panel_divider_vertical_long.png",
+      "source_bbox": {
+        "x": 1151,
+        "y": 675,
+        "width": 20,
+        "height": 146
+      },
+      "crop_bbox": {
+        "x": 1139,
+        "y": 663,
+        "width": 44,
+        "height": 170
+      },
+      "opaque_pixels": 1040
+    },
+    {
+      "index": 44,
+      "name": "icon_unit_soldier",
+      "file": "slices/044_icon_unit_soldier.png",
+      "source_bbox": {
+        "x": 161,
+        "y": 731,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 149,
+        "y": 719,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3673
+    },
+    {
+      "index": 45,
+      "name": "icon_unit_cavalry",
+      "file": "slices/045_icon_unit_cavalry.png",
+      "source_bbox": {
+        "x": 247,
+        "y": 731,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 235,
+        "y": 719,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3688
+    },
+    {
+      "index": 46,
+      "name": "icon_unit_bow",
+      "file": "slices/046_icon_unit_bow.png",
+      "source_bbox": {
+        "x": 333,
+        "y": 731,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 321,
+        "y": 719,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3672
+    },
+    {
+      "index": 47,
+      "name": "icon_unit_chariot",
+      "file": "slices/047_icon_unit_chariot.png",
+      "source_bbox": {
+        "x": 418,
+        "y": 731,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 406,
+        "y": 719,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3660
+    },
+    {
+      "index": 48,
+      "name": "icon_unit_siege_cart",
+      "file": "slices/048_icon_unit_siege_cart.png",
+      "source_bbox": {
+        "x": 502,
+        "y": 731,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 490,
+        "y": 719,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3674
+    },
+    {
+      "index": 49,
+      "name": "icon_unit_temple",
+      "file": "slices/049_icon_unit_temple.png",
+      "source_bbox": {
+        "x": 654,
+        "y": 731,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 642,
+        "y": 719,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3685
+    },
+    {
+      "index": 50,
+      "name": "icon_unit_tower",
+      "file": "slices/050_icon_unit_tower.png",
+      "source_bbox": {
+        "x": 739,
+        "y": 731,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 727,
+        "y": 719,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3675
+    },
+    {
+      "index": 51,
+      "name": "icon_unit_cathedral",
+      "file": "slices/051_icon_unit_cathedral.png",
+      "source_bbox": {
+        "x": 823,
+        "y": 731,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 811,
+        "y": 719,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3702
+    },
+    {
+      "index": 52,
+      "name": "icon_unit_aqueduct",
+      "file": "slices/052_icon_unit_aqueduct.png",
+      "source_bbox": {
+        "x": 908,
+        "y": 731,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 896,
+        "y": 719,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3669
+    },
+    {
+      "index": 53,
+      "name": "icon_unit_fields",
+      "file": "slices/053_icon_unit_fields.png",
+      "source_bbox": {
+        "x": 990,
+        "y": 731,
+        "width": 67,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 978,
+        "y": 719,
+        "width": 91,
+        "height": 93
+      },
+      "opaque_pixels": 3646
+    },
+    {
+      "index": 54,
+      "name": "panel_divider_vertical_diamond",
+      "file": "slices/054_panel_divider_vertical_diamond.png",
+      "source_bbox": {
+        "x": 1194,
+        "y": 777,
+        "width": 26,
+        "height": 90
+      },
+      "crop_bbox": {
+        "x": 1182,
+        "y": 765,
+        "width": 50,
+        "height": 114
+      },
+      "opaque_pixels": 967
+    },
+    {
+      "index": 55,
+      "name": "icon_medallion_laurel_small",
+      "file": "slices/055_icon_medallion_laurel_small.png",
+      "source_bbox": {
+        "x": 1088,
+        "y": 792,
+        "width": 44,
+        "height": 44
+      },
+      "crop_bbox": {
+        "x": 1076,
+        "y": 780,
+        "width": 68,
+        "height": 68
+      },
+      "opaque_pixels": 1485
+    },
+    {
+      "index": 56,
+      "name": "icon_victory_laurel",
+      "file": "slices/056_icon_victory_laurel.png",
+      "source_bbox": {
+        "x": 208,
+        "y": 814,
+        "width": 69,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 196,
+        "y": 802,
+        "width": 93,
+        "height": 93
+      },
+      "opaque_pixels": 3737
+    },
+    {
+      "index": 57,
+      "name": "icon_victory_skull",
+      "file": "slices/057_icon_victory_skull.png",
+      "source_bbox": {
+        "x": 310,
+        "y": 814,
+        "width": 69,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 298,
+        "y": 802,
+        "width": 93,
+        "height": 93
+      },
+      "opaque_pixels": 3705
+    },
+    {
+      "index": 58,
+      "name": "icon_victory_temple",
+      "file": "slices/058_icon_victory_temple.png",
+      "source_bbox": {
+        "x": 410,
+        "y": 814,
+        "width": 69,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 398,
+        "y": 802,
+        "width": 93,
+        "height": 93
+      },
+      "opaque_pixels": 3704
+    },
+    {
+      "index": 59,
+      "name": "icon_crown_medallion",
+      "file": "slices/059_icon_crown_medallion.png",
+      "source_bbox": {
+        "x": 502,
+        "y": 814,
+        "width": 69,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 490,
+        "y": 802,
+        "width": 93,
+        "height": 93
+      },
+      "opaque_pixels": 3721
+    },
+    {
+      "index": 60,
+      "name": "icon_victory_fist",
+      "file": "slices/060_icon_victory_fist.png",
+      "source_bbox": {
+        "x": 597,
+        "y": 814,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 585,
+        "y": 802,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3709
+    },
+    {
+      "index": 61,
+      "name": "icon_eagle_medallion",
+      "file": "slices/061_icon_eagle_medallion.png",
+      "source_bbox": {
+        "x": 686,
+        "y": 814,
+        "width": 69,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 674,
+        "y": 802,
+        "width": 93,
+        "height": 93
+      },
+      "opaque_pixels": 3729
+    },
+    {
+      "index": 62,
+      "name": "icon_victory_sun",
+      "file": "slices/062_icon_victory_sun.png",
+      "source_bbox": {
+        "x": 778,
+        "y": 814,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 766,
+        "y": 802,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3698
+    },
+    {
+      "index": 63,
+      "name": "icon_victory_globe",
+      "file": "slices/063_icon_victory_globe.png",
+      "source_bbox": {
+        "x": 867,
+        "y": 814,
+        "width": 68,
+        "height": 69
+      },
+      "crop_bbox": {
+        "x": 855,
+        "y": 802,
+        "width": 92,
+        "height": 93
+      },
+      "opaque_pixels": 3703
+    },
+    {
+      "index": 64,
+      "name": "icon_medallion_small_blank",
+      "file": "slices/064_icon_medallion_small_blank.png",
+      "source_bbox": {
+        "x": 1096,
+        "y": 852,
+        "width": 27,
+        "height": 27
+      },
+      "crop_bbox": {
+        "x": 1084,
+        "y": 840,
+        "width": 51,
+        "height": 51
+      },
+      "opaque_pixels": 595
+    },
+    {
+      "index": 65,
+      "name": "panel_frame_large",
+      "file": "slices/065_panel_frame_large.png",
+      "source_bbox": {
+        "x": 43,
+        "y": 898,
+        "width": 476,
+        "height": 194
+      },
+      "crop_bbox": {
+        "x": 31,
+        "y": 886,
+        "width": 500,
+        "height": 218
+      },
+      "opaque_pixels": 85828
+    },
+    {
+      "index": 66,
+      "name": "panel_frame_medium",
+      "file": "slices/066_panel_frame_medium.png",
+      "source_bbox": {
+        "x": 554,
+        "y": 899,
+        "width": 303,
+        "height": 87
+      },
+      "crop_bbox": {
+        "x": 542,
+        "y": 887,
+        "width": 327,
+        "height": 111
+      },
+      "opaque_pixels": 23729
+    },
+    {
+      "index": 67,
+      "name": "button_secondary_dark",
+      "file": "slices/067_button_secondary_dark.png",
+      "source_bbox": {
+        "x": 894,
+        "y": 910,
+        "width": 259,
+        "height": 56
+      },
+      "crop_bbox": {
+        "x": 882,
+        "y": 898,
+        "width": 283,
+        "height": 80
+      },
+      "opaque_pixels": 14499
+    },
+    {
+      "index": 68,
+      "name": "button_primary_gold_plain",
+      "file": "slices/068_button_primary_gold_plain.png",
+      "source_bbox": {
+        "x": 893,
+        "y": 978,
+        "width": 260,
+        "height": 45
+      },
+      "crop_bbox": {
+        "x": 881,
+        "y": 966,
+        "width": 284,
+        "height": 69
+      },
+      "opaque_pixels": 11656
+    },
+    {
+      "index": 69,
+      "name": "border_corner_bottom_left",
+      "file": "slices/069_border_corner_bottom_left.png",
+      "source_bbox": {
+        "x": 18,
+        "y": 987,
+        "width": 178,
+        "height": 246
+      },
+      "crop_bbox": {
+        "x": 6,
+        "y": 975,
+        "width": 202,
+        "height": 270
+      },
+      "opaque_pixels": 8211
+    },
+    {
+      "index": 70,
+      "name": "border_corner_bottom_right",
+      "file": "slices/070_border_corner_bottom_right.png",
+      "source_bbox": {
+        "x": 1057,
+        "y": 987,
+        "width": 178,
+        "height": 246
+      },
+      "crop_bbox": {
+        "x": 1045,
+        "y": 975,
+        "width": 202,
+        "height": 270
+      },
+      "opaque_pixels": 8248
+    },
+    {
+      "index": 71,
+      "name": "divider_line_long_center",
+      "file": "slices/071_divider_line_long_center.png",
+      "source_bbox": {
+        "x": 566,
+        "y": 994,
+        "width": 281,
+        "height": 20
+      },
+      "crop_bbox": {
+        "x": 554,
+        "y": 982,
+        "width": 305,
+        "height": 44
+      },
+      "opaque_pixels": 1790
+    },
+    {
+      "index": 72,
+      "name": "icon_medallion_empty_1",
+      "file": "slices/072_icon_medallion_empty_1.png",
+      "source_bbox": {
+        "x": 550,
+        "y": 1020,
+        "width": 67,
+        "height": 68
+      },
+      "crop_bbox": {
+        "x": 538,
+        "y": 1008,
+        "width": 91,
+        "height": 92
+      },
+      "opaque_pixels": 3608
+    },
+    {
+      "index": 73,
+      "name": "icon_medallion_empty_2",
+      "file": "slices/073_icon_medallion_empty_2.png",
+      "source_bbox": {
+        "x": 630,
+        "y": 1020,
+        "width": 68,
+        "height": 68
+      },
+      "crop_bbox": {
+        "x": 618,
+        "y": 1008,
+        "width": 92,
+        "height": 92
+      },
+      "opaque_pixels": 3604
+    },
+    {
+      "index": 74,
+      "name": "icon_medallion_empty_3",
+      "file": "slices/074_icon_medallion_empty_3.png",
+      "source_bbox": {
+        "x": 711,
+        "y": 1020,
+        "width": 68,
+        "height": 68
+      },
+      "crop_bbox": {
+        "x": 699,
+        "y": 1008,
+        "width": 92,
+        "height": 92
+      },
+      "opaque_pixels": 3611
+    },
+    {
+      "index": 75,
+      "name": "icon_medallion_empty_4",
+      "file": "slices/075_icon_medallion_empty_4.png",
+      "source_bbox": {
+        "x": 791,
+        "y": 1020,
+        "width": 67,
+        "height": 68
+      },
+      "crop_bbox": {
+        "x": 779,
+        "y": 1008,
+        "width": 91,
+        "height": 92
+      },
+      "opaque_pixels": 3591
+    },
+    {
+      "index": 76,
+      "name": "button_primary_gold_crown",
+      "file": "slices/076_button_primary_gold_crown.png",
+      "source_bbox": {
+        "x": 893,
+        "y": 1036,
+        "width": 261,
+        "height": 50
+      },
+      "crop_bbox": {
+        "x": 881,
+        "y": 1024,
+        "width": 285,
+        "height": 74
+      },
+      "opaque_pixels": 13003
+    },
+    {
+      "index": 77,
+      "name": "dust_strip",
+      "file": "slices/077_dust_strip.png",
+      "source_bbox": {
+        "x": 76,
+        "y": 1101,
+        "width": 1094,
+        "height": 48
+      },
+      "crop_bbox": {
+        "x": 64,
+        "y": 1089,
+        "width": 1118,
+        "height": 72
+      },
+      "opaque_pixels": 44819
+    },
+    {
+      "index": 78,
+      "name": "bottom_vignette",
+      "file": "slices/078_bottom_vignette.png",
+      "source_bbox": {
+        "x": 142,
+        "y": 1150,
+        "width": 957,
+        "height": 82
+      },
+      "crop_bbox": {
+        "x": 130,
+        "y": 1138,
+        "width": 981,
+        "height": 106
+      },
+      "opaque_pixels": 72642
+    }
+  ]
+}

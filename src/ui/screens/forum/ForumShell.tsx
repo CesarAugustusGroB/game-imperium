@@ -10,35 +10,6 @@ import { DoctrinaeTab } from './tabs/DoctrinaeTab';
 import { DecretaTab } from './tabs/DecretaTab';
 import { CampaignHexScreen } from '../CampaignHexScreen';
 
-// ── One-time scoped style injection ──
-// Any element inside the Forum shell gets the thin gold scrollbar
-// treatment instead of the default chunky OS scrollbar. Scoped with
-// the `.imp-forum-shell` class so legacy screens are unaffected.
-if (typeof document !== 'undefined' && !document.getElementById('imp-forum-styles')) {
-  const el = document.createElement('style');
-  el.id = 'imp-forum-styles';
-  el.textContent = `
-    .imp-forum-shell ::-webkit-scrollbar        { width: 6px; height: 6px; }
-    .imp-forum-shell ::-webkit-scrollbar-track  { background: transparent; }
-    .imp-forum-shell ::-webkit-scrollbar-thumb  {
-      background: rgba(212, 168, 67, 0.25);
-      border-radius: 3px;
-    }
-    .imp-forum-shell ::-webkit-scrollbar-thumb:hover {
-      background: rgba(212, 168, 67, 0.45);
-    }
-    .imp-forum-shell {
-      scrollbar-width: thin;
-      scrollbar-color: rgba(212, 168, 67, 0.25) transparent;
-    }
-    .imp-forum-shell * {
-      scrollbar-width: thin;
-      scrollbar-color: rgba(212, 168, 67, 0.25) transparent;
-    }
-  `;
-  document.head.appendChild(el);
-}
-
 const TAB_COMPONENTS: Record<ForumTab, () => preact.JSX.Element> = {
   overview:   OverviewTab,
   provinciae: ProvinciaeTab,

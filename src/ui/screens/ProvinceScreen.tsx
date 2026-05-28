@@ -49,20 +49,6 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
       background: rgba(80, 60, 20, 0.35) !important;
       box-shadow: inset 3px 0 0 var(--color-gold-primary);
     }
-    .prov-ledger::-webkit-scrollbar,
-    .prov-detail::-webkit-scrollbar { width: 3px; }
-    .prov-ledger::-webkit-scrollbar-track,
-    .prov-detail::-webkit-scrollbar-track { background: transparent; }
-    .prov-ledger::-webkit-scrollbar-thumb,
-    .prov-detail::-webkit-scrollbar-thumb {
-      background: rgba(180, 160, 100, 0.18);
-      border-radius: 2px;
-    }
-    .prov-ledger::-webkit-scrollbar-thumb:hover,
-    .prov-detail::-webkit-scrollbar-thumb:hover { background: rgba(180, 160, 100, 0.38); }
-    .prov-ledger { scrollbar-width: thin; scrollbar-color: rgba(180,160,100,0.18) transparent; }
-    .prov-detail { scrollbar-width: thin; scrollbar-color: rgba(180,160,100,0.18) transparent; }
-
     /* ── Governor card ── */
     .gov-strip {
       display: flex;

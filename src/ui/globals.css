@@ -29,6 +29,46 @@
   color: var(--color-gold-primary);
 }
 
+/* Global Roman scrollbar: slim gold thumb over transparent track. */
+:root {
+  --scrollbar-thumb: #b78d42;
+  --scrollbar-thumb-hover: #d1a95a;
+  --scrollbar-track: transparent;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  min-height: 44px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(231, 194, 104, 0.98), rgba(154, 116, 48, 0.98));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 237, 174, 0.42),
+    inset 0 -1px 0 rgba(54, 34, 8, 0.5);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background:
+    linear-gradient(180deg, rgba(247, 216, 132, 1), rgba(179, 139, 61, 1));
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Mobile layout adjustments */
 @media (max-width: 640px) {
   .screen-wrapper { padding-top: 42px !important; }
