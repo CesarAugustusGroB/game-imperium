@@ -207,6 +207,8 @@ export interface IterBelliState {
   spokeTerrain: string;
   /** Spoke duration in seasons (1–4); advances the Hub season clock on return. */
   spokeDuration: number;
+  /** Active campaign mission id (from the first-seated advisor's color); null if none. */
+  missionId: string | null;
 }
 
 // ── Battle ──────────────────────────────────────────────────────────────────

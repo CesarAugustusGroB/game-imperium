@@ -47,6 +47,7 @@ function freshState(): IterBelliState {
     initialSoldiers: B.START.fallbackSoldiers,
     spokeTerrain: 'plains',
     spokeDuration: 1,
+    missionId: null,
   };
 }
 
@@ -400,6 +401,12 @@ export interface CampaignSeed {
   spokeDuration: number;
   /** Supplies carried from the Hub army stock; omitted → keeps the START default. */
   supplies?: number;
+  /** Campaign mission id (Consilium-derived); omitted → no mission. */
+  missionId?: string;
+  /** Override starting threat (Consilium modifier); omitted → START.threat. */
+  startThreat?: number;
+  /** Override starting morale (Consilium modifier); omitted → START.morale. */
+  startMorale?: number;
 }
 
 /** Begin a fresh campaign, seeded from the run's army size and gold. */
@@ -415,6 +422,9 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
   S.archetype = seed.archetype;
   S.spokeTerrain = seed.spokeTerrain;
   S.spokeDuration = Math.max(1, Math.floor(seed.spokeDuration));
+  S.missionId = seed.missionId ?? null;
+  if (seed.startThreat != null) S.threat = clamp(seed.startThreat, B.THREAT_MIN, B.THREAT_MAX);
+  if (seed.startMorale != null) S.morale = clamp(seed.startMorale, B.MORALE_MIN, B.MORALE_MAX);
   if (seed.supplies != null) S.supplies = Math.max(0, Math.floor(seed.supplies));
 
   logTurn('Día 1: Inicio de la campaña');

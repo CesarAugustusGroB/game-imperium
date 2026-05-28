@@ -5,6 +5,7 @@
 import { MISSIONS, getMissionById, passiveModifier, computeConsiliumSetup } from '../src/data/iter-belli-consilium';
 import type { IterBelliState } from '../src/game/iterBelli/iter-belli-types';
 import type { Advisor } from '../src/game/council/advisor';
+import { startIterBelliCampaign, resetIterBelli, iterBelliState } from '../src/game/iterBelli/iter-belli-state';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -60,7 +61,16 @@ check('first slot loot NOT counted', c1.gold === 0);
 check('other slots sum threat', c1.threat === 2);
 check('other slots sum supplies', c1.supplies === 5);
 
-// --- Seed round-trip (added in Task 2) ---
+// --- Seed round-trip ---
+const seedBase = { soldiers: 1000, gold: 0, iuniores: 0, discipline: 4, archetype: null, spokeTerrain: 'plains', spokeDuration: 1 };
+startIterBelliCampaign({ ...seedBase, missionId: 'pax', startThreat: 0, startMorale: 10 });
+check('seed applies missionId', iterBelliState.value.missionId === 'pax');
+check('seed applies startThreat', iterBelliState.value.threat === 0);
+check('seed applies startMorale', iterBelliState.value.morale === 10);
+startIterBelliCampaign({ ...seedBase });
+check('omitted missionId → null', iterBelliState.value.missionId === null);
+resetIterBelli();
+check('reset clears missionId', iterBelliState.value.missionId === null);
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');
