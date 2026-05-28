@@ -10,6 +10,7 @@ import { resetIterBelliBattle } from '../../../game/iterBelli/iter-belli-combat'
 import { START } from '../../../game/iterBelli/iter-belli-balance';
 import { conquerProvince, provinces } from '../../../game/province/province-store';
 import { pickConquestName, PROVINCE_REWARD } from '../../../data/iter-belli-conquest';
+import { getMissionById } from '../../../data/iter-belli-consilium';
 import type { TerrainType } from '../../../data/terrain-data';
 import type { ResourceType } from '../../../game/core/commander';
 import { SUPPLY_MAX_CARRY } from '../../../config/game-config';
@@ -25,7 +26,10 @@ function returnToHub(): void {
   const s = iterBelliState.value;
   const outcome = s.outcome;
 
-  gold.value = s.gold;
+  // Consilium mission: on victory, a met condition grants a gold bonus.
+  const mission = getMissionById(s.missionId);
+  const missionAccomplished = !!(outcome?.victory && mission && mission.condition(s));
+  gold.value = s.gold + (mission && missionAccomplished ? mission.bonusGold : 0);
   iuniores.value = s.iuniores;
 
   // Season clock advances regardless of outcome — campaign time elapsed.
@@ -78,6 +82,8 @@ export function EndgameCard() {
   const outcome = s.outcome;
   if (!outcome) return null;
   const { victory } = outcome;
+  const mission = getMissionById(s.missionId);
+  const missionMet = !!(victory && mission && mission.condition(s));
 
   return (
     <div class="ib-overlay">
@@ -93,6 +99,14 @@ export function EndgameCard() {
           <div><span>Oro final</span><strong>{s.gold}</strong></div>
           <div><span>Compromisos rotos</span><strong>{outcome.brokenCommitments}</strong></div>
           <div><span>Amenaza final</span><strong>{s.threat.toFixed(1)} / 10</strong></div>
+          {mission && (
+            <div>
+              <span>Misión · {mission.title}</span>
+              <strong style={{ color: missionMet ? 'var(--imp-gold-hi)' : 'var(--imp-text-lo)' }}>
+                {missionMet ? `cumplida +${mission.bonusGold}⚜` : 'no cumplida'}
+              </strong>
+            </div>
+          )}
         </div>
         <button
           class="ornate-btn"
