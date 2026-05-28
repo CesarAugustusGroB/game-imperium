@@ -96,7 +96,7 @@ export function EndgameCard() {
         <div class="ib-end-stats">
           <div><span>Soldados restantes</span><strong>{outcome.soldiers.toLocaleString('es')} / {s.initialSoldiers.toLocaleString('es')}</strong></div>
           <div><span>Días empleados</span><strong>{outcome.turnNum} (de {START.timeRemaining})</strong></div>
-          <div><span>Oro final</span><strong>{s.gold}</strong></div>
+          <div><span>Oro final</span><strong>{s.gold + (mission && missionMet ? mission.bonusGold : 0)}</strong></div>
           <div><span>Compromisos rotos</span><strong>{outcome.brokenCommitments}</strong></div>
           <div><span>Amenaza final</span><strong>{s.threat.toFixed(1)} / 10</strong></div>
           {mission && (
