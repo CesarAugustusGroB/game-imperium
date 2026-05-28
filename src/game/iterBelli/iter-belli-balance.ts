@@ -8,7 +8,7 @@ import type { Archetype } from './iter-belli-types';
 export const START = {
   morale: 8.0,
   discipline: 4,
-  supplies: 12,
+  supplies: 28,
   threat: 2,
   timeRemaining: 12,
   /** Fallback soldiers if the run has no prepared army. */
@@ -22,7 +22,7 @@ export const POOL_TARGET_SIZE = 4;
 export const POOL_REFILL_ATTEMPTS = 20;
 
 // ── Per-turn maintenance ──
-export const SUPPLY_UPKEEP_PER_TURN = 1;
+export const SUPPLY_UPKEEP_PER_TURN = 2;
 export const HUNGER_MORALE_LOSS = 1;
 export const HUNGER_DESERTION_PCT = 0.02;
 export const MUTINY_MORALE_THRESHOLD = 3;
@@ -41,7 +41,7 @@ export const AMBUSH_DESERTION_PCT = 0.06;
 export const AMBUSH_MORALE_LOSS = 1.5;
 
 // ── Camp action ──
-export const CAMP_SUPPLY_COST = 2;
+export const CAMP_SUPPLY_COST = 4;
 export const CAMP_MORALE_GAIN = 0.5;
 
 // ── Final battle ──
