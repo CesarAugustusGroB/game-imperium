@@ -17,5 +17,5 @@ check('START.supplies is 28', START.supplies === 28);
 
 // --- Seed round-trip (added in Task 2) ---
 
-if (failures > 0) { console.error(`\n${failures} check(s) failed`); process.exit(1); }
-console.log('\nAll checks passed');
+if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
+console.log('\nAll checks passed.');
