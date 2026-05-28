@@ -8,6 +8,7 @@ import type { Advisor, AdvisorPassive } from '../game/council/advisor';
 import { getCurrentPassive } from '../game/council/advisor';
 import type { Faction } from '../game/core/commander';
 import type { IterBelliState } from '../game/iterBelli/iter-belli-types';
+import { SUPPLY_UPKEEP_PER_TURN, START } from '../game/iterBelli/iter-belli-balance';
 
 export interface MissionDef {
   id: string;
@@ -55,12 +56,15 @@ export interface ConsiliumSetup {
 
 type SeedDeltas = Pick<ConsiliumSetup, 'supplies' | 'gold' | 'threat' | 'morale'>;
 
+/** Total supply-upkeep budget of a campaign — the basis for upkeep-reduction bonuses. */
+const UPKEEP_BUDGET = SUPPLY_UPKEEP_PER_TURN * START.timeRemaining;
+
 /** Map one advisor passive to its starting-stat deltas (all zero if unmapped). */
 export function passiveModifier(passive: AdvisorPassive): SeedDeltas {
   const z: SeedDeltas = { supplies: 0, gold: 0, threat: 0, morale: 0 };
   switch (passive.type) {
     case 'upkeep-reduction':
-      return { ...z, supplies: Math.round((passive.percent / 100) * 24) };
+      return { ...z, supplies: Math.round((passive.percent / 100) * UPKEEP_BUDGET) };
     case 'threat-reduction':
       return { ...z, threat: passive.amount };
     case 'loot-bonus':
