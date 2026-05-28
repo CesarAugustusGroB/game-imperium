@@ -1,6 +1,6 @@
 import { playSfx } from '../../sound/sfx';
 import { iterBelliState, iterBelliLog, camp, playCard, currentLocation } from '../../../game/iterBelli/iter-belli-state';
-import { POOL_TARGET_SIZE } from '../../../game/iterBelli/iter-belli-balance';
+import { POOL_TARGET_SIZE, CAMP_SUPPLY_COST, CAMP_MORALE_GAIN } from '../../../game/iterBelli/iter-belli-balance';
 import { CampaignResourceBar } from './CampaignResourceBar';
 import { Itinerary } from './Itinerary';
 import { OperationCard } from './OperationCard';
@@ -180,7 +180,7 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
   document.head.appendChild(el);
 }
 
-const CAMP_LABEL = 'Acampar · 1 día · −2 suministros · +0.5 moral';
+const CAMP_LABEL = `Acampar · 1 día · −${CAMP_SUPPLY_COST} suministros · +${CAMP_MORALE_GAIN} moral`;
 
 export function IterBelliScreen() {
   const s = iterBelliState.value;
