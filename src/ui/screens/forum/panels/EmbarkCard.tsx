@@ -4,6 +4,8 @@ import { getResource } from '../../../../game/core/resources';
 import { selectedCommander } from '../../../../game/core/game-state';
 import { startIterBelliCampaign, computeStartingDiscipline } from '../../../../game/iterBelli/iter-belli-state';
 import { themeToTerrain } from '../../../../data/iter-belli-conquest';
+import { SUPPLY_UPKEEP_PER_TURN, START } from '../../../../game/iterBelli/iter-belli-balance';
+import { SUPPLIES_STARTING_STOCK } from '../../../../config/game-config';
 import { navigateToIterBelli } from '../../../screens';
 import { playSfx } from '../../../sound/sfx';
 import { OrnatePanel } from '../../../components/OrnatePanel';
@@ -21,12 +23,10 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
   const nodes = spoke?.nodes ?? [];
   const canEmbark = !!spoke && nodes.length > 0;
 
-  // Supply warning: how many supplies are needed for the unresolved nodes
-  const unresolvedNodes = nodes.filter((n) => !n.resolved);
-  const cohortCount = army?.cohorts?.length ?? 0;
+  // Supply warning: warn if the Hub stock is below the campaign's upkeep budget.
   const suppliesHave = army?.supplies ?? 0;
-  const suppliesNeeded = cohortCount * unresolvedNodes.length;
-  const supplyWarning = canEmbark && cohortCount > 0 && suppliesHave < suppliesNeeded;
+  const suppliesRecommended = SUPPLY_UPKEEP_PER_TURN * START.timeRemaining;
+  const supplyWarning = canEmbark && suppliesHave < suppliesRecommended;
 
   function handleEmbark() {
     if (!canEmbark) return;
@@ -38,7 +38,8 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
     const discipline = computeStartingDiscipline(archetype, preparedLegate.value?.traitIds ?? []);
     const spokeTerrain = themeToTerrain(spoke?.theme);
     const spokeDuration = spoke?.duration ?? 1;
-    startIterBelliCampaign({ soldiers, gold: getResource('gold'), iuniores: getResource('iuniores'), discipline, archetype, spokeTerrain, spokeDuration });
+    const supplies = army?.supplies ?? SUPPLIES_STARTING_STOCK;
+    startIterBelliCampaign({ soldiers, gold: getResource('gold'), iuniores: getResource('iuniores'), discipline, archetype, spokeTerrain, spokeDuration, supplies });
     navigateToIterBelli();
   }
 
@@ -88,7 +89,7 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
             fontStyle: 'italic',
             lineHeight: 1.5,
           }}>
-            Supplies: {suppliesHave}/{suppliesNeeded} — cohorts will take HP & morale attrition
+            Supplies: {suppliesHave}/{suppliesRecommended} — buy more in Exercitus or the campaign may starve
           </div>
         </div>
       )}
