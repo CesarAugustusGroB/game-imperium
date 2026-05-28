@@ -12,12 +12,14 @@ import { conquerProvince, provinces } from '../../../game/province/province-stor
 import { pickConquestName, PROVINCE_REWARD } from '../../../data/iter-belli-conquest';
 import type { TerrainType } from '../../../data/terrain-data';
 import type { ResourceType } from '../../../game/core/commander';
+import { SUPPLY_MAX_CARRY } from '../../../config/game-config';
 
 /**
  * Apply the campaign result back to the run, then return to the Hub:
  *  • campaign gold (incl. victory bonus) flows back to run gold,
  *  • victory bumps completedSpokes,
- *  • surviving soldiers scale each cohort's HP (dead cohorts drop out).
+ *  • surviving soldiers scale each cohort's HP (dead cohorts drop out),
+ *  • leftover campaign supplies flow back to the Hub army (capped at the carry cap).
  */
 function returnToHub(): void {
   const s = iterBelliState.value;
@@ -43,16 +45,26 @@ function returnToHub(): void {
   }
 
   const army = preparedArmy.value;
-  if (army && s.initialSoldiers > 0) {
-    const ratio = Math.max(0, Math.min(1, s.soldiers / s.initialSoldiers));
-    const cohorts = army.cohorts
-      .map((c) => {
-        const cur = c.currentHp ?? c.stats.hp;
-        const scaled = Math.round(cur * ratio);
-        return { ...c, currentHp: scaled, outOfAction: scaled <= 0 };
-      })
-      .filter((c) => (c.currentHp ?? 0) > 0);
-    preparedArmy.value = { ...army, cohorts, size: computeArmySize(cohorts) };
+  if (army) {
+    // Surviving soldiers scale each cohort's HP (dead cohorts drop out).
+    let cohorts = army.cohorts;
+    if (s.initialSoldiers > 0) {
+      const ratio = Math.max(0, Math.min(1, s.soldiers / s.initialSoldiers));
+      cohorts = army.cohorts
+        .map((c) => {
+          const cur = c.currentHp ?? c.stats.hp;
+          const scaled = Math.round(cur * ratio);
+          return { ...c, currentHp: scaled, outOfAction: scaled <= 0 };
+        })
+        .filter((c) => (c.currentHp ?? 0) > 0);
+    }
+    // Unified supplies: leftover campaign supplies flow back, capped at the Hub carry cap.
+    preparedArmy.value = {
+      ...army,
+      cohorts,
+      size: computeArmySize(cohorts),
+      supplies: Math.max(0, Math.min(SUPPLY_MAX_CARRY, s.supplies)),
+    };
   }
 
   resetIterBelliBattle();
