@@ -1,6 +1,7 @@
 import { playSfx } from '../../sound/sfx';
 import { iterBelliState, iterBelliLog, camp, playCard, currentLocation } from '../../../game/iterBelli/iter-belli-state';
 import { POOL_TARGET_SIZE, CAMP_SUPPLY_COST, CAMP_MORALE_GAIN } from '../../../game/iterBelli/iter-belli-balance';
+import { getMissionById } from '../../../data/iter-belli-consilium';
 import { CampaignResourceBar } from './CampaignResourceBar';
 import { Itinerary } from './Itinerary';
 import { OperationCard } from './OperationCard';
@@ -197,6 +198,14 @@ export function IterBelliScreen() {
         <div class="eyebrow">Iter Belli · Campaña en Hispania</div>
         <h1>MARCHA DE GUERRA</h1>
         <div class="sub">Lleva a tus legiones de la frontera a Sagunto antes del invierno.</div>
+        {(() => {
+          const mission = getMissionById(s.missionId);
+          return mission ? (
+            <div style={{ marginTop: 6, fontFamily: 'var(--imp-font-display)', fontSize: 13, letterSpacing: 1, color: 'var(--imp-gold)' }}>
+              ⚜ Misión: {mission.title} <span style={{ color: 'var(--imp-text-lo)', letterSpacing: 0 }}>— {mission.conditionDesc}</span>
+            </div>
+          ) : null;
+        })()}
       </header>
 
       <CampaignResourceBar state={s} />
