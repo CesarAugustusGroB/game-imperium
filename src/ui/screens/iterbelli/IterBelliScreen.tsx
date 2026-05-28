@@ -30,6 +30,8 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
     letter-spacing: 4px; color: var(--imp-gold-hi); margin: 2px 0 0; text-shadow: 0 2px 12px rgba(0,0,0,0.6);
   }
   .ib-head .sub { font-style: italic; color: var(--imp-text-mid); font-size: 13px; }
+  .ib-mission { margin-top: 6px; font-family: var(--imp-font-display); font-size: 13px; letter-spacing: 1px; color: var(--imp-gold); }
+  .ib-mission-cond { color: var(--imp-text-lo); letter-spacing: 0; }
 
   /* ── Resource bar ── */
   .ib-resbar { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 14px; }
@@ -188,6 +190,7 @@ export function IterBelliScreen() {
   const log = iterBelliLog.value;
   const loc = currentLocation();
   const inCampaign = s.phase === 'campaign';
+  const mission = getMissionById(s.missionId);
 
   // Pad the pool with placeholders to keep a steady grid.
   const placeholders = Math.max(0, POOL_TARGET_SIZE - s.pool.length);
@@ -198,14 +201,11 @@ export function IterBelliScreen() {
         <div class="eyebrow">Iter Belli · Campaña en Hispania</div>
         <h1>MARCHA DE GUERRA</h1>
         <div class="sub">Lleva a tus legiones de la frontera a Sagunto antes del invierno.</div>
-        {(() => {
-          const mission = getMissionById(s.missionId);
-          return mission ? (
-            <div style={{ marginTop: 6, fontFamily: 'var(--imp-font-display)', fontSize: 13, letterSpacing: 1, color: 'var(--imp-gold)' }}>
-              ⚜ Misión: {mission.title} <span style={{ color: 'var(--imp-text-lo)', letterSpacing: 0 }}>— {mission.conditionDesc}</span>
-            </div>
-          ) : null;
-        })()}
+        {mission && (
+          <div class="ib-mission">
+            ⚜ Misión: {mission.title} <span class="ib-mission-cond">— {mission.conditionDesc}</span>
+          </div>
+        )}
       </header>
 
       <CampaignResourceBar state={s} />
