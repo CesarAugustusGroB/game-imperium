@@ -60,7 +60,7 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
       missionId: consilium.missionId ?? undefined,
       startThreat: START.threat - consilium.threat,
       startMorale: START.morale + consilium.morale,
-      quests: computeSecondaryQuests(councilSlots.value),
+      quests: secondaryQuests,
     });
     navigateToIterBelli();
   }
@@ -112,7 +112,7 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
             </div>
           )}
           {questPreview && (
-            <div style={{ fontSize: 10, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: 4 }}>
+            <div style={{ fontSize: 10, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: (mission || modSummary) ? 4 : 0 }}>
               Objetivos secundarios: {questPreview} <span style={{ opacity: 0.7 }}>(aparecen en ruta)</span>
             </div>
           )}
