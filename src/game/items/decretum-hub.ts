@@ -94,6 +94,11 @@ export function isUpkeepWaived(): boolean {
   return activeDecretumEffects.value.some((a) => a.effect.kind === 'waive-upkeep');
 }
 
+/** Clear active continuous effects (call on run reset). */
+export function resetActiveDecretumEffects(): void {
+  activeDecretumEffects.value = [];
+}
+
 /** Advance active continuous effects one season; drop those that hit zero. */
 export function tickActiveDecretumEffects(): void {
   activeDecretumEffects.value = activeDecretumEffects.value

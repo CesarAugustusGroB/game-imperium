@@ -8,6 +8,8 @@ import type { Advisor } from '../council/advisor';
 import { advisorMarket, councilSlots, plannedSpoke, tierUpNotices } from '../council/council-store';
 import type { Decretum } from '../items/decretum';
 import { decretumHand, maxHandSize } from '../items/decretum-store';
+import type { ActiveDecretumEffect } from '../items/decretum-hub';
+import { activeDecretumEffects } from '../items/decretum-hub';
 import type { Doctrine } from '../items/doctrine';
 import { doctrineCollection, equippedDoctrines } from '../items/doctrine-store';
 import { consequenceFlags, seenEventsThisSpoke } from '../events/event-store';
@@ -155,6 +157,8 @@ export interface ActiveRunSave {
   equippedDoctrines: (Doctrine | null)[];
   decretumHand: Decretum[];
   maxHandSize: number;
+  /** Continuous Hub effects in flight (e.g. upkeep waivers). Optional for backwards compat. */
+  activeDecretumEffects?: ActiveDecretumEffect[];
   /** S31-04: campaign hex map state. Optional for backwards compat with pre-S31-04 saves. */
   campaign?: CampaignSnapshot | null;
 }
@@ -549,6 +553,7 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     equippedDoctrines: Array.isArray(run.equippedDoctrines) ? run.equippedDoctrines : [null, null, null, null],
     decretumHand: Array.isArray(run.decretumHand) ? run.decretumHand : [],
     maxHandSize: typeof run.maxHandSize === 'number' ? run.maxHandSize : 5,
+    activeDecretumEffects: Array.isArray(run.activeDecretumEffects) ? run.activeDecretumEffects : [],
     campaign: migrateCampaignSnapshot(run.campaign),
   };
 }
@@ -650,6 +655,7 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     equippedDoctrines: equippedDoctrines.value,
     decretumHand: decretumHand.value,
     maxHandSize: maxHandSize.value,
+    activeDecretumEffects: activeDecretumEffects.value,
     campaign: {
       hexTiles: hexTiles.value,
       campaignState: campaignState.value,
@@ -808,6 +814,7 @@ export async function restoreActiveRun(): Promise<boolean> {
     equippedDoctrines.value = snapshot.equippedDoctrines;
     decretumHand.value = snapshot.decretumHand;
     maxHandSize.value = snapshot.maxHandSize;
+    activeDecretumEffects.value = snapshot.activeDecretumEffects ?? [];
 
     if (snapshot.campaign) {
       setTiles(snapshot.campaign.hexTiles);

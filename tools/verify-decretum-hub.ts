@@ -6,7 +6,7 @@
 import {
   toHubEffect, isCastableAtHub, describeHubEffect, isUpkeepWaived,
   tickActiveDecretumEffects, activeDecretumEffects, RECRUIT_IUNIORES_PER_UNIT,
-  castDecretumAtHub,
+  castDecretumAtHub, resetActiveDecretumEffects,
 } from '../src/game/items/decretum-hub';
 import type { Decretum, DecretumEffect } from '../src/game/items/decretum';
 import { decretumHand } from '../src/game/items/decretum-store';
@@ -138,6 +138,11 @@ runSeasonTick('defending', 1);
 check('upkeep charged again after expiry (−2)', getResource('gold') === afterExpiry - 2);
 
 activeDecretumEffects.value = [];
+
+// --- reset helper clears actives ---
+activeDecretumEffects.value = [{ decretumId: 'r', name: 'R', effect: { kind: 'waive-upkeep', seasons: 1 }, remainingSeasons: 1 }];
+resetActiveDecretumEffects();
+check('resetActiveDecretumEffects clears actives', activeDecretumEffects.value.length === 0);
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');

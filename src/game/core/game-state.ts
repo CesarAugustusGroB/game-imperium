@@ -2,6 +2,7 @@ import { signal } from '@preact/signals';
 import type { Commander } from './commander';
 import { initResources, iuniores, setWarProfiler, setIncomeModifierFn, setExchangeBonusFn } from './resources';
 import { addDecretum, resetDecretumHand } from '../items/decretum-store';
+import { resetActiveDecretumEffects } from '../items/decretum-hub';
 import { resetDoctrineStore, getIncomeModifier, addDoctrineToCollection, doctrineCollection, equipDoctrine } from '../items/doctrine-store';
 import { STARTER_DECRETUM } from '../../data/decretum-data';
 import { STARTER_DOCTRINES } from '../../data/doctrine-data';
@@ -116,6 +117,7 @@ function initializeRunScaffold(commander: Commander): void {
 
   // Give starter Decretum matching commander color + white
   resetDecretumHand();
+  resetActiveDecretumEffects();
   for (const d of STARTER_DECRETUM) {
     if (d.color === commander.faction || d.color === 'white') {
       addDecretum(d);
@@ -218,6 +220,7 @@ export function resetRun(): void {
   setIncomeModifierFn(null);
   setExchangeBonusFn(null);
   resetDecretumHand();
+  resetActiveDecretumEffects();
   resetDoctrineStore();
   resetCouncilStore();
   resetProvinceStore();
