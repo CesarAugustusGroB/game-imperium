@@ -12,10 +12,11 @@
 
 import { signal } from '@preact/signals';
 import { CARD_DEFS } from '../../data/iter-belli-cards';
+import { makeQuestCard } from '../../data/iter-belli-quests';
 import { CRISES, LOCATIONS } from '../../data/iter-belli-locations';
 import * as B from './iter-belli-balance';
 import type {
-  Archetype, CardContext, CardEffects, CardInstance, IterBelliState, Location, LogKind, LogLine,
+  Archetype, CardContext, CardEffects, CardInstance, IterBelliState, Location, LogKind, LogLine, SecondaryQuest,
 } from './iter-belli-types';
 import { isCrisisDef } from './iter-belli-types';
 
@@ -48,6 +49,7 @@ function freshState(): IterBelliState {
     spokeTerrain: 'plains',
     spokeDuration: 1,
     missionId: null,
+    quests: [],
   };
 }
 
@@ -144,6 +146,17 @@ function injectCrises(): void {
   }
   if (S.morale < B.MUTINY_MORALE_THRESHOLD) {
     S.pool.unshift({ instanceId: S.cardIdCounter++, def: { ...CRISES.motin, id: 'crisis_motin' }, timer: 99 });
+  }
+}
+
+/** Inject quest cards for any pending quest whose location the army just reached. */
+function injectLocationQuests(): void {
+  const here = currentLocation().id;
+  for (const quest of S.quests) {
+    if (quest.status !== 'pending' || quest.locationId !== here) continue;
+    S.pool.unshift({ instanceId: S.cardIdCounter++, def: makeQuestCard(quest), timer: quest.window });
+    quest.status = 'active';
+    logEvent(`Objetivo del Consilium disponible: ${quest.title}.`, 'event');
   }
 }
 
@@ -305,6 +318,7 @@ function endTurn(timeCost: number): void {
 
   injectCrises();
   refillPool();
+  injectLocationQuests();
   checkEndConditions();
   commit();
 }
@@ -407,6 +421,8 @@ export interface CampaignSeed {
   startThreat?: number;
   /** Override starting morale (Consilium modifier); omitted → START.morale. */
   startMorale?: number;
+  /** Consilium secondary quests (Fase 2); omitted → none. */
+  quests?: SecondaryQuest[];
 }
 
 /** Begin a fresh campaign, seeded from the run's army size and gold. */
@@ -423,6 +439,7 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
   S.spokeTerrain = seed.spokeTerrain;
   S.spokeDuration = Math.max(1, Math.floor(seed.spokeDuration));
   S.missionId = seed.missionId ?? null;
+  S.quests = (seed.quests ?? []).map((q) => ({ ...q }));
   if (seed.startThreat != null) S.threat = clamp(seed.startThreat, B.THREAT_MIN, B.THREAT_MAX);
   if (seed.startMorale != null) S.morale = clamp(seed.startMorale, B.MORALE_MIN, B.MORALE_MAX);
   if (seed.supplies != null) S.supplies = Math.max(0, Math.floor(seed.supplies));
@@ -432,6 +449,7 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
   logEvent('El Senado espera resultados antes del invierno.');
   refillPool();
   injectCrises();
+  injectLocationQuests();
   commit();
 }
 

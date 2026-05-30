@@ -7,6 +7,7 @@ import { SECONDARY_QUESTS, makeQuestCard } from '../src/data/iter-belli-quests';
 import type { SecondaryQuest, CardContext } from '../src/game/iterBelli/iter-belli-types';
 import { computeSecondaryQuests } from '../src/data/iter-belli-consilium';
 import type { Advisor } from '../src/game/council/advisor';
+import { startIterBelliCampaign, resetIterBelli, iterBelliState, camp } from '../src/game/iterBelli/iter-belli-state';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -59,6 +60,30 @@ check('quests start pending', qs.every((q) => q.status === 'pending'));
 // Gaps: a null first slot is skipped; the first NON-null seat is the mission seat.
 const qs2 = computeSecondaryQuests([null, mkA('gold', 1), mkA('purple', 1)]);
 check('null-first skipped, gold = mission, purple = quest', qs2.length === 1 && qs2[0].color === 'purple');
+
+// --- Campaign-state injection (quest bound to the START location 'frontera') ---
+const seedBase = { soldiers: 4000, gold: 100, iuniores: 0, discipline: 4, archetype: null, spokeTerrain: 'plains', spokeDuration: 1 };
+const fronteraQuest: SecondaryQuest = { id: 'quest_red_x', color: 'red', title: 'Asalto al fuerte', locationId: 'frontera', window: 2, status: 'pending' };
+
+startIterBelliCampaign({ ...seedBase, quests: [fronteraQuest] });
+let st = iterBelliState.value;
+check('seed stores quests', st.quests.length === 1);
+check('quest injected at start location → active', st.quests[0].status === 'active');
+check('quest card present in pool', st.pool.filter((c) => c.def.questId === 'quest_red_x').length === 1);
+
+// Idempotent: camping at frontera must not re-inject the (now active) quest.
+camp();
+st = iterBelliState.value;
+check('quest card not duplicated after a turn', st.pool.filter((c) => c.def.questId === 'quest_red_x').length === 1);
+
+// A quest bound to a not-yet-reached location stays pending and is not in the pool.
+startIterBelliCampaign({ ...seedBase, quests: [{ ...fronteraQuest, id: 'quest_red_y', locationId: 'bosques' }] });
+st = iterBelliState.value;
+check('quest for far location stays pending', st.quests[0].status === 'pending');
+check('quest for far location not in pool', st.pool.every((c) => c.def.questId !== 'quest_red_y'));
+
+resetIterBelli();
+check('reset clears quests', iterBelliState.value.quests.length === 0);
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');
