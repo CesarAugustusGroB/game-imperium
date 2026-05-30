@@ -99,12 +99,14 @@ check('reward applied: gold +35', ps.gold === goldBefore + 35);
 check('reward applied: enemyWeaken +1', ps.enemyWeaken === weakenBefore + 1);
 check('quest card removed from pool after play', ps.pool.every((c) => c.def.questId !== 'quest_red_p'));
 
-// --- Failure on expiry (window 2 → fails after 2 camps; themed penalty +2 threat) ---
-startIterBelliCampaign({ ...seedBase, quests: [{ id: 'quest_red_f', color: 'red', title: 'Asalto al fuerte', locationId: 'frontera', window: 2, status: 'pending' }] });
+// --- Failure on expiry (window 1 → fails after 1 camp; themed penalty +2 threat) ---
+// Window 1 is deterministic for the brokenCommitments check: the quest expires on
+// the single camp, but no compromiso card (min expiry 2 at frontera, e.g.
+// mensajero_consul) can expire in one turn, so refillPool draws can't perturb it.
+startIterBelliCampaign({ ...seedBase, quests: [{ id: 'quest_red_f', color: 'red', title: 'Asalto al fuerte', locationId: 'frontera', window: 1, status: 'pending' }] });
 let fs = iterBelliState.value;
 const threatBefore = fs.threat;
 const brokenBefore = fs.brokenCommitments;
-camp(); // window 2 → 1
 camp(); // window 1 → 0 → expires this turn
 fs = iterBelliState.value;
 check('expired quest card → failed', fs.quests[0].status === 'failed');
