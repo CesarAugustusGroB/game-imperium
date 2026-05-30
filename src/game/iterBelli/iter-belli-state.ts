@@ -239,6 +239,12 @@ export function playCard(instanceId: number): void {
   // Remove the played card.
   S.pool = S.pool.filter((c) => c.instanceId !== instanceId);
 
+  // Secondary-quest completion.
+  if (def.questId) {
+    const quest = S.quests.find((q) => q.id === def.questId);
+    if (quest) quest.status = 'completed';
+  }
+
   if (goingToBattle) {
     S.phase = 'battle';
     commit();
@@ -294,16 +300,27 @@ function endTurn(timeCost: number): void {
   S.pool.forEach((c) => { if (c.def.category !== 'Crisis' && c.timer < 99) c.timer -= timeCost; });
   const expired = S.pool.filter((c) => c.timer <= 0 && c.def.category !== 'Crisis');
   for (const c of expired) {
-    if (!isCrisisDef(c.def) && c.def.cardType === 'compromiso') {
-      logEvent(`Compromiso roto: ${c.def.name}`, 'event');
-      if (c.def.penalty) {
-        const result = c.def.penalty(ctx());
+    if (isCrisisDef(c.def)) continue;
+    const def = c.def;
+    if (def.questId) {
+      const quest = S.quests.find((q) => q.id === def.questId);
+      if (quest) quest.status = 'failed';
+      logEvent(`Objetivo fallido: ${def.name}`, 'event');
+      if (def.penalty) {
+        const result = def.penalty(ctx());
+        if (result.effects) applyEffects(result.effects);
+        logEvent(result.msg, 'event');
+      }
+    } else if (def.cardType === 'compromiso') {
+      logEvent(`Compromiso roto: ${def.name}`, 'event');
+      if (def.penalty) {
+        const result = def.penalty(ctx());
         if (result.effects) applyEffects(result.effects);
         logEvent(result.msg, 'event');
       }
       S.brokenCommitments++;
     } else {
-      logEvent(`Oportunidad perdida: ${c.def.name} expiró`);
+      logEvent(`Oportunidad perdida: ${def.name} expiró`);
     }
   }
   S.pool = S.pool.filter((c) => c.timer > 0 || c.def.category === 'Crisis' || c.timer === 99);

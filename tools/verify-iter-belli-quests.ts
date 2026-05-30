@@ -7,7 +7,7 @@ import { SECONDARY_QUESTS, makeQuestCard } from '../src/data/iter-belli-quests';
 import type { SecondaryQuest, CardContext } from '../src/game/iterBelli/iter-belli-types';
 import { computeSecondaryQuests } from '../src/data/iter-belli-consilium';
 import type { Advisor } from '../src/game/council/advisor';
-import { startIterBelliCampaign, resetIterBelli, iterBelliState, camp } from '../src/game/iterBelli/iter-belli-state';
+import { startIterBelliCampaign, resetIterBelli, iterBelliState, camp, playCard } from '../src/game/iterBelli/iter-belli-state';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -84,6 +84,35 @@ check('quest for far location not in pool', st.pool.every((c) => c.def.questId !
 
 resetIterBelli();
 check('reset clears quests', iterBelliState.value.quests.length === 0);
+
+// --- Completion on play (red quest at frontera: reward +35 gold, +1 enemyWeaken) ---
+startIterBelliCampaign({ ...seedBase, gold: 100, quests: [{ id: 'quest_red_p', color: 'red', title: 'Asalto al fuerte', locationId: 'frontera', window: 3, status: 'pending' }] });
+let ps = iterBelliState.value;
+const questCard = ps.pool.find((c) => c.def.questId === 'quest_red_p');
+check('quest card available to play', !!questCard);
+const goldBefore = ps.gold;
+const weakenBefore = ps.enemyWeaken;
+playCard(questCard!.instanceId);
+ps = iterBelliState.value;
+check('playing quest card → completed', ps.quests[0].status === 'completed');
+check('reward applied: gold +35', ps.gold === goldBefore + 35);
+check('reward applied: enemyWeaken +1', ps.enemyWeaken === weakenBefore + 1);
+check('quest card removed from pool after play', ps.pool.every((c) => c.def.questId !== 'quest_red_p'));
+
+// --- Failure on expiry (window 2 → fails after 2 camps; themed penalty +2 threat) ---
+startIterBelliCampaign({ ...seedBase, quests: [{ id: 'quest_red_f', color: 'red', title: 'Asalto al fuerte', locationId: 'frontera', window: 2, status: 'pending' }] });
+let fs = iterBelliState.value;
+const threatBefore = fs.threat;
+const brokenBefore = fs.brokenCommitments;
+camp(); // window 2 → 1
+camp(); // window 1 → 0 → expires this turn
+fs = iterBelliState.value;
+check('expired quest card → failed', fs.quests[0].status === 'failed');
+check('themed penalty applied: threat +2', fs.threat === threatBefore + 2);
+check('quest failure does NOT bump brokenCommitments', fs.brokenCommitments === brokenBefore);
+check('expired quest card removed from pool', fs.pool.every((c) => c.def.questId !== 'quest_red_f'));
+
+resetIterBelli();
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');
