@@ -232,9 +232,7 @@ export function buySupplies(qty: number): boolean {
   const buyable = Math.min(qty, room);
   // Cost rounds UP — buying 1 supply still costs 1 gold (buying 2 is the
   // efficient increment). Multiples of SUPPLIES_PER_GOLD are fully efficient.
-  const baseCost = Math.ceil(buyable / SUPPLIES_PER_GOLD);
-  const cost = Math.max(1, Math.round(baseCost * (1 - getShopDiscount() / 100)));
-  if (cost <= 0) return false;
+  const cost = discountedGold(Math.ceil(buyable / SUPPLIES_PER_GOLD));
   if (!canAfford('gold', cost)) return false;
   if (!spendResource('gold', cost)) return false;
   preparedArmy.value = { ...army, supplies: army.supplies + buyable };
