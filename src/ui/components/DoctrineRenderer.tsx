@@ -107,6 +107,8 @@ function formatEffectDescription(doctrine: Doctrine): string {
       return `+${effect.count} ally unit${effect.count > 1 ? 's' : ''}`;
     case 'upkeep-reduction':
       return `${effect.percent}% upkeep reduction`;
+    case 'embark-bonus':
+      return '⚔';
     default:
       return '—';
   }
@@ -142,6 +144,8 @@ function formatDoctrineEffect(effect: DoctrineEffect): string {
       return `+${effect.count} ally unit${effect.count > 1 ? 's' : ''}`;
     case 'upkeep-reduction':
       return `${effect.percent}% upkeep reduction`;
+    case 'embark-bonus':
+      return `+${effect.amount} ${effect.stat} on campaign start`;
     default:
       return '—';
   }

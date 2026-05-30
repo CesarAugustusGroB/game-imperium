@@ -19,6 +19,14 @@ import { Corners } from '../../../components/motifs/Corners';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 
+const CAMPAIGN_EFFECT_BY_COLOR: Record<string, string> = {
+  red: 'Campaña: las cartas de Coerción erosionan más al enemigo.',
+  blue: 'Campaña: las cartas de Diplomacia cuestan menos oro y bajan más la amenaza.',
+  gold: 'Campaña: +moral cada turno.',
+  purple: 'Campaña: las cartas de Logística dan más suministros.',
+  white: 'Campaña: +suministros cada turno.',
+};
+
 const ROMAN: readonly string[] = ['I', 'II', 'III'];
 const RESOURCE_GLYPH: Record<ResourceType, string> = {
   gold: '⚜', faith: '✦', influence: '◈', momentum: '⚡', iuniores: '🛡',
@@ -547,6 +555,10 @@ function DoctrineDetail({ doctrine, slotIndex, accent, onUnequip, onUpgrade, onS
         lineHeight: 1.5, marginBottom: 14,
       }}>
         "{currentTier?.description ?? ''}"
+      </div>
+
+      <div style={{ fontSize: 11, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: 6 }}>
+        {CAMPAIGN_EFFECT_BY_COLOR[doctrine.color] ?? ''}
       </div>
 
       <div style={{
