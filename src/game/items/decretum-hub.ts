@@ -156,7 +156,7 @@ export function castDecretumAtHub(id: string): boolean {
   const faction = selectedCommander.value?.faction ?? null;
   if (!isCastableAtHub(scroll, faction)) return false;
   const effect = toHubEffect(scroll);
-  if (!effect) return false;
+  if (!effect) return false; // unreachable after isCastableAtHub, but narrows effect to non-null
   if (scroll.castCost) {
     for (const [res, amt] of Object.entries(scroll.castCost) as [ResourceType, number][]) {
       if (amt > 0) spendResource(res, amt);
