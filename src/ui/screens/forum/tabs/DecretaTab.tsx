@@ -149,7 +149,6 @@ export function DecretaTab() {
           {current ? (
             <DecretumDetail
               d={current}
-              castable={faction !== null && isDecretumCastable(current, faction)}
               hubCastable={isCastableAtHub(current, faction)}
               accent={accent}
               onSell={() => handleSell(current.id)}
@@ -260,14 +259,13 @@ function ScrollCard({ d, castable, selected, accent, onSelect }: ScrollCardProps
 
 interface DecretumDetailProps {
   d: Decretum;
-  castable: boolean;
   hubCastable: boolean;
   accent: string;
   onSell: () => void;
   onCast: () => void;
 }
 
-function DecretumDetail({ d, castable, hubCastable, accent, onSell, onCast }: DecretumDetailProps) {
+function DecretumDetail({ d, hubCastable, accent, onSell, onCast }: DecretumDetailProps) {
   const color = FACTION_COLORS[d.color];
   const costEntries = d.castCost
     ? (Object.entries(d.castCost) as [ResourceType, number][]).filter(([, amt]) => amt > 0)
@@ -312,7 +310,7 @@ function DecretumDetail({ d, castable, hubCastable, accent, onSell, onCast }: De
       }}>
         <InfoBox label="Cost" value={costLabel} color={accent} />
         <InfoBox label="Rarity" value={d.rarity} color={color} capitalize />
-        <InfoBox label="Castable" value={castable ? 'Yes' : 'No'} color={castable ? '#7a9a6a' : '#c24a3a'} />
+        <InfoBox label="Castable" value={hubCastable ? 'Yes' : 'No'} color={hubCastable ? '#7a9a6a' : '#c24a3a'} />
         <InfoBox label="Color" value={d.color} color={color} capitalize />
       </div>
 
