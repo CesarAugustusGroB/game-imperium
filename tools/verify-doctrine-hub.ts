@@ -6,6 +6,9 @@
 import { getShopDiscount, getEmbarkBonus, equippedDoctrines } from '../src/game/items/doctrine-store';
 import type { Doctrine, DoctrineEffect } from '../src/game/items/doctrine';
 import { STARTER_DOCTRINES } from '../src/data/doctrine-data';
+import { buySupplies, preparedArmy } from '../src/game/progression/strategic-store';
+import { gold, getResource } from '../src/game/core/resources';
+import type { ArmyData } from '../src/types/index';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -48,6 +51,22 @@ check('resource-per-spoke only grants live resources (gold/iuniores)',
   STARTER_DOCTRINES.flatMap((d) => d.levels.flatMap((l) => l.effects))
     .filter((e): e is Extract<DoctrineEffect, { type: 'resource-per-spoke' }> => e.type === 'resource-per-spoke')
     .every((e) => e.resource === 'gold' || e.resource === 'iuniores'));
+
+// --- shop-discount reduces buySupplies gold cost ---
+preparedArmy.value = { supplies: 0, cohorts: [], size: 0 } as unknown as ArmyData;
+equippedDoctrines.value = [null, null, null, null];
+gold.value = 1000;
+buySupplies(10);
+const fullCost = 1000 - getResource('gold');
+preparedArmy.value = { supplies: 0, cohorts: [], size: 0 } as unknown as ArmyData;
+equippedDoctrines.value = [mkDoctrine([{ type: 'shop-discount', percent: 50 }]), null, null, null];
+gold.value = 1000;
+buySupplies(10);
+const discCost = 1000 - getResource('gold');
+check('shop-discount lowers buySupplies cost', discCost < fullCost && discCost >= 1);
+
+equippedDoctrines.value = [null, null, null, null];
+preparedArmy.value = null;
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');

@@ -8,6 +8,14 @@ import { getCohortById } from '../army/cohort-data';
 import { computeArmySize, createCohortInstance } from '../army/cohort';
 import { rollHiringPool, rollLegateCandidate } from '../army/legate-pool';
 import { SUPPLIES_PER_GOLD, SUPPLIES_STARTING_STOCK, SUPPLY_MAX_CARRY, IUNIORES } from '../../config/game-config';
+import { getShopDiscount } from '../items/doctrine-store';
+
+// ── Helpers ──
+
+/** Gold cost after equipped-doctrine shop-discount, min 1. */
+function discountedGold(base: number): number {
+  return Math.max(1, Math.round(base * (1 - getShopDiscount() / 100)));
+}
 
 // ── State signals ──
 
@@ -224,7 +232,8 @@ export function buySupplies(qty: number): boolean {
   const buyable = Math.min(qty, room);
   // Cost rounds UP — buying 1 supply still costs 1 gold (buying 2 is the
   // efficient increment). Multiples of SUPPLIES_PER_GOLD are fully efficient.
-  const cost = Math.ceil(buyable / SUPPLIES_PER_GOLD);
+  const baseCost = Math.ceil(buyable / SUPPLIES_PER_GOLD);
+  const cost = Math.max(1, Math.round(baseCost * (1 - getShopDiscount() / 100)));
   if (cost <= 0) return false;
   if (!canAfford('gold', cost)) return false;
   if (!spendResource('gold', cost)) return false;
@@ -262,7 +271,7 @@ export function recruitCohort(cohortId: string): RecruitResult {
 
   // Atomic spend — guarded by the canAfford pre-checks above, so both
   // spendResource calls are guaranteed to succeed.
-  spendResource('gold', cohort.aurumCost);
+  spendResource('gold', discountedGold(cohort.aurumCost));
   if (!cohort.mercenary) spendResource('iuniores', IUNIORES.recruitCost);
 
   const army = ensurePreparedArmy();
@@ -283,7 +292,7 @@ export function getRecruitCohortFailure(cohortId: string): RecruitCohortFailure 
 
 function getRecruitFailureForCohort(cohort: Cohort): RecruitCohortFailure | null {
   if (!cohort.mercenary && !canAfford('iuniores', IUNIORES.recruitCost)) return 'insufficient-iuniores';
-  if (!canAfford('gold', cohort.aurumCost)) return 'insufficient-gold';
+  if (!canAfford('gold', discountedGold(cohort.aurumCost))) return 'insufficient-gold';
   return null;
 }
 

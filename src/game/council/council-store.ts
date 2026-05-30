@@ -1,6 +1,7 @@
 import { signal } from '@preact/signals';
 import type { Advisor } from './advisor';
 import { getCurrentSpokeTemplate, getTierForXp } from './advisor';
+import { getShopDiscount } from '../items/doctrine-store';
 import type { Spoke, SpokeNode, NodeType, SpokeTheme } from '../progression/spoke';
 import { currentSpoke, currentNodeIndex, spokeGains, grantSpokeResource, ZERO_GAINS, reindexSpokeNodesAndBranches } from '../progression/spoke';
 import { generateLandmarkSpoke } from '../progression/spoke-generation';
@@ -100,7 +101,7 @@ export function addAdvisorMarketOffer(advisor: Advisor): void {
 }
 
 function getAdvisorCost(advisor: Advisor): { resource: ResourceType; amount: number } {
-  return { resource: 'gold', amount: advisor.cost };
+  return { resource: 'gold', amount: Math.max(1, Math.round(advisor.cost * (1 - getShopDiscount() / 100))) };
 }
 
 /**
