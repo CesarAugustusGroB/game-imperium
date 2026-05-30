@@ -6,7 +6,7 @@ import { selectedCommander } from '../../../../game/core/game-state';
 import { startIterBelliCampaign, computeStartingDiscipline } from '../../../../game/iterBelli/iter-belli-state';
 import { themeToTerrain } from '../../../../data/iter-belli-conquest';
 import { computeConsiliumSetup, getMissionById, computeSecondaryQuests } from '../../../../data/iter-belli-consilium';
-import { equippedDoctrines } from '../../../../game/items/doctrine-store';
+import { equippedDoctrines, getEmbarkBonus } from '../../../../game/items/doctrine-store';
 import { computeDoctrineModifiers } from '../../../../data/iter-belli-doctrines';
 import { SUPPLY_UPKEEP_PER_TURN, START } from '../../../../game/iterBelli/iter-belli-balance';
 import { SUPPLIES_STARTING_STOCK } from '../../../../config/game-config';
@@ -61,14 +61,17 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
     const spokeTerrain = themeToTerrain(spoke?.theme);
     const spokeDuration = spoke?.duration ?? 1;
     const supplies = (army?.supplies ?? SUPPLIES_STARTING_STOCK) + consilium.supplies;
+    const embark = getEmbarkBonus();
     startIterBelliCampaign({
-      soldiers,
+      soldiers: soldiers + embark.soldiers,
       gold: getResource('gold') + consilium.gold,
       iuniores: getResource('iuniores'),
-      discipline, archetype, spokeTerrain, spokeDuration, supplies,
+      discipline: discipline + embark.discipline,
+      archetype, spokeTerrain, spokeDuration,
+      supplies: supplies + embark.supplies,
       missionId: consilium.missionId ?? undefined,
       startThreat: START.threat - consilium.threat,
-      startMorale: START.morale + consilium.morale,
+      startMorale: START.morale + consilium.morale + embark.morale,
       quests: secondaryQuests,
       doctrineModifiers,
     });
