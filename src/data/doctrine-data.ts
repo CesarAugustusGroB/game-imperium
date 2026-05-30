@@ -179,9 +179,9 @@ export const DOCTRINE_PAX_ROMANA: Doctrine = {
 export const DOCTRINE_FOEDUS_AETERNUM: Doctrine = {
   id: 'doctrine_foedus_aeternum', name: 'Foedus Aeternum', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+400 soldiers on campaign start + +15% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.15 }], upgradeCost: { influence: 5, gold: 3 } },
-    { description: '+800 soldiers on campaign start + +25% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.25 }], upgradeCost: { influence: 9, gold: 5 } },
-    { description: '+1200 soldiers on campaign start + +40% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.40 }], upgradeCost: {} },
+    { description: '+400 soldiers on campaign start + 15% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.15 }], upgradeCost: { influence: 5, gold: 3 } },
+    { description: '+800 soldiers on campaign start + 25% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.25 }], upgradeCost: { influence: 9, gold: 5 } },
+    { description: '+1200 soldiers on campaign start + 40% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.40 }], upgradeCost: {} },
   ],
 };
 
