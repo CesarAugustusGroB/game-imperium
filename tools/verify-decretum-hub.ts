@@ -128,8 +128,10 @@ runSeasonTick('defending', 1);
 check('waive active → no gold upkeep', getResource('gold') === waiveBefore);
 check('season tick decremented the active effect', activeDecretumEffects.value[0]?.remainingSeasons === 1);
 
-// Second tick expires it; a third tick charges upkeep again.
+// Second tick is the effect's last waived season: still free, then expires.
+const expiryBefore = getResource('gold');
 runSeasonTick('defending', 1);
+check('waive still free on its last (expiry) season', getResource('gold') === expiryBefore);
 check('waive expired after its seasons', activeDecretumEffects.value.length === 0);
 const afterExpiry = getResource('gold');
 runSeasonTick('defending', 1);
