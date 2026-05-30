@@ -7,8 +7,10 @@
 import type { Advisor, AdvisorPassive } from '../game/council/advisor';
 import { getCurrentPassive } from '../game/council/advisor';
 import type { Faction } from '../game/core/commander';
-import type { IterBelliState } from '../game/iterBelli/iter-belli-types';
-import { SUPPLY_UPKEEP_PER_TURN, START } from '../game/iterBelli/iter-belli-balance';
+import type { IterBelliState, SecondaryQuest } from '../game/iterBelli/iter-belli-types';
+import { SUPPLY_UPKEEP_PER_TURN, START, QUEST_WINDOW_BASE } from '../game/iterBelli/iter-belli-balance';
+import { SECONDARY_QUESTS } from './iter-belli-quests';
+import type { QuestColor } from './iter-belli-quests';
 
 export interface MissionDef {
   id: string;
@@ -101,4 +103,38 @@ export function computeConsiliumSetup(slots: (Advisor | null)[]): ConsiliumSetup
     setup.morale += mod.morale;
   }
   return setup;
+}
+
+/** Mid-campaign locations a secondary quest can bind to (no start/final stop). */
+const QUEST_LOCATIONS = ['tarraco', 'llanura', 'bosques'] as const;
+
+/**
+ * Resolve the seated council into secondary quests: the first occupied slot is
+ * the mission seat (no quest); every other occupied slot seeds one quest, themed
+ * by color, windowed by advisor tier, bound to a random distinct mid-location.
+ */
+export function computeSecondaryQuests(slots: (Advisor | null)[]): SecondaryQuest[] {
+  const quests: SecondaryQuest[] = [];
+  const available: string[] = [...QUEST_LOCATIONS];
+  let firstSeen = false;
+  let seatIdx = -1;
+  for (const advisor of slots) {
+    seatIdx++;
+    if (!advisor) continue;
+    if (!firstSeen) { firstSeen = true; continue; } // first occupied seat = mission
+    if (available.length === 0) break;
+    const color = advisor.color as QuestColor;
+    const window = QUEST_WINDOW_BASE + (advisor.currentTier - 1);
+    const pick = Math.floor(Math.random() * available.length);
+    const locationId = available.splice(pick, 1)[0];
+    quests.push({
+      id: `quest_${color}_${seatIdx}`,
+      color,
+      title: SECONDARY_QUESTS[color].title,
+      locationId,
+      window,
+      status: 'pending',
+    });
+  }
+  return quests;
 }
