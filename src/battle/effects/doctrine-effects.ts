@@ -88,6 +88,7 @@ export function registerDoctrineEffects(): void {
   doctrineRegistry.register('shop-discount', noop);
   doctrineRegistry.register('income-modifier', noop);
   doctrineRegistry.register('upkeep-reduction', noop);
+  doctrineRegistry.register('embark-bonus', noop);
 }
 
 /** Apply one doctrine/province effect (used by progression-bridge). */
