@@ -65,6 +65,7 @@ export function OperationCard({ card, state, onPlay }: Props) {
   const opCard = def as Card;
   const isCommitment = opCard.cardType === 'compromiso';
   const isGamble = opCard.cardType === 'arriesgada';
+  const isQuest = !!opCard.questId;
   const cost = opCard.cost ?? {};
 
   let canPlay = true;
@@ -73,21 +74,21 @@ export function OperationCard({ card, state, onPlay }: Props) {
   if (cost.iuniores && state.iuniores < cost.iuniores) canPlay = false;
 
   const cardCtx = { state, loc: currentLocation() };
-  const typeLabel = isCommitment ? 'Compromiso' : isGamble ? 'Arriesgada' : def.category;
-  const cls = ['ib-card', isCommitment ? 'commitment' : '', isGamble ? 'arriesgada' : '', canPlay ? '' : 'disabled']
+  const typeLabel = isQuest ? 'Objetivo' : isCommitment ? 'Compromiso' : isGamble ? 'Arriesgada' : def.category;
+  const cls = ['ib-card', isQuest ? 'quest' : '', isCommitment ? 'commitment' : '', isGamble ? 'arriesgada' : '', canPlay ? '' : 'disabled']
     .filter(Boolean).join(' ');
 
   return (
     <div
       class={cls}
-      style={{ '--card-color': cat.color } as preact.JSX.CSSProperties}
+      style={{ '--card-color': isQuest ? 'var(--imp-gold-hi)' : cat.color } as preact.JSX.CSSProperties}
       onClick={canPlay ? () => onPlay(card.instanceId) : undefined}
       role={canPlay ? 'button' : undefined}
     >
       {card.timer < 99 && (
         <div class={`ib-card-timer${card.timer <= 1 ? ' urgent' : ''}`}>⧗ {card.timer}d</div>
       )}
-      <div class="ib-card-header"><span><span class="ib-card-icon">{cat.icon}</span> {typeLabel}</span></div>
+      <div class="ib-card-header"><span><span class="ib-card-icon">{isQuest ? '◆' : cat.icon}</span> {typeLabel}</span></div>
       <div class="ib-card-name">{opCard.name}</div>
       <div class="ib-card-desc">{opCard.desc}</div>
 

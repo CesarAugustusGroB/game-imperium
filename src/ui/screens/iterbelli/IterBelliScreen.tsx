@@ -100,6 +100,7 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
   .ib-card.crisis { border-top-color: var(--imp-crimson); background: linear-gradient(180deg, rgba(125,20,20,0.22), rgba(22,19,34,0.96) 70%); cursor: default; }
   .ib-card.commitment { border-style: dashed; }
   .ib-card.arriesgada { border-top-style: double; border-top-width: 4px; }
+  .ib-card.quest { border-top-width: 4px; border-color: var(--imp-gold-faint); }
   .ib-card-timer { position: absolute; top: 8px; right: 8px; font-family: var(--imp-font-mono); font-size: 10px; color: var(--imp-text-mid); background: rgba(0,0,0,0.35); padding: 1px 6px; border-radius: 8px; }
   .ib-card-timer.urgent { color: var(--imp-crimson); }
   .ib-card-header { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--card-color, var(--imp-gold)); font-weight: 700; }
