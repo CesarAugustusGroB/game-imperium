@@ -11,12 +11,12 @@ import { canAfford } from '../core/resources';
 import type { Decretum } from './decretum';
 import { isDecretumCastable } from './decretum';
 
-/** Iuniores granted per spawned unit when a `spawn` decretum is cast at the Hub. */
+/** Iuniores granted per spawned unit when a `spawn` decretum is cast at the Hub. Tunable. */
 export const RECRUIT_IUNIORES_PER_UNIT = 250;
 
 /** A Hub effect derived from a Decretum. Only these kinds are "live" at the Hub. */
 export type HubDecretumEffect =
-  | { kind: 'grant'; resource: ResourceType; amount: number }          // instant
+  | { kind: 'grant'; resource: 'gold' | 'iuniores'; amount: number }   // instant — only live resources
   | { kind: 'heal-army'; fraction: number; target: 'all' | 'single' }  // instant
   | { kind: 'recruit'; iuniores: number }                              // instant
   | { kind: 'waive-upkeep'; seasons: number };                         // continuous
@@ -50,6 +50,8 @@ export function toHubEffect(d: Decretum): HubDecretumEffect | null {
     case 'upkeep-reduction':
       return { kind: 'waive-upkeep', seasons: e.seasons };
     default:
+      // Exhaustiveness intentionally open: any unmapped effect type (battle-only
+      // or deprecated-resource) is inert at the Hub by design ("set chico vivo").
       return null;
   }
 }
@@ -73,7 +75,9 @@ export function describeHubEffect(effect: HubDecretumEffect): string {
     case 'grant':
       return `+${effect.amount} ${effect.resource === 'gold' ? 'oro' : 'iuniores'}`;
     case 'heal-army':
-      return `Sana al ejército ${Math.round(effect.fraction * 100)}%`;
+      return effect.target === 'single'
+        ? `Sana la cohorte más dañada un ${Math.round(effect.fraction * 100)}%`
+        : `Sana al ejército un ${Math.round(effect.fraction * 100)}%`;
     case 'recruit':
       return `Recluta +${effect.iuniores} iuniores`;
     case 'waive-upkeep':
