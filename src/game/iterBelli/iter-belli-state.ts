@@ -16,8 +16,8 @@ import { makeQuestCard } from '../../data/iter-belli-quests';
 import { CRISES, LOCATIONS } from '../../data/iter-belli-locations';
 import * as B from './iter-belli-balance';
 import type {
-  Archetype, CardContext, CardEffects, CardInstance, DoctrineCampaignModifier,
-  IterBelliState, Location, LogKind, LogLine, SecondaryQuest,
+  Archetype, CardContext, CardCost, CardEffects, CardInstance, DoctrineCampaignModifier,
+  IterBelliState, Location, LogKind, LogLine, OperationCard, SecondaryQuest,
 } from './iter-belli-types';
 import { isCrisisDef } from './iter-belli-types';
 
@@ -113,10 +113,15 @@ function eligibleCards() {
 function drawCard(): CardInstance | null {
   const eligible = eligibleCards();
   if (eligible.length === 0) return null;
-  const totalWeight = eligible.reduce((s, c) => s + c.weight, 0);
+  const weightOf = (c: OperationCard): number => {
+    let w = c.weight;
+    for (const m of S.doctrineModifiers) if (m.weight) w *= m.weight(c, ctx());
+    return Math.max(0, w);
+  };
+  const totalWeight = eligible.reduce((s, c) => s + weightOf(c), 0);
   let r = Math.random() * totalWeight;
   for (const c of eligible) {
-    r -= c.weight;
+    r -= weightOf(c);
     if (r <= 0) {
       return { instanceId: S.cardIdCounter++, def: c, timer: c.expiry };
     }
@@ -207,7 +212,20 @@ export function playCard(instanceId: number): void {
   if (!card || isCrisisDef(card.def)) return;
   const def = card.def;
 
-  const cost = def.cost ?? {};
+  // Effective cost = base cost + doctrine cost deltas (discounts), clamped ≥ 0.
+  const cost: CardCost = { ...(def.cost ?? {}) };
+  for (const m of S.doctrineModifiers) {
+    if (!m.costDelta) continue;
+    const d = m.costDelta(def, ctx());
+    if (d.time != null) cost.time = (cost.time ?? 0) + d.time;
+    if (d.gold != null) cost.gold = (cost.gold ?? 0) + d.gold;
+    if (d.supplies != null) cost.supplies = (cost.supplies ?? 0) + d.supplies;
+    if (d.iuniores != null) cost.iuniores = (cost.iuniores ?? 0) + d.iuniores;
+  }
+  if (cost.time != null) cost.time = Math.max(0, cost.time);
+  if (cost.gold != null) cost.gold = Math.max(0, cost.gold);
+  if (cost.supplies != null) cost.supplies = Math.max(0, cost.supplies);
+  if (cost.iuniores != null) cost.iuniores = Math.max(0, cost.iuniores);
   // Costs apply regardless of gamble outcome.
   applyChange('supplies', -(cost.supplies ?? 0));
   applyChange('gold', -(cost.gold ?? 0));
@@ -237,6 +255,11 @@ export function playCard(instanceId: number): void {
   }
 
   const goingToBattle = applyEffects(eff);
+
+  // Doctrine onPlay bonuses (applied after the card's own effects).
+  for (const m of S.doctrineModifiers) {
+    if (m.onPlay) applyEffects(m.onPlay(def, ctx()));
+  }
 
   // Remove the played card.
   S.pool = S.pool.filter((c) => c.instanceId !== instanceId);
@@ -273,6 +296,11 @@ function endTurn(timeCost: number): void {
 
   // Passive upkeep.
   if (S.supplies > 0) applyChange('supplies', -B.SUPPLY_UPKEEP_PER_TURN);
+
+  // Doctrine passives (after upkeep, before hunger/mutiny so they can offset a crisis).
+  for (const m of S.doctrineModifiers) {
+    if (m.onTurn) applyEffects(m.onTurn(S));
+  }
 
   // Hunger.
   if (S.supplies <= 0) {

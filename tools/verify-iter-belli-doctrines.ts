@@ -6,8 +6,8 @@
 import { DOCTRINE_MODIFIERS, computeDoctrineModifiers } from '../src/data/iter-belli-doctrines';
 import type { OperationCard, CardContext } from '../src/game/iterBelli/iter-belli-types';
 import type { Doctrine } from '../src/game/items/doctrine';
-import { startIterBelliCampaign, resetIterBelli, iterBelliState } from '../src/game/iterBelli/iter-belli-state';
-import type { DoctrineCampaignModifier } from '../src/game/iterBelli/iter-belli-types';
+import { startIterBelliCampaign, resetIterBelli, iterBelliState, playCard, camp } from '../src/game/iterBelli/iter-belli-state';
+import type { DoctrineCampaignModifier, SecondaryQuest } from '../src/game/iterBelli/iter-belli-types';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -47,6 +47,51 @@ startIterBelliCampaign({ ...seedBase });
 check('omitted doctrineModifiers → empty', iterBelliState.value.doctrineModifiers.length === 0);
 resetIterBelli();
 check('reset clears doctrineModifiers', iterBelliState.value.doctrineModifiers.length === 0);
+
+// --- onPlay + costDelta plumbing (deterministic via a seeded quest card) ---
+// The quest card "Asalto al fuerte" is category 'Operaciones', effects { gold:35, enemyWeaken:1 }, cost { time:1, supplies:4 }.
+const fronteraQuest: SecondaryQuest = { id: 'dq', color: 'red', title: 'Asalto al fuerte', locationId: 'frontera', window: 5, status: 'pending' };
+const synthPlay: DoctrineCampaignModifier = {
+  id: 'synthPlay', label: 'SynthPlay',
+  onPlay: (card) => (card.category === 'Operaciones' ? { gold: 10 } : {}),
+  costDelta: (card) => (card.category === 'Operaciones' ? { supplies: -2 } : {}),
+};
+startIterBelliCampaign({ ...seedBase, gold: 100, quests: [fronteraQuest], doctrineModifiers: [synthPlay] });
+let s = iterBelliState.value;
+const qc = s.pool.find((c) => c.def.questId === 'dq');
+check('quest card present in pool', !!qc);
+const goldBefore = s.gold;
+const supBefore = s.supplies;
+const weakBefore = s.enemyWeaken;
+playCard(qc!.instanceId);
+s = iterBelliState.value;
+check('onPlay bonus applied (gold +45 = 35 reward + 10 doctrine)', s.gold === goldBefore + 45);
+check('base quest reward intact (enemyWeaken +1)', s.enemyWeaken === weakBefore + 1);
+check('costDelta discount applied (supplies -4: cost 2 + upkeep 2, not 6)', s.supplies === supBefore - 4);
+
+// --- onTurn plumbing ---
+const synthTurn: DoctrineCampaignModifier = { id: 'synthTurn', label: 'SynthTurn', onTurn: () => ({ supplies: 10 }) };
+startIterBelliCampaign({ ...seedBase, doctrineModifiers: [synthTurn] });
+let t = iterBelliState.value;
+const supB = t.supplies;
+camp(); // camp -4 supplies, endTurn upkeep -2, doctrine onTurn +10 → net +4
+t = iterBelliState.value;
+check('onTurn passive applied each turn (supplies net +4)', t.supplies === supB + 4);
+
+// --- non-matching category untouched ---
+const synthGate: DoctrineCampaignModifier = {
+  id: 'synthGate', label: 'SynthGate',
+  onPlay: (card) => (card.category === 'Coerción' ? { gold: 999 } : {}),
+};
+startIterBelliCampaign({ ...seedBase, gold: 100, quests: [{ ...fronteraQuest, id: 'dq2' }], doctrineModifiers: [synthGate] });
+let g = iterBelliState.value;
+const qc2 = g.pool.find((c) => c.def.questId === 'dq2');
+const goldB2 = g.gold;
+playCard(qc2!.instanceId);
+g = iterBelliState.value;
+check('category-gated onPlay does not fire on non-matching card (gold +35 only)', g.gold === goldB2 + 35);
+
+resetIterBelli();
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');
