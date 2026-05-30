@@ -3,6 +3,7 @@ import { globalSeason, threatLevel } from '../core/game-state';
 import { spendResource } from '../core/resources';
 import type { DoctrineEffect } from '../items/doctrine';
 import { getActiveEffects } from '../items/doctrine-store';
+import { isUpkeepWaived, tickActiveDecretumEffects } from '../items/decretum-hub';
 import { collectProvinceIncome, type ProvinceIncomeResult } from '../province/province-store';
 import type { Posture } from '../council/advisor';
 
@@ -29,7 +30,8 @@ export function runSeasonTick(posture: Posture, localSeason: number): SeasonTick
   const reductionPercent = getActiveEffects()
     .filter((e): e is Extract<DoctrineEffect, { type: 'upkeep-reduction'; percent: number }> => e.type === 'upkeep-reduction' && 'percent' in e)
     .reduce((sum, e) => sum + e.percent, 0);
-  const reductionMultiplier = Math.max(0, 1 - reductionPercent / 100);
+  // A Decretum waive-upkeep zeroes upkeep this season; otherwise doctrine reduction applies.
+  const reductionMultiplier = isUpkeepWaived() ? 0 : Math.max(0, 1 - reductionPercent / 100);
 
   const rawUpkeep: Partial<Record<ResourceType, number>> = { ...BASE_UPKEEP };
   if (posture === 'attacking') {
@@ -53,6 +55,9 @@ export function runSeasonTick(posture: Posture, localSeason: number): SeasonTick
 
   threatLevel.value += THREAT_PER_SEASON;
   globalSeason.value += 1;
+
+  // Advance/expire continuous Decretum effects once per season.
+  tickActiveDecretumEffects();
 
   const provinceIncome = collectProvinceIncome();
 
