@@ -34,7 +34,7 @@ check('empty slots → no modifiers', computeDoctrineModifiers([null, null, null
 const mods = computeDoctrineModifiers([mk('red', 1), null, mk('red', 2), mk('blue', 1)]);
 check('one modifier per equipped doctrine', mods.length === 3);
 check('stacking same color → two red modifiers', mods.filter((m) => m.label.includes('Marcial')).length === 2);
-check('bridge red level scales (t=2 → +2)', mods.find((m) => m.label.includes('Marcial'))!.onPlay!(coercion, noCtx).enemyWeaken !== undefined);
+check('bridge red level scales (first red is t=1 → +1)', mods.find((m) => m.label.includes('Marcial'))!.onPlay!(coercion, noCtx).enemyWeaken === 1);
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');
