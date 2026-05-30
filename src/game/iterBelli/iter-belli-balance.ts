@@ -65,6 +65,10 @@ export const LEVY_IUNIORES_COST = 500;
 /** Soldiers gained per levy — 1:1 with the Hub's iuniores→cohort-HP ratio (1000 iuniores ≈ a 1000-HP cohort). */
 export const LEVY_IUNIORES_SOLDIERS = 500;
 
+// ── Secondary quests (Consilium Fase 2) ──
+/** Base quest window (turns); +1 per advisor tier above I → 3 / 4 / 5. */
+export const QUEST_WINDOW_BASE = 3;
+
 // ── Commander identity ──
 /** Starting discipline (1–5) by archetype; overrides START.discipline at embark. */
 export const DISCIPLINE_BY_ARCHETYPE: Record<Archetype, number> = {

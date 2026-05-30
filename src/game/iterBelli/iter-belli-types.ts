@@ -113,6 +113,8 @@ export interface OperationCard {
   expiry: number;
   /** Relative draw weight. */
   weight: number;
+  /** Set when this card is a Consilium secondary-quest card; links it to a SecondaryQuest. */
+  questId?: string;
   /** Gate: card only appears when this returns true. */
   requires?: (ctx: CardContext) => boolean;
   // ── arriesgada (gamble) ──
@@ -122,6 +124,25 @@ export interface OperationCard {
   // ── compromiso (commitment) ──
   penalty?: (ctx: CardContext) => PenaltyResult;
   penaltyDesc?: string;
+}
+
+// ── Secondary quests (Consilium Fase 2) ─────────────────────────────────────
+
+export type QuestStatus = 'pending' | 'active' | 'completed' | 'failed';
+
+/**
+ * A Consilium secondary objective. Seeded at embark from a non-mission seat;
+ * its card is injected when the army reaches `locationId` and must be played
+ * within `window` turns. `color` is a plain string to keep this module free of
+ * advisor/run types.
+ */
+export interface SecondaryQuest {
+  id: string;
+  color: string;
+  title: string;
+  locationId: string;
+  window: number;
+  status: QuestStatus;
 }
 
 export type AnyCardDef = OperationCard | CrisisCard;
@@ -209,6 +230,8 @@ export interface IterBelliState {
   spokeDuration: number;
   /** Active campaign mission id (from the first-seated advisor's color); null if none. */
   missionId: string | null;
+  /** Consilium secondary quests (from non-mission seats); empty if none. */
+  quests: SecondaryQuest[];
 }
 
 // ── Battle ──────────────────────────────────────────────────────────────────
