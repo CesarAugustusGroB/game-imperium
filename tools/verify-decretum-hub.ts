@@ -6,8 +6,15 @@
 import {
   toHubEffect, isCastableAtHub, describeHubEffect, isUpkeepWaived,
   tickActiveDecretumEffects, activeDecretumEffects, RECRUIT_IUNIORES_PER_UNIT,
+  castDecretumAtHub,
 } from '../src/game/items/decretum-hub';
 import type { Decretum, DecretumEffect } from '../src/game/items/decretum';
+import { decretumHand } from '../src/game/items/decretum-store';
+import { selectedCommander } from '../src/game/core/game-state';
+import { getResource } from '../src/game/core/resources';
+import { preparedArmy } from '../src/game/progression/strategic-store';
+import type { ArmyData } from '../src/types/index';
+import type { Commander } from '../src/game/core/commander';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -56,6 +63,54 @@ check('tick decrements remaining', activeDecretumEffects.value[0]?.remainingSeas
 tickActiveDecretumEffects();
 check('tick to 0 → expired/removed', activeDecretumEffects.value.length === 0);
 check('after expiry → not waived', !isUpkeepWaived());
+
+// --- castDecretumAtHub ---
+selectedCommander.value = { faction: 'white' } as unknown as Commander; // white casts any color
+activeDecretumEffects.value = [];
+
+// grant: gold
+decretumHand.value = [mk({ type: 'resource-gain', resource: 'gold', amount: 5 }, 'red')];
+const goldBefore = getResource('gold');
+check('cast grant returns true', castDecretumAtHub('d') === true);
+check('grant added gold', getResource('gold') === goldBefore + 5);
+check('grant removed scroll from hand', decretumHand.value.length === 0);
+
+// recruit
+decretumHand.value = [mk({ type: 'spawn', unitRole: 'guard', count: 3 }, 'white')];
+const iunBefore = getResource('iuniores');
+castDecretumAtHub('d');
+check('recruit added iuniores (3×K)', getResource('iuniores') === iunBefore + 3 * RECRUIT_IUNIORES_PER_UNIT);
+
+// heal-army (all): cohort at 500/1000 → +30% of 1000 = 800
+preparedArmy.value = { cohorts: [{ currentHp: 500, stats: { hp: 1000 } }], size: 1000 } as unknown as ArmyData;
+decretumHand.value = [mk({ type: 'heal', amount: 0.3, target: 'all' }, 'white')];
+castDecretumAtHub('d');
+check('heal-army healed cohort by fraction', (preparedArmy.value!.cohorts[0].currentHp ?? 0) === 800);
+
+// waive-upkeep → pushed to actives, scroll consumed
+activeDecretumEffects.value = [];
+decretumHand.value = [mk({ type: 'upkeep-reduction', seasons: 2 }, 'white')];
+castDecretumAtHub('d');
+check('waive cast pushed active effect', activeDecretumEffects.value.length === 1 && activeDecretumEffects.value[0].remainingSeasons === 2);
+check('waive cast removed scroll', decretumHand.value.length === 0);
+
+// faction-lock: blue commander cannot cast a red scroll
+selectedCommander.value = { faction: 'blue' } as unknown as Commander;
+decretumHand.value = [mk({ type: 'resource-gain', resource: 'gold', amount: 5 }, 'red')];
+check('faction-locked cast returns false', castDecretumAtHub('d') === false);
+check('faction-locked cast left scroll in hand', decretumHand.value.length === 1);
+
+// inert: a buff scroll is not castable at hub
+selectedCommander.value = { faction: 'white' } as unknown as Commander;
+decretumHand.value = [mk({ type: 'buff', stat: 'atk', multiplier: 0.5, duration: 'battle' }, 'white')];
+check('inert cast returns false', castDecretumAtHub('d') === false);
+check('inert cast left scroll in hand', decretumHand.value.length === 1);
+
+// cleanup
+decretumHand.value = [];
+activeDecretumEffects.value = [];
+preparedArmy.value = null;
+selectedCommander.value = null;
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');

@@ -7,9 +7,13 @@
  */
 import { signal } from '@preact/signals';
 import type { Faction, ResourceType } from '../core/commander';
-import { canAfford } from '../core/resources';
+import { canAfford, addResource, spendResource } from '../core/resources';
+import { selectedCommander } from '../core/game-state';
+import { preparedArmy } from '../progression/strategic-store';
+import type { Cohort } from '../army/cohort';
 import type { Decretum } from './decretum';
 import { isDecretumCastable } from './decretum';
+import { decretumHand, removeDecretum } from './decretum-store';
 
 /** Iuniores granted per spawned unit when a `spawn` decretum is cast at the Hub. Tunable. */
 export const RECRUIT_IUNIORES_PER_UNIT = 250;
@@ -95,4 +99,70 @@ export function tickActiveDecretumEffects(): void {
   activeDecretumEffects.value = activeDecretumEffects.value
     .map((a) => ({ ...a, remainingSeasons: a.remainingSeasons - 1 }))
     .filter((a) => a.remainingSeasons > 0);
+}
+
+/** Heal the prepared army's cohorts by `fraction` of max HP (all, or the most-damaged one). */
+function healPreparedArmy(fraction: number, target: 'all' | 'single'): void {
+  const army = preparedArmy.value;
+  if (!army || army.cohorts.length === 0) return;
+  const heal = (c: Cohort): Cohort => {
+    const max = c.stats.hp;
+    const cur = c.currentHp ?? max;
+    return { ...c, currentHp: Math.min(max, cur + Math.round(fraction * max)) };
+  };
+  let cohorts: Cohort[];
+  if (target === 'all') {
+    cohorts = army.cohorts.map(heal);
+  } else {
+    let idx = -1;
+    let worstGap = -1;
+    army.cohorts.forEach((c, i) => {
+      const gap = c.stats.hp - (c.currentHp ?? c.stats.hp);
+      if (gap > worstGap) { worstGap = gap; idx = i; }
+    });
+    cohorts = army.cohorts.map((c, i) => (i === idx ? heal(c) : c));
+  }
+  preparedArmy.value = { ...army, cohorts };
+}
+
+/** Apply a resolved Hub effect (instant directly; continuous pushed to actives). */
+function applyHubEffect(effect: HubDecretumEffect, scroll: Decretum): void {
+  switch (effect.kind) {
+    case 'grant':
+      addResource(effect.resource, effect.amount);
+      break;
+    case 'recruit':
+      addResource('iuniores', effect.iuniores);
+      break;
+    case 'heal-army':
+      healPreparedArmy(effect.fraction, effect.target);
+      break;
+    case 'waive-upkeep':
+      activeDecretumEffects.value = [
+        ...activeDecretumEffects.value,
+        { decretumId: scroll.id, name: scroll.name, effect, remainingSeasons: effect.seasons },
+      ];
+      break;
+  }
+}
+
+/**
+ * Cast a Decretum from the Hub: validates castability, pays castCost, applies the
+ * Hub effect, and removes the scroll from hand. Returns false if not castable.
+ */
+export function castDecretumAtHub(id: string): boolean {
+  const scroll = decretumHand.value.find((d) => d.id === id);
+  if (!scroll) return false;
+  const faction = selectedCommander.value?.faction ?? null;
+  if (!isCastableAtHub(scroll, faction)) return false;
+  const effect = toHubEffect(scroll);
+  if (!effect) return false;
+  if (scroll.castCost) {
+    for (const [res, amt] of Object.entries(scroll.castCost) as [ResourceType, number][]) {
+      if (amt > 0) spendResource(res, amt);
+    }
+  }
+  applyHubEffect(effect, scroll);
+  removeDecretum(id);
+  return true;
 }
