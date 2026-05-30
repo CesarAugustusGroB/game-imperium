@@ -62,6 +62,7 @@ export const SECONDARY_QUESTS: Record<QuestColor, SecondaryQuestDef> = {
 /** Build the playable card for a seeded quest assignment. */
 export function makeQuestCard(quest: SecondaryQuest): OperationCard {
   const def = SECONDARY_QUESTS[quest.color as QuestColor];
+  if (!def) throw new Error(`makeQuestCard: unknown quest color "${quest.color}"`);
   return {
     id: `card_${quest.id}`,
     questId: quest.id,
