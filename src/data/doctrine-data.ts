@@ -5,27 +5,27 @@ import type { Doctrine } from '../game/items/doctrine';
 export const DOCTRINE_SWORD: Doctrine = {
   id: 'doctrine_sword', name: 'Doctrine of the Sword', color: 'red', currentLevel: 1,
   levels: [
-    { description: '+5% damage for all units.',     effects: [{ type: 'stat-modifier', stat: 'damage', multiplier: 0.05 }], upgradeCost: { momentum: 3 } },
-    { description: '+10% damage for all units.',    effects: [{ type: 'stat-modifier', stat: 'damage', multiplier: 0.10 }], upgradeCost: { momentum: 6 } },
-    { description: '+15% damage for all units.',    effects: [{ type: 'stat-modifier', stat: 'damage', multiplier: 0.15 }], upgradeCost: {} },
+    { description: '+200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 200 }], upgradeCost: { momentum: 3 } },
+    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { momentum: 6 } },
+    { description: '+600 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 600 }], upgradeCost: {} },
   ],
 };
 
 export const DOCTRINE_IRON: Doctrine = {
   id: 'doctrine_iron', name: 'Doctrine of Iron', color: 'red', currentLevel: 1,
   levels: [
-    { description: '+10% armor for all units.',     effects: [{ type: 'stat-modifier', stat: 'armor', multiplier: 0.10 }], upgradeCost: { momentum: 4 } },
-    { description: '+20% armor for all units.',     effects: [{ type: 'stat-modifier', stat: 'armor', multiplier: 0.20 }], upgradeCost: { momentum: 8 } },
-    { description: '+30% armor for all units.',     effects: [{ type: 'stat-modifier', stat: 'armor', multiplier: 0.30 }], upgradeCost: {} },
+    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { momentum: 4 } },
+    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { momentum: 8 } },
+    { description: '+1200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }], upgradeCost: {} },
   ],
 };
 
 export const DOCTRINE_BLOOD: Doctrine = {
   id: 'doctrine_blood', name: 'Doctrine of Blood', color: 'red', currentLevel: 1,
   levels: [
-    { description: 'Heal 50 HP per kill.',          effects: [{ type: 'heal-on-kill', amount: 50 }], upgradeCost: { momentum: 2, gold: 2 } },
-    { description: 'Heal 100 HP per kill.',         effects: [{ type: 'heal-on-kill', amount: 100 }], upgradeCost: { momentum: 5, gold: 3 } },
-    { description: 'Heal 200 HP per kill + 5% damage.', effects: [{ type: 'heal-on-kill', amount: 200 }, { type: 'stat-modifier', stat: 'damage', multiplier: 0.05 }], upgradeCost: {} },
+    { description: '+1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { momentum: 2, gold: 2 } },
+    { description: '+2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { momentum: 5, gold: 3 } },
+    { description: '+3 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 3 }], upgradeCost: {} },
   ],
 };
 
@@ -34,27 +34,27 @@ export const DOCTRINE_BLOOD: Doctrine = {
 export const DOCTRINE_DIPLOMACY: Doctrine = {
   id: 'doctrine_diplomacy', name: 'Doctrine of Diplomacy', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+1 Influence per spoke.',       effects: [{ type: 'resource-per-spoke', resource: 'influence', amount: 1 }], upgradeCost: { influence: 3 } },
-    { description: '+2 Influence per spoke.',       effects: [{ type: 'resource-per-spoke', resource: 'influence', amount: 2 }], upgradeCost: { influence: 6 } },
-    { description: '+3 Influence per spoke.',       effects: [{ type: 'resource-per-spoke', resource: 'influence', amount: 3 }], upgradeCost: {} },
+    { description: '+5 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 5 }], upgradeCost: { influence: 3 } },
+    { description: '+10 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 10 }], upgradeCost: { influence: 6 } },
+    { description: '+15 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 15 }], upgradeCost: {} },
   ],
 };
 
 export const DOCTRINE_COURT: Doctrine = {
   id: 'doctrine_court', name: 'Doctrine of the Court', color: 'blue', currentLevel: 1,
   levels: [
-    { description: 'Events offer 1 extra choice.',  effects: [{ type: 'extra-event-choices', count: 1 }], upgradeCost: { influence: 4 } },
-    { description: 'Events offer 2 extra choices.', effects: [{ type: 'extra-event-choices', count: 2 }], upgradeCost: { influence: 8 } },
-    { description: 'Events offer 3 extra choices.', effects: [{ type: 'extra-event-choices', count: 3 }], upgradeCost: {} },
+    { description: '+5 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 5 }], upgradeCost: { influence: 4 } },
+    { description: '+10 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 10 }], upgradeCost: { influence: 8 } },
+    { description: '+15 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 15 }], upgradeCost: {} },
   ],
 };
 
 export const DOCTRINE_ALLIANCES: Doctrine = {
   id: 'doctrine_alliances', name: 'Doctrine of Alliances', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+1 allied unit in battle.',      effects: [{ type: 'ally-units', count: 1 }], upgradeCost: { influence: 3, gold: 2 } },
-    { description: '+2 allied units in battle.',     effects: [{ type: 'ally-units', count: 2 }], upgradeCost: { influence: 6, gold: 4 } },
-    { description: '+3 allied units in battle.',     effects: [{ type: 'ally-units', count: 3 }], upgradeCost: {} },
+    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { influence: 3, gold: 2 } },
+    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { influence: 6, gold: 4 } },
+    { description: '+1200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }], upgradeCost: {} },
   ],
 };
 
@@ -63,27 +63,27 @@ export const DOCTRINE_ALLIANCES: Doctrine = {
 export const DOCTRINE_FAITH: Doctrine = {
   id: 'doctrine_faith', name: 'Doctrine of Faith', color: 'gold', currentLevel: 1,
   levels: [
-    { description: '+1 Faith per spoke.',            effects: [{ type: 'resource-per-spoke', resource: 'faith', amount: 1 }], upgradeCost: { faith: 3 } },
-    { description: '+2 Faith per spoke.',            effects: [{ type: 'resource-per-spoke', resource: 'faith', amount: 2 }], upgradeCost: { faith: 6 } },
-    { description: '+3 Faith per spoke.',            effects: [{ type: 'resource-per-spoke', resource: 'faith', amount: 3 }], upgradeCost: {} },
+    { description: '+5 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 5 }], upgradeCost: { faith: 3 } },
+    { description: '+10 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 10 }], upgradeCost: { faith: 6 } },
+    { description: '+15 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 15 }], upgradeCost: {} },
   ],
 };
 
 export const DOCTRINE_MIRACLES: Doctrine = {
   id: 'doctrine_miracles', name: 'Doctrine of Miracles', color: 'gold', currentLevel: 1,
   levels: [
-    { description: 'Heal all units 200 HP at battle start.', effects: [{ type: 'heal-battle-start', amount: 200 }], upgradeCost: { faith: 4 } },
-    { description: 'Heal all units 400 HP at battle start.', effects: [{ type: 'heal-battle-start', amount: 400 }], upgradeCost: { faith: 8 } },
-    { description: 'Heal all units to 60% HP at battle start.', effects: [{ type: 'heal-battle-start', amount: { percent: 0.60 } }], upgradeCost: {} },
+    { description: '+1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { faith: 4 } },
+    { description: '+2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { faith: 8 } },
+    { description: '+3 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 3 }], upgradeCost: {} },
   ],
 };
 
 export const DOCTRINE_PANTHEON: Doctrine = {
   id: 'doctrine_pantheon', name: 'Doctrine of the Pantheon', color: 'gold', currentLevel: 1,
   levels: [
-    { description: 'Units revive once at 10% HP.',  effects: [{ type: 'revive', hpPercent: 10 }], upgradeCost: { faith: 3, gold: 3 } },
-    { description: 'Units revive once at 20% HP.',  effects: [{ type: 'revive', hpPercent: 20 }], upgradeCost: { faith: 7, gold: 5 } },
-    { description: 'Units revive once at 30% HP.',  effects: [{ type: 'revive', hpPercent: 30 }], upgradeCost: {} },
+    { description: '+1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { faith: 3, gold: 3 } },
+    { description: '+2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { faith: 7, gold: 5 } },
+    { description: '+3 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 3 }], upgradeCost: {} },
   ],
 };
 
@@ -121,27 +121,27 @@ export const DOCTRINE_MARKET: Doctrine = {
 export const DOCTRINE_PEOPLE: Doctrine = {
   id: 'doctrine_people', name: 'Doctrine of the People', color: 'white', currentLevel: 1,
   levels: [
-    { description: '+10% max HP for all units.',     effects: [{ type: 'stat-modifier', stat: 'maxHp', multiplier: 0.10 }], upgradeCost: { gold: 3 } },
-    { description: '+20% max HP for all units.',     effects: [{ type: 'stat-modifier', stat: 'maxHp', multiplier: 0.20 }], upgradeCost: { gold: 6 } },
-    { description: '+30% max HP for all units.',     effects: [{ type: 'stat-modifier', stat: 'maxHp', multiplier: 0.30 }], upgradeCost: {} },
+    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { gold: 3 } },
+    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { gold: 6 } },
+    { description: '+1200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }], upgradeCost: {} },
   ],
 };
 
 export const DOCTRINE_MILITIA: Doctrine = {
   id: 'doctrine_militia', name: 'Doctrine of the Militia', color: 'white', currentLevel: 1,
   levels: [
-    { description: '1 free militia guard per battle.', effects: [{ type: 'free-units', unitRole: 'guard', count: 1 }], upgradeCost: { gold: 4 } },
-    { description: '2 free militia guards per battle.', effects: [{ type: 'free-units', unitRole: 'guard', count: 2 }], upgradeCost: { gold: 8 } },
-    { description: '3 free militia guards per battle.', effects: [{ type: 'free-units', unitRole: 'guard', count: 3 }], upgradeCost: {} },
+    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { gold: 4 } },
+    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { gold: 8 } },
+    { description: '+1200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }], upgradeCost: {} },
   ],
 };
 
 export const DOCTRINE_RESILIENCE: Doctrine = {
   id: 'doctrine_resilience', name: 'Doctrine of Resilience', color: 'white', currentLevel: 1,
   levels: [
-    { description: '+5% max HP + heal 100 HP at battle start.',  effects: [{ type: 'stat-modifier', stat: 'maxHp', multiplier: 0.05 }, { type: 'heal-battle-start', amount: 100 }], upgradeCost: { gold: 3, momentum: 2 } },
-    { description: '+10% max HP + heal 200 HP at battle start.', effects: [{ type: 'stat-modifier', stat: 'maxHp', multiplier: 0.10 }, { type: 'heal-battle-start', amount: 200 }], upgradeCost: { gold: 6, momentum: 4 } },
-    { description: '+15% max HP + heal 400 HP at battle start.', effects: [{ type: 'stat-modifier', stat: 'maxHp', multiplier: 0.15 }, { type: 'heal-battle-start', amount: 400 }], upgradeCost: {} },
+    { description: '+200 soldiers + 1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 200 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { gold: 3, momentum: 2 } },
+    { description: '+400 soldiers + 2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }, { type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { gold: 6, momentum: 4 } },
+    { description: '+600 soldiers + 3 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 600 }, { type: 'embark-bonus', stat: 'morale', amount: 3 }], upgradeCost: {} },
   ],
 };
 
@@ -150,18 +150,18 @@ export const DOCTRINE_RESILIENCE: Doctrine = {
 export const DOCTRINE_LEX_MILITARIS: Doctrine = {
   id: 'doctrine_lex_militaris', name: 'Lex Militaris', color: 'red', currentLevel: 1,
   levels: [
-    { description: '1 free vanguard unit per battle.',  effects: [{ type: 'free-units', unitRole: 'vanguard', count: 1 }], upgradeCost: { momentum: 3 } },
-    { description: '2 free vanguard units per battle.', effects: [{ type: 'free-units', unitRole: 'vanguard', count: 2 }], upgradeCost: { momentum: 6 } },
-    { description: '3 free vanguard units per battle.', effects: [{ type: 'free-units', unitRole: 'vanguard', count: 3 }], upgradeCost: {} },
+    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { momentum: 3 } },
+    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { momentum: 6 } },
+    { description: '+1200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }], upgradeCost: {} },
   ],
 };
 
 export const DOCTRINE_VIS_BELLICA: Doctrine = {
   id: 'doctrine_vis_bellica', name: 'Vis Bellica', color: 'red', currentLevel: 1,
   levels: [
-    { description: '+5% armor + heal 50 HP per kill.',         effects: [{ type: 'stat-modifier', stat: 'armor', multiplier: 0.05 }, { type: 'heal-on-kill', amount: 50 }], upgradeCost: { momentum: 4, gold: 2 } },
-    { description: '+10% armor + heal 100 HP per kill.',       effects: [{ type: 'stat-modifier', stat: 'armor', multiplier: 0.10 }, { type: 'heal-on-kill', amount: 100 }], upgradeCost: { momentum: 7, gold: 4 } },
-    { description: '+15% armor + heal 150 HP per kill + 5% damage.', effects: [{ type: 'stat-modifier', stat: 'armor', multiplier: 0.15 }, { type: 'heal-on-kill', amount: 150 }, { type: 'stat-modifier', stat: 'damage', multiplier: 0.05 }], upgradeCost: {} },
+    { description: '+200 soldiers + 1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 200 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { momentum: 4, gold: 2 } },
+    { description: '+400 soldiers + 1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { momentum: 7, gold: 4 } },
+    { description: '+600 soldiers + 2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 600 }, { type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: {} },
   ],
 };
 
@@ -170,18 +170,18 @@ export const DOCTRINE_VIS_BELLICA: Doctrine = {
 export const DOCTRINE_PAX_ROMANA: Doctrine = {
   id: 'doctrine_pax_romana', name: 'Pax Romana', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+1 Influence per spoke + shop prices reduced by 5%.', effects: [{ type: 'resource-per-spoke', resource: 'influence', amount: 1 }, { type: 'shop-discount', percent: 5 }], upgradeCost: { influence: 4 } },
-    { description: '+2 Influence per spoke + shop prices reduced by 10%.', effects: [{ type: 'resource-per-spoke', resource: 'influence', amount: 2 }, { type: 'shop-discount', percent: 10 }], upgradeCost: { influence: 8 } },
-    { description: '+3 Influence per spoke + shop prices reduced by 15%.', effects: [{ type: 'resource-per-spoke', resource: 'influence', amount: 3 }, { type: 'shop-discount', percent: 15 }], upgradeCost: {} },
+    { description: '+5 gold per spoke + shop prices reduced by 5%.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 5 }, { type: 'shop-discount', percent: 5 }], upgradeCost: { influence: 4 } },
+    { description: '+10 gold per spoke + shop prices reduced by 10%.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 10 }, { type: 'shop-discount', percent: 10 }], upgradeCost: { influence: 8 } },
+    { description: '+15 gold per spoke + shop prices reduced by 15%.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 15 }, { type: 'shop-discount', percent: 15 }], upgradeCost: {} },
   ],
 };
 
 export const DOCTRINE_FOEDUS_AETERNUM: Doctrine = {
   id: 'doctrine_foedus_aeternum', name: 'Foedus Aeternum', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+1 allied unit + +15% gold income.',  effects: [{ type: 'ally-units', count: 1 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.15 }], upgradeCost: { influence: 5, gold: 3 } },
-    { description: '+2 allied units + +25% gold income.', effects: [{ type: 'ally-units', count: 2 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.25 }], upgradeCost: { influence: 9, gold: 5 } },
-    { description: '+3 allied units + +40% gold income.', effects: [{ type: 'ally-units', count: 3 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.40 }], upgradeCost: {} },
+    { description: '+400 soldiers on campaign start + +15% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.15 }], upgradeCost: { influence: 5, gold: 3 } },
+    { description: '+800 soldiers on campaign start + +25% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.25 }], upgradeCost: { influence: 9, gold: 5 } },
+    { description: '+1200 soldiers on campaign start + +40% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.40 }], upgradeCost: {} },
   ],
 };
 
@@ -190,9 +190,9 @@ export const DOCTRINE_FOEDUS_AETERNUM: Doctrine = {
 export const DOCTRINE_DIVINA_PROVIDENTIA: Doctrine = {
   id: 'doctrine_divina_providentia', name: 'Divina Providentia', color: 'gold', currentLevel: 1,
   levels: [
-    { description: '+1 Faith per spoke + units revive once at 10% HP.',  effects: [{ type: 'resource-per-spoke', resource: 'faith', amount: 1 }, { type: 'revive', hpPercent: 10 }], upgradeCost: { faith: 5 } },
-    { description: '+2 Faith per spoke + units revive once at 20% HP.',  effects: [{ type: 'resource-per-spoke', resource: 'faith', amount: 2 }, { type: 'revive', hpPercent: 20 }], upgradeCost: { faith: 9 } },
-    { description: '+3 Faith per spoke + units revive once at 30% HP.',  effects: [{ type: 'resource-per-spoke', resource: 'faith', amount: 3 }, { type: 'revive', hpPercent: 30 }], upgradeCost: {} },
+    { description: '+5 gold per spoke + 1 morale on campaign start.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 5 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { faith: 5 } },
+    { description: '+10 gold per spoke + 2 morale on campaign start.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 10 }, { type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { faith: 9 } },
+    { description: '+15 gold per spoke + 3 morale on campaign start.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 15 }, { type: 'embark-bonus', stat: 'morale', amount: 3 }], upgradeCost: {} },
   ],
 };
 
@@ -212,18 +212,18 @@ export const DOCTRINE_ANNONA: Doctrine = {
 export const DOCTRINE_VIRTUS_POPULI: Doctrine = {
   id: 'doctrine_virtus_populi', name: 'Virtus Populi', color: 'white', currentLevel: 1,
   levels: [
-    { description: '+10% max HP + 1 free reserve per battle.',  effects: [{ type: 'stat-modifier', stat: 'maxHp', multiplier: 0.10 }, { type: 'free-units', unitRole: 'reserve', count: 1 }], upgradeCost: { gold: 4 } },
-    { description: '+20% max HP + 2 free reserves per battle.', effects: [{ type: 'stat-modifier', stat: 'maxHp', multiplier: 0.20 }, { type: 'free-units', unitRole: 'reserve', count: 2 }], upgradeCost: { gold: 8 } },
-    { description: '+30% max HP + 3 free reserves per battle.', effects: [{ type: 'stat-modifier', stat: 'maxHp', multiplier: 0.30 }, { type: 'free-units', unitRole: 'reserve', count: 3 }], upgradeCost: {} },
+    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { gold: 4 } },
+    { description: '+1600 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1600 }], upgradeCost: { gold: 8 } },
+    { description: '+2400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 2400 }], upgradeCost: {} },
   ],
 };
 
 export const DOCTRINE_CONCORDIA: Doctrine = {
   id: 'doctrine_concordia', name: 'Concordia', color: 'white', currentLevel: 1,
   levels: [
-    { description: 'Heal 300 HP at battle start + 1 event choice.',   effects: [{ type: 'heal-battle-start', amount: 300 }, { type: 'extra-event-choices', count: 1 }], upgradeCost: { gold: 4, momentum: 2 } },
-    { description: 'Heal 500 HP at battle start + 2 event choices.',  effects: [{ type: 'heal-battle-start', amount: 500 }, { type: 'extra-event-choices', count: 2 }], upgradeCost: { gold: 7, momentum: 4 } },
-    { description: 'Heal to 40% HP at battle start + 2 event choices.', effects: [{ type: 'heal-battle-start', amount: { percent: 0.40 } }, { type: 'extra-event-choices', count: 2 }], upgradeCost: {} },
+    { description: '+1 morale on campaign start + 5 gold per spoke.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }, { type: 'resource-per-spoke', resource: 'gold', amount: 5 }], upgradeCost: { gold: 4, momentum: 2 } },
+    { description: '+2 morale on campaign start + 10 gold per spoke.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }, { type: 'resource-per-spoke', resource: 'gold', amount: 10 }], upgradeCost: { gold: 7, momentum: 4 } },
+    { description: '+3 morale on campaign start + 15 gold per spoke.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 3 }, { type: 'resource-per-spoke', resource: 'gold', amount: 15 }], upgradeCost: {} },
   ],
 };
 

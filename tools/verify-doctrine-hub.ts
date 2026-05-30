@@ -5,6 +5,7 @@
  */
 import { getShopDiscount, getEmbarkBonus, equippedDoctrines } from '../src/game/items/doctrine-store';
 import type { Doctrine, DoctrineEffect } from '../src/game/items/doctrine';
+import { STARTER_DOCTRINES } from '../src/data/doctrine-data';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -37,6 +38,16 @@ check('embark soldiers sum (400+200=600)', b.soldiers === 600);
 check('embark morale sum (2)', b.morale === 2);
 
 equippedDoctrines.value = [null, null, null, null];
+
+// --- data uses only the live Hub vocabulary ---
+const LIVE_TYPES = new Set(['income-modifier', 'upkeep-reduction', 'resource-per-spoke', 'shop-discount', 'embark-bonus']);
+const DEAD = STARTER_DOCTRINES.flatMap((d) => d.levels.flatMap((l) => l.effects))
+  .filter((e) => !LIVE_TYPES.has(e.type));
+check('no doctrine uses a dead/battle effect type', DEAD.length === 0);
+check('resource-per-spoke only grants live resources (gold/iuniores)',
+  STARTER_DOCTRINES.flatMap((d) => d.levels.flatMap((l) => l.effects))
+    .filter((e): e is Extract<DoctrineEffect, { type: 'resource-per-spoke' }> => e.type === 'resource-per-spoke')
+    .every((e) => e.resource === 'gold' || e.resource === 'iuniores'));
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');
