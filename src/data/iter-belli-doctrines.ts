@@ -11,6 +11,8 @@ import type { Doctrine } from '../game/items/doctrine';
 
 export type DoctrineColor = 'red' | 'blue' | 'gold' | 'purple' | 'white';
 
+// Shared no-op sentinels returned by hooks for cards they do not affect.
+// MUST stay immutable — the engine only reads hook return values, never mutates them.
 const NONE: CardEffects = {};
 const NO_COST: CardCost = {};
 
@@ -53,10 +55,11 @@ export const DOCTRINE_MODIFIERS: Record<DoctrineColor, (level: number) => Doctri
  */
 export function computeDoctrineModifiers(equipped: (Doctrine | null)[]): DoctrineCampaignModifier[] {
   const mods: DoctrineCampaignModifier[] = [];
-  for (const doctrine of equipped) {
-    if (!doctrine) continue;
+  equipped.forEach((doctrine, slot) => {
+    if (!doctrine) return;
     const factory = DOCTRINE_MODIFIERS[doctrine.color as DoctrineColor];
-    if (factory) mods.push(factory(doctrine.currentLevel));
-  }
+    // Unique id per slot so stacked same-color doctrines don't collide.
+    if (factory) mods.push({ ...factory(doctrine.currentLevel), id: `doctrine_${doctrine.color}_${slot}` });
+  });
   return mods;
 }
