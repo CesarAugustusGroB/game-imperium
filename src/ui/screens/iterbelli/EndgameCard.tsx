@@ -110,7 +110,7 @@ export function EndgameCard() {
           {s.quests.map((q) => (
             <div key={q.id}>
               <span>Objetivo · {q.title}</span>
-              <strong style={{ color: q.status === 'completed' ? 'var(--imp-gold-hi)' : q.status === 'failed' ? '#b23a3a' : 'var(--imp-text-lo)' }}>
+              <strong style={{ color: q.status === 'completed' ? 'var(--imp-gold-hi)' : q.status === 'failed' ? 'var(--imp-crimson)' : 'var(--imp-text-lo)' }}>
                 {q.status === 'completed' ? 'cumplido' : q.status === 'failed' ? 'fallido' : 'no activado'}
               </strong>
             </div>
