@@ -4,6 +4,7 @@ import {
   councilSlots,
   hireAndSeatAdvisor,
   unseatAdvisor,
+  getDiscountedAdvisorCost,
 } from '../../../../game/council/council-store';
 import {
   type Advisor,
@@ -445,7 +446,7 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
             border: '1px solid var(--imp-gold-dim)',
             background: 'rgba(13, 11, 20, 0.72)',
           }}>
-            {source === 'market' ? `${advisor.cost}g` : 'SEATED'}
+            {source === 'market' ? `${getDiscountedAdvisorCost(advisor)}g` : 'SEATED'}
           </div>
         </div>
       </div>
@@ -944,7 +945,7 @@ function AdvisorMarketRow({
         fontWeight: 800,
         whiteSpace: 'nowrap',
       }}>
-        {advisor.cost}g
+        {getDiscountedAdvisorCost(advisor)}g
       </div>
       {actionLabel && (
         <button
@@ -1086,7 +1087,8 @@ function heroLine(p: AdvisorPassive, source: AdvisorSource): string {
 
 function getHireBlockReason(advisor: Advisor, currentGold: number, emptySlotIndex: number): string | null {
   if (emptySlotIndex === -1) return 'All seats filled';
-  if (currentGold < advisor.cost) return `Need ${advisor.cost - currentGold} gold`;
+  const cost = getDiscountedAdvisorCost(advisor);
+  if (currentGold < cost) return `Need ${cost - currentGold} gold`;
   return null;
 }
 

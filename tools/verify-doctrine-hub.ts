@@ -9,6 +9,8 @@ import { STARTER_DOCTRINES } from '../src/data/doctrine-data';
 import { buySupplies, preparedArmy } from '../src/game/progression/strategic-store';
 import { gold, getResource } from '../src/game/core/resources';
 import type { ArmyData } from '../src/types/index';
+import { getDiscountedAdvisorCost } from '../src/game/council/council-store';
+import type { Advisor } from '../src/game/council/advisor';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -67,6 +69,14 @@ check('shop-discount lowers buySupplies cost', discCost < fullCost && discCost >
 
 equippedDoctrines.value = [null, null, null, null];
 preparedArmy.value = null;
+
+// --- advisor hire cost reflects shop-discount ---
+const fakeAdvisor = { cost: 100 } as unknown as Advisor;
+equippedDoctrines.value = [null, null, null, null];
+check('no discount → full advisor cost', getDiscountedAdvisorCost(fakeAdvisor) === 100);
+equippedDoctrines.value = [mkDoctrine([{ type: 'shop-discount', percent: 50 }]), null, null, null];
+check('shop-discount lowers advisor cost (~50)', getDiscountedAdvisorCost(fakeAdvisor) === 50);
+equippedDoctrines.value = [null, null, null, null];
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');

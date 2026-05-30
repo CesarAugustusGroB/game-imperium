@@ -108,7 +108,7 @@ function formatEffectDescription(doctrine: Doctrine): string {
     case 'upkeep-reduction':
       return `${effect.percent}% upkeep reduction`;
     case 'embark-bonus':
-      return '⚔';
+      return `+${effect.amount} ${effect.stat} on campaign start`;
     default:
       return '—';
   }

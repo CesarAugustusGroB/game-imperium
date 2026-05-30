@@ -1,5 +1,6 @@
 import type { JSX } from 'preact';
 import type { Advisor } from '../../../../../game/council/advisor';
+import { getDiscountedAdvisorCost } from '../../../../../game/council/council-store';
 import { FACTION_COLORS } from '../../../../../game/core/commander';
 import { Corners } from '../../../../components/motifs/Corners';
 import { TraitGlyph } from './TraitGlyph';
@@ -175,7 +176,7 @@ export function AdvisorMarketCard({
             fontWeight: 800,
             whiteSpace: 'nowrap',
           }}>
-            {advisor.cost}g
+            {getDiscountedAdvisorCost(advisor)}g
           </div>
           <button
             type="button"

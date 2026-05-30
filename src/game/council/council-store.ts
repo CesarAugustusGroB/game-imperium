@@ -104,6 +104,11 @@ function getAdvisorCost(advisor: Advisor): { resource: ResourceType; amount: num
   return { resource: 'gold', amount: Math.max(1, Math.round(advisor.cost * (1 - getShopDiscount() / 100))) };
 }
 
+/** Advisor hire gold cost after equipped-doctrine shop-discount (for UI gate + display). */
+export function getDiscountedAdvisorCost(advisor: Advisor): number {
+  return getAdvisorCost(advisor).amount;
+}
+
 /**
  * Buy an advisor from the political market and seat them immediately.
  * Returns false and mutates nothing if the offer is missing, unaffordable,
