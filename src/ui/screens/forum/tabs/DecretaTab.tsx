@@ -6,6 +6,7 @@ import { selectedCommander } from '../../../../game/core/game-state';
 import { FACTION_COLORS } from '../../../../game/core/commander';
 import type { ResourceType } from '../../../../game/core/commander';
 import { playSfx } from '../../../sound/sfx';
+import { castDecretumAtHub, isCastableAtHub, toHubEffect, describeHubEffect, activeDecretumEffects } from '../../../../game/items/decretum-hub';
 import { OrnatePanel } from '../../../components/OrnatePanel';
 import { Corners } from '../../../components/motifs/Corners';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
@@ -39,6 +40,13 @@ export function DecretaTab() {
     if (selectedId.value === id) selectedId.value = null;
   }
 
+  function handleCast(id: string) {
+    if (castDecretumAtHub(id)) {
+      playSfx('ui_equip');
+      if (selectedId.value === id) selectedId.value = null;
+    }
+  }
+
   return (
     <>
       <Masthead title="Decreta" subtitle={subtitle} accent={accent} />
@@ -61,9 +69,25 @@ export function DecretaTab() {
               fontSize: 9, color: 'var(--imp-text-lo)',
               letterSpacing: 1, textTransform: 'uppercase',
             }}>
-              Cast in battle
+              Cast at hub
             </span>}
           />
+          {activeDecretumEffects.value.length > 0 && (
+            <div style={{
+              margin: '0 0 10px', padding: '8px 12px',
+              background: 'rgba(122, 168, 106, 0.10)',
+              border: '1px solid rgba(122, 168, 106, 0.35)',
+              borderRadius: 2,
+              fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic',
+              fontSize: 11, color: 'var(--imp-text-mid)',
+            }}>
+              {activeDecretumEffects.value.map((a) => (
+                <div key={a.decretumId}>
+                  ◆ {a.name} — {describeHubEffect(a.effect)} · {a.remainingSeasons} {a.remainingSeasons === 1 ? 'temporada' : 'temporadas'}
+                </div>
+              ))}
+            </div>
+          )}
           {hand.length === 0 ? (
             <div style={{
               flex: 1, display: 'flex', flexDirection: 'column',
@@ -126,8 +150,10 @@ export function DecretaTab() {
             <DecretumDetail
               d={current}
               castable={faction !== null && isDecretumCastable(current, faction)}
+              hubCastable={isCastableAtHub(current, faction)}
               accent={accent}
               onSell={() => handleSell(current.id)}
+              onCast={() => handleCast(current.id)}
             />
           ) : (
             <div style={{
@@ -235,11 +261,13 @@ function ScrollCard({ d, castable, selected, accent, onSelect }: ScrollCardProps
 interface DecretumDetailProps {
   d: Decretum;
   castable: boolean;
+  hubCastable: boolean;
   accent: string;
   onSell: () => void;
+  onCast: () => void;
 }
 
-function DecretumDetail({ d, castable, accent, onSell }: DecretumDetailProps) {
+function DecretumDetail({ d, castable, hubCastable, accent, onSell, onCast }: DecretumDetailProps) {
   const color = FACTION_COLORS[d.color];
   const costEntries = d.castCost
     ? (Object.entries(d.castCost) as [ResourceType, number][]).filter(([, amt]) => amt > 0)
@@ -248,6 +276,7 @@ function DecretumDetail({ d, castable, accent, onSell }: DecretumDetailProps) {
     ? costEntries.map(([r, a]) => `${a} ${RESOURCE_GLYPH[r]}`).join(' ')
     : 'Free';
   const sellPrice = DECRETUM_SELL_PRICE[d.rarity];
+  const hubEffect = toHubEffect(d);
 
   return (
     <>
@@ -299,10 +328,28 @@ function DecretumDetail({ d, castable, accent, onSell }: DecretumDetailProps) {
           color: 'var(--imp-text-lo)',
           lineHeight: 1.4,
         }}>
-          Scrolls are cast during battle from the decretum bar — this panel is
-          a reference only.
+          {hubEffect
+            ? `Al lanzar en el Hub: ${describeHubEffect(hubEffect)}.`
+            : 'Sin efecto de Hub — este pergamino no puede lanzarse aquí.'}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={onCast}
+            disabled={!hubCastable}
+            style={{
+              flex: 1,
+              padding: '10px 16px',
+              background: hubCastable ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)` : 'rgba(80, 70, 50, 0.4)',
+              border: 'none', borderRadius: 2,
+              color: hubCastable ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
+              fontSize: 11, fontWeight: 700,
+              letterSpacing: 2, textTransform: 'uppercase',
+              fontFamily: 'var(--imp-font-display)',
+              cursor: hubCastable ? 'pointer' : 'not-allowed',
+            }}
+          >
+            Lanzar
+          </button>
           <button
             onClick={onSell}
             style={{
