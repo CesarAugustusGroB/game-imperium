@@ -6,6 +6,8 @@ import { selectedCommander } from '../../../../game/core/game-state';
 import { startIterBelliCampaign, computeStartingDiscipline } from '../../../../game/iterBelli/iter-belli-state';
 import { themeToTerrain } from '../../../../data/iter-belli-conquest';
 import { computeConsiliumSetup, getMissionById, computeSecondaryQuests } from '../../../../data/iter-belli-consilium';
+import { equippedDoctrines } from '../../../../game/items/doctrine-store';
+import { computeDoctrineModifiers } from '../../../../data/iter-belli-doctrines';
 import { SUPPLY_UPKEEP_PER_TURN, START } from '../../../../game/iterBelli/iter-belli-balance';
 import { SUPPLIES_STARTING_STOCK } from '../../../../config/game-config';
 import { navigateToIterBelli } from '../../../screens';
@@ -36,6 +38,9 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
   const secondaryQuests = useMemo(() => computeSecondaryQuests(councilSlots.value), [councilSlots.value]);
   const questPreview = secondaryQuests.map((q) => q.title).join(' · ');
 
+  const doctrineModifiers = useMemo(() => computeDoctrineModifiers(equippedDoctrines.value), [equippedDoctrines.value]);
+  const doctrinePreview = [...new Set(doctrineModifiers.map((m) => m.label))].join(' · ');
+
   const campaignTitle = spoke?.label ?? 'No campaign planned';
   const nodes = spoke?.nodes ?? [];
   const canEmbark = !!spoke && nodes.length > 0;
@@ -65,6 +70,7 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
       startThreat: START.threat - consilium.threat,
       startMorale: START.morale + consilium.morale,
       quests: secondaryQuests,
+      doctrineModifiers,
     });
     navigateToIterBelli();
   }
@@ -98,7 +104,7 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
         {campaignTitle}
       </div>
       {/* ── Consilium: mission + modifiers ── */}
-      {(mission || modSummary || questPreview) && (
+      {(mission || modSummary || questPreview || doctrinePreview) && (
         <div style={{
           marginBottom: 10, padding: '8px 12px',
           background: 'rgba(212, 168, 67, 0.08)',
@@ -118,6 +124,11 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
           {questPreview && (
             <div style={{ fontSize: 10, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: (mission || modSummary) ? 4 : 0 }}>
               Objetivos secundarios: {questPreview} <span style={{ opacity: 0.7 }}>(aparecen en ruta)</span>
+            </div>
+          )}
+          {doctrinePreview && (
+            <div style={{ fontSize: 10, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: 4 }}>
+              Doctrinae: {doctrinePreview}
             </div>
           )}
         </div>
