@@ -4,7 +4,7 @@ import { getResource } from '../../../../game/core/resources';
 import { selectedCommander } from '../../../../game/core/game-state';
 import { startIterBelliCampaign, computeStartingDiscipline } from '../../../../game/iterBelli/iter-belli-state';
 import { themeToTerrain } from '../../../../data/iter-belli-conquest';
-import { computeConsiliumSetup, getMissionById } from '../../../../data/iter-belli-consilium';
+import { computeConsiliumSetup, getMissionById, computeSecondaryQuests } from '../../../../data/iter-belli-consilium';
 import { SUPPLY_UPKEEP_PER_TURN, START } from '../../../../game/iterBelli/iter-belli-balance';
 import { SUPPLIES_STARTING_STOCK } from '../../../../config/game-config';
 import { navigateToIterBelli } from '../../../screens';
@@ -28,6 +28,9 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
     consilium.gold ? `+${consilium.gold} oro` : null,
     consilium.morale ? `+${consilium.morale} moral` : null,
   ].filter(Boolean).join(' · ');
+
+  const secondaryQuests = computeSecondaryQuests(councilSlots.value);
+  const questPreview = secondaryQuests.map((q) => q.title).join(' · ');
 
   const campaignTitle = spoke?.label ?? 'No campaign planned';
   const nodes = spoke?.nodes ?? [];
@@ -57,6 +60,7 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
       missionId: consilium.missionId ?? undefined,
       startThreat: START.threat - consilium.threat,
       startMorale: START.morale + consilium.morale,
+      quests: computeSecondaryQuests(councilSlots.value),
     });
     navigateToIterBelli();
   }
@@ -90,7 +94,7 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
         {campaignTitle}
       </div>
       {/* ── Consilium: mission + modifiers ── */}
-      {(mission || modSummary) && (
+      {(mission || modSummary || questPreview) && (
         <div style={{
           marginBottom: 10, padding: '8px 12px',
           background: 'rgba(212, 168, 67, 0.08)',
@@ -105,6 +109,11 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
           {modSummary && (
             <div style={{ fontSize: 10, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: mission ? 4 : 0 }}>
               Consilium: {modSummary}
+            </div>
+          )}
+          {questPreview && (
+            <div style={{ fontSize: 10, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: 4 }}>
+              Objetivos secundarios: {questPreview} <span style={{ opacity: 0.7 }}>(aparecen en ruta)</span>
             </div>
           )}
         </div>
