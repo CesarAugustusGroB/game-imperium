@@ -145,6 +145,27 @@ export interface SecondaryQuest {
   status: QuestStatus;
 }
 
+// ── Doctrine campaign modifiers (Doctrinae Fase 1) ───────────────────────────
+
+/**
+ * A campaign modifier contributed by one equipped Hub doctrine. All hooks are
+ * optional; the engine consults whichever a modifier defines. `color` lives in
+ * the run domain, so this type stays color-agnostic — the data bridge maps
+ * doctrines to these.
+ */
+export interface DoctrineCampaignModifier {
+  id: string;
+  label: string;
+  /** Draw-weight multiplier for a card (absent → treated as 1). */
+  weight?: (card: OperationCard) => number;
+  /** Cost adjustment (negative = discount) applied when a card is played. */
+  costDelta?: (card: OperationCard) => CardCost;
+  /** Extra effects added when a card is played. */
+  onPlay?: (card: OperationCard, ctx: CardContext) => CardEffects;
+  /** Passive effects applied each turn. */
+  onTurn?: (state: IterBelliState) => CardEffects;
+}
+
 export type AnyCardDef = OperationCard | CrisisCard;
 
 /** Crisis pool entry — derived from {@link Crisis}, not directly playable. */
@@ -232,6 +253,8 @@ export interface IterBelliState {
   missionId: string | null;
   /** Consilium secondary quests (from non-mission seats); empty if none. */
   quests: SecondaryQuest[];
+  /** Campaign modifiers from equipped Hub doctrines (Fase 1); empty if none. */
+  doctrineModifiers: DoctrineCampaignModifier[];
 }
 
 // ── Battle ──────────────────────────────────────────────────────────────────
