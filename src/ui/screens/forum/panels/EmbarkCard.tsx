@@ -1,3 +1,4 @@
+import { useMemo } from 'preact/hooks';
 import { plannedSpoke, councilSlots } from '../../../../game/council/council-store';
 import { preparedArmy, preparedLegate } from '../../../../game/progression/strategic-store';
 import { getResource } from '../../../../game/core/resources';
@@ -29,7 +30,10 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
     consilium.morale ? `+${consilium.morale} moral` : null,
   ].filter(Boolean).join(' · ');
 
-  const secondaryQuests = computeSecondaryQuests(councilSlots.value);
+  // Memoize so the quests' random locations stay stable for a given seated
+  // council (computeSecondaryQuests uses Math.random); recomputed only when the
+  // seating changes. handleEmbark seeds this exact value into the campaign.
+  const secondaryQuests = useMemo(() => computeSecondaryQuests(councilSlots.value), [councilSlots.value]);
   const questPreview = secondaryQuests.map((q) => q.title).join(' · ');
 
   const campaignTitle = spoke?.label ?? 'No campaign planned';
