@@ -2,6 +2,7 @@ import { playSfx } from '../../sound/sfx';
 import { iterBelliState, iterBelliLog, camp, playCard, currentLocation } from '../../../game/iterBelli/iter-belli-state';
 import { POOL_TARGET_SIZE, CAMP_SUPPLY_COST, CAMP_MORALE_GAIN } from '../../../game/iterBelli/iter-belli-balance';
 import { getMissionById } from '../../../data/iter-belli-consilium';
+import { isCrisisDef } from '../../../game/iterBelli/iter-belli-types';
 import { CampaignResourceBar } from './CampaignResourceBar';
 import { Itinerary } from './Itinerary';
 import { OperationCard } from './OperationCard';
@@ -191,6 +192,7 @@ export function IterBelliScreen() {
   const loc = currentLocation();
   const inCampaign = s.phase === 'campaign';
   const mission = getMissionById(s.missionId);
+  const activeQuests = s.quests.filter((q) => q.status === 'active');
 
   // Pad the pool with placeholders to keep a steady grid.
   const placeholders = Math.max(0, POOL_TARGET_SIZE - s.pool.length);
@@ -206,6 +208,15 @@ export function IterBelliScreen() {
             ⚜ Misión: {mission.title} <span class="ib-mission-cond">— {mission.conditionDesc}</span>
           </div>
         )}
+        {activeQuests.map((q) => {
+          const qc = s.pool.find((c) => !isCrisisDef(c.def) && c.def.questId === q.id);
+          const turns = qc ? qc.timer : 0;
+          return (
+            <div key={q.id} class="ib-mission">
+              ◆ Objetivo: {q.title} <span class="ib-mission-cond">— {turns} {turns === 1 ? 'turno' : 'turnos'} restantes</span>
+            </div>
+          );
+        })}
       </header>
 
       <CampaignResourceBar state={s} />
