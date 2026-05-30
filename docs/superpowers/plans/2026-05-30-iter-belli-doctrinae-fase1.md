@@ -113,9 +113,9 @@ const noCtx = {} as CardContext;
 // --- Per-color modifier factories ---
 check('red onPlay Coerción → enemyWeaken +t (t=2)', DOCTRINE_MODIFIERS.red(2).onPlay!(coercion, noCtx).enemyWeaken === 2);
 check('red onPlay non-Coerción → no enemyWeaken', DOCTRINE_MODIFIERS.red(2).onPlay!(logistica, noCtx).enemyWeaken === undefined);
-check('blue costDelta Diplomacia → gold -5t (t=3)', DOCTRINE_MODIFIERS.blue(3).costDelta!(diplomacia).gold === -15);
+check('blue costDelta Diplomacia → gold -5t (t=3)', DOCTRINE_MODIFIERS.blue(3).costDelta!(diplomacia, noCtx).gold === -15);
 check('blue onPlay Diplomacia → threat -t (t=2)', DOCTRINE_MODIFIERS.blue(2).onPlay!(diplomacia, noCtx).threat === -2);
-check('blue costDelta non-Diplomacia → no gold', DOCTRINE_MODIFIERS.blue(2).costDelta!(logistica).gold === undefined);
+check('blue costDelta non-Diplomacia → no gold', DOCTRINE_MODIFIERS.blue(2).costDelta!(logistica, noCtx).gold === undefined);
 check('purple onPlay Logística → supplies +2t (t=2)', DOCTRINE_MODIFIERS.purple(2).onPlay!(logistica, noCtx).supplies === 4);
 check('gold onTurn → morale +0.3t (t=3)', Math.abs((DOCTRINE_MODIFIERS.gold(3).onTurn!({} as never).morale ?? 0) - 0.9) < 1e-9);
 check('white onTurn → supplies +t (t=2)', DOCTRINE_MODIFIERS.white(2).onTurn!({} as never).supplies === 2);
@@ -395,7 +395,7 @@ function drawCard(): CardInstance | null {
   if (eligible.length === 0) return null;
   const weightOf = (c: OperationCard): number => {
     let w = c.weight;
-    for (const m of S.doctrineModifiers) if (m.weight) w *= m.weight(c);
+    for (const m of S.doctrineModifiers) if (m.weight) w *= m.weight(c, ctx());
     return Math.max(0, w);
   };
   const totalWeight = eligible.reduce((s, c) => s + weightOf(c), 0);
@@ -429,7 +429,7 @@ with:
   const cost: CardCost = { ...(def.cost ?? {}) };
   for (const m of S.doctrineModifiers) {
     if (!m.costDelta) continue;
-    const d = m.costDelta(def);
+    const d = m.costDelta(def, ctx());
     if (d.time != null) cost.time = (cost.time ?? 0) + d.time;
     if (d.gold != null) cost.gold = (cost.gold ?? 0) + d.gold;
     if (d.supplies != null) cost.supplies = (cost.supplies ?? 0) + d.supplies;

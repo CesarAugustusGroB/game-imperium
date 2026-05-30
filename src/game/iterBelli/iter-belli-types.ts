@@ -157,9 +157,9 @@ export interface DoctrineCampaignModifier {
   id: string;
   label: string;
   /** Draw-weight multiplier for a card (absent → treated as 1). */
-  weight?: (card: OperationCard) => number;
+  weight?: (card: OperationCard, ctx: CardContext) => number;
   /** Cost adjustment (negative = discount) applied when a card is played. */
-  costDelta?: (card: OperationCard) => CardCost;
+  costDelta?: (card: OperationCard, ctx: CardContext) => CardCost;
   /** Extra effects added when a card is played. */
   onPlay?: (card: OperationCard, ctx: CardContext) => CardEffects;
   /** Passive effects applied each turn. */
