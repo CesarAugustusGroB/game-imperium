@@ -201,6 +201,23 @@ export function getIncomeModifier(resource: ResourceType): number {
     .reduce((sum, e) => sum + e.multiplier, 0);
 }
 
+/** Sum of shop-discount percents from equipped doctrines, clamped 0–75. */
+export function getShopDiscount(): number {
+  const sum = getActiveEffects()
+    .filter((e): e is Extract<DoctrineEffect, { type: 'shop-discount' }> => e.type === 'shop-discount')
+    .reduce((s, e) => s + e.percent, 0);
+  return Math.max(0, Math.min(75, sum));
+}
+
+/** Aggregate embark-army bonus (per stat) from equipped doctrines. */
+export function getEmbarkBonus(): { soldiers: number; morale: number; supplies: number; discipline: number } {
+  const out = { soldiers: 0, morale: 0, supplies: 0, discipline: 0 };
+  for (const e of getActiveEffects()) {
+    if (e.type === 'embark-bonus') out[e.stat] += e.amount;
+  }
+  return out;
+}
+
 // ── Reset ──
 
 /** Reset all doctrine state (called on run end / title screen return). */

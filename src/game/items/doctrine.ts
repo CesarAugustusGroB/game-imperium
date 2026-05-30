@@ -15,7 +15,8 @@ export type DoctrineEffect =
   | { type: 'shop-discount'; percent: number }
   | { type: 'income-modifier'; resource: ResourceType; multiplier: number }
   | { type: 'ally-units'; count: number }
-  | { type: 'upkeep-reduction'; percent: number };
+  | { type: 'upkeep-reduction'; percent: number }
+  | { type: 'embark-bonus'; stat: 'soldiers' | 'morale' | 'supplies' | 'discipline'; amount: number };
 
 // ── Doctrine level ──
 
