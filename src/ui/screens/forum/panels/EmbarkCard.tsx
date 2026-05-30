@@ -127,7 +127,7 @@ export function EmbarkCard({ accent = '#d4a843' }: EmbarkCardProps) {
             </div>
           )}
           {doctrinePreview && (
-            <div style={{ fontSize: 10, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: 4 }}>
+            <div style={{ fontSize: 10, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: (mission || modSummary || questPreview) ? 4 : 0 }}>
               Doctrinae: {doctrinePreview}
             </div>
           )}
