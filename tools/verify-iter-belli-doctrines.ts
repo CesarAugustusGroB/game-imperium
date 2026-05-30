@@ -6,6 +6,8 @@
 import { DOCTRINE_MODIFIERS, computeDoctrineModifiers } from '../src/data/iter-belli-doctrines';
 import type { OperationCard, CardContext } from '../src/game/iterBelli/iter-belli-types';
 import type { Doctrine } from '../src/game/items/doctrine';
+import { startIterBelliCampaign, resetIterBelli, iterBelliState } from '../src/game/iterBelli/iter-belli-state';
+import type { DoctrineCampaignModifier } from '../src/game/iterBelli/iter-belli-types';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -35,6 +37,16 @@ const mods = computeDoctrineModifiers([mk('red', 1), null, mk('red', 2), mk('blu
 check('one modifier per equipped doctrine', mods.length === 3);
 check('stacking same color → two red modifiers', mods.filter((m) => m.label.includes('Marcial')).length === 2);
 check('bridge red level scales (first red is t=1 → +1)', mods.find((m) => m.label.includes('Marcial'))!.onPlay!(coercion, noCtx).enemyWeaken === 1);
+
+// --- Seed round-trip ---
+const seedBase = { soldiers: 4000, gold: 100, iuniores: 0, discipline: 4, archetype: null, spokeTerrain: 'plains', spokeDuration: 1 };
+const synthMod: DoctrineCampaignModifier = { id: 'synth', label: 'Synth' };
+startIterBelliCampaign({ ...seedBase, doctrineModifiers: [synthMod] });
+check('seed stores doctrineModifiers', iterBelliState.value.doctrineModifiers.length === 1);
+startIterBelliCampaign({ ...seedBase });
+check('omitted doctrineModifiers → empty', iterBelliState.value.doctrineModifiers.length === 0);
+resetIterBelli();
+check('reset clears doctrineModifiers', iterBelliState.value.doctrineModifiers.length === 0);
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');

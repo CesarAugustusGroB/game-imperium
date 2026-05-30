@@ -16,7 +16,8 @@ import { makeQuestCard } from '../../data/iter-belli-quests';
 import { CRISES, LOCATIONS } from '../../data/iter-belli-locations';
 import * as B from './iter-belli-balance';
 import type {
-  Archetype, CardContext, CardEffects, CardInstance, IterBelliState, Location, LogKind, LogLine, SecondaryQuest,
+  Archetype, CardContext, CardEffects, CardInstance, DoctrineCampaignModifier,
+  IterBelliState, Location, LogKind, LogLine, SecondaryQuest,
 } from './iter-belli-types';
 import { isCrisisDef } from './iter-belli-types';
 
@@ -50,6 +51,7 @@ function freshState(): IterBelliState {
     spokeDuration: 1,
     missionId: null,
     quests: [],
+    doctrineModifiers: [],
   };
 }
 
@@ -440,6 +442,8 @@ export interface CampaignSeed {
   startMorale?: number;
   /** Consilium secondary quests (Fase 2); omitted → none. */
   quests?: SecondaryQuest[];
+  /** Equipped-doctrine campaign modifiers (Doctrinae Fase 1); omitted → none. */
+  doctrineModifiers?: DoctrineCampaignModifier[];
 }
 
 /** Begin a fresh campaign, seeded from the run's army size and gold. */
@@ -457,6 +461,7 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
   S.spokeDuration = Math.max(1, Math.floor(seed.spokeDuration));
   S.missionId = seed.missionId ?? null;
   S.quests = (seed.quests ?? []).map((q) => ({ ...q }));
+  S.doctrineModifiers = (seed.doctrineModifiers ?? []).slice();
   if (seed.startThreat != null) S.threat = clamp(seed.startThreat, B.THREAT_MIN, B.THREAT_MAX);
   if (seed.startMorale != null) S.morale = clamp(seed.startMorale, B.MORALE_MIN, B.MORALE_MAX);
   if (seed.supplies != null) S.supplies = Math.max(0, Math.floor(seed.supplies));
