@@ -557,7 +557,7 @@ function DoctrineDetail({ doctrine, slotIndex, accent, onUnequip, onUpgrade, onS
         "{currentTier?.description ?? ''}"
       </div>
 
-      <div style={{ fontSize: 11, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: 6 }}>
+      <div style={{ fontSize: 11, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: 6, lineHeight: 1.4 }}>
         {CAMPAIGN_EFFECT_BY_COLOR[doctrine.color] ?? ''}
       </div>
 
