@@ -10,6 +10,13 @@ import {
   advisorIncomeBonus, advisorThreatReduction, advisorSpokeGrants,
 } from '../src/game/council/council-store';
 import type { Advisor } from '../src/game/council/advisor';
+import { buySupplies, preparedArmy } from '../src/game/progression/strategic-store';
+import { runSeasonTick } from '../src/game/progression/season-tick';
+import { getDiscountedAdvisorCost } from '../src/game/council/council-store';
+import { gold, getResource } from '../src/game/core/resources';
+import { threatLevel } from '../src/game/core/game-state';
+import { wireRunBonuses } from '../src/game/core/game-state';
+import type { ArmyData } from '../src/types/index';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -55,6 +62,50 @@ const grants = advisorSpokeGrants();
 check('advisorSpokeGrants: deprecated res-per-spoke → gold', grants.some((g) => g.resource === 'gold' && g.amount === 3));
 check('advisorSpokeGrants: extra-event-choices → gold n*5', grants.some((g) => g.resource === 'gold' && g.amount === 10));
 councilSlots.value = [null, null, null];
+
+// --- Hub integration (requires the setters wired) ---
+wireRunBonuses();
+
+councilSlots.value = [mkA({ type: 'shop-discount', percent: 50 }), null, null];
+preparedArmy.value = { supplies: 0, cohorts: [], size: 0 } as unknown as ArmyData;
+gold.value = 1000;
+buySupplies(10);
+const discounted = 1000 - getResource('gold');
+councilSlots.value = [null, null, null];
+preparedArmy.value = { supplies: 0, cohorts: [], size: 0 } as unknown as ArmyData;
+gold.value = 1000;
+buySupplies(10);
+const full = 1000 - getResource('gold');
+check('advisor shop-discount lowers buySupplies cost', discounted < full && discounted >= 1);
+
+councilSlots.value = [null, null, null];
+const advBase = getDiscountedAdvisorCost({ cost: 100 } as unknown as Advisor);
+councilSlots.value = [mkA({ type: 'shop-discount', percent: 50 }), null, null];
+const advDisc = getDiscountedAdvisorCost({ cost: 100 } as unknown as Advisor);
+check('advisor shop-discount lowers advisor hire cost', advDisc < advBase);
+
+councilSlots.value = [null, null, null];
+gold.value = 100;
+runSeasonTick('defending', 1);
+const upFull = 100 - getResource('gold');
+councilSlots.value = [mkA({ type: 'upkeep-reduction', percent: 100 }), null, null];
+gold.value = 100;
+runSeasonTick('defending', 1);
+const upRed = 100 - getResource('gold');
+check('advisor upkeep-reduction lowers season upkeep', upRed < upFull);
+
+councilSlots.value = [null, null, null];
+threatLevel.value = 0;
+runSeasonTick('defending', 1);
+const thFull = threatLevel.value;
+councilSlots.value = [mkA({ type: 'threat-reduction', amount: 1 }), null, null];
+threatLevel.value = 0;
+runSeasonTick('defending', 1);
+const thRed = threatLevel.value;
+check('advisor threat-reduction lowers season threat growth', thRed < thFull);
+
+councilSlots.value = [null, null, null];
+preparedArmy.value = null;
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');

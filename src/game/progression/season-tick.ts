@@ -16,6 +16,16 @@ export const ATTACKING_UPKEEP_BONUS: Partial<Record<ResourceType, number>> = { g
 /** Threat increase per season tick. */
 export const THREAT_PER_SEASON = 1;
 
+// Advisor passives are pushed in from game-state (avoids importing council-store here).
+let extraUpkeepReductionFn: () => number = () => 0;
+export function setExtraUpkeepReductionFn(fn: () => number): void {
+  extraUpkeepReductionFn = fn;
+}
+let threatReductionFn: () => number = () => 0;
+export function setThreatReductionFn(fn: () => number): void {
+  threatReductionFn = fn;
+}
+
 /** Result of a season tick, for the UI to display. */
 export interface SeasonTickResult {
   season: number;
@@ -29,7 +39,7 @@ export interface SeasonTickResult {
 export function runSeasonTick(posture: Posture, localSeason: number): SeasonTickResult {
   const reductionPercent = getActiveEffects()
     .filter((e): e is Extract<DoctrineEffect, { type: 'upkeep-reduction'; percent: number }> => e.type === 'upkeep-reduction' && 'percent' in e)
-    .reduce((sum, e) => sum + e.percent, 0);
+    .reduce((sum, e) => sum + e.percent, 0) + extraUpkeepReductionFn();
   // A Decretum waive-upkeep zeroes upkeep this season; otherwise doctrine reduction applies.
   const reductionMultiplier = isUpkeepWaived() ? 0 : Math.max(0, 1 - reductionPercent / 100);
 
@@ -53,7 +63,7 @@ export function runSeasonTick(posture: Posture, localSeason: number): SeasonTick
     }
   }
 
-  threatLevel.value += THREAT_PER_SEASON;
+  threatLevel.value += Math.max(0, THREAT_PER_SEASON - threatReductionFn());
   globalSeason.value += 1;
 
   // Advance/expire continuous Decretum effects once per season.

@@ -101,7 +101,8 @@ export function addAdvisorMarketOffer(advisor: Advisor): void {
 }
 
 function getAdvisorCost(advisor: Advisor): { resource: ResourceType; amount: number } {
-  return { resource: 'gold', amount: Math.max(1, Math.round(advisor.cost * (1 - getShopDiscount() / 100))) };
+  const pct = Math.min(75, getShopDiscount() + advisorShopDiscount());
+  return { resource: 'gold', amount: Math.max(1, Math.round(advisor.cost * (1 - pct / 100))) };
 }
 
 /** Advisor hire gold cost after equipped-doctrine shop-discount (for UI gate + display). */
@@ -442,6 +443,9 @@ export function startSpokeFromCouncil(): void {
     if (effect.type === 'resource-per-spoke') {
       grantSpokeResource(effect.resource, effect.amount, faction);
     }
+  }
+  for (const g of advisorSpokeGrants()) {
+    grantSpokeResource(g.resource, g.amount, faction);
   }
 }
 

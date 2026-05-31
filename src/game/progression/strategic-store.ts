@@ -10,11 +10,19 @@ import { rollHiringPool, rollLegateCandidate } from '../army/legate-pool';
 import { SUPPLIES_PER_GOLD, SUPPLIES_STARTING_STOCK, SUPPLY_MAX_CARRY, IUNIORES } from '../../config/game-config';
 import { getShopDiscount } from '../items/doctrine-store';
 
+// Advisor shop-discount is pushed in from game-state to avoid an import cycle
+// (council-store imports strategic-store; the reverse would be circular).
+let extraShopDiscountFn: () => number = () => 0;
+export function setExtraShopDiscountFn(fn: () => number): void {
+  extraShopDiscountFn = fn;
+}
+
 // ── Helpers ──
 
 /** Gold cost after equipped-doctrine shop-discount, min 1. */
 function discountedGold(base: number): number {
-  return Math.max(1, Math.round(base * (1 - getShopDiscount() / 100)));
+  const pct = Math.min(75, getShopDiscount() + extraShopDiscountFn());
+  return Math.max(1, Math.round(base * (1 - pct / 100)));
 }
 
 // ── State signals ──

@@ -7,14 +7,15 @@ import { resetDoctrineStore, getIncomeModifier, addDoctrineToCollection, doctrin
 import { STARTER_DECRETUM } from '../../data/decretum-data';
 import { STARTER_DOCTRINES } from '../../data/doctrine-data';
 import { isDoctrineEquippable } from '../items/doctrine';
-import { resetCouncilStore, advisorMarket, seatAdvisor, setAdvisorMarket } from '../council/council-store';
+import { resetCouncilStore, advisorMarket, seatAdvisor, setAdvisorMarket, advisorShopDiscount, advisorUpkeepReduction, advisorThreatReduction, advisorIncomeBonus } from '../council/council-store';
 import { resetSpoke } from '../progression/spoke';
 import { resetProvinceStore, conquerProvince, provinces, getMarketExchangeBonus } from '../province/province-store';
 import { initGovernorStore, resetGovernorStore } from '../province/governor-store';
 import { initProvinceMapStore, resetProvinceMapStore, claimTerritory } from '../province/province-map-store';
 import { resetEventStore } from '../events/event-store';
 import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyIds, registerFactionSyncCallback } from '../progression/npc-faction-store';
-import { resetStrategicStore, ensurePreparedArmy, preparedArmy } from '../progression/strategic-store';
+import { resetStrategicStore, ensurePreparedArmy, preparedArmy, setExtraShopDiscountFn } from '../progression/strategic-store';
+import { setExtraUpkeepReductionFn, setThreatReductionFn } from '../progression/season-tick';
 import { getCohortById } from '../army/cohort-data';
 import { computeArmySize, createCohortInstance } from '../army/cohort';
 import { clearActiveRunSave, recordRunStart } from './meta-save';
@@ -90,6 +91,14 @@ export function syncFactionSignals(): void {
 // when setFactionRelation is called mid-run, without creating a circular import.
 registerFactionSyncCallback(syncFactionSignals);
 
+/** Wire equipped-doctrine + seated-advisor bonuses into the resource/strategic/season layers. */
+export function wireRunBonuses(): void {
+  setIncomeModifierFn((res) => getIncomeModifier(res) + advisorIncomeBonus(res));
+  setExtraShopDiscountFn(advisorShopDiscount);
+  setExtraUpkeepReductionFn(advisorUpkeepReduction);
+  setThreatReductionFn(advisorThreatReduction);
+}
+
 interface StartRunOptions {
   recordRunStart?: boolean;
   seedHomeProvince?: boolean;
@@ -100,7 +109,7 @@ function initializeRunScaffold(commander: Commander): void {
   initResources(commander.startingResources);
   iuniores.value = IUNIORES.startingSeed;
   setWarProfiler(commander.id === 'crassus');
-  setIncomeModifierFn(getIncomeModifier);
+  wireRunBonuses();
   setExchangeBonusFn(getMarketExchangeBonus);
 
   completedSpokes.value = 0;
@@ -218,6 +227,9 @@ export function resetRun(): void {
   initResources({ gold: 0, faith: 0, influence: 0, momentum: 0, iuniores: 0 });
   setWarProfiler(false);
   setIncomeModifierFn(null);
+  setExtraShopDiscountFn(() => 0);
+  setExtraUpkeepReductionFn(() => 0);
+  setThreatReductionFn(() => 0);
   setExchangeBonusFn(null);
   resetDecretumHand();
   resetActiveDecretumEffects();
