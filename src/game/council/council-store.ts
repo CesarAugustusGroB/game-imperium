@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Advisor } from './advisor';
-import { getCurrentSpokeTemplate, getTierForXp } from './advisor';
+import { getCurrentSpokeTemplate, getTierForXp, getCurrentPassive } from './advisor';
 import { getShopDiscount } from '../items/doctrine-store';
 import type { Spoke, SpokeNode, NodeType, SpokeTheme } from '../progression/spoke';
 import { currentSpoke, currentNodeIndex, spokeGains, grantSpokeResource, ZERO_GAINS, reindexSpokeNodesAndBranches } from '../progression/spoke';
@@ -443,6 +443,68 @@ export function startSpokeFromCouncil(): void {
       grantSpokeResource(effect.resource, effect.amount, faction);
     }
   }
+}
+
+// ── Advisor passive aggregators ──
+
+/** Sum of shop-discount percents from all seated advisors. */
+export function advisorShopDiscount(): number {
+  let sum = 0;
+  for (const a of councilSlots.value) {
+    if (!a) continue;
+    const p = getCurrentPassive(a);
+    if (p.type === 'shop-discount') sum += p.percent;
+  }
+  return sum;
+}
+
+/** Sum of upkeep-reduction percents from all seated advisors. */
+export function advisorUpkeepReduction(): number {
+  let sum = 0;
+  for (const a of councilSlots.value) {
+    if (!a) continue;
+    const p = getCurrentPassive(a);
+    if (p.type === 'upkeep-reduction') sum += p.percent;
+  }
+  return sum;
+}
+
+/** Sum of threat-reduction amounts from all seated advisors. */
+export function advisorThreatReduction(): number {
+  let sum = 0;
+  for (const a of councilSlots.value) {
+    if (!a) continue;
+    const p = getCurrentPassive(a);
+    if (p.type === 'threat-reduction') sum += p.amount;
+  }
+  return sum;
+}
+
+/** Additive income multiplier for a resource from seated advisors' loot-bonus (gold only). */
+export function advisorIncomeBonus(resource: ResourceType): number {
+  let bonus = 0;
+  for (const a of councilSlots.value) {
+    if (!a) continue;
+    const p = getCurrentPassive(a);
+    if (p.type === 'loot-bonus' && resource === 'gold') bonus += p.percent / 100;
+  }
+  return bonus;
+}
+
+/** Per-spoke grants from seated advisors: resource-per-spoke (deprecated→gold) + extra-event-choices→gold. */
+export function advisorSpokeGrants(): { resource: ResourceType; amount: number }[] {
+  const grants: { resource: ResourceType; amount: number }[] = [];
+  for (const a of councilSlots.value) {
+    if (!a) continue;
+    const p = getCurrentPassive(a);
+    if (p.type === 'resource-per-spoke') {
+      const resource: ResourceType = p.resource === 'gold' || p.resource === 'iuniores' ? p.resource : 'gold';
+      grants.push({ resource, amount: p.amount });
+    } else if (p.type === 'extra-event-choices') {
+      grants.push({ resource: 'gold', amount: p.count * 5 });
+    }
+  }
+  return grants;
 }
 
 /** Reset all council state (called on run end / title screen return). */

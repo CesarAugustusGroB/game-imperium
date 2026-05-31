@@ -5,6 +5,11 @@
  */
 import { passiveModifier } from '../src/data/iter-belli-consilium';
 import type { AdvisorPassive } from '../src/game/council/advisor';
+import {
+  councilSlots, advisorShopDiscount, advisorUpkeepReduction,
+  advisorIncomeBonus, advisorThreatReduction, advisorSpokeGrants,
+} from '../src/game/council/council-store';
+import type { Advisor } from '../src/game/council/advisor';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -22,6 +27,34 @@ check('REVIVED: resource-per-spoke faith → gold', pm({ type: 'resource-per-spo
 check('REVIVED: resource-per-spoke influence → gold', pm({ type: 'resource-per-spoke', resource: 'influence', amount: 2 }).gold === 2);
 check('REVIVED: extra-event-choices → gold (n*5)', pm({ type: 'extra-event-choices', count: 2 }).gold === 10);
 check('shop-discount no longer seeds gold (real Hub discount instead)', pm({ type: 'shop-discount', percent: 10 }).gold === 0);
+
+// --- advisor aggregators ---
+const mkA = (passive: AdvisorPassive): Advisor =>
+  ({ currentTier: 1, color: 'white', tiers: [{ passive }, { passive }, { passive }] } as unknown as Advisor);
+
+councilSlots.value = [null, null, null];
+check('empty council → 0 shop discount', advisorShopDiscount() === 0);
+check('empty council → 0 income bonus', advisorIncomeBonus('gold') === 0);
+councilSlots.value = [
+  mkA({ type: 'shop-discount', percent: 10 }),
+  mkA({ type: 'upkeep-reduction', percent: 20 }),
+  mkA({ type: 'threat-reduction', amount: 1 }),
+];
+check('advisorShopDiscount sums', advisorShopDiscount() === 10);
+check('advisorUpkeepReduction sums', advisorUpkeepReduction() === 20);
+check('advisorThreatReduction sums', advisorThreatReduction() === 1);
+councilSlots.value = [mkA({ type: 'loot-bonus', percent: 25 }), null, null];
+check('advisorIncomeBonus(gold) = loot %/100', Math.abs(advisorIncomeBonus('gold') - 0.25) < 1e-9);
+check('advisorIncomeBonus(faith) = 0', advisorIncomeBonus('faith') === 0);
+councilSlots.value = [
+  mkA({ type: 'resource-per-spoke', resource: 'faith', amount: 3 }),
+  mkA({ type: 'extra-event-choices', count: 2 }),
+  null,
+];
+const grants = advisorSpokeGrants();
+check('advisorSpokeGrants: deprecated res-per-spoke → gold', grants.some((g) => g.resource === 'gold' && g.amount === 3));
+check('advisorSpokeGrants: extra-event-choices → gold n*5', grants.some((g) => g.resource === 'gold' && g.amount === 10));
+councilSlots.value = [null, null, null];
 
 if (failures > 0) { console.error(`\n${failures} check(s) failed.`); process.exit(1); }
 console.log('\nAll checks passed.');
