@@ -63,7 +63,8 @@ export function runSeasonTick(posture: Posture, localSeason: number): SeasonTick
     }
   }
 
-  threatLevel.value += Math.max(0, THREAT_PER_SEASON - threatReductionFn());
+  const threatIncrease = Math.max(0, THREAT_PER_SEASON - threatReductionFn());
+  threatLevel.value += threatIncrease;
   globalSeason.value += 1;
 
   // Advance/expire continuous Decretum effects once per season.
@@ -76,7 +77,7 @@ export function runSeasonTick(posture: Posture, localSeason: number): SeasonTick
     globalSeason: globalSeason.value,
     upkeepPaid,
     upkeepShortfall,
-    threatIncrease: THREAT_PER_SEASON,
+    threatIncrease,
     provinceIncome,
   };
 }
