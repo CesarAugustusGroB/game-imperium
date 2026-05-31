@@ -1053,20 +1053,23 @@ function splitPassiveDescription(
   description: string,
 ): { value: string; label: string } {
   switch (passive.type) {
-    case 'resource-per-spoke':
-      return { value: `+${passive.amount}`, label: `${capitalizeResource(passive.resource)} Each Spoke` };
+    case 'resource-per-spoke': {
+      // Deprecated resources fold to gold (matches advisorSpokeGrants / passiveModifier).
+      const res = passive.resource === 'gold' || passive.resource === 'iuniores' ? passive.resource : 'gold';
+      return { value: `+${passive.amount}`, label: `${capitalizeResource(res)} Each Spoke` };
+    }
     case 'upkeep-reduction':
       return { value: `${passive.percent}%`, label: 'Upkeep Relief' };
     case 'shop-discount':
       return { value: `${passive.percent}%`, label: 'Market Discount' };
     case 'extra-event-choices':
-      return { value: `+${passive.count}`, label: 'Event Choices' };
+      return { value: `+${passive.count * 5}`, label: 'Gold Each Spoke' };
     case 'heal-between-nodes':
-      return { value: `${passive.amount} HP`, label: 'Field Recovery' };
+      return { value: `+${Math.round(passive.amount / 100)}`, label: 'Morale at Embark' };
     case 'threat-reduction':
       return { value: `-${passive.amount}`, label: 'Enemy Threat' };
     case 'loot-bonus':
-      return { value: `+${passive.percent}%`, label: 'Battle Loot' };
+      return { value: `+${passive.percent}%`, label: 'Gold Income' };
     default: {
       const [value = description, ...rest] = description.split(' ');
       return { value, label: rest.join(' ').replace(/\.$/, '') || 'Passive Bonus' };
