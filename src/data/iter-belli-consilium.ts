@@ -61,6 +61,9 @@ type SeedDeltas = Pick<ConsiliumSetup, 'supplies' | 'gold' | 'threat' | 'morale'
 /** Total supply-upkeep budget of a campaign — the basis for upkeep-reduction bonuses. */
 const UPKEEP_BUDGET = SUPPLY_UPKEEP_PER_TURN * START.timeRemaining;
 
+/** Gold granted per extra-event-choice (advisor passive has no event system to widen). */
+const EVENT_CHOICE_GOLD = 5;
+
 /** Map one advisor passive to its starting-stat deltas (all zero if unmapped). */
 export function passiveModifier(passive: AdvisorPassive): SeedDeltas {
   const z: SeedDeltas = { supplies: 0, gold: 0, threat: 0, morale: 0 };
@@ -70,14 +73,17 @@ export function passiveModifier(passive: AdvisorPassive): SeedDeltas {
     case 'threat-reduction':
       return { ...z, threat: passive.amount };
     case 'loot-bonus':
-    case 'shop-discount':
       return { ...z, gold: Math.round(passive.percent / 5) };
     case 'heal-between-nodes':
       return { ...z, morale: Math.round(passive.amount / 100) };
     case 'resource-per-spoke':
-      return passive.resource === 'gold' ? { ...z, gold: passive.amount } : z;
+      // Deprecated resources (faith/influence/momentum) fold into gold.
+      return { ...z, gold: passive.amount };
+    case 'extra-event-choices':
+      return { ...z, gold: passive.count * EVENT_CHOICE_GOLD };
     default:
-      return z; // extra-event-choices and anything else: no campaign effect
+      // shop-discount no longer seeds gold — it now applies as a real Hub discount.
+      return z;
   }
 }
 

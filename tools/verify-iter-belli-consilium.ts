@@ -38,9 +38,9 @@ check('cruzada true at morale 6', MISSIONS.gold.condition({ ...base, morale: 6 }
 check('upkeep 20% → +5 supplies', passiveModifier({ type: 'upkeep-reduction', percent: 20 }).supplies === 5);
 check('threat-reduction 2 → 2', passiveModifier({ type: 'threat-reduction', amount: 2 }).threat === 2);
 check('gold resource 3 → +3 gold', passiveModifier({ type: 'resource-per-spoke', resource: 'gold', amount: 3 }).gold === 3);
-check('momentum resource → 0 gold', passiveModifier({ type: 'resource-per-spoke', resource: 'momentum', amount: 3 }).gold === 0);
+check('momentum resource → gold (deprecated folds to gold)', passiveModifier({ type: 'resource-per-spoke', resource: 'momentum', amount: 3 }).gold === 3);
 check('loot 25% → +5 gold', passiveModifier({ type: 'loot-bonus', percent: 25 }).gold === 5);
-check('shop 10% → +2 gold', passiveModifier({ type: 'shop-discount', percent: 10 }).gold === 2);
+check('shop 10% → 0 gold (real Hub discount, no seed)', passiveModifier({ type: 'shop-discount', percent: 10 }).gold === 0);
 check('heal 200 → +2 morale', passiveModifier({ type: 'heal-between-nodes', amount: 200 }).morale === 2);
 check('extra-event-choices → 0 supplies', passiveModifier({ type: 'extra-event-choices', count: 2 }).supplies === 0);
 
