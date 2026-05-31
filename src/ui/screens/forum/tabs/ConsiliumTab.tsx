@@ -1038,13 +1038,13 @@ function TierBadge({ tier }: { tier: Advisor['currentTier'] }) {
 
 function describePassive(p: AdvisorPassive): string {
   switch (p.type) {
-    case 'resource-per-spoke': return `+${p.amount} ${p.resource} each spoke.`;
-    case 'upkeep-reduction': return `${p.percent}% off upkeep costs.`;
-    case 'shop-discount': return `${p.percent}% shop discount.`;
-    case 'extra-event-choices': return `+${p.count} extra event choice(s).`;
-    case 'heal-between-nodes': return `Restore ${p.amount} HP between nodes.`;
-    case 'threat-reduction': return `Enemy threat reduced by ${p.amount}.`;
-    case 'loot-bonus': return `+${p.percent}% loot from battles.`;
+    case 'upkeep-reduction':    return `−${p.percent}% upkeep de temporada · +suministros al embarcar`;
+    case 'shop-discount':       return `−${p.percent}% precios del Hub`;
+    case 'loot-bonus':          return `+${p.percent}% income de oro · +oro al embarcar`;
+    case 'threat-reduction':    return `−${p.amount} amenaza/temporada · −amenaza al embarcar`;
+    case 'heal-between-nodes':  return `+moral al embarcar`;
+    case 'resource-per-spoke':  return `+${p.amount} oro por spoke · +oro al embarcar`;
+    case 'extra-event-choices': return `+${p.count * 5} oro por spoke`;
   }
 }
 
