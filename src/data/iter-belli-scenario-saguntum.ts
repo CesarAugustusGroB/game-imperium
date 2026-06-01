@@ -32,4 +32,5 @@ export const SAGUNTUM: CampaignScenario = {
     battleLostLog: (n) => `Derrota en Sagunto. Quedan ${n} soldados.`,
   },
   conquestNames: CONQUEST_NAMES,
+  provinceTerrain: 'plains',
 };

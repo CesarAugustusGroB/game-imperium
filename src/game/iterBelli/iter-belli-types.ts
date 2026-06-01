@@ -10,6 +10,8 @@
  * Bellum system) is imported or referenced here.
  */
 
+import type { TerrainType } from '../../data/terrain-data';
+
 // ── Categories & locations ──────────────────────────────────────────────────
 
 export type CategoryName =
@@ -82,6 +84,8 @@ export interface CampaignScenario {
   enemy: ScenarioEnemy;
   narrative: ScenarioNarrative;
   conquestNames: string[];
+  /** Terrain stamped on the province conquered on victory (was spoke.theme). */
+  provinceTerrain: TerrainType;
 }
 
 // ── Cards ─────────────────────────────────────────────────────────────────

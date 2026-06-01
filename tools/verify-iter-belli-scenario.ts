@@ -41,6 +41,9 @@ check('defeatText non-empty', n.defeatText.length > 0);
 check('battleWonLog interpolates count + place', n.battleWonLog(123).includes('123') && n.battleWonLog(123).includes('Sagunto'));
 check('battleLostLog interpolates count', n.battleLostLog(7).includes('7'));
 
+console.log('SAGUNTUM province terrain');
+check('provinceTerrain present', typeof SAGUNTUM.provinceTerrain === 'string' && SAGUNTUM.provinceTerrain.length > 0);
+
 console.log('Active-scenario holder');
 check('defaults to SAGUNTUM', getActiveScenario() === SAGUNTUM);
 const fake = { ...SAGUNTUM, id: 'fake' } as CampaignScenario;
