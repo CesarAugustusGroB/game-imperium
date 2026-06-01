@@ -1,10 +1,10 @@
-import { LOCATIONS } from '../../../data/iter-belli-locations';
+import { getActiveScenario } from '../../../game/iterBelli/iter-belli-scenario';
 
-/** Horizontal progress rail of the 5 campaign stops. */
+/** Horizontal progress rail of the campaign stops (from the active scenario). */
 export function Itinerary({ locationIdx }: { locationIdx: number }) {
   return (
     <div class="ib-itinerary">
-      {LOCATIONS.map((l, i) => {
+      {getActiveScenario().locations.map((l, i) => {
         const cls = [
           'ib-stop',
           i < locationIdx ? 'visited' : '',
