@@ -511,6 +511,27 @@ export function advisorSpokeGrants(): { resource: ResourceType; amount: number }
   return grants;
 }
 
+/**
+ * Campaign duration (seasons) derived from seated advisors — the spoke-free
+ * replacement for generateSpokeFromCouncil's duration block. 0 seated → 1
+ * (matches the old `spoke?.duration ?? 1` fallback).
+ */
+export function plannedCampaignDuration(): number {
+  const seated = councilSlots.value.filter((a): a is Advisor => a !== null);
+  if (seated.length === 0) return 1;
+  const avg = seated.reduce((sum, a) => {
+    const [min, max] = getCurrentSpokeTemplate(a).durationRange;
+    return sum + (min + max) / 2;
+  }, 0) / seated.length;
+  return Math.round(Math.min(4, Math.max(2, avg)));
+}
+
+/** Embark is allowed once at least one advisor is seated (preserves the old
+ *  gate: no seated council → no plannedSpoke → embark disabled). */
+export function canEmbarkFromCouncil(): boolean {
+  return councilSlots.value.some(Boolean);
+}
+
 /** Reset all council state (called on run end / title screen return). */
 export function resetCouncilStore(): void {
   councilSlots.value = [null, null, null];
