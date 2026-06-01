@@ -11,6 +11,7 @@
 import { signal } from '@preact/signals';
 import * as B from './iter-belli-balance';
 import { applyBattleOutcome, iterBelliState } from './iter-belli-state';
+import { getActiveScenario } from './iter-belli-scenario';
 import type {
   BattleArmy, BattleState, DoctrineName, RoundResult, StanceDef, StanceName,
 } from './iter-belli-types';
@@ -260,12 +261,13 @@ function bmLog(text: string, kind: BattleState['log'][number]['kind'] = ''): voi
 /** Build the decisive battle from the current campaign state. Idempotent per phase. */
 export function beginBattle(): void {
   const s = iterBelliState.value;
+  const enemy = getActiveScenario().enemy;
   const enemyMult = (1 + s.threat / B.ENEMY_THREAT_DIVISOR) * (1 - s.enemyWeaken * B.ENEMY_WEAKEN_PER_POINT);
-  const enemySoldiers = Math.max(B.ENEMY_MIN_SOLDIERS, Math.floor(B.ENEMY_BASE_SOLDIERS * enemyMult));
+  const enemySoldiers = Math.max(enemy.minSoldiers, Math.floor(enemy.baseSoldiers * enemyMult));
 
   BS = {
     atk: makeArmy('Tu ejército', s.soldiers, s.morale, s.discipline, 'PLAYER'),
-    dfn: makeArmy('Aníbal Barca', enemySoldiers, B.ENEMY_MORALE, B.ENEMY_DISCIPLINE, 'Maniobrera'),
+    dfn: makeArmy(enemy.name, enemySoldiers, enemy.morale, enemy.discipline, enemy.doctrine),
     terrainAtkMult: s.fortified ? B.FORTIFIED_TERRAIN_MULT : 1.0,
     terrainDfnMult: 1.0,
     defDieBonus: 0,
@@ -279,7 +281,7 @@ export function beginBattle(): void {
 
   bmLog('INICIO DE BATALLA', 'head');
   bmLog(`Tu ejército: ${BS.atk.soldiers.toLocaleString('es')} sold · M${BS.atk.morale.toFixed(1)} · Disciplina ${B.ROMAN[BS.atk.discipline]}`);
-  bmLog(`Aníbal Barca: ${BS.dfn.soldiers.toLocaleString('es')} sold · M${BS.dfn.morale.toFixed(1)} · Disciplina V · Maniobrera`);
+  bmLog(`${enemy.name}: ${BS.dfn.soldiers.toLocaleString('es')} sold · M${BS.dfn.morale.toFixed(1)} · Disciplina ${B.ROMAN[enemy.discipline]} · ${enemy.doctrine}`);
   if (s.fortified) bmLog('Tu campamento fortificado da +15% al daño inicial.');
   if (s.enemyWeaken > 0) bmLog(`El enemigo llega erosionado por tus operaciones (−${s.enemyWeaken * 7}% efectivos).`);
   bmLog('Eres el atacante. Tiras d6, el enemigo d8.');
