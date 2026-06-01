@@ -13,7 +13,7 @@
 import { signal } from '@preact/signals';
 import { CARD_DEFS } from '../../data/iter-belli-cards';
 import { makeQuestCard } from '../../data/iter-belli-quests';
-import { CRISES, LOCATIONS } from '../../data/iter-belli-locations';
+import { getActiveScenario, resetActiveScenario } from './iter-belli-scenario';
 import * as B from './iter-belli-balance';
 import type {
   Archetype, CardContext, CardCost, CardEffects, CardInstance, DoctrineCampaignModifier,
@@ -77,7 +77,7 @@ function clamp(v: number, min: number, max: number): number {
 }
 
 export function currentLocation(): Location {
-  return LOCATIONS[S.locationIdx];
+  return getActiveScenario().locations[S.locationIdx];
 }
 
 function ctx(): CardContext {
@@ -130,9 +130,10 @@ function drawCard(): CardInstance | null {
 }
 
 function refillPool(): void {
-  // At Sagunto, force the decisive assault to be the only option.
-  if (currentLocation().id === 'sagunto' && !S.pool.find((c) => c.def.id === 'asalto_decisivo')) {
-    const assault = CARD_DEFS.find((c) => c.id === 'asalto_decisivo');
+  const scenario = getActiveScenario();
+  // At the objective, force the decisive assault to be the only option.
+  if (currentLocation().id === scenario.objectiveLocationId && !S.pool.find((c) => c.def.id === scenario.decisiveCardId)) {
+    const assault = CARD_DEFS.find((c) => c.id === scenario.decisiveCardId);
     if (assault) {
       S.pool = [{ instanceId: S.cardIdCounter++, def: assault, timer: 99 }];
     }
@@ -147,12 +148,13 @@ function refillPool(): void {
 }
 
 function injectCrises(): void {
+  const { crises } = getActiveScenario();
   S.pool = S.pool.filter((c) => c.def.category !== 'Crisis');
   if (S.supplies <= 0) {
-    S.pool.unshift({ instanceId: S.cardIdCounter++, def: { ...CRISES.hambre, id: 'crisis_hambre' }, timer: 99 });
+    S.pool.unshift({ instanceId: S.cardIdCounter++, def: { ...crises.hambre, id: 'crisis_hambre' }, timer: 99 });
   }
   if (S.morale < B.MUTINY_MORALE_THRESHOLD) {
-    S.pool.unshift({ instanceId: S.cardIdCounter++, def: { ...CRISES.motin, id: 'crisis_motin' }, timer: 99 });
+    S.pool.unshift({ instanceId: S.cardIdCounter++, def: { ...crises.motin, id: 'crisis_motin' }, timer: 99 });
   }
 }
 
@@ -190,7 +192,7 @@ function applyEffects(eff: CardEffects): boolean {
         logEvent(`El Senado concede ${v} días adicionales al plazo de campaña.`, 'event');
         break;
       case 'advance':
-        if (S.locationIdx < LOCATIONS.length - 1) {
+        if (S.locationIdx < getActiveScenario().locations.length - 1) {
           S.locationIdx++;
           logEvent(`Avanzas a ${currentLocation().name}.`, 'event');
         }
@@ -394,7 +396,7 @@ function handleAmbush(): void {
 
 function checkEndConditions(): void {
   if (S.finished) return;
-  if (S.timeRemaining <= 0 && currentLocation().id !== 'sagunto') {
+  if (S.timeRemaining <= 0 && currentLocation().id !== getActiveScenario().objectiveLocationId) {
     finishCampaign(false, 'Se ha agotado el plazo. El Senado te releva del mando.');
     return;
   }
@@ -412,7 +414,7 @@ function finishCampaign(victory: boolean, message: string): void {
   S.phase = 'endgame';
   S.outcome = {
     victory,
-    title: victory ? 'Triunfo en Hispania' : 'Campaña fallida',
+    title: victory ? getActiveScenario().narrative.victoryTitle : getActiveScenario().narrative.defeatTitle,
     text: message,
     soldiers: S.soldiers,
     turnNum: S.turnNum,
@@ -427,13 +429,14 @@ function finishCampaign(victory: boolean, message: string): void {
 export function applyBattleOutcome(victory: boolean, survivors: number, finalMorale: number): void {
   S.soldiers = Math.max(0, Math.floor(survivors));
   S.morale = clamp(finalMorale, B.MORALE_MIN, B.MORALE_MAX);
+  const { narrative } = getActiveScenario();
   if (victory) {
     applyChange('gold', B.VICTORY_GOLD_BONUS);
-    logEvent(`Has vencido en Sagunto. Quedan ${S.soldiers} soldados.`, 'battle');
-    finishCampaign(true, 'Has derrotado al ejército púnico. Sagunto se rinde. La campaña es un éxito.');
+    logEvent(narrative.battleWonLog(S.soldiers), 'battle');
+    finishCampaign(true, narrative.victoryText);
   } else {
-    logEvent(`Derrota en Sagunto. Quedan ${S.soldiers} soldados.`, 'battle');
-    finishCampaign(false, 'Tu ejército ha sido derrotado en Sagunto. La campaña ha fracasado.');
+    logEvent(narrative.battleLostLog(S.soldiers), 'battle');
+    finishCampaign(false, narrative.defeatText);
   }
   commit();
 }
@@ -478,6 +481,7 @@ export interface CampaignSeed {
 export function startIterBelliCampaign(seed: CampaignSeed): void {
   S = freshState();
   logLines = [];
+  resetActiveScenario();
   const soldiers = seed.soldiers > 0 ? Math.floor(seed.soldiers) : B.START.fallbackSoldiers;
   S.soldiers = soldiers;
   S.initialSoldiers = soldiers;
@@ -507,5 +511,6 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
 export function resetIterBelli(): void {
   S = freshState();
   logLines = [];
+  resetActiveScenario();
   commit();
 }
