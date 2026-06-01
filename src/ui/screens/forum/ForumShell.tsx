@@ -8,14 +8,12 @@ import { ExercitusTab } from './tabs/ExercitusTab';
 import { MercatorTab } from './tabs/MercatorTab';
 import { DoctrinaeTab } from './tabs/DoctrinaeTab';
 import { DecretaTab } from './tabs/DecretaTab';
-import { CampaignHexScreen } from '../CampaignHexScreen';
 
 const TAB_COMPONENTS: Record<ForumTab, () => preact.JSX.Element> = {
   overview:   OverviewTab,
   provinciae: ProvinciaeTab,
   consilium:  ConsiliumTab,
   exercitus:  ExercitusTab,
-  bellum:     CampaignHexScreen,
   mercator:   MercatorTab,
   doctrinae:  DoctrinaeTab,
   decreta:    DecretaTab,

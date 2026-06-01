@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { Settings, BookOpen, Landmark, X } from 'lucide-preact';
-import { navigateTo, navigateToBellum } from '../screens';
+import { Settings, Landmark, X } from 'lucide-preact';
+import { navigateTo } from '../screens';
 import { GoldDust } from '../components/GoldDust';
 import { OptionsModal } from '../components/SettingsPanel';
 import bgPicture from '../../assets/backgrounds/roman_background.png?w=1600;2400&format=avif;webp;png&as=picture';
 import { hasActiveRunSave, restoreActiveRun } from '../../game/core/meta-save';
-import { currentSpoke } from '../../game/progression/spoke';
 
 const STYLES = `
   .title-screen {
@@ -612,8 +611,7 @@ export function TitleScreen() {
   async function handleContinue() {
     const restored = await restoreActiveRun();
     if (!restored) return;
-    if (currentSpoke.value) navigateToBellum();
-    else navigateTo('forum');
+    navigateTo('forum');
   }
 
   return (
@@ -678,9 +676,6 @@ export function TitleScreen() {
             <MenuButton className="title-screen__btn-2" disabled={!canContinue} onClick={handleContinue}>
               Continue
             </MenuButton>
-            <MenuButton className="title-screen__btn-3" onClick={() => navigateTo('quick-battle')}>
-              Quick Battle
-            </MenuButton>
           </div>
         </main>
 
@@ -690,11 +685,6 @@ export function TitleScreen() {
             <button type="button" class="title-screen__footer-button" onClick={() => setOptionsOpen(true)}>
               <Settings aria-hidden="true" />
               <span>Options</span>
-            </button>
-            <span class="title-screen__footer-separator" aria-hidden="true" />
-            <button type="button" class="title-screen__footer-button" onClick={() => navigateTo('bellum-systems')}>
-              <BookOpen aria-hidden="true" />
-              <span>Tutorial</span>
             </button>
             <span class="title-screen__footer-separator" aria-hidden="true" />
             <button type="button" class="title-screen__footer-button" onClick={() => setCreditsOpen(true)}>

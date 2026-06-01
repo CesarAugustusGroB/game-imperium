@@ -1,14 +1,12 @@
 import { signal } from '@preact/signals';
 import { selectedCommander } from '../game/core/game-state';
 import { playSfx } from './sound/sfx';
-import { activeForumTab, sidebarCollapsed } from './screens/forum/state';
+import { activeForumTab } from './screens/forum/state';
 import type { ForumTab } from './screens/forum/state';
 
 export type ScreenName =
   | 'title'
   | 'commander-select'
-  | 'quick-battle'
-  | 'bellum-systems'
   | 'forum'
   | 'hub'
   | 'iterbelli'
@@ -16,15 +14,10 @@ export type ScreenName =
   | 'council'
   | 'provinces'
   | 'army-recruitment'
-  | 'legate-hiring'
-  | 'battle'
-  | 'battleV2'
-  | 'post-battle'
-  | 'victory'
-  | 'defeat';
+  | 'legate-hiring';
 
-const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'quick-battle', 'bellum-systems', 'forum', 'hub', 'iterbelli', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'battle', 'battleV2', 'post-battle', 'victory', 'defeat'];
-const REQUIRES_RUN: ScreenName[] = ['forum', 'hub', 'iterbelli', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'post-battle', 'victory', 'defeat'];
+const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'forum', 'hub', 'iterbelli', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring'];
+const REQUIRES_RUN: ScreenName[] = ['forum', 'hub', 'iterbelli', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring'];
 
 /**
  * Legacy screen → Forum tab. `hub` and the old per-section routes (`council`,
@@ -52,17 +45,6 @@ function resolveScreen(screen: ScreenName): ScreenName {
 }
 
 /**
- * Navigate to the Forum's Bellum tab — campaign / spoke surface. Replaces
- * the retired `#node-map` and `#spoke-campaign` routes; sidebar collapses
- * so the campaign view gets full width.
- */
-export function navigateToBellum(): void {
-  activeForumTab.value = 'bellum';
-  sidebarCollapsed.value = true;
-  navigateTo('forum');
-}
-
-/**
  * Navigate to the Iter Belli campaign — the card-driven "march of war" launched
  * on Embark. A full-screen surface with its own resource bar (see App's
  * BARE_SCREENS). The campaign must already be seeded via startIterBelliCampaign.
@@ -84,20 +66,9 @@ function getInitialScreen(): ScreenName {
 export const currentScreen = signal<ScreenName>(getInitialScreen());
 export const transitionState = signal<'idle' | 'exiting' | 'entering'>('idle');
 
-function applyScreenDOM(screen: ScreenName): void {
+function applyScreenDOM(_screen: ScreenName): void {
   const appRoot = document.getElementById('app-root');
-  const battleScreen = document.getElementById('battle-screen');
-  const battleV2Root = document.getElementById('battle-v2-root');
-
-  if (screen === 'battle' || screen === 'battleV2') {
-    if (appRoot) appRoot.style.display = screen === 'battleV2' ? 'block' : 'none';
-    if (battleScreen) battleScreen.style.display = 'block';
-    if (battleV2Root) battleV2Root.style.display = screen === 'battleV2' ? 'block' : 'none';
-  } else {
-    if (appRoot) appRoot.style.display = 'block';
-    if (battleScreen) battleScreen.style.display = 'none';
-    if (battleV2Root) battleV2Root.style.display = 'none';
-  }
+  if (appRoot) appRoot.style.display = 'block';
 }
 
 window.addEventListener('hashchange', () => {
@@ -115,15 +86,6 @@ export function navigateTo(screen: ScreenName): void {
 
   // Legacy routes collapse into the Forum shell with the right tab active.
   screen = resolveScreen(screen);
-
-  // Battle uses DOM toggle — keep instant
-  if (screen === 'battle' || screen === 'battleV2') {
-    currentScreen.value = screen;
-    window.location.hash = screen;
-    applyScreenDOM(screen);
-    playSfx('ui_navigate');
-    return;
-  }
 
   // Guard against double-navigation
   if (transitionState.value !== 'idle') return;

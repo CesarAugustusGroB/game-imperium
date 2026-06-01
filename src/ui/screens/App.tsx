@@ -4,15 +4,10 @@ import type { ScreenName } from '../screens';
 import { ResourceBar } from '../components/ResourceBar';
 import { NotificationFeed } from '../components/NotificationFeed';
 import { MusicToggle } from '../components/MusicToggle';
+import { CustomCursor } from '../components/CustomCursor';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TitleScreen } from './TitleScreen';
 import { CommanderSelectScreen } from './CommanderSelectScreen';
-import { QuickBattleScreen } from './QuickBattleScreen';
-import { BellumSystemsScreen } from './BellumSystemsScreen';
-import { PostBattleScreen } from './PostBattleScreen';
-import { VictoryScreen } from './VictoryScreen';
-import { DefeatScreen } from './DefeatScreen';
-import { BattleScreenV2 } from './BattleScreenV2';
 import { ForumShell } from './forum';
 import { IterBelliScreen } from './iterbelli/IterBelliScreen';
 import { loadMetaSave, startActiveRunPersistence } from '../../game/core/meta-save';
@@ -26,21 +21,15 @@ loadBattleSettings();
  * Screens that should not render the global ResourceBar. The Forum shell
  * provides its own resource chips in the Masthead, so `forum` is bare too.
  */
-const BARE_SCREENS: ReadonlySet<ScreenName> = new Set(['title', 'commander-select', 'quick-battle', 'bellum-systems', 'forum', 'iterbelli', 'battle', 'battleV2']);
+const BARE_SCREENS: ReadonlySet<ScreenName> = new Set(['title', 'commander-select', 'forum', 'iterbelli']);
 
 /** Map of screen id → component. Order matches navigation flow. */
 const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> = {
   'title': TitleScreen,
   'commander-select': CommanderSelectScreen,
-  'quick-battle': QuickBattleScreen,
-  'bellum-systems': BellumSystemsScreen,
   'forum': ForumShell,
   'hub': ForumShell,
   'iterbelli': IterBelliScreen,
-  'battleV2': BattleScreenV2,
-  'post-battle': PostBattleScreen,
-  'victory': VictoryScreen,
-  'defeat': DefeatScreen,
 };
 
 function UnknownScreen({ screen }: { screen: ScreenName }) {
@@ -102,6 +91,7 @@ export function App() {
       </ErrorBoundary>
       <NotificationFeed />
       <MusicToggle />
+      <CustomCursor />
     </>
   );
 }

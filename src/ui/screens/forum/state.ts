@@ -5,13 +5,12 @@ export type ForumTab =
   | 'provinciae'
   | 'consilium'
   | 'exercitus'
-  | 'bellum'
   | 'mercator'
   | 'doctrinae'
   | 'decreta';
 
 export const FORUM_TABS: readonly ForumTab[] = [
-  'overview', 'provinciae', 'consilium', 'exercitus', 'bellum', 'mercator', 'doctrinae', 'decreta',
+  'overview', 'provinciae', 'consilium', 'exercitus', 'mercator', 'doctrinae', 'decreta',
 ] as const;
 
 export const activeForumTab = signal<ForumTab>('overview');
@@ -19,7 +18,6 @@ export const sidebarCollapsed = signal(false);
 
 export function setForumTab(tab: ForumTab): void {
   activeForumTab.value = tab;
-  if (tab === 'bellum') sidebarCollapsed.value = true;
 }
 
 
