@@ -2,7 +2,6 @@ import { signal } from '@preact/signals';
 import type { Advisor } from './advisor';
 import { getCurrentSpokeTemplate, getTierForXp, getCurrentPassive } from './advisor';
 import { getShopDiscount } from '../items/doctrine-store';
-import type { Spoke } from '../progression/spoke';
 import { addResource, spendResource } from '../core/resources';
 import type { ResourceType } from '../core/commander';
 import { addNotification } from '../../ui/notifications/notification-store';
@@ -17,9 +16,6 @@ export const advisorMarket = signal<Advisor[]>([]);
 
 /** Names of advisors who tiered up at last spoke completion. Cleared when hub is shown. */
 export const tierUpNotices = signal<string[]>([]);
-
-/** Cached planned spoke — stable preview, recomputed only on advisor changes. */
-export const plannedSpoke = signal<Spoke | null>(null);
 
 // ── Slot management ──
 
@@ -299,5 +295,4 @@ export function resetCouncilStore(): void {
   councilSlots.value = [null, null, null];
   advisorMarket.value = [];
   tierUpNotices.value = [];
-  plannedSpoke.value = null;
 }

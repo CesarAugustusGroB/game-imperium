@@ -3,9 +3,8 @@ import type { ArmyData } from '../../types';
 import { IUNIORES } from '../../config/game-config';
 import { COMMANDERS } from '../../data/commanders';
 import { STARTER_ADVISORS } from '../../data/advisor-data';
-import type { ResourceType } from '../core/commander';
 import type { Advisor } from '../council/advisor';
-import { advisorMarket, councilSlots, plannedSpoke, tierUpNotices } from '../council/council-store';
+import { advisorMarket, councilSlots, tierUpNotices } from '../council/council-store';
 import type { Decretum } from '../items/decretum';
 import { decretumHand, maxHandSize } from '../items/decretum-store';
 import type { ActiveDecretumEffect } from '../items/decretum-hub';
@@ -15,7 +14,6 @@ import { doctrineCollection, equippedDoctrines } from '../items/doctrine-store';
 import { consequenceFlags, seenEventsThisSpoke } from '../events/event-store';
 import type { NPCFaction } from '../progression/npc-faction-store';
 import { npcFactions } from '../progression/npc-faction-store';
-import { currentNodeIndex, currentSpoke, spokeGains, type Spoke, type SpokeNode, ZERO_GAINS } from '../progression/spoke';
 import {
   crusadeBattlesLeft,
   goldenOpportunityPending,
@@ -52,36 +50,7 @@ import {
 import { faith, gold, influence, initResources, iuniores, momentum, type Resources } from './resources';
 import type { Legate } from '../army/legate';
 import { normalizeCohortRoster } from '../army/cohort';
-import {
-  activeEventId,
-  activeEventTileId,
-  campaignState,
-  hexTiles,
-  setActiveEvent,
-  setTiles,
-  setVisitHistory,
-  visitHistory,
-} from '../campaign/campaign-state';
-import { bellumGains, setBellumGains } from '../campaign/bellum-run-gains';
-import { CAMPAIGN_MOVEMENT_POINTS_MAX } from '../campaign/campaign-balance';
-import type { CampaignState, HexTile } from '../campaign/campaign-types';
 import { SUPPLY_MAX_CARRY, SUPPLY_MORALE_PENALTY_CAP } from '../../config/game-config';
-
-// —— Known Bellum field value sets (exported for verify scripts) ——
-
-export const KNOWN_TERRAINS = [
-  'plains', 'forest', 'hills', 'mountains', 'river', 'road', 'camp', 'ruins',
-] as const;
-
-export const KNOWN_EVENTS = [
-  'none', 'battle', 'supply', 'ambush', 'rest', 'merchant', 'story',
-  'elite', 'scout', 'recruit', 'hazard', 'boss',
-] as const;
-
-export const KNOWN_BATTLE_MODIFIERS = [
-  'forest_cover', 'dense_trees', 'high_ground', 'open_field', 'river_crossing',
-  'urban_fighting', 'mud', 'narrow_pass', 'sacred_ground', 'fortified_position',
-] as const;
 
 // —— Types ——
 
@@ -106,15 +75,6 @@ export interface RunRecord {
 
 type SavedResources = Omit<Resources, 'iuniores'> & { iuniores?: number };
 
-export interface CampaignSnapshot {
-  hexTiles: HexTile[];
-  campaignState: CampaignState;
-  activeEventTileId: string | null;
-  activeEventId: string | null;
-  /** S32-05: ordered list of tile ids the legion has occupied this run. */
-  visitHistory: string[];
-}
-
 export interface ActiveRunSave {
   commanderId: string;
   resources: SavedResources;
@@ -134,12 +94,6 @@ export interface ActiveRunSave {
   councilSlots: (Advisor | null)[];
   advisorMarket: Advisor[];
   tierUpNotices: string[];
-  plannedSpoke: Spoke | null;
-  currentSpoke: Spoke | null;
-  currentNodeIndex: number;
-  spokeGains: Record<ResourceType, number>;
-  /** S33-09: cumulative resource gains across hex battles in the current Bellum run. Optional for backwards compat. */
-  bellumGains?: Record<ResourceType, number>;
   consequenceFlags: string[];
   seenEventsThisSpoke: string[];
   npcFactions: NPCFaction[];
@@ -159,8 +113,6 @@ export interface ActiveRunSave {
   maxHandSize: number;
   /** Continuous Hub effects in flight (e.g. upkeep waivers). Optional for backwards compat. */
   activeDecretumEffects?: ActiveDecretumEffect[];
-  /** S31-04: campaign hex map state. Optional for backwards compat with pre-S31-04 saves. */
-  campaign?: CampaignSnapshot | null;
 }
 
 export interface MetaSave {
@@ -187,7 +139,6 @@ export interface MetaSave {
 // —— Constants ——
 
 const STORAGE_KEY = 'imperium-meta-save';
-const MAX_RUN_HISTORY = 50;
 const SAVE_DEBOUNCE_MS = 500;
 const ADVISOR_TEMPLATE_BY_ID = new Map(STARTER_ADVISORS.map(advisor => [advisor.id, advisor] as const));
 
@@ -223,22 +174,6 @@ function normalizeResources(resources: Partial<SavedResources> | null | undefine
   return normalized;
 }
 
-/** S33-09: validate and normalize a bellumGains record from a save. Falls back to all-zeros
- *  on any missing or malformed entry so old saves load cleanly. */
-function normalizeBellumGains(raw: unknown): Record<ResourceType, number> {
-  const ZERO: Record<ResourceType, number> = { gold: 0, faith: 0, influence: 0, momentum: 0, iuniores: 0 };
-  if (!raw || typeof raw !== 'object') return { ...ZERO };
-  const obj = raw as Partial<Record<ResourceType, unknown>>;
-  const result = { ...ZERO };
-  for (const key of Object.keys(ZERO) as ResourceType[]) {
-    const val = obj[key];
-    if (typeof val === 'number' && isFinite(val) && val >= 0) {
-      result[key] = Math.floor(val);
-    }
-  }
-  return result;
-}
-
 function asFiniteNumber(v: unknown, fallback: number): number {
   return typeof v === 'number' && isFinite(v) ? v : fallback;
 }
@@ -262,19 +197,6 @@ export function normalizeArmySnapshot(army: ArmyData | null | undefined): ArmyDa
     campaignMoraleDelta: army.campaignMoraleDelta === undefined
       ? undefined
       : asFiniteNumber(army.campaignMoraleDelta, 0),
-  };
-}
-
-function normalizeSpokeSnapshot(spoke: Spoke | null | undefined): Spoke | null {
-  if (!spoke) return null;
-  // S27-02: SpokeNode gained optional Itinerarium fields (landmarkType,
-  // encounterType, revealed, effects, …). The spread copy preserves whatever
-  // is on each node — undefined for legacy saves, set for Itinerarium spokes —
-  // so older saves load without migration code. Readers must tolerate absence.
-  return {
-    ...spoke,
-    boundArmy: normalizeArmySnapshot(spoke.boundArmy ?? null),
-    branches: normalizeBranches(spoke.branches),
   };
 }
 
@@ -353,147 +275,6 @@ function normalizeSavedCouncilSlots(rawSlots: unknown): (Advisor | null)[] {
   return normalized;
 }
 
-/**
- * S27 variety pass: branches changed shape from `{attachAfter, node}` to
- * `{attachAfter, nodes: SpokeNode[]}`. Older saves carry the singular form;
- * normalize them into single-node chains so reads never crash.
- */
-function normalizeBranches(branches: Spoke['branches']): Spoke['branches'] {
-  if (!branches || branches.length === 0) return branches;
-  return branches.map(b => {
-    // New shape — passthrough.
-    if (Array.isArray((b as { nodes?: unknown }).nodes)) return b;
-    // Old shape — promote `node` into `nodes: [node]`. Cast through `unknown`
-    // because the legacy interface no longer exists in the type system.
-    const legacy = b as unknown as { attachAfter: number; node: SpokeNode };
-    if (legacy.node) {
-      return { attachAfter: legacy.attachAfter, nodes: [legacy.node] };
-    }
-    // Defensive: drop malformed entries.
-    return { attachAfter: 0, nodes: [] };
-  }).filter(b => b.nodes.length > 0);
-}
-
-/**
- * S31-04: parse a saved campaign blob back into a CampaignSnapshot.
- * Returns null on missing, non-object, or shape-mismatched data so legacy saves
- * (and any corruption) load cleanly with a fresh map.
- *
- * Spot-checks the first hexTiles element's shape so a non-empty array of
- * non-HexTile garbage (e.g. a corrupted save with `hexTiles: [1, 2, 3]`) is
- * rejected before HexTileView reads `tile.q` and crashes. The check assumes
- * uniform corruption — one bad element implies the rest are too — which is
- * how localStorage corruption realistically manifests.
- */
-export function migrateCampaignSnapshot(raw: unknown): CampaignSnapshot | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const obj = raw as Partial<CampaignSnapshot>;
-  if (!Array.isArray(obj.hexTiles)) return null;
-  if (!obj.campaignState || typeof obj.campaignState !== 'object') return null;
-
-  // S33-05: `supplies` and `morale` were removed from CampaignState. Accept
-  // old saves that include them (silently ignore), and don't require them for
-  // new saves. The only required field is `currentTileId`.
-  const cs = obj.campaignState as Partial<CampaignState> & { supplies?: unknown; morale?: unknown };
-  if (typeof cs.currentTileId !== 'string') return null;
-  const movementPoints = typeof cs.movementPoints === 'number'
-    ? cs.movementPoints
-    : CAMPAIGN_MOVEMENT_POINTS_MAX;
-
-  if (obj.hexTiles.length > 0 && !isLikelyHexTile(obj.hexTiles[0])) return null;
-
-  // S33-11 Gap 1: sanitize each tile before stamping onto the snapshot.
-  // Unknown terrain is structural corruption → reject. Unknown event → normalize
-  // to 'none'. battleModifiers junk-filtered; empty after filter → drop field.
-  // scoutedLevel out-of-range → drop field.
-  const sanitizedTiles: HexTile[] = [];
-  for (const rawTile of obj.hexTiles) {
-    if (!isLikelyHexTile(rawTile)) return null;
-    const tile = rawTile as HexTile & { battleModifiers?: unknown; scoutedLevel?: unknown };
-
-    // terrain: unknown → reject snapshot (structural)
-    if (!(KNOWN_TERRAINS as readonly string[]).includes(tile.terrain)) return null;
-
-    // event: unknown → normalize to 'none'
-    const event = (KNOWN_EVENTS as readonly string[]).includes(tile.event)
-      ? tile.event
-      : 'none' as const;
-
-    // battleModifiers: filter to known ids; empty after filter → drop field
-    let battleModifiers: HexTile['battleModifiers'];
-    if (Array.isArray(tile.battleModifiers)) {
-      const filtered = (tile.battleModifiers as unknown[]).filter(
-        (m): m is typeof KNOWN_BATTLE_MODIFIERS[number] =>
-          (KNOWN_BATTLE_MODIFIERS as readonly unknown[]).includes(m),
-      );
-      battleModifiers = filtered.length > 0 ? filtered : undefined;
-    }
-
-    // scoutedLevel: keep only 0 | 1 | 2; otherwise drop
-    let scoutedLevel: HexTile['scoutedLevel'];
-    if (tile.scoutedLevel === 0 || tile.scoutedLevel === 1 || tile.scoutedLevel === 2) {
-      scoutedLevel = tile.scoutedLevel;
-    }
-
-    const sanitized: HexTile = {
-      ...tile,
-      event,
-      battleModifiers,
-      scoutedLevel,
-    };
-    sanitizedTiles.push(sanitized);
-  }
-
-  // S33-11 Gap 2: cross-validate activeEventTileId against sanitized tiles.
-  // Restoring into a 'none'-event tile would render the modal with no content;
-  // restoring into a non-existent tile id would crash on findTile lookup.
-  // Both fail safely to null.
-  const rawActiveId = typeof obj.activeEventTileId === 'string' ? obj.activeEventTileId : null;
-  const rawActiveEventId = typeof obj.activeEventId === 'string' ? obj.activeEventId : null;
-  let activeId: string | null = null;
-  let activeCampaignEventId: string | null = null;
-  if (rawActiveId !== null) {
-    const matchingTile = sanitizedTiles.find(t => t.id === rawActiveId);
-    if (matchingTile && matchingTile.event !== 'none') {
-      activeId = rawActiveId;
-      activeCampaignEventId = rawActiveEventId;
-    }
-  }
-
-  // S32-05: visit history is decorative (drives the polyline). On any
-  // malformation, default to [] rather than rejecting the whole snapshot —
-  // the campaign state itself is more important to preserve.
-  const rawHistory = (obj as { visitHistory?: unknown }).visitHistory;
-  const safeHistory: string[] = Array.isArray(rawHistory) && rawHistory.every((id) => typeof id === 'string')
-    ? (rawHistory as string[])
-    : [];
-
-  return {
-    hexTiles: sanitizedTiles,
-    campaignState: {
-      currentTileId: cs.currentTileId,
-      selectedTileId:
-        typeof cs.selectedTileId === 'string' ? cs.selectedTileId : null,
-      movementPoints,
-    },
-    activeEventTileId: activeId,
-    activeEventId: activeCampaignEventId,
-    visitHistory: safeHistory,
-  };
-}
-
-function isLikelyHexTile(value: unknown): value is HexTile {
-  if (!value || typeof value !== 'object') return false;
-  const t = value as Partial<HexTile>;
-  return (
-    typeof t.id === 'string' &&
-    typeof t.q === 'number' &&
-    typeof t.r === 'number' &&
-    typeof t.terrain === 'string' &&
-    typeof t.event === 'string'
-  );
-}
-
 function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
   if (!rawRun || typeof rawRun !== 'object') return null;
 
@@ -508,8 +289,6 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     iunioresSeeded = true;
   }
 
-  const plannedSpoke = normalizeSpokeSnapshot(run.plannedSpoke ?? null);
-  const currentSpokeSnapshot = normalizeSpokeSnapshot(run.currentSpoke ?? null);
   const preparedArmySnapshot = normalizeArmySnapshot(run.preparedArmy ?? null);
 
   return {
@@ -531,11 +310,6 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     councilSlots: normalizeSavedCouncilSlots(run.councilSlots),
     advisorMarket: normalizeSavedAdvisorMarket(run as Partial<ActiveRunSave> & Record<string, unknown>),
     tierUpNotices: Array.isArray(run.tierUpNotices) ? run.tierUpNotices : [],
-    plannedSpoke,
-    currentSpoke: currentSpokeSnapshot,
-    currentNodeIndex: typeof run.currentNodeIndex === 'number' ? run.currentNodeIndex : 0,
-    spokeGains: { ...ZERO_GAINS, ...(run.spokeGains ?? {}) },
-    bellumGains: normalizeBellumGains(run.bellumGains),
     consequenceFlags: Array.isArray(run.consequenceFlags) ? run.consequenceFlags : [],
     seenEventsThisSpoke: Array.isArray(run.seenEventsThisSpoke) ? run.seenEventsThisSpoke : [],
     npcFactions: Array.isArray(run.npcFactions) ? run.npcFactions : [],
@@ -554,7 +328,6 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     decretumHand: Array.isArray(run.decretumHand) ? run.decretumHand : [],
     maxHandSize: typeof run.maxHandSize === 'number' ? run.maxHandSize : 5,
     activeDecretumEffects: Array.isArray(run.activeDecretumEffects) ? run.activeDecretumEffects : [],
-    campaign: migrateCampaignSnapshot(run.campaign),
   };
 }
 
@@ -633,11 +406,6 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     councilSlots: councilSlots.value,
     advisorMarket: advisorMarket.value,
     tierUpNotices: tierUpNotices.value,
-    plannedSpoke: normalizeSpokeSnapshot(plannedSpoke.value),
-    currentSpoke: normalizeSpokeSnapshot(currentSpoke.value),
-    currentNodeIndex: currentNodeIndex.value,
-    spokeGains: spokeGains.value,
-    bellumGains: bellumGains.value,
     consequenceFlags: Array.from(consequenceFlags.value),
     seenEventsThisSpoke: Array.from(seenEventsThisSpoke.value),
     npcFactions: npcFactions.value,
@@ -656,13 +424,6 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     decretumHand: decretumHand.value,
     maxHandSize: maxHandSize.value,
     activeDecretumEffects: activeDecretumEffects.value,
-    campaign: {
-      hexTiles: hexTiles.value,
-      campaignState: campaignState.value,
-      activeEventTileId: activeEventTileId.value,
-      activeEventId: activeEventId.value,
-      visitHistory: visitHistory.value,
-    },
   };
 }
 
@@ -704,33 +465,19 @@ function flushPendingPersist(): void {
 /**
  * Set up the autosave effect for the active run.
  *
- * **Persistence scope**: this effect tracks `selectedCommander` and the three
- * campaign signals (hexTiles, campaignState, activeEventTileId). Mutations to
- * any of those debounce a save through `saveActiveRunSnapshot`.
+ * **Persistence scope**: this effect tracks `selectedCommander`. A change to it
+ * debounces a save through `saveActiveRunSnapshot`.
  *
  * **Known gap**: the broader run state — provinces, councilSlots, advisorPool,
  * decretumHand, doctrineCollection, governorAssignments, npcFactions, …
  * — is NOT tracked here. Mutations to those signals do not trigger autosave;
- * they only persist the next time the campaign signals or commander change
- * (effectively whenever the player moves on the hex map).
- *
- * Widening the effect to track all run signals risks save loops (a save
- * write that touches a tracked signal re-fires the effect). S32-09 will
- * decide whether to widen with explicit re-entrancy guards or accept the
- * current scope as the contract.
+ * they only persist the next time the commander changes.
  */
 export function startActiveRunPersistence(): () => void {
   if (persistenceDisposer) return persistenceDisposer;
 
   const stop = effect(() => {
     if (!selectedCommander.value) return;
-    // S31-04: subscribe to campaign signals so setTiles/setCurrent/setSelected/
-    // consumeEvent all debounce a save. Reads are purely for tracking — the
-    // values themselves are read again inside saveActiveRunSnapshot.
-    void hexTiles.value;
-    void campaignState.value;
-    void activeEventTileId.value;
-    void activeEventId.value;
 
     flushPendingPersist();
     pendingPersistTimer = setTimeout(() => {
@@ -784,12 +531,6 @@ export async function restoreActiveRun(): Promise<boolean> {
     councilSlots.value = snapshot.councilSlots;
     advisorMarket.value = snapshot.advisorMarket;
     tierUpNotices.value = snapshot.tierUpNotices;
-    plannedSpoke.value = normalizeSpokeSnapshot(snapshot.plannedSpoke);
-
-    currentSpoke.value = normalizeSpokeSnapshot(snapshot.currentSpoke);
-    currentNodeIndex.value = snapshot.currentNodeIndex;
-    spokeGains.value = { ...ZERO_GAINS, ...snapshot.spokeGains };
-    setBellumGains(snapshot.bellumGains ?? { gold: 0, faith: 0, influence: 0, momentum: 0, iuniores: 0 });
 
     consequenceFlags.value = new Set(snapshot.consequenceFlags);
     seenEventsThisSpoke.value = new Set(snapshot.seenEventsThisSpoke);
@@ -816,13 +557,6 @@ export async function restoreActiveRun(): Promise<boolean> {
     maxHandSize.value = snapshot.maxHandSize;
     activeDecretumEffects.value = snapshot.activeDecretumEffects ?? [];
 
-    if (snapshot.campaign) {
-      setTiles(snapshot.campaign.hexTiles);
-      campaignState.value = snapshot.campaign.campaignState;
-      setActiveEvent(snapshot.campaign.activeEventTileId, snapshot.campaign.activeEventId);
-      setVisitHistory(snapshot.campaign.visitHistory);
-    }
-
     metaSave.value = {
       ...metaSave.value,
       activeRun: {
@@ -835,8 +569,6 @@ export async function restoreActiveRun(): Promise<boolean> {
           iuniores: iuniores.value,
         },
         iunioresSeeded: true,
-        plannedSpoke: normalizeSpokeSnapshot(plannedSpoke.value),
-        currentSpoke: normalizeSpokeSnapshot(currentSpoke.value),
         preparedArmy: normalizeArmySnapshot(preparedArmy.value),
       },
     };
@@ -874,50 +606,6 @@ export function computeScore(
   // Bonus for finishing faster (fewer seasons used) — doubled in S9-06
   const speedBonus = outcome === 'victory' ? Math.max(0, (24 - seasons) * 100) : 0;
   return basePoints + battlePoints + provincePoints + speedBonus;
-}
-
-/**
- * Record a completed run. Call from Victory/Defeat screens before resetRun().
- */
-export function recordRunComplete(
-  commanderId: string,
-  commanderName: string,
-  outcome: 'victory' | 'defeat',
-  battlesWon: number,
-  seasons: number,
-  provinces: number,
-): void {
-  const score = computeScore(outcome, battlesWon, seasons, provinces);
-
-  const record: RunRecord = {
-    date: new Date().toISOString(),
-    commanderId,
-    commanderName,
-    outcome,
-    battlesWon,
-    seasons,
-    provinces,
-    score,
-  };
-
-  const prev = metaSave.value;
-  const runs = [record, ...prev.runs].slice(0, MAX_RUN_HISTORY);
-  const victories = prev.victories + (outcome === 'victory' ? 1 : 0);
-  const highScore = Math.max(prev.highScore, score);
-  const commanderWins = outcome === 'victory' && !prev.commanderWins.includes(commanderId)
-    ? [...prev.commanderWins, commanderId]
-    : prev.commanderWins;
-
-  metaSave.value = {
-    ...prev,
-    runs,
-    victories,
-    highScore,
-    commanderWins,
-    activeRun: null,
-  };
-
-  persist();
 }
 
 /** Get the best run record, or null if no runs. */

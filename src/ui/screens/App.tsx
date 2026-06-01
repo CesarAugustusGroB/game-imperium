@@ -11,11 +11,9 @@ import { CommanderSelectScreen } from './CommanderSelectScreen';
 import { ForumShell } from './forum';
 import { IterBelliScreen } from './iterbelli/IterBelliScreen';
 import { loadMetaSave, startActiveRunPersistence } from '../../game/core/meta-save';
-import { loadBattleSettings } from '../../battle/battle-settings';
 
 // Load meta-save from localStorage on startup
 loadMetaSave();
-loadBattleSettings();
 
 /**
  * Screens that should not render the global ResourceBar. The Forum shell

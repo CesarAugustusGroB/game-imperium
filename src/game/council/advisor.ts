@@ -1,5 +1,4 @@
 import type { ResourceType } from '../core/commander';
-import type { NodeType } from '../progression/spoke';
 import type { GameEntity, FactionAffiliated, TierLevel, TierTuple } from '../../types/index';
 
 // ── Posture ──
@@ -10,11 +9,9 @@ export type Posture = 'attacking' | 'defending';
 // ── Spoke template ──
 
 /**
- * What an advisor contributes to spoke generation.
- * Node weights are relative (normalized at generation time).
+ * What an advisor contributes to campaign planning (duration + posture).
  */
 export interface SpokeTemplate {
-  nodeWeights: Partial<Record<NodeType, number>>;
   /** Min and max spoke duration in seasons (1-4). */
   durationRange: [min: number, max: number];
   posture: Posture;
