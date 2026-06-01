@@ -6,6 +6,7 @@ import { completedSpokes, battlesWon, globalSeason, MAX_SEASONS, spokesSinceLast
 import { preparedArmy } from '../../../game/progression/strategic-store';
 import { computeArmySize } from '../../../game/army/cohort';
 import { iterBelliState, resetIterBelli } from '../../../game/iterBelli/iter-belli-state';
+import { getActiveScenario } from '../../../game/iterBelli/iter-belli-scenario';
 import { resetIterBelliBattle } from '../../../game/iterBelli/iter-belli-combat';
 import { START } from '../../../game/iterBelli/iter-belli-balance';
 import { conquerProvince, provinces } from '../../../game/province/province-store';
@@ -42,7 +43,7 @@ function returnToHub(): void {
 
     // Conquer a province: terrain from the spoke theme, random unused name, fixed income.
     const taken = new Set(provinces.value.map((p) => p.name));
-    const name = pickConquestName(taken);
+    const name = pickConquestName(taken, getActiveScenario().conquestNames);
     conquerProvince(name, PROVINCE_REWARD as Record<ResourceType, number>, 1, {
       terrain: s.spokeTerrain as TerrainType,
     });

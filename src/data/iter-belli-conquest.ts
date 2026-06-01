@@ -34,11 +34,11 @@ const ROMAN_SUFFIX = ['II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
  * Pick a province name not already in `taken`. Random unused name from the pool;
  * if every base name is taken, append a roman-numeral suffix until one is free.
  */
-export function pickConquestName(taken: Set<string>): string {
-  const free = CONQUEST_NAMES.filter((n) => !taken.has(n));
+export function pickConquestName(taken: Set<string>, names: string[] = CONQUEST_NAMES): string {
+  const free = names.filter((n) => !taken.has(n));
   if (free.length > 0) return free[Math.floor(Math.random() * free.length)];
   for (const suffix of ROMAN_SUFFIX) {
-    for (const base of CONQUEST_NAMES) {
+    for (const base of names) {
       const candidate = `${base} ${suffix}`;
       if (!taken.has(candidate)) return candidate;
     }
