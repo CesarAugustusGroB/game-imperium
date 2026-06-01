@@ -1,8 +1,8 @@
 /**
- * army-replenishment — iuniores-powered rest-node army HP recovery (S25-04 / FT-IUN).
+ * army-replenishment — iuniores-powered army HP recovery for the Hub roster.
  *
- * Pure-logic companion to `supplies.ts`. Given an army's cohort roster and
- * the current iuniores pool, `previewReplenishment` computes:
+ * Given a cohort roster and the current iuniores pool, the preview functions
+ * compute:
  *
  *  - Per-cohort iuniores cost to fully heal (formula: round(missingHp × 1000 / maxHp))
  *  - Sequential-fill distribution when the pool is insufficient: each damaged
@@ -14,15 +14,9 @@
  * larger maxHp are MORE efficient to heal per iuniores spent (a 2000-HP Triarii
  * at 50% heals for 500 iuniores, same as a 1000-HP Militia at 50%).
  *
- * Cohort destruction (R-3 from FT-IUN): cohorts at 0 HP are removed upstream
- * by the battle layer and by `supplies.consumeTraversal` before the player
- * can reach a rest node. This module sees only survivors. No revive-from-dead
- * and no iuniores refund on death — veterans went home.
- *
- * The preview function is PURE — S25-08's UI will call it as a dry-run. The
- * commit function `replenishBoundArmy` is side-effecting: it spends iuniores
- * from the pool, mutates `currentSpoke.boundArmy.cohorts`, and updates the
- * `lastReplenishmentSummary` signal that the rest modal reads.
+ * The preview functions are PURE — the Exercitus tab calls them as a dry-run.
+ * The commit functions (`replenishHubRoster`, `healCohortInRoster`) spend
+ * iuniores from the pool and write the healed roster back to `preparedArmy`.
  */
 
 import type { Cohort } from './cohort';
