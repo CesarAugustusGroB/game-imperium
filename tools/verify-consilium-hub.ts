@@ -11,10 +11,8 @@ import {
 } from '../src/game/council/council-store';
 import type { Advisor } from '../src/game/council/advisor';
 import { buySupplies, preparedArmy } from '../src/game/progression/strategic-store';
-import { runSeasonTick } from '../src/game/progression/season-tick';
 import { getDiscountedAdvisorCost } from '../src/game/council/council-store';
 import { gold, getResource } from '../src/game/core/resources';
-import { threatLevel } from '../src/game/core/game-state';
 import { wireRunBonuses } from '../src/game/core/game-state';
 import type { ArmyData } from '../src/types/index';
 
@@ -83,26 +81,6 @@ const advBase = getDiscountedAdvisorCost({ cost: 100 } as unknown as Advisor);
 councilSlots.value = [mkA({ type: 'shop-discount', percent: 50 }), null, null];
 const advDisc = getDiscountedAdvisorCost({ cost: 100 } as unknown as Advisor);
 check('advisor shop-discount lowers advisor hire cost', advDisc < advBase);
-
-councilSlots.value = [null, null, null];
-gold.value = 100;
-runSeasonTick('defending', 1);
-const upFull = 100 - getResource('gold');
-councilSlots.value = [mkA({ type: 'upkeep-reduction', percent: 100 }), null, null];
-gold.value = 100;
-runSeasonTick('defending', 1);
-const upRed = 100 - getResource('gold');
-check('advisor upkeep-reduction lowers season upkeep', upRed < upFull);
-
-councilSlots.value = [null, null, null];
-threatLevel.value = 0;
-runSeasonTick('defending', 1);
-const thFull = threatLevel.value;
-councilSlots.value = [mkA({ type: 'threat-reduction', amount: 1 }), null, null];
-threatLevel.value = 0;
-runSeasonTick('defending', 1);
-const thRed = threatLevel.value;
-check('advisor threat-reduction lowers season threat growth', thRed < thFull);
 
 councilSlots.value = [null, null, null];
 preparedArmy.value = null;

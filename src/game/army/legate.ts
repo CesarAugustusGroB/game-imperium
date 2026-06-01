@@ -1,4 +1,4 @@
-import type { UnitRole, UnitStats, LieutenantOrder } from '../../battle/battle-types';
+import type { UnitRole, UnitStats, LieutenantOrder } from './unit-types';
 
 /**
  * LegateEffect — discriminated union of every effect shape a Legate trait can

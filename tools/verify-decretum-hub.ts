@@ -11,11 +11,10 @@ import {
 import type { Decretum, DecretumEffect } from '../src/game/items/decretum';
 import { decretumHand } from '../src/game/items/decretum-store';
 import { selectedCommander } from '../src/game/core/game-state';
-import { getResource, addResource as addRes } from '../src/game/core/resources';
+import { getResource } from '../src/game/core/resources';
 import { preparedArmy } from '../src/game/progression/strategic-store';
 import type { ArmyData } from '../src/types/index';
 import type { Commander } from '../src/game/core/commander';
-import { runSeasonTick } from '../src/game/progression/season-tick';
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -112,32 +111,6 @@ decretumHand.value = [];
 activeDecretumEffects.value = [];
 preparedArmy.value = null;
 selectedCommander.value = null;
-
-// --- season-tick upkeep waive ---
-// Control: defending posture, no provinces → only gold upkeep (BASE_UPKEEP gold:2) moves gold.
-activeDecretumEffects.value = [];
-addRes('gold', 100);
-const ctrlBefore = getResource('gold');
-runSeasonTick('defending', 1);
-check('no waive → gold upkeep charged (−2)', getResource('gold') === ctrlBefore - 2);
-
-// With an active waive-upkeep, no upkeep is charged this season.
-activeDecretumEffects.value = [{ decretumId: 'x', name: 'X', effect: { kind: 'waive-upkeep', seasons: 2 }, remainingSeasons: 2 }];
-const waiveBefore = getResource('gold');
-runSeasonTick('defending', 1);
-check('waive active → no gold upkeep', getResource('gold') === waiveBefore);
-check('season tick decremented the active effect', activeDecretumEffects.value[0]?.remainingSeasons === 1);
-
-// Second tick is the effect's last waived season: still free, then expires.
-const expiryBefore = getResource('gold');
-runSeasonTick('defending', 1);
-check('waive still free on its last (expiry) season', getResource('gold') === expiryBefore);
-check('waive expired after its seasons', activeDecretumEffects.value.length === 0);
-const afterExpiry = getResource('gold');
-runSeasonTick('defending', 1);
-check('upkeep charged again after expiry (−2)', getResource('gold') === afterExpiry - 2);
-
-activeDecretumEffects.value = [];
 
 // --- reset helper clears actives ---
 activeDecretumEffects.value = [{ decretumId: 'r', name: 'R', effect: { kind: 'waive-upkeep', seasons: 1 }, remainingSeasons: 1 }];

@@ -1,6 +1,6 @@
 import type {
   MovementProfileId, UnitRole, UnitStats,
-} from '../../battle/battle-types';
+} from './unit-types';
 
 /**
  * Rarity tier for a recruitable cohort. Mirrors the ladder authored in

@@ -25,12 +25,9 @@
  * `lastReplenishmentSummary` signal that the rest modal reads.
  */
 
-import { signal } from '@preact/signals';
 import type { Cohort } from './cohort';
-import type { ArmyData } from '../../types/index';
 import { computeArmySize, applyCohortHealthState, cohortInstanceKey } from './cohort';
 import { iuniores, spendResource } from '../core/resources';
-import { currentSpoke, syncPreparedFromBoundArmy } from '../progression/spoke';
 import { preparedArmy } from '../progression/strategic-store';
 
 export interface CohortReplenishment {
@@ -241,108 +238,6 @@ export function previewHubReplenishment(
     partialHeal: iunioresSpent < totalIunioresNeeded,
     nextCohorts,
   };
-}
-
-/**
- * The last replenishment outcome. Set by `replenishBoundArmy`. S25-08's
- * rest-modal UI reads this to render the per-cohort summary. Reset to null
- * at spoke end (handled by strategic-store.resetStrategicSpoke / resetSpoke).
- */
-export const lastReplenishmentSummary = signal<ReplenishmentPreview | null>(null);
-
-export const POST_BATTLE_HEAL_REWARD_RATIO = 0.2;
-
-export interface PostBattleHealRewardSummary {
-  cohortsHealed: number;
-  hpRestored: number;
-}
-
-/**
- * Reward-pick healing from the post-battle screen. Restores a small flat
- * fraction of each damaged cohort's max HP, costs no iuniores, and clears
- * outOfAction for cohorts that recover above the 1 HP floor.
- */
-export function applyPostBattleHealReward(
-  ratio = POST_BATTLE_HEAL_REWARD_RATIO,
-): PostBattleHealRewardSummary | null {
-  const spoke = currentSpoke.value;
-  const army = spoke?.boundArmy;
-  if (!spoke || !army || army.cohorts.length === 0) return null;
-
-  const healRatio = Math.max(0, ratio);
-  if (healRatio <= 0) return null;
-
-  let cohortsHealed = 0;
-  let hpRestored = 0;
-  const nextCohorts = army.cohorts.map((cohort) => {
-    const maxHp = cohort.stats.hp;
-    const currentHp = getCohortCurrentHp(cohort);
-    const missingHp = Math.max(0, maxHp - currentHp);
-    if (missingHp <= 0) return cohort;
-
-    const healAmount = Math.max(1, Math.ceil(maxHp * healRatio));
-    const restored = Math.min(missingHp, healAmount);
-    cohortsHealed++;
-    hpRestored += restored;
-    return applyCohortHealthState(cohort, currentHp + restored, false);
-  });
-
-  if (hpRestored <= 0) return { cohortsHealed: 0, hpRestored: 0 };
-
-  const nextArmy: ArmyData = {
-    ...army,
-    cohorts: nextCohorts,
-    size: computeArmySize(nextCohorts),
-  };
-  currentSpoke.value = { ...spoke, boundArmy: nextArmy };
-  syncPreparedFromBoundArmy(nextArmy);
-
-  return { cohortsHealed, hpRestored };
-}
-
-/**
- * Commit a replenishment on the currently-bound army (the army traversing
- * the active spoke). Reads `currentSpoke.value.boundArmy` and the current
- * `iuniores.value`, computes the preview, spends iuniores, and writes back
- * the updated army.
- *
- * Returns the summary and stores it in `lastReplenishmentSummary`. Returns
- * null (and stores null) if there is no active spoke, no bound army, or no
- * cohorts to heal.
- *
- * Called by the spoke rest-node flow when the player lands on a rest node.
- * S25-08 will add a preview-before-commit gate on top.
- */
-export function replenishBoundArmy(): ReplenishmentPreview | null {
-  const spoke = currentSpoke.value;
-  if (!spoke) { lastReplenishmentSummary.value = null; return null; }
-  const army = spoke.boundArmy;
-  if (!army || army.cohorts.length === 0) {
-    lastReplenishmentSummary.value = null;
-    return null;
-  }
-
-  const preview = previewReplenishment(army.cohorts, iuniores.value);
-
-  // No-op: nothing to heal — don't touch pool or signal.
-  if (preview.iunioresSpent === 0) {
-    lastReplenishmentSummary.value = preview;
-    return preview;
-  }
-
-  // Guarded by preview.iunioresSpent ≤ iuniores.value, so spendResource succeeds.
-  spendResource('iuniores', preview.iunioresSpent);
-
-  const nextArmy: ArmyData = {
-    ...army,
-    cohorts: preview.nextCohorts,
-    size: computeArmySize(preview.nextCohorts),  // maxHp-based, unchanged by healing but safe to recompute
-  };
-  currentSpoke.value = { ...spoke, boundArmy: nextArmy };
-  syncPreparedFromBoundArmy(nextArmy);
-
-  lastReplenishmentSummary.value = preview;
-  return preview;
 }
 
 /**
