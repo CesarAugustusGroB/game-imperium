@@ -69,6 +69,32 @@
   background: transparent;
 }
 
+/* Ornate panels brighten as the cursor crosses them — border ignites to its
+   accent, a soft glow blooms outward, the whole panel lifts and lightens.
+   Driven by --imp-panel-accent set per panel (gold default; faction colors
+   for advisor/army cards). !important overrides the inline border/box-shadow. */
+.imp-ornate-panel {
+  --imp-panel-accent: #d4a843;
+  transition:
+    border-color var(--duration-slow) var(--ease-default),
+    box-shadow var(--duration-slow) var(--ease-default),
+    transform var(--duration-slow) var(--ease-default),
+    filter var(--duration-slow) var(--ease-default);
+}
+.imp-ornate-panel:hover {
+  border-color: var(--imp-panel-accent) !important;
+  filter: brightness(1.05);
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--imp-panel-accent) 22%, transparent),
+    inset 0 0 30px color-mix(in srgb, var(--imp-panel-accent) 9%, transparent),
+    0 10px 34px rgba(0, 0, 0, 0.5),
+    0 0 26px color-mix(in srgb, var(--imp-panel-accent) 26%, transparent) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .imp-ornate-panel:hover { transform: none; }
+}
+
 /* Mobile layout adjustments */
 @media (max-width: 640px) {
   .screen-wrapper { padding-top: 42px !important; }
