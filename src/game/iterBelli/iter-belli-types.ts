@@ -47,6 +47,43 @@ export interface Crisis {
   icon: string;
 }
 
+// ── Campaign scenario (Sagunto-abstraction seam) ─────────────────────────────
+
+/** The enemy army faced in the decisive battle. Identity only — the battle
+ *  math (threat scaling, weaken, fortified, max rounds) stays in balance. */
+export interface ScenarioEnemy {
+  name: string;
+  doctrine: DoctrineName;
+  baseSoldiers: number;
+  minSoldiers: number;
+  morale: number;
+  discipline: number;
+}
+
+/** Narrative strings shown at campaign end. The two interpolated battle logs are
+ *  functions so the survivor-count output matches the current text verbatim. */
+export interface ScenarioNarrative {
+  victoryTitle: string;
+  defeatTitle: string;
+  victoryText: string;
+  defeatText: string;
+  battleWonLog: (survivors: number) => string;
+  battleLostLog: (survivors: number) => string;
+}
+
+/** A self-contained Iter Belli scenario: itinerary, crises, enemy, narrative.
+ *  `SAGUNTUM` is the first instance; the engine reads the active one. */
+export interface CampaignScenario {
+  id: string;
+  locations: Location[];
+  objectiveLocationId: string;
+  decisiveCardId: string;
+  crises: Record<'hambre' | 'motin' | 'encuentro', Crisis>;
+  enemy: ScenarioEnemy;
+  narrative: ScenarioNarrative;
+  conquestNames: string[];
+}
+
 // ── Cards ─────────────────────────────────────────────────────────────────
 
 export type CardType = 'compromiso' | 'arriesgada';
