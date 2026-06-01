@@ -6,20 +6,24 @@ import { provinces } from '../../../game/province/province-store';
 import { councilSlots } from '../../../game/council/council-store';
 import { equippedDoctrines } from '../../../game/items/doctrine-store';
 import { Corners } from '../../components/motifs/Corners';
+import { GameIcon } from '../../components/GameIcon';
+import type { GameIconName } from '../../components/GameIcon';
 import { MosaicBand } from '../../components/motifs/MosaicBand';
 import { NOISE_SVG } from '../../components/motifs/textures';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { InlineImageIcon } from '../../components/ResourceIcon';
 import { navigateTo } from '../../screens';
 import {
   activeForumTab, sidebarCollapsed, setForumTab, romanCalendar,
 } from './state';
 import type { ForumTab } from './state';
 import { tutorialDismissed, setTutorialDismissed } from '../../../game/core/meta-save';
+import seasonIcon from '../../../assets/ui/resources/season-icon-color.png';
 
 interface NavItem {
   k: ForumTab;
   l: string;
-  g: string;
+  icon: GameIconName;
   badge?: string | number;
 }
 
@@ -31,12 +35,12 @@ function useNavItems(): NavItem[] {
   const equippedTotal = equippedDoctrines.value.length;
 
   return [
-    { k: 'overview',   l: 'Forum',      g: '◉' },
-    { k: 'provinciae', l: 'Provinciae', g: '⬢', badge: provinces.value.length },
-    { k: 'consilium',  l: 'Consilium',  g: '◎', badge: `${seatedCount}/${seatedTotal}` },
-    { k: 'exercitus',  l: 'Exercitus',  g: '⚔', badge: cohortCount },
-    { k: 'doctrinae',  l: 'Doctrinae',  g: '◈', badge: `${equippedCount}/${equippedTotal}` },
-    { k: 'decreta',    l: 'Decreta',    g: '❖', badge: decretumHand.value.length },
+    { k: 'overview',   l: 'Forum',      icon: 'nav-forum' },
+    { k: 'provinciae', l: 'Provinciae', icon: 'nav-provinciae', badge: provinces.value.length },
+    { k: 'consilium',  l: 'Consilium',  icon: 'nav-consilium', badge: `${seatedCount}/${seatedTotal}` },
+    { k: 'exercitus',  l: 'Exercitus',  icon: 'nav-exercitus', badge: cohortCount },
+    { k: 'doctrinae',  l: 'Doctrinae',  icon: 'nav-doctrinae', badge: `${equippedCount}/${equippedTotal}` },
+    { k: 'decreta',    l: 'Decreta',    icon: 'nav-decreta', badge: decretumHand.value.length },
   ];
 }
 
@@ -193,13 +197,11 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
                 position: 'relative',
               }}
             >
-              <span style={{
-                width: 14, textAlign: 'center', fontSize: 13,
-                color: active ? accent : 'var(--imp-text-lo)',
-                flexShrink: 0,
-              }}>
-                {n.g}
-              </span>
+              <GameIcon
+                name={n.icon}
+                size={22}
+                style={{ opacity: active ? 1 : 0.78, transition: 'opacity 140ms' }}
+              />
               {!collapsed && (
                 <>
                   <span style={{
@@ -248,10 +250,12 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
         }}>
           <Corners color={accent} size={5} inset={2} thickness={1} />
           <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
             fontFamily: 'var(--imp-font-display)',
             fontSize: 10, color: accent,
             letterSpacing: 2, textTransform: 'uppercase',
           }}>
+            <InlineImageIcon src={seasonIcon} size={15} />
             {cal.season}
           </div>
           <div style={{
@@ -296,7 +300,7 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
             t.style.background = 'transparent';
           }}
         >
-          <span style={{ fontSize: 14, width: 14, textAlign: 'center', flexShrink: 0 }}>↻</span>
+          <GameIcon name="nav-tutorial" size={16} />
           {!collapsed && (
             <span style={{
               letterSpacing: 2, textTransform: 'uppercase',
@@ -343,7 +347,7 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
             t.style.background = 'transparent';
           }}
         >
-          <span style={{ width: 14, textAlign: 'center', fontSize: 14, flexShrink: 0 }}>⚐</span>
+          <GameIcon name="nav-abandon" size={16} />
           {!collapsed && (
             <span style={{ marginLeft: 10 }}>Abandon Run</span>
           )}
@@ -367,9 +371,7 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
           fontFamily: 'var(--imp-font-body)',
         }}
       >
-        <span style={{ fontSize: 14, color: accent, width: 14, textAlign: 'center' }}>
-          {collapsed ? '›' : '‹'}
-        </span>
+        <GameIcon name={collapsed ? 'nav-next' : 'nav-prev'} size={16} />
         {!collapsed && (
           <span style={{
             letterSpacing: 2, textTransform: 'uppercase',

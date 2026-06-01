@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hilo 4 · Fase 2 — Decreta consumibles (Hub)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital@0;1&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16131f; --panel:#1d1930; --panel2:#241f38;
+    --gold:#d4a843; --gold-hi:#f0d080; --gold-faint:rgba(212,168,67,.25);
+    --text-hi:#efe7d2; --text:#cdc4b4; --text-lo:#8f8676;
+    --green:#7faa6a; --blue:#5a8ab0; --red:#b23a3a; --purple:#a972a9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(122,36,50,.18), transparent 60%),
+      linear-gradient(180deg, #100d18 0%, var(--ink) 45%);
+    color:var(--text); font-family:'EB Garamond',Georgia,serif; font-size:18px; line-height:1.6; padding:48px 20px 96px}
+  .wrap{max-width:1000px; margin:0 auto}
+  .eyebrow{font-family:'Cinzel',serif; letter-spacing:5px; text-transform:uppercase; font-size:11px; color:var(--text-lo); text-align:center}
+  h1{font-family:'Cinzel',serif; font-weight:700; letter-spacing:2px; color:var(--gold-hi); text-align:center; font-size:34px; margin:8px 0 4px; text-shadow:0 0 24px rgba(212,168,67,.25)}
+  .sub{text-align:center; color:var(--text-lo); font-style:italic}
+  .meta{text-align:center; color:var(--text-lo); font-size:12px; font-family:'JetBrains Mono',monospace; margin-top:8px}
+  .laurel{text-align:center; color:var(--gold); opacity:.7; font-size:20px; letter-spacing:8px; margin:14px 0}
+  .rule{height:1px; background:linear-gradient(90deg,transparent,var(--gold-faint),transparent); margin:26px 0}
+  h2{font-family:'Cinzel',serif; font-weight:500; letter-spacing:1.5px; color:var(--gold); font-size:20px; margin:34px 0 12px; border-bottom:1px solid var(--gold-faint); padding-bottom:6px}
+  .lead{color:var(--text); font-style:italic; margin:8px 0 0}
+  .deal{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:18px 0}
+  .chip{background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--gold-faint); border-radius:4px; padding:10px 16px; min-width:150px; max-width:240px}
+  .chip .k{font-family:'Cinzel',serif; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-lo); display:block; margin-bottom:3px}
+  .chip .v{color:var(--text-hi); font-size:15px}
+  .thread{background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--gold-faint); border-left:3px solid var(--gold); border-radius:4px; padding:16px 22px; margin:14px 0; box-shadow:0 2px 20px rgba(0,0,0,.32)}
+  .thread h3{font-family:'Cinzel',serif; color:var(--gold-hi); font-size:17px; letter-spacing:1px; margin:0 0 4px; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .badge{font-family:'Cinzel',serif; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; padding:2px 8px; border-radius:2px; border:1px solid currentColor}
+  .b-new{color:var(--green)} .b-edit{color:var(--blue)}
+  .tnum{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-lo); border:1px solid var(--gold-faint); padding:1px 7px; border-radius:2px}
+  .thread p{margin:8px 0}
+  .thread ul{margin:8px 0; padding-left:20px} .thread li{margin:5px 0}
+  code{font-family:'JetBrains Mono',monospace; font-size:.82em; color:var(--gold-hi); background:rgba(212,168,67,.08); padding:1px 6px; border-radius:3px; border:1px solid var(--gold-faint)}
+  .path{font-family:'JetBrains Mono',monospace; font-size:.8em; color:var(--text-lo)}
+  strong{color:var(--text-hi)}
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:15px}
+  th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--gold-faint); vertical-align:top}
+  th{font-family:'Cinzel',serif; font-weight:500; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); white-space:nowrap}
+  td.src{font-family:'JetBrains Mono',monospace; font-size:.82em; color:var(--text)}
+  td .h{font-family:'Cinzel',serif; color:var(--gold-hi); font-size:14px; letter-spacing:.5px}
+  .inst{color:var(--blue); font-family:'JetBrains Mono',monospace; font-size:.8em}
+  .cont{color:var(--green); font-family:'JetBrains Mono',monospace; font-size:.8em}
+  .dead{color:var(--text-lo); font-style:italic}
+  .note{font-size:14px; color:var(--text-lo); font-style:italic}
+  .flow{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; font-family:'JetBrains Mono',monospace; font-size:12px}
+  .flow .step{border:1px solid var(--gold-faint); border-radius:3px; padding:5px 10px; color:var(--text)}
+  .flow .arr{color:var(--gold); opacity:.7}
+  .why{border-left:3px solid var(--green)}
+  .verify{font-size:13px; color:var(--green); font-family:'JetBrains Mono',monospace; margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Branch · worktree-experimentation</div>
+  <h1>Hilo 4 · Fase 2</h1>
+  <div class="sub">Decreta consumibles — lanzados desde el Hub</div>
+  <div class="laurel">❦ &nbsp; ⚜ &nbsp; ❦</div>
+  <div class="meta">Los Decreta se lanzan en el Hub por efectos de Hub · NO entran a la campaña · pendiente de implementar</div>
+
+  <div class="rule"></div>
+
+  <h2>El trato en una línea</h2>
+  <p class="lead">Un <strong>Decretum</strong> de la mano se <strong>lanza desde el Hub</strong> (pestaña Decreta) por un efecto de Hub <strong>instantáneo</strong> (boon inmediato) o <strong>continuo por N temporadas</strong> (tickea en el reloj). Se consume al lanzarse. <strong>No entra a Iter Belli.</strong> Solo los Decreta cuyo efecto traduce bien al Hub son casteables; el resto queda <strong>inerte</strong> por ahora.</p>
+
+  <div class="deal">
+    <div class="chip"><span class="k">Dónde</span><span class="v">Hub (pestaña Decreta), no la campaña</span></div>
+    <div class="chip"><span class="k">Efecto</span><span class="v">Instantáneo o continuo N temporadas</span></div>
+    <div class="chip"><span class="k">Contenido</span><span class="v">Set chico vivo + resto inerte</span></div>
+    <div class="chip"><span class="k">Consumo</span><span class="v">Single-use, respeta faction-lock + castCost</span></div>
+  </div>
+
+  <h2>Ciclo de vida</h2>
+  <div class="flow">
+    <span class="step">Decretum en la mano (castable en Hub)</span>
+    <span class="arr">→</span>
+    <span class="step">Lanzar · gasta castCost · removeDecretum</span>
+    <span class="arr">→</span>
+    <span class="step inst" style="color:var(--blue)">instantáneo: aplica boon ya</span>
+    <span class="arr">/</span>
+    <span class="step cont" style="color:var(--green)">continuo: push a activos (N temporadas)</span>
+    <span class="arr">→</span>
+    <span class="step">season-tick: aplica + decrementa + expira</span>
+  </div>
+
+  <h2>El set chico de efectos-Hub vivos</h2>
+  <p class="note">Valores/inclusiones propuestos — ajustables. <code>toHubEffect(decretum) → HubDecretumEffect | null</code> (null = inerte).</p>
+  <table>
+    <thead>
+      <tr><th>Efecto Decretum (existente)</th><th>→ Efecto Hub</th><th>Clase</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="src">resource-gain (gold/iuniores)</td><td><span class="h">grant</span> — +recurso inmediato</td><td class="inst">instant</td></tr>
+      <tr><td class="src">resource-gain (influence/momentum/faith · deprecados)</td><td class="dead">— null (inerte)</td><td class="dead">—</td></tr>
+      <tr><td class="src">heal</td><td><span class="h">heal-army</span> — sana cohortes de preparedArmy</td><td class="inst">instant</td></tr>
+      <tr><td class="src">investment-discount</td><td><span class="h">shop-discount</span> — setea nextInvestmentDiscount</td><td class="inst">instant</td></tr>
+      <tr><td class="src">spawn</td><td><span class="h">recruit</span> — +iuniores (count × K)</td><td class="inst">instant</td></tr>
+      <tr><td class="src">upkeep-reduction {seasons}</td><td><span class="h">waive-upkeep</span> — sin upkeep por N temporadas</td><td class="cont">continuo</td></tr>
+      <tr><td class="src">buff · debuff · damage · reveal · prevent-death · convert · event-mod</td><td class="dead">— null (inerte)</td><td class="dead">—</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Vivos ≈ 10–12 Decreta (grants de oro, sanaciones, supply/annona, cursus); el resto inerte. La arquitectura permite ampliar el set después. Único continuo de esta fase: <code>waive-upkeep</code> (es el único que los datos existentes necesitan).</p>
+
+  <h2>Arquitectura (Hub puro — no toca Iter Belli)</h2>
+
+  <div class="thread">
+    <h3><span class="tnum">game</span> items/decretum-hub.ts <span class="badge b-new">Nuevo</span></h3>
+    <ul>
+      <li><code>HubDecretumEffect</code> — union del set vivo (grant / heal-army / shop-discount / recruit / waive-upkeep).</li>
+      <li><code>toHubEffect(d): HubDecretumEffect | null</code> — switch por <code>effect.type</code>; null para deprecados/solo-batalla.</li>
+      <li><code>isCastableAtHub(d, faction)</code> — faction-lock + tiene efecto-Hub + afford <code>castCost</code>.</li>
+      <li><code>castDecretumAtHub(id)</code> — gate → aplica instant / push continuo → <code>removeDecretum</code>.</li>
+    </ul>
+  </div>
+
+  <div class="thread">
+    <h3><span class="tnum">game</span> items/decretum-store.ts <span class="badge b-edit">Extender</span></h3>
+    <p><code>activeDecretumEffects: signal&lt;ActiveDecretumEffect[]&gt;</code> — <code>{ decretumId, name, effect, remainingSeasons }</code>.</p>
+  </div>
+
+  <div class="thread">
+    <h3><span class="tnum">game</span> progression/season-tick.ts <span class="badge b-edit">Extender</span></h3>
+    <ul>
+      <li>Leer los <code>waive-upkeep</code> activos → upkeep = 0 esa temporada (junto a la reducción de doctrinas que ya se consume acá).</li>
+      <li>Tras el tick: <code>remainingSeasons--</code> y filtrar los expirados (≤ 0).</li>
+    </ul>
+  </div>
+
+  <div class="thread">
+    <h3><span class="tnum">ui</span> forum/tabs/DecretaTab.tsx <span class="badge b-edit">Extender</span></h3>
+    <ul>
+      <li>Botón <strong>"Lanzar"</strong> en el detalle (habilitado si <code>isCastableAtHub</code>; muestra qué hará).</li>
+      <li>Lista de <strong>efectos continuos activos</strong> con temporadas restantes.</li>
+      <li>Actualizar el hint ("se lanzan en batalla" → "se lanzan en el Hub"). <code class="path">DecretaPanel</code>: badge de activos (opcional).</li>
+    </ul>
+  </div>
+
+  <h2>Por qué encaja</h2>
+  <div class="thread why">
+    <ul>
+      <li>Reusa <code>isDecretumCastable</code> (faction-lock), <code>removeDecretum</code> (consumo), <code>addResource</code>/<code>spendResource</code> (boons + castCost), <code>preparedArmy</code> (heal), <code>nextInvestmentDiscount</code> (descuento) — todo ya existe.</li>
+      <li>El sistema continuo-con-duración es nuevo pero mínimo (un signal + tick-down en season-tick), modelado sobre el precedente de doctrinas + expiry.</li>
+      <li>Da un hogar <strong>vivo</strong> a los Decreta (hoy muertos: se lanzaban en la batalla hex deprecada).</li>
+    </ul>
+  </div>
+
+  <h2>Verificación</h2>
+  <div class="thread">
+    <div class="verify">✓ tools/verify-decretum-hub.ts (npx tsx)</div>
+    <ul>
+      <li><code>toHubEffect</code>: vivos → efecto correcto; deprecados/solo-batalla → null.</li>
+      <li><code>castDecretumAtHub</code>: aplica grant/heal/discount; push continuo; remueve de mano; respeta faction-lock + castCost; no castea inertes.</li>
+      <li>season-tick: <code>waive-upkeep</code> activo → upkeep 0; decrementa; expira a 0.</li>
+    </ul>
+    <p><code>tsc --noEmit</code> + verify Doctrinae/Quests/Consilium sin regresión + Chrome (lanzar un Decretum, ver efecto + lista de activos).</p>
+  </div>
+
+  <div class="laurel" style="margin-top:32px">❦ &nbsp; ⚜ &nbsp; ❦</div>
+</div>
+</body>
+</html>

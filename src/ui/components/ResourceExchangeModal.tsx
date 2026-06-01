@@ -6,6 +6,7 @@ import type { ResourceType } from '../../game/core/commander';
 import { exchangeResources, getExchangePreview } from '../../game/core/resources';
 import { gold, faith, influence, momentum, iuniores } from '../../game/core/resources';
 import { OrnateFrame, OrnateHeader } from './OrnateFrame';
+import { ResourceAmount, ResourceIcon } from './ResourceIcon';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('exchange-modal-styles')) {
@@ -185,7 +186,7 @@ export function ResourceExchangeModal({ onClose }: Props) {
                     fontFamily: 'inherit',
                   }}
                 >
-                  <span style={{ fontSize: 'var(--font-size-lg)' }}>{info.icon}</span>
+                  <ResourceIcon type={res} size={22} />
                   <span style={{ fontSize: '8px', color: info.color, fontWeight: 700, letterSpacing: '0.5px' }}>{info.label}</span>
                   <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>{bal}</span>
                 </button>
@@ -223,7 +224,7 @@ export function ResourceExchangeModal({ onClose }: Props) {
                     fontFamily: 'inherit',
                   }}
                 >
-                  <span style={{ fontSize: 'var(--font-size-lg)' }}>{info.icon}</span>
+                  <ResourceIcon type={res} size={22} />
                   <span style={{ fontSize: '8px', color: info.color, fontWeight: 700, letterSpacing: '0.5px' }}>{info.label}</span>
                   <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>{bal}</span>
                 </button>
@@ -287,11 +288,11 @@ export function ResourceExchangeModal({ onClose }: Props) {
           ) : preview ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: 'var(--font-size-md)' }}>
               <span style={{ color: '#e07060', fontWeight: 700 }}>
-                {RESOURCE_INFO[from].icon} -{preview.spend}
+                <ResourceAmount type={from} amount={preview.spend} sign="-" iconSize={18} />
               </span>
               <span style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-lg)' }}>→</span>
               <span style={{ color: '#60c880', fontWeight: 700 }}>
-                {RESOURCE_INFO[to].icon} +{preview.gain}
+                <ResourceAmount type={to} amount={preview.gain} sign="+" iconSize={18} />
               </span>
             </div>
           ) : null}

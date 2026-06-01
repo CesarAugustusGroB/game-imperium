@@ -1,20 +1,21 @@
 import { decretumHand } from '../../../../game/items/decretum-store';
 import { selectedCommander } from '../../../../game/core/game-state';
-import { OrnatePanel } from '../../../components/OrnatePanel';
+import { BentoCard } from '../../../components/BentoCard';
 import { SectionHeader, LinkButton } from '../components/SectionHeader';
 import { ScrollRow } from '../components/ScrollRow';
 import { setForumTab } from '../state';
 
 interface DecretaPanelProps {
   accent?: string;
+  index?: number;
 }
 
-export function DecretaPanel({ accent = '#d4a843' }: DecretaPanelProps) {
+export function DecretaPanel({ accent = '#d4a843', index = 0 }: DecretaPanelProps) {
   const hand = decretumHand.value;
   const commander = selectedCommander.value;
 
   return (
-    <OrnatePanel accent={accent} style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+    <BentoCard accent={accent} index={index} style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <SectionHeader
         title="Decreta"
         accent={accent}
@@ -36,6 +37,6 @@ export function DecretaPanel({ accent = '#d4a843' }: DecretaPanelProps) {
         )}
         {hand.map((s) => <ScrollRow key={s.id} s={s} commander={commander} />)}
       </div>
-    </OrnatePanel>
+    </BentoCard>
   );
 }

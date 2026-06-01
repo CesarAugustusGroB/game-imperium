@@ -1,8 +1,8 @@
-import type { Decretum } from '../../game/items/decretum';
+﻿import type { Decretum } from '../../game/items/decretum';
 import { DECRETUM_SELL_PRICE } from '../../game/items/decretum';
 import { FACTION_COLORS } from '../../game/core/commander';
 import { Tooltip } from './Tooltip';
-import { formatCost } from '../ui-constants';
+import { CostInline, ResourceAmount } from './ResourceIcon';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('decretum-card-styles')) {
@@ -158,11 +158,11 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
       </div>
       {decretum.castCost && Object.keys(decretum.castCost).length > 0 && (
         <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-          Cast cost: {formatCost(decretum.castCost)}
+          Cast cost: <CostInline cost={decretum.castCost} iconSize={14} />
         </div>
       )}
       <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-        Sell: {DECRETUM_SELL_PRICE[decretum.rarity]}💰
+        Sell: <ResourceAmount type="gold" amount={DECRETUM_SELL_PRICE[decretum.rarity]} iconSize={14} />
       </div>
     </div>
   );

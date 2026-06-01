@@ -1,4 +1,5 @@
-import { useSignal } from '@preact/signals';
+﻿import { useSignal } from '@preact/signals';
+import type { ComponentChildren } from 'preact';
 import { decretumHand, maxHandSize, sellDecretum } from '../../../../game/items/decretum-store';
 import { isDecretumCastable, DECRETUM_SELL_PRICE } from '../../../../game/items/decretum';
 import type { Decretum } from '../../../../game/items/decretum';
@@ -7,15 +8,13 @@ import { FACTION_COLORS } from '../../../../game/core/commander';
 import type { ResourceType } from '../../../../game/core/commander';
 import { playSfx } from '../../../sound/sfx';
 import { castDecretumAtHub, isCastableAtHub, toHubEffect, describeHubEffect, activeDecretumEffects } from '../../../../game/items/decretum-hub';
-import { OrnatePanel } from '../../../components/OrnatePanel';
+import { BentoCard } from '../../../components/BentoCard';
 import { Corners } from '../../../components/motifs/Corners';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
+import { CostInline, ResourceAmount } from '../../../components/ResourceIcon';
 
-const RESOURCE_GLYPH: Record<ResourceType, string> = {
-  gold: '⚜', faith: '✦', influence: '◈', momentum: '⚡', iuniores: '🛡',
-};
 
 export function DecretaTab() {
   const selectedId = useSignal<string | null>(null);
@@ -58,8 +57,9 @@ export function DecretaTab() {
       }}>
 
         {/* ── LEFT: Hand grid ── */}
-        <OrnatePanel
+        <BentoCard
           accent={accent}
+          index={0}
           style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}
         >
           <SectionHeader
@@ -134,12 +134,12 @@ export function DecretaTab() {
               ))}
             </div>
           )}
-        </OrnatePanel>
+        </BentoCard>
 
         {/* ── RIGHT: Detail ── */}
-        <OrnatePanel
-          accent={accent}
-          cornersSize={12}
+        <BentoCard
+          accent={current ? FACTION_COLORS[current.color] : accent}
+          index={1}
           style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto', position: 'relative' }}
         >
           <div style={{ position: 'absolute', top: 14, right: 14, opacity: 0.08, pointerEvents: 'none' }}>
@@ -163,7 +163,7 @@ export function DecretaTab() {
               Pick a scroll to inspect.
             </div>
           )}
-        </OrnatePanel>
+        </BentoCard>
       </div>
     </>
   );
@@ -184,7 +184,9 @@ function ScrollCard({ d, castable, selected, accent, onSelect }: ScrollCardProps
   const costEntry = d.castCost
     ? (Object.entries(d.castCost) as [ResourceType, number][]).find(([, amt]) => amt > 0) ?? null
     : null;
-  const costLabel = costEntry ? `${costEntry[1]}${RESOURCE_GLYPH[costEntry[0]]}` : '—';
+  const costLabel = costEntry
+    ? <ResourceAmount type={costEntry[0]} amount={costEntry[1]} iconSize={13} />
+    : '—';
 
   return (
     <div
@@ -271,7 +273,7 @@ function DecretumDetail({ d, hubCastable, accent, onSell, onCast }: DecretumDeta
     ? (Object.entries(d.castCost) as [ResourceType, number][]).filter(([, amt]) => amt > 0)
     : [];
   const costLabel = costEntries.length > 0
-    ? costEntries.map(([r, a]) => `${a} ${RESOURCE_GLYPH[r]}`).join(' ')
+    ? <CostInline cost={d.castCost ?? {}} iconSize={14} />
     : 'Free';
   const sellPrice = DECRETUM_SELL_PRICE[d.rarity];
   const hubEffect = toHubEffect(d);
@@ -363,7 +365,7 @@ function DecretumDetail({ d, hubCastable, accent, onSell, onCast }: DecretumDeta
               cursor: 'pointer',
             }}
           >
-            Sell · {sellPrice}⚜
+            Sell · <ResourceAmount type="gold" amount={sellPrice} iconSize={14} />
           </button>
         </div>
       </div>
@@ -371,7 +373,7 @@ function DecretumDetail({ d, hubCastable, accent, onSell, onCast }: DecretumDeta
   );
 }
 
-function InfoBox({ label, value, color, capitalize }: { label: string; value: string; color: string; capitalize?: boolean }) {
+function InfoBox({ label, value, color, capitalize }: { label: string; value: ComponentChildren; color: string; capitalize?: boolean }) {
   return (
     <div style={{
       padding: '10px 12px',

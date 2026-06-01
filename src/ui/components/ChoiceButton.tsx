@@ -1,6 +1,6 @@
 import type { EventChoice } from '../../game/events/event-types';
 import type { ResourceType } from '../../game/core/commander';
-import { RESOURCE_INFO } from '../../game/core/commander';
+import { ResourceAmount, ResourceIcon } from './ResourceIcon';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('choice-btn-styles')) {
@@ -64,7 +64,7 @@ function EffectPill({ resource, amount }: { resource: ResourceType; amount: numb
 
   return (
     <span style={pillStyle}>
-      <span>{RESOURCE_INFO[resource].icon}</span>
+      <ResourceIcon type={resource} size={14} />
       <span>{positive ? `+${amount}` : `${amount}`}</span>
     </span>
   );
@@ -149,11 +149,14 @@ export function ChoiceButton({
 
       {/* Cost indicator */}
       {!canAfford && choice.requiresResource && (
-        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)', marginTop: '2px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)', marginTop: '2px' }}>
           {(Object.keys(choice.requiresResource) as ResourceType[])
             .filter(r => (choice.requiresResource![r] ?? 0) > (currentResources?.[r] ?? 0))
-            .map(r => `Requires ${choice.requiresResource![r]} ${RESOURCE_INFO[r].icon}`)
-            .join('  ')}
+            .map(r => (
+              <span key={r} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                Requires <ResourceAmount type={r} amount={choice.requiresResource![r] ?? 0} iconSize={14} />
+              </span>
+            ))}
         </div>
       )}
     </button>

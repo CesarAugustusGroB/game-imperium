@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks';
+﻿import { useState } from 'preact/hooks';
 import type { Province } from '../../../../game/province/province';
 import {
   INVESTMENT_DATA, calculateNetWealthChange,
@@ -7,6 +7,7 @@ import { getAssignedGovernor } from '../../../../game/province/governor-store';
 import { ROMAN } from '../../../ui-constants';
 import { TERRAIN_ICONS, TRADE_GOOD_ICONS } from '../../ProvinceScreen';
 import { Tooltip } from '../../../components/Tooltip';
+import { ResourceAmount } from '../../../components/ResourceIcon';
 
 interface ProvinceRowProps {
   p: Province;
@@ -59,7 +60,7 @@ export function ProvinceRow({ p, accent = '#d4a843', onClick, selected = false }
         Unrest: {p.unrest}/100
       </div>
       <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-        Net: {totalIncome >= 0 ? '+' : ''}{totalIncome}⚜/turn · Governor: {governorName ?? 'none'}
+        Net: <ResourceAmount type="gold" amount={totalIncome} sign={totalIncome >= 0 ? '+' : ''} iconSize={14} /> / turn · Governor: {governorName ?? 'none'}
       </div>
       {p.investments.length > 0 && (
         <div style={{ marginTop: '3px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
@@ -136,7 +137,7 @@ export function ProvinceRow({ p, accent = '#d4a843', onClick, selected = false }
           color: totalIncome >= 0 ? '#7a9a6a' : '#c24a3a',
           fontWeight: 600,
         }}>
-          {totalIncome >= 0 ? '+' : ''}{totalIncome}⚜
+          <ResourceAmount type="gold" amount={totalIncome} sign={totalIncome >= 0 ? '+' : ''} iconSize={15} />
         </div>
         <div style={{
           fontSize: 8,

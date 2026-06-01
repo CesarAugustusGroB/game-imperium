@@ -1,6 +1,7 @@
 import { preparedArmy, preparedLegate } from '../../../../game/progression/strategic-store';
 import { getLegateTraitById } from '../../../../game/army/legate-traits';
-import { OrnatePanel } from '../../../components/OrnatePanel';
+import { BentoCard } from '../../../components/BentoCard';
+import { GameIcon } from '../../../components/GameIcon';
 import { SectionHeader, LinkButton, ROLE_COLORS } from '../components/SectionHeader';
 import { setForumTab } from '../state';
 import { SUPPLY_MAX_CARRY } from '../../../../config/game-config';
@@ -8,13 +9,14 @@ import type { Cohort } from '../../../../game/army/cohort';
 
 interface ExercitusPanelProps {
   accent?: string;
+  index?: number;
 }
 
 function getCohortCurrentHp(cohort: Cohort): number {
   return cohort.currentHp ?? (cohort.outOfAction ? 1 : cohort.stats.hp);
 }
 
-export function ExercitusPanel({ accent = '#d4a843' }: ExercitusPanelProps) {
+export function ExercitusPanel({ accent = '#d4a843', index = 0 }: ExercitusPanelProps) {
   const army = preparedArmy.value;
   const legate = preparedLegate.value;
   const cohorts = army?.cohorts ?? [];
@@ -24,7 +26,7 @@ export function ExercitusPanel({ accent = '#d4a843' }: ExercitusPanelProps) {
   const maxHpTotal = cohorts.reduce((sum, c) => sum + c.stats.hp, 0);
 
   return (
-    <OrnatePanel accent={accent}>
+    <BentoCard accent={accent} index={index}>
       <SectionHeader
         title="Exercitus"
         accent={accent}
@@ -102,7 +104,7 @@ export function ExercitusPanel({ accent = '#d4a843' }: ExercitusPanelProps) {
           letterSpacing: 0.5,
           title: `Supplies: ${supplies} / ${SUPPLY_MAX_CARRY}`,
         }}>
-          <span>📦</span>
+          <GameIcon name="supplies-crate" size={12} />
           <span>{supplies}/{SUPPLY_MAX_CARRY}</span>
         </div>
       </div>
@@ -143,6 +145,6 @@ export function ExercitusPanel({ accent = '#d4a843' }: ExercitusPanelProps) {
           </div>
         </div>
       )}
-    </OrnatePanel>
+    </BentoCard>
   );
 }

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hilo 4 · Fase 1 — Doctrinae → cartas de campaña</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital@0;1&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16131f; --panel:#1d1930; --panel2:#241f38;
+    --gold:#d4a843; --gold-hi:#f0d080; --gold-faint:rgba(212,168,67,.25);
+    --text-hi:#efe7d2; --text:#cdc4b4; --text-lo:#8f8676;
+    --green:#7faa6a; --blue:#5a8ab0; --red:#b23a3a; --purple:#a972a9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(122,36,50,.18), transparent 60%),
+      linear-gradient(180deg, #100d18 0%, var(--ink) 45%);
+    color:var(--text); font-family:'EB Garamond',Georgia,serif; font-size:18px; line-height:1.6; padding:48px 20px 96px}
+  .wrap{max-width:1000px; margin:0 auto}
+  .eyebrow{font-family:'Cinzel',serif; letter-spacing:5px; text-transform:uppercase; font-size:11px; color:var(--text-lo); text-align:center}
+  h1{font-family:'Cinzel',serif; font-weight:700; letter-spacing:2px; color:var(--gold-hi); text-align:center; font-size:34px; margin:8px 0 4px; text-shadow:0 0 24px rgba(212,168,67,.25)}
+  .sub{text-align:center; color:var(--text-lo); font-style:italic}
+  .meta{text-align:center; color:var(--text-lo); font-size:12px; font-family:'JetBrains Mono',monospace; margin-top:8px}
+  .laurel{text-align:center; color:var(--gold); opacity:.7; font-size:20px; letter-spacing:8px; margin:14px 0}
+  .rule{height:1px; background:linear-gradient(90deg,transparent,var(--gold-faint),transparent); margin:26px 0}
+  h2{font-family:'Cinzel',serif; font-weight:500; letter-spacing:1.5px; color:var(--gold); font-size:20px; margin:34px 0 12px; border-bottom:1px solid var(--gold-faint); padding-bottom:6px}
+  .lead{color:var(--text); font-style:italic; margin:8px 0 0}
+  .deal{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:18px 0}
+  .chip{background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--gold-faint); border-radius:4px; padding:10px 16px; min-width:150px; max-width:240px}
+  .chip .k{font-family:'Cinzel',serif; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-lo); display:block; margin-bottom:3px}
+  .chip .v{color:var(--text-hi); font-size:15px}
+  .thread{background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--gold-faint); border-left:3px solid var(--gold); border-radius:4px; padding:16px 22px; margin:14px 0; box-shadow:0 2px 20px rgba(0,0,0,.32)}
+  .thread h3{font-family:'Cinzel',serif; color:var(--gold-hi); font-size:17px; letter-spacing:1px; margin:0 0 4px; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .badge{font-family:'Cinzel',serif; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; padding:2px 8px; border-radius:2px; border:1px solid currentColor}
+  .b-new{color:var(--green)} .b-edit{color:var(--blue)}
+  .tnum{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-lo); border:1px solid var(--gold-faint); padding:1px 7px; border-radius:2px}
+  .thread p{margin:8px 0}
+  .thread ul{margin:8px 0; padding-left:20px} .thread li{margin:5px 0}
+  code{font-family:'JetBrains Mono',monospace; font-size:.82em; color:var(--gold-hi); background:rgba(212,168,67,.08); padding:1px 6px; border-radius:3px; border:1px solid var(--gold-faint)}
+  pre{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--text-hi); background:rgba(0,0,0,.30); border:1px solid var(--gold-faint); border-left:3px solid var(--gold); border-radius:4px; padding:14px 16px; overflow-x:auto; line-height:1.5}
+  pre .c{color:var(--text-lo)}
+  pre .k{color:var(--blue)}
+  pre .t{color:var(--gold-hi)}
+  .path{font-family:'JetBrains Mono',monospace; font-size:.8em; color:var(--text-lo)}
+  strong{color:var(--text-hi)}
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:15px}
+  th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--gold-faint); vertical-align:top}
+  th{font-family:'Cinzel',serif; font-weight:500; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); white-space:nowrap}
+  td .q{font-family:'Cinzel',serif; color:var(--gold-hi); font-size:14px; letter-spacing:.5px}
+  td.dot{white-space:nowrap; font-weight:700}
+  .hook{font-family:'JetBrains Mono',monospace; font-size:.82em; color:var(--blue)}
+  .eff{color:var(--green)}
+  .c-red{color:var(--red)} .c-blue{color:var(--blue)} .c-gold{color:var(--gold-hi)} .c-purple{color:var(--purple)} .c-white{color:var(--text-hi)}
+  .note{font-size:14px; color:var(--text-lo); font-style:italic}
+  .flow{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0; font-family:'JetBrains Mono',monospace; font-size:12px}
+  .flow .step{border:1px solid var(--gold-faint); border-radius:3px; padding:5px 10px; color:var(--text)}
+  .flow .arr{color:var(--gold); opacity:.7}
+  .why{border-left:3px solid var(--green)}
+  .verify{font-size:13px; color:var(--green); font-family:'JetBrains Mono',monospace; margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Branch · worktree-experimentation</div>
+  <h1>Hilo 4 · Fase 1</h1>
+  <div class="sub">Doctrinae → cartas de campaña — diseño</div>
+  <div class="laurel">❦ &nbsp; ⚜ &nbsp; ❦</div>
+  <div class="meta">Las Doctrinae equipadas en el Hub modifican el pool/eventos de la campaña · pendiente de implementar</div>
+
+  <div class="rule"></div>
+
+  <h2>El trato en una línea</h2>
+  <p class="lead">Cada <strong>Doctrina equipada</strong> (hasta 4 slots, nivel I/II/III) <strong>modifica</strong> la campaña Iter Belli según su <strong>color</strong>. No inyecta cartas nuevas: cambia cómo se comporta el pool y la marcha. El motor expone <strong>hooks</strong> para que una doctrina pueda hacer <em>cualquier cosa</em>; en esta fase, una conducta insignia por color.</p>
+
+  <div class="deal">
+    <div class="chip"><span class="k">Alcance</span><span class="v">Solo Doctrinae (Decreta = Fase 2)</span></div>
+    <div class="chip"><span class="k">Efecto</span><span class="v">Modifica el pool/eventos existentes</span></div>
+    <div class="chip"><span class="k">Base</span><span class="v">Por color · 1 conducta por color</span></div>
+    <div class="chip"><span class="k">Escala</span><span class="v">Nivel I/II/III de la doctrina</span></div>
+    <div class="chip"><span class="k">Apilado</span><span class="v">Varias del mismo color suman</span></div>
+  </div>
+
+  <h2>El motor de hooks</h2>
+  <p>El módulo de campaña solo conoce un tipo puro con hooks <strong>opcionales</strong>. Una doctrina implementa los que necesita; puede tocar frecuencia, costo, efectos o reaccionar por turno.</p>
+  <pre><span class="c">// iter-belli-types.ts</span>
+<span class="k">interface</span> <span class="t">DoctrineCampaignModifier</span> {
+  id: string; label: string;
+  weight?(card): number;            <span class="c">// multiplicador de peso de robo (def. 1)</span>
+  costDelta?(card): Partial&lt;CardCost&gt;;   <span class="c">// descuento de costo</span>
+  onPlay?(card, ctx): CardEffects;        <span class="c">// efectos extra al jugar</span>
+  onTurn?(state): CardEffects;            <span class="c">// pasivo por turno</span>
+}</pre>
+  <div class="flow">
+    <span class="step">drawCard → ×weight(card)</span>
+    <span class="arr">·</span>
+    <span class="step">playCard → costDelta + onPlay</span>
+    <span class="arr">·</span>
+    <span class="step">endTurn → onTurn(state)</span>
+  </div>
+  <p class="note">Fase 1 ejercita 3 de los 4 hooks (<code>onPlay</code>, <code>costDelta</code>, <code>onTurn</code>); <code>weight</code> queda disponible para conductas futuras por-doctrina.</p>
+
+  <h2>Las 5 conductas insignia por color</h2>
+  <p class="note">Valores propuestos — ajustables antes del spec. Nivel t = 1 / 2 / 3.</p>
+  <table>
+    <thead>
+      <tr><th>Color</th><th>Doctrina</th><th>Hook</th><th>Efecto (t = 1/2/3)</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="dot c-red">●&nbsp;red</td>
+        <td><span class="q">Marcial</span></td>
+        <td class="hook">onPlay · Coerción</td>
+        <td class="eff">enemyWeaken +t — la coerción erosiona más al enemigo final</td>
+      </tr>
+      <tr>
+        <td class="dot c-blue">●&nbsp;blue</td>
+        <td><span class="q">Diplomática</span></td>
+        <td class="hook">costDelta + onPlay · Diplomacia</td>
+        <td class="eff">costo oro −5·t · amenaza extra −t</td>
+      </tr>
+      <tr>
+        <td class="dot c-purple">●&nbsp;purple</td>
+        <td><span class="q">Económica</span></td>
+        <td class="hook">onPlay · Logística</td>
+        <td class="eff">suministros +2·t al jugar logística</td>
+      </tr>
+      <tr>
+        <td class="dot c-gold">●&nbsp;gold</td>
+        <td><span class="q">Religiosa</span></td>
+        <td class="hook">onTurn</td>
+        <td class="eff">moral +0.3·t por turno — la fe sostiene al ejército</td>
+      </tr>
+      <tr>
+        <td class="dot c-white">●&nbsp;white</td>
+        <td><span class="q">Populista</span></td>
+        <td class="hook">onTurn</td>
+        <td class="eff">suministros +1·t por turno — el pueblo aprovisiona</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Arquitectura (respeta el desacople del Consilium/Quests)</h2>
+
+  <div class="thread">
+    <h3><span class="tnum">data</span> iter-belli-doctrines.ts <span class="badge b-new">Nuevo</span></h3>
+    <p>Data + funciones puras — <strong>no</strong> importa run-state.</p>
+    <ul>
+      <li><code>DOCTRINE_MODIFIERS: Record&lt;Color, (level)=&gt;DoctrineCampaignModifier&gt;</code> — las 5 conductas con sus hooks.</li>
+      <li><code>computeDoctrineModifiers(equipped: (Doctrine|null)[]): DoctrineCampaignModifier[]</code> — lee color + <code>currentLevel</code> de cada slot ocupado y apila. (Importa el tipo <code>Doctrine</code>; lo llama EmbarkCard, como el Consilium.)</li>
+    </ul>
+  </div>
+
+  <div class="thread">
+    <h3><span class="tnum">game</span> iter-belli-types.ts <span class="badge b-edit">Extender</span></h3>
+    <ul>
+      <li><code>DoctrineCampaignModifier</code> (tipo del motor de hooks).</li>
+      <li><code>doctrineModifiers: DoctrineCampaignModifier[]</code> en <code>IterBelliState</code> y <code>doctrineModifiers?</code> en <code>CampaignSeed</code>.</li>
+    </ul>
+  </div>
+
+  <div class="thread">
+    <h3><span class="tnum">game</span> iter-belli-state.ts <span class="badge b-edit">Extender</span></h3>
+    <ul>
+      <li><code>drawCard()</code> — peso efectivo = <code>card.weight × Π modifier.weight(card)</code>.</li>
+      <li><code>playCard()</code> — aplica <code>costDelta</code> (descuento) y suma <code>onPlay(card, ctx)</code> a los efectos.</li>
+      <li><code>endTurn()</code> — aplica cada <code>onTurn(state)</code> como pasivo.</li>
+      <li><code>startIterBelliCampaign</code> guarda <code>seed.doctrineModifiers</code> en estado.</li>
+    </ul>
+  </div>
+
+  <div class="thread">
+    <h3><span class="tnum">ui</span> EmbarkCard.tsx <span class="badge b-edit">Extender</span></h3>
+    <ul>
+      <li>Computa <code>computeDoctrineModifiers(equippedDoctrines.value)</code> y lo pasa por el seed (junto a Consilium + quests).</li>
+      <li>Preview "Doctrinae: …" con las conductas activas; opcional una línea en la cabecera de campaña.</li>
+    </ul>
+  </div>
+
+  <h2>Por qué encaja</h2>
+  <div class="thread why">
+    <ul>
+      <li>Espeja el bridge del Consilium: leer estado equipado → seed en embark → el módulo de campaña nunca importa run/doctrine.</li>
+      <li>Los hooks son <strong>funciones sobre estado/carta</strong>, igual que <code>effects</code>/<code>penalty</code> de las cartas — patrón ya presente en el codebase.</li>
+      <li>"Puede hacer cualquier cosa": el set de hooks cubre frecuencia, costo, efectos y reacción por turno; ampliable sin tocar a los consumidores.</li>
+    </ul>
+  </div>
+
+  <h2>Verificación</h2>
+  <div class="thread">
+    <div class="verify">✓ tools/verify-iter-belli-doctrines.ts (npx tsx)</div>
+    <ul>
+      <li><code>computeDoctrineModifiers</code>: color→modificador, escala por nivel, apilado, slots vacíos.</li>
+      <li>El motor consulta los hooks: jugar Coerción con red → enemyWeaken sube; Diplomacia con blue → costo oro baja; endTurn con gold → moral sube.</li>
+    </ul>
+    <p><code>tsc --noEmit</code> + verify Fase 1/Quests sin regresión + chequeo en Chrome.</p>
+  </div>
+
+  <div class="laurel" style="margin-top:32px">❦ &nbsp; ⚜ &nbsp; ❦</div>
+</div>
+</body>
+</html>

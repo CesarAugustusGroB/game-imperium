@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact';
+import { GameIcon } from '../../../components/GameIcon';
 
 interface SectionHeaderProps {
   title: string;
@@ -35,10 +36,17 @@ export interface LinkButtonProps {
 }
 
 export function LinkButton({ label, onClick, accent = '#d4a843' }: LinkButtonProps) {
+  // Labels like "Open →" / "Manage →": strip the textual arrow and render the
+  // sliced arrow medallion instead.
+  const hasArrow = /→\s*$/.test(label);
+  const text = label.replace(/\s*→\s*$/, '');
   return (
     <button
       onClick={onClick}
       style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 4,
         fontSize: 9,
         letterSpacing: 1.5,
         color: accent,
@@ -52,7 +60,8 @@ export function LinkButton({ label, onClick, accent = '#d4a843' }: LinkButtonPro
         fontWeight: 600,
       }}
     >
-      {label}
+      {text}
+      {hasArrow && <GameIcon name="arrow-right" size={10} />}
     </button>
   );
 }

@@ -1,18 +1,19 @@
 import { provinces } from '../../../../game/province/province-store';
-import { OrnatePanel } from '../../../components/OrnatePanel';
+import { BentoCard } from '../../../components/BentoCard';
 import { SectionHeader, LinkButton } from '../components/SectionHeader';
 import { ProvinceRow } from '../components/ProvinceRow';
 import { setForumTab } from '../state';
 
 interface ProvinciaeListPanelProps {
   accent?: string;
+  index?: number;
 }
 
-export function ProvinciaeListPanel({ accent = '#d4a843' }: ProvinciaeListPanelProps) {
+export function ProvinciaeListPanel({ accent = '#d4a843', index = 0 }: ProvinciaeListPanelProps) {
   const provs = provinces.value;
 
   return (
-    <OrnatePanel accent={accent} style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+    <BentoCard accent={accent} index={index} style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
       <SectionHeader
         title="Provinciae"
         accent={accent}
@@ -41,6 +42,6 @@ export function ProvinciaeListPanel({ accent = '#d4a843' }: ProvinciaeListPanelP
           />
         ))}
       </div>
-    </OrnatePanel>
+    </BentoCard>
   );
 }

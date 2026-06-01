@@ -4,6 +4,7 @@ import { Tooltip } from '../../components/Tooltip';
 export interface StatChipData {
   key: string;
   glyph: string;
+  iconSrc?: string;
   value: number | string;
   delta?: number;
   color: string;
@@ -32,7 +33,15 @@ export function StatChip({ r, accent = '#d4a843' }: StatChipProps) {
       }}
     >
       <Corners color={accent} size={6} inset={0} thickness={1} />
-      <span style={{ color: r.color, fontSize: 14, lineHeight: 1 }}>{r.glyph}</span>
+      {r.iconSrc ? (
+        <img
+          src={r.iconSrc}
+          alt=""
+          style={{ width: 20, height: 20, objectFit: 'contain', display: 'block' }}
+        />
+      ) : (
+        <span style={{ color: r.color, fontSize: 14, lineHeight: 1 }}>{r.glyph}</span>
+      )}
       <span style={{
         fontFamily: 'var(--imp-font-mono)',
         fontSize: 13, fontWeight: 600,
@@ -62,7 +71,15 @@ export function StatChip({ r, accent = '#d4a843' }: StatChipProps) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 180 }}>
           {r.label && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, color: r.color }}>
-              <span>{r.glyph}</span>
+              {r.iconSrc ? (
+                <img
+                  src={r.iconSrc}
+                  alt=""
+                  style={{ width: 20, height: 20, objectFit: 'contain', display: 'block' }}
+                />
+              ) : (
+                <span>{r.glyph}</span>
+              )}
               <span>{r.label}</span>
               <span style={{ marginLeft: 'auto', fontFamily: 'var(--imp-font-mono)', color: 'var(--imp-text-hi)' }}>
                 {valueLabel}

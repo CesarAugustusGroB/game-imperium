@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iter Belli — Consilium: misión + modificadores (Fase 1)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital@0;1&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16131f; --panel:#1d1930; --panel2:#241f38;
+    --gold:#d4a843; --gold-hi:#f0d080; --gold-faint:rgba(212,168,67,.25);
+    --text-hi:#efe7d2; --text:#cdc4b4; --text-lo:#8f8676;
+    --red:#b23a3a; --blue:#5a8ab0; --goldf:#c9a23f; --purple:#a972a9; --white:#cfc6b5;
+    --danger:#c24a3a; --green:#7faa6a;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(122,36,50,.18), transparent 60%),
+      linear-gradient(180deg, #100d18 0%, var(--ink) 40%);
+    color:var(--text); font-family:'EB Garamond', Georgia, serif; font-size:18px; line-height:1.62;
+    padding:48px 20px 96px;
+  }
+  .wrap{max-width:960px; margin:0 auto}
+  .eyebrow{font-family:'Cinzel',serif; letter-spacing:5px; text-transform:uppercase; font-size:11px; color:var(--text-lo); text-align:center}
+  h1{font-family:'Cinzel',serif; font-weight:700; letter-spacing:2px; color:var(--gold-hi);
+     text-align:center; font-size:34px; margin:8px 0 4px; text-shadow:0 0 24px rgba(212,168,67,.25)}
+  .sub{text-align:center; color:var(--text-lo); font-style:italic; margin-bottom:6px}
+  .rule{height:1px; background:linear-gradient(90deg,transparent,var(--gold-faint),transparent); margin:28px 0}
+  .laurel{text-align:center; color:var(--gold); opacity:.7; font-size:20px; letter-spacing:8px}
+  h2{font-family:'Cinzel',serif; font-weight:500; letter-spacing:1.5px; color:var(--gold);
+     font-size:21px; margin:36px 0 10px; border-bottom:1px solid var(--gold-faint); padding-bottom:6px}
+  h2 .n{color:var(--text-lo); font-size:15px; margin-right:10px}
+  h3{font-family:'Cinzel',serif; color:var(--gold-hi); font-size:15px; letter-spacing:1px; margin:22px 0 6px}
+  p{margin:10px 0}
+  code{font-family:'JetBrains Mono',monospace; font-size:.82em; color:var(--gold-hi);
+       background:rgba(212,168,67,.08); padding:1px 6px; border-radius:3px; border:1px solid var(--gold-faint)}
+  strong{color:var(--text-hi)}
+  ul{margin:10px 0; padding-left:22px}
+  li{margin:6px 0}
+  .card{background:linear-gradient(180deg, var(--panel2), var(--panel)); border:1px solid var(--gold-faint);
+        border-radius:4px; padding:18px 22px; margin:14px 0; box-shadow:0 2px 24px rgba(0,0,0,.35)}
+  .pill{display:inline-block; font-family:'Cinzel',serif; font-size:10px; letter-spacing:2px; text-transform:uppercase;
+        padding:3px 10px; border-radius:2px; border:1px solid var(--gold-faint); color:var(--gold); margin:2px 4px 2px 0}
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:15.5px}
+  th,td{text-align:left; padding:9px 12px; border-bottom:1px solid rgba(212,168,67,.14); vertical-align:top}
+  th{font-family:'Cinzel',serif; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text-lo); font-weight:500}
+  tr:hover td{background:rgba(212,168,67,.04)}
+  .dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:8px; vertical-align:middle; box-shadow:0 0 8px currentColor}
+  .c-red{color:var(--red)} .c-blue{color:var(--blue)} .c-gold{color:var(--goldf)} .c-purple{color:var(--purple)} .c-white{color:var(--white)}
+  .cond{font-family:'JetBrains Mono',monospace; font-size:.8em; color:var(--text)}
+  .bonus{color:var(--gold-hi); white-space:nowrap}
+  .files li code{color:var(--text-hi)}
+  .scope-out{border-left:3px solid var(--danger); background:rgba(194,74,58,.07)}
+  .flow{font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--text); line-height:1.9;
+        background:rgba(0,0,0,.25); border:1px solid var(--gold-faint); border-radius:4px; padding:14px 16px; overflow-x:auto}
+  .flow .arr{color:var(--gold)}
+  .tag{font-family:'Cinzel',serif; font-size:10px; letter-spacing:2px; color:var(--green); border:1px solid var(--green); padding:2px 8px; border-radius:2px}
+  .meta{text-align:center; color:var(--text-lo); font-size:12px; font-family:'JetBrains Mono',monospace; margin-top:8px}
+  a.top{display:block; text-align:center; color:var(--text-lo); font-size:12px; text-decoration:none; margin-top:40px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Iter Belli · Design Spec · Phase 1</div>
+  <h1>Consilium → Misión + Modificadores</h1>
+  <div class="sub">El consejo moldea la campaña al embarcar</div>
+  <div class="laurel">❦ &nbsp; ⚜ &nbsp; ❦</div>
+  <div class="meta">spec: 2026-05-28-iter-belli-consilium-mission-modifiers-design.md · commit 720dd26</div>
+
+  <div class="rule"></div>
+
+  <h2><span class="n">I</span>Contexto y objetivo</h2>
+  <p>El Consilium sentado (3 ranuras, <code>councilSlots</code>) hoy <strong>no afecta</strong> a la campaña Iter Belli. Esta feature hace que el consejo configure cada campaña al embarcar:</p>
+  <ul>
+    <li>La <strong>primera ranura ocupada</strong> fija la <strong>misión principal</strong> (según el <code>color</code> del advisor).</li>
+    <li>Las <strong>demás ranuras ocupadas</strong> aportan cada una un <strong>modificador</strong> a los stats iniciales de la campaña (según su <code>passive</code>).</li>
+  </ul>
+  <p>Es la <strong>Fase 1</strong> de la visión "el Consilium moldea la campaña". Reusa el puente <code>CampaignSeed</code>; el módulo de lógica de Iter Belli queda <strong>desacoplado</strong> (solo guarda un <code>missionId</code> y recibe deltas numéricos — sin importar <code>Advisor</code>). No toca código de bellum/batallas.</p>
+
+  <h2><span class="n">II</span>Decisiones fijadas</h2>
+  <div class="card">
+    <span class="pill">Fase 1 = misión + modificadores</span>
+    <span class="pill">misión por color (asiento 1)</span>
+    <span class="pill">modificador por passive (otros asientos)</span>
+    <span class="pill">aplican en seed-time</span>
+    <p style="margin-bottom:0">Eventos secundarios diferidos a Fase 2. Sin autoring por-advisor: se reutiliza el <code>color</code> y el <code>passive</code> que ya existen. Los modificadores se aplican como bonus a los stats iniciales (motor de campaña intacto).</p>
+  </div>
+
+  <h2><span class="n">III</span>Misión principal <span style="font-size:13px;color:var(--text-lo)">— primer asiento → color → misión</span></h2>
+  <p>5 misiones, una por color. La campaña termina igual en la batalla de Sagunto; la misión superpone una <strong>condición medible</strong> al final. En <strong>victoria</strong>, si se cumple, se otorga un <strong>bonus de oro</strong> sobre la recompensa base (conquista del Thread 6 + oro). Derrota = sin recompensa. Números tuneables.</p>
+  <table>
+    <thead><tr><th>Color (asiento 1)</th><th>Misión</th><th>Condición (victoria Y…)</th><th>Bonus</th></tr></thead>
+    <tbody>
+      <tr><td><span class="dot c-red"></span>red · Militar</td><td><code>asalto</code> · Asalto</td><td class="cond">turnNum ≤ 8 <span style="color:var(--text-lo)">(asalto veloz)</span></td><td class="bonus">+50 oro</td></tr>
+      <tr><td><span class="dot c-blue"></span>blue · Diplomático</td><td><code>pax</code> · Pax Romana</td><td class="cond">threat ≤ 4</td><td class="bonus">+50 oro</td></tr>
+      <tr><td><span class="dot c-gold"></span>gold · Religioso</td><td><code>cruzada</code> · Cruzada</td><td class="cond">morale ≥ 6</td><td class="bonus">+50 oro</td></tr>
+      <tr><td><span class="dot c-purple"></span>purple · Económico</td><td><code>botin</code> · Botín</td><td class="cond">gold ≥ 120</td><td class="bonus">+80 oro</td></tr>
+      <tr><td><span class="dot c-white"></span>white · Populista</td><td><code>legion</code> · Legión Intacta</td><td class="cond">soldiers ≥ 0.6 × initialSoldiers</td><td class="bonus">+50 oro</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:14px;color:var(--text-lo)">Sin ranura ocupada → <code>missionId = null</code> (sin misión, solo recompensa base).</p>
+
+  <h2><span class="n">IV</span>Modificadores <span style="font-size:13px;color:var(--text-lo)">— otros asientos → passive → deltas de stats iniciales</span></h2>
+  <p>Cada ranura ocupada <em>después de la primera</em> mapea su <code>passive</code> de tier activo a deltas de seed, sumados:</p>
+  <table>
+    <thead><tr><th>Passive <code>type</code></th><th>Efecto en el seed de campaña</th></tr></thead>
+    <tbody>
+      <tr><td><code>upkeep-reduction</code> (P%)</td><td>+<code>round(P/100 × 24)</code> suministros iniciales <span style="color:var(--text-lo)">(presupuesto upkeep = 2×12)</span></td></tr>
+      <tr><td><code>threat-reduction</code> (A)</td><td>−A amenaza inicial (clamp ≥ 0)</td></tr>
+      <tr><td><code>resource-per-spoke</code> gold (A)</td><td>+A oro inicial</td></tr>
+      <tr><td><code>loot-bonus</code> (P%)</td><td>+<code>round(P/5)</code> oro inicial</td></tr>
+      <tr><td><code>shop-discount</code> (P%)</td><td>+<code>round(P/5)</code> oro inicial <span style="color:var(--text-lo)">(compras más baratas ≈ más oro)</span></td></tr>
+      <tr><td><code>heal-between-nodes</code> (A)</td><td>+<code>round(A/100)</code> moral inicial (clamp ≤ 10)</td></tr>
+      <tr><td><code>extra-event-choices</code>, recursos deprecados (faith/influence/momentum)</td><td>sin efecto (se omiten)</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:14px;color:var(--text-lo)"><code>loot-bonus</code>/<code>shop-discount</code> son proxies de oro en seed-time (sin threading por-turno en Fase 1); tuneables. Recursos deprecados quedan inertes.</p>
+
+  <h2><span class="n">V</span>Display</h2>
+  <ul>
+    <li><strong>Tarjeta de embark:</strong> misión activa (título + condición) + resumen de modificadores (p.ej. "Consilium: +5 suministros, −2 amenaza, +4 oro").</li>
+    <li><strong>Cabecera / barra de campaña:</strong> título de la misión + su condición para trackearla en vivo.</li>
+    <li><strong>Endgame:</strong> línea de "Misión cumplida (+N oro)" o "Misión fallida".</li>
+  </ul>
+
+  <h2><span class="n">VI</span>Arquitectura y archivos</h2>
+  <ul class="files">
+    <li><span class="tag">NUEVO</span> &nbsp;<code>src/data/iter-belli-consilium.ts</code> — datos/bridge puros: <code>MISSIONS</code> (color→misión, condición, bonus), <code>getMissionById</code>, <code>PASSIVE_MODIFIER(passive)</code>, <code>ConsiliumSetup</code>, y <code>computeConsiliumSetup(slots)</code> (1ª ranura→misión; demás→suma de modificadores).</li>
+    <li><code>iter-belli-types.ts</code> — <code>IterBelliState.missionId: string | null</code>.</li>
+    <li><code>iter-belli-state.ts</code> — <code>CampaignSeed</code> gana <code>missionId?</code>, <code>startThreat?</code>, <code>startMorale?</code>; aplicados (clamp) en <code>startIterBelliCampaign</code>; gold/supplies se pliegan en los campos existentes del seed.</li>
+    <li><code>forum/panels/EmbarkCard.tsx</code> — <code>computeConsiliumSetup(councilSlots.value)</code>, plegar deltas en el seed, render de misión + modificadores.</li>
+    <li><code>iterbelli/CampaignResourceBar.tsx</code> — mostrar la misión activa durante la campaña.</li>
+    <li><code>iterbelli/EndgameCard.tsx</code> — evaluar <code>condition(s)</code> en victoria, sumar <code>bonusGold</code> al writeback, mostrar el resultado.</li>
+  </ul>
+
+  <h3>Flujo de datos</h3>
+  <div class="flow">
+    EmbarkCard <span class="arr">→</span> computeConsiliumSetup(councilSlots)<br>
+    &nbsp;&nbsp;<span class="arr">→</span> seed { missionId, gold/supplies + deltas, startThreat, startMorale }<br>
+    &nbsp;&nbsp;<span class="arr">→</span> startIterBelliCampaign <span class="arr">→</span> IterBelliState.missionId + stats ajustados<br>
+    &nbsp;&nbsp;<span class="arr">→</span> [campaña] <span class="arr">→</span> EndgameCard.returnToHub<br>
+    &nbsp;&nbsp;<span class="arr">→</span> evalúa condición → bonus de oro si se cumple
+  </div>
+
+  <h2><span class="n">VII</span>Verificación</h2>
+  <p>Nuevo <code>tools/verify-iter-belli-consilium.ts</code> (<code>npx tsx</code>):</p>
+  <ul>
+    <li><code>MISSIONS</code> tiene los 5 colores con ids distintos; <code>getMissionById</code> hace round-trip y devuelve null para desconocido.</li>
+    <li>Cada <code>condition</code> devuelve true/false correctamente en estados finales fabricados (p.ej. <code>pax</code> true a threat 4, false a 5).</li>
+    <li><code>PASSIVE_MODIFIER</code>: upkeep 20%→+5 supplies; threat-reduction 2→2; gold 3→+3; loot 25%→+5 oro; heal 200→+2 moral; recurso deprecado→todo 0.</li>
+    <li><code>computeConsiliumSetup</code>: 1ª ranura fija misión y NO aporta modificador; las demás suman; todo-null → <code>{ null, 0,0,0,0 }</code>.</li>
+    <li>Round-trip del seed: <code>missionId='pax'</code>, startThreat 0, startMorale 10 aplican; <code>resetIterBelli</code> los limpia.</li>
+  </ul>
+  <p>Más <code>npx tsc --noEmit</code> → 0, los otros verify de Iter Belli siguen pasando, y prueba en navegador (advisor red 1º → "Asalto"; quartermaster en otra ranura → más suministros iniciales; cumplir condición → bonus en endgame y oro del Hub).</p>
+
+  <h2><span class="n">VIII</span>Fuera de alcance</h2>
+  <div class="card scope-out">
+    <ul style="margin:0">
+      <li>Eventos/objetivos secundarios desde los asientos no-primeros (<strong>Fase 2</strong>).</li>
+      <li>Efectos de modificador por-turno (upkeep real por turno, descuento de tienda en vivo) — Fase 1 aplica solo en seed-time.</li>
+      <li>Sin editar bellum/batallas, <code>army/morale.ts</code>, advisor data ni el council store (lectura sola de <code>councilSlots</code>).</li>
+      <li>El módulo de lógica solo gana <code>missionId: string</code> — sin imports de <code>Advisor</code>/council.</li>
+    </ul>
+  </div>
+
+  <div class="laurel" style="margin-top:36px">❦ &nbsp; ⚜ &nbsp; ❦</div>
+  <a class="top" href="#">▲ volver arriba</a>
+</div>
+</body>
+</html>

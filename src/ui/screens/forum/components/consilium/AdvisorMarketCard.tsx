@@ -3,6 +3,7 @@ import type { Advisor } from '../../../../../game/council/advisor';
 import { getDiscountedAdvisorCost } from '../../../../../game/council/council-store';
 import { FACTION_COLORS } from '../../../../../game/core/commander';
 import { Corners } from '../../../../components/motifs/Corners';
+import { ResourceAmount } from '../../../../components/ResourceIcon';
 import { TraitGlyph } from './TraitGlyph';
 
 const ROMAN: readonly string[] = ['I', 'II', 'III'];
@@ -176,7 +177,7 @@ export function AdvisorMarketCard({
             fontWeight: 800,
             whiteSpace: 'nowrap',
           }}>
-            {getDiscountedAdvisorCost(advisor)}g
+            <ResourceAmount type="gold" amount={getDiscountedAdvisorCost(advisor)} iconSize={14} />
           </div>
           <button
             type="button"

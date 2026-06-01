@@ -17,8 +17,9 @@ import {
 } from '../../../../game/council/advisor';
 import { FACTION_COLORS } from '../../../../game/core/commander';
 import { gold } from '../../../../game/core/resources';
-import { OrnatePanel } from '../../../components/OrnatePanel';
+import { BentoCard } from '../../../components/BentoCard';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
+import { ResourceAmount } from '../../../components/ResourceIcon';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 import {
@@ -181,14 +182,15 @@ export function ConsiliumTab() {
             />
           </aside>
 
-          <OrnatePanel
-            accent={CONSILIUM_ACCENT}
-            padding="0"
+          <BentoCard
+            accent={currentSelection ? FACTION_COLORS[currentSelection.advisor.color] : CONSILIUM_ACCENT}
+            index={1}
             style={{
               minHeight: 0,
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
+              padding: 0,
             }}
           >
             {currentSelection ? (
@@ -199,7 +201,7 @@ export function ConsiliumTab() {
             ) : (
               <EmptyHero />
             )}
-          </OrnatePanel>
+          </BentoCard>
 
           <aside class="consilium-reserve-column consilium-scroll">
             <ReservedColumn slots={slots} />
@@ -235,7 +237,7 @@ interface SeatsPanelProps {
 
 function SeatsPanel({ slots, selectedId, onSelect }: SeatsPanelProps) {
   return (
-    <OrnatePanel accent={CONSILIUM_ACCENT}>
+    <BentoCard accent={CONSILIUM_ACCENT} index={0}>
       <SectionHeader title="The Three Seats" accent={CONSILIUM_ACCENT} />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {slots.map((advisor, index) => (
@@ -248,7 +250,7 @@ function SeatsPanel({ slots, selectedId, onSelect }: SeatsPanelProps) {
           />
         ))}
       </div>
-    </OrnatePanel>
+    </BentoCard>
   );
 }
 
@@ -446,7 +448,9 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
             border: '1px solid var(--imp-gold-dim)',
             background: 'rgba(13, 11, 20, 0.72)',
           }}>
-            {source === 'market' ? `${getDiscountedAdvisorCost(advisor)}g` : 'SEATED'}
+            {source === 'market'
+              ? <ResourceAmount type="gold" amount={getDiscountedAdvisorCost(advisor)} iconSize={17} />
+              : 'SEATED'}
           </div>
         </div>
       </div>
@@ -561,7 +565,7 @@ function ReservedColumn({ slots }: { slots: (Advisor | null)[] }) {
   const seatedAdvisors = slots.filter((advisor): advisor is Advisor => advisor !== null);
 
   return (
-    <OrnatePanel accent={CONSILIUM_ACCENT} style={{ minHeight: '100%' }}>
+    <BentoCard accent={CONSILIUM_ACCENT} index={2} style={{ minHeight: '100%' }}>
       <SectionHeader title="Seated Bonuses" accent={CONSILIUM_ACCENT} />
       <div style={{
         minHeight: '100%',
@@ -638,7 +642,7 @@ function ReservedColumn({ slots }: { slots: (Advisor | null)[] }) {
           />
         </div>
       </div>
-    </OrnatePanel>
+    </BentoCard>
   );
 }
 
@@ -677,11 +681,11 @@ function PoliticalMarketPanel({
 }: PoliticalMarketPanelProps) {
   return (
     <div style={{ flex: '0 0 auto', padding: '0 32px 24px' }}>
-      <OrnatePanel accent={CONSILIUM_ACCENT} padding="14px 16px">
+      <BentoCard accent={CONSILIUM_ACCENT} index={3} style={{ padding: '14px 16px' }}>
         <SectionHeader
           title="Political Market"
           accent={CONSILIUM_ACCENT}
-          right={<span style={countPillStyle}>{totalOffers} offers · {currentGold}g</span>}
+          right={<span style={countPillStyle}>{totalOffers} offers · <ResourceAmount type="gold" amount={currentGold} iconSize={13} /></span>}
         />
 
         <div style={{
@@ -780,7 +784,7 @@ function PoliticalMarketPanel({
             onHire={onHire}
           />
         )}
-      </OrnatePanel>
+      </BentoCard>
     </div>
   );
 }
@@ -945,7 +949,7 @@ function AdvisorMarketRow({
         fontWeight: 800,
         whiteSpace: 'nowrap',
       }}>
-        {getDiscountedAdvisorCost(advisor)}g
+        <ResourceAmount type="gold" amount={getDiscountedAdvisorCost(advisor)} iconSize={13} />
       </div>
       {actionLabel && (
         <button

@@ -19,7 +19,7 @@ function advisorMeta(
   };
 }
 
-// â”€â”€ Red (Military) â€” battle-heavy, short spokes, attacking â”€â”€
+// ── Red (Military) — battle-heavy, short spokes, attacking ──
 
 export const ADVISOR_CENTURION: Advisor = {
   id: 'advisor_centurion', name: 'Centurion Varro', color: 'red', currentTier: 1, xp: 0,
@@ -69,7 +69,7 @@ export const ADVISOR_RAIDER: Advisor = {
   ],
 };
 
-// â”€â”€ Blue (Diplomatic) â€” event-heavy, longer spokes, defending â”€â”€
+// ── Blue (Diplomatic) — event-heavy, longer spokes, defending ──
 
 export const ADVISOR_DIPLOMAT: Advisor = {
   id: 'advisor_diplomat', name: 'Legate Aemilia', color: 'blue', currentTier: 1, xp: 0,
@@ -119,7 +119,7 @@ export const ADVISOR_SPYMASTER: Advisor = {
   ],
 };
 
-// â”€â”€ Gold (Religious) â€” faith, healing, holy events â”€â”€
+// ── Gold (Religious) — faith, healing, holy events ──
 
 export const ADVISOR_PONTIFEX: Advisor = {
   id: 'advisor_pontifex', name: 'Pontifex Lucius', color: 'gold', currentTier: 1, xp: 0,
@@ -169,7 +169,7 @@ export const ADVISOR_ZEALOT: Advisor = {
   ],
 };
 
-// â”€â”€ Purple (Economic) â€” trade, gold, shop discounts â”€â”€
+// ── Purple (Economic) — trade, gold, shop discounts ──
 
 export const ADVISOR_MERCHANT: Advisor = {
   id: 'advisor_merchant', name: 'Merchant Decimus', color: 'purple', currentTier: 1, xp: 0,
@@ -219,7 +219,7 @@ export const ADVISOR_SMUGGLER: Advisor = {
   ],
 };
 
-// â”€â”€ White (Populist) â€” balanced, rest-heavy, population bonuses â”€â”€
+// ── White (Populist) — balanced, rest-heavy, population bonuses ──
 
 export const ADVISOR_TRIBUNE: Advisor = {
   id: 'advisor_tribune', name: 'Tribune Publius', color: 'white', currentTier: 1, xp: 0,
@@ -269,7 +269,7 @@ export const ADVISOR_CONSUL: Advisor = {
   ],
 };
 
-// â”€â”€ All starter advisors â”€â”€
+// ── All starter advisors ──
 
 export const STARTER_ADVISORS: Advisor[] = [
   // Red

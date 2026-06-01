@@ -1,4 +1,4 @@
-import { signal, useSignal } from '@preact/signals';
+﻿import { signal, useSignal } from '@preact/signals';
 import type { ComponentChildren } from 'preact';
 import { selectedCommander } from '../../game/core/game-state';
 import { playSfx } from '../sound/sfx';
@@ -28,12 +28,14 @@ import { TRADE_GOOD_DATA } from '../../data/trade-goods';
 import { TERRAIN_DATA, TERRAIN_AVAILABLE_BUILDINGS } from '../../data/terrain-data';
 import { nextInvestmentDiscount } from '../../game/progression/strategic-store';
 import { FOOD, IUNIORES } from '../../config/game-config';
-import { ROMAN, formatCost } from '../ui-constants';
+import { ROMAN } from '../ui-constants';
 import { Portrait } from '../components/Portrait';
 import { Tooltip } from '../components/Tooltip';
 import { BuildingIcon } from '../components/BuildingIcon';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
+import { BentoCard } from '../components/BentoCard';
 import { Masthead } from './forum/Masthead';
+import { CostInline, ResourceAmount, ResourceIcon } from '../components/ResourceIcon';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('province-styles')) {
@@ -664,7 +666,7 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
           {(Object.entries(incomeBonus) as [ResourceType, number][]).map(([res, amt]) => (
             amt > 0 ? (
               <div key={res} style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
-                +{amt} {RESOURCE_INFO[res].icon} per spoke
+                <ResourceAmount type={res} amount={amt} sign="+" iconSize={14} /> per spoke
               </div>
             ) : null
           ))}
@@ -682,7 +684,7 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
       )}
       {nextLevel > 0 && cost && (
         <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-          {currentLevel === 0 ? 'Build' : `Upgrade to Lv.${nextLevel}`}: {formatCost(cost)}
+          {currentLevel === 0 ? 'Build' : `Upgrade to Lv.${nextLevel}`}: <CostInline cost={cost} iconSize={14} />
         </div>
       )}
       {isSlotLocked && (
@@ -726,7 +728,7 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
         )}
         {!maxed && cost && (
           <button class="ornate-btn" disabled={!affordable} onClick={handleBuild}>
-            {currentLevel === 0 ? 'Build' : `${ROMAN[currentLevel]} → ${ROMAN[nextLevel]}`} · {formatCost(cost)}
+            {currentLevel === 0 ? 'Build' : `${ROMAN[currentLevel]} → ${ROMAN[nextLevel]}`} · <CostInline cost={cost} iconSize={14} />
           </button>
         )}
         {maxed && <div class="inv-maxed">Max Level</div>}
@@ -1069,7 +1071,7 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
                     <span style={{ fontSize: '8px', opacity: 0.6, fontWeight: 400, textTransform: 'none', lineHeight: '1.3', textAlign: 'center' }}>
                       {tierData.description.split(' ').slice(0, 6).join(' ')}
                     </span>
-                    <span style={{ fontSize: '9px', color: 'var(--color-gold-secondary)', fontWeight: 700 }}>{formatCost(cost)}</span>
+                    <span style={{ fontSize: '9px', color: 'var(--color-gold-secondary)', fontWeight: 700 }}><CostInline cost={cost} iconSize={13} /></span>
                     <span style={{ fontSize: '8px', color: 'rgba(230, 130, 80, 0.75)', fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>then {tier}g/season</span>
                   </button>
                 );
@@ -1921,7 +1923,7 @@ function UnrestSection({ province }: { province: Province }) {
 function LedgerRow({
   label, value, detail, badge, positive = false, negative = false, bold = false,
 }: {
-  label: string; value: string; detail?: string; badge?: 'trade' | 'gov';
+  label: string; value: ComponentChildren; detail?: string; badge?: 'trade' | 'gov';
   positive?: boolean; negative?: boolean; bold?: boolean;
 }) {
   const valueColor = positive
@@ -1979,7 +1981,7 @@ function LedgerRow({
   );
 }
 
-function IncomeLedger({ province }: { province: Province }) {
+function IncomeLedger({ province, accent = '#d4a843', index = 0 }: { province: Province; accent?: string; index?: number }) {
   const isExpanded = useSignal(false);
   const traits = getGovernorTraits(province.id);
 
@@ -2062,7 +2064,7 @@ function IncomeLedger({ province }: { province: Province }) {
   const nonGoldEntries = (Object.entries(nonGoldIncome) as [ResourceType, number][]).filter(([, v]) => v > 0);
 
   return (
-    <div class="ledger-section">
+    <BentoCard accent={accent} index={index} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
       {/* Summary header — always visible */}
       <div class="ledger-header" onClick={() => { isExpanded.value = !isExpanded.value; }}>
         <span style={{
@@ -2081,7 +2083,7 @@ function IncomeLedger({ province }: { province: Province }) {
           </span>
           {nonGoldEntries.map(([res, amt]) => (
             <span key={res} style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-              {RESOURCE_INFO[res].icon}+{amt}
+              <ResourceAmount type={res} amount={amt} sign="+" iconSize={14} />
             </span>
           ))}
           <span class="ledger-toggle" style={{ fontSize: '10px', color: 'var(--color-text-muted)', transition: 'color var(--duration-fast)' }}>
@@ -2134,11 +2136,11 @@ function IncomeLedger({ province }: { province: Province }) {
 
           {/* Non-gold resources */}
           {nonGoldEntries.map(([res, amt]) => (
-            <LedgerRow key={res} label={RESOURCE_INFO[res].label} value={`+${amt} ${RESOURCE_INFO[res].icon}`} positive />
+            <LedgerRow key={res} label={RESOURCE_INFO[res].label} value={<ResourceAmount type={res} amount={amt} sign="+" iconSize={14} />} positive />
           ))}
           <LedgerRow
             label="Iuniores / season"
-            value={`+${iunioresYield} ${RESOURCE_INFO.iuniores.icon}`}
+            value={<ResourceAmount type="iuniores" amount={iunioresYield} sign="+" iconSize={14} />}
             positive={iunioresYield > 0}
             detail={`${province.population} pop × ${IUNIORES.perPop}/pop = ${iunioresYield}`}
           />
@@ -2178,7 +2180,7 @@ function IncomeLedger({ province }: { province: Province }) {
           </div>
         </div>
       )}
-    </div>
+    </BentoCard>
   );
 }
 
@@ -2240,8 +2242,10 @@ function ProvinceAdminPanel({ province }: { province: Province }) {
   function setLower(v: TaxLevel) { playSfx('ui_click'); setProvinceTax(province.id, v, province.upperTax); }
   function setUpper(v: TaxLevel) { playSfx('ui_click'); setProvinceTax(province.id, province.lowerTax, v); }
 
+  const accent = getSettlementColor(province.population);
+
   return (
-    <div class="pa-admin">
+    <BentoCard accent={accent} index={1} style={{ overflow: 'hidden', padding: 0 }}>
       <div class="pa-admin-title-bar">
         <div class="pa-admin-title">Province Administration</div>
         <div class="pa-admin-divider" />
@@ -2313,7 +2317,7 @@ function ProvinceAdminPanel({ province }: { province: Province }) {
           {netIncome >= 0 ? '+' : ''}{netIncome}g / season
         </span>
       </div>
-    </div>
+    </BentoCard>
   );
 }
 
@@ -2324,6 +2328,9 @@ function ProvinceDetail({ province }: { province: Province }) {
   void governorAssignments.value;
   void governorPool.value;
 
+  // Per-province tier tint (settlement size) drives each card's hairline + glow.
+  const accent = getSettlementColor(province.population);
+
   return (
     <div style={{ animation: 'prov-fade-in var(--duration-normal) var(--ease-default)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Province Identity (S18-06) */}
@@ -2333,19 +2340,18 @@ function ProvinceDetail({ province }: { province: Province }) {
       <ProvinceAdminPanel key={province.id} province={province} />
 
       {/* Wealth · Population · Unrest — same row */}
-      <div style={{
+      <BentoCard accent={accent} index={2} style={{
         display: 'flex', alignItems: 'stretch',
-        paddingBottom: '14px', borderBottom: '1px solid var(--color-border-subtle)',
       }}>
         <div style={{ flex: '1 1 0', minWidth: 0, paddingRight: '12px' }}><WealthDisplay province={province} /></div>
         <div style={{ width: '1px', background: 'var(--color-border-subtle)', flexShrink: 0 }} />
         <div style={{ flex: '1 1 0', minWidth: 0, padding: '0 12px' }}><PopBar province={province} /></div>
         <div style={{ width: '1px', background: 'var(--color-border-subtle)', flexShrink: 0 }} />
         <div style={{ flex: '1 1 0', minWidth: 0, paddingLeft: '12px' }}><UnrestSection province={province} /></div>
-      </div>
+      </BentoCard>
 
       {/* Income Ledger (S18-04) */}
-      <IncomeLedger province={province} />
+      <IncomeLedger province={province} accent={accent} index={3} />
 
       {/* Building grid — terrain gates + synergies (S18-07) */}
       <BuildingGrid province={province} />
@@ -2400,7 +2406,13 @@ export function ProvinciaeTab() {
   const netGold = (totalIncome.gold ?? 0) - totalExpenses;
   const subtitle = allProvinces.length === 0
     ? 'No holdings'
-    : `${allProvinces.length} Holding${allProvinces.length === 1 ? '' : 's'} · ${netGold >= 0 ? '+' : ''}${netGold}⚜ · Avg unrest ${avgUnrest}%`;
+    : (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        {allProvinces.length} Holding{allProvinces.length === 1 ? '' : 's'} ·
+        <ResourceAmount type="gold" amount={netGold} sign={netGold >= 0 ? '+' : ''} iconSize={14} />
+        · Avg unrest {avgUnrest}%
+      </span>
+    );
 
   return (
     <>
@@ -2429,7 +2441,7 @@ export function ProvinciaeTab() {
             {totalPop > 0 && (
               <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
                 <span class="ornate-stat-chip" title="Total Population">👥 <strong>{totalPop}</strong></span>
-                <span class="ornate-stat-chip" title="Avg Wealth">{RESOURCE_INFO.gold.icon} <strong>{avgWealth}</strong></span>
+                <span class="ornate-stat-chip" title="Avg Wealth"><ResourceIcon type="gold" size={16} /> <strong>{avgWealth}</strong></span>
               </div>
             )}
           </div>

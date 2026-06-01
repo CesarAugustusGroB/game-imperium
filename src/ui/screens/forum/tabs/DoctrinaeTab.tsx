@@ -1,4 +1,4 @@
-import { useSignal } from '@preact/signals';
+﻿import { useSignal } from '@preact/signals';
 import type { JSX } from 'preact';
 import { selectedCommander } from '../../../../game/core/game-state';
 import {
@@ -14,10 +14,11 @@ import { FACTION_COLORS } from '../../../../game/core/commander';
 import type { ResourceType } from '../../../../game/core/commander';
 import { gold, faith, influence, momentum, iuniores } from '../../../../game/core/resources';
 import { playSfx } from '../../../sound/sfx';
-import { OrnatePanel } from '../../../components/OrnatePanel';
+import { BentoCard } from '../../../components/BentoCard';
 import { Corners } from '../../../components/motifs/Corners';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
+import { CostInline, ResourceAmount } from '../../../components/ResourceIcon';
 
 const CAMPAIGN_EFFECT_BY_COLOR: Record<string, string> = {
   red: 'Campaña: las cartas de Coerción erosionan más al enemigo.',
@@ -28,10 +29,6 @@ const CAMPAIGN_EFFECT_BY_COLOR: Record<string, string> = {
 };
 
 const ROMAN: readonly string[] = ['I', 'II', 'III'];
-const RESOURCE_GLYPH: Record<ResourceType, string> = {
-  gold: '⚜', faith: '✦', influence: '◈', momentum: '⚡', iuniores: '🛡',
-};
-
 export function DoctrinaeTab() {
   const selectedId = useSignal<string | null>(null);
   const draggedId = useSignal<string | null>(null);          // dragging FROM collection
@@ -56,6 +53,10 @@ export function DoctrinaeTab() {
 
   const equippedCount = slots.filter((d) => d !== null).length;
   const subtitle = `${equippedCount} of ${slots.length} equipped · ${collection.length} in collection`;
+
+  // Detail panel takes on the active doctrine's school color so its hairline +
+  // hover glow match the inspected doctrine; falls back to Forum gold.
+  const detailAccent = current ? FACTION_COLORS[current.doctrine.color] : accent;
 
   function handleSelect(id: string) { selectedId.value = id; }
 
@@ -157,7 +158,7 @@ export function DoctrinaeTab() {
           display: 'flex', flexDirection: 'column', gap: 12,
           minHeight: 0, overflow: 'auto',
         }}>
-          <OrnatePanel accent={accent}>
+          <BentoCard accent={accent} index={0}>
             <SectionHeader
               title="Equipped"
               accent={accent}
@@ -187,9 +188,9 @@ export function DoctrinaeTab() {
                 />
               ))}
             </div>
-          </OrnatePanel>
+          </BentoCard>
 
-          <OrnatePanel accent={accent}>
+          <BentoCard accent={accent} index={1}>
             <SectionHeader
               title="Collection"
               accent={accent}
@@ -228,13 +229,13 @@ export function DoctrinaeTab() {
                 />
               ))}
             </div>
-          </OrnatePanel>
+          </BentoCard>
         </div>
 
         {/* ── RIGHT: Detail ── */}
-        <OrnatePanel
-          accent={accent}
-          cornersSize={14}
+        <BentoCard
+          accent={detailAccent}
+          index={2}
           style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'auto' }}
         >
           {current ? (
@@ -257,7 +258,7 @@ export function DoctrinaeTab() {
               Pick a doctrine to inspect.
             </div>
           )}
-        </OrnatePanel>
+        </BentoCard>
       </div>
     </>
   );
@@ -484,7 +485,7 @@ function CollectionRow({
       </button>
       <button
         onClick={(e) => { e.stopPropagation(); onSell(); }}
-        title={`Sell for ${sellPrice}⚜`}
+        title={`Sell for ${sellPrice} gold`}
         style={{
           padding: '5px 10px',
           background: 'transparent',
@@ -498,7 +499,7 @@ function CollectionRow({
           flexShrink: 0,
         }}
       >
-        Sell · {sellPrice}⚜
+        Sell · <ResourceAmount type="gold" amount={sellPrice} iconSize={14} />
       </button>
     </div>
   );
@@ -583,7 +584,7 @@ function DoctrineDetail({ doctrine, slotIndex, accent, onUnequip, onUpgrade, onS
             style={btnPrimary(accent, !canAffordUpgrade)}
             title={!canAffordUpgrade ? 'Not enough resources' : 'Upgrade to next tier'}
           >
-            Upgrade · {upgradeCostEntries.map(([r, a]) => `${a}${RESOURCE_GLYPH[r]}`).join(' ')}
+            Upgrade · <CostInline cost={upgradeCost} iconSize={14} />
           </button>
         )}
         {isEquipped && !upgradeCost && (
@@ -598,7 +599,7 @@ function DoctrineDetail({ doctrine, slotIndex, accent, onUnequip, onUpgrade, onS
         )}
         {!isEquipped && onSell && (
           <button onClick={onSell} style={btnOutline('#c24a3a')}>
-            Sell · {getDoctrineSellPrice(doctrine)}⚜
+            Sell · <ResourceAmount type="gold" amount={getDoctrineSellPrice(doctrine)} iconSize={14} />
           </button>
         )}
       </div>

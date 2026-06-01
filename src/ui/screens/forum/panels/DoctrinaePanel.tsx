@@ -1,18 +1,19 @@
 import { equippedDoctrines } from '../../../../game/items/doctrine-store';
 import { FACTION_COLORS } from '../../../../game/core/commander';
-import { OrnatePanel } from '../../../components/OrnatePanel';
+import { BentoCard } from '../../../components/BentoCard';
 import { SectionHeader, LinkButton } from '../components/SectionHeader';
 import { setForumTab } from '../state';
 
 interface DoctrinaePanelProps {
   accent?: string;
+  index?: number;
 }
 
-export function DoctrinaePanel({ accent = '#d4a843' }: DoctrinaePanelProps) {
+export function DoctrinaePanel({ accent = '#d4a843', index = 0 }: DoctrinaePanelProps) {
   const slots = equippedDoctrines.value;
 
   return (
-    <OrnatePanel accent={accent}>
+    <BentoCard accent={accent} index={index}>
       <SectionHeader
         title="Doctrinae"
         accent={accent}
@@ -90,6 +91,6 @@ export function DoctrinaePanel({ accent = '#d4a843' }: DoctrinaePanelProps) {
           );
         })}
       </div>
-    </OrnatePanel>
+    </BentoCard>
   );
 }

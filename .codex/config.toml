@@ -1,0 +1,6 @@
+[mcp_servers.map2d]
+args = [
+    "tsx",
+    "tools/mcp-server.ts",
+]
+command = "npx"

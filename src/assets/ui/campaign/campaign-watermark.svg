@@ -1,0 +1,38 @@
+<svg width="180" height="140" viewBox="0 0 180 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g opacity="0.72" stroke="#8A5A2B" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M90 15V128"/>
+    <path d="M68 38C73 30 82 25 90 25C98 25 107 30 112 38"/>
+    <path d="M63 45C72 53 78 66 90 78C102 66 108 53 117 45"/>
+    <path d="M65 47L90 123L115 47"/>
+    <path d="M76 67H104"/>
+    <path d="M80 86H100"/>
+    <path d="M70 30C64 24 59 19 53 15"/>
+    <path d="M110 30C116 24 121 19 127 15"/>
+    <path d="M58 20C55 16 53 11 53 6"/>
+    <path d="M122 20C125 16 127 11 127 6"/>
+    <path d="M51 38C38 49 29 62 21 77"/>
+    <path d="M129 38C142 49 151 62 159 77"/>
+    <path d="M35 62C24 57 15 50 9 41"/>
+    <path d="M145 62C156 57 165 50 171 41"/>
+    <path d="M46 50C39 40 34 30 31 18"/>
+    <path d="M134 50C141 40 146 30 149 18"/>
+  </g>
+  <g opacity="0.58" stroke="#A97634" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M30 83C45 91 61 97 79 100"/>
+    <path d="M150 83C135 91 119 97 101 100"/>
+    <path d="M24 93C42 102 61 108 82 110"/>
+    <path d="M156 93C138 102 119 108 98 110"/>
+    <path d="M45 106C43 115 37 122 29 127"/>
+    <path d="M135 106C137 115 143 122 151 127"/>
+    <path d="M53 111C51 120 47 127 41 133"/>
+    <path d="M127 111C129 120 133 127 139 133"/>
+  </g>
+  <g opacity="0.45" fill="#A97634">
+    <path d="M90 6L94 14H86L90 6Z"/>
+    <path d="M30 15L34 23H26L30 15Z"/>
+    <path d="M150 15L154 23H146L150 15Z"/>
+    <circle cx="90" cy="35" r="3.5"/>
+    <circle cx="90" cy="54" r="2.6"/>
+    <circle cx="90" cy="72" r="2.1"/>
+  </g>
+</svg>

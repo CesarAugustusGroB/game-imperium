@@ -1,4 +1,4 @@
-import { OrnateFrame } from '../../components/OrnateFrame';
+﻿import { OrnateFrame } from '../../components/OrnateFrame';
 import { playSfx } from '../../sound/sfx';
 import { navigateTo } from '../../screens';
 import { gold, iuniores } from '../../../game/core/resources';
@@ -15,6 +15,7 @@ import { getMissionById } from '../../../data/iter-belli-consilium';
 import type { TerrainType } from '../../../data/terrain-data';
 import type { ResourceType } from '../../../game/core/commander';
 import { SUPPLY_MAX_CARRY } from '../../../config/game-config';
+import { ResourceAmount } from '../../components/ResourceIcon';
 
 /**
  * Apply the campaign result back to the run, then return to the Hub:
@@ -104,7 +105,7 @@ export function EndgameCard() {
             <div>
               <span>Misión · {mission.title}</span>
               <strong style={{ color: missionMet ? 'var(--imp-gold-hi)' : 'var(--imp-text-lo)' }}>
-                {missionMet ? `cumplida +${mission.bonusGold}⚜` : 'no cumplida'}
+                {missionMet ? <>cumplida <ResourceAmount type="gold" amount={mission.bonusGold} sign="+" iconSize={14} /></> : 'no cumplida'}
               </strong>
             </div>
           )}

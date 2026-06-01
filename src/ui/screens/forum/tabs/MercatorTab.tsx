@@ -6,6 +6,7 @@ import { playSfx } from '../../../sound/sfx';
 import { OrnatePanel } from '../../../components/OrnatePanel';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
+import { ResourceAmount, ResourceIcon } from '../../../components/ResourceIcon';
 
 type SellableResource = Extract<ResourceType, 'faith' | 'influence' | 'momentum'>;
 
@@ -117,8 +118,8 @@ export function MercatorTab() {
                       fontFamily: 'var(--imp-font-body)',
                     }}
                   >
-                    <span style={{ color: info.color, fontSize: 20, width: 22, textAlign: 'center', flexShrink: 0 }}>
-                      {info.icon}
+                    <span style={{ width: 22, textAlign: 'center', flexShrink: 0 }}>
+                      <ResourceIcon type={resource} size={22} />
                     </span>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span style={{
@@ -224,11 +225,11 @@ export function MercatorTab() {
             gap: 12,
           }}>
             <span style={{ color: 'var(--imp-text-mid)', fontSize: 12 }}>
-              {RESOURCE_INFO[selected.value].icon} -{canSell ? clampedAmount : 0}
+              <ResourceAmount type={selected.value} amount={canSell ? clampedAmount : 0} sign="-" iconSize={16} />
             </span>
             <span style={{ color: 'var(--imp-text-lo)' }}>to</span>
             <span style={{ color: accent, fontSize: 12, fontWeight: 700 }}>
-              {RESOURCE_INFO.gold.icon} +{canSell ? clampedAmount : 0}
+              <ResourceAmount type="gold" amount={canSell ? clampedAmount : 0} sign="+" iconSize={16} />
             </span>
           </div>
 

@@ -2,6 +2,20 @@ import { CATEGORIES } from '../../../data/iter-belli-locations';
 import { currentLocation } from '../../../game/iterBelli/iter-belli-state';
 import type { CardEffects, CardInstance, IterBelliState, OperationCard as Card } from '../../../game/iterBelli/iter-belli-types';
 import { isCrisisDef } from '../../../game/iterBelli/iter-belli-types';
+import { GameIcon } from '../../components/GameIcon';
+import type { GameIconName } from '../../components/GameIcon';
+
+/** Operation-card category → sliced medallion icon. */
+const CAT_ICON: Record<string, GameIconName> = {
+  'Logística': 'cat-logistica',
+  'Movimiento': 'cat-movimiento',
+  'Inteligencia': 'cat-inteligencia',
+  'Coerción': 'cat-coercion',
+  'Diplomacia': 'cat-diplomacia',
+  'Postura': 'cat-postura',
+  'Operaciones': 'cat-operaciones',
+  'Crisis': 'cat-crisis',
+};
 
 const EFFECT_LABELS: Record<string, string> = {
   soldiers: 'Soldados', morale: 'Moral', discipline: 'Disciplina', supplies: 'Suministros',
@@ -25,7 +39,7 @@ function EffectLines({ eff }: { eff: CardEffects }) {
         if (k === 'advance') return <div class="ib-effect" key={k}><span class="label">Avance</span><span class="pos">→ siguiente</span></div>;
         if (k === 'ambushDetected') return <div class="ib-effect" key={k}><span class="label">Anti-emboscada</span><span class="pos">activo</span></div>;
         if (k === 'fortified') return <div class="ib-effect" key={k}><span class="label">Fortificación</span><span class="pos">activa</span></div>;
-        if (k === 'triggerFinalBattle') return <div class="ib-effect" key={k} style={{ justifyContent: 'center' }}><span style={{ color: 'var(--imp-crimson)', fontWeight: 700, letterSpacing: 1 }}>★ BATALLA DECISIVA</span></div>;
+        if (k === 'triggerFinalBattle') return <div class="ib-effect" key={k} style={{ justifyContent: 'center', alignItems: 'center', gap: 5 }}><GameIcon name="op-final-battle" size={14} /><span style={{ color: 'var(--imp-crimson)', fontWeight: 700, letterSpacing: 1 }}>BATALLA DECISIVA</span></div>;
         if (typeof v === 'number') {
           const sign = v > 0 ? '+' : '';
           return <div class="ib-effect" key={k}><span class="label">{EFFECT_LABELS[k] ?? k}</span><span class={signClass(k, v)}>{sign}{v}</span></div>;
@@ -54,7 +68,7 @@ export function OperationCard({ card, state, onPlay }: Props) {
     else if (def.id === 'crisis_encuentro') note = 'Decide: jugar o sufrir';
     return (
       <div class="ib-card crisis" style={{ '--card-color': cat.color } as preact.JSX.CSSProperties}>
-        <div class="ib-card-header"><span><span class="ib-card-icon">{cat.icon}</span> Crisis</span></div>
+        <div class="ib-card-header"><span><span class="ib-card-icon"><GameIcon name={CAT_ICON[def.category] ?? 'cat-crisis'} size={15} /></span> Crisis</span></div>
         <div class="ib-card-name">{def.name}</div>
         <div class="ib-card-desc">{def.desc}</div>
         <div class="ib-card-effects" style={{ textAlign: 'center', color: 'var(--imp-crimson)', fontWeight: 700 }}>{note}</div>
@@ -88,7 +102,7 @@ export function OperationCard({ card, state, onPlay }: Props) {
       {card.timer < 99 && (
         <div class={`ib-card-timer${card.timer <= 1 ? ' urgent' : ''}`}>⧗ {card.timer}d</div>
       )}
-      <div class="ib-card-header"><span><span class="ib-card-icon">{isQuest ? '◆' : cat.icon}</span> {typeLabel}</span></div>
+      <div class="ib-card-header"><span><span class="ib-card-icon"><GameIcon name={isQuest ? 'op-quest' : (CAT_ICON[def.category] ?? 'cat-operaciones')} size={15} /></span> {typeLabel}</span></div>
       <div class="ib-card-name">{opCard.name}</div>
       <div class="ib-card-desc">{opCard.desc}</div>
 

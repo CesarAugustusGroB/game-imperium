@@ -4,7 +4,7 @@ const PLAYLIST: readonly string[] = [
   '/audio/main_theme.mp3',
   '/audio/Saffron_Morning (1).mp3',
   '/audio/Beneath_the_Banyan.mp3',
-  '/audio/Titanium_Gravity.mp3',
+  '/audio/The_Sovereign_Crown.mp3',
 ];
 
 const VOLUME = 0.35;

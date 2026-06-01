@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iter Belli — Lo que hicimos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital@0;1&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16131f; --panel:#1d1930; --panel2:#241f38;
+    --gold:#d4a843; --gold-hi:#f0d080; --gold-faint:rgba(212,168,67,.25);
+    --text-hi:#efe7d2; --text:#cdc4b4; --text-lo:#8f8676;
+    --green:#7faa6a; --blue:#5a8ab0; --red:#b23a3a; --purple:#a972a9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(122,36,50,.18), transparent 60%),
+      linear-gradient(180deg, #100d18 0%, var(--ink) 45%);
+    color:var(--text); font-family:'EB Garamond',Georgia,serif; font-size:18px; line-height:1.6; padding:48px 20px 96px}
+  .wrap{max-width:1000px; margin:0 auto}
+  .eyebrow{font-family:'Cinzel',serif; letter-spacing:5px; text-transform:uppercase; font-size:11px; color:var(--text-lo); text-align:center}
+  h1{font-family:'Cinzel',serif; font-weight:700; letter-spacing:2px; color:var(--gold-hi); text-align:center; font-size:34px; margin:8px 0 4px; text-shadow:0 0 24px rgba(212,168,67,.25)}
+  .sub{text-align:center; color:var(--text-lo); font-style:italic}
+  .meta{text-align:center; color:var(--text-lo); font-size:12px; font-family:'JetBrains Mono',monospace; margin-top:8px}
+  .laurel{text-align:center; color:var(--gold); opacity:.7; font-size:20px; letter-spacing:8px; margin:14px 0}
+  .rule{height:1px; background:linear-gradient(90deg,transparent,var(--gold-faint),transparent); margin:26px 0}
+  h2{font-family:'Cinzel',serif; font-weight:500; letter-spacing:1.5px; color:var(--gold); font-size:20px; margin:34px 0 12px; border-bottom:1px solid var(--gold-faint); padding-bottom:6px}
+  .stats{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:18px 0}
+  .stat{background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--gold-faint); border-radius:4px; padding:12px 18px; text-align:center; min-width:120px}
+  .stat .n{font-family:'Cinzel',serif; font-size:26px; color:var(--gold-hi); display:block}
+  .stat .l{font-size:11px; color:var(--text-lo); letter-spacing:1px; text-transform:uppercase}
+  .thread{background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--gold-faint); border-left:3px solid var(--gold); border-radius:4px; padding:16px 22px; margin:14px 0; box-shadow:0 2px 20px rgba(0,0,0,.32)}
+  .thread h3{font-family:'Cinzel',serif; color:var(--gold-hi); font-size:17px; letter-spacing:1px; margin:0 0 4px; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .badge{font-family:'Cinzel',serif; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; padding:2px 8px; border-radius:2px; border:1px solid currentColor}
+  .b-done{color:var(--green)} .b-pending{color:var(--text-lo)}
+  .tnum{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-lo); border:1px solid var(--gold-faint); padding:1px 7px; border-radius:2px}
+  .thread p{margin:8px 0}
+  .thread ul{margin:8px 0; padding-left:20px} .thread li{margin:4px 0}
+  code{font-family:'JetBrains Mono',monospace; font-size:.82em; color:var(--gold-hi); background:rgba(212,168,67,.08); padding:1px 6px; border-radius:3px; border:1px solid var(--gold-faint)}
+  .sha{font-family:'JetBrains Mono',monospace; font-size:.78em; color:var(--text-lo)}
+  strong{color:var(--text-hi)}
+  .verify{font-size:13px; color:var(--green); font-family:'JetBrains Mono',monospace; margin-top:6px}
+  .pending{opacity:.78; border-left-color:var(--text-lo)}
+  .pending h3 .tnum{border-color:var(--text-lo)}
+  .note{font-size:14px; color:var(--text-lo); font-style:italic}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Branch · worktree-experimentation</div>
+  <h1>Iter Belli — Lo que hicimos</h1>
+  <div class="sub">Integración del Hub ↔ la campaña de cartas, hilo por hilo</div>
+  <div class="laurel">❦ &nbsp; ⚜ &nbsp; ❦</div>
+  <div class="meta">39 commits sobre develop · nada mergeado (rama preservada)</div>
+
+  <div class="stats">
+    <div class="stat"><span class="n">6</span><span class="l">Features</span></div>
+    <div class="stat"><span class="n">5</span><span class="l">Verify scripts</span></div>
+    <div class="stat"><span class="n">106+</span><span class="l">Checks ✓</span></div>
+    <div class="stat"><span class="n">0</span><span class="l">tsc errors</span></div>
+    <div class="stat"><span class="n">3</span><span class="l">Hilos restantes</span></div>
+  </div>
+
+  <div class="rule"></div>
+
+  <h2>Cimientos</h2>
+  <div class="thread">
+    <h3>Iter Belli como Embark + limpieza de UI <span class="badge b-done">Hecho</span></h3>
+    <p>Embark lanza la campaña <strong>Iter Belli</strong> (marcha Frontera→Sagunto con cartas de operación y batalla de posturas d6-vs-d8), reskineada al look oscuro Imperium. Módulo autocontenido (<code>src/game/iterBelli/</code>), sin tocar bellum/batallas (deprecadas).</p>
+    <ul>
+      <li>Pestaña Bellum oculta; <code>faith/influence/momentum</code> removidos del UI y marcados <code>@deprecated</code>.</li>
+      <li>Selección de comandante limpiada; fix de tooltips; node-strip removido.</li>
+    </ul>
+    <p class="sha">checkpoint c86c6d3 · base de la rama</p>
+  </div>
+
+  <h2>Hilos de integración (Hub ↔ Campaña)</h2>
+  <p class="note">Cada hilo siguió la misma cadencia: brainstorm → spec → plan → ejecución por subagentes (revisión de spec + de calidad por tarea) → verificación en navegador.</p>
+
+  <div class="thread">
+    <h3><span class="tnum">Hilo 1</span> Iuniores → refuerzos <span class="badge b-done">Hecho</span></h3>
+    <p>Los <strong>iuniores</strong> del run se heredan en la campaña; la carta <em>"Leva de iuniores"</em> los gasta para reforzar soldados; el resto vuelve al Hub.</p>
+    <p class="sha">a9558c0 · f565977 · fb691f8 · 9854ef3</p>
+  </div>
+
+  <div class="thread">
+    <h3><span class="tnum">Hilo 5</span> Identidad de comandante <span class="badge b-done">Hecho</span></h3>
+    <p><strong>Disciplina inicial por arquetipo</strong> (Warlord II · Religious III · Merchant IV · Diplomat V) + modificador ±1 del legado (lectura de trait-ids, sin tocar batallas). <strong>Carta firma</strong> por comandante (Furia gala / Te Deum / Mercenarios de Craso / Tratado romano), gateada por arquetipo.</p>
+    <p class="sha">b556d2c · da5470d</p>
+    <div class="verify">✓ verify-iter-belli-commander.ts</div>
+  </div>
+
+  <div class="thread">
+    <h3><span class="tnum">Hilo 6</span> Resultado → Hub <span class="badge b-done">Hecho</span></h3>
+    <p>El resultado de la campaña alimenta el run: <code>battlesWon++</code>, el reloj de temporadas avanza (<code>globalSeason += duración</code>), <code>spokesSinceLastBattle=0</code>, y en victoria se <strong>conquista una provincia</strong> (terreno derivado del tema del spoke, nombre aleatorio de un pool, income fijo).</p>
+    <p class="sha">2ddaf85 · f0d97cb · 8ffe8db · 9438f88 · a099baa</p>
+    <div class="verify">✓ verify-iter-belli-result-to-hub.ts</div>
+  </div>
+
+  <div class="thread">
+    <h3><span class="tnum">Hilo 7</span> Suministros unificados (una economía) <span class="badge b-done">Hecho</span></h3>
+    <p>Una sola economía de supply: la campaña arranca con el stock del Hub (<code>preparedArmy.supplies</code>, comprable con oro en Exercitus), lo consume en escala-Hub (upkeep 2/turno, camp 4), y <strong>devuelve el sobrante</strong> al volver (clamp 0–80). Aviso de embark arreglado. Moral queda fuera (sin stock persistente en el Hub).</p>
+    <p class="sha">95d75a0 · 511ee04 · 2e9bbe7 · 6af7c41 · d27bcb3</p>
+    <div class="verify">✓ verify-iter-belli-supplies.ts · bug del label "Acampar" cazado en navegador</div>
+  </div>
+
+  <div class="thread">
+    <h3><span class="tnum">Hilo 3</span> Consilium → misión + modificadores <span class="badge b-done">Hecho · Fase 1</span></h3>
+    <p>El consejo moldea la campaña: el <strong>asiento 1</strong> (por color) fija la <strong>misión</strong> (Asalto / Pax Romana / Cruzada / Botín / Legión Intacta) con condición medible y <strong>bonus de oro</strong> al cumplirla en victoria; los <strong>otros asientos</strong> aportan <strong>modificadores</strong> de stats iniciales (su <code>passive</code> → supplies/oro/amenaza/moral). Visible en embark, cabecera de campaña y endgame.</p>
+    <p class="sha">4f495f6 · 6c88ab4 · 70cd388 · d789577 · 85d9ad0 · 014ae3f · 8fa5c81</p>
+    <div class="verify">✓ verify-iter-belli-consilium.ts (35 checks) · en vivo: misión "Asalto" + Consilium +3 oro + seed Oro=5</div>
+  </div>
+
+  <h2>Hilos restantes</h2>
+  <div class="thread pending">
+    <h3><span class="tnum">Hilo 2</span> Provincias → condiciones de inicio <span class="badge b-pending">Pendiente</span></h3>
+    <p>Las provincias que posees/conquistas moldean el arranque de la siguiente campaña (itinerario, recursos, amenaza). Cierra el bucle con la conquista del Hilo 6.</p>
+  </div>
+  <div class="thread pending">
+    <h3><span class="tnum">Hilo 4</span> Doctrinae/Decreta → cartas <span class="badge b-pending">Pendiente</span></h3>
+    <p>Doctrinas y decretos equipados en el Hub inyectan o modifican cartas de operación del pool de campaña.</p>
+  </div>
+  <div class="thread pending">
+    <h3><span class="tnum">Hilo 3 · Fase 2</span> Eventos secundarios del Consilium <span class="badge b-pending">Pendiente</span></h3>
+    <p>Los asientos 2 y 3 inyectan objetivos/eventos secundarios genéricos a mitad de campaña ("ayuda a tribu local", "conquista el fuerte X") con bonus al completarse.</p>
+  </div>
+
+  <div class="rule"></div>
+  <h2>Cómo se construyó</h2>
+  <ul>
+    <li><strong>Superpowers:</strong> brainstorming → writing-plans → subagent-driven-development (implementer fresco + revisión de spec + revisión de calidad por tarea) → finishing-a-development-branch.</li>
+    <li><strong>Verificación:</strong> sin runner de tests — scripts <code>tools/verify-*.ts</code> (<code>npx tsx</code>) + <code>tsc --noEmit</code> + comprobación en Chrome vía Playwright.</li>
+    <li><strong>Desacople:</strong> el módulo de lógica <code>src/game/iterBelli/</code> no importa estado del run; los puentes viven en EmbarkCard/EndgameCard y en <code>src/data/iter-belli-*.ts</code>.</li>
+    <li><strong>Rigor en review:</strong> falsos positivos de los reviewers rechazados con evidencia; menores legítimos aplicados.</li>
+  </ul>
+
+  <div class="laurel" style="margin-top:32px">❦ &nbsp; ⚜ &nbsp; ❦</div>
+</div>
+</body>
+</html>

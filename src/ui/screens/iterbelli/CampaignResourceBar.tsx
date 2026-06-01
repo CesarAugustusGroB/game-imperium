@@ -1,6 +1,10 @@
 import { Tooltip } from '../../components/Tooltip';
 import { ROMAN, ALERT } from '../../../game/iterBelli/iter-belli-balance';
 import type { IterBelliState } from '../../../game/iterBelli/iter-belli-types';
+import { ResourceIcon } from '../../components/ResourceIcon';
+import { GameIcon } from '../../components/GameIcon';
+import type { GameIconName } from '../../components/GameIcon';
+import type { ResourceType } from '../../../game/core/commander';
 
 interface ResourceDef {
   key: string;
@@ -8,6 +12,8 @@ interface ResourceDef {
   label: string;
   value: string;
   tip: string;
+  icon?: GameIconName;
+  iconType?: ResourceType;
   alert?: boolean;
   warn?: boolean;
 }
@@ -15,35 +21,35 @@ interface ResourceDef {
 function resources(s: IterBelliState): ResourceDef[] {
   return [
     {
-      key: 'soldiers', glyph: '⚔', label: 'Soldados', value: s.soldiers.toLocaleString('es'),
+      key: 'soldiers', glyph: '⚔', icon: 'res-soldiers', label: 'Soldados', value: s.soldiers.toLocaleString('es'),
       tip: 'Efectivos de tu ejército. Caen por hambre, motín, escaramuzas y emboscadas. Si bajan de 1000, la campaña fracasa.',
       alert: s.soldiers < ALERT.soldiersLow,
     },
     {
-      key: 'morale', glyph: '♺', label: 'Moral', value: s.morale.toFixed(1),
+      key: 'morale', glyph: '♺', icon: 'res-morale', label: 'Moral', value: s.morale.toFixed(1),
       tip: 'Cohesión del ejército (0–10). Bajo 3 hay riesgo de motín; a 0 el ejército se desbanda.',
       alert: s.morale < ALERT.moraleLow,
     },
     {
-      key: 'discipline', glyph: '⛨', label: 'Disciplina', value: ROMAN[s.discipline],
+      key: 'discipline', glyph: '⛨', icon: 'res-discipline', label: 'Disciplina', value: ROMAN[s.discipline],
       tip: 'Nivel táctico (I–V). Desbloquea posturas de batalla más avanzadas.',
     },
     {
-      key: 'supplies', glyph: '❦', label: 'Suministros', value: String(s.supplies),
+      key: 'supplies', glyph: '❦', icon: 'res-supplies', label: 'Suministros', value: String(s.supplies),
       tip: 'Víveres. Se consume 1 por turno. A 0 llega el hambre: deserciones y caída de moral.',
       alert: s.supplies <= 0,
       warn: s.supplies > 0 && s.supplies < ALERT.suppliesWarn,
     },
     {
-      key: 'gold', glyph: '⚜', label: 'Oro', value: String(s.gold),
+      key: 'gold', glyph: '', iconType: 'gold', label: 'Oro', value: String(s.gold),
       tip: 'Oro de campaña (heredado del run). Paga cartas, sobornos y tributos; vuelve al hub al terminar.',
     },
     {
-      key: 'iuniores', glyph: '🛡', label: 'Iuniores', value: s.iuniores.toLocaleString('es'),
+      key: 'iuniores', glyph: '', iconType: 'iuniores', label: 'Iuniores', value: s.iuniores.toLocaleString('es'),
       tip: 'Reclutas heredados del run. Gástalos con la "Leva de iuniores" para reforzar soldados; el resto vuelve al hub.',
     },
     {
-      key: 'threat', glyph: '☠', label: 'Amenaza', value: s.threat.toFixed(1),
+      key: 'threat', glyph: '☠', icon: 'res-threat', label: 'Amenaza', value: s.threat.toFixed(1),
       tip: 'Atención enemiga (0–10). Alta amenaza dispara escaramuzas y emboscadas.',
       alert: s.threat >= ALERT.threatAlert,
       warn: s.threat >= ALERT.threatWarn && s.threat < ALERT.threatAlert,
@@ -62,13 +68,18 @@ export function CampaignResourceBar({ state }: { state: IterBelliState }) {
           position="below"
           content={
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <div style={{ fontWeight: 700, color: 'var(--imp-gold-hi)' }}>{r.glyph} {r.label}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, color: 'var(--imp-gold-hi)' }}>
+                {r.icon ? <GameIcon name={r.icon} size={18} /> : r.iconType ? <ResourceIcon type={r.iconType} size={18} /> : r.glyph}
+                {r.label}
+              </div>
               <div style={{ color: 'var(--imp-text-mid)', fontSize: 'var(--font-size-sm)' }}>{r.tip}</div>
             </div>
           }
         >
           <div class={`ib-res${r.alert ? ' alert' : ''}${r.warn ? ' warn' : ''}`}>
-            <span class="ib-res-label">{r.glyph} {r.label}</span>
+            <span class="ib-res-label">
+              {r.icon ? <GameIcon name={r.icon} size={16} /> : r.iconType ? <ResourceIcon type={r.iconType} size={16} /> : r.glyph} {r.label}
+            </span>
             <span class="ib-res-value">{r.value}</span>
           </div>
         </Tooltip>

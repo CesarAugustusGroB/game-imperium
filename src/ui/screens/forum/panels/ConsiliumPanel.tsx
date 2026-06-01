@@ -1,8 +1,8 @@
-import { councilSlots, plannedSpoke } from '../../../../game/council/council-store';
+import { councilSlots } from '../../../../game/council/council-store';
 import type { Advisor } from '../../../../game/council/advisor';
 import { FACTION_COLORS } from '../../../../game/core/commander';
-import { OrnatePanel } from '../../../components/OrnatePanel';
-import { SectionHeader, LinkButton, NODE_ICONS } from '../components/SectionHeader';
+import { BentoCard } from '../../../components/BentoCard';
+import { SectionHeader, LinkButton } from '../components/SectionHeader';
 import { setForumTab } from '../state';
 
 /** Static slot labels — flavor, not state. */
@@ -10,70 +10,25 @@ const SLOT_LABELS = ['Consiliarius', 'Legatus', 'Augur'];
 
 interface ConsiliumPanelProps {
   accent?: string;
+  index?: number;
 }
 
-export function ConsiliumPanel({ accent = '#d4a843' }: ConsiliumPanelProps) {
+export function ConsiliumPanel({ accent = '#d4a843', index = 0 }: ConsiliumPanelProps) {
   const slots = councilSlots.value;
-  const spoke = plannedSpoke.value;
 
   return (
-    <OrnatePanel accent={accent}>
+    <BentoCard accent={accent} index={index}>
       <SectionHeader
         title="Consilium"
         accent={accent}
         right={<LinkButton label="Open →" onClick={() => setForumTab('consilium')} accent={accent} />}
       />
-      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+      <div style={{ display: 'flex', gap: 8 }}>
         {slots.map((advisor, i) => (
           <AdvisorSlot key={i} advisor={advisor} label={SLOT_LABELS[i] ?? `Slot ${i + 1}`} accent={accent} />
         ))}
       </div>
-      {spoke && (
-        <div style={{
-          padding: '10px 12px',
-          background: 'rgba(15, 13, 22, 0.6)',
-          border: '1px solid rgba(212, 168, 67, 0.15)',
-          borderRadius: 2,
-        }}>
-          <div style={{
-            fontSize: 9, letterSpacing: 1.5,
-            color: 'var(--imp-text-lo)',
-            textTransform: 'uppercase', marginBottom: 6,
-          }}>
-            Auspice — {spoke.posture}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            {spoke.nodes.map((n, i) => {
-              const icon = NODE_ICONS[n.type];
-              return (
-                <>
-                  <div
-                    key={n.id}
-                    title={icon?.label ?? n.type}
-                    style={{
-                      width: 22, height: 22, borderRadius: '50%',
-                      background: `${icon?.color ?? accent}22`,
-                      border: `1.5px solid ${icon?.color ?? accent}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, color: icon?.color ?? accent,
-                      opacity: n.resolved ? 0.4 : 1,
-                    }}
-                  >
-                    {icon?.icon ?? '•'}
-                  </div>
-                  {i < spoke.nodes.length - 1 && (
-                    <div style={{
-                      flex: 1, height: 1,
-                      background: 'rgba(212, 168, 67, 0.15)',
-                    }} />
-                  )}
-                </>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </OrnatePanel>
+    </BentoCard>
   );
 }
 

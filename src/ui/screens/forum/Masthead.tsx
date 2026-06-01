@@ -1,29 +1,45 @@
 import { gold, iuniores } from '../../../game/core/resources';
+import type { ComponentChildren } from 'preact';
 import { globalSeason, MAX_SEASONS } from '../../../game/core/game-state';
 import { MosaicBand } from '../../components/motifs/MosaicBand';
 import { StatChip } from './StatChip';
 import type { StatChipData } from './StatChip';
+import goldStackIcon from '../../../assets/ui/resources/gold-stack-icon.png';
+import iunioresIcon from '../../../assets/ui/resources/iuniores-icon-color.png';
+import seasonIcon from '../../../assets/ui/resources/season-icon-color.png';
 
 interface MastheadProps {
   title: string;
-  subtitle: string;
+  subtitle: ComponentChildren;
   accent?: string;
 }
 
 export function Masthead({ title, subtitle, accent = '#d4a843' }: MastheadProps) {
   const chips: StatChipData[] = [
     {
-      key: 'gold', glyph: '⚜', value: gold.value, color: '#d4a843',
+      key: 'gold',
+      glyph: '',
+      iconSrc: goldStackIcon,
+      value: gold.value,
+      color: '#d4a843',
       label: 'Gold',
       description: 'Primary income for all factions. Spent on unit upkeep, upgrades, and investments. Purple commanders earn 2x gold.',
     },
     {
-      key: 'iuniores', glyph: '🛡', value: iuniores.value, color: '#a88b5c',
+      key: 'iuniores',
+      glyph: '',
+      iconSrc: iunioresIcon,
+      value: iuniores.value,
+      color: '#a88b5c',
       label: 'Iuniores',
       description: 'Citizen-soldiers drawn from your provinces. Spent to recruit regular cohorts and replenish army HP at rest nodes.',
     },
     {
-      key: 'season', glyph: 'S', value: `${globalSeason.value}/${MAX_SEASONS}`, color: '#d4a843',
+      key: 'season',
+      glyph: '',
+      iconSrc: seasonIcon,
+      value: `${globalSeason.value}/${MAX_SEASONS}`,
+      color: '#d4a843',
       label: 'Season',
       description: 'Global campaign season. The final invasion begins when the season limit is reached.',
     },

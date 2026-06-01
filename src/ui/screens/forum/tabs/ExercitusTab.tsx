@@ -28,9 +28,9 @@ import {
 const LEGATE_HIRE_COST = 80;
 
 const ROLE_COLORS: Record<UnitRole, string> = {
-  vanguard: '#b23a3a',  // crimson â€” frontline
-  reserve:  '#d4a843',  // gold â€” elite
-  guard:    '#5a7aa0',  // lapis â€” specialist
+  vanguard: '#b23a3a',  // crimson — frontline
+  reserve:  '#d4a843',  // gold — elite
+  guard:    '#5a7aa0',  // lapis — specialist
 };
 
 const ROLE_LABELS: Record<UnitRole, string> = {
@@ -40,9 +40,9 @@ const ROLE_LABELS: Record<UnitRole, string> = {
 };
 
 const ROLE_ICONS: Record<UnitRole, string> = {
-  vanguard: 'âš”',
-  reserve:  'â˜…',
-  guard:    'âž¶',
+  vanguard: '⚔',
+  reserve:  '★',
+  guard:    '➶',
 };
 
 export function ExercitusTab() {
@@ -87,9 +87,9 @@ export function ExercitusTab() {
   const groups = Array.from(groupMap.entries());
   const totalSize = army?.size ?? 0;
   const sizeLabel = totalSize >= 1000 ? `${(totalSize / 1000).toFixed(1)}K` : `${totalSize}`;
-  const subtitle = `${cohorts.length} cohort${cohorts.length === 1 ? '' : 's'} Â· ${sizeLabel} HP Â· ${legate ? `Legate ${legate.name.split(' ').slice(-1)[0]}` : 'No legate'}`;
+  const subtitle = `${cohorts.length} cohort${cohorts.length === 1 ? '' : 's'} · ${sizeLabel} HP · ${legate ? `Legate ${legate.name.split(' ').slice(-1)[0]}` : 'No legate'}`;
 
-  // â”€â”€ Supplies â”€â”€
+  // ── Supplies ──
   const currentSupplies = army?.supplies ?? 0;
   const supplyRatio = SUPPLY_MAX_CARRY > 0 ? currentSupplies / SUPPLY_MAX_CARRY : 0;
   const coversNodes = cohorts.length > 0 ? Math.floor(currentSupplies / cohorts.length) : 0;
@@ -109,7 +109,7 @@ export function ExercitusTab() {
     if (result && result.iunioresSpent > 0) playSfx('ui_equip');
   }
 
-  // â”€â”€ S26-07: Roster Health panel data â”€â”€
+  // ── S26-07: Roster Health panel data ──
   // Per-instance (not grouped): each damaged or outOfAction cohort gets its own
   // row so the player can target individual heals. We carry the array index so
   // healCohortInRoster() can address the right slot.
@@ -272,7 +272,7 @@ export function ExercitusTab() {
           <button
             onClick={() => handleRecruit(c.id)}
             disabled={!canBuy}
-            title={c.mercenary ? 'Mercenary cohort â€” gold only.' : (disabledCopy ?? `Recruit ${c.name}`)}
+            title={c.mercenary ? 'Mercenary cohort — gold only.' : (disabledCopy ?? `Recruit ${c.name}`)}
             style={{
               marginTop: 4,
               padding: '5px 10px',
@@ -307,15 +307,15 @@ export function ExercitusTab() {
       : canFullyAfford
         ? accent                            // ready to heal: gold
         : 'var(--imp-text-lo)';             // can't afford: muted
-    const buttonLabel = isMerc ? 'Gold Heal â€” S27' : 'Heal';
+    const buttonLabel = isMerc ? 'Gold Heal — S27' : 'Heal';
     const disabledTooltip = isMerc
-      ? 'Mercenary cohorts heal with gold â€” coming in S27.'
+      ? 'Mercenary cohorts heal with gold — coming in S27.'
       : canFullyAfford
         ? `Spend ${fullCost} iuniores to fully restore.`
         : currentIuniores > 0
           ? `Insufficient iuniores. Need ${fullCost - currentIuniores} more for a full heal (partial heal will apply ${currentIuniores}).`
           : 'Insufficient iuniores. Pool is empty.';
-    // Citizen heal is enabled whenever the pool has *any* iuniores â€” partial
+    // Citizen heal is enabled whenever the pool has *any* iuniores — partial
     // heals are valid and surfaced via the formula tooltip.
     const buttonEnabled = !isMerc && currentIuniores > 0;
 
@@ -351,7 +351,7 @@ export function ExercitusTab() {
               {ROLE_LABELS[c.role]}
             </div>
             {isOoA && (
-              <div title="Out of action â€” cannot deploy until healed." style={{
+              <div title="Out of action — cannot deploy until healed." style={{
                 fontSize: 8, padding: '1px 6px',
                 border: '1px solid rgba(194, 74, 58, 0.6)',
                 background: 'rgba(194, 74, 58, 0.18)',
@@ -360,11 +360,11 @@ export function ExercitusTab() {
                 letterSpacing: 1, textTransform: 'uppercase',
                 fontFamily: 'var(--imp-font-display)', fontWeight: 700,
               }}>
-                âš• Out of Action
+                ⚕ Out of Action
               </div>
             )}
             {isMerc && (
-              <div title="Mercenary cohort â€” gold-only heal pending in S27." style={{
+              <div title="Mercenary cohort — gold-only heal pending in S27." style={{
                 fontSize: 8, padding: '1px 6px',
                 border: '1px solid rgba(232, 192, 112, 0.5)',
                 background: 'rgba(232, 192, 112, 0.12)',
@@ -378,7 +378,7 @@ export function ExercitusTab() {
             )}
           </div>
 
-          {/* HP bar â€” dual layer: red baseline + colored fill */}
+          {/* HP bar — dual layer: red baseline + colored fill */}
           <div style={{
             position: 'relative',
             height: 8,
@@ -457,7 +457,7 @@ export function ExercitusTab() {
         display: 'grid', gridTemplateColumns: '1fr 340px', gap: 14,
       }}>
 
-        {/* â”€â”€ LEFT: Cohorts + Catalog â”€â”€ */}
+        {/* ── LEFT: Cohorts + Catalog ── */}
         <div style={{
           display: 'flex', flexDirection: 'column', gap: 12,
           minHeight: 0, overflow: 'auto',
@@ -470,7 +470,7 @@ export function ExercitusTab() {
                 fontFamily: 'var(--imp-font-mono)',
                 fontSize: 11, color: 'var(--imp-text-mid)',
               }}>
-                {cohorts.length} Â· {sizeLabel} HP
+                {cohorts.length} · {sizeLabel} HP
               </span>}
             />
             {groups.length === 0 ? (
@@ -519,7 +519,7 @@ export function ExercitusTab() {
                           letterSpacing: 1, textTransform: 'uppercase',
                           fontStyle: 'italic',
                         }}>
-                          {ROLE_LABELS[g.role]} Â· {g.hp} HP
+                          {ROLE_LABELS[g.role]} · {g.hp} HP
                         </div>
                         <div style={{
                           display: 'flex',
@@ -532,7 +532,7 @@ export function ExercitusTab() {
                         }}>
                           <ResourceAmount type="gold" amount={g.aurumCost} iconSize={14} />
                           {g.mercenary ? (
-                            <span title="Mercenary cohort â€” gold only.">Mercenary</span>
+                            <span title="Mercenary cohort — gold only.">Mercenary</span>
                           ) : (
                             <ResourceAmount type="iuniores" amount={IUNIORES.recruitCost} iconSize={14} />
                           )}
@@ -543,7 +543,7 @@ export function ExercitusTab() {
                         fontSize: 18, fontWeight: 600,
                         color: 'var(--imp-text-hi)',
                       }}>
-                        Ã—{g.count}
+                        ×{g.count}
                       </div>
                       <button
                         onClick={() => handleRemove(id)}
@@ -561,7 +561,7 @@ export function ExercitusTab() {
                           flexShrink: 0,
                         }}
                       >
-                        âˆ’
+                        −
                       </button>
                     </div>
                   );
@@ -570,7 +570,7 @@ export function ExercitusTab() {
             )}
           </BentoCard>
 
-          {/* â”€â”€ Roster Health (S26-07) â”€â”€ */}
+          {/* ── Roster Health (S26-07) ── */}
           {showRosterHealth && (
             <BentoCard accent={accent} index={1}>
               <SectionHeader
@@ -581,8 +581,8 @@ export function ExercitusTab() {
                   fontSize: 11, color: 'var(--imp-text-mid)',
                 }}>
                   {damagedCitizens.length} damaged
-                  {ooaCount > 0 && <span style={{ color: '#e88858' }}> Â· {ooaCount} âš•</span>}
-                  {damagedMercs.length > 0 && <span style={{ color: '#f0d080' }}> Â· {damagedMercs.length} merc</span>}
+                  {ooaCount > 0 && <span style={{ color: '#e88858' }}> · {ooaCount} ⚕</span>}
+                  {damagedMercs.length > 0 && <span style={{ color: '#f0d080' }}> · {damagedMercs.length} merc</span>}
                 </span>}
               />
 
@@ -618,7 +618,7 @@ export function ExercitusTab() {
                     }}>
                       {hubPreview.partialHeal ? (
                         <>
-                          <ResourceAmount type="iuniores" amount={hubPreview.iunioresSpent} iconSize={14} style={{ color: '#a88b5c', fontWeight: 700 }} /> spends now â€”{' '}
+                          <ResourceAmount type="iuniores" amount={hubPreview.iunioresSpent} iconSize={14} style={{ color: '#a88b5c', fontWeight: 700 }} /> spends now —{' '}
                           <span style={{ color: '#7ecf97', fontWeight: 700 }}>{hubPreview.hpRestored} HP</span> across{' '}
                           {hubPreview.perCohort.filter(p => p.iunioresSpent > 0).length} cohort
                           {hubPreview.perCohort.filter(p => p.iunioresSpent > 0).length === 1 ? '' : 's'}.
@@ -638,7 +638,7 @@ export function ExercitusTab() {
                     onClick={handleReplenishAll}
                     disabled={hubPreview.iunioresSpent === 0}
                     title={hubPreview.iunioresSpent === 0
-                      ? 'No iuniores in the pool â€” heal nothing.'
+                      ? 'No iuniores in the pool — heal nothing.'
                       : `Spend ${hubPreview.iunioresSpent} iuniores now.`}
                     style={{
                       padding: '8px 14px',
@@ -669,7 +669,7 @@ export function ExercitusTab() {
             </BentoCard>
           )}
 
-          {/* â”€â”€ Supplies â”€â”€ */}
+          {/* ── Supplies ── */}
           <BentoCard accent={accent} index={2}>
             <SectionHeader
               title="Supplies"
@@ -766,7 +766,7 @@ export function ExercitusTab() {
                 color: coversNodes > 2 ? 'var(--imp-text-mid)' : '#d48b3a',
                 fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic',
               }}>
-                Covers â‰ˆ {coversNodes} node{coversNodes !== 1 ? 's' : ''}
+                Covers ≈ {coversNodes} node{coversNodes !== 1 ? 's' : ''}
               </div>
             )}
           </BentoCard>
@@ -821,7 +821,7 @@ export function ExercitusTab() {
           </BentoCard>
         </div>
 
-        {/* â”€â”€ RIGHT: Legatus â”€â”€ */}
+        {/* ── RIGHT: Legatus ── */}
         <div style={{
           display: 'flex', flexDirection: 'column', gap: 12,
           minHeight: 0, overflow: 'auto',
@@ -832,7 +832,7 @@ export function ExercitusTab() {
               <div style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
               }}>
-                {/* Portrait placeholder â€” large circle with initial */}
+                {/* Portrait placeholder — large circle with initial */}
                 <div style={{
                   width: 120, height: 120, borderRadius: '50%',
                   border: `2px solid ${accent}`,
@@ -916,7 +916,7 @@ export function ExercitusTab() {
             )}
           </BentoCard>
 
-          {/* Hiring pool â€” shown whenever legate is empty, also collapsed/expanded when one is hired.
+          {/* Hiring pool — shown whenever legate is empty, also collapsed/expanded when one is hired.
               Kept visible so players can swap legates (dismiss + hire). */}
           {!legate && (
             <BentoCard accent={accent} index={5}>
@@ -982,7 +982,7 @@ export function ExercitusTab() {
                             {candidate.traitIds
                               .map((t) => getLegateTraitById(t)?.name)
                               .filter(Boolean)
-                              .join(' Â· ') || 'â€”'}
+                              .join(' · ') || '—'}
                           </div>
                         </div>
                       </div>

@@ -1,9 +1,9 @@
-import type { Doctrine, DoctrineEffect } from '../../game/items/doctrine';
+﻿import type { Doctrine, DoctrineEffect } from '../../game/items/doctrine';
 import { getCurrentEffects, getUpgradeCost, getDoctrineSellPrice } from '../../game/items/doctrine';
 import { FACTION_COLORS } from '../../game/core/commander';
 import type { ResourceType } from '../../game/core/commander';
 import { Tooltip } from './Tooltip';
-import { formatCost } from '../ui-constants';
+import { CostInline, ResourceAmount } from './ResourceIcon';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('doctrine-slot-styles')) {
@@ -227,7 +227,7 @@ export function DoctrineSlot({
       ))}
       {getUpgradeCost(doctrine) && (
         <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-          Upgrade: {formatCost(getUpgradeCost(doctrine)!)}
+          Upgrade: <CostInline cost={getUpgradeCost(doctrine)!} iconSize={14} />
         </div>
       )}
     </div>
@@ -267,7 +267,7 @@ export function DoctrineSlot({
           borderRadius: '3px',
           zIndex: 2,
         }}>
-          {sellPrice}g
+          <ResourceAmount type="gold" amount={sellPrice} iconSize={12} />
         </div>
       )}
 
@@ -376,7 +376,7 @@ export function DoctrineSlot({
               textAlign: 'center',
             }}
           >
-            Upgrade · {formatCost(upgradeCost)}
+            Upgrade · <CostInline cost={upgradeCost} iconSize={14} />
           </button>
         ) : (
           <div style={{

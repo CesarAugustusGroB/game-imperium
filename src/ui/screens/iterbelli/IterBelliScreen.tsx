@@ -1,4 +1,4 @@
-import { playSfx } from '../../sound/sfx';
+﻿import { playSfx } from '../../sound/sfx';
 import { iterBelliState, iterBelliLog, camp, playCard, currentLocation } from '../../../game/iterBelli/iter-belli-state';
 import { POOL_TARGET_SIZE, CAMP_SUPPLY_COST, CAMP_MORALE_GAIN } from '../../../game/iterBelli/iter-belli-balance';
 import { getMissionById } from '../../../data/iter-belli-consilium';
@@ -9,6 +9,7 @@ import { OperationCard } from './OperationCard';
 import { CampaignLog } from './CampaignLog';
 import { BattleModal } from './BattleModal';
 import { EndgameCard } from './EndgameCard';
+import { ResourceIcon } from '../../components/ResourceIcon';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('iterbelli-styles')) {
@@ -206,7 +207,7 @@ export function IterBelliScreen() {
         <div class="sub">Lleva a tus legiones de la frontera a Sagunto antes del invierno.</div>
         {mission && (
           <div class="ib-mission">
-            ⚜ Misión: {mission.title} <span class="ib-mission-cond">— {mission.conditionDesc}</span>
+            <ResourceIcon type="gold" size={16} /> Misión: {mission.title} <span class="ib-mission-cond">— {mission.conditionDesc}</span>
           </div>
         )}
         {activeQuests.map((q) => {

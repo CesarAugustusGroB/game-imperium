@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Map2D UI Inventory</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111014;
+      --surface: #19171d;
+      --surface-2: #221f27;
+      --ink: #f0e8d2;
+      --muted: #a99e86;
+      --line: #4a3e2d;
+      --gold: #d7ad4b;
+      --red: #8f2d3d;
+      --green: #5d9a74;
+      --blue: #5d82b8;
+      --shadow: rgba(0, 0, 0, 0.38);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        linear-gradient(90deg, rgba(215, 173, 75, 0.06) 1px, transparent 1px) 0 0 / 54px 54px,
+        linear-gradient(0deg, rgba(215, 173, 75, 0.04) 1px, transparent 1px) 0 0 / 54px 54px,
+        radial-gradient(circle at 16% 18%, rgba(143, 45, 61, 0.22), transparent 32rem),
+        radial-gradient(circle at 90% 4%, rgba(93, 130, 184, 0.16), transparent 30rem),
+        linear-gradient(180deg, #17131b 0%, #0d0c10 100%);
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 40px 0 56px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 28px;
+      align-items: end;
+      margin-bottom: 30px;
+      border-bottom: 1px solid rgba(215, 173, 75, 0.28);
+      padding-bottom: 24px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--gold);
+      font: 700 12px/1.2 ui-monospace, "Cascadia Mono", Consolas, monospace;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(42px, 7vw, 92px);
+      line-height: 0.9;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .summary {
+      margin: 0;
+      color: var(--muted);
+      font: 15px/1.55 ui-sans-serif, "Segoe UI", sans-serif;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      margin: 28px 0;
+      align-items: center;
+    }
+
+    input[type="search"] {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid rgba(215, 173, 75, 0.34);
+      border-radius: var(--radius);
+      background: rgba(17, 16, 20, 0.72);
+      color: var(--ink);
+      padding: 0 16px;
+      font: 15px/1 ui-sans-serif, "Segoe UI", sans-serif;
+      outline: none;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    }
+
+    input[type="search"]:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(215, 173, 75, 0.12);
+    }
+
+    .count {
+      color: var(--muted);
+      font: 700 12px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .overview {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .metric {
+      border: 1px solid rgba(215, 173, 75, 0.24);
+      border-radius: var(--radius);
+      background: rgba(25, 23, 29, 0.76);
+      padding: 16px;
+      box-shadow: 0 16px 40px var(--shadow);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+      color: var(--gold);
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font: 12px/1.25 ui-sans-serif, "Segoe UI", sans-serif;
+      text-transform: uppercase;
+    }
+
+    main {
+      display: grid;
+      gap: 18px;
+    }
+
+    section {
+      border: 1px solid rgba(215, 173, 75, 0.22);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(34, 31, 39, 0.88), rgba(19, 18, 23, 0.88));
+      box-shadow: 0 24px 60px var(--shadow);
+      overflow: hidden;
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: center;
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(215, 173, 75, 0.18);
+      background: rgba(215, 173, 75, 0.05);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .section-note {
+      color: var(--muted);
+      font: 13px/1.45 ui-sans-serif, "Segoe UI", sans-serif;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      border: 1px solid rgba(215, 173, 75, 0.24);
+      color: var(--gold);
+      padding: 0 10px;
+      font: 700 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      background: rgba(215, 173, 75, 0.14);
+    }
+
+    .item {
+      min-height: 108px;
+      padding: 16px;
+      background: rgba(17, 16, 20, 0.86);
+    }
+
+    .item h3 {
+      margin: 0;
+      font: 700 17px/1.2 ui-sans-serif, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    .item p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font: 13px/1.45 ui-sans-serif, "Segoe UI", sans-serif;
+    }
+
+    .path {
+      display: inline-block;
+      margin-top: 12px;
+      color: #cfc4aa;
+      font: 11px/1.35 ui-monospace, "Cascadia Mono", Consolas, monospace;
+      word-break: break-word;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 16px 20px 20px;
+      background: rgba(17, 16, 20, 0.86);
+    }
+
+    .tag {
+      border: 1px solid rgba(215, 173, 75, 0.22);
+      border-radius: 999px;
+      color: #d9cfb7;
+      padding: 7px 10px;
+      font: 12px/1 ui-sans-serif, "Segoe UI", sans-serif;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .accent-red {
+      color: #f08b99;
+      border-color: rgba(143, 45, 61, 0.55);
+    }
+
+    .accent-green {
+      color: #9ed3b4;
+      border-color: rgba(93, 154, 116, 0.55);
+    }
+
+    .accent-blue {
+      color: #a9c6ef;
+      border-color: rgba(93, 130, 184, 0.55);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    footer {
+      margin-top: 28px;
+      color: var(--muted);
+      font: 12px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace;
+    }
+
+    @media (max-width: 900px) {
+      header,
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .overview {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .page {
+        width: min(100% - 24px, 1180px);
+        padding-top: 24px;
+      }
+
+      .overview,
+      .grid,
+      .section-head {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <p class="eyebrow">Map2D / src/ui</p>
+        <h1>Inventario de UI</h1>
+      </div>
+      <p class="summary">
+        Mapa rapido de pantallas, tabs, superficies de campaña, componentes HUD y piezas de soporte detectadas en el worktree de experimentacion.
+      </p>
+    </header>
+
+    <div class="overview" aria-label="Resumen">
+      <div class="metric"><strong>10</strong><span>Pantallas navegables</span></div>
+      <div class="metric"><strong>8</strong><span>Tabs Forum</span></div>
+      <div class="metric"><strong>7</strong><span>Iter Belli UI</span></div>
+      <div class="metric"><strong>20+</strong><span>Componentes compartidos</span></div>
+    </div>
+
+    <div class="toolbar">
+      <input id="filter" type="search" placeholder="Filtrar por nombre, ruta o familia..." autocomplete="off">
+      <div class="count" id="count">0 visibles</div>
+    </div>
+
+    <main id="inventory">
+      <section data-search="pantallas navegables app screens title commander quick battle bellum forum iter belli post victory defeat">
+        <div class="section-head">
+          <div>
+            <h2>Pantallas navegables</h2>
+            <div class="section-note">Registradas en App.tsx y screens.ts como superficies principales.</div>
+          </div>
+          <span class="pill">route surface</span>
+        </div>
+        <div class="grid">
+          <article class="item" data-search="TitleScreen src/ui/screens/TitleScreen.tsx title inicio portada"><h3>TitleScreen</h3><p>Entrada principal del juego.</p><span class="path">src/ui/screens/TitleScreen.tsx</span></article>
+          <article class="item" data-search="CommanderSelectScreen src/ui/screens/CommanderSelectScreen.tsx commander select"><h3>CommanderSelectScreen</h3><p>Seleccion de comandante para iniciar run.</p><span class="path">src/ui/screens/CommanderSelectScreen.tsx</span></article>
+          <article class="item" data-search="QuickBattleScreen src/ui/screens/QuickBattleScreen.tsx quick battle"><h3>QuickBattleScreen</h3><p>Acceso a escenarios de batalla rapida.</p><span class="path">src/ui/screens/QuickBattleScreen.tsx</span></article>
+          <article class="item" data-search="BellumSystemsScreen src/ui/screens/BellumSystemsScreen.tsx bellum systems"><h3>BellumSystemsScreen</h3><p>Pantalla de sistemas Bellum.</p><span class="path">src/ui/screens/BellumSystemsScreen.tsx</span></article>
+          <article class="item" data-search="ForumShell src/ui/screens/forum/ForumShell.tsx forum shell hub"><h3>ForumShell</h3><p>Shell central con sidebar y tabs de gestion.</p><span class="path">src/ui/screens/forum/ForumShell.tsx</span></article>
+          <article class="item" data-search="IterBelliScreen src/ui/screens/iterbelli/IterBelliScreen.tsx iter belli"><h3>IterBelliScreen</h3><p>Campaña de marcha con cartas y recursos propios.</p><span class="path">src/ui/screens/iterbelli/IterBelliScreen.tsx</span></article>
+          <article class="item" data-search="BattleScreenV2 src/ui/screens/BattleScreenV2.tsx battle v2"><h3>BattleScreenV2</h3><p>Superficie principal de batalla V2.</p><span class="path">src/ui/screens/BattleScreenV2.tsx</span></article>
+          <article class="item" data-search="PostBattleScreen src/ui/screens/PostBattleScreen.tsx post battle"><h3>PostBattleScreen</h3><p>Resolucion y recompensas tras combate.</p><span class="path">src/ui/screens/PostBattleScreen.tsx</span></article>
+          <article class="item" data-search="VictoryScreen src/ui/screens/VictoryScreen.tsx victory"><h3>VictoryScreen</h3><p>Cierre de victoria.</p><span class="path">src/ui/screens/VictoryScreen.tsx</span></article>
+          <article class="item" data-search="DefeatScreen src/ui/screens/DefeatScreen.tsx defeat"><h3>DefeatScreen</h3><p>Cierre de derrota.</p><span class="path">src/ui/screens/DefeatScreen.tsx</span></article>
+        </div>
+      </section>
+
+      <section data-search="forum tabs overview provinciae consilium exercitus bellum mercator doctrinae decreta">
+        <div class="section-head">
+          <div>
+            <h2>Tabs dentro de Forum</h2>
+            <div class="section-note">Definidas como ForumTab y renderizadas por ForumShell.</div>
+          </div>
+          <span class="pill accent-blue">forum</span>
+        </div>
+        <div class="tag-row">
+          <span class="tag">overview</span>
+          <span class="tag">provinciae</span>
+          <span class="tag">consilium</span>
+          <span class="tag">exercitus</span>
+          <span class="tag accent-red">bellum -> CampaignHexScreen</span>
+          <span class="tag">mercator</span>
+          <span class="tag">doctrinae</span>
+          <span class="tag">decreta</span>
+        </div>
+      </section>
+
+      <section data-search="rutas legacy hub council provinces doctrine army recruitment legate hiring forum remap">
+        <div class="section-head">
+          <div>
+            <h2>Rutas legacy remapeadas</h2>
+            <div class="section-note">Deep links antiguos que ahora aterrizan en Forum con el tab correcto.</div>
+          </div>
+          <span class="pill accent-green">compat</span>
+        </div>
+        <div class="tag-row">
+          <span class="tag">hub -> overview</span>
+          <span class="tag">council -> consilium</span>
+          <span class="tag">provinces -> provinciae</span>
+          <span class="tag">doctrine -> doctrinae</span>
+          <span class="tag">army-recruitment -> exercitus</span>
+          <span class="tag">legate-hiring -> exercitus</span>
+        </div>
+      </section>
+
+      <section data-search="iter belli campaign battle modal log resource bar itinerary operation card endgame">
+        <div class="section-head">
+          <div>
+            <h2>Iter Belli UI</h2>
+            <div class="section-note">Piezas especificas de la campaña card-driven.</div>
+          </div>
+          <span class="pill accent-red">campaign</span>
+        </div>
+        <div class="grid">
+          <article class="item" data-search="IterBelliScreen"><h3>IterBelliScreen</h3><p>Contenedor principal de la marcha.</p><span class="path">src/ui/screens/iterbelli/IterBelliScreen.tsx</span></article>
+          <article class="item" data-search="OperationCard"><h3>OperationCard</h3><p>Carta jugable de operacion.</p><span class="path">src/ui/screens/iterbelli/OperationCard.tsx</span></article>
+          <article class="item" data-search="Itinerary"><h3>Itinerary</h3><p>Progreso y ruta de campaña.</p><span class="path">src/ui/screens/iterbelli/Itinerary.tsx</span></article>
+          <article class="item" data-search="CampaignLog"><h3>CampaignLog</h3><p>Registro de eventos de campaña.</p><span class="path">src/ui/screens/iterbelli/CampaignLog.tsx</span></article>
+          <article class="item" data-search="CampaignResourceBar"><h3>CampaignResourceBar</h3><p>Recursos locales de Iter Belli.</p><span class="path">src/ui/screens/iterbelli/CampaignResourceBar.tsx</span></article>
+          <article class="item" data-search="BattleModal"><h3>BattleModal</h3><p>Resolucion modal de combate.</p><span class="path">src/ui/screens/iterbelli/BattleModal.tsx</span></article>
+          <article class="item" data-search="EndgameCard"><h3>EndgameCard</h3><p>Estado final de la expedicion.</p><span class="path">src/ui/screens/iterbelli/EndgameCard.tsx</span></article>
+        </div>
+      </section>
+
+      <section data-search="componentes hud modales shared resource notification music settings army event confirm tooltip button card panel">
+        <div class="section-head">
+          <div>
+            <h2>Componentes, HUD y modales</h2>
+            <div class="section-note">Biblioteca compartida para pantallas y flujos de juego.</div>
+          </div>
+          <span class="pill">shared</span>
+        </div>
+        <div class="tag-row">
+          <span class="tag">ResourceBar</span>
+          <span class="tag">NotificationFeed</span>
+          <span class="tag">MusicToggle</span>
+          <span class="tag">SettingsPanel / OptionsModal</span>
+          <span class="tag">ArmyDetailHUD</span>
+          <span class="tag">ArmyCampaignPanel</span>
+          <span class="tag">EventModal</span>
+          <span class="tag">CampaignEventModal</span>
+          <span class="tag">ConfirmDialog</span>
+          <span class="tag">ResourceExchangeModal</span>
+          <span class="tag">Tooltip</span>
+          <span class="tag">Button</span>
+          <span class="tag">Card</span>
+          <span class="tag">Panel</span>
+          <span class="tag">OrnatePanel</span>
+          <span class="tag">OrnateFrame</span>
+          <span class="tag">Bar</span>
+          <span class="tag">Portrait</span>
+        </div>
+      </section>
+
+      <section data-search="especial legacy main menu ability ui canvas end hub node modal province map view campaign hex">
+        <div class="section-head">
+          <div>
+            <h2>UI especial o legacy</h2>
+            <div class="section-note">Archivos presentes que son soporte, legacy o no estan montados como pantalla principal directa.</div>
+          </div>
+          <span class="pill accent-green">support</span>
+        </div>
+        <div class="tag-row">
+          <span class="tag">main-menu.ts</span>
+          <span class="tag">battle/ability-ui.ts</span>
+          <span class="tag">CanvasScreen</span>
+          <span class="tag">EndScreen</span>
+          <span class="tag">HubScreen</span>
+          <span class="tag">NodeModal</span>
+          <span class="tag">ProvinceScreen</span>
+          <span class="tag">ProvinceMapView</span>
+          <span class="tag">CampaignHexScreen</span>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Fuente: src/ui/screens.ts, src/ui/screens/App.tsx, src/ui/screens/forum/state.ts y arbol src/ui.
+    </footer>
+  </div>
+
+  <script>
+    const filter = document.querySelector('#filter');
+    const count = document.querySelector('#count');
+    const sections = [...document.querySelectorAll('section')];
+    const searchable = [...document.querySelectorAll('section, .item, .tag')];
+
+    function normalize(value) {
+      return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function applyFilter() {
+      const query = normalize(filter.value.trim());
+      let visible = 0;
+
+      searchable.forEach((node) => {
+        node.classList.remove('hidden');
+      });
+
+      sections.forEach((section) => {
+        const children = [...section.querySelectorAll('.item, .tag')];
+        let sectionMatch = normalize(section.dataset.search || section.textContent).includes(query);
+        let childMatches = 0;
+
+        children.forEach((child) => {
+          const haystack = normalize((child.dataset.search || '') + ' ' + child.textContent);
+          const match = !query || haystack.includes(query) || sectionMatch;
+          child.classList.toggle('hidden', !match);
+          if (match) childMatches += 1;
+        });
+
+        const showSection = !query || sectionMatch || childMatches > 0;
+        section.classList.toggle('hidden', !showSection);
+        if (showSection) visible += 1;
+      });
+
+      count.textContent = visible + (visible === 1 ? ' seccion visible' : ' secciones visibles');
+    }
+
+    filter.addEventListener('input', applyFilter);
+    applyFilter();
+  </script>
+</body>
+</html>

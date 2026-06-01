@@ -5,6 +5,8 @@ import { selectedCommander, globalSeason, MAX_SEASONS } from '../../game/core/ga
 import { FACTION_PRIMARY_RESOURCE, RESOURCE_INFO } from '../../game/core/commander';
 import type { ResourceType } from '../../game/core/commander';
 import { Tooltip } from './Tooltip';
+import { InlineImageIcon, ResourceIcon } from './ResourceIcon';
+import seasonIcon from '../../assets/ui/resources/season-icon-color.png';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('resource-bar-styles')) {
@@ -58,6 +60,7 @@ function ResourceCounter({ type }: { type: ResourceType }) {
   const ref = useRef<HTMLSpanElement>(null);
   const prevValue = useRef(sig.value);
   const [delta, setDelta] = useState<number | null>(null);
+  const renderIcon = () => <ResourceIcon type={type} size={22} />;
 
   // Flash on value change + capture delta
   useEffect(() => {
@@ -83,7 +86,10 @@ function ResourceCounter({ type }: { type: ResourceType }) {
       content={
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ fontWeight: 700, color: info.color }}>
-            {info.icon} {info.label}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              {renderIcon()}
+              {info.label}
+            </span>
           </div>
           <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
             {RESOURCE_TOOLTIP[type]}
@@ -102,7 +108,7 @@ function ResourceCounter({ type }: { type: ResourceType }) {
           position: 'relative',
         }}
       >
-        <span style={{ fontSize: 'var(--font-size-lg)' }}>{info.icon}</span>
+        {renderIcon()}
         <span
           ref={ref}
           style={{
@@ -149,8 +155,9 @@ export function ResourceBar() {
       >
         <div
           aria-label={`Season ${globalSeason.value} of ${MAX_SEASONS}`}
-          style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid var(--color-border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid var(--color-border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
         >
+          <InlineImageIcon src={seasonIcon} size={20} />
           <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', fontWeight: 400, lineHeight: '1' }}>
             S{globalSeason.value}/{MAX_SEASONS}
           </span>
