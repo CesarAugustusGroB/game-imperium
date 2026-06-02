@@ -246,10 +246,10 @@ function normalizeSavedAdvisor(rawAdvisor: unknown): Advisor | null {
     tiers: Array.isArray(advisor.tiers) ? advisor.tiers as Advisor['tiers'] : template.tiers,
   };
 
-  if (template.portrait) {
-    normalized.portrait = template.portrait;
-  } else if (typeof advisor.portrait === 'string') {
+  if (typeof advisor.portrait === 'string') {
     normalized.portrait = advisor.portrait;
+  } else if (template.portrait) {
+    normalized.portrait = template.portrait;
   } else {
     delete normalized.portrait;
   }
