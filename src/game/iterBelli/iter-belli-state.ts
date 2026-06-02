@@ -60,6 +60,8 @@ let logLines: LogLine[] = [];
 
 export const iterBelliState = signal<IterBelliState>(S);
 export const iterBelliLog = signal<LogLine[]>(logLines);
+/** True while a campaign is in flight (embark → return-to-hub). Gates serialization. */
+export const iterBelliActive = signal<boolean>(false);
 
 /** Publish the current draft to the signals so subscribers re-render. */
 function commit(): void {
@@ -504,6 +506,7 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
   refillPool();
   injectCrises();
   injectLocationQuests();
+  iterBelliActive.value = true;
   commit();
 }
 
@@ -511,6 +514,19 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
 export function resetIterBelli(): void {
   S = freshState();
   logLines = [];
+  iterBelliActive.value = false;
   resetActiveScenario();
+  commit();
+}
+
+/**
+ * Replace the engine's live state and log wholesale (used by the persistence
+ * layer to restore a saved campaign). The active scenario must already be set
+ * by the caller. Marks the campaign active and publishes to the signals.
+ */
+export function loadIterBelliState(state: IterBelliState, log: LogLine[]): void {
+  S = state;
+  logLines = log;
+  iterBelliActive.value = true;
   commit();
 }
