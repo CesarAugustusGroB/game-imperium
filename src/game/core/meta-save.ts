@@ -52,6 +52,7 @@ import type { Legate } from '../army/legate';
 import { normalizeCohortRoster } from '../army/cohort';
 import { SUPPLY_MAX_CARRY, SUPPLY_MORALE_PENALTY_CAP } from '../../config/game-config';
 import { serializeIterBelli, restoreIterBelli, type IterBelliSave } from '../iterBelli/iter-belli-save';
+import { iterBelliState } from '../iterBelli/iter-belli-state';
 import { computeDoctrineModifiers } from '../../data/iter-belli-doctrines';
 
 // —— Types ——
@@ -483,6 +484,8 @@ export function startActiveRunPersistence(): () => void {
   if (persistenceDisposer) return persistenceDisposer;
 
   const stop = effect(() => {
+    // Track the campaign so each committed turn debounce-saves the run snapshot.
+    void iterBelliState.value;
     if (!selectedCommander.value) return;
 
     flushPendingPersist();
