@@ -65,7 +65,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
     const supplies = (army?.supplies ?? SUPPLIES_STARTING_STOCK) + consilium.supplies;
     const embark = getEmbarkBonus();
     startIterBelliCampaign({
-      soldiers: soldiers + embark.soldiers,
+      soldiers: soldiers + embark.soldiers + consilium.soldiers,
       gold: getResource('gold') + consilium.gold,
       iuniores: getResource('iuniores'),
       discipline: discipline + embark.discipline,
@@ -74,6 +74,8 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
       missionId: consilium.missionId ?? undefined,
       startThreat: START.threat - consilium.threat,
       startMorale: START.morale + consilium.morale + embark.morale,
+      enemyWeaken: consilium.enemyWeaken,
+      extraDays: consilium.extraDays,
       quests: secondaryQuests,
       doctrineModifiers,
     });

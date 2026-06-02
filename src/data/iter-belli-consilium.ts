@@ -54,9 +54,15 @@ export interface ConsiliumSetup {
   threat: number;
   /** Bonus to starting morale. */
   morale: number;
+  /** Erosion of the final enemy army (each point ≈ −7% effectives). */
+  enemyWeaken: number;
+  /** Extra campaign days added to the starting clock. */
+  extraDays: number;
+  /** Bonus to starting soldiers. */
+  soldiers: number;
 }
 
-type SeedDeltas = Pick<ConsiliumSetup, 'supplies' | 'gold' | 'threat' | 'morale'>;
+type SeedDeltas = Pick<ConsiliumSetup, 'supplies' | 'gold' | 'threat' | 'morale' | 'enemyWeaken' | 'extraDays' | 'soldiers'>;
 
 /** Total supply-upkeep budget of a campaign — the basis for upkeep-reduction bonuses. */
 const UPKEEP_BUDGET = SUPPLY_UPKEEP_PER_TURN * START.timeRemaining;
@@ -66,7 +72,7 @@ const EVENT_CHOICE_GOLD = 5;
 
 /** Map one advisor passive to its starting-stat deltas (all zero if unmapped). */
 export function passiveModifier(passive: AdvisorPassive): SeedDeltas {
-  const z: SeedDeltas = { supplies: 0, gold: 0, threat: 0, morale: 0 };
+  const z: SeedDeltas = { supplies: 0, gold: 0, threat: 0, morale: 0, enemyWeaken: 0, extraDays: 0, soldiers: 0 };
   switch (passive.type) {
     case 'upkeep-reduction':
       return { ...z, supplies: Math.round((passive.percent / 100) * UPKEEP_BUDGET) };
@@ -81,6 +87,14 @@ export function passiveModifier(passive: AdvisorPassive): SeedDeltas {
       return { ...z, gold: passive.amount };
     case 'extra-event-choices':
       return { ...z, gold: passive.count * EVENT_CHOICE_GOLD };
+    case 'enemy-weaken':
+      return { ...z, enemyWeaken: passive.amount };
+    case 'campaign-time':
+      return { ...z, extraDays: passive.days };
+    case 'morale-bonus':
+      return { ...z, morale: passive.amount };
+    case 'soldiers-bonus':
+      return { ...z, soldiers: passive.amount };
     default:
       // shop-discount no longer seeds gold — it now applies as a real Hub discount.
       return z;
@@ -93,7 +107,7 @@ export function passiveModifier(passive: AdvisorPassive): SeedDeltas {
  * passive modifier.
  */
 export function computeConsiliumSetup(slots: (Advisor | null)[]): ConsiliumSetup {
-  const setup: ConsiliumSetup = { missionId: null, supplies: 0, gold: 0, threat: 0, morale: 0 };
+  const setup: ConsiliumSetup = { missionId: null, supplies: 0, gold: 0, threat: 0, morale: 0, enemyWeaken: 0, extraDays: 0, soldiers: 0 };
   let firstSeen = false;
   for (const advisor of slots) {
     if (!advisor) continue;
@@ -107,6 +121,9 @@ export function computeConsiliumSetup(slots: (Advisor | null)[]): ConsiliumSetup
     setup.gold += mod.gold;
     setup.threat += mod.threat;
     setup.morale += mod.morale;
+    setup.enemyWeaken += mod.enemyWeaken;
+    setup.extraDays += mod.extraDays;
+    setup.soldiers += mod.soldiers;
   }
   return setup;
 }

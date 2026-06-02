@@ -473,6 +473,10 @@ export interface CampaignSeed {
   startThreat?: number;
   /** Override starting morale (Consilium modifier); omitted → START.morale. */
   startMorale?: number;
+  /** Erode the final enemy army (seeds IterBelliState.enemyWeaken); omitted → 0. */
+  enemyWeaken?: number;
+  /** Extra campaign days added to the starting clock; omitted → none. */
+  extraDays?: number;
   /** Consilium secondary quests (Fase 2); omitted → none. */
   quests?: SecondaryQuest[];
   /** Equipped-doctrine campaign modifiers (Doctrinae Fase 1); omitted → none. */
@@ -499,6 +503,8 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
   if (seed.startThreat != null) S.threat = clamp(seed.startThreat, B.THREAT_MIN, B.THREAT_MAX);
   if (seed.startMorale != null) S.morale = clamp(seed.startMorale, B.MORALE_MIN, B.MORALE_MAX);
   if (seed.supplies != null) S.supplies = Math.max(0, Math.floor(seed.supplies));
+  if (seed.enemyWeaken != null) S.enemyWeaken = Math.max(0, Math.floor(seed.enemyWeaken));
+  if (seed.extraDays) S.timeRemaining += Math.floor(seed.extraDays);
 
   logTurn('Día 1: Inicio de la campaña');
   logEvent(`El ejército parte de la frontera. ${S.soldiers} soldados, moral ${S.morale.toFixed(1)}, disciplina ${B.ROMAN[S.discipline]}.`);

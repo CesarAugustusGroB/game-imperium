@@ -27,7 +27,11 @@ export type AdvisorPassive =
   | { type: 'extra-event-choices'; count: number }
   | { type: 'heal-between-nodes'; amount: number }
   | { type: 'threat-reduction'; amount: number }
-  | { type: 'loot-bonus'; percent: number };
+  | { type: 'loot-bonus'; percent: number }
+  | { type: 'enemy-weaken'; amount: number }
+  | { type: 'campaign-time'; days: number }
+  | { type: 'morale-bonus'; amount: number }
+  | { type: 'soldiers-bonus'; amount: number };
 
 // ── Advisor tier ──
 
