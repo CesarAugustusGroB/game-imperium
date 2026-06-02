@@ -330,20 +330,18 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
   const role = source === 'seat'
     ? SLOT_LABELS[slotIndex ?? 0] ?? 'Seated Advisor'
     : 'Political Candidate';
-  const portraitColumnWidth = 'clamp(300px, 30vw, 430px)';
-  const portraitRightInset = 'clamp(20px, 3vw, 42px)';
-  const portraitTextGap = 'clamp(34px, 4vw, 58px)';
+  const portraitColumnWidth = 'clamp(300px, 28vw, 420px)';
 
   return (
     <div style={{
       flex: 1,
       minHeight: 0,
       display: 'grid',
-      gridTemplateRows: 'minmax(320px, 0.86fr) auto',
+      gridTemplateRows: 'minmax(300px, 1fr) auto',
       background: `
-        radial-gradient(circle at 76% 14%, ${color}20 0%, transparent 32%),
-        linear-gradient(140deg, rgba(240, 208, 128, 0.08) 0%, transparent 24%),
-        linear-gradient(180deg, rgba(25, 21, 35, 0.98) 0%, rgba(10, 8, 15, 0.99) 100%)
+        radial-gradient(circle at 50% 8%, ${color}24 0%, transparent 42%),
+        linear-gradient(140deg, rgba(240, 208, 128, 0.08) 0%, transparent 22%),
+        linear-gradient(180deg, rgba(34, 30, 48, 0.96) 0%, rgba(13, 11, 20, 0.98) 100%)
       `,
     }}>
       <div style={{
@@ -357,45 +355,21 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
         <SPQREmblem
           size={180}
           color={CONSILIUM_ACCENT}
-          opacity={0.08}
-          style={{ position: 'absolute', top: 42, right: 20, zIndex: 0 }}
+          opacity={0.1}
+          style={{ position: 'absolute', top: 28, right: 28 }}
         />
         {advisor.portrait ? (
-          <div
+          <img
+            src={advisor.portrait}
+            alt={advisor.name}
             style={{
-              position: 'absolute',
-              top: 0,
-              right: portraitRightInset,
-              bottom: 0,
-              width: portraitColumnWidth,
-              overflow: 'hidden',
-              borderLeft: '1px solid var(--imp-gold-faint)',
-              borderRight: '1px solid var(--imp-gold-faint)',
-              background: 'rgba(5, 4, 8, 0.92)',
-              boxShadow: 'inset 0 0 0 1px rgba(212, 168, 67, 0.08), 0 24px 70px rgba(0, 0, 0, 0.66)',
-              zIndex: 1,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center 18%',
+              filter: 'saturate(0.9) contrast(1.06)',
             }}
-          >
-            <img
-              src={advisor.portrait}
-              alt={advisor.name}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center 16%',
-                filter: 'saturate(0.94) contrast(1.08)',
-              }}
-            />
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              background: `
-                linear-gradient(90deg, rgba(5, 4, 8, 0.72) 0%, rgba(5, 4, 8, 0.28) 18%, transparent 42%),
-                linear-gradient(180deg, transparent 58%, rgba(5, 4, 8, 0.82) 100%)
-              `,
-            }} />
-          </div>
+          />
         ) : (
           <div style={{
             flex: 1,
@@ -416,22 +390,19 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
           position: 'absolute',
           inset: 0,
           background: `
-            linear-gradient(90deg, rgba(5, 4, 8, 0.99) 0%, rgba(5, 4, 8, 0.99) 52%, rgba(5, 4, 8, 0.76) 68%, transparent 79%, transparent 100%),
-            linear-gradient(180deg, rgba(5, 4, 8, 0.18) 0%, transparent 34%, rgba(5, 4, 8, 0.96) 100%)
+            linear-gradient(90deg, rgba(13, 11, 20, 0.94) 0%, transparent 24%, transparent 72%, rgba(13, 11, 20, 0.88) 100%),
+            linear-gradient(180deg, transparent 34%, rgba(13, 11, 20, 0.98) 100%)
           `,
-          zIndex: 2,
         }} />
         <div style={{
           position: 'absolute',
-          left: 'clamp(36px, 4.8vw, 68px)',
-          right: `calc(${portraitColumnWidth} + ${portraitRightInset} + ${portraitTextGap})`,
-          top: '50%',
-          transform: 'translateY(-42%)',
+          left: 22,
+          right: 22,
+          bottom: 18,
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          gap: 10,
-          zIndex: 3,
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
+          gap: 16,
         }}>
           <div style={{ minWidth: 0 }}>
             <div style={{
@@ -448,38 +419,35 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
               marginTop: 4,
               color: 'var(--imp-text-hi)',
               fontFamily: 'var(--imp-font-display)',
-              fontSize: 'clamp(44px, 5vw, 72px)',
+              fontSize: 'clamp(28px, 4vw, 48px)',
               fontWeight: 600,
-              letterSpacing: 1.8,
-              lineHeight: 0.9,
+              letterSpacing: 2,
+              lineHeight: 0.96,
               textTransform: 'uppercase',
-              maxWidth: 760,
               textShadow: '0 4px 18px rgba(0, 0, 0, 0.7)',
             }}>
               {advisor.name}
             </div>
             <div style={{
-              marginTop: 12,
+              marginTop: 7,
               color: 'var(--imp-text-mid)',
               fontFamily: 'var(--imp-font-serif)',
               fontSize: 16,
               fontStyle: 'italic',
               lineHeight: 1.25,
-              maxWidth: 760,
             }}>
               {heroLine(currentTierData.passive, source)}
             </div>
           </div>
           <div style={{
-            alignSelf: 'flex-start',
+            flex: '0 0 auto',
             color: CONSILIUM_ACCENT,
             fontFamily: 'var(--imp-font-mono)',
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: 900,
-            letterSpacing: 1.2,
-            padding: '8px 12px',
+            padding: '7px 10px',
             border: '1px solid var(--imp-gold-dim)',
-            background: 'rgba(13, 11, 20, 0.78)',
+            background: 'rgba(13, 11, 20, 0.72)',
           }}>
             {source === 'market'
               ? <ResourceAmount type="gold" amount={getDiscountedAdvisorCost(advisor)} iconSize={17} />
@@ -489,11 +457,11 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
       </div>
 
       <div style={{
-        padding: '14px 22px 16px',
+        padding: '18px 22px 20px',
         borderTop: '1px solid var(--imp-gold-faint)',
         background: 'rgba(13, 11, 20, 0.72)',
       }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 10 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 14 }}>
           {advisor.traits.map((trait) => (
             <TraitChip key={trait} trait={trait} />
           ))}
@@ -505,7 +473,7 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
           nextTierThreshold={nextTierThreshold}
           accent={CONSILIUM_ACCENT}
           factionColor={color}
-          style={{ marginBottom: 12 }}
+          style={{ marginBottom: 14 }}
         />
 
         <div style={{
@@ -1042,7 +1010,7 @@ function MiniPortrait({ advisor, size }: { advisor: Advisor; size: number }) {
         <img
           src={advisor.portrait}
           alt=""
-          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 18%' }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }}
         />
       ) : (
         advisor.name.charAt(0).toUpperCase()
