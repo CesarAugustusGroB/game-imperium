@@ -20,6 +20,11 @@ loadMetaSave();
  * True while a saved in-flight campaign is being restored at boot. `App` renders
  * a bare veil during this window so the empty campaign never flashes before the
  * async restore (which may load topology) completes.
+ *
+ * Gated specifically on `activeRun.iterBelli` (an in-flight Iter Belli card
+ * campaign) — NOT on `activeRun` alone. A Hub-only run with no campaign must
+ * still reach the title screen and resume via the "Continue" button; do not
+ * widen this condition, or such runs would be force-routed into `iterbelli`.
  */
 export const bootResuming = signal<boolean>(metaSave.value.activeRun?.iterBelli != null);
 
