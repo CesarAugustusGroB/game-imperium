@@ -7,6 +7,10 @@
  * passed into restore. This module imports only the campaign engine + its data
  * (cards, quests, scenario) — never the Hub stores — so it stays pure and
  * verifiable in isolation.
+ *
+ * Card-def ids are plain snake_case and never begin with `card_` or `crisis_`;
+ * quest cards use the `card_<questId>` prefix and crisis cards the `crisis_<key>`
+ * prefix, which keeps the three populations disjoint in resolveCardDef.
  */
 
 import { iterBelliState, iterBelliLog, iterBelliActive, loadIterBelliState } from './iter-belli-state';
@@ -76,8 +80,10 @@ function resolveCardDef(defId: string, scenario: CampaignScenario, quests: Secon
   if (quest) return makeQuestCard(quest);
 
   if (defId.startsWith('crisis_')) {
-    const key = defId.slice('crisis_'.length) as keyof CampaignScenario['crises'];
-    const crisis = scenario.crises[key];
+    const key = defId.slice('crisis_'.length);
+    const crisis = key in scenario.crises
+      ? scenario.crises[key as keyof CampaignScenario['crises']]
+      : undefined;
     return crisis ? { ...crisis, id: defId } : null;
   }
 
