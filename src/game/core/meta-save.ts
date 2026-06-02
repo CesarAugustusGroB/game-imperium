@@ -51,6 +51,8 @@ import { faith, gold, influence, initResources, iuniores, momentum, type Resourc
 import type { Legate } from '../army/legate';
 import { normalizeCohortRoster } from '../army/cohort';
 import { SUPPLY_MAX_CARRY, SUPPLY_MORALE_PENALTY_CAP } from '../../config/game-config';
+import { serializeIterBelli, restoreIterBelli, type IterBelliSave } from '../iterBelli/iter-belli-save';
+import { computeDoctrineModifiers } from '../../data/iter-belli-doctrines';
 
 // —— Types ——
 
@@ -113,6 +115,8 @@ export interface ActiveRunSave {
   maxHandSize: number;
   /** Continuous Hub effects in flight (e.g. upkeep waivers). Optional for backwards compat. */
   activeDecretumEffects?: ActiveDecretumEffect[];
+  /** In-flight Iter Belli campaign snapshot. Absent/null = no campaign in flight. */
+  iterBelli?: IterBelliSave | null;
 }
 
 export interface MetaSave {
@@ -242,10 +246,10 @@ function normalizeSavedAdvisor(rawAdvisor: unknown): Advisor | null {
     tiers: Array.isArray(advisor.tiers) ? advisor.tiers as Advisor['tiers'] : template.tiers,
   };
 
-  if (typeof advisor.portrait === 'string') {
-    normalized.portrait = advisor.portrait;
-  } else if (template.portrait) {
+  if (template.portrait) {
     normalized.portrait = template.portrait;
+  } else if (typeof advisor.portrait === 'string') {
+    normalized.portrait = advisor.portrait;
   } else {
     delete normalized.portrait;
   }
@@ -328,6 +332,7 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     decretumHand: Array.isArray(run.decretumHand) ? run.decretumHand : [],
     maxHandSize: typeof run.maxHandSize === 'number' ? run.maxHandSize : 5,
     activeDecretumEffects: Array.isArray(run.activeDecretumEffects) ? run.activeDecretumEffects : [],
+    iterBelli: (run.iterBelli && typeof run.iterBelli === 'object') ? run.iterBelli as IterBelliSave : null,
   };
 }
 
@@ -424,6 +429,7 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     decretumHand: decretumHand.value,
     maxHandSize: maxHandSize.value,
     activeDecretumEffects: activeDecretumEffects.value,
+    iterBelli: serializeIterBelli(),
   };
 }
 
@@ -556,6 +562,10 @@ export async function restoreActiveRun(): Promise<boolean> {
     decretumHand.value = snapshot.decretumHand;
     maxHandSize.value = snapshot.maxHandSize;
     activeDecretumEffects.value = snapshot.activeDecretumEffects ?? [];
+
+    if (snapshot.iterBelli) {
+      restoreIterBelli(snapshot.iterBelli, computeDoctrineModifiers(equippedDoctrines.value));
+    }
 
     metaSave.value = {
       ...metaSave.value,
