@@ -1,5 +1,6 @@
 import { useEffect } from 'preact/hooks';
-import { currentScreen, navigateTo, transitionState } from '../screens';
+import { signal } from '@preact/signals';
+import { currentScreen, navigateTo, navigateToIterBelli, transitionState } from '../screens';
 import type { ScreenName } from '../screens';
 import { ResourceBar } from '../components/ResourceBar';
 import { NotificationFeed } from '../components/NotificationFeed';
@@ -10,10 +11,31 @@ import { TitleScreen } from './TitleScreen';
 import { CommanderSelectScreen } from './CommanderSelectScreen';
 import { ForumShell } from './forum';
 import { IterBelliScreen } from './iterbelli/IterBelliScreen';
-import { loadMetaSave, startActiveRunPersistence } from '../../game/core/meta-save';
+import { loadMetaSave, startActiveRunPersistence, restoreActiveRun, metaSave } from '../../game/core/meta-save';
 
 // Load meta-save from localStorage on startup
 loadMetaSave();
+
+/**
+ * True while a saved in-flight campaign is being restored at boot. `App` renders
+ * a bare veil during this window so the empty campaign never flashes before the
+ * async restore (which may load topology) completes.
+ */
+export const bootResuming = signal<boolean>(metaSave.value.activeRun?.iterBelli != null);
+
+if (bootResuming.value) {
+  void (async () => {
+    const ok = await restoreActiveRun();
+    if (ok) {
+      // A mid-campaign reload keeps the `#iterbelli` hash, so we are usually
+      // already on the right screen — only navigate (and play its cue) if not.
+      if (currentScreen.value !== 'iterbelli') navigateToIterBelli();
+    } else {
+      navigateTo('title');
+    }
+    bootResuming.value = false;
+  })();
+}
 
 /**
  * Screens that should not render the global ResourceBar. The Forum shell
@@ -74,10 +96,15 @@ export function App() {
   const screen = currentScreen.value;
   const exiting = transitionState.value === 'exiting';
   const showResourceBar = !BARE_SCREENS.has(screen);
+  const resuming = bootResuming.value;
 
   useEffect(() => {
     return startActiveRunPersistence();
   }, []);
+
+  if (resuming) {
+    return <div style={{ position: 'fixed', inset: 0, background: 'var(--color-bg-primary, #0a0a14)' }} />;
+  }
 
   return (
     <>
