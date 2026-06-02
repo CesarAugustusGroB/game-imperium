@@ -23,7 +23,6 @@ restore, and migration plumbing.
 - No serialization of the transient decisive-battle (`BattleState`) sub-state.
 - No new "Continue" UI; reload routing is automatic.
 - No meta-save version bump (the new field is backward-compatible).
-- No persistence of finished campaigns (an ended run is not resumed).
 
 ## Architecture
 
@@ -52,7 +51,7 @@ The two closure-bearing fields are **not stored** — they are re-derived on res
 | Field | Strategy |
 |---|---|
 | `pool[].def` (card defs are functions) | Store `{ instanceId, defId, timer }`. On restore, resolve the def by id: normal cards from `CARD_DEFS`; crisis cards (`crisis_*`) from `getActiveScenario().crises`; quest cards via `makeQuestCard(quest)` matched against `state.quests`. |
-| `doctrineModifiers` (hooks are functions) | Not stored. Recomputed via `computeDoctrineModifiers(equippedDoctrines.value)` at restore time. The Hub restore runs first and equipped doctrines cannot change mid-campaign, so recompute is safe. |
+| `doctrineModifiers` (hooks are functions) | Not stored. Recomputed by the **caller** (`meta-save`) via `computeDoctrineModifiers(equippedDoctrines.value)` and passed into `restoreIterBelli(save, modifiers)`. Keeps `iter-belli-save.ts` free of `doctrine-store` imports. Equipped doctrines cannot change mid-campaign, so recompute is safe. |
 | All scalars/flags/`outcome`/`quests`/`archetype`/`missionId`/`locationIdx`/`turnNum`/`log` | Copied verbatim (already plain data). |
 | `scenarioId` | Stored; on restore `setActiveScenario(SCENARIOS_BY_ID[id])`. Registry currently holds only `SAGUNTUM`. |
 
@@ -65,32 +64,40 @@ reroll the hand (prevents save-scumming).
    - `IterBelliSave` interface (the JSON projection above).
    - `SavedCardInstance = { instanceId: number; defId: string; timer: number }`.
    - `serializeIterBelli(): IterBelliSave | null` — reads `iterBelliState.value` +
-     `iterBelliLog.value` + `getActiveScenario().id`. Returns `null` when the
-     campaign is finished or never started (so a finished run is not resumed).
-   - `restoreIterBelli(save: IterBelliSave): void` — sets the active scenario,
-     resolves card defs, recomputes doctrine modifiers, builds a full
-     `IterBelliState`, and hands it to `loadIterBelliState`.
+     `iterBelliLog.value` + `getActiveScenario().id`. Returns `null` when no
+     campaign is active (the `iterBelliActive` flag is false).
+   - `restoreIterBelli(save: IterBelliSave, doctrineModifiers: DoctrineCampaignModifier[]): void`
+     — sets the active scenario, resolves card defs, builds a full
+     `IterBelliState` (injecting the caller-supplied modifiers), and hands it to
+     `loadIterBelliState`.
    - `SCENARIOS_BY_ID: Record<string, CampaignScenario>` — id → scenario lookup.
    - `resolveCardDef(defId, state): AnyCardDef | null` — the pool rehydrator.
 
 2. **`src/game/iterBelli/iter-belli-state.ts`**
+   - Add `export const iterBelliActive = signal<boolean>(false)` — true while a
+     campaign is in flight. Set `true` at the end of `startIterBelliCampaign`,
+     `false` in `resetIterBelli`.
    - Add `loadIterBelliState(state: IterBelliState, log: LogLine[]): void` — replaces
-     the module-private `S` and `logLines`, then `commit()`s. (Serialize needs no new
-     export — it reads the committed signal.)
+     the module-private `S` and `logLines`, sets `iterBelliActive` true, then
+     `commit()`s. (Serialize needs no new export — it reads the committed signal.)
 
 3. **`src/game/core/meta-save.ts`**
    - Add `iterBelli?: IterBelliSave | null` to `ActiveRunSave`.
    - `buildActiveRunSnapshot()` sets `iterBelli: serializeIterBelli()`.
    - `migrateActiveRun()` reads `run.iterBelli ?? null` (backward-compatible; no
      version bump — old saves simply lack the field).
-   - `restoreActiveRun()`, after the Hub state is restored, calls
-     `if (snapshot.iterBelli) restoreIterBelli(snapshot.iterBelli)`.
+   - `restoreActiveRun()`, after the Hub state (incl. `equippedDoctrines`) is
+     restored, calls `if (snapshot.iterBelli) restoreIterBelli(snapshot.iterBelli,
+     computeDoctrineModifiers(equippedDoctrines.value))`.
 
 4. **`src/ui/screens/App.tsx`**
-   - At boot, `maybeResumeCampaign()`: if the loaded save has an **in-flight**
-     campaign (`activeRun.iterBelli && !activeRun.iterBelli.finished`),
-     `await restoreActiveRun()` then `navigateToIterBelli()`. Otherwise no-op — the
-     existing Title/Continue flow is untouched.
+   - At boot (module scope, after `loadMetaSave()`): if the loaded save has a
+     campaign (`activeRun.iterBelli != null` — only emitted while active), set a
+     `bootResuming` signal true and kick off an async resume: `await
+     restoreActiveRun()` → `navigateToIterBelli()` → `bootResuming = false`.
+   - While `bootResuming` is true, `App` renders a bare dark veil (no content) to
+     avoid a flash of the empty campaign before restore completes. Otherwise no-op —
+     the existing Title/Continue flow is untouched.
 
 5. **Autosave**
    - Extend the tracked `effect` in `startActiveRunPersistence` to read
@@ -99,15 +106,20 @@ reroll the hand (prevents save-scumming).
 
 ## Edge Cases
 
-- **Finished campaign** (`state.finished`): `serializeIterBelli()` returns `null`,
-  so nothing is restored or auto-routed.
+- **Endgame reached, not yet returned** (`phase === 'endgame'`): the campaign stays
+  `active`, so it **is** persisted and resumed to the `EndgameCard`. This is
+  deliberate — `returnToHub()` is what applies the campaign rewards (gold, province,
+  season advance, cohort scaling); resuming the endgame lets the player still claim
+  them after a reload. The save is cleared (`iterBelliActive → false`) only once
+  `returnToHub()` runs `resetIterBelli()`.
 - **Reload mid decisive battle** (`phase === 'battle'`): the transient `BattleState`
   is **not** serialized. On restore with `phase === 'battle'`, the decisive battle is
   re-initialized from the persisted army (soldiers/morale/discipline/`enemyWeaken`/
   `fortified` + `scenario.enemy`). Dice are RNG regardless, so this is equivalent.
-  Rare case, zero serialization cost. (Implementation detail to confirm in planning:
-  how `IterBelliScreen`/`BattleModal` enter the battle phase, to ensure re-entry
-  re-derives the battle.)
+  Rare case, zero serialization cost. Confirmed mechanism: `BattleModal`'s mount
+  effect calls `beginBattle()` whenever `iterBelliBattle.value` is null, and restore
+  leaves that signal null — so re-entering the `battle` phase re-derives the battle
+  automatically with no extra wiring.
 
 ## Testing
 
