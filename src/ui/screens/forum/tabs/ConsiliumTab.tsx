@@ -360,15 +360,6 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
         opacity: 0.55,
       }} />
 
-      {/* top-center laurel crest */}
-      <div aria-hidden="true" style={{
-        position: 'absolute', top: 'clamp(3px, 0.6vw, 9px)', left: '50%', transform: 'translateX(-50%)',
-        display: 'flex', alignItems: 'center', opacity: 0.7, zIndex: 4,
-      }}>
-        <Laurel size={28} color="var(--imp-gold-mid)" />
-        <Laurel size={28} color="var(--imp-gold-mid)" flip />
-      </div>
-
       {/* dismiss (seated only) */}
       {isSeated && slotIndex !== null && (
         <button
