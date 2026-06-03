@@ -393,14 +393,6 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
           position: 'relative', minWidth: 0,
           display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: 'clamp(6px, 0.8vw, 11px)',
         }}>
-          {/* faint imperial watermark */}
-          <div aria-hidden="true" style={{
-            position: 'absolute', top: '50%', left: '12%', transform: 'translateY(-50%)',
-            pointerEvents: 'none', zIndex: 0,
-          }}>
-            <SPQREmblem size={340} color="var(--imp-gold)" opacity={0.05} />
-          </div>
-
           <div style={{ position: 'relative', zIndex: 1, minWidth: 0 }}>
             <div style={{
               color: 'var(--imp-gold-mid)', fontFamily: 'var(--imp-font-body)',
