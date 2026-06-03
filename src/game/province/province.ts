@@ -50,15 +50,15 @@ export interface Investment {
 
 export interface Province {
   id: string;
-  /** Display name (usually from the spoke that created it). */
+  /** Display name (usually from the campaign that created it). */
   name: string;
   /** Population count. Grows via food surplus; no hard cap (food is the ceiling). */
   population: number;
-  /** Base resource income per spoke (before investment bonuses). */
+  /** Base resource income per season (before investment bonuses). */
   baseIncome: Partial<Record<ResourceType, number>>;
   /** 0–100. High unrest reduces income and may trigger a Rebellion event. */
   unrest: number;
-  /** Gold upkeep cost per spoke (before investment costs). */
+  /** Gold upkeep cost per season (before investment costs). */
   baseExpenses: number;
   /** Built investments. At most one of each type. */
   investments: Investment[];
@@ -98,7 +98,7 @@ export interface Province {
 export interface InvestmentLevelEffect {
   incomeBonus: Partial<Record<ResourceType, number>>;
   expensesBonus: number;   // additional gold upkeep
-  unrestChange: number;    // negative = suppresses unrest per spoke
+  unrestChange: number;    // negative = suppresses unrest per season
   buildCost: ResourceCost; // resources to build / upgrade to this level
   description: string;
   /** Food production bonus for this tier (S20 — Food & Population). */
@@ -122,9 +122,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Castrum',
     flavour: 'A fortified camp that garrisons a permanent legion detachment.',
     levels: [
-      { incomeBonus: {},                    expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: 'Garrison deters minor raids. -5 Unrest/spoke.', beautinessBonus: -3 },
-      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -10, buildCost: { gold: 10, momentum: 3 },          description: 'Full cohort stationed. -10 Unrest/spoke. Free levy unit in defense battles.', beautinessBonus: -4 },
-      { incomeBonus: { momentum: 1 },       expensesBonus: 3, unrestChange: -15, buildCost: { gold: 20, momentum: 6 },          description: 'Veteran legion presence. -15 Unrest/spoke. +1 Momentum/spoke. Free veteran unit.', beautinessBonus: -5 },
+      { incomeBonus: {},                    expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: 'Garrison deters minor raids. -5 Unrest/season.', beautinessBonus: -3 },
+      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -10, buildCost: { gold: 10, momentum: 3 },          description: 'Full cohort stationed. -10 Unrest/season. Free levy unit in defense battles.', beautinessBonus: -4 },
+      { incomeBonus: { momentum: 1 },       expensesBonus: 3, unrestChange: -15, buildCost: { gold: 20, momentum: 6 },          description: 'Veteran legion presence. -15 Unrest/season. +1 Momentum/season. Free veteran unit.', beautinessBonus: -5 },
     ],
   },
   basilica: {
@@ -132,9 +132,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Basilica',
     flavour: 'A court of law that channels political loyalty upward.',
     levels: [
-      { incomeBonus: { influence: 1 },      expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+1 Influence/spoke.', beautinessBonus: 3 },
-      { incomeBonus: { influence: 2 },      expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 10, influence: 3 },         description: '+2 Influence/spoke. -5 Unrest/spoke.', beautinessBonus: 4 },
-      { incomeBonus: { influence: 3 },      expensesBonus: 2, unrestChange: -10, buildCost: { gold: 20, influence: 6 },         description: '+3 Influence/spoke. -10 Unrest/spoke. +1 extra event choice.', beautinessBonus: 5 },
+      { incomeBonus: { influence: 1 },      expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+1 Influence/season.', beautinessBonus: 3 },
+      { incomeBonus: { influence: 2 },      expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 10, influence: 3 },         description: '+2 Influence/season. -5 Unrest/season.', beautinessBonus: 4 },
+      { incomeBonus: { influence: 3 },      expensesBonus: 2, unrestChange: -10, buildCost: { gold: 20, influence: 6 },         description: '+3 Influence/season. -10 Unrest/season. +1 extra event choice.', beautinessBonus: 5 },
     ],
   },
   pantheon: {
@@ -142,9 +142,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Pantheon',
     flavour: 'Temples to the Roman gods maintain divine favour and civic morale.',
     levels: [
-      { incomeBonus: { faith: 1 },          expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: '+1 Faith/spoke. -5 Unrest/spoke.', beautinessBonus: 5 },
-      { incomeBonus: { faith: 2 },          expensesBonus: 1, unrestChange: -10, buildCost: { gold: 10, faith: 3 },             description: '+2 Faith/spoke. -10 Unrest/spoke.', beautinessBonus: 8 },
-      { incomeBonus: { faith: 3 },          expensesBonus: 2, unrestChange: -15, buildCost: { gold: 20, faith: 6 },             description: '+3 Faith/spoke. -15 Unrest/spoke. Units in this province\'s battles revive once.', beautinessBonus: 10 },
+      { incomeBonus: { faith: 1 },          expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: '+1 Faith/season. -5 Unrest/season.', beautinessBonus: 5 },
+      { incomeBonus: { faith: 2 },          expensesBonus: 1, unrestChange: -10, buildCost: { gold: 10, faith: 3 },             description: '+2 Faith/season. -10 Unrest/season.', beautinessBonus: 8 },
+      { incomeBonus: { faith: 3 },          expensesBonus: 2, unrestChange: -15, buildCost: { gold: 20, faith: 6 },             description: '+3 Faith/season. -15 Unrest/season. Units in this province\'s battles revive once.', beautinessBonus: 10 },
     ],
   },
   market: {
@@ -152,9 +152,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Market',
     flavour: 'A bustling forum that taxes trade flowing through the province.',
     levels: [
-      { incomeBonus: { gold: 2 },           expensesBonus: 0, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+2 Gold/spoke.', beautinessBonus: -2 },
-      { incomeBonus: { gold: 4 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 12 },                      description: '+4 Gold/spoke.', beautinessBonus: -2 },
-      { incomeBonus: { gold: 6 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 24 },                      description: '+6 Gold/spoke. Resource exchange rates in this province improved by 1.', beautinessBonus: -3 },
+      { incomeBonus: { gold: 2 },           expensesBonus: 0, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+2 Gold/season.', beautinessBonus: -2 },
+      { incomeBonus: { gold: 4 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 12 },                      description: '+4 Gold/season.', beautinessBonus: -2 },
+      { incomeBonus: { gold: 6 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 24 },                      description: '+6 Gold/season. Resource exchange rates in this province improved by 1.', beautinessBonus: -3 },
     ],
   },
   aqueduct: {
@@ -162,9 +162,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Aqueduct',
     flavour: 'Running water feeds population growth and scales all income.',
     levels: [
-      { incomeBonus: { gold: 1 },           expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 6 },                       description: '+1 Gold/spoke. +1 Food. +1 Pop cap. -5 Unrest/spoke.', beautinessBonus: 3, foodBonus: 1 },
-      { incomeBonus: { gold: 2 },           expensesBonus: 2, unrestChange: -5,  buildCost: { gold: 14 },                      description: '+2 Gold/spoke. +2 Food. +2 Pop cap. -5 Unrest/spoke.', beautinessBonus: 4, foodBonus: 2 },
-      { incomeBonus: { gold: 3 },           expensesBonus: 2, unrestChange: -10, buildCost: { gold: 26 },                      description: '+3 Gold/spoke. +3 Food. +3 Pop cap. -10 Unrest/spoke. All income +10%.', beautinessBonus: 5, foodBonus: 3 },
+      { incomeBonus: { gold: 1 },           expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 6 },                       description: '+1 Gold/season. +1 Food. +1 Pop cap. -5 Unrest/season.', beautinessBonus: 3, foodBonus: 1 },
+      { incomeBonus: { gold: 2 },           expensesBonus: 2, unrestChange: -5,  buildCost: { gold: 14 },                      description: '+2 Gold/season. +2 Food. +2 Pop cap. -5 Unrest/season.', beautinessBonus: 4, foodBonus: 2 },
+      { incomeBonus: { gold: 3 },           expensesBonus: 2, unrestChange: -10, buildCost: { gold: 26 },                      description: '+3 Gold/season. +3 Food. +3 Pop cap. -10 Unrest/season. All income +10%.', beautinessBonus: 5, foodBonus: 3 },
     ],
   },
   insula: {
@@ -172,9 +172,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Insula & Arena',
     flavour: 'Bread, housing, and spectacles keep the masses content.',
     levels: [
-      { incomeBonus: {},                          expensesBonus: 1, unrestChange: -10, buildCost: { gold: 4 },                       description: '-10 Unrest/spoke.' },
-      { incomeBonus: {},                          expensesBonus: 2, unrestChange: -20, buildCost: { gold: 10 },                      description: '-20 Unrest/spoke. Rebellion events suppressed at <50 Unrest.' },
-      { incomeBonus: { momentum: 1 },             expensesBonus: 2, unrestChange: -30, buildCost: { gold: 18 },                      description: '-30 Unrest/spoke. +1 Momentum/spoke. Rebellion impossible below 70 Unrest.' },
+      { incomeBonus: {},                          expensesBonus: 1, unrestChange: -10, buildCost: { gold: 4 },                       description: '-10 Unrest/season.' },
+      { incomeBonus: {},                          expensesBonus: 2, unrestChange: -20, buildCost: { gold: 10 },                      description: '-20 Unrest/season. Rebellion events suppressed at <50 Unrest.' },
+      { incomeBonus: { momentum: 1 },             expensesBonus: 2, unrestChange: -30, buildCost: { gold: 18 },                      description: '-30 Unrest/season. +1 Momentum/season. Rebellion impossible below 70 Unrest.' },
     ],
   },
 
@@ -185,9 +185,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Port',
     flavour: 'Stone quays and warehouses channel the wealth of the sea.',
     levels: [
-      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+2 Gold/spoke. +2 Wealth Growth/spoke.' },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 10 },                        description: '+3 Gold/spoke. +3 Wealth Growth/spoke.' },
-      { incomeBonus: { gold: 4 },                 expensesBonus: 2, unrestChange: 0, buildCost: { gold: 20 },                        description: '+4 Gold/spoke. +4 Wealth Growth/spoke. Trade hub.' },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+2 Gold/season. +2 Wealth Growth/season.' },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 10 },                        description: '+3 Gold/season. +3 Wealth Growth/season.' },
+      { incomeBonus: { gold: 4 },                 expensesBonus: 2, unrestChange: 0, buildCost: { gold: 20 },                        description: '+4 Gold/season. +4 Wealth Growth/season. Trade hub.' },
     ],
   },
   fishery: {
@@ -195,9 +195,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Fishery',
     flavour: 'Nets and salt-curing houses feed the province through lean seasons.',
     levels: [
-      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+2 Gold/spoke. +1 Food/spoke.', foodBonus: 1 },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 9 },                         description: '+3 Gold/spoke. +2 Food/spoke.', foodBonus: 2 },
-      { incomeBonus: { gold: 4 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 16 },                        description: '+4 Gold/spoke. +3 Food/spoke. Coastal settlements fed.', foodBonus: 3 },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+2 Gold/season. +1 Food/season.', foodBonus: 1 },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 9 },                         description: '+3 Gold/season. +2 Food/season.', foodBonus: 2 },
+      { incomeBonus: { gold: 4 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 16 },                        description: '+4 Gold/season. +3 Food/season. Coastal settlements fed.', foodBonus: 3 },
     ],
   },
   villa: {
@@ -205,9 +205,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Villa',
     flavour: 'Country estates of the rich yield harvests and social stability.',
     levels: [
-      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: -3, buildCost: { gold: 5 },                        description: '+1 Gold/spoke. +1 Food/spoke. -3 Unrest/spoke.', foodBonus: 1 },
-      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: -5, buildCost: { gold: 10 },                       description: '+2 Gold/spoke. +2 Food/spoke. -5 Unrest/spoke.', foodBonus: 2 },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: -8, buildCost: { gold: 18 },                       description: '+3 Gold/spoke. +3 Food/spoke. -8 Unrest/spoke. Farmland yield doubled.', foodBonus: 3 },
+      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: -3, buildCost: { gold: 5 },                        description: '+1 Gold/season. +1 Food/season. -3 Unrest/season.', foodBonus: 1 },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: -5, buildCost: { gold: 10 },                       description: '+2 Gold/season. +2 Food/season. -5 Unrest/season.', foodBonus: 2 },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: -8, buildCost: { gold: 18 },                       description: '+3 Gold/season. +3 Food/season. -8 Unrest/season. Farmland yield doubled.', foodBonus: 3 },
     ],
   },
   stables: {
@@ -215,9 +215,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Stables',
     flavour: 'Horses bred on the plains give the legion a decisive edge.',
     levels: [
-      { incomeBonus: { momentum: 1 },             expensesBonus: 1, unrestChange: 0, buildCost: { gold: 5, momentum: 2 },            description: '+1 Momentum/spoke. Cavalry units trained here.' },
-      { incomeBonus: { momentum: 2 },             expensesBonus: 2, unrestChange: 0, buildCost: { gold: 10, momentum: 4 },           description: '+2 Momentum/spoke. +1 cavalry unit in battles.' },
-      { incomeBonus: { momentum: 3 },             expensesBonus: 3, unrestChange: 0, buildCost: { gold: 18, momentum: 6 },           description: '+3 Momentum/spoke. Elite cavalry in battles.' },
+      { incomeBonus: { momentum: 1 },             expensesBonus: 1, unrestChange: 0, buildCost: { gold: 5, momentum: 2 },            description: '+1 Momentum/season. Cavalry units trained here.' },
+      { incomeBonus: { momentum: 2 },             expensesBonus: 2, unrestChange: 0, buildCost: { gold: 10, momentum: 4 },           description: '+2 Momentum/season. +1 cavalry unit in battles.' },
+      { incomeBonus: { momentum: 3 },             expensesBonus: 3, unrestChange: 0, buildCost: { gold: 18, momentum: 6 },           description: '+3 Momentum/season. Elite cavalry in battles.' },
     ],
   },
   lumber_camp: {
@@ -225,9 +225,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Lumber Camp',
     flavour: 'Managed felling and seasoning pits supply timber to the whole empire.',
     levels: [
-      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+1 Gold/spoke. -5% build costs in this province.' },
-      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 9 },                         description: '+2 Gold/spoke. -10% build costs in this province.' },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 16 },                        description: '+3 Gold/spoke. -15% build costs in this province.' },
+      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+1 Gold/season. -5% build costs in this province.' },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 9 },                         description: '+2 Gold/season. -10% build costs in this province.' },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 16 },                        description: '+3 Gold/season. -15% build costs in this province.' },
     ],
   },
   mountain_pass: {
@@ -235,9 +235,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Mountain Pass',
     flavour: 'A fortified defile that controls all movement through the heights.',
     levels: [
-      { incomeBonus: { momentum: 1 },             expensesBonus: 1, unrestChange: 0, buildCost: { gold: 5, momentum: 2 },            description: '+1 Momentum/spoke. Opens mountain trade route.' },
-      { incomeBonus: { momentum: 1, gold: 1 },    expensesBonus: 2, unrestChange: 0, buildCost: { gold: 12, momentum: 4 },           description: '+1 Momentum, +1 Gold/spoke. Trade route active.' },
-      { incomeBonus: { momentum: 2, gold: 2 },    expensesBonus: 3, unrestChange: 0, buildCost: { gold: 22, momentum: 6 },           description: '+2 Momentum, +2 Gold/spoke. Strategic pass controlled.' },
+      { incomeBonus: { momentum: 1 },             expensesBonus: 1, unrestChange: 0, buildCost: { gold: 5, momentum: 2 },            description: '+1 Momentum/season. Opens mountain trade route.' },
+      { incomeBonus: { momentum: 1, gold: 1 },    expensesBonus: 2, unrestChange: 0, buildCost: { gold: 12, momentum: 4 },           description: '+1 Momentum, +1 Gold/season. Trade route active.' },
+      { incomeBonus: { momentum: 2, gold: 2 },    expensesBonus: 3, unrestChange: 0, buildCost: { gold: 22, momentum: 6 },           description: '+2 Momentum, +2 Gold/season. Strategic pass controlled.' },
     ],
   },
   oasis_market: {
@@ -245,9 +245,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Oasis Market',
     flavour: 'A palm-shaded market where desert caravans exchange rare goods.',
     levels: [
-      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 5 },                         description: '+2 Gold/spoke. +2 Wealth Growth/spoke.' },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 12 },                        description: '+3 Gold/spoke. +3 Wealth Growth/spoke.' },
-      { incomeBonus: { gold: 5 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 22 },                        description: '+5 Gold/spoke. +4 Wealth Growth/spoke. Desert trade nexus.' },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 5 },                         description: '+2 Gold/season. +2 Wealth Growth/season.' },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 12 },                        description: '+3 Gold/season. +3 Wealth Growth/season.' },
+      { incomeBonus: { gold: 5 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 22 },                        description: '+5 Gold/season. +4 Wealth Growth/season. Desert trade nexus.' },
     ],
   },
   caravan_post: {
@@ -255,9 +255,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Caravan Post',
     flavour: 'Rest stops and water depots sustain the cross-desert trade network.',
     levels: [
-      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+1 Gold/spoke. +3 Wealth Growth/spoke.' },
-      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 10 },                        description: '+2 Gold/spoke. +4 Wealth Growth/spoke.' },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 18 },                        description: '+3 Gold/spoke. +5 Wealth Growth/spoke. Cross-desert network.' },
+      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+1 Gold/season. +3 Wealth Growth/season.' },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 10 },                        description: '+2 Gold/season. +4 Wealth Growth/season.' },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 18 },                        description: '+3 Gold/season. +5 Wealth Growth/season. Cross-desert network.' },
     ],
   },
   oracle_shrine: {
@@ -265,9 +265,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Oracle Shrine',
     flavour: 'Marsh vapours and the whisper of reeds bring visions to the faithful.',
     levels: [
-      { incomeBonus: { faith: 1 },                expensesBonus: 0, unrestChange: -3, buildCost: { gold: 4, faith: 2 },              description: '+1 Faith/spoke. +1 Food. -3 Unrest/spoke.', foodBonus: 1 },
-      { incomeBonus: { faith: 2 },                expensesBonus: 1, unrestChange: -5, buildCost: { gold: 8, faith: 4 },              description: '+2 Faith/spoke. +1 Food. -5 Unrest/spoke.', foodBonus: 1 },
-      { incomeBonus: { faith: 3 },                expensesBonus: 1, unrestChange: -8, buildCost: { gold: 15, faith: 6 },             description: '+3 Faith/spoke. +2 Food. -8 Unrest/spoke.', foodBonus: 2 },
+      { incomeBonus: { faith: 1 },                expensesBonus: 0, unrestChange: -3, buildCost: { gold: 4, faith: 2 },              description: '+1 Faith/season. +1 Food. -3 Unrest/season.', foodBonus: 1 },
+      { incomeBonus: { faith: 2 },                expensesBonus: 1, unrestChange: -5, buildCost: { gold: 8, faith: 4 },              description: '+2 Faith/season. +1 Food. -5 Unrest/season.', foodBonus: 1 },
+      { incomeBonus: { faith: 3 },                expensesBonus: 1, unrestChange: -8, buildCost: { gold: 15, faith: 6 },             description: '+3 Faith/season. +2 Food. -8 Unrest/season.', foodBonus: 2 },
     ],
   },
   reed_harvest: {
@@ -275,9 +275,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Reed Harvest',
     flavour: 'Skilled harvesters work the marsh beds for papyrus, rushes, and fuel.',
     levels: [
-      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 3 },                         description: '+1 Gold/spoke. +1 Food/spoke.', foodBonus: 1 },
-      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 8 },                         description: '+2 Gold/spoke. +2 Food/spoke.', foodBonus: 2 },
-      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 15 },                        description: '+3 Gold/spoke. +3 Food/spoke. Marshland mastered.', foodBonus: 3 },
+      { incomeBonus: { gold: 1 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 3 },                         description: '+1 Gold/season. +1 Food/season.', foodBonus: 1 },
+      { incomeBonus: { gold: 2 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 8 },                         description: '+2 Gold/season. +2 Food/season.', foodBonus: 2 },
+      { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 15 },                        description: '+3 Gold/season. +3 Food/season. Marshland mastered.', foodBonus: 3 },
     ],
   },
   // ── S20: Food & Population ──
@@ -286,9 +286,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Granary',
     flavour: 'Raised storehouses keep grain dry and the province fed through lean seasons.',
     levels: [
-      { incomeBonus: {},                           expensesBonus: 1, unrestChange: 0,  buildCost: { gold: 5 },                         description: '+1 Food/spoke. Stores surplus grain.', foodBonus: 1 },
-      { incomeBonus: {},                           expensesBonus: 1, unrestChange: 0,  buildCost: { gold: 10 },                        description: '+2 Food/spoke. Improved storage capacity.', foodBonus: 2 },
-      { incomeBonus: {},                           expensesBonus: 2, unrestChange: 0,  buildCost: { gold: 20 },                        description: '+3 Food/spoke. Famine recovery -1 season.', foodBonus: 3 },
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: 0,  buildCost: { gold: 5 },                         description: '+1 Food/season. Stores surplus grain.', foodBonus: 1 },
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: 0,  buildCost: { gold: 10 },                        description: '+2 Food/season. Improved storage capacity.', foodBonus: 2 },
+      { incomeBonus: {},                           expensesBonus: 2, unrestChange: 0,  buildCost: { gold: 20 },                        description: '+3 Food/season. Famine recovery -1 season.', foodBonus: 3 },
     ],
   },
   gardens: {
@@ -296,9 +296,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Gardens & Fountains',
     flavour: 'Terraced gardens and marble fountains draw settlers from across the realm.',
     levels: [
-      { incomeBonus: {},                           expensesBonus: 1, unrestChange: -2, buildCost: { gold: 6, influence: 2 },            description: '+10% Beautiness. -2 Unrest/spoke.', beautinessBonus: 10 },
-      { incomeBonus: {},                           expensesBonus: 1, unrestChange: -4, buildCost: { gold: 12, influence: 4 },           description: '+15% Beautiness. -4 Unrest/spoke.', beautinessBonus: 15 },
-      { incomeBonus: {},                           expensesBonus: 2, unrestChange: -6, buildCost: { gold: 22, influence: 6 },           description: '+20% Beautiness. -6 Unrest/spoke. A jewel of the empire.', beautinessBonus: 20 },
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: -2, buildCost: { gold: 6, influence: 2 },            description: '+10% Beautiness. -2 Unrest/season.', beautinessBonus: 10 },
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: -4, buildCost: { gold: 12, influence: 4 },           description: '+15% Beautiness. -4 Unrest/season.', beautinessBonus: 15 },
+      { incomeBonus: {},                           expensesBonus: 2, unrestChange: -6, buildCost: { gold: 22, influence: 6 },           description: '+20% Beautiness. -6 Unrest/season. A jewel of the empire.', beautinessBonus: 20 },
     ],
   },
 };
@@ -348,7 +348,7 @@ export function getActiveSynergies(province: Province): SynergyData[] {
 // ── Helpers ──
 
 /**
- * Total income generated by a province each spoke.
+ * Total income generated by a province each season.
  * = base income + investment bonuses, then governor income-bonus % applied per resource.
  */
 export function getProvinceIncome(
@@ -385,7 +385,7 @@ export function getProvinceIncome(
 }
 
 /**
- * Total gold upkeep cost per spoke.
+ * Total gold upkeep cost per season.
  * Governor expense-reduction trait reduces the total by a percentage.
  */
 export function getProvinceExpenses(
@@ -408,7 +408,7 @@ export function getProvinceExpenses(
 }
 
 /**
- * Net unrest change per spoke from investments + governor.
+ * Net unrest change per season from investments + governor.
  * Negative means unrest is suppressed.
  */
 export function getUnrestModifier(

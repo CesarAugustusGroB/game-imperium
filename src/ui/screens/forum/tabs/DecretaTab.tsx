@@ -109,7 +109,7 @@ export function DecretaTab() {
                 color: 'var(--imp-text-lo)',
                 textAlign: 'center', maxWidth: 320,
               }}>
-                Scrolls are dealt between nodes and at run start.
+                Scrolls are dealt between campaigns and at run start.
               </div>
             </div>
           ) : (
