@@ -9,7 +9,7 @@ import { iterBelliState, resetIterBelli } from '../../../game/iterBelli/iter-bel
 import { getActiveScenario } from '../../../game/iterBelli/iter-belli-scenario';
 import { resetIterBelliBattle } from '../../../game/iterBelli/iter-belli-combat';
 import { START } from '../../../game/iterBelli/iter-belli-balance';
-import { conquerProvince, provinces } from '../../../game/province/province-store';
+import { conquerProvince, provinces, collectProvinceIncome } from '../../../game/province/province-store';
 import { pickConquestName, PROVINCE_REWARD } from '../../../data/iter-belli-conquest';
 import { getMissionById } from '../../../data/iter-belli-consilium';
 import type { TerrainType } from '../../../data/terrain-data';
@@ -36,6 +36,8 @@ function returnToHub(): void {
 
   // Season clock advances regardless of outcome — campaign time elapsed.
   globalSeason.value = Math.min(MAX_SEASONS, globalSeason.value + s.spokeDuration);
+  // Provinces accrue income/ticks for each season spent on campaign.
+  for (let i = 0; i < s.spokeDuration; i++) collectProvinceIncome();
 
   if (outcome?.victory) {
     completedSpokes.value++;
