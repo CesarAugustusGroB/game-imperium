@@ -23,7 +23,7 @@ function advisorMeta(
 
 export const ADVISOR_CENTURION: Advisor = {
   id: 'advisor_centurion', name: 'Centurion Varro', color: 'red', currentTier: 1, xp: 0,
-  ...advisorMeta(['Strategist', 'Veteran']),
+  ...advisorMeta(['Strategist', 'Veteran'], 1, 'advisor_centurion.png'),
   tiers: [
     { description: '+10% loot from battles.',
       passive: { type: 'loot-bonus', percent: 10 },
@@ -39,7 +39,7 @@ export const ADVISOR_CENTURION: Advisor = {
 
 export const ADVISOR_SIEGE_MASTER: Advisor = {
   id: 'advisor_siege_master', name: 'Siege Master Titus', color: 'red', currentTier: 1, xp: 0,
-  ...advisorMeta(['Strategist', 'Logistician'], 1, 'char_tiberius.png'),
+  ...advisorMeta(['Strategist', 'Logistician'], 1, 'advisor_siege_master.png'),
   tiers: [
     { description: 'Erodes the final enemy by 7% at embark.',
       passive: { type: 'enemy-weaken', amount: 1 },
@@ -55,7 +55,7 @@ export const ADVISOR_SIEGE_MASTER: Advisor = {
 
 export const ADVISOR_RAIDER: Advisor = {
   id: 'advisor_raider', name: 'Raider Brennus', color: 'red', currentTier: 1, xp: 0,
-  ...advisorMeta(['Strategist', 'Schemer'], 1, 'char_boudicca.png'),
+  ...advisorMeta(['Strategist', 'Schemer'], 1, 'advisor_raider.png'),
   tiers: [
     { description: '+15% loot from battles.',
       passive: { type: 'loot-bonus', percent: 15 },
@@ -73,7 +73,7 @@ export const ADVISOR_RAIDER: Advisor = {
 
 export const ADVISOR_DIPLOMAT: Advisor = {
   id: 'advisor_diplomat', name: 'Legate Aemilia', color: 'blue', currentTier: 1, xp: 0,
-  ...advisorMeta(['Diplomat', 'Negotiator']),
+  ...advisorMeta(['Diplomat', 'Negotiator'], 1, 'advisor_diplomat.png'),
   tiers: [
     { description: '+5 gold at embark.',
       passive: { type: 'extra-event-choices', count: 1 },
@@ -89,7 +89,7 @@ export const ADVISOR_DIPLOMAT: Advisor = {
 
 export const ADVISOR_SCHOLAR: Advisor = {
   id: 'advisor_scholar', name: 'Scholar Ptolemy', color: 'blue', currentTier: 1, xp: 0,
-  ...advisorMeta(['Diplomat', 'Administrator']),
+  ...advisorMeta(['Diplomat', 'Administrator'], 1, 'advisor_scholar.png'),
   tiers: [
     { description: '+1 campaign day at embark.',
       passive: { type: 'campaign-time', days: 1 },
@@ -105,7 +105,7 @@ export const ADVISOR_SCHOLAR: Advisor = {
 
 export const ADVISOR_SPYMASTER: Advisor = {
   id: 'advisor_spymaster', name: 'Spymaster Cassia', color: 'blue', currentTier: 1, xp: 0,
-  ...advisorMeta(['Schemer', 'Mastermind']),
+  ...advisorMeta(['Schemer', 'Mastermind'], 1, 'advisor_spymaster.png'),
   tiers: [
     { description: '−1 starting threat at embark.',
       passive: { type: 'threat-reduction', amount: 1 },
@@ -123,7 +123,7 @@ export const ADVISOR_SPYMASTER: Advisor = {
 
 export const ADVISOR_PONTIFEX: Advisor = {
   id: 'advisor_pontifex', name: 'Pontifex Lucius', color: 'gold', currentTier: 1, xp: 0,
-  ...advisorMeta(['Pontifex', 'Diplomat'], 1, 'char_pope_innocent.png'),
+  ...advisorMeta(['Pontifex', 'Diplomat'], 1, 'advisor_pontifex.png'),
   tiers: [
     { description: '+1 morale at embark.',
       passive: { type: 'morale-bonus', amount: 1 },
@@ -139,7 +139,7 @@ export const ADVISOR_PONTIFEX: Advisor = {
 
 export const ADVISOR_HEALER: Advisor = {
   id: 'advisor_healer', name: 'Healer Cornelia', color: 'gold', currentTier: 1, xp: 0,
-  ...advisorMeta(['Healer', 'Logistician']),
+  ...advisorMeta(['Healer', 'Logistician'], 1, 'advisor_healer.png'),
   tiers: [
     { description: '+1 morale at embark.',
       passive: { type: 'heal-between-nodes', amount: 100 },
@@ -155,7 +155,7 @@ export const ADVISOR_HEALER: Advisor = {
 
 export const ADVISOR_ZEALOT: Advisor = {
   id: 'advisor_zealot', name: 'Zealot Marcus', color: 'gold', currentTier: 1, xp: 0,
-  ...advisorMeta(['Zealot', 'Strategist']),
+  ...advisorMeta(['Zealot', 'Strategist'], 1, 'advisor_zealot.png'),
   tiers: [
     { description: '+250 soldiers at embark.',
       passive: { type: 'soldiers-bonus', amount: 250 },
@@ -173,7 +173,7 @@ export const ADVISOR_ZEALOT: Advisor = {
 
 export const ADVISOR_MERCHANT: Advisor = {
   id: 'advisor_merchant', name: 'Merchant Decimus', color: 'purple', currentTier: 1, xp: 0,
-  ...advisorMeta(['Coin-Keeper', 'Financier'], 1, 'char_marcus_crassus.png'),
+  ...advisorMeta(['Coin-Keeper', 'Financier'], 1, 'advisor_merchant.png'),
   tiers: [
     { description: '+2 gold at embark.',
       passive: { type: 'resource-per-spoke', resource: 'gold', amount: 2 },
@@ -189,7 +189,7 @@ export const ADVISOR_MERCHANT: Advisor = {
 
 export const ADVISOR_QUARTERMASTER: Advisor = {
   id: 'advisor_quartermaster', name: 'Quartermaster Livia', color: 'purple', currentTier: 1, xp: 0,
-  ...advisorMeta(['Logistician', 'Administrator']),
+  ...advisorMeta(['Logistician', 'Administrator'], 1, 'advisor_quartermaster.png'),
   tiers: [
     { description: '+supplies at embark (10% of campaign upkeep).',
       passive: { type: 'upkeep-reduction', percent: 10 },
@@ -205,7 +205,7 @@ export const ADVISOR_QUARTERMASTER: Advisor = {
 
 export const ADVISOR_SMUGGLER: Advisor = {
   id: 'advisor_smuggler', name: 'Smuggler Gaius', color: 'purple', currentTier: 1, xp: 0,
-  ...advisorMeta(['Schemer', 'Coin-Keeper']),
+  ...advisorMeta(['Schemer', 'Coin-Keeper'], 1, 'advisor_smuggler.png'),
   tiers: [
     { description: '10% shop discount.',
       passive: { type: 'shop-discount', percent: 10 },
@@ -223,7 +223,7 @@ export const ADVISOR_SMUGGLER: Advisor = {
 
 export const ADVISOR_TRIBUNE: Advisor = {
   id: 'advisor_tribune', name: 'Tribune Publius', color: 'white', currentTier: 1, xp: 0,
-  ...advisorMeta(['Tribune', 'Negotiator']),
+  ...advisorMeta(['Tribune', 'Negotiator'], 1, 'advisor_tribune.png'),
   tiers: [
     { description: '+10% loot from all sources.',
       passive: { type: 'loot-bonus', percent: 10 },
@@ -239,7 +239,7 @@ export const ADVISOR_TRIBUNE: Advisor = {
 
 export const ADVISOR_VETERAN: Advisor = {
   id: 'advisor_veteran', name: 'Veteran Flavia', color: 'white', currentTier: 1, xp: 0,
-  ...advisorMeta(['Veteran', 'Healer']),
+  ...advisorMeta(['Veteran', 'Healer'], 1, 'advisor_veteran.png'),
   tiers: [
     { description: '+1 morale at embark.',
       passive: { type: 'heal-between-nodes', amount: 50 },
@@ -255,7 +255,7 @@ export const ADVISOR_VETERAN: Advisor = {
 
 export const ADVISOR_CONSUL: Advisor = {
   id: 'advisor_consul', name: 'Consul Servius', color: 'white', currentTier: 1, xp: 0,
-  ...advisorMeta(['Administrator', 'Diplomat'], 1, 'char_caesar_augustus.png'),
+  ...advisorMeta(['Administrator', 'Diplomat'], 1, 'advisor_consul.png'),
   tiers: [
     { description: '−1 starting threat at embark.',
       passive: { type: 'threat-reduction', amount: 1 },

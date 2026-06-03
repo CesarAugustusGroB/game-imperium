@@ -247,10 +247,12 @@ function normalizeSavedAdvisor(rawAdvisor: unknown): Advisor | null {
     tiers: Array.isArray(advisor.tiers) ? advisor.tiers as Advisor['tiers'] : template.tiers,
   };
 
-  if (typeof advisor.portrait === 'string') {
-    normalized.portrait = advisor.portrait;
-  } else if (template.portrait) {
+  // Template portrait wins so saved games pick up the current councilor art
+  // (codex's intent). Fall back to a saved portrait only when the template has none.
+  if (template.portrait) {
     normalized.portrait = template.portrait;
+  } else if (typeof advisor.portrait === 'string') {
+    normalized.portrait = advisor.portrait;
   } else {
     delete normalized.portrait;
   }
