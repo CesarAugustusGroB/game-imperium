@@ -137,7 +137,7 @@ export function fireAdvisor(advisorId: string): number {
   market.splice(index, 1);
   advisorMarket.value = market;
 
-  // Selling bypasses spoke-gain tracking — use addResource directly
+  // Selling adds gold directly (no income-modifier tracking)
   addResource('gold', goldGained);
 
   return goldGained;
@@ -232,8 +232,8 @@ export function advisorIncomeBonus(resource: ResourceType): number {
 }
 
 /**
- * Campaign duration (seasons) derived from seated advisors — the spoke-free
- * replacement for generateSpokeFromCouncil's duration block. 0 seated → 1
+ * Campaign duration (seasons) derived from seated advisors —
+ * derived from seated advisors' campaign-duration templates. 0 seated → 1
  * (matches the old `spoke?.duration ?? 1` fallback).
  */
 export function plannedCampaignDuration(): number {

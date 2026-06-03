@@ -1060,13 +1060,13 @@ function TierBadge({ tier }: { tier: Advisor['currentTier'] }) {
 
 function describePassive(p: AdvisorPassive): string {
   switch (p.type) {
-    case 'upkeep-reduction':    return `−${p.percent}% upkeep de temporada · +suministros al embarcar`;
+    case 'upkeep-reduction':    return `+suministros al embarcar (≈${p.percent}% del upkeep de campaña)`;
     case 'shop-discount':       return `−${p.percent}% precios del Hub`;
     case 'loot-bonus':          return `+${p.percent}% income de oro · +oro al embarcar`;
-    case 'threat-reduction':    return `−${p.amount} amenaza/temporada · −amenaza al embarcar`;
+    case 'threat-reduction':    return `−${p.amount} amenaza inicial · al embarcar`;
     case 'heal-between-nodes':  return `+moral al embarcar`;
-    case 'resource-per-spoke':  return `+${p.amount} oro por spoke · +oro al embarcar`;
-    case 'extra-event-choices': return `+${p.count * 5} oro por spoke`;
+    case 'resource-per-spoke':  return `+${p.amount} oro al embarcar`;
+    case 'extra-event-choices': return `+${p.count * 5} oro al embarcar`;
     case 'enemy-weaken':        return `−${p.amount * 7}% al ejército enemigo final · al embarcar`;
     case 'campaign-time':       return `+${p.days} ${p.days === 1 ? 'día' : 'días'} de campaña · al embarcar`;
     case 'morale-bonus':        return `+${p.amount} moral · al embarcar`;
@@ -1079,21 +1079,18 @@ function splitPassiveDescription(
   description: string,
 ): { value: string; label: string } {
   switch (passive.type) {
-    case 'resource-per-spoke': {
-      // Deprecated resources fold to gold (matches advisorSpokeGrants / passiveModifier).
-      const res = passive.resource === 'gold' || passive.resource === 'iuniores' ? passive.resource : 'gold';
-      return { value: `+${passive.amount}`, label: `${capitalizeResource(res)} Each Spoke` };
-    }
+    case 'resource-per-spoke':
+      return { value: `+${passive.amount}`, label: 'Gold at Embark' };
     case 'upkeep-reduction':
-      return { value: `${passive.percent}%`, label: 'Upkeep Relief' };
+      return { value: `${passive.percent}%`, label: 'Starting Supplies' };
     case 'shop-discount':
       return { value: `${passive.percent}%`, label: 'Market Discount' };
     case 'extra-event-choices':
-      return { value: `+${passive.count * 5}`, label: 'Gold Each Spoke' };
+      return { value: `+${passive.count * 5}`, label: 'Gold at Embark' };
     case 'heal-between-nodes':
       return { value: `+${Math.round(passive.amount / 100)}`, label: 'Morale at Embark' };
     case 'threat-reduction':
-      return { value: `-${passive.amount}`, label: 'Enemy Threat' };
+      return { value: `-${passive.amount}`, label: 'Starting Threat' };
     case 'loot-bonus':
       return { value: `+${passive.percent}%`, label: 'Gold Income' };
     case 'enemy-weaken':
@@ -1109,10 +1106,6 @@ function splitPassiveDescription(
       return { value, label: rest.join(' ').replace(/\.$/, '') || 'Passive Bonus' };
     }
   }
-}
-
-function capitalizeResource(resource: string): string {
-  return resource.charAt(0).toUpperCase() + resource.slice(1);
 }
 
 function heroLine(p: AdvisorPassive, source: AdvisorSource): string {

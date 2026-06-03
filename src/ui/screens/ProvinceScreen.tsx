@@ -666,13 +666,13 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
           {(Object.entries(incomeBonus) as [ResourceType, number][]).map(([res, amt]) => (
             amt > 0 ? (
               <div key={res} style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
-                <ResourceAmount type={res} amount={amt} sign="+" iconSize={14} /> per spoke
+                <ResourceAmount type={res} amount={amt} sign="+" iconSize={14} /> per season
               </div>
             ) : null
           ))}
           {unrestChange < 0 && (
             <div style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
-              {unrestChange} unrest per spoke
+              {unrestChange} unrest per season
             </div>
           )}
           {showGoldFormula && (
@@ -1689,12 +1689,12 @@ function IdentityStrip({ province }: { province: Province }) {
           content={(() => {
             const f = province.uniqueFeature!;
             const rows: string[] = [];
-            if (f.goldPerSeason) rows.push(`${f.goldPerSeason > 0 ? '+' : ''}${f.goldPerSeason} Gold/spoke`);
-            if (f.foodPerSeason) rows.push(`+${f.foodPerSeason} Food/spoke`);
-            if (f.faithPerSeason) rows.push(`+${f.faithPerSeason} Faith/spoke`);
-            if (f.influencePerSeason) rows.push(`+${f.influencePerSeason} Influence/spoke`);
-            if (f.momentumPerSeason) rows.push(`+${f.momentumPerSeason} Momentum/spoke`);
-            if (f.unrestPerSeason) rows.push(`${f.unrestPerSeason} Unrest/spoke`);
+            if (f.goldPerSeason) rows.push(`${f.goldPerSeason > 0 ? '+' : ''}${f.goldPerSeason} Gold/season`);
+            if (f.foodPerSeason) rows.push(`+${f.foodPerSeason} Food/season`);
+            if (f.faithPerSeason) rows.push(`+${f.faithPerSeason} Faith/season`);
+            if (f.influencePerSeason) rows.push(`+${f.influencePerSeason} Influence/season`);
+            if (f.momentumPerSeason) rows.push(`+${f.momentumPerSeason} Momentum/season`);
+            if (f.unrestPerSeason) rows.push(`${f.unrestPerSeason} Unrest/season`);
             if (f.beautinessBonus) rows.push(`+${f.beautinessBonus}% Beautiness`);
             if (f.buildCostDiscount) rows.push(`-${f.buildCostDiscount}% Build Cost`);
             if (f.wealthGrowthBonus) rows.push(`+${f.wealthGrowthBonus} Wealth Growth`);
@@ -2434,7 +2434,7 @@ export function ProvinciaeTab() {
               No provinces conquered yet
             </div>
             <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', maxWidth: '320px', lineHeight: '1.5' }}>
-              Complete spokes to conquer provinces. Each province generates income and can be improved with investments.
+              Complete campaigns to conquer provinces. Each province generates income and can be improved with investments.
             </div>
             {/* Aggregate empire-wide income chips — surfaced here so the metric
                 isn't lost when the empty state hides the detail panels. */}
