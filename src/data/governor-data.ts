@@ -40,7 +40,7 @@ export const GOVERNOR_LEGATUS: Governor = {
     {
       description: '+15% garrison strength.',
       traits: [{ type: 'garrison-strength', percent: 15 }],
-      hireCost: { gold: 5, momentum: 2 },
+      hireCost: { gold: 7 },
     },
     {
       description: '+25% garrison strength, −5 unrest.',
@@ -48,7 +48,7 @@ export const GOVERNOR_LEGATUS: Governor = {
         { type: 'garrison-strength', percent: 25 },
         { type: 'unrest-reduction', flat: 5 },
       ],
-      hireCost: { gold: 10, momentum: 4 },
+      hireCost: { gold: 14 },
     },
     {
       description: '+35% garrison strength, −10 unrest, +1 population growth.',
@@ -57,7 +57,7 @@ export const GOVERNOR_LEGATUS: Governor = {
         { type: 'unrest-reduction', flat: 10 },
         { type: 'population-growth', amount: 1 },
       ],
-      hireCost: { gold: 18, momentum: 6 },
+      hireCost: { gold: 24 },
     },
   ],
 };
@@ -68,26 +68,26 @@ export const GOVERNOR_PONTIFEX: Governor = {
   color: 'blue',
   tiers: [
     {
-      description: '+10% faith income.',
-      traits: [{ type: 'income-bonus', resource: 'faith', percent: 10 }],
-      hireCost: { gold: 4, faith: 3 },
+      description: '+10% gold income.',
+      traits: [{ type: 'income-bonus', resource: 'gold', percent: 10 }],
+      hireCost: { gold: 7 },
     },
     {
-      description: '+18% faith income, −8 unrest.',
+      description: '+18% gold income, −8 unrest.',
       traits: [
-        { type: 'income-bonus', resource: 'faith', percent: 18 },
+        { type: 'income-bonus', resource: 'gold', percent: 18 },
         { type: 'unrest-reduction', flat: 8 },
       ],
-      hireCost: { gold: 8, faith: 6 },
+      hireCost: { gold: 14 },
     },
     {
-      description: '+25% faith income, −15 unrest, −10% investment cost.',
+      description: '+25% gold income, −15 unrest, −10% investment cost.',
       traits: [
-        { type: 'income-bonus', resource: 'faith', percent: 25 },
+        { type: 'income-bonus', resource: 'gold', percent: 25 },
         { type: 'unrest-reduction', flat: 15 },
         { type: 'investment-discount', percent: 10 },
       ],
-      hireCost: { gold: 14, faith: 10 },
+      hireCost: { gold: 24 },
     },
   ],
 };
@@ -98,26 +98,26 @@ export const GOVERNOR_SENATOR: Governor = {
   color: 'purple',
   tiers: [
     {
-      description: '+10% influence income.',
-      traits: [{ type: 'income-bonus', resource: 'influence', percent: 10 }],
-      hireCost: { gold: 4, influence: 3 },
+      description: '+10% gold income.',
+      traits: [{ type: 'income-bonus', resource: 'gold', percent: 10 }],
+      hireCost: { gold: 7 },
     },
     {
-      description: '+18% influence income, +1 population growth.',
+      description: '+18% gold income, +1 population growth.',
       traits: [
-        { type: 'income-bonus', resource: 'influence', percent: 18 },
+        { type: 'income-bonus', resource: 'gold', percent: 18 },
         { type: 'population-growth', amount: 1 },
       ],
-      hireCost: { gold: 8, influence: 6 },
+      hireCost: { gold: 14 },
     },
     {
-      description: '+25% influence income, +2 population growth, −10% expenses.',
+      description: '+25% gold income, +2 population growth, −10% expenses.',
       traits: [
-        { type: 'income-bonus', resource: 'influence', percent: 25 },
+        { type: 'income-bonus', resource: 'gold', percent: 25 },
         { type: 'population-growth', amount: 2 },
         { type: 'expense-reduction', percent: 10 },
       ],
-      hireCost: { gold: 14, influence: 10 },
+      hireCost: { gold: 24 },
     },
   ],
 };
