@@ -435,7 +435,7 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
         {/* LEFT — text */}
         <div style={{
           position: 'relative', minWidth: 0,
-          display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 'clamp(6px, 0.8vw, 11px)',
+          display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: 'clamp(6px, 0.8vw, 11px)',
         }}>
           {/* faint imperial watermark */}
           <div aria-hidden="true" style={{
