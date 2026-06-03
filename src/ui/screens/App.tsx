@@ -17,24 +17,39 @@ import { loadMetaSave, startActiveRunPersistence, restoreActiveRun, metaSave } f
 loadMetaSave();
 
 /**
- * True while a saved in-flight campaign is being restored at boot. `App` renders
- * a bare veil during this window so the empty campaign never flashes before the
- * async restore (which may load topology) completes.
+ * True while a saved run is being restored at boot. `App` renders a bare veil
+ * during this window so an empty screen never flashes before the async restore
+ * (which may load topology) completes.
  *
- * Gated specifically on `activeRun.iterBelli` (an in-flight Iter Belli card
- * campaign) — NOT on `activeRun` alone. A Hub-only run with no campaign must
- * still reach the title screen and resume via the "Continue" button; do not
- * widen this condition, or such runs would be force-routed into `iterbelli`.
+ * Gated on there being an active run AND the initial screen needing one (i.e.
+ * the player reloaded *into* the Hub or a campaign, not onto the title). This
+ * covers BOTH a mid-campaign reload and a Hub-only reload — without it, a Hub
+ * reload would render the Forum with no commander/resources ("no data"). The
+ * title and commander-select screens don't require a run, so reloading there
+ * skips the veil and resumes via the "Continue" button as before.
  */
-export const bootResuming = signal<boolean>(metaSave.value.activeRun?.iterBelli != null);
+const bootInitialScreen = currentScreen.value;
+const runNeedsRestore =
+  metaSave.value.activeRun != null &&
+  bootInitialScreen !== 'title' &&
+  bootInitialScreen !== 'commander-select';
+
+export const bootResuming = signal<boolean>(runNeedsRestore);
 
 if (bootResuming.value) {
   void (async () => {
     const ok = await restoreActiveRun();
     if (ok) {
-      // A mid-campaign reload keeps the `#iterbelli` hash, so we are usually
-      // already on the right screen — only navigate (and play its cue) if not.
-      if (currentScreen.value !== 'iterbelli') navigateToIterBelli();
+      const inCampaign = metaSave.value.activeRun?.iterBelli != null;
+      if (inCampaign && currentScreen.value !== 'iterbelli') {
+        // Mid-campaign reload that lost the hash — route into the campaign.
+        navigateToIterBelli();
+      } else if (!inCampaign && currentScreen.value === 'iterbelli') {
+        // Hub-only run sitting on a stale #iterbelli hash — send it to the Forum.
+        navigateTo('forum');
+      }
+      // Otherwise the hash already matches the restored state (e.g. #forum) —
+      // stay put; the run state is now populated, so the screen renders fully.
     } else {
       navigateTo('title');
     }
