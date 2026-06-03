@@ -346,12 +346,7 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
-      background: `
-        radial-gradient(125% 80% at 50% -12%, rgba(122, 36, 50, 0.22) 0%, transparent 52%),
-        radial-gradient(85% 120% at 110% 50%, ${color}26 0%, transparent 56%),
-        linear-gradient(135deg, rgba(20, 17, 30, 0.58) 0%, rgba(13, 11, 20, 0.46) 46%, rgba(7, 5, 12, 0.72) 100%),
-        url(${consiliumHeroBg})
-      `,
+      background: `url(${consiliumHeroBg})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
