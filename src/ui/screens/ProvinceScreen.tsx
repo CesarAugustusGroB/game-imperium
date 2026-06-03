@@ -1007,11 +1007,8 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
             key={gov.id}
             class="gov-picker-card"
             style={{
-              background: 'linear-gradient(90deg, rgba(30, 24, 50, 0.7), rgba(18, 14, 32, 0.85))',
-              border: '1px solid var(--color-border-default)',
-              borderLeft: `3px solid ${fColor}`,
-              borderRadius: 'var(--radius-md)',
-              padding: '12px 14px',
+              borderBottom: '1px solid rgba(212, 168, 67, 0.12)',
+              padding: '8px 2px 14px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
