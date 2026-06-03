@@ -30,6 +30,7 @@ import {
   TraitChip,
   TraitGlyph,
 } from '../components/consilium';
+import consiliumHeroBg from '../../../../assets/backgrounds/consilium_hero_bg.png';
 
 /** Static slot-position labels - flavor, not state. */
 const SLOT_LABELS = ['Consiliarius', 'Legatus', 'Augur'];
@@ -346,10 +347,14 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
       flexDirection: 'column',
       overflow: 'hidden',
       background: `
-        radial-gradient(125% 80% at 50% -12%, rgba(122, 36, 50, 0.20) 0%, transparent 52%),
-        radial-gradient(85% 120% at 110% 50%, ${color}24 0%, transparent 56%),
-        linear-gradient(135deg, var(--imp-ink-hi) 0%, var(--imp-ink) 46%, #07050c 100%)
+        radial-gradient(125% 80% at 50% -12%, rgba(122, 36, 50, 0.22) 0%, transparent 52%),
+        radial-gradient(85% 120% at 110% 50%, ${color}26 0%, transparent 56%),
+        linear-gradient(135deg, rgba(20, 17, 30, 0.58) 0%, rgba(13, 11, 20, 0.46) 46%, rgba(7, 5, 12, 0.72) 100%),
+        url(${consiliumHeroBg})
       `,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
     }}>
       {/* leather depth + fine grain */}
       <div aria-hidden="true" style={{
