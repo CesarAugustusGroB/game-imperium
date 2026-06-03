@@ -30,6 +30,7 @@ import {
   TraitGlyph,
 } from '../components/consilium';
 import consiliumHeroBg from '../../../../assets/backgrounds/consilium_hero_bg.png';
+import consiliumMedallion from '../../../../assets/ui/consilium-medallion.png';
 
 /** Static slot-position labels - flavor, not state. */
 const SLOT_LABELS = ['Consiliarius', 'Legatus', 'Augur'];
@@ -518,16 +519,19 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
               )}
             </div>
             {/* imperial medallion */}
-            <div aria-hidden="true" style={{
-              position: 'absolute', bottom: -21, left: '50%', transform: 'translateX(-50%)',
-              width: 46, height: 46, borderRadius: '50%',
-              background: 'radial-gradient(circle at 50% 34%, #2a2030 0%, #0b0911 72%)',
-              border: '2px solid var(--imp-gold)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 6px 16px rgba(0, 0, 0, 0.62), inset 0 0 0 1px rgba(0, 0, 0, 0.6)',
-            }}>
-              <LaurelWreath size={32} color="var(--imp-gold-hi)" opacity={0.95} />
-            </div>
+            <img
+              src={consiliumMedallion}
+              alt=""
+              aria-hidden="true"
+              width={54}
+              height={54}
+              style={{
+                position: 'absolute', bottom: -25, left: '50%', transform: 'translateX(-50%)',
+                width: 54, height: 54, objectFit: 'contain',
+                filter: 'drop-shadow(0 6px 14px rgba(0, 0, 0, 0.62))',
+                pointerEvents: 'none',
+              }}
+            />
           </div>
         </div>
       </div>
