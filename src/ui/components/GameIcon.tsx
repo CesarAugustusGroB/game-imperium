@@ -79,6 +79,9 @@ export const GAME_ICONS = {
 
 export type GameIconName = keyof typeof GAME_ICONS;
 
+/** Global bump: render every meaning-bearing medallion icon 50% larger than its requested size. */
+const ICON_SCALE = 1.5;
+
 interface GameIconProps {
   name: GameIconName;
   size?: number;
@@ -89,13 +92,14 @@ interface GameIconProps {
 
 /** Renders a sliced Roman medallion icon at the given pixel size. */
 export function GameIcon({ name, size = 16, className, style, title }: GameIconProps) {
+  const px = Math.round(size * ICON_SCALE);
   return (
     <img
       src={GAME_ICONS[name]}
       alt=""
       title={title}
-      width={size}
-      height={size}
+      width={px}
+      height={px}
       class={className}
       style={{
         display: 'inline-block',

@@ -9,6 +9,9 @@ const RESOURCE_ICON_SRC: Partial<Record<ResourceType, string>> = {
   iuniores: iunioresIcon,
 };
 
+/** Global bump: render every meaning-bearing resource disc 50% larger than its requested size. */
+const ICON_SCALE = 1.5;
+
 interface InlineImageIconProps {
   src: string;
   size?: number;
@@ -17,6 +20,7 @@ interface InlineImageIconProps {
 }
 
 export function InlineImageIcon({ src, size = 18, title, style }: InlineImageIconProps) {
+  const px = Math.round(size * ICON_SCALE);
   return (
     <img
       src={src}
@@ -24,8 +28,8 @@ export function InlineImageIcon({ src, size = 18, title, style }: InlineImageIco
       title={title}
       aria-hidden={title ? undefined : 'true'}
       style={{
-        width: size,
-        height: size,
+        width: px,
+        height: px,
         objectFit: 'contain',
         display: 'inline-block',
         verticalAlign: '-0.25em',
@@ -52,7 +56,7 @@ export function ResourceIcon({ type, size = 18, title, style }: ResourceIconProp
     <span
       title={title}
       aria-hidden={title ? undefined : 'true'}
-      style={{ color: RESOURCE_INFO[type].color, lineHeight: 1, ...style }}
+      style={{ color: RESOURCE_INFO[type].color, fontSize: Math.round(size * ICON_SCALE), lineHeight: 1, ...style }}
     >
       {RESOURCE_INFO[type].icon}
     </span>
