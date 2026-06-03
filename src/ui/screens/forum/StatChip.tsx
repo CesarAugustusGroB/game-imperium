@@ -1,4 +1,3 @@
-import { Corners } from '../../components/motifs/Corners';
 import { Tooltip } from '../../components/Tooltip';
 
 export interface StatChipData {
@@ -25,14 +24,14 @@ export function StatChip({ r, accent = '#d4a843' }: StatChipProps) {
     <div
       style={{
         display: 'flex', alignItems: 'center', gap: 6,
-        padding: '6px 12px',
-        background: 'rgba(20, 18, 32, 0.7)',
-        border: '1px solid rgba(212, 168, 67, 0.15)',
-        borderRadius: 2,
+        padding: '6px 13px',
+        background: 'linear-gradient(180deg, rgba(26, 23, 38, 0.9), rgba(7, 5, 12, 0.92))',
+        border: `1px solid ${accent}59`,
+        borderRadius: 6,
+        boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.5)',
         position: 'relative',
       }}
     >
-      <Corners color={accent} size={6} inset={0} thickness={1} />
       {r.iconSrc ? (
         <img
           src={r.iconSrc}
