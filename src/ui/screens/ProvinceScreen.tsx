@@ -2508,6 +2508,7 @@ export function ProvinciaeTab() {
             width="min(580px, 92vw)"
             padding="compact"
             className="prov-detail"
+            corners={false}
             style={{ maxHeight: '85vh', overflowY: 'auto', overflowX: 'hidden' }}
             onClick={(e: MouseEvent) => e.stopPropagation()}
           >

@@ -201,6 +201,8 @@ interface OrnateFrameProps {
   className?: string;
   style?: JSX.CSSProperties;
   onClick?: (e: MouseEvent) => void;
+  /** Show the 4 gold corner-bracket ornaments. Default true. */
+  corners?: boolean;
 }
 
 export function OrnateFrame({
@@ -210,6 +212,7 @@ export function OrnateFrame({
   className,
   style,
   onClick,
+  corners = true,
 }: OrnateFrameProps) {
   const padClass =
     padding === 'compact' ? 'ornate-pad-compact' :
@@ -221,10 +224,14 @@ export function OrnateFrame({
       style={{ width, ...style }}
       onClick={onClick}
     >
-      <span class="ornate-corner tl" />
-      <span class="ornate-corner tr" />
-      <span class="ornate-corner bl" />
-      <span class="ornate-corner br" />
+      {corners && (
+        <>
+          <span class="ornate-corner tl" />
+          <span class="ornate-corner tr" />
+          <span class="ornate-corner bl" />
+          <span class="ornate-corner br" />
+        </>
+      )}
       {children}
     </div>
   );
