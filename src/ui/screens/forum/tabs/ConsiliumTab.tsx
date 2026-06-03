@@ -509,7 +509,7 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
         </div>
 
         {/* RIGHT — portrait */}
-        <div style={{ position: 'relative', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: 'clamp(20px, 2vw, 28px)' }}>
           <div style={{
             position: 'relative', height: 'min(100%, 440px)', maxWidth: '100%', aspectRatio: '3 / 4',
             padding: 6, borderRadius: 3,
