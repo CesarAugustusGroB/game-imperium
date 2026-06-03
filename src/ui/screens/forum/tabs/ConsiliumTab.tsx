@@ -26,7 +26,6 @@ import { SectionHeader } from '../components/SectionHeader';
 import {
   BonusCard,
   getTraitVisual,
-  SPQREmblem,
   TraitChip,
   TraitGlyph,
 } from '../components/consilium';
@@ -643,18 +642,6 @@ function ReservedColumn({ slots }: { slots: (Advisor | null)[] }) {
           </div>
         )}
 
-        <div style={{
-          marginTop: 'auto',
-          display: 'flex',
-          justifyContent: 'center',
-          paddingTop: seatedAdvisors.length === 0 ? 4 : 12,
-        }}>
-          <SPQREmblem
-            size={130}
-            color={CONSILIUM_ACCENT}
-            opacity={0.1}
-          />
-        </div>
       </div>
     </BentoCard>
   );
