@@ -629,9 +629,7 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
 
   // Force signal reads for reactivity on resource changes
   getResource('gold');
-  getResource('faith');
-  getResource('influence');
-  getResource('momentum');
+  getResource('iuniores');
 
   function handleBuild() {
     if (nextLevel > 0) {

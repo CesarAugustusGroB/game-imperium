@@ -310,7 +310,7 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
     // Placed before governor income-bonus so future iuniores-targeting traits can enhance yield.
     const iunioresYield = Math.floor(prov.population * IUNIORES.perPop);
     if (iunioresYield > 0) {
-      provIncome.iuniores = iunioresYield;
+      provIncome.iuniores = (provIncome.iuniores ?? 0) + iunioresYield;
     }
 
     // Governor income-bonus trait applied after multipliers
