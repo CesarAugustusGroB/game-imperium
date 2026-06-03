@@ -123,8 +123,8 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     flavour: 'A fortified camp that garrisons a permanent legion detachment.',
     levels: [
       { incomeBonus: {},                    expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: 'Garrison deters minor raids. -5 Unrest/season.', beautinessBonus: -3 },
-      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -10, buildCost: { gold: 10, momentum: 3 },          description: 'Full cohort stationed. -10 Unrest/season. Free levy unit in defense battles.', beautinessBonus: -4 },
-      { incomeBonus: { momentum: 1 },       expensesBonus: 3, unrestChange: -15, buildCost: { gold: 20, momentum: 6 },          description: 'Veteran legion presence. -15 Unrest/season. +1 Momentum/season. Free veteran unit.', beautinessBonus: -5 },
+      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -10, buildCost: { gold: 13 },                      description: 'Full cohort stationed. -10 Unrest/season. Free levy unit in defense battles.', beautinessBonus: -4 },
+      { incomeBonus: { iuniores: 1 },       expensesBonus: 3, unrestChange: -15, buildCost: { gold: 26 },                      description: 'Veteran legion presence. -15 Unrest/season. +1 Iuniores/season. Free veteran unit.', beautinessBonus: -5 },
     ],
   },
   basilica: {
@@ -132,9 +132,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Basilica',
     flavour: 'A court of law that channels political loyalty upward.',
     levels: [
-      { incomeBonus: { influence: 1 },      expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+1 Influence/season.', beautinessBonus: 3 },
-      { incomeBonus: { influence: 2 },      expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 10, influence: 3 },         description: '+2 Influence/season. -5 Unrest/season.', beautinessBonus: 4 },
-      { incomeBonus: { influence: 3 },      expensesBonus: 2, unrestChange: -10, buildCost: { gold: 20, influence: 6 },         description: '+3 Influence/season. -10 Unrest/season. +1 extra event choice.', beautinessBonus: 5 },
+      { incomeBonus: { gold: 1 },            expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+1 Gold/season.', beautinessBonus: 3 },
+      { incomeBonus: { gold: 2 },            expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 13 },                      description: '+2 Gold/season. -5 Unrest/season.', beautinessBonus: 4 },
+      { incomeBonus: { gold: 3 },            expensesBonus: 2, unrestChange: -10, buildCost: { gold: 26 },                      description: '+3 Gold/season. -10 Unrest/season. +1 extra event choice.', beautinessBonus: 5 },
     ],
   },
   pantheon: {
@@ -142,9 +142,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Pantheon',
     flavour: 'Temples to the Roman gods maintain divine favour and civic morale.',
     levels: [
-      { incomeBonus: { faith: 1 },          expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: '+1 Faith/season. -5 Unrest/season.', beautinessBonus: 5 },
-      { incomeBonus: { faith: 2 },          expensesBonus: 1, unrestChange: -10, buildCost: { gold: 10, faith: 3 },             description: '+2 Faith/season. -10 Unrest/season.', beautinessBonus: 8 },
-      { incomeBonus: { faith: 3 },          expensesBonus: 2, unrestChange: -15, buildCost: { gold: 20, faith: 6 },             description: '+3 Faith/season. -15 Unrest/season. Units in this province\'s battles revive once.', beautinessBonus: 10 },
+      { incomeBonus: { gold: 1 },            expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: '+1 Gold/season. -5 Unrest/season.', beautinessBonus: 5 },
+      { incomeBonus: { gold: 2 },            expensesBonus: 1, unrestChange: -10, buildCost: { gold: 13 },                      description: '+2 Gold/season. -10 Unrest/season.', beautinessBonus: 8 },
+      { incomeBonus: { gold: 3 },            expensesBonus: 2, unrestChange: -15, buildCost: { gold: 26 },                      description: '+3 Gold/season. -15 Unrest/season. Units in this province\'s battles revive once.', beautinessBonus: 10 },
     ],
   },
   market: {
@@ -174,7 +174,7 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     levels: [
       { incomeBonus: {},                          expensesBonus: 1, unrestChange: -10, buildCost: { gold: 4 },                       description: '-10 Unrest/season.' },
       { incomeBonus: {},                          expensesBonus: 2, unrestChange: -20, buildCost: { gold: 10 },                      description: '-20 Unrest/season. Rebellion events suppressed at <50 Unrest.' },
-      { incomeBonus: { momentum: 1 },             expensesBonus: 2, unrestChange: -30, buildCost: { gold: 18 },                      description: '-30 Unrest/season. +1 Momentum/season. Rebellion impossible below 70 Unrest.' },
+      { incomeBonus: { iuniores: 1 },              expensesBonus: 2, unrestChange: -30, buildCost: { gold: 18 },                      description: '-30 Unrest/season. +1 Iuniores/season. Rebellion impossible below 70 Unrest.' },
     ],
   },
 
@@ -215,9 +215,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Stables',
     flavour: 'Horses bred on the plains give the legion a decisive edge.',
     levels: [
-      { incomeBonus: { momentum: 1 },             expensesBonus: 1, unrestChange: 0, buildCost: { gold: 5, momentum: 2 },            description: '+1 Momentum/season. Cavalry units trained here.' },
-      { incomeBonus: { momentum: 2 },             expensesBonus: 2, unrestChange: 0, buildCost: { gold: 10, momentum: 4 },           description: '+2 Momentum/season. +1 cavalry unit in battles.' },
-      { incomeBonus: { momentum: 3 },             expensesBonus: 3, unrestChange: 0, buildCost: { gold: 18, momentum: 6 },           description: '+3 Momentum/season. Elite cavalry in battles.' },
+      { incomeBonus: { iuniores: 1 },              expensesBonus: 1, unrestChange: 0, buildCost: { gold: 7 },                        description: '+1 Iuniores/season. Cavalry units trained here.' },
+      { incomeBonus: { iuniores: 2 },              expensesBonus: 2, unrestChange: 0, buildCost: { gold: 14 },                       description: '+2 Iuniores/season. +1 cavalry unit in battles.' },
+      { incomeBonus: { iuniores: 3 },              expensesBonus: 3, unrestChange: 0, buildCost: { gold: 24 },                       description: '+3 Iuniores/season. Elite cavalry in battles.' },
     ],
   },
   lumber_camp: {
@@ -235,9 +235,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Mountain Pass',
     flavour: 'A fortified defile that controls all movement through the heights.',
     levels: [
-      { incomeBonus: { momentum: 1 },             expensesBonus: 1, unrestChange: 0, buildCost: { gold: 5, momentum: 2 },            description: '+1 Momentum/season. Opens mountain trade route.' },
-      { incomeBonus: { momentum: 1, gold: 1 },    expensesBonus: 2, unrestChange: 0, buildCost: { gold: 12, momentum: 4 },           description: '+1 Momentum, +1 Gold/season. Trade route active.' },
-      { incomeBonus: { momentum: 2, gold: 2 },    expensesBonus: 3, unrestChange: 0, buildCost: { gold: 22, momentum: 6 },           description: '+2 Momentum, +2 Gold/season. Strategic pass controlled.' },
+      { incomeBonus: { iuniores: 1 },              expensesBonus: 1, unrestChange: 0, buildCost: { gold: 7 },                        description: '+1 Iuniores/season. Opens mountain trade route.' },
+      { incomeBonus: { iuniores: 1, gold: 1 },    expensesBonus: 2, unrestChange: 0, buildCost: { gold: 16 },                       description: '+1 Iuniores, +1 Gold/season. Trade route active.' },
+      { incomeBonus: { iuniores: 2, gold: 2 },    expensesBonus: 3, unrestChange: 0, buildCost: { gold: 28 },                       description: '+2 Iuniores, +2 Gold/season. Strategic pass controlled.' },
     ],
   },
   oasis_market: {
@@ -265,9 +265,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Oracle Shrine',
     flavour: 'Marsh vapours and the whisper of reeds bring visions to the faithful.',
     levels: [
-      { incomeBonus: { faith: 1 },                expensesBonus: 0, unrestChange: -3, buildCost: { gold: 4, faith: 2 },              description: '+1 Faith/season. +1 Food. -3 Unrest/season.', foodBonus: 1 },
-      { incomeBonus: { faith: 2 },                expensesBonus: 1, unrestChange: -5, buildCost: { gold: 8, faith: 4 },              description: '+2 Faith/season. +1 Food. -5 Unrest/season.', foodBonus: 1 },
-      { incomeBonus: { faith: 3 },                expensesBonus: 1, unrestChange: -8, buildCost: { gold: 15, faith: 6 },             description: '+3 Faith/season. +2 Food. -8 Unrest/season.', foodBonus: 2 },
+      { incomeBonus: { gold: 1 },                  expensesBonus: 0, unrestChange: -3, buildCost: { gold: 6 },                       description: '+1 Gold/season. +1 Food. -3 Unrest/season.', foodBonus: 1 },
+      { incomeBonus: { gold: 2 },                  expensesBonus: 1, unrestChange: -5, buildCost: { gold: 12 },                      description: '+2 Gold/season. +1 Food. -5 Unrest/season.', foodBonus: 1 },
+      { incomeBonus: { gold: 3 },                  expensesBonus: 1, unrestChange: -8, buildCost: { gold: 21 },                      description: '+3 Gold/season. +2 Food. -8 Unrest/season.', foodBonus: 2 },
     ],
   },
   reed_harvest: {
@@ -296,9 +296,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Gardens & Fountains',
     flavour: 'Terraced gardens and marble fountains draw settlers from across the realm.',
     levels: [
-      { incomeBonus: {},                           expensesBonus: 1, unrestChange: -2, buildCost: { gold: 6, influence: 2 },            description: '+10% Beautiness. -2 Unrest/season.', beautinessBonus: 10 },
-      { incomeBonus: {},                           expensesBonus: 1, unrestChange: -4, buildCost: { gold: 12, influence: 4 },           description: '+15% Beautiness. -4 Unrest/season.', beautinessBonus: 15 },
-      { incomeBonus: {},                           expensesBonus: 2, unrestChange: -6, buildCost: { gold: 22, influence: 6 },           description: '+20% Beautiness. -6 Unrest/season. A jewel of the empire.', beautinessBonus: 20 },
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: -2, buildCost: { gold: 8 },                          description: '+10% Beautiness. -2 Unrest/season.', beautinessBonus: 10 },
+      { incomeBonus: {},                           expensesBonus: 1, unrestChange: -4, buildCost: { gold: 16 },                         description: '+15% Beautiness. -4 Unrest/season.', beautinessBonus: 15 },
+      { incomeBonus: {},                           expensesBonus: 2, unrestChange: -6, buildCost: { gold: 28 },                         description: '+20% Beautiness. -6 Unrest/season. A jewel of the empire.', beautinessBonus: 20 },
     ],
   },
 };
@@ -901,11 +901,7 @@ export function getRebelThreshold(province: Province): number {
 /** Numeric "value" of a built investment — used to weight destruction. */
 function investmentCostValue(inv: Investment): number {
   const cost = INVESTMENT_DATA[inv.type].levels[inv.level - 1].buildCost;
-  // Gold + resource costs (other resources treated as 2× gold equivalent)
-  return (cost.gold ?? 0)
-    + (cost.momentum ?? 0) * 2
-    + (cost.influence ?? 0) * 2
-    + (cost.faith ?? 0) * 2;
+  return (cost.gold ?? 0) + (cost.iuniores ?? 0) * 2;
 }
 
 /**
