@@ -34,18 +34,18 @@ export const DOCTRINE_BLOOD: Doctrine = {
 export const DOCTRINE_DIPLOMACY: Doctrine = {
   id: 'doctrine_diplomacy', name: 'Doctrine of Diplomacy', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+5 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 5 }], upgradeCost: { influence: 3 } },
-    { description: '+10 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 10 }], upgradeCost: { influence: 6 } },
-    { description: '+15 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 15 }], upgradeCost: {} },
+    { description: '+5 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }], upgradeCost: { influence: 3 } },
+    { description: '+10 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }], upgradeCost: { influence: 6 } },
+    { description: '+15 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 15 }], upgradeCost: {} },
   ],
 };
 
 export const DOCTRINE_COURT: Doctrine = {
   id: 'doctrine_court', name: 'Doctrine of the Court', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+5 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 5 }], upgradeCost: { influence: 4 } },
-    { description: '+10 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 10 }], upgradeCost: { influence: 8 } },
-    { description: '+15 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 15 }], upgradeCost: {} },
+    { description: '+5 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }], upgradeCost: { influence: 4 } },
+    { description: '+10 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }], upgradeCost: { influence: 8 } },
+    { description: '+15 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 15 }], upgradeCost: {} },
   ],
 };
 
@@ -63,9 +63,9 @@ export const DOCTRINE_ALLIANCES: Doctrine = {
 export const DOCTRINE_FAITH: Doctrine = {
   id: 'doctrine_faith', name: 'Doctrine of Faith', color: 'gold', currentLevel: 1,
   levels: [
-    { description: '+5 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 5 }], upgradeCost: { faith: 3 } },
-    { description: '+10 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 10 }], upgradeCost: { faith: 6 } },
-    { description: '+15 gold per spoke.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 15 }], upgradeCost: {} },
+    { description: '+5 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }], upgradeCost: { faith: 3 } },
+    { description: '+10 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }], upgradeCost: { faith: 6 } },
+    { description: '+15 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 15 }], upgradeCost: {} },
   ],
 };
 
@@ -170,9 +170,9 @@ export const DOCTRINE_VIS_BELLICA: Doctrine = {
 export const DOCTRINE_PAX_ROMANA: Doctrine = {
   id: 'doctrine_pax_romana', name: 'Pax Romana', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+5 gold per spoke + shop prices reduced by 5%.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 5 }, { type: 'shop-discount', percent: 5 }], upgradeCost: { influence: 4 } },
-    { description: '+10 gold per spoke + shop prices reduced by 10%.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 10 }, { type: 'shop-discount', percent: 10 }], upgradeCost: { influence: 8 } },
-    { description: '+15 gold per spoke + shop prices reduced by 15%.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 15 }, { type: 'shop-discount', percent: 15 }], upgradeCost: {} },
+    { description: '+5 gold at campaign start + shop prices reduced by 5%.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }, { type: 'shop-discount', percent: 5 }], upgradeCost: { influence: 4 } },
+    { description: '+10 gold at campaign start + shop prices reduced by 10%.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }, { type: 'shop-discount', percent: 10 }], upgradeCost: { influence: 8 } },
+    { description: '+15 gold at campaign start + shop prices reduced by 15%.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 15 }, { type: 'shop-discount', percent: 15 }], upgradeCost: {} },
   ],
 };
 
@@ -190,9 +190,9 @@ export const DOCTRINE_FOEDUS_AETERNUM: Doctrine = {
 export const DOCTRINE_DIVINA_PROVIDENTIA: Doctrine = {
   id: 'doctrine_divina_providentia', name: 'Divina Providentia', color: 'gold', currentLevel: 1,
   levels: [
-    { description: '+5 gold per spoke + 1 morale on campaign start.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 5 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { faith: 5 } },
-    { description: '+10 gold per spoke + 2 morale on campaign start.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 10 }, { type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { faith: 9 } },
-    { description: '+15 gold per spoke + 3 morale on campaign start.', effects: [{ type: 'resource-per-spoke', resource: 'gold', amount: 15 }, { type: 'embark-bonus', stat: 'morale', amount: 3 }], upgradeCost: {} },
+    { description: '+5 gold at campaign start + 1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { faith: 5 } },
+    { description: '+10 gold at campaign start + 2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }, { type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { faith: 9 } },
+    { description: '+15 gold at campaign start + 3 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 15 }, { type: 'embark-bonus', stat: 'morale', amount: 3 }], upgradeCost: {} },
   ],
 };
 
@@ -221,9 +221,9 @@ export const DOCTRINE_VIRTUS_POPULI: Doctrine = {
 export const DOCTRINE_CONCORDIA: Doctrine = {
   id: 'doctrine_concordia', name: 'Concordia', color: 'white', currentLevel: 1,
   levels: [
-    { description: '+1 morale on campaign start + 5 gold per spoke.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }, { type: 'resource-per-spoke', resource: 'gold', amount: 5 }], upgradeCost: { gold: 4, momentum: 2 } },
-    { description: '+2 morale on campaign start + 10 gold per spoke.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }, { type: 'resource-per-spoke', resource: 'gold', amount: 10 }], upgradeCost: { gold: 7, momentum: 4 } },
-    { description: '+3 morale on campaign start + 15 gold per spoke.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 3 }, { type: 'resource-per-spoke', resource: 'gold', amount: 15 }], upgradeCost: {} },
+    { description: '+1 morale on campaign start + 5 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }, { type: 'embark-bonus', stat: 'gold', amount: 5 }], upgradeCost: { gold: 4, momentum: 2 } },
+    { description: '+2 morale on campaign start + 10 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }, { type: 'embark-bonus', stat: 'gold', amount: 10 }], upgradeCost: { gold: 7, momentum: 4 } },
+    { description: '+3 morale on campaign start + 15 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 3 }, { type: 'embark-bonus', stat: 'gold', amount: 15 }], upgradeCost: {} },
   ],
 };
 

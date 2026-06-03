@@ -210,8 +210,8 @@ export function getShopDiscount(): number {
 }
 
 /** Aggregate embark-army bonus (per stat) from equipped doctrines. */
-export function getEmbarkBonus(): { soldiers: number; morale: number; supplies: number; discipline: number } {
-  const out = { soldiers: 0, morale: 0, supplies: 0, discipline: 0 };
+export function getEmbarkBonus(): { soldiers: number; morale: number; supplies: number; discipline: number; gold: number } {
+  const out = { soldiers: 0, morale: 0, supplies: 0, discipline: 0, gold: 0 };
   for (const e of getActiveEffects()) {
     if (e.type === 'embark-bonus') out[e.stat] += e.amount;
   }

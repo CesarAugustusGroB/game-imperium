@@ -6,7 +6,6 @@ import type { Collectible, TierLevel, TierTuple, ResourceCost } from '../../type
 
 export type DoctrineEffect =
   | { type: 'stat-modifier'; stat: 'damage' | 'armor' | 'maxHp'; multiplier: number }
-  | { type: 'resource-per-spoke'; resource: ResourceType; amount: number }
   | { type: 'heal-on-kill'; amount: number }
   | { type: 'revive'; hpPercent: number }
   | { type: 'heal-battle-start'; amount: number | 'full' | { percent: number } }
@@ -16,7 +15,7 @@ export type DoctrineEffect =
   | { type: 'income-modifier'; resource: ResourceType; multiplier: number }
   | { type: 'ally-units'; count: number }
   | { type: 'upkeep-reduction'; percent: number }
-  | { type: 'embark-bonus'; stat: 'soldiers' | 'morale' | 'supplies' | 'discipline'; amount: number };
+  | { type: 'embark-bonus'; stat: 'soldiers' | 'morale' | 'supplies' | 'discipline' | 'gold'; amount: number };
 
 // ── Doctrine level ──
 

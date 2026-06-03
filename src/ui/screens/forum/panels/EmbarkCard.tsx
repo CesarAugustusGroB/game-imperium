@@ -66,7 +66,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
     const embark = getEmbarkBonus();
     startIterBelliCampaign({
       soldiers: soldiers + embark.soldiers + consilium.soldiers,
-      gold: getResource('gold') + consilium.gold,
+      gold: getResource('gold') + consilium.gold + embark.gold,
       iuniores: getResource('iuniores'),
       discipline: discipline + embark.discipline,
       archetype, spokeTerrain, spokeDuration,

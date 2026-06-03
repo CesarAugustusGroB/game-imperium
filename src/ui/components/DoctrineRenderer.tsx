@@ -85,8 +85,6 @@ function formatEffectDescription(doctrine: Doctrine): string {
   switch (effect.type) {
     case 'stat-modifier':
       return `${effect.stat} ×${effect.multiplier.toFixed(2)}`;
-    case 'resource-per-spoke':
-      return `+${effect.amount} ${RESOURCE_LABELS[effect.resource]} / spoke`;
     case 'heal-on-kill':
       return `Heal ${effect.amount} HP on kill`;
     case 'revive':
@@ -120,8 +118,6 @@ function formatDoctrineEffect(effect: DoctrineEffect): string {
       const pct = Math.round((effect.multiplier - 1) * 100);
       return `${pct >= 0 ? '+' : ''}${pct}% ${effect.stat} modifier`;
     }
-    case 'resource-per-spoke':
-      return `+${effect.amount} ${RESOURCE_LABELS[effect.resource]} per spoke`;
     case 'heal-on-kill':
       return `Heal ${effect.amount} HP on kill`;
     case 'revive':
