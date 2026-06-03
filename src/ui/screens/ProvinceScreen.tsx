@@ -1562,8 +1562,7 @@ function IdentityStrip({ province }: { province: Province }) {
     const rows: TGRow[] = [];
     if (tradeGood.flatGold          > 0) rows.push({ icon: '🪙', label: 'Gold',         value: `+${tradeGood.flatGold}g/s` });
     if (tradeGood.flatGrowth        > 0) rows.push({ icon: '👥', label: 'Pop Growth',   value: `+${tradeGood.flatGrowth}/s` });
-    if (tradeGood.flatFaith         > 0) rows.push({ icon: '✦',  label: 'Faith',        value: `+${tradeGood.flatFaith}/s` });
-    if (tradeGood.flatMomentum      > 0) rows.push({ icon: '⚡', label: 'Momentum',     value: `+${tradeGood.flatMomentum}/s` });
+    if (tradeGood.flatIuniores      > 0) rows.push({ icon: '⚔️', label: 'Iuniores',     value: `+${tradeGood.flatIuniores}/s` });
     if (tradeGood.wealthGrowthBonus > 0) rows.push({ icon: '💰', label: 'Wealth Growth',value: `+${tradeGood.wealthGrowthBonus}/s` });
 
     const specialLine = (() => {
@@ -2012,16 +2011,14 @@ function IncomeLedger({ province, accent = '#d4a843', index = 0 }: { province: P
 
   const subsistence = 1;
   const tradeGoodGold     = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood].flatGold     : 0;
-  const tradeGoodFaith    = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood].flatFaith    : 0;
-  const tradeGoodMomentum = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood].flatMomentum : 0;
+  const tradeGoodIuniores = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood].flatIuniores : 0;
 
   // Non-gold income (flat building output, no wealth/tax scaling)
   const nonGoldIncome: Partial<Record<ResourceType, number>> = {};
   for (const [res, amt] of Object.entries(nonGoldRaw) as [ResourceType, number][]) {
     nonGoldIncome[res] = amt;
   }
-  if (tradeGoodFaith    > 0) nonGoldIncome.faith    = (nonGoldIncome.faith    ?? 0) + tradeGoodFaith;
-  if (tradeGoodMomentum > 0) nonGoldIncome.momentum = (nonGoldIncome.momentum ?? 0) + tradeGoodMomentum;
+  if (tradeGoodIuniores > 0) nonGoldIncome.iuniores = (nonGoldIncome.iuniores ?? 0) + tradeGoodIuniores;
 
   // Governor bonus on non-gold
   for (const trait of traits) {

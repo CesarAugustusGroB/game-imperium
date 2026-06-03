@@ -303,8 +303,7 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
     if (prov.tradeGood) {
       const good = TRADE_GOOD_DATA[prov.tradeGood];
       if (good.flatGold > 0)     provIncome.gold     = (provIncome.gold     ?? 0) + good.flatGold;
-      if (good.flatFaith > 0)    provIncome.faith    = (provIncome.faith    ?? 0) + good.flatFaith;
-      if (good.flatMomentum > 0) provIncome.momentum = (provIncome.momentum ?? 0) + good.flatMomentum;
+      if (good.flatIuniores > 0) provIncome.iuniores = (provIncome.iuniores ?? 0) + good.flatIuniores;
     }
 
     // Iuniores: population × per-pop ratio (S25-02 / FT-IUN).
