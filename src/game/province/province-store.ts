@@ -306,6 +306,13 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
       if (good.flatIuniores > 0) provIncome.iuniores = (provIncome.iuniores ?? 0) + good.flatIuniores;
     }
 
+    // Unique feature flat income (gold/iuniores) — matches the income ledger display.
+    if (prov.uniqueFeature) {
+      const feat = prov.uniqueFeature;
+      if (feat.goldPerSeason)     provIncome.gold     = (provIncome.gold     ?? 0) + feat.goldPerSeason;
+      if (feat.iunioresPerSeason) provIncome.iuniores = (provIncome.iuniores ?? 0) + feat.iunioresPerSeason;
+    }
+
     // Iuniores: population × per-pop ratio (S25-02 / FT-IUN).
     // Placed before governor income-bonus so future iuniores-targeting traits can enhance yield.
     const iunioresYield = Math.floor(prov.population * IUNIORES.perPop);
