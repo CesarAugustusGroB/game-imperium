@@ -27,7 +27,7 @@ export const DECRETUM_MARS: Decretum = {
   description: 'Invoke the god of war. All units deal +60% damage this battle.',
   effect: { type: 'buff', stat: 'atk', multiplier: 0.6, duration: 'battle' },
   rarity: 'legendary',
-  castCost: { momentum: 2 },
+  castCost: { iuniores: 2 },
 };
 
 // ── Blue (Diplomatic) — 3 scrolls ──
@@ -45,8 +45,8 @@ export const DECRETUM_SENATE: Decretum = {
   id: 'decretum_senate',
   name: 'Decretum of the Senate',
   color: 'blue',
-  description: 'A decree from the Senate floor. Gain 3 Influence immediately.',
-  effect: { type: 'resource-gain', resource: 'influence', amount: 3 },
+  description: 'A decree from the Senate floor. Gain 3 Gold immediately.',
+  effect: { type: 'resource-gain', resource: 'gold', amount: 3 },
   rarity: 'common',
 };
 
@@ -86,7 +86,7 @@ export const DECRETUM_ORACLE: Decretum = {
   description: 'Fate itself intervenes — prevent the next unit death this battle.',
   effect: { type: 'prevent-death', count: 1 },
   rarity: 'legendary',
-  castCost: { faith: 1 },
+  castCost: { gold: 1 },
 };
 
 // ── Purple (Economic) — 3 scrolls ──
@@ -145,7 +145,7 @@ export const DECRETUM_RIOT: Decretum = {
   description: 'Unleash chaos on the battlefield. Deal 1500 area damage — beware friendly fire.',
   effect: { type: 'damage', amount: 1500, target: 'area' },
   rarity: 'legendary',
-  castCost: { momentum: 1 },
+  castCost: { iuniores: 1 },
 };
 
 // ── Red (Military) — 3 additional scrolls ──
@@ -183,8 +183,8 @@ export const DECRETUM_FOEDUS: Decretum = {
   id: 'decretum_foedus',
   name: 'Foedus Amicitiae',
   color: 'blue',
-  description: 'A treaty of friendship earns goodwill. Gain 2 Influence immediately.',
-  effect: { type: 'resource-gain', resource: 'influence', amount: 2 },
+  description: 'A treaty of friendship earns goodwill. Gain 2 Gold immediately.',
+  effect: { type: 'resource-gain', resource: 'gold', amount: 2 },
   rarity: 'common',
 };
 
@@ -195,7 +195,7 @@ export const DECRETUM_LEGATUS: Decretum = {
   description: 'Your legate secures favorable terms — force the next event to resolve well. The weakest enemy joins your side next battle.',
   effect: { type: 'event-modifier', outcome: 'favorable' },
   rarity: 'legendary',
-  castCost: { influence: 1 },
+  castCost: { gold: 1 },
   extraEffects: [{ type: 'convert-enemy-next-battle', count: 1 }],
 };
 
@@ -232,8 +232,8 @@ export const DECRETUM_PIETAS: Decretum = {
   id: 'decretum_pietas',
   name: 'Vow of Pietas',
   color: 'gold',
-  description: 'Sacred devotion channels divine momentum. Gain 3 Momentum immediately.',
-  effect: { type: 'resource-gain', resource: 'momentum', amount: 3 },
+  description: 'Sacred devotion swells the ranks. Gain 3 Iuniores immediately.',
+  effect: { type: 'resource-gain', resource: 'iuniores', amount: 3 },
   rarity: 'common',
 };
 
@@ -294,7 +294,7 @@ export const DECRETUM_TRIUMPHUS: Decretum = {
   description: 'The triumph is declared — the crowd\'s frenzy grants all units +50% agility and prevents the next death.',
   effect: { type: 'prevent-death', count: 2 },
   rarity: 'legendary',
-  castCost: { faith: 2 },
+  castCost: { gold: 2 },
 };
 
 // ── All starter Decretum ──

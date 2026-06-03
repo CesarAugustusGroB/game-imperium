@@ -1,9 +1,11 @@
 import { useRef, useEffect, useState } from 'preact/hooks';
 import type { Signal } from '@preact/signals';
-import { gold, faith, influence, momentum, iuniores } from '../../game/core/resources';
+import { gold, iuniores } from '../../game/core/resources';
 import { selectedCommander, globalSeason, MAX_SEASONS } from '../../game/core/game-state';
 import { FACTION_PRIMARY_RESOURCE, RESOURCE_INFO } from '../../game/core/commander';
-import type { ResourceType } from '../../game/core/commander';
+
+/** Only gold and iuniores are live; faith/influence/momentum are deprecated and never shown. */
+type LiveResource = 'gold' | 'iuniores';
 import { Tooltip } from './Tooltip';
 import { InlineImageIcon, ResourceIcon } from './ResourceIcon';
 import seasonIcon from '../../assets/ui/resources/season-icon-color.png';
@@ -37,19 +39,16 @@ const BAR_STYLE: Record<string, string> = {
   zIndex: '100',
 };
 
-const resourceSignals: Record<ResourceType, Signal<number>> = {
-  gold, faith, influence, momentum, iuniores,
+const resourceSignals: Record<LiveResource, Signal<number>> = {
+  gold, iuniores,
 };
 
-const RESOURCE_TOOLTIP: Record<ResourceType, string> = {
+const RESOURCE_TOOLTIP: Record<LiveResource, string> = {
   gold: 'Primary income for all factions. Used for upkeep and investments.',
-  faith: 'Primary resource of the Gold (Religious) faction. Drives crusade and miracle abilities.',
-  influence: 'Primary resource of the Blue (Diplomat) faction. Powers negotiation and manipulation.',
-  momentum: 'Primary resource of the Red (Warlord) faction. Fuels aggressive tactics and berserk stances.',
   iuniores: 'Iuniores — citizen-soldiers drawn from your provinces. Spent to recruit cohorts (1000 each) and to replenish army HP at rest nodes.',
 };
 
-function ResourceCounter({ type }: { type: ResourceType }) {
+function ResourceCounter({ type }: { type: LiveResource }) {
   const sig = resourceSignals[type];
   const info = RESOURCE_INFO[type];
   const commander = selectedCommander.value;

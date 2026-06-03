@@ -25,7 +25,7 @@ export const COMMANDERS: Commander[] = [
       cost: { resource: 'momentum', amount: 2 },
       cooldown: 'once-per-battle',
     },
-    startingResources: { gold: 2, faith: 0, influence: 0, momentum: 3, iuniores: 0 },
+    startingResources: { gold: 2, faith: 0, influence: 0, momentum: 0, iuniores: 0 },
     archetype: 'Warlord',
     archetypeDescription: 'Iron and fire forge nations. The strong rule, the weak serve, and every battle makes my people more formidable than the last.',
     startingBonuses: [
@@ -73,7 +73,7 @@ export const COMMANDERS: Commander[] = [
       cost: { resource: 'faith', amount: 2 },
       cooldown: 'unlimited',
     },
-    startingResources: { gold: 3, faith: 2, influence: 0, momentum: 0, iuniores: 0 },
+    startingResources: { gold: 3, faith: 0, influence: 0, momentum: 0, iuniores: 0 },
     archetype: 'Religious',
     archetypeDescription: 'Faith guides my people. Through devotion and righteousness, we will build the greatest civilization the world has ever known.',
     startingBonuses: [
@@ -120,7 +120,7 @@ export const COMMANDERS: Commander[] = [
       cost: { resource: 'influence', amount: 3 },
       cooldown: 'once-per-battle',
     },
-    startingResources: { gold: 2, faith: 0, influence: 2, momentum: 0, iuniores: 0 },
+    startingResources: { gold: 2, faith: 0, influence: 0, momentum: 0, iuniores: 0 },
     archetype: 'Diplomat',
     archetypeDescription: 'Empires are not built by swords alone. The right word in the right ear buys a legion and costs no blood.',
     startingBonuses: [

@@ -5,7 +5,6 @@ import { OverviewTab } from './tabs/OverviewTab';
 import { ProvinciaeTab } from './tabs/ProvinciaeTab';
 import { ConsiliumTab } from './tabs/ConsiliumTab';
 import { ExercitusTab } from './tabs/ExercitusTab';
-import { MercatorTab } from './tabs/MercatorTab';
 import { DoctrinaeTab } from './tabs/DoctrinaeTab';
 import { DecretaTab } from './tabs/DecretaTab';
 
@@ -14,7 +13,6 @@ const TAB_COMPONENTS: Record<ForumTab, () => preact.JSX.Element> = {
   provinciae: ProvinciaeTab,
   consilium:  ConsiliumTab,
   exercitus:  ExercitusTab,
-  mercator:   MercatorTab,
   doctrinae:  DoctrinaeTab,
   decreta:    DecretaTab,
 };

@@ -198,7 +198,7 @@ export function startNewRun(commander: Commander, options?: StartRunOptions): vo
 
   if (seedHomeProvince) {
     // Create the home province first (no territory claimed yet — topology not loaded)
-    conquerProvince('Roma', { gold: 2, faith: 1, influence: 1, momentum: 0, iuniores: 0 }, 1);
+    conquerProvince('Roma', { gold: 2, faith: 0, influence: 0, momentum: 0, iuniores: 0 }, 1);
 
     // Load topology, then retroactively claim territory for Roma
     initProvinceMapStore().then(() => {

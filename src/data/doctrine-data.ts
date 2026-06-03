@@ -5,8 +5,8 @@ import type { Doctrine } from '../game/items/doctrine';
 export const DOCTRINE_SWORD: Doctrine = {
   id: 'doctrine_sword', name: 'Doctrine of the Sword', color: 'red', currentLevel: 1,
   levels: [
-    { description: '+200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 200 }], upgradeCost: { momentum: 3 } },
-    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { momentum: 6 } },
+    { description: '+200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 200 }], upgradeCost: { iuniores: 3 } },
+    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { iuniores: 6 } },
     { description: '+600 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 600 }], upgradeCost: {} },
   ],
 };
@@ -14,8 +14,8 @@ export const DOCTRINE_SWORD: Doctrine = {
 export const DOCTRINE_IRON: Doctrine = {
   id: 'doctrine_iron', name: 'Doctrine of Iron', color: 'red', currentLevel: 1,
   levels: [
-    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { momentum: 4 } },
-    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { momentum: 8 } },
+    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { iuniores: 4 } },
+    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { iuniores: 8 } },
     { description: '+1200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }], upgradeCost: {} },
   ],
 };
@@ -23,8 +23,8 @@ export const DOCTRINE_IRON: Doctrine = {
 export const DOCTRINE_BLOOD: Doctrine = {
   id: 'doctrine_blood', name: 'Doctrine of Blood', color: 'red', currentLevel: 1,
   levels: [
-    { description: '+1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { momentum: 2, gold: 2 } },
-    { description: '+2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { momentum: 5, gold: 3 } },
+    { description: '+1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { iuniores: 2, gold: 2 } },
+    { description: '+2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { iuniores: 5, gold: 3 } },
     { description: '+3 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 3 }], upgradeCost: {} },
   ],
 };
@@ -34,8 +34,8 @@ export const DOCTRINE_BLOOD: Doctrine = {
 export const DOCTRINE_DIPLOMACY: Doctrine = {
   id: 'doctrine_diplomacy', name: 'Doctrine of Diplomacy', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+5 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }], upgradeCost: { influence: 3 } },
-    { description: '+10 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }], upgradeCost: { influence: 6 } },
+    { description: '+5 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }], upgradeCost: { gold: 3 } },
+    { description: '+10 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }], upgradeCost: { gold: 6 } },
     { description: '+15 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 15 }], upgradeCost: {} },
   ],
 };
@@ -43,8 +43,8 @@ export const DOCTRINE_DIPLOMACY: Doctrine = {
 export const DOCTRINE_COURT: Doctrine = {
   id: 'doctrine_court', name: 'Doctrine of the Court', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+5 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }], upgradeCost: { influence: 4 } },
-    { description: '+10 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }], upgradeCost: { influence: 8 } },
+    { description: '+5 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }], upgradeCost: { gold: 4 } },
+    { description: '+10 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }], upgradeCost: { gold: 8 } },
     { description: '+15 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 15 }], upgradeCost: {} },
   ],
 };
@@ -52,8 +52,8 @@ export const DOCTRINE_COURT: Doctrine = {
 export const DOCTRINE_ALLIANCES: Doctrine = {
   id: 'doctrine_alliances', name: 'Doctrine of Alliances', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { influence: 3, gold: 2 } },
-    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { influence: 6, gold: 4 } },
+    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { gold: 5 } },
+    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { gold: 10 } },
     { description: '+1200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }], upgradeCost: {} },
   ],
 };
@@ -63,8 +63,8 @@ export const DOCTRINE_ALLIANCES: Doctrine = {
 export const DOCTRINE_FAITH: Doctrine = {
   id: 'doctrine_faith', name: 'Doctrine of Faith', color: 'gold', currentLevel: 1,
   levels: [
-    { description: '+5 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }], upgradeCost: { faith: 3 } },
-    { description: '+10 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }], upgradeCost: { faith: 6 } },
+    { description: '+5 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }], upgradeCost: { gold: 3 } },
+    { description: '+10 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }], upgradeCost: { gold: 6 } },
     { description: '+15 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 15 }], upgradeCost: {} },
   ],
 };
@@ -72,8 +72,8 @@ export const DOCTRINE_FAITH: Doctrine = {
 export const DOCTRINE_MIRACLES: Doctrine = {
   id: 'doctrine_miracles', name: 'Doctrine of Miracles', color: 'gold', currentLevel: 1,
   levels: [
-    { description: '+1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { faith: 4 } },
-    { description: '+2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { faith: 8 } },
+    { description: '+1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { gold: 4 } },
+    { description: '+2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { gold: 8 } },
     { description: '+3 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 3 }], upgradeCost: {} },
   ],
 };
@@ -81,8 +81,8 @@ export const DOCTRINE_MIRACLES: Doctrine = {
 export const DOCTRINE_PANTHEON: Doctrine = {
   id: 'doctrine_pantheon', name: 'Doctrine of the Pantheon', color: 'gold', currentLevel: 1,
   levels: [
-    { description: '+1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { faith: 3, gold: 3 } },
-    { description: '+2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { faith: 7, gold: 5 } },
+    { description: '+1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { gold: 6 } },
+    { description: '+2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { gold: 12 } },
     { description: '+3 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 3 }], upgradeCost: {} },
   ],
 };
@@ -139,8 +139,8 @@ export const DOCTRINE_MILITIA: Doctrine = {
 export const DOCTRINE_RESILIENCE: Doctrine = {
   id: 'doctrine_resilience', name: 'Doctrine of Resilience', color: 'white', currentLevel: 1,
   levels: [
-    { description: '+200 soldiers + 1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 200 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { gold: 3, momentum: 2 } },
-    { description: '+400 soldiers + 2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }, { type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { gold: 6, momentum: 4 } },
+    { description: '+200 soldiers + 1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 200 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { gold: 3, iuniores: 2 } },
+    { description: '+400 soldiers + 2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }, { type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { gold: 6, iuniores: 4 } },
     { description: '+600 soldiers + 3 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 600 }, { type: 'embark-bonus', stat: 'morale', amount: 3 }], upgradeCost: {} },
   ],
 };
@@ -150,8 +150,8 @@ export const DOCTRINE_RESILIENCE: Doctrine = {
 export const DOCTRINE_LEX_MILITARIS: Doctrine = {
   id: 'doctrine_lex_militaris', name: 'Lex Militaris', color: 'red', currentLevel: 1,
   levels: [
-    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { momentum: 3 } },
-    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { momentum: 6 } },
+    { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { iuniores: 3 } },
+    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { iuniores: 6 } },
     { description: '+1200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }], upgradeCost: {} },
   ],
 };
@@ -159,8 +159,8 @@ export const DOCTRINE_LEX_MILITARIS: Doctrine = {
 export const DOCTRINE_VIS_BELLICA: Doctrine = {
   id: 'doctrine_vis_bellica', name: 'Vis Bellica', color: 'red', currentLevel: 1,
   levels: [
-    { description: '+200 soldiers + 1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 200 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { momentum: 4, gold: 2 } },
-    { description: '+400 soldiers + 1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { momentum: 7, gold: 4 } },
+    { description: '+200 soldiers + 1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 200 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { iuniores: 4, gold: 2 } },
+    { description: '+400 soldiers + 1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { iuniores: 7, gold: 4 } },
     { description: '+600 soldiers + 2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 600 }, { type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: {} },
   ],
 };
@@ -170,8 +170,8 @@ export const DOCTRINE_VIS_BELLICA: Doctrine = {
 export const DOCTRINE_PAX_ROMANA: Doctrine = {
   id: 'doctrine_pax_romana', name: 'Pax Romana', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+5 gold at campaign start + shop prices reduced by 5%.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }, { type: 'shop-discount', percent: 5 }], upgradeCost: { influence: 4 } },
-    { description: '+10 gold at campaign start + shop prices reduced by 10%.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }, { type: 'shop-discount', percent: 10 }], upgradeCost: { influence: 8 } },
+    { description: '+5 gold at campaign start + shop prices reduced by 5%.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }, { type: 'shop-discount', percent: 5 }], upgradeCost: { gold: 4 } },
+    { description: '+10 gold at campaign start + shop prices reduced by 10%.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }, { type: 'shop-discount', percent: 10 }], upgradeCost: { gold: 8 } },
     { description: '+15 gold at campaign start + shop prices reduced by 15%.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 15 }, { type: 'shop-discount', percent: 15 }], upgradeCost: {} },
   ],
 };
@@ -179,8 +179,8 @@ export const DOCTRINE_PAX_ROMANA: Doctrine = {
 export const DOCTRINE_FOEDUS_AETERNUM: Doctrine = {
   id: 'doctrine_foedus_aeternum', name: 'Foedus Aeternum', color: 'blue', currentLevel: 1,
   levels: [
-    { description: '+400 soldiers on campaign start + 15% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.15 }], upgradeCost: { influence: 5, gold: 3 } },
-    { description: '+800 soldiers on campaign start + 25% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.25 }], upgradeCost: { influence: 9, gold: 5 } },
+    { description: '+400 soldiers on campaign start + 15% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.15 }], upgradeCost: { gold: 8 } },
+    { description: '+800 soldiers on campaign start + 25% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.25 }], upgradeCost: { gold: 14 } },
     { description: '+1200 soldiers on campaign start + 40% gold income.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }, { type: 'income-modifier', resource: 'gold', multiplier: 0.40 }], upgradeCost: {} },
   ],
 };
@@ -190,8 +190,8 @@ export const DOCTRINE_FOEDUS_AETERNUM: Doctrine = {
 export const DOCTRINE_DIVINA_PROVIDENTIA: Doctrine = {
   id: 'doctrine_divina_providentia', name: 'Divina Providentia', color: 'gold', currentLevel: 1,
   levels: [
-    { description: '+5 gold at campaign start + 1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { faith: 5 } },
-    { description: '+10 gold at campaign start + 2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }, { type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { faith: 9 } },
+    { description: '+5 gold at campaign start + 1 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 5 }, { type: 'embark-bonus', stat: 'morale', amount: 1 }], upgradeCost: { gold: 5 } },
+    { description: '+10 gold at campaign start + 2 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 10 }, { type: 'embark-bonus', stat: 'morale', amount: 2 }], upgradeCost: { gold: 9 } },
     { description: '+15 gold at campaign start + 3 morale on campaign start.', effects: [{ type: 'embark-bonus', stat: 'gold', amount: 15 }, { type: 'embark-bonus', stat: 'morale', amount: 3 }], upgradeCost: {} },
   ],
 };
@@ -221,8 +221,8 @@ export const DOCTRINE_VIRTUS_POPULI: Doctrine = {
 export const DOCTRINE_CONCORDIA: Doctrine = {
   id: 'doctrine_concordia', name: 'Concordia', color: 'white', currentLevel: 1,
   levels: [
-    { description: '+1 morale on campaign start + 5 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }, { type: 'embark-bonus', stat: 'gold', amount: 5 }], upgradeCost: { gold: 4, momentum: 2 } },
-    { description: '+2 morale on campaign start + 10 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }, { type: 'embark-bonus', stat: 'gold', amount: 10 }], upgradeCost: { gold: 7, momentum: 4 } },
+    { description: '+1 morale on campaign start + 5 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 1 }, { type: 'embark-bonus', stat: 'gold', amount: 5 }], upgradeCost: { gold: 4, iuniores: 2 } },
+    { description: '+2 morale on campaign start + 10 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 2 }, { type: 'embark-bonus', stat: 'gold', amount: 10 }], upgradeCost: { gold: 7, iuniores: 4 } },
     { description: '+3 morale on campaign start + 15 gold at campaign start.', effects: [{ type: 'embark-bonus', stat: 'morale', amount: 3 }, { type: 'embark-bonus', stat: 'gold', amount: 15 }], upgradeCost: {} },
   ],
 };
