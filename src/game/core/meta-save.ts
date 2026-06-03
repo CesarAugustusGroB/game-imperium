@@ -52,7 +52,6 @@ import type { Legate } from '../army/legate';
 import { normalizeCohortRoster } from '../army/cohort';
 import { SUPPLY_MAX_CARRY, SUPPLY_MORALE_PENALTY_CAP } from '../../config/game-config';
 import { serializeIterBelli, restoreIterBelli, type IterBelliSave } from '../iterBelli/iter-belli-save';
-import { iterBelliState } from '../iterBelli/iter-belli-state';
 import { computeDoctrineModifiers } from '../../data/iter-belli-doctrines';
 
 // —— Types ——
@@ -474,21 +473,23 @@ function flushPendingPersist(): void {
 /**
  * Set up the autosave effect for the active run.
  *
- * **Persistence scope**: this effect tracks `selectedCommander`. A change to it
- * debounces a save through `saveActiveRunSnapshot`.
- *
- * **Known gap**: the broader run state — provinces, councilSlots, advisorPool,
- * decretumHand, doctrineCollection, governorAssignments, npcFactions, …
- * — is NOT tracked here. Mutations to those signals do not trigger autosave;
- * they only persist the next time the commander changes.
+ * **Persistence scope**: this effect builds a full run snapshot on every run,
+ * which *reads* every signal that gets serialized. Because signal effects
+ * subscribe to whatever they read, ANY mutation to the Hub state — resources,
+ * provinces, councilSlots, advisorMarket, decretumHand, doctrineCollection,
+ * governorAssignments, npcFactions, strategic state, the campaign, … — re-runs
+ * this effect and debounces a save. This keeps the on-reload state identical to
+ * the live state; reusing `buildActiveRunSnapshot` guarantees the tracked set
+ * never drifts from the saved set.
  */
 export function startActiveRunPersistence(): () => void {
   if (persistenceDisposer) return persistenceDisposer;
 
   const stop = effect(() => {
-    // Track the campaign so each committed turn debounce-saves the run snapshot.
-    void iterBelliState.value;
-    if (!selectedCommander.value) return;
+    // Building the snapshot reads (and thus subscribes to) the entire run state.
+    // Returns null when no run is active — nothing to persist yet.
+    const snapshot = buildActiveRunSnapshot();
+    if (!snapshot) return;
 
     flushPendingPersist();
     pendingPersistTimer = setTimeout(() => {
