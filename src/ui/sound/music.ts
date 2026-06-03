@@ -5,6 +5,10 @@ const PLAYLIST: readonly string[] = [
   '/audio/Saffron_Morning (1).mp3',
   '/audio/Beneath_the_Banyan.mp3',
   '/audio/The_Sovereign_Crown.mp3',
+  '/audio/Marcha_de_Roma.mp3',
+  '/audio/Paso_de_Marmol.mp3',
+  '/audio/Aquila_Rising.mp3',
+  '/audio/Aquila_Ascends.mp3',
 ];
 
 const VOLUME = 0.35;
