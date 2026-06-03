@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { GameIcon } from '../../../components/GameIcon';
+import type { GameIconName } from '../../../components/GameIcon';
 
 interface SectionHeaderProps {
   title: string;
@@ -36,10 +37,8 @@ export interface LinkButtonProps {
 }
 
 export function LinkButton({ label, onClick, accent = '#d4a843' }: LinkButtonProps) {
-  // Labels like "Open →" / "Manage →": strip the textual arrow and render the
-  // sliced arrow medallion instead.
-  const hasArrow = /→\s*$/.test(label);
-  const text = label.replace(/\s*→\s*$/, '');
+  const hasArrow = /(->|→|â†’)\s*$/.test(label);
+  const text = label.replace(/\s*(->|→|â†’)\s*$/, '');
   return (
     <button
       onClick={onClick}
@@ -66,15 +65,15 @@ export function LinkButton({ label, onClick, accent = '#d4a843' }: LinkButtonPro
   );
 }
 
-export const NODE_ICONS: Record<string, { icon: string; color: string; label: string }> = {
-  battle: { icon: '⚔', color: '#c25040', label: 'Battle' },
-  event:  { icon: '⚑', color: '#d4a843', label: 'Event' },
-  rest:   { icon: '⚕', color: '#5a8a7a', label: 'Rest' },
-  boss:   { icon: '✠', color: '#7a2432', label: 'Boss' },
+export const NODE_ICONS: Record<string, { icon: string; iconName: GameIconName; color: string; label: string }> = {
+  battle: { icon: '⚔', iconName: 'node-battle', color: '#c25040', label: 'Battle' },
+  event:  { icon: '⚑', iconName: 'node-event', color: '#d4a843', label: 'Event' },
+  rest:   { icon: '⚕', iconName: 'node-rest', color: '#5a8a7a', label: 'Rest' },
+  boss:   { icon: '✠', iconName: 'node-boss', color: '#7a2432', label: 'Boss' },
 };
 
 export const ROLE_COLORS: Record<string, string> = {
   vanguard: '#b23a3a',
-  reserve:  '#d4a843',
-  guard:    '#5a7aa0',
+  reserve: '#d4a843',
+  guard: '#5a7aa0',
 };

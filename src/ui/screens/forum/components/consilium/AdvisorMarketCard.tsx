@@ -66,7 +66,7 @@ export function AdvisorMarketCard({
 
       <div style={{
         position: 'relative',
-        aspectRatio: '3/4',
+        aspectRatio: '2/3',
         borderRadius: 2,
         overflow: 'hidden',
         border: `1px solid ${factionColor}`,
@@ -82,7 +82,7 @@ export function AdvisorMarketCard({
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              objectPosition: 'center 24%',
+              objectPosition: 'center 18%',
               filter: 'saturate(0.9) contrast(1.06)',
             }}
           />

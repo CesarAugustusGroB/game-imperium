@@ -61,7 +61,7 @@ function AdvisorSlot({ advisor, label, accent }: AdvisorSlotProps) {
     <div
       onClick={() => setForumTab('consilium')}
       style={{
-        flex: 1, aspectRatio: '3/4',
+        flex: 1, aspectRatio: '2/3',
         position: 'relative',
         cursor: 'pointer',
         background: advisor ? placeholderBg : 'rgba(30, 26, 45, 0.35)',
@@ -92,7 +92,7 @@ function AdvisorSlot({ advisor, label, accent }: AdvisorSlotProps) {
           style={{
             position: 'absolute', inset: 0,
             width: '100%', height: '100%',
-            objectFit: 'cover', objectPosition: 'center 25%',
+            objectFit: 'cover', objectPosition: 'center 18%',
             filter: 'saturate(0.85) contrast(1.05)',
           }}
         />
