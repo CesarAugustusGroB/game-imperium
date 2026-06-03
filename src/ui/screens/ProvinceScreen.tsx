@@ -984,9 +984,7 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
 
   // Force signal reads for reactivity
   getResource('gold');
-  getResource('faith');
-  getResource('influence');
-  getResource('momentum');
+  getResource('iuniores');
 
   if (pool.length === 0) {
     return (
