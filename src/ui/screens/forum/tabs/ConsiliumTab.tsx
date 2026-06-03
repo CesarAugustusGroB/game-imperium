@@ -334,34 +334,9 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
   const isSeated = source === 'seat';
   const cost = isSeated ? advisor.cost : getDiscountedAdvisorCost(advisor);
   const tier = advisor.currentTier;
-
-  const tierCircle = (n: 1 | 2 | 3) => {
-    const active = n === tier;
-    const done = n < tier;
-    return (
-      <div style={{
-        width: 24, height: 24, borderRadius: '50%', flex: '0 0 auto',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        border: `1px solid ${active || done ? 'var(--imp-gold)' : 'var(--imp-gold-faint)'}`,
-        background: active
-          ? 'radial-gradient(circle, rgba(212, 168, 67, 0.3), rgba(7, 5, 12, 0.95))'
-          : 'rgba(7, 5, 12, 0.7)',
-        boxShadow: active ? '0 0 12px rgba(212, 168, 67, 0.4)' : undefined,
-        color: active || done ? 'var(--imp-gold-hi)' : 'var(--imp-text-lo)',
-        fontFamily: 'var(--imp-font-display)', fontSize: 11, fontWeight: 700,
-      }}>
-        {ROMAN[n - 1]}
-      </div>
-    );
-  };
-  const connector = (done: boolean, grow: number) => (
-    <div style={{
-      flex: grow, minWidth: 14, height: 1, alignSelf: 'center',
-      background: done
-        ? 'linear-gradient(90deg, var(--imp-gold), var(--imp-gold-dim))'
-        : 'repeating-linear-gradient(90deg, var(--imp-gold-faint) 0 5px, transparent 5px 10px)',
-    }} />
-  );
+  const xpPct = nextTierThreshold === null
+    ? 100
+    : Math.min(100, Math.max(0, (advisor.xp / nextTierThreshold) * 100));
 
   return (
     <div style={{
@@ -385,15 +360,6 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
         backgroundSize: '4px 4px',
         opacity: 0.55,
       }} />
-
-      {/* ornate gold frame + corners */}
-      <div aria-hidden="true" style={{
-        position: 'absolute', inset: 'clamp(9px, 1vw, 15px)', pointerEvents: 'none',
-        border: '1px solid var(--imp-gold-dim)',
-        boxShadow: 'inset 0 0 0 3px rgba(7, 5, 12, 0.92), inset 0 0 0 4px rgba(212, 168, 67, 0.12), inset 0 0 60px rgba(0, 0, 0, 0.5)',
-      }}>
-        <Corners color="var(--imp-gold)" size={20} inset={-2} thickness={1.4} />
-      </div>
 
       {/* top-center laurel crest */}
       <div aria-hidden="true" style={{
@@ -517,6 +483,30 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
               <TraitChip key={trait} trait={trait} />
             ))}
           </div>
+
+          {/* tier / xp progress bar */}
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 5, maxWidth: 440, marginTop: 2 }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+              fontFamily: 'var(--imp-font-mono)', fontSize: 9, letterSpacing: 1.4,
+              color: 'var(--imp-text-lo)', textTransform: 'uppercase',
+            }}>
+              <span>{nextTierThreshold === null ? `Tier ${ROMAN[tier - 1]} · Max` : `Tier ${ROMAN[tier - 1]} → ${ROMAN[tier]}`}</span>
+              <span>{nextTierThreshold === null ? 'MAX' : `${advisor.xp} / ${nextTierThreshold}`}</span>
+            </div>
+            <div style={{
+              position: 'relative', height: 7, borderRadius: 999, overflow: 'hidden',
+              background: 'rgba(0, 0, 0, 0.55)', border: '1px solid var(--imp-gold-faint)',
+              boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.6)',
+            }}>
+              <div style={{
+                width: `${xpPct}%`, height: '100%',
+                background: 'linear-gradient(90deg, var(--imp-gold-mid), var(--imp-gold-hi))',
+                boxShadow: '0 0 10px rgba(212, 168, 67, 0.5)',
+                transition: 'width var(--duration-normal) var(--ease-default)',
+              }} />
+            </div>
+          </div>
         </div>
 
         {/* RIGHT — portrait */}
@@ -562,27 +552,6 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
         </div>
       </div>
 
-      {/* bottom tier rail */}
-      <div style={{
-        position: 'relative', zIndex: 3,
-        borderTop: '1px solid var(--imp-gold-faint)',
-        background: 'linear-gradient(180deg, rgba(7, 5, 12, 0.42), rgba(7, 5, 12, 0.74))',
-        padding: 'clamp(8px, 0.9vw, 12px) clamp(28px, 3vw, 46px)',
-        display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.1vw, 16px)',
-      }}>
-        {tierCircle(1)}
-        {connector(tier > 1, 1)}
-        {tierCircle(2)}
-        {connector(tier > 2, 1)}
-        {tierCircle(3)}
-        {connector(false, 1.4)}
-        <span style={{
-          flex: '0 0 auto', color: 'var(--imp-text-lo)',
-          fontFamily: 'var(--imp-font-mono)', fontSize: 12, letterSpacing: 1,
-        }}>
-          {nextTierThreshold === null ? 'MAX' : `${advisor.xp} / ${nextTierThreshold}`}
-        </span>
-      </div>
     </div>
   );
 }
