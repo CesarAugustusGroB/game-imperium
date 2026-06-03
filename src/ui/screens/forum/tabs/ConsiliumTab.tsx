@@ -20,7 +20,6 @@ import { gold } from '../../../../game/core/resources';
 import { BentoCard } from '../../../components/BentoCard';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
 import { Laurel } from '../../../components/motifs/Laurel';
-import { Corners } from '../../../components/motifs/Corners';
 import { ResourceAmount } from '../../../components/ResourceIcon';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
@@ -535,7 +534,6 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
                   {advisor.name.charAt(0).toUpperCase()}
                 </div>
               )}
-              <Corners color="rgba(240, 208, 128, 0.5)" size={16} inset={4} thickness={1.2} />
             </div>
             {/* imperial medallion */}
             <div aria-hidden="true" style={{
