@@ -1479,8 +1479,6 @@ function IdentityStrip({ province }: { province: Province }) {
   const modRows: ModRow[] = [];
   if (mods.growthModifier !== 0) modRows.push({ icon: '👥', label: 'Pop Growth',    value: `${mods.growthModifier > 0 ? '+' : ''}${mods.growthModifier}/s`, positive: mods.growthModifier > 0 });
   if (mods.pwgModifier    !== 0) modRows.push({ icon: '💰', label: 'Wealth Growth',  value: `${mods.pwgModifier > 0 ? '+' : ''}${mods.pwgModifier}/s`,    positive: mods.pwgModifier > 0 });
-  if (mods.faithBonus     !== 0) modRows.push({ icon: '✦',  label: 'Faith',         value: `+${mods.faithBonus}/s`,                                         positive: true });
-  if (mods.momentumBonus  !== 0) modRows.push({ icon: '⚡', label: 'Momentum',      value: `+${mods.momentumBonus}/s`,                                      positive: true });
   if (mods.garrisonBonus  !== 0) modRows.push({ icon: '🛡', label: 'Garrison',      value: `+${mods.garrisonBonus}`,                                        positive: true });
 
   const terrainTooltip = (

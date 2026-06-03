@@ -44,10 +44,6 @@ export interface TerrainModifiers {
   growthModifier: number;
   /** Delta to Positive Wealth Generation (PWG) per season (e.g. +1 hills/coast). */
   pwgModifier: number;
-  /** Bonus faith income per season (+1 forest/marsh). */
-  faithBonus: number;
-  /** Bonus momentum income per season (+1 plains). */
-  momentumBonus: number;
   /** Passive garrison strength bonus (+2 mountains). */
   garrisonBonus: number;
 }
@@ -73,8 +69,6 @@ export interface TerrainData {
 const ZERO_MODIFIERS: TerrainModifiers = {
   growthModifier: 0,
   pwgModifier: 0,
-  faithBonus: 0,
-  momentumBonus: 0,
   garrisonBonus: 0,
 };
 
@@ -105,14 +99,14 @@ export const TERRAIN_DATA: Record<TerrainType, TerrainData> = {
   forest: {
     id: 'forest',
     name: 'Forest',
-    baseModifiers: { ...ZERO_MODIFIERS, faithBonus: 1 },
+    baseModifiers: { ...ZERO_MODIFIERS },
     exclusiveBuildings: ['sacred_grove', 'lumber_camp'],
     flavour: 'Ancient groves inspire reverence and yield timber in equal measure.',
   },
   plains: {
     id: 'plains',
     name: 'Plains',
-    baseModifiers: { ...ZERO_MODIFIERS, momentumBonus: 1 },
+    baseModifiers: { ...ZERO_MODIFIERS },
     exclusiveBuildings: ['training_ground', 'stables'],
     flavour: 'Open ground breeds swift cavalry and disciplined legions.',
   },
@@ -126,7 +120,7 @@ export const TERRAIN_DATA: Record<TerrainType, TerrainData> = {
   marsh: {
     id: 'marsh',
     name: 'Marsh',
-    baseModifiers: { ...ZERO_MODIFIERS, growthModifier: -1, faithBonus: 1 },
+    baseModifiers: { ...ZERO_MODIFIERS, growthModifier: -1 },
     exclusiveBuildings: ['oracle_shrine', 'reed_harvest'],
     flavour: 'Mist and murk birth strange faiths and strange harvests alike.',
   },
