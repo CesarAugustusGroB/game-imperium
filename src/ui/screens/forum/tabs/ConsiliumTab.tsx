@@ -19,12 +19,13 @@ import { FACTION_COLORS } from '../../../../game/core/commander';
 import { gold } from '../../../../game/core/resources';
 import { BentoCard } from '../../../components/BentoCard';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
+import { Laurel } from '../../../components/motifs/Laurel';
+import { Corners } from '../../../components/motifs/Corners';
 import { ResourceAmount } from '../../../components/ResourceIcon';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 import {
   BonusCard,
-  CeremonialTrack,
   getTraitVisual,
   SPQREmblem,
   TraitChip,
@@ -330,212 +331,257 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
   const role = source === 'seat'
     ? SLOT_LABELS[slotIndex ?? 0] ?? 'Seated Advisor'
     : 'Political Candidate';
-  const portraitColumnWidth = 'clamp(300px, 28vw, 420px)';
-  const portraitRightInset = 'clamp(20px, 3vw, 42px)';
-  const portraitTextGap = 'clamp(34px, 4vw, 58px)';
+  const isSeated = source === 'seat';
+  const cost = isSeated ? advisor.cost : getDiscountedAdvisorCost(advisor);
+  const tier = advisor.currentTier;
+
+  const tierCircle = (n: 1 | 2 | 3) => {
+    const active = n === tier;
+    const done = n < tier;
+    return (
+      <div style={{
+        width: 24, height: 24, borderRadius: '50%', flex: '0 0 auto',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: `1px solid ${active || done ? 'var(--imp-gold)' : 'var(--imp-gold-faint)'}`,
+        background: active
+          ? 'radial-gradient(circle, rgba(212, 168, 67, 0.3), rgba(7, 5, 12, 0.95))'
+          : 'rgba(7, 5, 12, 0.7)',
+        boxShadow: active ? '0 0 12px rgba(212, 168, 67, 0.4)' : undefined,
+        color: active || done ? 'var(--imp-gold-hi)' : 'var(--imp-text-lo)',
+        fontFamily: 'var(--imp-font-display)', fontSize: 11, fontWeight: 700,
+      }}>
+        {ROMAN[n - 1]}
+      </div>
+    );
+  };
+  const connector = (done: boolean, grow: number) => (
+    <div style={{
+      flex: grow, minWidth: 14, height: 1, alignSelf: 'center',
+      background: done
+        ? 'linear-gradient(90deg, var(--imp-gold), var(--imp-gold-dim))'
+        : 'repeating-linear-gradient(90deg, var(--imp-gold-faint) 0 5px, transparent 5px 10px)',
+    }} />
+  );
 
   return (
     <div style={{
+      position: 'relative',
       flex: 1,
       minHeight: 0,
-      display: 'grid',
-      gridTemplateRows: 'minmax(300px, 0.82fr) auto',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
       background: `
-        radial-gradient(circle at 50% 8%, ${color}24 0%, transparent 42%),
-        linear-gradient(140deg, rgba(240, 208, 128, 0.08) 0%, transparent 22%),
-        linear-gradient(180deg, rgba(34, 30, 48, 0.96) 0%, rgba(13, 11, 20, 0.98) 100%)
+        radial-gradient(125% 80% at 50% -12%, rgba(122, 36, 50, 0.20) 0%, transparent 52%),
+        radial-gradient(85% 120% at 110% 50%, ${color}24 0%, transparent 56%),
+        linear-gradient(135deg, var(--imp-ink-hi) 0%, var(--imp-ink) 46%, #07050c 100%)
       `,
     }}>
-      <div style={{
-        position: 'relative',
-        minHeight: 0,
-        overflow: 'hidden',
-        display: 'flex',
-        alignItems: 'stretch',
-        justifyContent: 'center',
+      {/* leather depth + fine grain */}
+      <div aria-hidden="true" style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        boxShadow: 'inset 0 0 150px rgba(0, 0, 0, 0.74), inset 0 0 0 1px rgba(122, 36, 50, 0.34)',
+        backgroundImage: 'radial-gradient(rgba(212, 168, 67, 0.05) 1px, transparent 1px)',
+        backgroundSize: '4px 4px',
+        opacity: 0.55,
+      }} />
+
+      {/* ornate gold frame + corners */}
+      <div aria-hidden="true" style={{
+        position: 'absolute', inset: 'clamp(9px, 1vw, 15px)', pointerEvents: 'none',
+        border: '1px solid var(--imp-gold-dim)',
+        boxShadow: 'inset 0 0 0 3px rgba(7, 5, 12, 0.92), inset 0 0 0 4px rgba(212, 168, 67, 0.12), inset 0 0 60px rgba(0, 0, 0, 0.5)',
       }}>
-        <SPQREmblem
-          size={180}
-          color={CONSILIUM_ACCENT}
-          opacity={0.1}
-          style={{ position: 'absolute', top: 28, right: 28 }}
-        />
-        {advisor.portrait ? (
-          <img
-            src={advisor.portrait}
-            alt={advisor.name}
-            style={{
-              position: 'absolute',
-              top: 24,
-              right: portraitRightInset,
-              width: portraitColumnWidth,
-              height: 'calc(100% - 48px)',
-              objectFit: 'cover',
-              objectPosition: 'center 16%',
-              filter: 'saturate(0.94) contrast(1.08)',
-              border: '1px solid var(--imp-gold-faint)',
-              borderRadius: 2,
-              background: 'rgba(5, 4, 8, 0.94)',
-              boxShadow: 'inset 0 0 0 1px rgba(212, 168, 67, 0.08), 0 24px 70px rgba(0, 0, 0, 0.62)',
-              zIndex: 1,
-            }}
-          />
-        ) : (
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color,
-            fontFamily: 'var(--imp-font-display)',
-            fontSize: 'clamp(120px, 18vw, 240px)',
-            fontWeight: 600,
-            opacity: 0.68,
-            textShadow: '0 8px 28px rgba(0, 0, 0, 0.7)',
-          }}>
-            {advisor.name.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <Corners color="var(--imp-gold)" size={20} inset={-2} thickness={1.4} />
+      </div>
+
+      {/* top-center laurel crest */}
+      <div aria-hidden="true" style={{
+        position: 'absolute', top: 'clamp(3px, 0.6vw, 9px)', left: '50%', transform: 'translateX(-50%)',
+        display: 'flex', alignItems: 'center', opacity: 0.7, zIndex: 4,
+      }}>
+        <Laurel size={28} color="var(--imp-gold-mid)" />
+        <Laurel size={28} color="var(--imp-gold-mid)" flip />
+      </div>
+
+      {/* dismiss (seated only) */}
+      {isSeated && slotIndex !== null && (
+        <button
+          type="button"
+          class="consilium-danger-btn"
+          aria-label={`Dismiss ${advisor.name}`}
+          onClick={() => onDismiss(slotIndex)}
+          style={{
+            position: 'absolute', top: 'clamp(15px, 1.5vw, 23px)', right: 'clamp(15px, 1.5vw, 23px)', zIndex: 5,
+            width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: '1px solid var(--imp-gold-dim)', borderRadius: '50%',
+            background: 'rgba(7, 5, 12, 0.82)', color: 'var(--imp-text-mid)',
+            fontFamily: 'var(--imp-font-body)', fontSize: 12, lineHeight: 1, cursor: 'pointer',
+          }}
+        >
+          ✕
+        </button>
+      )}
+
+      {/* main two-column */}
+      <div style={{
+        position: 'relative', flex: 1, minHeight: 0,
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr) clamp(190px, 32%, 330px)',
+        gap: 'clamp(18px, 2.4vw, 42px)',
+        padding: 'clamp(10px, 1.4vw, 22px) clamp(28px, 3vw, 46px) clamp(6px, 0.8vw, 12px)',
+        zIndex: 3,
+      }}>
+        {/* LEFT — text */}
         <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: `
-            linear-gradient(90deg, rgba(5, 4, 8, 0.99) 0%, rgba(5, 4, 8, 0.99) 54%, rgba(5, 4, 8, 0.7) 70%, transparent 82%, rgba(13, 11, 20, 0.28) 100%),
-            linear-gradient(180deg, rgba(5, 4, 8, 0.14) 0%, transparent 34%, rgba(5, 4, 8, 0.96) 100%)
-          `,
-          zIndex: 2,
-        }} />
-        <div style={{
-          position: 'absolute',
-          left: 'clamp(36px, 4.8vw, 68px)',
-          right: `calc(${portraitColumnWidth} + ${portraitRightInset} + ${portraitTextGap})`,
-          top: '50%',
-          transform: 'translateY(-42%)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          gap: 10,
-          zIndex: 3,
+          position: 'relative', minWidth: 0,
+          display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 'clamp(6px, 0.8vw, 11px)',
         }}>
-          <div style={{ minWidth: 0 }}>
+          {/* faint imperial watermark */}
+          <div aria-hidden="true" style={{
+            position: 'absolute', top: '50%', left: '12%', transform: 'translateY(-50%)',
+            pointerEvents: 'none', zIndex: 0,
+          }}>
+            <SPQREmblem size={340} color="var(--imp-gold)" opacity={0.05} />
+          </div>
+
+          <div style={{ position: 'relative', zIndex: 1, minWidth: 0 }}>
             <div style={{
-              color: 'var(--imp-text-lo)',
-              fontFamily: 'var(--imp-font-body)',
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: 2.4,
+              color: 'var(--imp-gold-mid)', fontFamily: 'var(--imp-font-body)',
+              fontSize: 'clamp(9px, 0.78vw, 11px)', fontWeight: 700, letterSpacing: 3.4,
               textTransform: 'uppercase',
             }}>
-              Tier {ROMAN[advisor.currentTier - 1] ?? 'I'} · {role}
+              Tier {ROMAN[tier - 1] ?? 'I'} · {role}
             </div>
-            <div style={{
-              marginTop: 4,
-              color: 'var(--imp-text-hi)',
-              fontFamily: 'var(--imp-font-display)',
-              fontSize: 'clamp(38px, 4.2vw, 62px)',
-              fontWeight: 600,
-              letterSpacing: 1.6,
-              lineHeight: 0.92,
-              textTransform: 'uppercase',
-              maxWidth: 690,
-              overflowWrap: 'break-word',
-              textShadow: '0 4px 18px rgba(0, 0, 0, 0.7)',
-            }}>
-              {advisor.name}
+
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'clamp(14px, 1.6vw, 26px)', flexWrap: 'wrap', marginTop: 6 }}>
+              <h2 style={{
+                margin: 0, color: 'var(--imp-text-hi)', fontFamily: 'var(--imp-font-display)',
+                fontSize: 'clamp(28px, 2.9vw, 46px)', fontWeight: 600, letterSpacing: 1,
+                lineHeight: 0.92, textTransform: 'uppercase', overflowWrap: 'break-word',
+                textShadow: '0 6px 26px rgba(0, 0, 0, 0.72)',
+              }}>
+                {advisor.name}
+              </h2>
+              <div style={{
+                flex: '0 0 auto', marginBottom: 'clamp(5px, 0.7vw, 11px)',
+                display: 'inline-flex', alignItems: 'center',
+                padding: '7px 13px', border: '1px solid var(--imp-gold-dim)', borderRadius: 3,
+                background: 'linear-gradient(180deg, rgba(26, 23, 38, 0.9), rgba(7, 5, 12, 0.92))',
+                boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.55)',
+                color: 'var(--imp-gold-hi)', fontFamily: 'var(--imp-font-mono)', fontSize: 17, fontWeight: 700,
+              }}>
+                <ResourceAmount type="gold" amount={cost} iconSize={18} />
+              </div>
             </div>
-            <div style={{
-              marginTop: 7,
-              color: 'var(--imp-text-mid)',
-              fontFamily: 'var(--imp-font-serif)',
-              fontSize: 16,
-              fontStyle: 'italic',
-              lineHeight: 1.3,
-              maxWidth: 650,
+
+            <p style={{
+              margin: '8px 0 0', maxWidth: 520,
+              color: 'var(--imp-text-mid)', fontFamily: 'var(--imp-font-serif)',
+              fontSize: 'clamp(12px, 0.92vw, 15px)', fontStyle: 'italic', lineHeight: 1.3,
             }}>
               {heroLine(currentTierData.passive, source)}
-            </div>
+            </p>
           </div>
+
+          {/* status + traits on one row to stay compact in the short card */}
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 'clamp(8px, 1vw, 14px)' }}>
+            {isSeated ? (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 9,
+                padding: '7px 16px', borderRadius: 3,
+                border: '1px solid var(--imp-gold-dim)',
+                background: 'linear-gradient(180deg, rgba(122, 36, 50, 0.52), rgba(58, 15, 23, 0.64))',
+                boxShadow: 'inset 0 0 18px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.4)',
+              }}>
+                <Laurel size={18} color="var(--imp-gold-hi)" />
+                <span style={{
+                  color: 'var(--imp-gold-hi)', fontFamily: 'var(--imp-font-display)',
+                  fontSize: 15, fontWeight: 700, letterSpacing: 3.5, textTransform: 'uppercase',
+                }}>Seated</span>
+                <Laurel size={18} color="var(--imp-gold-hi)" flip />
+              </div>
+            ) : (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center',
+                padding: '7px 16px', borderRadius: 3,
+                border: '1px solid var(--imp-gold-dim)', background: 'rgba(13, 11, 20, 0.7)',
+                color: 'var(--imp-gold)', fontFamily: 'var(--imp-font-display)',
+                fontSize: 14, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase',
+              }}>
+                Candidate
+              </div>
+            )}
+            <div aria-hidden="true" style={{ width: 1, alignSelf: 'stretch', minHeight: 24, background: 'var(--imp-gold-faint)' }} />
+            {advisor.traits.map((trait) => (
+              <TraitChip key={trait} trait={trait} />
+            ))}
+          </div>
+        </div>
+
+        {/* RIGHT — portrait */}
+        <div style={{ position: 'relative', minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{
-            alignSelf: 'flex-start',
-            color: CONSILIUM_ACCENT,
-            fontFamily: 'var(--imp-font-mono)',
-            fontSize: 16,
-            fontWeight: 900,
-            letterSpacing: 1.2,
-            padding: '8px 12px',
-            border: '1px solid var(--imp-gold-dim)',
-            background: 'rgba(13, 11, 20, 0.78)',
+            position: 'relative', height: 'min(100%, 440px)', maxWidth: '100%', aspectRatio: '3 / 4',
+            padding: 6, borderRadius: 3,
+            background: 'linear-gradient(155deg, var(--imp-gold-mid) 0%, #6b4e1c 28%, var(--imp-gold) 50%, #4a3614 72%, var(--imp-gold-mid) 100%)',
+            boxShadow: '0 26px 72px rgba(0, 0, 0, 0.66), 0 0 0 1px rgba(0, 0, 0, 0.72)',
           }}>
-            {source === 'market'
-              ? <ResourceAmount type="gold" amount={getDiscountedAdvisorCost(advisor)} iconSize={17} />
-              : 'SEATED'}
+            <div style={{
+              position: 'relative', width: '100%', height: '100%', overflow: 'hidden', borderRadius: 1,
+              background: 'rgba(5, 4, 8, 0.94)',
+              boxShadow: 'inset 0 0 0 2px rgba(7, 5, 12, 0.9), inset 0 0 0 3px rgba(240, 208, 128, 0.22)',
+            }}>
+              {advisor.portrait ? (
+                <img src={advisor.portrait} alt={advisor.name} style={{
+                  width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 14%',
+                  filter: 'saturate(0.96) contrast(1.06)', display: 'block',
+                }} />
+              ) : (
+                <div style={{
+                  width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color, fontFamily: 'var(--imp-font-display)', fontSize: 'clamp(72px, 11vw, 150px)', fontWeight: 600, opacity: 0.68,
+                }}>
+                  {advisor.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <Corners color="rgba(240, 208, 128, 0.5)" size={16} inset={4} thickness={1.2} />
+            </div>
+            {/* imperial medallion */}
+            <div aria-hidden="true" style={{
+              position: 'absolute', bottom: -21, left: '50%', transform: 'translateX(-50%)',
+              width: 46, height: 46, borderRadius: '50%',
+              background: 'radial-gradient(circle at 50% 34%, #2a2030 0%, #0b0911 72%)',
+              border: '2px solid var(--imp-gold)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 6px 16px rgba(0, 0, 0, 0.62), inset 0 0 0 1px rgba(0, 0, 0, 0.6)',
+            }}>
+              <LaurelWreath size={32} color="var(--imp-gold-hi)" opacity={0.95} />
+            </div>
           </div>
         </div>
       </div>
 
+      {/* bottom tier rail */}
       <div style={{
-        padding: '14px 22px 16px',
+        position: 'relative', zIndex: 3,
         borderTop: '1px solid var(--imp-gold-faint)',
-        background: 'rgba(13, 11, 20, 0.72)',
+        background: 'linear-gradient(180deg, rgba(7, 5, 12, 0.42), rgba(7, 5, 12, 0.74))',
+        padding: 'clamp(8px, 0.9vw, 12px) clamp(28px, 3vw, 46px)',
+        display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.1vw, 16px)',
       }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 10 }}>
-          {advisor.traits.map((trait) => (
-            <TraitChip key={trait} trait={trait} />
-          ))}
-        </div>
-
-        <CeremonialTrack
-          currentTier={advisor.currentTier}
-          xp={advisor.xp}
-          nextTierThreshold={nextTierThreshold}
-          accent={CONSILIUM_ACCENT}
-          factionColor={color}
-          style={{ marginBottom: 12 }}
-        />
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) auto',
-          gap: 12,
-          alignItems: 'end',
+        {tierCircle(1)}
+        {connector(tier > 1, 1)}
+        {tierCircle(2)}
+        {connector(tier > 2, 1)}
+        {tierCircle(3)}
+        {connector(false, 1.4)}
+        <span style={{
+          flex: '0 0 auto', color: 'var(--imp-text-lo)',
+          fontFamily: 'var(--imp-font-mono)', fontSize: 12, letterSpacing: 1,
         }}>
-          <div style={{
-            padding: '10px 12px',
-            border: '1px solid var(--imp-gold-faint)',
-            borderRadius: 2,
-            background: 'rgba(20, 18, 32, 0.62)',
-            color: 'var(--imp-text)',
-            fontFamily: 'var(--imp-font-serif)',
-            fontSize: 13,
-            fontStyle: 'italic',
-            lineHeight: 1.35,
-          }}>
-            {describePassive(currentTierData.passive)}
-          </div>
-
-          {source === 'seat' && slotIndex !== null && (
-            <button
-              type="button"
-              class="consilium-danger-btn"
-              onClick={() => onDismiss(slotIndex)}
-              style={{
-                padding: '8px 12px',
-                border: '1px solid var(--imp-gold-dim)',
-                borderRadius: 2,
-                background: 'transparent',
-                color: 'var(--imp-danger)',
-                cursor: 'pointer',
-                fontFamily: 'var(--imp-font-body)',
-                fontSize: 10,
-                fontWeight: 800,
-                letterSpacing: 1.4,
-                textTransform: 'uppercase',
-              }}
-            >
-              Dismiss
-            </button>
-          )}
-        </div>
+          {nextTierThreshold === null ? 'MAX' : `${advisor.xp} / ${nextTierThreshold}`}
+        </span>
       </div>
     </div>
   );
