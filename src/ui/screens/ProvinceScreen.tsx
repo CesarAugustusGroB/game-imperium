@@ -1688,9 +1688,7 @@ function IdentityStrip({ province }: { province: Province }) {
             const rows: string[] = [];
             if (f.goldPerSeason) rows.push(`${f.goldPerSeason > 0 ? '+' : ''}${f.goldPerSeason} Gold/season`);
             if (f.foodPerSeason) rows.push(`+${f.foodPerSeason} Food/season`);
-            if (f.faithPerSeason) rows.push(`+${f.faithPerSeason} Faith/season`);
-            if (f.influencePerSeason) rows.push(`+${f.influencePerSeason} Influence/season`);
-            if (f.momentumPerSeason) rows.push(`+${f.momentumPerSeason} Momentum/season`);
+            if (f.iunioresPerSeason) rows.push(`+${f.iunioresPerSeason} Iuniores/season`);
             if (f.unrestPerSeason) rows.push(`${f.unrestPerSeason} Unrest/season`);
             if (f.beautinessBonus) rows.push(`+${f.beautinessBonus}% Beautiness`);
             if (f.buildCostDiscount) rows.push(`-${f.buildCostDiscount}% Build Cost`);

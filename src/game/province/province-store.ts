@@ -93,9 +93,7 @@ export function conquerProvince(
     const bonuses: string[] = [];
     if (uniqueFeature.goldPerSeason) bonuses.push(`${uniqueFeature.goldPerSeason > 0 ? '+' : ''}${uniqueFeature.goldPerSeason}g`);
     if (uniqueFeature.foodPerSeason) bonuses.push(`+${uniqueFeature.foodPerSeason} food`);
-    if (uniqueFeature.faithPerSeason) bonuses.push(`+${uniqueFeature.faithPerSeason} faith`);
-    if (uniqueFeature.influencePerSeason) bonuses.push(`+${uniqueFeature.influencePerSeason} influence`);
-    if (uniqueFeature.momentumPerSeason) bonuses.push(`+${uniqueFeature.momentumPerSeason} momentum`);
+    if (uniqueFeature.iunioresPerSeason) bonuses.push(`+${uniqueFeature.iunioresPerSeason} iuniores`);
     if (uniqueFeature.unrestPerSeason) bonuses.push(`${uniqueFeature.unrestPerSeason} unrest`);
     if (uniqueFeature.beautinessBonus) bonuses.push(`+${uniqueFeature.beautinessBonus}% beauty`);
     if (uniqueFeature.buildCostDiscount) bonuses.push(`-${uniqueFeature.buildCostDiscount}% build cost`);

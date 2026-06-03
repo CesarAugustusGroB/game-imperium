@@ -369,9 +369,7 @@ export function getProvinceIncome(
   const feat = province.uniqueFeature;
   if (feat) {
     if (feat.goldPerSeason) total.gold = (total.gold ?? 0) + feat.goldPerSeason;
-    if (feat.faithPerSeason) total.faith = (total.faith ?? 0) + feat.faithPerSeason;
-    if (feat.influencePerSeason) total.influence = (total.influence ?? 0) + feat.influencePerSeason;
-    if (feat.momentumPerSeason) total.momentum = (total.momentum ?? 0) + feat.momentumPerSeason;
+    if (feat.iunioresPerSeason) total.iuniores = (total.iuniores ?? 0) + feat.iunioresPerSeason;
   }
 
   // Apply governor income-bonus traits (percentage boost per resource)
