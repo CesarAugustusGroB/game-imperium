@@ -640,42 +640,47 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
     }
   }
 
-  const incomeBonus = currentEffect?.incomeBonus ?? {};
-  const unrestChange = currentEffect?.unrestChange ?? 0;
-
-  // Gold formula: only for built buildings that produce gold (flat, no multipliers)
-  const rawGold = (incomeBonus as Record<string, number>).gold ?? 0;
-  const showGoldFormula = currentLevel > 0 && rawGold > 0;
+  // What the building yields at its relevant tier — the current tier if built,
+  // otherwise the next (buildable) tier — so the tooltip always says what it gives.
+  const displayEffect = currentEffect ?? nextEffect;
+  const displayLevel = currentLevel > 0 ? currentLevel : nextLevel;
+  const dispIncome = displayEffect?.incomeBonus ?? {};
+  const dispUnrest = displayEffect?.unrestChange ?? 0;
+  const dispFood = displayEffect?.foodBonus ?? 0;
 
   const investmentTooltip = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
       <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)' }}>
         {data.name}{currentLevel > 0 ? ` Lv.${currentLevel}` : ''}
       </div>
-      {currentLevel === 0 ? (
-        <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-          {data.flavour}
-        </div>
-      ) : (
-        <div>
+      <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
+        {data.flavour}
+      </div>
+      {displayEffect && (
+        <div style={{ marginTop: '2px' }}>
+          {currentLevel === 0 && (
+            <div style={{ color: 'var(--color-gold-secondary)', fontSize: 'var(--font-size-xs)', fontWeight: 600, letterSpacing: '0.5px' }}>
+              If built (Tier {ROMAN[displayLevel]}):
+            </div>
+          )}
           <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)' }}>
-            {currentEffect?.description ?? ''}
+            {displayEffect.description}
           </div>
-          {(Object.entries(incomeBonus) as [ResourceType, number][]).map(([res, amt]) => (
+          {(Object.entries(dispIncome) as [ResourceType, number][]).map(([res, amt]) => (
             amt > 0 ? (
               <div key={res} style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
                 <ResourceAmount type={res} amount={amt} sign="+" iconSize={14} /> per season
               </div>
             ) : null
           ))}
-          {unrestChange < 0 && (
+          {dispFood > 0 && (
             <div style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
-              {unrestChange} unrest per season
+              +{dispFood} food per season
             </div>
           )}
-          {showGoldFormula && (
-            <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)', marginTop: '2px', fontFamily: 'var(--font-mono, monospace)' }}>
-              {data.name} {ROMAN[currentLevel]}: +{rawGold}g/season
+          {dispUnrest < 0 && (
+            <div style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
+              {dispUnrest} unrest per season
             </div>
           )}
         </div>
