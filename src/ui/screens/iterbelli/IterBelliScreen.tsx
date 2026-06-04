@@ -9,7 +9,7 @@ import { OperationCard } from './OperationCard';
 import { CampaignLog } from './CampaignLog';
 import { BattleModal } from './BattleModal';
 import { EndgameCard } from './EndgameCard';
-import { ResourceIcon } from '../../components/ResourceIcon';
+import { ResourceAmount } from '../../components/ResourceIcon';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('iterbelli-styles')) {
@@ -207,7 +207,22 @@ export function IterBelliScreen() {
         <div class="sub">Lleva a tus legiones de la frontera a Sagunto antes del invierno.</div>
         {mission && (
           <div class="ib-mission">
-            <ResourceIcon type="gold" size={16} /> Misión: {mission.title} <span class="ib-mission-cond">— {mission.conditionDesc}</span>
+            Misión: {mission.title}{' '}
+            <span class="ib-mission-cond">
+              — {mission.conditionResource ? (
+                <>
+                  {mission.conditionResource.lead}{' '}
+                  <ResourceAmount
+                    type={mission.conditionResource.type}
+                    amount={mission.conditionResource.amount}
+                    iconSize={11}
+                  />{' '}
+                  {mission.conditionResource.tail}
+                </>
+              ) : mission.conditionDesc}
+              {' · Recompensa '}
+              <ResourceAmount type="gold" amount={mission.bonusGold} sign="+" iconSize={11} />
+            </span>
           </div>
         )}
         {activeQuests.map((q) => {

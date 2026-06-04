@@ -35,7 +35,11 @@ import { BuildingIcon } from '../components/BuildingIcon';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { BentoCard } from '../components/BentoCard';
 import { Masthead } from './forum/Masthead';
-import { CostInline, ResourceAmount, ResourceIcon } from '../components/ResourceIcon';
+import { CostInline, InlineImageIcon, ResourceAmount } from '../components/ResourceIcon';
+import foodIcon from '../../assets/ui/resources/food-icon.png';
+import populationIcon from '../../assets/ui/resources/population-icon.png';
+import unrestIcon from '../../assets/ui/resources/unrest-icon.png';
+import wealthIcon from '../../assets/ui/resources/wealth-icon.png';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('province-styles')) {
@@ -585,6 +589,7 @@ function UnrestBar({ unrest, modifier, width = 60 }: { unrest: number; modifier:
   const barColor = pct > 70 ? 'var(--color-danger)' : pct > 40 ? 'var(--color-gold-secondary)' : 'var(--color-success)';
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <InlineImageIcon src={unrestIcon} size={14} style={{ verticalAlign: 'middle' }} />
       <div style={{ width: `${width}px`, height: '5px', background: 'rgba(40, 35, 60, 0.8)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: barColor, borderRadius: 'var(--radius-sm)', transition: 'width var(--duration-slow) var(--ease-default)' }} />
       </div>
@@ -674,8 +679,8 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
             ) : null
           ))}
           {dispFood > 0 && (
-            <div style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
-              +{dispFood} food per season
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
+              +{dispFood} <InlineImageIcon src={foodIcon} size={14} /> per season
             </div>
           )}
           {dispUnrest < 0 && (
@@ -953,14 +958,14 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
           {/* Row 2: wealth + wealth trend + pop */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-primary)', fontWeight: 700 }}>
-              🪙 {Math.round(province.wealth)}
+              <InlineImageIcon src={wealthIcon} size={15} style={{ verticalAlign: 'middle' }} /> {Math.round(province.wealth)}
             </span>
             <span style={{ fontSize: '9px', color: wealthTrendColor }}>
               {netWealthChange >= 0 ? '+' : ''}{netWealthChange.toFixed(1)}/s
             </span>
             <span style={{ fontSize: '9px', color: 'var(--color-border-default)' }}>·</span>
-            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-              👥 {province.population} <span style={{ color: 'var(--color-text-muted)', fontSize: '9px' }}>{settlementLabel}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+              <InlineImageIcon src={populationIcon} size={15} style={{ verticalAlign: 'middle' }} /> {province.population} <span style={{ color: 'var(--color-text-muted)', fontSize: '9px' }}>{settlementLabel}</span>
             </span>
             <span style={{ marginLeft: 'auto', fontSize: '9px', color: 'var(--color-text-muted)' }}>
               {invCount}/{slotMax} □
@@ -1131,56 +1136,6 @@ function getSettlementColor(pop: number): string {
 
 // ── Stat panel SVG icons ──
 
-function CoinSVG() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="6.5" fill="rgba(180,130,10,0.25)" stroke="#d4a843" strokeWidth="1"/>
-      <circle cx="8" cy="8" r="4" fill="rgba(180,130,10,0.15)" stroke="rgba(240,208,128,0.4)" strokeWidth="0.5"/>
-      {/* Two pillars + top/bottom beams (Roman column motif) */}
-      <rect x="5.5" y="4.2" width="5" height="0.9" rx="0.3" fill="#f0d080"/>
-      <rect x="5.5" y="10.9" width="5" height="0.9" rx="0.3" fill="#f0d080"/>
-      <rect x="6.3" y="5.1" width="0.9" height="5.8" fill="#f0d080"/>
-      <rect x="8.8" y="5.1" width="0.9" height="5.8" fill="#f0d080"/>
-    </svg>
-  );
-}
-
-function PeopleSVG() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-      {/* Back person (slightly right + darker) */}
-      <circle cx="9.5" cy="5.2" r="2.1" fill="#7070b8"/>
-      <path d="M5.8 14.5 Q5.8 10 9.5 10 Q13.2 10 13.2 14.5" fill="#7070b8"/>
-      {/* Front person (slightly left + lighter) */}
-      <circle cx="6.5" cy="5.8" r="2.1" fill="#a0a0d8"/>
-      <path d="M2.8 14.5 Q2.8 10 6.5 10 Q10.2 10 10.2 14.5" fill="#a0a0d8"/>
-    </svg>
-  );
-}
-
-function ScalesSVG() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-      {/* Pole */}
-      <rect x="7.6" y="3" width="0.9" height="9.5" rx="0.3" fill="#a0a0d8"/>
-      {/* Base */}
-      <rect x="5" y="12" width="6" height="0.9" rx="0.4" fill="#a0a0d8"/>
-      {/* Beam */}
-      <rect x="2.5" y="5.8" width="11" height="0.9" rx="0.4" fill="#a0a0d8"/>
-      {/* Left strings */}
-      <line x1="3.2" y1="6.7" x2="2.4" y2="9.5" stroke="#a0a0d8" strokeWidth="0.7"/>
-      <line x1="5.5" y1="6.7" x2="6.3" y2="9.5" stroke="#a0a0d8" strokeWidth="0.7"/>
-      {/* Left pan */}
-      <path d="M2 9.5 Q4.3 11 6.7 9.5" stroke="#a0a0d8" strokeWidth="0.9" fill="none"/>
-      {/* Right strings */}
-      <line x1="10.5" y1="6.7" x2="9.7" y2="9.5" stroke="#a0a0d8" strokeWidth="0.7"/>
-      <line x1="12.8" y1="6.7" x2="13.6" y2="9.5" stroke="#a0a0d8" strokeWidth="0.7"/>
-      {/* Right pan */}
-      <path d="M9.3 9.5 Q11.6 11 14 9.5" stroke="#a0a0d8" strokeWidth="0.9" fill="none"/>
-    </svg>
-  );
-}
-
 // ── Shared stat panel header: [BADGE] ─── TITLE ─── [BADGE] ──
 function StatPanelHeader({ title, icon }: { title: string; icon?: ComponentChildren }) {
   const badgeStyle = {
@@ -1246,11 +1201,13 @@ function PopBar({ province }: { province: Province }) {
       <div style={{ fontWeight: 700, color: settlementColor }}>
         {settlementLabel} — Pop {province.population}
       </div>
-      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-        Food: {foodProd.toFixed(0)} produced{foodEffective < foodProd ? ` (${foodEffective.toFixed(1)} after tax)` : ''} — {foodCons} consumed
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+        <InlineImageIcon src={foodIcon} size={14} />
+        <span>{foodProd.toFixed(0)} produced{foodEffective < foodProd ? ` (${foodEffective.toFixed(1)} after tax)` : ''} — {foodCons} consumed</span>
       </div>
-      <div style={{ fontSize: 'var(--font-size-xs)', color: surplusColor }}>
-        Surplus: {foodSurplus >= 0 ? '+' : ''}{foodSurplus.toFixed(1)} {foodSurplus > 0 ? '(growing)' : foodSurplus < 0 ? '(starving!)' : '(equilibrium)'}
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--font-size-xs)', color: surplusColor }}>
+        <InlineImageIcon src={foodIcon} size={14} />
+        <span>Surplus: {foodSurplus >= 0 ? '+' : ''}{foodSurplus.toFixed(1)} {foodSurplus > 0 ? '(growing)' : foodSurplus < 0 ? '(starving!)' : '(equilibrium)'}</span>
       </div>
       {beautiness > 0 && (
         <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-secondary)' }}>
@@ -1274,13 +1231,16 @@ function PopBar({ province }: { province: Province }) {
   return (
     <Tooltip content={tooltipContent} variant="rich" position="above" align="start">
       <div class="pop-section">
-        <StatPanelHeader title="Settlement Population" icon={<PeopleSVG />} />
+        <StatPanelHeader
+          title="Settlement Population"
+          icon={<InlineImageIcon src={populationIcon} size={18} style={{ verticalAlign: 'middle' }} />}
+        />
 
         {/* Hero + breakdown rows */}
         <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '6px' }}>
           {/* Left: icon + pop number */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', flexShrink: 0 }}>
-            <span style={{ fontSize: '22px', lineHeight: 1 }}>👥</span>
+            <InlineImageIcon src={populationIcon} size={26} style={{ verticalAlign: 'middle' }} />
             <span style={{
               fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700,
               color: settlementColor, lineHeight: 1,
@@ -1336,8 +1296,9 @@ function PopBar({ province }: { province: Province }) {
           borderTop: '1px solid var(--color-border-subtle)', paddingTop: '5px',
           fontSize: '9px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
         }}>
-          <span style={{ color: growthColor }}>
-            Food: {foodSurplus >= 0 ? '+' : ''}{foodSurplus.toFixed(1)} {growthArrow}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: growthColor }}>
+            <InlineImageIcon src={foodIcon} size={14} />
+            {foodSurplus >= 0 ? '+' : ''}{foodSurplus.toFixed(1)} {growthArrow}
           </span>
           <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>
             {seasonsToNext !== null ? `Next in ${seasonsToNext}s` : 'No growth'}
@@ -1385,13 +1346,16 @@ function WealthDisplay({ province }: { province: Province }) {
   return (
     <Tooltip content={tooltipContent} variant="rich" position="above" align="start">
       <div class="wealth-section">
-        <StatPanelHeader title="Wealth Economy" icon={<CoinSVG />} />
+        <StatPanelHeader
+          title="Wealth Economy"
+          icon={<InlineImageIcon src={wealthIcon} size={18} style={{ verticalAlign: 'middle' }} />}
+        />
 
         {/* Hero + breakdown rows */}
         <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '6px' }}>
           {/* Left: coin + number */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', flexShrink: 0 }}>
-            <span style={{ fontSize: '22px', lineHeight: 1 }}>🪙</span>
+            <InlineImageIcon src={wealthIcon} size={26} style={{ verticalAlign: 'middle' }} />
             <span style={{
               fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700,
               color: 'var(--color-gold-primary)', lineHeight: 1,
@@ -1476,9 +1440,9 @@ function IdentityStrip({ province }: { province: Province }) {
 
   // ── Terrain tooltip ──
   const mods = terrain.baseModifiers;
-  interface ModRow { icon: string; label: string; value: string; positive: boolean }
+  interface ModRow { icon: ComponentChildren; label: string; value: string; positive: boolean }
   const modRows: ModRow[] = [];
-  if (mods.growthModifier !== 0) modRows.push({ icon: '👥', label: 'Pop Growth',    value: `${mods.growthModifier > 0 ? '+' : ''}${mods.growthModifier}/s`, positive: mods.growthModifier > 0 });
+  if (mods.growthModifier !== 0) modRows.push({ icon: <InlineImageIcon src={populationIcon} size={12} />, label: 'Pop Growth',    value: `${mods.growthModifier > 0 ? '+' : ''}${mods.growthModifier}/s`, positive: mods.growthModifier > 0 });
   if (mods.pwgModifier    !== 0) modRows.push({ icon: '💰', label: 'Wealth Growth',  value: `${mods.pwgModifier > 0 ? '+' : ''}${mods.pwgModifier}/s`,    positive: mods.pwgModifier > 0 });
   if (mods.garrisonBonus  !== 0) modRows.push({ icon: '🛡', label: 'Garrison',      value: `+${mods.garrisonBonus}`,                                        positive: true });
 
@@ -1511,7 +1475,7 @@ function IdentityStrip({ province }: { province: Province }) {
           {modRows.map(row => (
             <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                <span style={{ fontSize: '11px', opacity: 0.75 }}>{row.icon}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: '11px', opacity: 0.75 }}>{row.icon}</span>
                 {row.label}
               </span>
               <span style={{
@@ -1557,10 +1521,10 @@ function IdentityStrip({ province }: { province: Province }) {
 
   // ── Trade good tooltip ──
   const tradeGoodTooltip = tradeGood ? (() => {
-    interface TGRow { icon: string; label: string; value: string }
+    interface TGRow { icon: ComponentChildren; label: string; value: string }
     const rows: TGRow[] = [];
     if (tradeGood.flatGold          > 0) rows.push({ icon: '🪙', label: 'Gold',         value: `+${tradeGood.flatGold}g/s` });
-    if (tradeGood.flatGrowth        > 0) rows.push({ icon: '👥', label: 'Pop Growth',   value: `+${tradeGood.flatGrowth}/s` });
+    if (tradeGood.flatGrowth        > 0) rows.push({ icon: <InlineImageIcon src={populationIcon} size={12} />, label: 'Pop Growth',   value: `+${tradeGood.flatGrowth}/s` });
     if (tradeGood.flatIuniores      > 0) rows.push({ icon: '⚔️', label: 'Iuniores',     value: `+${tradeGood.flatIuniores}/s` });
     if (tradeGood.wealthGrowthBonus > 0) rows.push({ icon: '💰', label: 'Wealth Growth',value: `+${tradeGood.wealthGrowthBonus}/s` });
 
@@ -1610,7 +1574,7 @@ function IdentityStrip({ province }: { province: Province }) {
             {rows.map(row => (
               <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-                  <span style={{ fontSize: '11px', opacity: 0.75 }}>{row.icon}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: '11px', opacity: 0.75 }}>{row.icon}</span>
                   {row.label}
                 </span>
                 <span style={{
@@ -1837,15 +1801,16 @@ function UnrestSection({ province }: { province: Province }) {
   return (
     <Tooltip content={tooltipContent} variant="rich" position="above" align="start">
       <div class="unrest-section">
-        <StatPanelHeader title="Regional Order" icon={<ScalesSVG />} />
+        <StatPanelHeader
+          title="Regional Order"
+          icon={<InlineImageIcon src={unrestIcon} size={18} style={{ verticalAlign: 'middle' }} />}
+        />
 
         {/* Hero icon + number + change rows */}
         <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '5px' }}>
           {/* Left: icon + unrest number */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', flexShrink: 0 }}>
-            <span style={{ fontSize: '22px', lineHeight: 1 }}>
-              {isCritical ? '🔥' : province.unrest > 60 ? '⚔️' : province.unrest > 30 ? '😤' : '🛡️'}
-            </span>
+            <InlineImageIcon src={unrestIcon} size={26} style={{ verticalAlign: 'middle' }} />
             <span style={{
               fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700,
               color: barColor, lineHeight: 1,
@@ -2070,7 +2035,7 @@ function IncomeLedger({ province, accent = '#d4a843', index = 0 }: { province: P
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: netColor }}>
-            NET {net >= 0 ? '+' : ''}{net}g/season
+            NET <ResourceAmount type="gold" amount={net} sign={net >= 0 ? '+' : ''} iconSize={11} /> /season
           </span>
           {nonGoldEntries.map(([res, amt]) => (
             <span key={res} style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
@@ -2165,8 +2130,8 @@ function IncomeLedger({ province, accent = '#d4a843', index = 0 }: { province: P
             }}>
               Net
             </span>
-            <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: netColor }}>
-              {net >= 0 ? '+' : ''}{net}g/season
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 'var(--font-size-sm)', fontWeight: 700, color: netColor }}>
+              <ResourceAmount type="gold" amount={net} sign={net >= 0 ? '+' : ''} iconSize={12} /> /season
             </span>
           </div>
         </div>
@@ -2431,8 +2396,8 @@ export function ProvinciaeTab() {
                 isn't lost when the empty state hides the detail panels. */}
             {totalPop > 0 && (
               <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-                <span class="ornate-stat-chip" title="Total Population">👥 <strong>{totalPop}</strong></span>
-                <span class="ornate-stat-chip" title="Avg Wealth"><ResourceIcon type="gold" size={16} /> <strong>{avgWealth}</strong></span>
+                <span class="ornate-stat-chip" title="Total Population"><InlineImageIcon src={populationIcon} size={16} /> <strong>{totalPop}</strong></span>
+                <span class="ornate-stat-chip" title="Avg Wealth"><InlineImageIcon src={wealthIcon} size={16} /> <strong>{avgWealth}</strong></span>
               </div>
             )}
           </div>

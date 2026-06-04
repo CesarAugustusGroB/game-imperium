@@ -18,6 +18,7 @@ import {
 } from './state';
 import type { ForumTab } from './state';
 import { tutorialDismissed, setTutorialDismissed } from '../../../game/core/meta-save';
+import improvedSeal from '../../../assets/ui/icons/improved-seal.png';
 import seasonIcon from '../../../assets/ui/resources/season-icon-color.png';
 
 interface NavItem {
@@ -85,15 +86,20 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
       }}>
         <div style={{
           width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-          background: `radial-gradient(circle, var(--imp-panel-soft) 60%, var(--imp-ink) 100%)`,
-          border: `2px solid ${accent}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontFamily: 'var(--imp-font-display)',
-          fontSize: 11, fontWeight: 700,
-          color: accent, letterSpacing: 1,
-          boxShadow: `0 0 14px ${accent}44, inset 0 0 8px rgba(0, 0, 0, 0.5)`,
+          filter: `drop-shadow(0 0 10px ${accent}55)`,
         }}>
-          SPQR
+          <img
+            src={improvedSeal}
+            alt=""
+            aria-hidden="true"
+            style={{
+              width: 48,
+              height: 48,
+              objectFit: 'contain',
+              display: 'block',
+            }}
+          />
         </div>
         {!collapsed && (
           <div class="fade-in" style={{ flex: 1, minWidth: 0 }}>
@@ -125,7 +131,6 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
           border: '1px solid rgba(212, 168, 67, 0.15)',
           borderRadius: 2, position: 'relative',
         }}>
-          <Corners color={accent} size={5} inset={2} thickness={1} />
           <div style={{
             width: 36, height: 36, borderRadius: '50%', overflow: 'hidden',
             border: `1px solid ${accent}`, flexShrink: 0,

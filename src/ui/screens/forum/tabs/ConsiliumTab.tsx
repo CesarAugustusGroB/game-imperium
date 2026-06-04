@@ -25,6 +25,7 @@ import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 import {
   BonusCard,
+  CeremonialTrack,
   getTraitVisual,
   TraitChip,
   TraitGlyph,
@@ -328,15 +329,13 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
     advisor.currentTier === 1 ? XP_TIER_2 :
     advisor.currentTier === 2 ? XP_TIER_3 :
     null;
+  const prevTierThreshold = advisor.currentTier === 1 ? 0 : XP_TIER_2;
   const role = source === 'seat'
     ? SLOT_LABELS[slotIndex ?? 0] ?? 'Seated Advisor'
     : 'Political Candidate';
   const isSeated = source === 'seat';
   const cost = isSeated ? advisor.cost : getDiscountedAdvisorCost(advisor);
   const tier = advisor.currentTier;
-  const xpPct = nextTierThreshold === null
-    ? 100
-    : Math.min(100, Math.max(0, (advisor.xp / nextTierThreshold) * 100));
 
   return (
     <div style={{
@@ -466,29 +465,15 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
             ))}
           </div>
 
-          {/* tier / xp progress bar */}
-          <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 5, maxWidth: 440, marginTop: 2 }}>
-            <div style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-              fontFamily: 'var(--imp-font-mono)', fontSize: 9, letterSpacing: 1.4,
-              color: 'var(--imp-text-lo)', textTransform: 'uppercase',
-            }}>
-              <span>{nextTierThreshold === null ? `Tier ${ROMAN[tier - 1]} · Max` : `Tier ${ROMAN[tier - 1]} → ${ROMAN[tier]}`}</span>
-              <span>{nextTierThreshold === null ? 'MAX' : `${advisor.xp} / ${nextTierThreshold}`}</span>
-            </div>
-            <div style={{
-              position: 'relative', height: 7, borderRadius: 999, overflow: 'hidden',
-              background: 'rgba(0, 0, 0, 0.55)', border: '1px solid var(--imp-gold-faint)',
-              boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.6)',
-            }}>
-              <div style={{
-                width: `${xpPct}%`, height: '100%',
-                background: 'linear-gradient(90deg, var(--imp-gold-mid), var(--imp-gold-hi))',
-                boxShadow: '0 0 10px rgba(212, 168, 67, 0.5)',
-                transition: 'width var(--duration-normal) var(--ease-default)',
-              }} />
-            </div>
-          </div>
+          <CeremonialTrack
+            currentTier={advisor.currentTier}
+            xp={advisor.xp}
+            nextTierThreshold={nextTierThreshold}
+            prevTierThreshold={prevTierThreshold}
+            accent={CONSILIUM_ACCENT}
+            factionColor={color}
+            style={{ position: 'relative', zIndex: 1, marginTop: 2 }}
+          />
         </div>
 
         {/* RIGHT — portrait */}

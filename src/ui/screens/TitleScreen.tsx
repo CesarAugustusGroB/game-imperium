@@ -4,6 +4,7 @@ import { navigateTo } from '../screens';
 import { GoldDust } from '../components/GoldDust';
 import { OptionsModal } from '../components/SettingsPanel';
 import bgPicture from '../../assets/backgrounds/roman_background.png?w=1600;2400&format=avif;webp;png&as=picture';
+import improvedSeal from '../../assets/ui/icons/improved-seal.png';
 import { hasActiveRunSave, restoreActiveRun } from '../../game/core/meta-save';
 
 const STYLES = `
@@ -208,9 +209,9 @@ const STYLES = `
     object-fit: contain;
   }
   .title-screen__emblem--laurel {
-    width: 70px;
-    height: 70px;
-    opacity: 0.88;
+    width: 82px;
+    height: 82px;
+    opacity: 0.96;
   }
   .title-screen__emblem--eagle {
     width: 158px;
@@ -649,7 +650,7 @@ export function TitleScreen() {
           <div class="title-screen__crest-row" aria-hidden="true">
             <span class="title-screen__line" />
             <span class="title-screen__emblem title-screen__emblem--laurel">
-              <img src="/asset/ui/generated/roman_laurel_wreath.png" alt="" />
+              <img src={improvedSeal} alt="" />
             </span>
             <span class="title-screen__line title-screen__line--right" />
           </div>

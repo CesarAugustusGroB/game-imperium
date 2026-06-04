@@ -6,7 +6,7 @@
  */
 import type { Advisor, AdvisorPassive } from '../game/council/advisor';
 import { getCurrentPassive } from '../game/council/advisor';
-import type { Faction } from '../game/core/commander';
+import type { Faction, ResourceType } from '../game/core/commander';
 import type { IterBelliState, SecondaryQuest } from '../game/iterBelli/iter-belli-types';
 import { SUPPLY_UPKEEP_PER_TURN, START, QUEST_WINDOW_BASE } from '../game/iterBelli/iter-belli-balance';
 import { SECONDARY_QUESTS } from './iter-belli-quests';
@@ -17,6 +17,13 @@ export interface MissionDef {
   title: string;
   /** Short human-readable success condition, shown in the UI. */
   conditionDesc: string;
+  /** Optional structured resource condition for icon-rich UI surfaces. */
+  conditionResource?: {
+    lead: string;
+    type: Extract<ResourceType, 'gold' | 'iuniores'>;
+    amount: number;
+    tail: string;
+  };
   /** Checked against the final campaign state; bonus granted on victory when true. */
   condition: (s: IterBelliState) => boolean;
   bonusGold: number;
@@ -24,15 +31,19 @@ export interface MissionDef {
 
 /** Main mission by the first-seated advisor's color. Tunable. */
 export const MISSIONS: Record<Faction, MissionDef> = {
-  red: { id: 'asalto', title: 'Asalto', conditionDesc: 'Vence en ≤ 8 días',
+  red: { id: 'asalto', title: 'Asalto', conditionDesc: 'Vence en ocho días o menos',
     condition: (s) => s.turnNum <= 8, bonusGold: 50 },
-  blue: { id: 'pax', title: 'Pax Romana', conditionDesc: 'Amenaza final ≤ 4',
+  blue: { id: 'pax', title: 'Pax Romana', conditionDesc: 'Termina con cuatro puntos de amenaza o menos',
     condition: (s) => s.threat <= 4, bonusGold: 50 },
-  gold: { id: 'cruzada', title: 'Cruzada', conditionDesc: 'Moral final ≥ 6',
+  gold: { id: 'cruzada', title: 'Cruzada', conditionDesc: 'Termina con seis puntos de moral o más',
     condition: (s) => s.morale >= 6, bonusGold: 50 },
-  purple: { id: 'botin', title: 'Botín', conditionDesc: 'Oro final ≥ 120',
+  purple: {
+    id: 'botin',
+    title: 'Botín',
+    conditionDesc: 'Termina con 120 de oro o más',
+    conditionResource: { lead: 'Termina con', type: 'gold', amount: 120, tail: 'o más' },
     condition: (s) => s.gold >= 120, bonusGold: 80 },
-  white: { id: 'legion', title: 'Legión Intacta', conditionDesc: 'Conserva ≥ 60% de soldados',
+  white: { id: 'legion', title: 'Legión Intacta', conditionDesc: 'Conserva al menos el 60% de tus soldados',
     condition: (s) => s.initialSoldiers > 0 && s.soldiers >= 0.6 * s.initialSoldiers, bonusGold: 50 },
 };
 

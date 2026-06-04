@@ -13,7 +13,9 @@ import { SUPPLIES_STARTING_STOCK } from '../../../../config/game-config';
 import { navigateToIterBelli } from '../../../screens';
 import { playSfx } from '../../../sound/sfx';
 import { BentoCard } from '../../../components/BentoCard';
+import { ResourceAmount } from '../../../components/ResourceIcon';
 import campaignBriefingBackground from '../../../../assets/ui/campaign/campaign-briefing-background.png';
+import missionParchmentScroll from '../../../../assets/ui/campaign/mission-parchment-scroll.png';
 
 interface EmbarkCardProps {
   accent?: string;
@@ -167,35 +169,89 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
 
         {(mission || modSummary || questPreview || doctrinePreview) && (
           <div style={{
-            marginBottom: 16,
-            padding: '13px 32px 14px',
-            minHeight: 91,
-            width: 'fit-content',
-            maxWidth: 'min(100%, 520px)',
-            background: 'linear-gradient(90deg, rgba(7, 8, 9, 0.68), rgba(19, 18, 17, 0.44))',
-            border: '1px solid rgba(166, 115, 43, 0.42)',
-            borderRadius: 2,
-            boxShadow: 'inset 0 0 22px rgba(0, 0, 0, 0.48)',
+            margin: '-8px 0 11px',
+            padding: '27px clamp(48px, 7vw, 72px) 29px',
+            minHeight: 112,
+            width: 'min(100%, 540px)',
+            backgroundImage: `url(${missionParchmentScroll})`,
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: '100% 100%',
+            filter: 'drop-shadow(0 5px 12px rgba(0, 0, 0, 0.72))',
           }}>
-            {mission && (
-              <>
-                <div style={{ fontFamily: 'var(--imp-font-display)', fontSize: 13, letterSpacing: 0.8, color: 'var(--imp-gold-hi)' }}>
-                  <span aria-hidden="true" style={{ marginRight: 7 }}>o</span>
-                  Mission: {mission.title}
+            <div style={{ padding: '7px 14px 8px' }}>
+              {mission && (
+                <>
+                <div style={{
+                  fontFamily: 'var(--imp-font-display)',
+                  fontSize: 14,
+                  fontWeight: 800,
+                  letterSpacing: 0.7,
+                  color: '#341b0b',
+                }}>
+                  Misión: {mission.title}
                 </div>
-                <div style={{ fontSize: 11, color: 'rgba(229, 216, 194, 0.76)', fontFamily: 'var(--imp-font-serif)', marginTop: 13, paddingLeft: 24 }}>
-                  Termina la ruta con {mission.conditionDesc}.
+                <div style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  lineHeight: 1.35,
+                  color: '#3e220e',
+                  fontFamily: 'var(--imp-font-serif)',
+                  marginTop: 8,
+                  paddingLeft: 24,
+                }}>
+                  {mission.conditionResource ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+                      <span>{mission.conditionResource.lead}</span>
+                      <ResourceAmount
+                        type={mission.conditionResource.type}
+                        amount={mission.conditionResource.amount}
+                        iconSize={11}
+                        style={{ color: '#3e220e', fontWeight: 700 }}
+                      />
+                      <span>{mission.conditionResource.tail}.</span>
+                    </span>
+                  ) : (
+                    <>{mission.conditionDesc}.</>
+                  )}
                 </div>
-                <div style={{ fontSize: 11, color: 'rgba(229, 216, 194, 0.72)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: 14, paddingLeft: 24 }}>
-                  Bonus: +{mission.bonusGold} oro al cumplir la mision Consilium.
+                <div style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  lineHeight: 1.35,
+                  color: '#4a2810',
+                  fontFamily: 'var(--imp-font-serif)',
+                  fontStyle: 'italic',
+                  marginTop: 8,
+                  paddingLeft: 24,
+                }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
+                    <span>Recompensa:</span>
+                    <ResourceAmount
+                      type="gold"
+                      amount={mission.bonusGold}
+                      sign="+"
+                      iconSize={11}
+                      style={{ color: '#4a2810', fontWeight: 800 }}
+                    />
+                    <span>al completar la misión.</span>
+                  </span>
                 </div>
-              </>
-            )}
-            {!mission && modSummary && (
-              <div style={{ fontSize: 11, color: 'rgba(229, 216, 194, 0.76)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic' }}>
-                Consilium: {modSummary}
-              </div>
-            )}
+                </>
+              )}
+              {!mission && modSummary && (
+                <div style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  lineHeight: 1.35,
+                  color: '#3e220e',
+                  fontFamily: 'var(--imp-font-serif)',
+                  fontStyle: 'italic',
+                }}>
+                  Consilium: {modSummary}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

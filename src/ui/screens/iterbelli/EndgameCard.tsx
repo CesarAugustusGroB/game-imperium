@@ -10,6 +10,7 @@ import { getActiveScenario } from '../../../game/iterBelli/iter-belli-scenario';
 import { resetIterBelliBattle } from '../../../game/iterBelli/iter-belli-combat';
 import { START } from '../../../game/iterBelli/iter-belli-balance';
 import { conquerProvince, provinces, collectProvinceIncome } from '../../../game/province/province-store';
+import { councilSlots, grantAdvisorXp } from '../../../game/council/council-store';
 import { pickConquestName, PROVINCE_REWARD } from '../../../data/iter-belli-conquest';
 import { getMissionById } from '../../../data/iter-belli-consilium';
 import type { TerrainType } from '../../../data/terrain-data';
@@ -75,6 +76,13 @@ function returnToHub(): void {
       supplies: Math.max(0, Math.min(SUPPLY_MAX_CARRY, s.supplies)),
     };
   }
+
+  // Seated advisors earn XP for serving the campaign: +1 for completing it,
+  // +1 more on victory. grantAdvisorXp auto-tiers-up and fires the promotion
+  // toast; the new tier persists with the council in the next autosave.
+  const xpPerAdvisor = 1 + (outcome?.victory ? 1 : 0);
+  const seatedIds = councilSlots.value.flatMap((a) => (a ? [a.id] : []));
+  for (const id of seatedIds) grantAdvisorXp(id, xpPerAdvisor);
 
   resetIterBelliBattle();
   resetIterBelli();

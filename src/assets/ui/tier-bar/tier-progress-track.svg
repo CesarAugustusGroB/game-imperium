@@ -1,0 +1,28 @@
+<svg width="260" height="28" viewBox="0 0 260 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="trackFill" x1="130" y1="2" x2="130" y2="26" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#241C2A"/>
+      <stop offset="0.46" stop-color="#17101D"/>
+      <stop offset="1" stop-color="#0A080E"/>
+    </linearGradient>
+    <linearGradient id="goldStroke" x1="130" y1="1" x2="130" y2="27" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F2D28A"/>
+      <stop offset="0.5" stop-color="#A77B3C"/>
+      <stop offset="1" stop-color="#51351C"/>
+    </linearGradient>
+    <filter id="outerShadow" x="-6" y="-6" width="272" height="40" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="2" stdDeviation="1.4" flood-color="#050208" flood-opacity="0.85"/>
+    </filter>
+  </defs>
+  <g filter="url(#outerShadow)">
+    <path d="M8 2H252L258 14L252 26H8L2 14L8 2Z" fill="#070509" stroke="#24180E" stroke-width="2"/>
+    <path d="M9 4H87L81 14L87 24H9L4 14L9 4Z" fill="url(#trackFill)" stroke="url(#goldStroke)" stroke-width="1.5"/>
+    <path d="M88 4H173L167 14L173 24H88L82 14L88 4Z" fill="url(#trackFill)" stroke="url(#goldStroke)" stroke-width="1.5"/>
+    <path d="M174 4H251L256 14L251 24H174L168 14L174 4Z" fill="url(#trackFill)" stroke="url(#goldStroke)" stroke-width="1.5"/>
+    <path d="M9 5.75H85.5" stroke="#F1CF82" stroke-opacity="0.4" stroke-width="0.8"/>
+    <path d="M89.5 5.75H171.5" stroke="#F1CF82" stroke-opacity="0.35" stroke-width="0.8"/>
+    <path d="M175.5 5.75H249" stroke="#F1CF82" stroke-opacity="0.28" stroke-width="0.8"/>
+    <path d="M83 14L88 5" stroke="#4B2D21" stroke-width="1.2"/>
+    <path d="M168 14L173 5" stroke="#4B2D21" stroke-width="1.2"/>
+  </g>
+</svg>
