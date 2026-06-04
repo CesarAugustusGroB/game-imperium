@@ -20,6 +20,7 @@ import { getGovernorTraits, getGovernorSalary, dismissGovernor, registerProvince
 import { assignNextFeature } from './feature-store';
 import { claimTerritory, claimTerritoryAt } from './province-map-store';
 import { nextInvestmentDiscount } from '../progression/strategic-store';
+import { isUpkeepWaived, tickActiveDecretumEffects } from '../items/decretum-hub';
 import { addNotification } from '../../ui/notifications/notification-store';
 import { TERRAIN_DATA } from '../../data/terrain-data';
 import type { TerrainType } from '../../data/terrain-data';
@@ -353,7 +354,10 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
 
   let expensesPaid = 0;
   let expenseShortfall = 0;
-  if (totalExpenses > 0) {
+  // An active waive-upkeep decretum (e.g. SUPPLY/ANNONA) suspends the gold
+  // upkeep drain for this season — no payment, no shortfall.
+  const upkeepWaived = isUpkeepWaived();
+  if (totalExpenses > 0 && !upkeepWaived) {
     if (spendResource('gold', totalExpenses)) {
       expensesPaid = totalExpenses;
     } else {
@@ -468,6 +472,11 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
   });
 
   provinces.value = updatedProvinces;
+
+  // Age continuous Hub effects (upkeep waivers) by one season; those that hit
+  // zero drop out. Read above as `upkeepWaived` so this season is still covered.
+  tickActiveDecretumEffects();
+
   return { incomeGained, expensesPaid, expenseShortfall, rebellions };
 }
 
