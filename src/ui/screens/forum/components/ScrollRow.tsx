@@ -31,7 +31,6 @@ export function ScrollRow({ s, commander }: ScrollRowProps) {
         borderRadius: 2,
         opacity: castable ? 1 : 0.45,
         transition: 'all 150ms',
-        cursor: 'pointer',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

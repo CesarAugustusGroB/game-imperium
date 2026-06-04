@@ -92,7 +92,7 @@ export function ExercitusPanel({ accent = '#d4a843', index = 0 }: ExercitusPanel
       <div style={{
         marginTop: 8, display: 'flex', alignItems: 'center', gap: 8,
       }}>
-        <div style={{
+        <div title={`Supplies: ${supplies} / ${SUPPLY_MAX_CARRY}`} style={{
           display: 'inline-flex', alignItems: 'center', gap: 4,
           padding: '2px 7px',
           background: supplyLow ? 'rgba(194, 74, 58, 0.15)' : 'rgba(212, 168, 67, 0.1)',
@@ -102,7 +102,6 @@ export function ExercitusPanel({ accent = '#d4a843', index = 0 }: ExercitusPanel
           color: supplyLow ? '#d48b3a' : 'var(--imp-text-mid)',
           fontFamily: 'var(--imp-font-mono)',
           letterSpacing: 0.5,
-          title: `Supplies: ${supplies} / ${SUPPLY_MAX_CARRY}`,
         }}>
           <GameIcon name="supplies-crate" size={12} />
           <span>{supplies}/{SUPPLY_MAX_CARRY}</span>
