@@ -67,18 +67,18 @@ export function getResource(type: ResourceType): number {
 }
 
 /**
- * Add a resource. Applies 2x multiplier if it matches the faction's primary.
- * Returns the actual amount added. Negative amounts are ignored and return 0.
+ * Add a resource, applying War Profiteer / doctrine income modifiers (capped at
+ * +75%). Returns the actual amount added. Negative amounts are ignored and
+ * return 0.
  */
-export function addResource(type: ResourceType, amount: number, faction?: Faction): number {
+export function addResource(type: ResourceType, amount: number): number {
   if (amount < 0) return 0;
-  const factionMultiplier = faction && FACTION_PRIMARY_RESOURCE[faction] === type ? 2 : 1;
   // S3-11 + S4-11: Additive bonus pool — War Profiteer and doctrine income-modifier stack additively
   let bonusMultiplier = 0;
   if (type === 'gold' && warProfilerActive) bonusMultiplier += 0.5;
   if (incomeModifierFn) bonusMultiplier += incomeModifierFn(type);
   bonusMultiplier = Math.min(bonusMultiplier, 0.75); // S9-07: cap income modifiers at +75%
-  const actual = Math.floor(amount * factionMultiplier * (1 + bonusMultiplier));
+  const actual = Math.floor(amount * (1 + bonusMultiplier));
   resourceSignals[type].value += actual;
   return actual;
 }

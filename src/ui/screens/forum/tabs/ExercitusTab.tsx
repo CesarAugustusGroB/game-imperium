@@ -307,17 +307,15 @@ export function ExercitusTab() {
       : canFullyAfford
         ? accent                            // ready to heal: gold
         : 'var(--imp-text-lo)';             // can't afford: muted
-    const buttonLabel = isMerc ? 'Gold Heal — S27' : 'Heal';
-    const disabledTooltip = isMerc
-      ? 'Mercenary cohorts heal with gold — coming in S27.'
-      : canFullyAfford
-        ? `Spend ${fullCost} iuniores to fully restore.`
-        : currentIuniores > 0
-          ? `Insufficient iuniores. Need ${fullCost - currentIuniores} more for a full heal (partial heal will apply ${currentIuniores}).`
-          : 'Insufficient iuniores. Pool is empty.';
+    const disabledTooltip = canFullyAfford
+      ? `Spend ${fullCost} iuniores to fully restore.`
+      : currentIuniores > 0
+        ? `Insufficient iuniores. Need ${fullCost - currentIuniores} more for a full heal (partial heal will apply ${currentIuniores}).`
+        : 'Insufficient iuniores. Pool is empty.';
     // Citizen heal is enabled whenever the pool has *any* iuniores — partial
-    // heals are valid and surfaced via the formula tooltip.
-    const buttonEnabled = !isMerc && currentIuniores > 0;
+    // heals are valid and surfaced via the formula tooltip. Mercenaries have no
+    // heal action, so their row shows health only (no button).
+    const buttonEnabled = currentIuniores > 0;
 
     return (
       <div key={`health-${c.instanceId ?? c.id}-${index}`} style={{
@@ -364,7 +362,7 @@ export function ExercitusTab() {
               </div>
             )}
             {isMerc && (
-              <div title="Mercenary cohort — gold-only heal pending in S27." style={{
+              <div title="Mercenary cohort." style={{
                 fontSize: 8, padding: '1px 6px',
                 border: '1px solid rgba(232, 192, 112, 0.5)',
                 background: 'rgba(232, 192, 112, 0.12)',
@@ -412,37 +410,41 @@ export function ExercitusTab() {
             color: 'var(--imp-text-lo)',
           }}>
             <span>{currentHp} / {maxHp} HP</span>
-            <span style={{ color: tone }}>
-              {isMerc ? 'Gold heal pending' : <><ResourceAmount type="iuniores" amount={fullCost} iconSize={13} /> to full</>}
-            </span>
+            {!isMerc && (
+              <span style={{ color: tone }}>
+                <ResourceAmount type="iuniores" amount={fullCost} iconSize={13} /> to full
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Heal button */}
-        <div style={{ flexShrink: 0 }}>
-          <button
-            onClick={() => handleHealOne(index)}
-            disabled={!buttonEnabled}
-            title={disabledTooltip}
-            style={{
-              padding: '6px 12px',
-              background: buttonEnabled
-                ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`
-                : 'rgba(80, 70, 50, 0.3)',
-              border: 'none',
-              borderRadius: 2,
-              color: buttonEnabled ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
-              fontSize: 9, fontWeight: 700,
-              letterSpacing: 1.5, textTransform: 'uppercase',
-              fontFamily: 'var(--imp-font-display)',
-              cursor: buttonEnabled ? 'pointer' : 'not-allowed',
-              transition: 'all 160ms',
-              minWidth: 96,
-            }}
-          >
-            {buttonLabel}
-          </button>
-        </div>
+        {/* Heal button — citizens only; mercenaries have no heal action yet */}
+        {!isMerc && (
+          <div style={{ flexShrink: 0 }}>
+            <button
+              onClick={() => handleHealOne(index)}
+              disabled={!buttonEnabled}
+              title={disabledTooltip}
+              style={{
+                padding: '6px 12px',
+                background: buttonEnabled
+                  ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`
+                  : 'rgba(80, 70, 50, 0.3)',
+                border: 'none',
+                borderRadius: 2,
+                color: buttonEnabled ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
+                fontSize: 9, fontWeight: 700,
+                letterSpacing: 1.5, textTransform: 'uppercase',
+                fontFamily: 'var(--imp-font-display)',
+                cursor: buttonEnabled ? 'pointer' : 'not-allowed',
+                transition: 'all 160ms',
+                minWidth: 96,
+              }}
+            >
+              Heal
+            </button>
+          </div>
+        )}
       </div>
     );
   }
