@@ -9,7 +9,7 @@ import { signal } from '@preact/signals';
 import type { Faction, ResourceType } from '../core/commander';
 import { canAfford, addResource, spendResource } from '../core/resources';
 import { selectedCommander } from '../core/game-state';
-import { preparedArmy } from '../progression/strategic-store';
+import { preparedArmy, nextInvestmentDiscount } from '../progression/strategic-store';
 import type { Cohort } from '../army/cohort';
 import type { Decretum } from './decretum';
 import { isDecretumCastable } from './decretum';
@@ -152,8 +152,39 @@ function applyHubEffect(effect: HubDecretumEffect, scroll: Decretum): void {
 }
 
 /**
+ * Spanish summaries of a scroll's Hub-relevant secondary effects, for the
+ * Decreta tab cast hint. Battle-only extras (convert-enemy-next-battle) have
+ * no live Hub consumer and are omitted.
+ */
+export function describeExtraEffectsHub(scroll: Decretum): string[] {
+  const out: string[] = [];
+  for (const ex of scroll.extraEffects ?? []) {
+    if (ex.type === 'investment-discount') {
+      out.push(`próxima inversión −${ex.percent}%`);
+    }
+  }
+  return out;
+}
+
+/**
+ * Apply a Decretum's secondary effects when cast at the Hub. Only the
+ * Hub-relevant extras are wired: `investment-discount` arms the one-time
+ * next-build discount consumed by addInvestment (province-store). Battle-only
+ * extras (convert-enemy-next-battle) have no live Hub/Iter-Belli consumer yet,
+ * so they intentionally stay inert here.
+ */
+function applyExtraEffects(scroll: Decretum): void {
+  for (const ex of scroll.extraEffects ?? []) {
+    if (ex.type === 'investment-discount') {
+      nextInvestmentDiscount.value = ex.percent;
+    }
+  }
+}
+
+/**
  * Cast a Decretum from the Hub: validates castability, pays castCost, applies the
- * Hub effect, and removes the scroll from hand. Returns false if not castable.
+ * Hub effect (and any Hub-relevant secondary effects), and removes the scroll
+ * from hand. Returns false if not castable.
  */
 export function castDecretumAtHub(id: string): boolean {
   const scroll = decretumHand.value.find((d) => d.id === id);
@@ -168,6 +199,7 @@ export function castDecretumAtHub(id: string): boolean {
     }
   }
   applyHubEffect(effect, scroll);
+  applyExtraEffects(scroll);
   removeDecretum(id);
   return true;
 }

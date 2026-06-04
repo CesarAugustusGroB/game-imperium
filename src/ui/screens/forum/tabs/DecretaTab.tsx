@@ -7,7 +7,7 @@ import { selectedCommander } from '../../../../game/core/game-state';
 import { FACTION_COLORS } from '../../../../game/core/commander';
 import type { ResourceType } from '../../../../game/core/commander';
 import { playSfx } from '../../../sound/sfx';
-import { castDecretumAtHub, isCastableAtHub, toHubEffect, describeHubEffect, activeDecretumEffects } from '../../../../game/items/decretum-hub';
+import { castDecretumAtHub, isCastableAtHub, toHubEffect, describeHubEffect, describeExtraEffectsHub, activeDecretumEffects } from '../../../../game/items/decretum-hub';
 import { BentoCard } from '../../../components/BentoCard';
 import { Corners } from '../../../components/motifs/Corners';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
@@ -329,7 +329,7 @@ function DecretumDetail({ d, hubCastable, accent, onSell, onCast }: DecretumDeta
           lineHeight: 1.4,
         }}>
           {hubEffect
-            ? `Al lanzar en el Hub: ${describeHubEffect(hubEffect)}.`
+            ? `Al lanzar en el Hub: ${[describeHubEffect(hubEffect), ...describeExtraEffectsHub(d)].join(' · ')}.`
             : 'Sin efecto de Hub — este pergamino no puede lanzarse aquí.'}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
