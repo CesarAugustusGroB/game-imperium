@@ -3,14 +3,14 @@ import type { Province, InvestmentType } from './province';
 import {
   createProvince, INVESTMENT_DATA,
   getInvestmentDiscount, applyInvestmentDiscount,
-  getProvinceExpenses, getBuildingSlots,
-  getTaxRate, calculateInitialWealth,
+  getProvinceIncome, getProvinceExpenses, getBuildingSlots,
+  calculateInitialWealth,
   calculateNetWealthChange,
   tickFamine,
   tickPopulationGrowth,
   rollImmigration,
   calculateUnrestDelta, getRebelThreshold, applyRebellion,
-  getAvailableBuildings, getActiveSynergies,
+  getAvailableBuildings,
 } from './province';
 import type { ResourceType } from '../core/commander';
 import type { DoctrineEffect } from '../items/doctrine';
@@ -26,7 +26,6 @@ import { TERRAIN_DATA } from '../../data/terrain-data';
 import type { TerrainType } from '../../data/terrain-data';
 import { getTradeGoodsForTerrain, TRADE_GOOD_DATA } from '../../data/trade-goods';
 import type { TradeGoodType } from '../../data/trade-goods';
-import { IUNIORES } from '../../config/game-config';
 
 // ── Province signals ──
 
@@ -271,65 +270,10 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
 
   for (const prov of allProvinces) {
     const traits = getGovernorTraits(prov.id);
-    const taxRate = getTaxRate(prov.lowerTax, prov.upperTax);
-    const taxRevenue = Math.floor(prov.wealth * taxRate);
 
-    // Split building income into gold vs non-gold
-    let buildingGold = 0;
-    const nonGold: Partial<Record<ResourceType, number>> = {};
-    for (const inv of prov.investments) {
-      const effect = INVESTMENT_DATA[inv.type].levels[inv.level - 1];
-      for (const [res, amt] of Object.entries(effect.incomeBonus) as [ResourceType, number][]) {
-        if (res === 'gold') buildingGold += amt;
-        else nonGold[res] = (nonGold[res] ?? 0) + amt;
-      }
-    }
-
-    // Synergy gold bonus — flat building income
-    for (const syn of getActiveSynergies(prov)) {
-      if (syn.bonus.type === 'gold') buildingGold += syn.bonus.amount;
-    }
-
-    // Gold: tax revenue (wealth × rate) + building gold + 1 subsistence
-    const provIncome: Partial<Record<ResourceType, number>> = {
-      gold: taxRevenue + buildingGold + 1,
-    };
-
-    // Non-gold: flat building output (no wealth/tax scaling)
-    for (const [res, amt] of Object.entries(nonGold) as [ResourceType, number][]) {
-      provIncome[res] = amt;
-    }
-
-    // Trade good flat income — added after multipliers (flat = no tier × tax scaling per spec)
-    if (prov.tradeGood) {
-      const good = TRADE_GOOD_DATA[prov.tradeGood];
-      if (good.flatGold > 0)     provIncome.gold     = (provIncome.gold     ?? 0) + good.flatGold;
-      if (good.flatIuniores > 0) provIncome.iuniores = (provIncome.iuniores ?? 0) + good.flatIuniores;
-    }
-
-    // Unique feature flat income (gold/iuniores) — matches the income ledger display.
-    if (prov.uniqueFeature) {
-      const feat = prov.uniqueFeature;
-      if (feat.goldPerSeason)     provIncome.gold     = (provIncome.gold     ?? 0) + feat.goldPerSeason;
-      if (feat.iunioresPerSeason) provIncome.iuniores = (provIncome.iuniores ?? 0) + feat.iunioresPerSeason;
-    }
-
-    // Iuniores: population × per-pop ratio (S25-02 / FT-IUN).
-    // Placed before governor income-bonus so future iuniores-targeting traits can enhance yield.
-    const iunioresYield = Math.floor(prov.population * IUNIORES.perPop);
-    if (iunioresYield > 0) {
-      provIncome.iuniores = (provIncome.iuniores ?? 0) + iunioresYield;
-    }
-
-    // Governor income-bonus trait applied after multipliers
-    for (const trait of traits) {
-      if (trait.type === 'income-bonus' && provIncome[trait.resource] != null) {
-        provIncome[trait.resource] = Math.floor(
-          provIncome[trait.resource]! * (1 + trait.percent / 100),
-        );
-      }
-    }
-
+    // Per-province gross income — shared with every income display via
+    // getProvinceIncome so the ledger and the tick can never diverge.
+    const provIncome = getProvinceIncome(prov, traits);
     for (const [res, amt] of Object.entries(provIncome) as [ResourceType, number][]) {
       if (amt > 0) totals[res] = (totals[res] ?? 0) + amt;
     }

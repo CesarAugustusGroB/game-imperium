@@ -2,8 +2,9 @@
 import type { Province } from '../../../../game/province/province';
 import {
   INVESTMENT_DATA, calculateNetWealthChange,
+  getProvinceIncome, getProvinceExpenses,
 } from '../../../../game/province/province';
-import { getAssignedGovernor } from '../../../../game/province/governor-store';
+import { getAssignedGovernor, getGovernorTraits, getGovernorSalary } from '../../../../game/province/governor-store';
 import { ROMAN } from '../../../ui-constants';
 import { TERRAIN_ICONS, TRADE_GOOD_ICONS } from '../../ProvinceScreen';
 import { Tooltip } from '../../../components/Tooltip';
@@ -31,8 +32,14 @@ export function ProvinceRow({ p, accent = '#d4a843', onClick, selected = false }
     p.unrest > 35 ? accent :
     '#7a9a6a';
 
-  const totalIncome = Object.values(p.baseIncome)
-    .reduce<number>((sum, v) => sum + (v ?? 0), 0);
+  // Real net gold per season — mirrors the tick (getProvinceIncome) minus
+  // upkeep + governor salary — so the row matches the ledger, not stale
+  // baseIncome. Net (not gross) to honour the red/green coloring below.
+  const traits = getGovernorTraits(p.id);
+  const totalIncome =
+    (getProvinceIncome(p, traits).gold ?? 0)
+    - getProvinceExpenses(p, traits)
+    - getGovernorSalary(p.id);
   const assigned = getAssignedGovernor(p.id);
   const governorName = assigned?.governor.name ?? null;
 

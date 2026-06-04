@@ -2,7 +2,7 @@
 import type { ComponentChildren } from 'preact';
 import { selectedCommander } from '../../game/core/game-state';
 import { playSfx } from '../sound/sfx';
-import { provinces, buildInvestment, canAffordCost, getNextInvestmentLevel, setProvinceTax } from '../../game/province/province-store';
+import { provinces, buildInvestment, canAffordCost, getNextInvestmentLevel, setProvinceTax, hasAqueductIncomeBonus } from '../../game/province/province-store';
 import {
   INVESTMENT_DATA, getProvinceIncome, getProvinceExpenses, getUnrestModifier,
   getInvestmentDiscount, applyInvestmentDiscount,
@@ -1392,8 +1392,8 @@ function WealthDisplay({ province }: { province: Province }) {
           fontSize: '9px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
         }}>
           <span style={{ color: 'var(--color-text-muted)' }}>Net Income</span>
-          <span style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
-            +{taxRevenue}g/season
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
+            <ResourceAmount type="gold" amount={taxRevenue} sign="+" iconSize={11} /> /season
           </span>
         </div>
       </div>
@@ -2351,9 +2351,16 @@ export function ProvinciaeTab() {
     for (const [res, amt] of Object.entries(inc) as [ResourceType, number][]) {
       totalIncome[res] = (totalIncome[res] ?? 0) + amt;
     }
-    totalExpenses += getProvinceExpenses(p, t);
+    // Match the tick: upkeep AND governor salary are both drained each season.
+    totalExpenses += getProvinceExpenses(p, t) + getGovernorSalary(p.id);
     totalUnrest += p.unrest;
     totalWealth += p.wealth;
+  }
+  // Empire-wide Aqueduct T3 bonus: +10% all income (mirrors collectProvinceIncome).
+  if (hasAqueductIncomeBonus()) {
+    for (const res of Object.keys(totalIncome) as ResourceType[]) {
+      totalIncome[res] = Math.floor((totalIncome[res] ?? 0) * 1.1);
+    }
   }
   const n = allProvinces.length || 1;
   const avgUnrest = Math.round(totalUnrest / n);
