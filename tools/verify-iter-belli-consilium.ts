@@ -58,7 +58,7 @@ const c1 = computeConsiliumSetup([
   mk('gold', { type: 'upkeep-reduction', percent: 20 }),
 ]);
 check('first slot sets mission', c1.missionId === 'asalto');
-check('first slot loot NOT counted', c1.gold === 0);
+check('first slot loot now counted (+5 gold)', c1.gold === 5);
 check('other slots sum threat', c1.threat === 2);
 check('other slots sum supplies', c1.supplies === 5);
 

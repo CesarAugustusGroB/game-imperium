@@ -114,8 +114,10 @@ export function passiveModifier(passive: AdvisorPassive): SeedDeltas {
 
 /**
  * Resolve the seated council into a campaign setup: the first occupied slot
- * sets the mission (by color, no modifier); every other occupied slot sums its
- * passive modifier.
+ * sets the mission (by color); EVERY occupied slot — including the first — sums
+ * its passive modifier. (The first advisor's passive used to be silently
+ * dropped, so seating your best advisor in slot 0 quietly cost you its embark
+ * bonus while the hero card still advertised it.)
  */
 export function computeConsiliumSetup(slots: (Advisor | null)[]): ConsiliumSetup {
   const setup: ConsiliumSetup = { missionId: null, supplies: 0, gold: 0, threat: 0, morale: 0, enemyWeaken: 0, extraDays: 0, soldiers: 0 };
@@ -124,8 +126,7 @@ export function computeConsiliumSetup(slots: (Advisor | null)[]): ConsiliumSetup
     if (!advisor) continue;
     if (!firstSeen) {
       firstSeen = true;
-      setup.missionId = MISSIONS[advisor.color].id;
-      continue; // first seat sets the mission only
+      setup.missionId = MISSIONS[advisor.color].id; // first seat also picks the mission
     }
     const mod = passiveModifier(getCurrentPassive(advisor));
     setup.supplies += mod.supplies;
