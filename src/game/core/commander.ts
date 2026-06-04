@@ -47,15 +47,6 @@ export const ARCHETYPE_COLORS: Record<Commander['archetype'], string> = {
   Merchant:  '#8a5cc2',
 };
 
-/** Map each faction to its primary resource (earns 2x). White has no primary — universal access instead. */
-export const FACTION_PRIMARY_RESOURCE: Record<Faction, ResourceType | null> = {
-  gold: 'faith',
-  red: 'momentum',
-  blue: 'influence',
-  purple: 'gold',
-  white: null,
-};
-
 /**
  * Shared color-lock rule: item color matches commander color,
  * or item is white (universal), or commander is white (can use any).

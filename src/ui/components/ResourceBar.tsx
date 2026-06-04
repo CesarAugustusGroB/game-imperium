@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'preact/hooks';
 import type { Signal } from '@preact/signals';
 import { gold, iuniores } from '../../game/core/resources';
 import { selectedCommander, globalSeason, MAX_SEASONS } from '../../game/core/game-state';
-import { FACTION_PRIMARY_RESOURCE, RESOURCE_INFO } from '../../game/core/commander';
+import { RESOURCE_INFO } from '../../game/core/commander';
 
 /** Only gold and iuniores are live; faith/influence/momentum are deprecated and never shown. */
 type LiveResource = 'gold' | 'iuniores';
@@ -51,10 +51,8 @@ const RESOURCE_TOOLTIP: Record<LiveResource, string> = {
 function ResourceCounter({ type }: { type: LiveResource }) {
   const sig = resourceSignals[type];
   const info = RESOURCE_INFO[type];
-  const commander = selectedCommander.value;
-  const isPrimary = commander
-    ? FACTION_PRIMARY_RESOURCE[commander.faction] === type
-    : false;
+  // gold and iuniores are both core live resources — always shown at full
+  // prominence (no faction-primary dimming; that system was deprecated).
 
   const ref = useRef<HTMLSpanElement>(null);
   const prevValue = useRef(sig.value);
@@ -72,7 +70,7 @@ function ResourceCounter({ type }: { type: LiveResource }) {
     setDelta(diff);
     prevValue.current = sig.value;
     const timer = setTimeout(() => {
-      el.style.color = isPrimary ? info.color : 'var(--color-text-secondary)';
+      el.style.color = info.color;
       el.style.transform = 'scale(1)';
     }, 400);
     // Remove delta after animation
@@ -103,7 +101,7 @@ function ResourceCounter({ type }: { type: LiveResource }) {
         aria-label={`${info.label ?? type}: ${sig.value}`}
         style={{
           display: 'flex', alignItems: 'center', gap: '4px',
-          opacity: isPrimary ? 1 : 0.7,
+          opacity: 1,
           position: 'relative',
         }}
       >
@@ -111,10 +109,10 @@ function ResourceCounter({ type }: { type: LiveResource }) {
         <span
           ref={ref}
           style={{
-            color: isPrimary ? info.color : 'var(--color-text-secondary)',
-            fontWeight: isPrimary ? '700' : '400',
+            color: info.color,
+            fontWeight: '700',
             transition: `color var(--duration-slow) var(--ease-default), transform var(--duration-normal) var(--ease-default)`,
-            textShadow: isPrimary ? `0 0 8px ${info.color}40` : 'none',
+            textShadow: `0 0 8px ${info.color}40`,
           }}
         >
           {sig.value}

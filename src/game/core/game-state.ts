@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Commander } from './commander';
-import { initResources, iuniores, setWarProfiler, setIncomeModifierFn, setExchangeBonusFn } from './resources';
+import { initResources, iuniores, setWarProfiler, setIncomeModifierFn } from './resources';
 import { addDecretum, resetDecretumHand } from '../items/decretum-store';
 import { resetActiveDecretumEffects } from '../items/decretum-hub';
 import { resetDoctrineStore, getIncomeModifier, addDoctrineToCollection, doctrineCollection, equipDoctrine } from '../items/doctrine-store';
@@ -8,7 +8,7 @@ import { STARTER_DECRETUM } from '../../data/decretum-data';
 import { STARTER_DOCTRINES } from '../../data/doctrine-data';
 import { isDoctrineEquippable } from '../items/doctrine';
 import { resetCouncilStore, advisorMarket, seatAdvisor, setAdvisorMarket, advisorShopDiscount, advisorIncomeBonus } from '../council/council-store';
-import { resetProvinceStore, conquerProvince, provinces, getMarketExchangeBonus } from '../province/province-store';
+import { resetProvinceStore, conquerProvince, provinces } from '../province/province-store';
 import { initGovernorStore, resetGovernorStore } from '../province/governor-store';
 import { initProvinceMapStore, resetProvinceMapStore, claimTerritory } from '../province/province-map-store';
 import { resetEventStore } from '../events/event-store';
@@ -105,7 +105,6 @@ function initializeRunScaffold(commander: Commander): void {
   iuniores.value = IUNIORES.startingSeed;
   setWarProfiler(commander.id === 'crassus');
   wireRunBonuses();
-  setExchangeBonusFn(getMarketExchangeBonus);
 
   completedSpokes.value = 0;
   threatLevel.value = 0;
@@ -223,7 +222,6 @@ export function resetRun(): void {
   setWarProfiler(false);
   setIncomeModifierFn(null);
   setExtraShopDiscountFn(() => 0);
-  setExchangeBonusFn(null);
   resetDecretumHand();
   resetActiveDecretumEffects();
   resetDoctrineStore();

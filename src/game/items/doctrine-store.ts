@@ -178,22 +178,6 @@ export function getActiveEffects(): DoctrineEffect[] {
 
 // ── Typed effect helpers ──
 
-/** Sum of all revive hpPercent values from equipped doctrines. Returns 0 if none. */
-export function getReviveThreshold(): number {
-  return getActiveEffects()
-    .filter((e): e is Extract<DoctrineEffect, { type: 'revive' }> => e.type === 'revive')
-    .reduce((max, e) => Math.max(max, e.hpPercent), 0);
-}
-
-/** Total extra event choices granted by equipped doctrines + province investments. */
-export function getExtraEventChoices(): number {
-  // Province effects are added by the caller (spoke encounter dispatch) to
-  // avoid circular deps. This function only counts doctrine effects.
-  return getActiveEffects()
-    .filter((e): e is Extract<DoctrineEffect, { type: 'extra-event-choices' }> => e.type === 'extra-event-choices')
-    .reduce((sum, e) => sum + e.count, 0);
-}
-
 /** Aggregate income-modifier multiplier for a given resource (additive). Returns 0 if none. */
 export function getIncomeModifier(resource: ResourceType): number {
   return getActiveEffects()

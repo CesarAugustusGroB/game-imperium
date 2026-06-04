@@ -34,35 +34,15 @@ export function removeDecretum(id: string): void {
 }
 
 /**
- * Attempt to cast a decretum by id.
- * Checks that a commander is selected and the scroll is castable by their faction.
- * If castable, removes the scroll from hand and returns true.
- * Effect application is delegated to the battle UI (S4-10).
- */
-export function castDecretum(id: string): boolean {
-  const scroll = decretumHand.value.find((d) => d.id === id);
-  if (!scroll) return false;
-
-  const commander = selectedCommander.value;
-  if (!commander) return false;
-
-  if (!isDecretumCastable(scroll, commander.faction)) return false;
-
-  removeDecretum(id);
-  return true;
-}
-
-/**
- * Sell a decretum for gold.
- * Selling bypasses the faction 2x multiplier.
- * Returns the gold gained, or 0 if the scroll was not found.
+ * Sell a decretum for gold. Returns the gold gained, or 0 if the scroll was
+ * not found.
  */
 export function sellDecretum(id: string): number {
   const scroll = decretumHand.value.find((d) => d.id === id);
   if (!scroll) return 0;
 
   const price = DECRETUM_SELL_PRICE[scroll.rarity];
-  addResource('gold', price); // no faction param — selling bypasses 2x
+  addResource('gold', price);
   removeDecretum(id);
   return price;
 }

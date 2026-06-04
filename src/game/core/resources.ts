@@ -1,6 +1,5 @@
 import { signal } from '@preact/signals';
-import type { Faction, ResourceType } from './commander';
-import { FACTION_PRIMARY_RESOURCE } from './commander';
+import type { ResourceType } from './commander';
 
 // S3-11: War Profiteer flag — kept as module-level state (NOT imported from game-state.ts)
 // to avoid a circular dependency: game-state.ts imports resources.ts; if resources.ts
@@ -18,13 +17,6 @@ let incomeModifierFn: ((type: ResourceType) => number) | null = null;
 
 export function setIncomeModifierFn(fn: ((type: ResourceType) => number) | null): void {
   incomeModifierFn = fn;
-}
-
-// S6-10: Market T3 exchange rate bonus — caller pushes a getter.
-let exchangeBonusFn: (() => number) | null = null;
-
-export function setExchangeBonusFn(fn: (() => number) | null): void {
-  exchangeBonusFn = fn;
 }
 
 export interface Resources {
@@ -98,33 +90,3 @@ export function canAfford(type: ResourceType, amount: number): boolean {
   return resourceSignals[type].value >= amount;
 }
 
-/**
- * Exchange resources. Primary resource converts at 2:2, others at 3:2.
- * Returns the amount gained, or 0 if insufficient.
- * @param amount - The amount to spend from the source resource.
- */
-export function exchangeResources(
-  from: ResourceType, to: ResourceType, amount: number, faction: Faction,
-): number {
-  if (amount <= 0) return 0;
-  const isPrimary = FACTION_PRIMARY_RESOURCE[faction] === from;
-  const bonus = exchangeBonusFn ? exchangeBonusFn() : 0;
-  const gained = (isPrimary ? amount : Math.floor(amount * 2 / 3)) + bonus;
-  if (!spendResource(from, amount)) return 0;
-  resourceSignals[to].value += gained;
-  return gained;
-}
-
-/**
- * Get exchange rate info for display.
- * Returns { spend, gain } for converting `amount` of `from` to `to`.
- */
-export function getExchangePreview(
-  from: ResourceType, amount: number, faction: Faction,
-): { spend: number; gain: number } {
-  const isPrimary = FACTION_PRIMARY_RESOURCE[faction] === from;
-  const bonus = exchangeBonusFn ? exchangeBonusFn() : 0;
-  if (isPrimary) return { spend: amount, gain: amount + bonus };
-  const gain = Math.floor(amount * 2 / 3) + bonus;
-  return { spend: amount, gain };
-}

@@ -22,32 +22,6 @@ export type DecretumEffect =
   | { type: 'convert-enemy-next-battle'; count: number }
   | { type: 'investment-discount'; percent: number };
 
-// ── Targeting mode (derived from effect for UI) ──
-
-export type DecretumTargeting = 'none' | 'single-unit' | 'single-hex' | 'immediate';
-
-/** Determine what targeting mode the ability UI should use for a given effect. */
-export function getDecretumTargeting(effect: DecretumEffect): DecretumTargeting {
-  switch (effect.type) {
-    case 'heal':
-      return effect.target === 'single' ? 'single-unit' : 'immediate';
-    case 'damage':
-      return effect.target === 'single' ? 'single-unit' : 'immediate';
-    case 'spawn':
-      return 'immediate'; // placement is automatic (hardcoded rows), no hex pick needed
-    case 'buff':
-    case 'debuff':
-    case 'resource-gain':
-    case 'reveal':
-    case 'prevent-death':
-    case 'event-modifier':
-    case 'upkeep-reduction':
-    case 'convert-enemy-next-battle':
-    case 'investment-discount':
-      return 'immediate';
-  }
-}
-
 // ── Decretum definition ──
 
 export interface Decretum extends Collectible {

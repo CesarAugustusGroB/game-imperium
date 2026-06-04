@@ -459,19 +459,6 @@ export function getProvinceEffects(): DoctrineEffect[] {
   return effects;
 }
 
-/**
- * Count Market T3 exchange rate bonuses across all provinces.
- * Each Market T3 gives +1 to exchange output.
- */
-export function getMarketExchangeBonus(): number {
-  let bonus = 0;
-  for (const prov of provinces.value) {
-    for (const inv of prov.investments) {
-      if (inv.type === 'market' && inv.level >= 3) bonus += 1;
-    }
-  }
-  return bonus;
-}
 
 /**
  * Check if any province has Aqueduct T3 (all income +10%).
