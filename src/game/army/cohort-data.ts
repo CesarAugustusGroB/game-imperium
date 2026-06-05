@@ -1,24 +1,26 @@
 import type { Cohort } from './cohort';
 
 /**
- * Roman cohort catalog — the 5 starter cohort types for S14.
+ * Roman cohort catalog — the starter recruitable cohort types.
  *
- * Stat profiles are balanced against the canonical ROLE_STATS in
- * battle-config.ts (vanguard 150/40/1080/40, reserve 130/50/840/70,
- * guard 100/80/1200/30) but given thematic personality:
+ * Every unit has flat 1000 HP; identity comes from the five power stats
+ * (charge/harass/push/siege/movement) on a 0–3 scale, where the point total
+ * ≈ unit quality (militia ~2, a solid line unit ~5). Thematic profiles:
  *
- *  - Hastati    — baseline front-line, cheap
- *  - Principes  — elite veterans, stronger across the board
- *  - Triarii    — defensive backbone, high def/hp, low agi
- *  - Velites    — fragile skirmishers, high agi, low hp/def
- *  - Equites    — mobile cavalry, high atk/agi
+ *  - Militia    — cheap civic levy; a little push, nothing else
+ *  - Hastati    — front-line shield wall; high push, a pinch of harass (pila)
+ *  - Principes   — main line; push with a touch of charge
+ *  - Triarii    — anchor reserve; max push plus a decisive shove (charge)
+ *  - Velites    — light skirmishers; harass + movement, no line presence
+ *  - Equites    — citizen cavalry; high charge + movement
+ *  - Cretan Archer — missile mercenary; high harass, a little siege/movement
  */
 export const COHORT_CATALOG: readonly Cohort[] = [
   {
     id: 'militia',
     name: 'Militia',
     role: 'vanguard',
-    stats: { atk: 100, def: 30, hp: 800, agi: 35 },
+    stats: { hp: 1000, charge: 0, harass: 0, push: 2, siege: 0, movement: 0 },
     aurumCost: 20,
     rarity: 'common',
     spriteId: 'roman_militia_common',
@@ -29,7 +31,7 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     id: 'hastati',
     name: 'Hastati',
     role: 'vanguard',
-    stats: { atk: 140, def: 40, hp: 1000, agi: 40 },
+    stats: { hp: 1000, charge: 0, harass: 1, push: 3, siege: 0, movement: 0 },
     aurumCost: 40,
     rarity: 'common',
     spriteId: 'roman_hastatii_common',
@@ -40,7 +42,7 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     id: 'principes',
     name: 'Principes',
     role: 'vanguard',
-    stats: { atk: 170, def: 55, hp: 1150, agi: 45 },
+    stats: { hp: 1000, charge: 1, harass: 1, push: 3, siege: 0, movement: 0 },
     aurumCost: 80,
     rarity: 'rare',
     spriteId: 'roman_princeps_rare',
@@ -51,7 +53,7 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     id: 'triarii',
     name: 'Triarii',
     role: 'reserve',
-    stats: { atk: 130, def: 90, hp: 1300, agi: 25 },
+    stats: { hp: 1000, charge: 2, harass: 0, push: 3, siege: 0, movement: 0 },
     aurumCost: 100,
     rarity: 'super-rare',
     spriteId: 'roman_triarii_super_rare',
@@ -62,7 +64,7 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     id: 'velites',
     name: 'Velites',
     role: 'vanguard',
-    stats: { atk: 130, def: 25, hp: 700, agi: 90 },
+    stats: { hp: 1000, charge: 0, harass: 2, push: 0, siege: 0, movement: 2 },
     aurumCost: 30,
     rarity: 'uncommon',
     spriteId: 'roman_velite_uncommon',
@@ -73,7 +75,7 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     id: 'equites',
     name: 'Equites',
     role: 'guard',
-    stats: { atk: 160, def: 50, hp: 900, agi: 80 },
+    stats: { hp: 1000, charge: 3, harass: 0, push: 0, siege: 0, movement: 2 },
     aurumCost: 90,
     rarity: 'rare',
     spriteId: 'roman_equite_rare',
@@ -84,7 +86,7 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     id: 'cretan_archer',
     name: 'Cretan Archer',
     role: 'vanguard',
-    stats: { atk: 120, def: 20, hp: 700, agi: 85 },
+    stats: { hp: 1000, charge: 0, harass: 3, push: 0, siege: 1, movement: 1 },
     aurumCost: 70,
     rarity: 'rare',
     spriteId: 'cretan_archer_rare',
@@ -96,7 +98,7 @@ export const COHORT_CATALOG: readonly Cohort[] = [
     id: 'gallic_warband_merc',
     name: 'Gallic Warband',
     role: 'vanguard',
-    stats: { atk: 135, def: 25, hp: 870, agi: 55 },
+    stats: { hp: 1000, charge: 2, harass: 0, push: 1, siege: 0, movement: 0 },
     aurumCost: 45,
     rarity: 'common',
     spriteId: 'gallic_common',
@@ -128,7 +130,7 @@ export const GALLIC_COHORT_POOL: readonly Cohort[] = [
     id: 'clansmen',
     name: 'Clansmen',
     role: 'vanguard',
-    stats: { atk: 105, def: 30, hp: 820, agi: 45 },
+    stats: { hp: 1000, charge: 1, harass: 0, push: 1, siege: 0, movement: 0 },
     aurumCost: 20,
     rarity: 'common',
     spriteId: 'gallic_clansmen_common',
@@ -139,7 +141,7 @@ export const GALLIC_COHORT_POOL: readonly Cohort[] = [
     id: 'warband',
     name: 'Warband',
     role: 'vanguard',
-    stats: { atk: 135, def: 25, hp: 870, agi: 55 },
+    stats: { hp: 1000, charge: 2, harass: 0, push: 1, siege: 0, movement: 0 },
     aurumCost: 30,
     rarity: 'common',
     spriteId: 'gallic_common',
@@ -150,7 +152,7 @@ export const GALLIC_COHORT_POOL: readonly Cohort[] = [
     id: 'neitos',
     name: 'Neitos Javelineers',
     role: 'vanguard',
-    stats: { atk: 125, def: 20, hp: 680, agi: 95 },
+    stats: { hp: 1000, charge: 0, harass: 2, push: 0, siege: 0, movement: 2 },
     aurumCost: 35,
     rarity: 'uncommon',
     spriteId: 'gallic_neitos_uncommon',
@@ -161,7 +163,7 @@ export const GALLIC_COHORT_POOL: readonly Cohort[] = [
     id: 'gaesatae',
     name: 'Gaesatae',
     role: 'vanguard',
-    stats: { atk: 195, def: 20, hp: 960, agi: 70 },
+    stats: { hp: 1000, charge: 3, harass: 1, push: 0, siege: 0, movement: 0 },
     aurumCost: 85,
     rarity: 'rare',
     spriteId: 'gallic_gaesatae_rare',
@@ -172,7 +174,7 @@ export const GALLIC_COHORT_POOL: readonly Cohort[] = [
     id: 'noble_horse',
     name: 'Noble Horse',
     role: 'guard',
-    stats: { atk: 165, def: 55, hp: 950, agi: 85 },
+    stats: { hp: 1000, charge: 3, harass: 0, push: 0, siege: 0, movement: 2 },
     aurumCost: 95,
     rarity: 'rare',
     spriteId: 'gallic_noble_horse_rare',
@@ -183,7 +185,7 @@ export const GALLIC_COHORT_POOL: readonly Cohort[] = [
     id: 'vergobret',
     name: 'Vergobret',
     role: 'reserve',
-    stats: { atk: 155, def: 75, hp: 1250, agi: 50 },
+    stats: { hp: 1000, charge: 2, harass: 0, push: 2, siege: 0, movement: 1 },
     aurumCost: 110,
     rarity: 'super-rare',
     spriteId: 'gallic_vergobret_super_rare',

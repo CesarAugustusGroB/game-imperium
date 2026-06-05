@@ -15,6 +15,7 @@ import {
 import { getLegateTraitById } from '../../../../game/army/legate-traits';
 import { playSfx } from '../../../sound/sfx';
 import type { UnitRole } from '../../../../game/army/unit-types';
+import { POWER_STATS } from '../../../../game/army/unit-types';
 import { BentoCard } from '../../../components/BentoCard';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
@@ -231,10 +232,12 @@ export function ExercitusTab() {
             color: 'var(--imp-text-lo)',
             flexWrap: 'wrap',
           }}>
-            <span>ATK {c.stats.atk}</span>
-            <span>DEF {c.stats.def}</span>
             <span>HP {c.stats.hp}</span>
-            <span>AGI {c.stats.agi}</span>
+            {POWER_STATS.map((p) => (
+              <span key={p.key} title={p.label} style={{ opacity: c.stats[p.key] > 0 ? 1 : 0.3 }}>
+                {p.glyph} {c.stats[p.key]}
+              </span>
+            ))}
             <ResourceAmount type="gold" amount={c.aurumCost} iconSize={14} />
             {!c.mercenary && <ResourceAmount type="iuniores" amount={IUNIORES.recruitCost} iconSize={14} />}
           </div>

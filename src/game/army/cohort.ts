@@ -1,6 +1,7 @@
 import type {
   MovementProfileId, UnitRole, UnitStats,
 } from './unit-types';
+import { getCohortById, getGallicCohortById } from './cohort-data';
 
 /**
  * Rarity tier for a recruitable cohort. Mirrors the ladder authored in
@@ -162,6 +163,13 @@ export function normalizeCohortRoster(cohorts: readonly Cohort[]): Cohort[] {
       ? candidate
       : buildCohortInstanceId(cohort.id);
     seen.add(instanceId);
-    return cohort.instanceId === instanceId ? { ...cohort } : { ...cohort, instanceId };
+    // Refresh stats from the catalog by id so legacy saves (old atk/def/agi
+    // shape, varying hp) adopt the current flat-HP + power-stat block. Clamp any
+    // carried-over currentHp down to the new max.
+    const template = getCohortById(cohort.id) ?? getGallicCohortById(cohort.id);
+    const stats = template ? template.stats : cohort.stats;
+    const next: Cohort = { ...cohort, instanceId, stats };
+    if (next.currentHp != null && next.currentHp > stats.hp) next.currentHp = stats.hp;
+    return next;
   });
 }

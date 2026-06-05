@@ -1,26 +1,26 @@
 import type { LegateTrait } from './legate';
 
 /**
- * Starter catalog of 8 Legate traits. Each trait is pure data — the
- * application pipeline in S14-05 dispatches on `effect.type` without any
- * per-trait switch cases (S14 NFR-2).
+ * Starter catalog of Legate traits. Each trait is pure data — the application
+ * pipeline dispatches on `effect.type` without any per-trait switch cases.
  *
- * Multipliers are tuned against the canonical ROLE_STATS scale in
- * battle-config.ts (vanguard atk 150, guard hp 1200, etc.), not flat
- * integers — a flat +1 atk would be imperceptible at this scale.
+ * `stat-bonus` effects target the unit power stats (charge/push/movement/…) as
+ * percentage multipliers. The live combat engine does not consume them yet —
+ * like the unit powers themselves, they are identity/flavor pending a combat
+ * hookup.
  */
 export const LEGATE_TRAITS: readonly LegateTrait[] = [
   {
     id: 'veteran',
     name: 'Veteran',
-    description: '+15% attack to all vanguard units.',
-    effect: { type: 'stat-bonus', target: 'vanguard', stat: 'atk', multiplier: 0.15 },
+    description: '+15% charge power to all vanguard units.',
+    effect: { type: 'stat-bonus', target: 'vanguard', stat: 'charge', multiplier: 0.15 },
   },
   {
     id: 'disciplined',
     name: 'Disciplined',
-    description: '+20% defense to all reserve units.',
-    effect: { type: 'stat-bonus', target: 'reserve', stat: 'def', multiplier: 0.20 },
+    description: '+20% push power to all reserve units.',
+    effect: { type: 'stat-bonus', target: 'reserve', stat: 'push', multiplier: 0.20 },
   },
   {
     id: 'aggressive',
@@ -37,14 +37,14 @@ export const LEGATE_TRAITS: readonly LegateTrait[] = [
   {
     id: 'swift',
     name: 'Swift',
-    description: '+20% agility to all units.',
-    effect: { type: 'stat-bonus', target: 'all', stat: 'agi', multiplier: 0.20 },
+    description: '+20% movement to all units.',
+    effect: { type: 'stat-bonus', target: 'all', stat: 'movement', multiplier: 0.20 },
   },
   {
     id: 'tactician',
     name: 'Tactician',
-    description: '+20% attack to all guard units.',
-    effect: { type: 'stat-bonus', target: 'guard', stat: 'atk', multiplier: 0.20 },
+    description: '+20% charge power to all guard units.',
+    effect: { type: 'stat-bonus', target: 'guard', stat: 'charge', multiplier: 0.20 },
   },
   {
     id: 'stoic',

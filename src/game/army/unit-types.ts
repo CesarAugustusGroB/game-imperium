@@ -27,10 +27,42 @@ export type MovementProfileId =
   | 'lieutenant:skirmish'
   | 'lieutenant:mobile';
 
-/** Base combat stat block for a unit/cohort. */
+/**
+ * Base stat block for a unit/cohort: a flat hit-point pool plus five tactical
+ * "power" stats on a small 0–3 scale (0 = not this unit's role, 1 = low,
+ * 2 = moderate, 3 = strong). The combat engine does not read the powers yet —
+ * they are unit identity/ficha for now; only `hp` feeds the soldiers pool.
+ */
 export interface UnitStats {
-  atk: number;
-  def: number;
+  /** Hit points. Flat 1000 for every unit — the army-size / replenishment basis. */
   hp: number;
-  agi: number;
+  /** Carga — shock / charge power (cavalry). */
+  charge: number;
+  /** Acoso — harassment / skirmish power (sling). */
+  harass: number;
+  /** Empuje — push / line-hold power (Roman shield). */
+  push: number;
+  /** Asedio — siege power (crossbow). */
+  siege: number;
+  /** Movimiento — battlefield movement power (feet). */
+  movement: number;
 }
+
+/** Keys of the five tactical power stats (everything on UnitStats except `hp`). */
+export type PowerStat = keyof Omit<UnitStats, 'hp'>;
+
+/**
+ * Display metadata for the five power stats — the single place the UI reads to
+ * render them. Glyphs are emoji placeholders until the real icons (cavalry,
+ * sling, scutum, crossbow, feet) are wired into GameIcon.
+ */
+export const POWER_STATS: readonly { key: PowerStat; label: string; glyph: string }[] = [
+  { key: 'charge',   label: 'Carga',      glyph: '🐎' },
+  { key: 'harass',   label: 'Acoso',      glyph: '🪨' },
+  { key: 'push',     label: 'Empuje',     glyph: '🛡' },
+  { key: 'siege',    label: 'Asedio',     glyph: '🏹' },
+  { key: 'movement', label: 'Movimiento', glyph: '👣' },
+];
+
+/** Flat HP every unit has under the power-stat model. */
+export const UNIT_HP = 1000;
