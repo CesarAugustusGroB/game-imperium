@@ -310,7 +310,7 @@ export const SUPPLY_MORALE_PENALTY_CAP = 40;
  */
 export const IUNIORES = {
   /** Iuniores generated per province population point per season. Used by S25-02. */
-  perPop: 10,
+  perPop: 100,
   /** Flat iuniores cost per cohort recruitment. Used by S25-03. */
   recruitCost: 1000,
   /** Initial pool seeded at the start of a new run. */
