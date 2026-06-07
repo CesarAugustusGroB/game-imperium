@@ -182,6 +182,21 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
   .ib-end-stats > div { display: flex; justify-content: space-between; border-bottom: 1px solid var(--imp-gold-faint); padding-bottom: 3px; }
   .ib-end-stats span { color: var(--imp-text-lo); }
   .ib-end-stats strong { color: var(--imp-text-hi); font-family: var(--imp-font-mono); }
+  .ib-bm-canvas { display:block; width:100%; height:300px; background:#07050a; border:1px solid var(--imp-gold-faint); border-radius: var(--radius-sm); margin-bottom: 12px; }
+  .ib-bm-deploy { padding: 6px 2px 2px; }
+  .ib-bm-forms { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:10px; }
+  .ib-bm-form { text-align:left; padding:12px; border-radius:3px; cursor:pointer; background: var(--imp-panel-soft); border:1px solid var(--imp-gold-dim); border-left:3px solid var(--imp-gold); color: var(--imp-text); }
+  .ib-bm-form:hover:not(:disabled) { border-color: var(--imp-gold); background: var(--imp-panel-hover); }
+  .ib-bm-form.locked, .ib-bm-form:disabled { opacity:.4; cursor:not-allowed; }
+  .ib-bm-form-name { font-family: var(--imp-font-display); font-size:14px; color: var(--imp-gold-hi); }
+  .ib-bm-form-req { font-size:10px; letter-spacing:1px; text-transform:uppercase; color: var(--imp-text-lo); margin:2px 0 4px; }
+  .ib-bm-form-desc { font-size:11px; color: var(--imp-text-mid); line-height:1.35; }
+  .ib-bm-orders { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap:8px; margin-bottom:12px; }
+  .ib-bm-order { text-align:left; padding:8px 10px; border-radius:3px; cursor:pointer; background: var(--imp-panel-soft); border:1px solid var(--imp-gold-dim); border-left:3px solid var(--imp-gold); color: var(--imp-text); }
+  .ib-bm-order:hover:not(:disabled) { border-color: var(--imp-gold); background: var(--imp-panel-hover); }
+  .ib-bm-order:disabled { opacity:.4; cursor:not-allowed; }
+  .ib-bm-order-name { font-size:12px; font-weight:700; color: var(--imp-gold-hi); }
+  .ib-bm-order-desc { font-size:10px; color: var(--imp-text-mid); margin-top:2px; line-height:1.3; }
   `;
   document.head.appendChild(el);
 }
