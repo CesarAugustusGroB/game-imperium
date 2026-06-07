@@ -17,6 +17,8 @@ export interface BattleSession {
   formationOptions: FormationKey[];
   state: BattleState;
   log: RoundLogLine[];
+  lastOrders: { you: OrderKey; enemy: OrderKey } | null;
+  lastLosses: { you: number; enemy: number } | null;
 }
 
 let OPTS: BeginOpts | null = null;
@@ -33,6 +35,8 @@ export function beginBattleSession(opts: BeginOpts): void {
     formationOptions: opts.formationOptions,
     state: makeBattleState(you, enemy, opts.center),
     log: [],
+    lastOrders: null,
+    lastLosses: null,
   };
 }
 
@@ -40,14 +44,19 @@ export function chooseFormation(formation: FormationKey): void {
   const s = battleSession.value; if (!s || s.phase !== 'deployment' || !OPTS) return;
   const you = makeBattleArmy('you', OPTS.playerSeedFor(formation));
   const enemy = makeBattleArmy('enemy', OPTS.enemy);
-  battleSession.value = { ...s, phase: 'fighting', state: makeBattleState(you, enemy, OPTS.center), log: [] };
+  battleSession.value = { ...s, phase: 'fighting', state: makeBattleState(you, enemy, OPTS.center), log: [], lastOrders: null, lastLosses: null };
 }
 
 export function issueOrder(order: OrderKey): void {
   const s = battleSession.value; if (!s || s.phase !== 'fighting') return;
-  const lines = playRound(s.state, order, RNG);
+  const yHp = s.state.you.hp, eHp = s.state.enemy.hp;
+  const { log: lines, enemyOrder } = playRound(s.state, order, RNG);
   const phase = s.state.finished ? 'resolved' : 'fighting';
-  battleSession.value = { ...s, phase, state: s.state, log: [...s.log, ...lines] };
+  battleSession.value = {
+    ...s, phase, state: s.state, log: [...s.log, ...lines],
+    lastOrders: { you: order, enemy: enemyOrder },
+    lastLosses: { you: yHp - s.state.you.hp, enemy: eHp - s.state.enemy.hp },
+  };
 }
 
 export function concludeBattleSession(): void {

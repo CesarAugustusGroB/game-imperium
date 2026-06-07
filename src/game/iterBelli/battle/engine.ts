@@ -30,8 +30,8 @@ export function makeBattleState(you: BattleArmy, enemy: BattleArmy, center: Cent
   return { you, enemy, round: 0, control, center, finished: false, victory: null, endMsg: '', lastDice: { you: null, enemy: null } };
 }
 
-export function playRound(S: BattleState, playerKey: OrderKey, rng: Rng): RoundLogLine[] {
-  if (S.finished) return [];
+export function playRound(S: BattleState, playerKey: OrderKey, rng: Rng): { log: RoundLogLine[]; enemyOrder: OrderKey } {
+  if (S.finished) return { log: [], enemyOrder: playerKey };
   S.round++;
   S.you.guardMult = 1; S.enemy.guardMult = 1;
   const eKey = enemyChoose(S);
@@ -75,7 +75,7 @@ export function playRound(S: BattleState, playerKey: OrderKey, rng: Rng): RoundL
 
   checkEnd(S);
   if (S.finished && S.endMsg && !log.some((l) => l.kind === 'out')) log.push({ text: S.endMsg, kind: 'out' });
-  return log;
+  return { log, enemyOrder: eKey };
 }
 
 /** Production RNG. Tests inject a deterministic one. */

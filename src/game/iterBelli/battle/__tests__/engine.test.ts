@@ -10,7 +10,7 @@ describe('playRound', () => {
     const you = makeBattleArmy('you', { hp:10000, morale:10, discipline:6, stats:{charge:10,harass:8,push:16,siege:5,movement:9}, armorPct:20, armorName:'Iron', ammo:32, formation:FORMATIONS.battleLine });
     const enemy = makeBattleArmy('enemy', ENEMY_ARCHETYPES.carthage);
     const s = makeBattleState(you, enemy, CENTERS.plain);
-    const log = playRound(s, 'charge', fixedRng(4));
+    const { log } = playRound(s, 'charge', fixedRng(4));
     expect(s.round).toBe(1);
     expect(log.length).toBeGreaterThan(0);
   });

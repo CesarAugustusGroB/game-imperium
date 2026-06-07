@@ -58,7 +58,7 @@ export function BattleModal() {
           <DeploymentPanel />
         ) : (
           <>
-            <BattleCanvas state={s.state} round={s.state.round} lastOrders={null} lastLosses={null} />
+            <BattleCanvas state={s.state} round={s.state.round} lastOrders={s.lastOrders} lastLosses={s.lastLosses} />
             <div class="ib-bm-arena">
               <ArmyStatus army={s.state.you} />
               <div class="ib-bm-round"><div class="ib-bm-round-label">Round</div><div class="ib-bm-round-num">{s.state.round}</div></div>

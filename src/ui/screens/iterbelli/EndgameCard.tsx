@@ -7,7 +7,6 @@ import { preparedArmy } from '../../../game/progression/strategic-store';
 import { computeArmySize } from '../../../game/army/cohort';
 import { iterBelliState, resetIterBelli } from '../../../game/iterBelli/iter-belli-state';
 import { getActiveScenario } from '../../../game/iterBelli/iter-belli-scenario';
-import { resetIterBelliBattle } from '../../../game/iterBelli/iter-belli-combat';
 import { START } from '../../../game/iterBelli/iter-belli-balance';
 import { conquerProvince, provinces, collectProvinceIncome } from '../../../game/province/province-store';
 import { councilSlots, grantAdvisorXp } from '../../../game/council/council-store';
@@ -84,7 +83,6 @@ function returnToHub(): void {
   const seatedIds = councilSlots.value.flatMap((a) => (a ? [a.id] : []));
   for (const id of seatedIds) grantAdvisorXp(id, xpPerAdvisor);
 
-  resetIterBelliBattle();
   resetIterBelli();
   navigateTo('hub');
 }
