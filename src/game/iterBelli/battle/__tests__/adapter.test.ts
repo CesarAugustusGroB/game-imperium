@@ -44,3 +44,28 @@ describe('adapter formations + terrain', () => {
     expect(keys).not.toContain('triplex');    // disc 6 > 4, locked
   });
 });
+
+import { buildPlayerSeed, buildEnemyArchetype } from '../adapter';
+import { ENEMY_ARCHETYPES } from '../orders';
+
+describe('adapter army builders', () => {
+  const roster = [cohort({push:3}), cohort({push:3}), cohort({charge:2,movement:2})];
+  it('player seed scales mass stats by strength, keeps movement, scales discipline', () => {
+    const seed = buildPlayerSeed(
+      { soldiers: 5000, initialSoldiers: 10000, morale: 7, discipline: 3 } as any,
+      roster, null,
+    );
+    expect(seed.hp).toBe(5000);
+    expect(seed.morale).toBe(7);
+    expect(seed.discipline).toBe(6);          // scaleDiscipline(3)
+    expect(seed.stats.push).toBe(3);          // 6 × 0.5 strength
+    expect(seed.stats.movement).toBe(2);      // movement NOT scaled
+  });
+  it('enemy archetype scales mass stats by enemyWeaken', () => {
+    const e = buildEnemyArchetype('carthage', 0, 10000); // no weaken
+    expect(e.stats.charge).toBe(ENEMY_ARCHETYPES.carthage.stats.charge);
+    const w = buildEnemyArchetype('carthage', 5, 10000); // 5 × 7% = 35% weaker
+    expect(w.stats.charge).toBeLessThan(ENEMY_ARCHETYPES.carthage.stats.charge);
+    expect(w.stats.movement).toBe(ENEMY_ARCHETYPES.carthage.stats.movement); // movement unscaled
+  });
+});
