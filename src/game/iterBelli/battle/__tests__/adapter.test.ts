@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { sumRosterStats, strengthFrac, scaleDiscipline } from '../adapter';
+import { legateFormationKeys, terrainToCenterKey, availableFormations } from '../adapter';
+import { CENTERS } from '../orders';
 
 const cohort = (o: Partial<{charge:number;harass:number;push:number;siege:number;movement:number}>) =>
   ({ id:'c', name:'c', role:'vanguard', aurumCost:0, description:'',
@@ -20,5 +22,25 @@ describe('adapter stat summation', () => {
     expect(scaleDiscipline(5)).toBe(10);
     expect(scaleDiscipline(7)).toBe(10);
     expect(scaleDiscipline(0)).toBe(0);
+  });
+});
+
+describe('adapter formations + terrain', () => {
+  it('commons always available; null legate → commons only', () => {
+    const keys = legateFormationKeys(null);
+    expect(keys).toEqual(['battleLine','openOrder','shieldWall']);
+  });
+  it('a veteran legate unlocks triplex', () => {
+    const keys = legateFormationKeys({ traitIds:['veteran'] } as any);
+    expect(keys).toContain('triplex');
+  });
+  it('terrain maps to a real center; unknown falls back to plain', () => {
+    expect(CENTERS[terrainToCenterKey('hills')].name).toBe('Hill');
+    expect(CENTERS[terrainToCenterKey('marsh')]).toBeDefined();
+  });
+  it('availableFormations filters by discipline req', () => {
+    const keys = availableFormations({ traitIds:['veteran'] } as any, 4); // engine disc 4
+    expect(keys).toContain('battleLine');     // disc 2
+    expect(keys).not.toContain('triplex');    // disc 6 > 4, locked
   });
 });
