@@ -34,6 +34,18 @@ describe('adapter formations + terrain', () => {
     const keys = legateFormationKeys({ traitIds:['veteran'] } as any);
     expect(keys).toContain('triplex');
   });
+  it('real traits map to the right unique formation', () => {
+    expect(legateFormationKeys({ traitIds:['disciplined'] } as any)).toContain('triplex');
+    expect(legateFormationKeys({ traitIds:['cautious'] } as any)).toContain('testudo');
+    expect(legateFormationKeys({ traitIds:['aggressive'] } as any)).toContain('cuneus');
+    expect(legateFormationKeys({ traitIds:['swift','stoic'] } as any)).toEqual(
+      expect.arrayContaining(['cuneus','testudo']),
+    );
+  });
+  it('morale-only traits gate no unique formation (commons only)', () => {
+    expect(legateFormationKeys({ traitIds:['charismatic','inspiring','rallying'] } as any))
+      .toEqual(['battleLine','openOrder','shieldWall']);
+  });
   it('terrain maps to a real center; unknown falls back to plain', () => {
     expect(CENTERS[terrainToCenterKey('hills')].name).toBe('Hill');
     expect(CENTERS[terrainToCenterKey('marsh')]).toBeDefined();

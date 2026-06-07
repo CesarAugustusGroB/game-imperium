@@ -24,11 +24,20 @@ export function scaleDiscipline(campaignDiscipline: number): number {
   return Math.max(0, Math.min(10, Math.round(campaignDiscipline * 2)));
 }
 
-/** Legate trait id → the FORMATIONS trait label that unlocks a unique formation. */
+/**
+ * Legate trait id → the FORMATIONS trait label that unlocks a unique formation.
+ * Real trait ids from `src/game/army/legate-traits.ts`. Disciplined commanders unlock
+ * the manipular Triplex; defensive/enduring ones the Testudo; aggressive/mobile ones the
+ * Cuneus. The morale traits (rallying/charismatic/inspiring) gate no formation.
+ */
 const TRAIT_TO_FORMATION_TRAIT: Record<string, string> = {
   veteran: 'Roman Veteran',
-  engineer: 'Engineer',
-  shock: 'Shock',
+  disciplined: 'Roman Veteran',
+  tactician: 'Roman Veteran',
+  cautious: 'Engineer',
+  stoic: 'Engineer',
+  aggressive: 'Shock',
+  swift: 'Shock',
 };
 
 export function legateFormationKeys(legate: Legate | null): FormationKey[] {
