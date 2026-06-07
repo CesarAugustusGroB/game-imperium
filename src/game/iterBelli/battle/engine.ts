@@ -44,8 +44,12 @@ export function playRound(S: BattleState, playerKey: OrderKey, rng: Rng): RoundL
   const log: RoundLogLine[] = [{ text: `Round ${S.round} — You: ${yO.name} (d${yFaces}) · Enemy: ${eO.name} (d${eFaces})`, kind: 'head' }];
   const yHp = S.you.hp, eHp = S.enemy.hp;
 
-  // If retreating, reduce damage taken from the enemy counter-blow
+  // Evasion (retreat / hit & run) must blunt THIS round's incoming damage regardless of
+  // which side resolves first, so set the guard up front from each order's movement check.
+  // (resolveMove also sets it on success — idempotent; this covers the side that resolves second.)
   if (playerKey === 'retreat') S.you.guardMult = 0.25;
+  else if (yO.effect === 'hitrun' && yDie + S.you.stats.movement >= (yO.check ?? 0)) S.you.guardMult = 0.25;
+  if (eO.effect === 'hitrun' && eDie + S.enemy.stats.movement >= (eO.check ?? 0)) S.enemy.guardMult = 0.25;
 
   resolveCenter(S, yO, eO, yDie, eDie);
   const yRes = resolveOrder(S, S.you, S.enemy, yO, yDie, eO);
