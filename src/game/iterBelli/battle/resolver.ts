@@ -146,3 +146,48 @@ function resolveMove(S: BattleState, att: BattleArmy, def: BattleArmy, o: OrderD
   log.push({ text:`${who} execute ${o.name} for ${Math.round(dmg)}${note}`, kind: note.includes('crit') ? 'crit' : cls });
   return { eMoraleHit, log };
 }
+
+export function resolveCenter(S: BattleState, yO: OrderDef, eO: OrderDef, yDie: number, eDie: number): void {
+  const yPush = yO.push ? (S.you.stats.push + yDie) * (yO.push / 14) : 0;
+  const ePush = eO.push ? (S.enemy.stats.push + eDie) * (eO.push / 14) : 0;
+  const delta = yPush - ePush;
+  if (delta !== 0) S.control = clamp(S.control + delta * BAL.CENTER_MOVE, -100, 100);
+}
+
+export function applyMorale(S: BattleState, army: BattleArmy, hpBefore: number, ownO: OrderDef, incomingMoraleHit: number): void {
+  const frac = (hpBefore - army.hp) / Math.max(hpBefore, 1);
+  let casualty = frac * BAL.MORALE_K;
+  if (ownO.defensive && ownO.protect) casualty *= (1 - ownO.protect);
+  let loss = casualty + (incomingMoraleHit || 0);
+  if (army.encircled) loss += 1.0;
+  loss *= Math.max(0, 1 - army.discipline * BAL.MORALE_RESIST);
+  loss = Math.max(0, loss);
+  if (ownO.sMorale && ownO.sMorale < 0) loss += -ownO.sMorale;
+  if (controllerOf(S) === army.side && S.center.moraleRegen) army.morale = clamp(army.morale + S.center.moraleRegen, 0, 10);
+  army.morale = clamp(army.morale - loss, 0, 10);
+}
+
+export function checkEnd(S: BattleState): void {
+  if (S.finished) return;
+  const y = S.you, e = S.enemy;
+  if (e.hp <= 0) { finish(S, true, `${e.name} is annihilated.`); return; }
+  if (y.hp <= 0) { finish(S, false, 'Your legion is annihilated.'); return; }
+  if (e.morale <= 0) {
+    if (e.encircled) { e.hp = Math.round(e.hp * 0.05); finish(S, true, 'The enemy breaks while encircled — total annihilation.'); }
+    else { e.hp = Math.round(e.hp * 0.4); finish(S, true, 'Enemy morale collapses — they flee.'); }
+    return;
+  }
+  if (y.morale <= 0) {
+    if (y.encircled) finish(S, false, 'Your line breaks while encircled — slaughter.');
+    else finish(S, false, 'Your morale collapses — the legion routs.');
+    return;
+  }
+  if (S.round >= BAL.MAX_ROUNDS) {
+    const ys = y.hp / y.maxHp + y.morale / 10, es = e.hp / e.maxHp + e.morale / 10;
+    finish(S, ys >= es, 'The battle grinds out — ' + (ys >= es ? 'you hold the field.' : 'the enemy holds the field.'));
+  }
+}
+
+export function finish(S: BattleState, victory: boolean, msg: string): void {
+  S.finished = true; S.victory = victory; S.endMsg = msg;
+}
