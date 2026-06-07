@@ -120,6 +120,29 @@ function chargeAndMove(
   return resolveMove(S, att, def, o, die, ctx, eMoraleHit);
 }
 
-function resolveMove(_S: BattleState, _att: BattleArmy, _def: BattleArmy, _o: OrderDef, _die: number, ctx: any, eMoraleHit: number): OrderResult {
-  return { eMoraleHit, log: ctx.log };
+function resolveMove(S: BattleState, att: BattleArmy, def: BattleArmy, o: OrderDef, die: number, ctx: any, eMoraleHit: number): OrderResult {
+  if (o.sub !== 'move') return { eMoraleHit, log: ctx.log };
+  const { cls, who, log, discBonus, ms, centerDmgBonus, statVal } = ctx;
+
+  // Retreat: break off on a successful movement check.
+  if (o.effect === 'retreat') {
+    const need = (o.check ?? 11) + (att.encircled ? 6 : 0);
+    const total = die + att.stats.movement;
+    if (total >= need) { att.retreated = true; log.push({ text:`${who} disengage and pull back (${total}≥${need}).`, kind: cls }); }
+    else log.push({ text:`${who} fail to break off (${total} < ${need}).`, kind: cls });
+    return { eMoraleHit: 0, log };
+  }
+
+  const total = die + att.stats.movement;
+  if (total < (o.check ?? 0)) { log.push({ text:`${who} fail ${o.name} (${total} < ${o.check}).`, kind: cls }); return { eMoraleHit: 0, log }; }
+
+  let mult = o.mult ?? 0;
+  let note = '';
+  if (o.effect === 'flank' && controllerOf(S) === def.side) { mult *= 2.5; note = ' — flanking crit!'; }
+  const dmg = mitigate(statVal * die * mult * discBonus * ms * (1 + centerDmgBonus) * BAL.DMG_SCALE, def, o);
+  def.hp = Math.max(0, def.hp - dmg);
+  if (o.effect === 'encircle') { def.encircled = true; def.encircleTurns = 2; eMoraleHit += 1.0; note += ' — enemy encircled.'; }
+  if (o.effect === 'hitrun') { att.guardMult = 0.25; note += ' — strike and withdraw.'; }
+  log.push({ text:`${who} execute ${o.name} for ${Math.round(dmg)}${note}`, kind: note.includes('crit') ? 'crit' : cls });
+  return { eMoraleHit, log };
 }
