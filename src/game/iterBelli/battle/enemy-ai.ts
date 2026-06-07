@@ -9,7 +9,10 @@ export function enemyChoose(S: BattleState): OrderKey {
     const o = ORDERS[k];
     if (e.discipline < o.disc) return false;
     if (o.ammo && e.ammo < o.ammo) return false;
-    if (ms < 1 && (o.reckless || o.disc >= 6) && !o.sMorale) return false;
+    // When shaken, lock bold/reckless orders — but still allow *recovery* orders
+    // (positive sMorale: rally/drums/lineRelief). A reckless order with a negative
+    // self-morale cost (e.g. allOut) must stay locked, or the AI suicides.
+    if (ms < 1 && (o.reckless || o.disc >= 6) && !(o.sMorale && o.sMorale > 0)) return false;
     return true;
   });
   const has = (k: OrderKey) => av.includes(k);
