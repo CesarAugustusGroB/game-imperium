@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { enemyChoose } from '../enemy-ai';
-import { ORDERS, CENTERS, FORMATIONS } from '../orders';
+import { CENTERS, FORMATIONS } from '../orders';
 import type { BattleArmy, BattleState } from '../types';
 const mkArmy = (side:'you'|'enemy', over:Partial<BattleArmy>={}):BattleArmy => ({
   name:side, side, hp:10000, maxHp:10000, morale:10, discipline:6,

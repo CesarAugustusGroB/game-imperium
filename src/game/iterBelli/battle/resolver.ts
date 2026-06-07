@@ -1,5 +1,4 @@
-import type { BattleArmy, BattleState, OrderDef, OrderKey, Side, RoundLogLine } from './types';
-import { ORDERS } from './orders';
+import type { BattleArmy, BattleState, OrderDef, Side, RoundLogLine } from './types';
 import { BAL } from './balance';
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -92,7 +91,7 @@ export function controllerOf(S: BattleState): Side | null {
 function chargeAndMove(
   S: BattleState, att: BattleArmy, def: BattleArmy, o: OrderDef, die: number, defO: OrderDef, ctx: any,
 ): OrderResult {
-  const { cls, who, tgt, log, discBonus, ms, attHasCenter, centerDmgBonus, statVal } = ctx;
+  const { cls, who, log, discBonus, ms, attHasCenter, centerDmgBonus, statVal } = ctx;
   let eMoraleHit = ctx.eMoraleHit as number;
 
   if (o.sub === 'charge') {
