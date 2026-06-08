@@ -1,0 +1,21 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="moveFill" x1="6" y1="6" x2="25" y2="27" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B8F4C9"/>
+      <stop offset="0.5" stop-color="#42B66A"/>
+      <stop offset="1" stop-color="#145C3C"/>
+    </linearGradient>
+    <linearGradient id="moveGold" x1="16" y1="4" x2="16" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBE29E"/>
+      <stop offset="1" stop-color="#8D5E24"/>
+    </linearGradient>
+    <filter id="moveShadow" x="-3" y="-2" width="38" height="38" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="#050208" flood-opacity="0.78"/>
+    </filter>
+  </defs>
+  <g filter="url(#moveShadow)">
+    <path d="M11.6 24.8C8.5 24 6.1 22.1 4.6 19C8.8 18.7 12.2 16.9 14.8 13.4C13.5 17.8 14 21.3 16.3 23.8C14.9 24.7 13.4 25 11.6 24.8Z" fill="url(#moveFill)" stroke="url(#moveGold)" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M16.1 26.6C13.7 24.4 12.7 21.7 13.4 18.6C14.1 15.5 16.9 12.5 21.9 9.7C20.9 13.3 21.2 16.2 22.9 18.2C21.5 21.5 19.2 24.3 16.1 26.6Z" fill="#61D17B" stroke="#D8B765" stroke-width="1.1"/>
+    <path d="M18 18.5L24.9 5.3L23.1 16.1H27.3L15.7 29L19.2 18.5H18Z" fill="#F5CA56" stroke="#5C3212" stroke-width="1" stroke-linejoin="round"/>
+  </g>
+</svg>

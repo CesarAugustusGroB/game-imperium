@@ -1,0 +1,23 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="slingCord" x1="6" y1="5" x2="24" y2="27" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1D18A"/>
+      <stop offset="1" stop-color="#8C4F22"/>
+    </linearGradient>
+    <radialGradient id="stoneFill" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(21.5 9) rotate(123) scale(8)">
+      <stop stop-color="#E8D6BE"/>
+      <stop offset="0.55" stop-color="#8E7E6A"/>
+      <stop offset="1" stop-color="#34291F"/>
+    </radialGradient>
+    <filter id="harassShadow" x="-3" y="-2" width="38" height="38" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="#050208" flood-opacity="0.78"/>
+    </filter>
+  </defs>
+  <g filter="url(#harassShadow)">
+    <path d="M7.2 25.5C11.8 20.8 15.1 16.9 17.1 13.8" stroke="url(#slingCord)" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M10.5 26.9C13.4 22.3 16.5 18.6 19.9 15.8" stroke="#B77938" stroke-width="1.7" stroke-linecap="round"/>
+    <path d="M17.1 11.6C18.7 8.5 21.2 7.1 24.5 7.6C24.1 10.9 22.3 13.1 19 14.1L17.1 11.6Z" fill="#B65636" stroke="#F0CB78" stroke-width="1.2" stroke-linejoin="round"/>
+    <circle cx="23.1" cy="8.1" r="4.4" fill="url(#stoneFill)" stroke="#EBD49A" stroke-width="1.1"/>
+    <path d="M20.2 5.7L17.4 3.9M25.4 12.2L28.2 14.2M26.2 7.4L29.2 6.6" stroke="#DCC88D" stroke-width="1.1" stroke-linecap="round" opacity="0.75"/>
+  </g>
+</svg>

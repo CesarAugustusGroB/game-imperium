@@ -1,0 +1,21 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="chargeHorse" x1="6" y1="6" x2="25" y2="26" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6D48B"/>
+      <stop offset="0.45" stop-color="#C16D36"/>
+      <stop offset="1" stop-color="#5C2119"/>
+    </linearGradient>
+    <linearGradient id="chargeGold" x1="16" y1="3" x2="16" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE6A4"/>
+      <stop offset="1" stop-color="#935D21"/>
+    </linearGradient>
+    <filter id="chargeShadow" x="-3" y="-2" width="38" height="38" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="#050208" flood-opacity="0.78"/>
+    </filter>
+  </defs>
+  <g filter="url(#chargeShadow)">
+    <path d="M7 24.7L10.8 15.2L15.9 8.5L23.2 6.5L27 10.7L23.6 12.2L20.1 10.6L18.4 13.5L22.5 18.4L21.1 24.7H16.5L17.4 19.6L13.5 16.4L11.4 24.7H7Z" fill="url(#chargeHorse)" stroke="url(#chargeGold)" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M17.3 8.3C15.8 5.9 13.8 4.6 11.3 4.3C12.2 7.2 13.8 9.1 16.1 10.1L17.3 8.3Z" fill="#C8ECF2" stroke="#E9C96E" stroke-width="1"/>
+    <path d="M24.9 17.4L29.4 18.1M24.1 20L28.2 21.6M22.3 22.2L25.4 24.8" stroke="#F6D48B" stroke-width="1.4" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -1,0 +1,21 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="wingFill" x1="6" y1="8" x2="27" y2="24" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B4F1C8"/>
+      <stop offset="0.5" stop-color="#58B86F"/>
+      <stop offset="1" stop-color="#1D5E39"/>
+    </linearGradient>
+    <linearGradient id="agiGold" x1="16" y1="5" x2="16" y2="27" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6D994"/>
+      <stop offset="1" stop-color="#7C4B1F"/>
+    </linearGradient>
+    <filter id="agiShadow" x="-3" y="-2" width="38" height="38" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="1.6" stdDeviation="1.3" flood-color="#050208" flood-opacity="0.75"/>
+    </filter>
+  </defs>
+  <g filter="url(#agiShadow)">
+    <path d="M16 27C12.8 24.8 11.3 21.7 12 18.2C12.7 14.7 15.9 11.7 21.6 9.1C20.2 12.5 19.8 15.4 20.4 17.8C21.7 16.2 23.6 14.9 26.2 13.9C24.9 19.7 21.4 24.1 16 27Z" fill="url(#wingFill)" stroke="url(#agiGold)" stroke-width="1.2"/>
+    <path d="M11.5 23.4C8.6 22.6 6.4 21.1 4.8 18.8C8.5 18.3 11.4 16.7 13.5 14C12.4 17.5 12.8 20.6 14.8 23.3C13.8 23.6 12.9 23.7 11.5 23.4Z" fill="#79D990" stroke="#D8B766" stroke-width="1"/>
+    <path d="M14.2 22.9C17 19.6 20 17.2 24.2 15.2" stroke="#EAF7C6" stroke-opacity="0.55" stroke-width="1.2" stroke-linecap="round"/>
+  </g>
+</svg>

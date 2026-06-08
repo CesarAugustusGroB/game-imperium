@@ -13,6 +13,7 @@ import { SUPPLIES_STARTING_STOCK } from '../../../../config/game-config';
 import { navigateToIterBelli } from '../../../screens';
 import { playSfx } from '../../../sound/sfx';
 import { BentoCard } from '../../../components/BentoCard';
+import { GameIcon } from '../../../components/GameIcon';
 import { ResourceAmount } from '../../../components/ResourceIcon';
 import campaignBriefingBackground from '../../../../assets/ui/campaign/campaign-briefing-background.png';
 import missionParchmentScroll from '../../../../assets/ui/campaign/mission-parchment-scroll.png';
@@ -267,7 +268,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
             alignItems: 'flex-start',
             gap: 8,
           }}>
-            <span style={{ fontSize: 13, flexShrink: 0, lineHeight: 1.4 }}>!</span>
+            <GameIcon name="supplies-crate" size={18} style={{ flexShrink: 0 }} />
             <div style={{
               fontSize: 10,
               color: '#d48b3a',

@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Iter Belli · Battle Rework (prototype)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital@0;1&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0e0c16; --panel:#16131f; --panel2:#1d1929; --line:rgba(212,168,67,.18);
+    --gold:#d4a843; --gold-hi:#f0d080; --txt-hi:#ece3d0; --txt:#bdb3a0; --txt-lo:#8a8170;
+    --red:#c24a3a; --green:#4a9a6a; --blue:#5a7aa0; --crimson:#b23a3a;
+    --charge:#c97a3a; --harass:#9a86c0; --push:#5a8a9a; --siege:#b06a4a; --move:#6aa06a; --moral:#d4a843;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'EB Garamond',serif; background:
+      radial-gradient(1200px 700px at 50% -10%, #221a2e 0%, var(--ink) 60%),
+      var(--ink);
+    color:var(--txt); min-height:100vh; padding:18px; letter-spacing:.2px;
+  }
+  h1,h2,h3,.disp{font-family:'Cinzel',serif; letter-spacing:1.5px}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .wrap{max-width:1180px; margin:0 auto}
+  .topbar{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px; border-bottom:1px solid var(--line); padding-bottom:10px}
+  .topbar h1{font-size:20px; color:var(--gold-hi); text-transform:uppercase}
+  .topbar .sub{font-size:13px; color:var(--txt-lo); font-style:italic}
+
+  .frame{background:linear-gradient(180deg, var(--panel) 0%, #12101a 100%); border:1px solid var(--line);
+    border-radius:4px; box-shadow:0 12px 40px rgba(0,0,0,.5), inset 0 0 0 1px rgba(0,0,0,.4)}
+
+  /* ── pre-battle formation select ── */
+  #setup{padding:22px}
+  #setup h2{font-size:15px; color:var(--gold); text-transform:uppercase; margin-bottom:4px}
+  .hint{font-size:12.5px; color:var(--txt-lo); font-style:italic; margin-bottom:14px}
+  .disc-pick{display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap}
+  .disc-pick label{font-size:12px; color:var(--txt); text-transform:uppercase; letter-spacing:1px; font-family:'Cinzel'}
+  .disc-pick input[type=range]{accent-color:var(--gold); width:200px}
+  .pill{font-family:'JetBrains Mono'; font-size:12px; color:var(--gold-hi); background:rgba(212,168,67,.1);
+    border:1px solid var(--line); border-radius:3px; padding:3px 8px}
+  .forms{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+  .fcard{background:var(--panel2); border:1px solid var(--line); border-left:3px solid var(--gold);
+    border-radius:3px; padding:12px; cursor:pointer; transition:all .15s; position:relative}
+  .fcard:hover{border-color:var(--gold); transform:translateY(-2px)}
+  .fcard.locked{opacity:.4; cursor:not-allowed; filter:grayscale(.6)}
+  .fcard.sel{box-shadow:0 0 0 2px var(--gold), 0 8px 24px rgba(212,168,67,.25)}
+  .fcard .fn{font-family:'Cinzel'; font-size:13px; color:var(--txt-hi); text-transform:uppercase; font-weight:600}
+  .fcard .ft{font-size:11.5px; color:var(--txt); font-style:italic; margin:5px 0 8px; line-height:1.45; min-height:48px}
+  .fcard .fo{font-size:10px; color:var(--txt-lo); font-family:'JetBrains Mono'}
+  .fcard .req{position:absolute; top:8px; right:10px; font-size:10px; font-family:'JetBrains Mono';
+    color:var(--gold); background:rgba(0,0,0,.4); border:1px solid var(--line); border-radius:3px; padding:1px 6px}
+  .fcard.uniq{border-left-color:#b07acc}
+  .fcard.uniq .req{color:#c79ae0}
+  .tag{display:inline-block; font-size:8.5px; font-family:'Cinzel'; letter-spacing:1px; text-transform:uppercase;
+    border:1px solid; border-radius:2px; padding:1px 5px; margin-top:6px}
+  .epill{font-family:'Cinzel'; font-size:11px; letter-spacing:.5px; color:var(--txt); background:rgba(178,58,58,.08);
+    border:1px solid rgba(178,58,58,.3); border-radius:3px; padding:4px 10px; cursor:pointer; transition:all .12s; text-transform:uppercase}
+  .epill:hover{border-color:var(--crimson); color:var(--txt-hi)}
+  .epill.sel{background:rgba(178,58,58,.25); border-color:var(--crimson); color:#f0c0b0; box-shadow:0 0 0 1px var(--crimson)}
+  .cpill{font-family:'Cinzel'; font-size:11px; letter-spacing:.5px; color:var(--txt); background:rgba(212,168,67,.08);
+    border:1px solid var(--line); border-radius:3px; padding:4px 10px; cursor:pointer; transition:all .12s; text-transform:uppercase}
+  .cpill:hover{border-color:var(--gold); color:var(--txt-hi)}
+  .cpill.sel{background:rgba(212,168,67,.22); border-color:var(--gold); color:var(--gold-hi); box-shadow:0 0 0 1px var(--gold)}
+  .ladder{margin-bottom:14px; padding:10px 14px; background:rgba(212,168,67,.06); border:1px solid var(--line);
+    border-radius:4px; font-size:12px; color:var(--txt); line-height:1.55}
+  .ladder b{color:var(--gold-hi)}
+  .ladder .next{display:block; margin-top:4px; color:var(--txt-lo); font-style:italic}
+  .ladder .next b{color:#9ad09a; font-style:normal}
+  .startbtn{margin-top:18px; width:100%; padding:11px; font-family:'Cinzel'; font-size:13px; font-weight:700;
+    letter-spacing:2px; text-transform:uppercase; color:var(--ink); border:none; border-radius:3px; cursor:pointer;
+    background:linear-gradient(180deg,var(--gold-hi),#b8892a)}
+  .startbtn:disabled{opacity:.4; cursor:not-allowed; filter:grayscale(1)}
+
+  /* ── arena ── */
+  #battle{display:none}
+  #battleCanvas{display:block; width:100%; height:300px; background:#07050a;
+    border-bottom:1px solid var(--line); border-radius:4px 4px 0 0}
+  .arena{display:grid; grid-template-columns:1fr 220px 1fr; gap:12px; padding:16px}
+  .army{background:var(--panel2); border:1px solid var(--line); border-radius:3px; padding:14px}
+  .army.enemy{border-left:3px solid var(--crimson)}
+  .army.you{border-left:3px solid var(--gold)}
+  .army .nm{font-family:'Cinzel'; font-size:15px; color:var(--txt-hi); text-transform:uppercase; font-weight:600}
+  .army .fm{font-size:11px; color:var(--gold); font-style:italic; margin-bottom:2px}
+  .army .meta{font-size:10.5px; color:var(--txt-lo); font-family:'JetBrains Mono'; margin-bottom:10px}
+  .bar-wrap{margin:7px 0}
+  .bar-lbl{display:flex; justify-content:space-between; font-size:10px; color:var(--txt-lo); font-family:'JetBrains Mono'; margin-bottom:3px}
+  .bar{height:9px; background:rgba(0,0,0,.45); border-radius:99px; overflow:hidden; position:relative}
+  .bar > i{position:absolute; inset:0; border-radius:99px; transition:width .35s ease}
+  .hp > i{background:linear-gradient(90deg,#4a9a6a,#7ecf97)}
+  .hp.low > i{background:linear-gradient(90deg,#d48b3a,#e8a848)}
+  .hp.crit > i{background:linear-gradient(90deg,#c24a3a,#d4604a)}
+  .mor > i{background:linear-gradient(90deg,#6a6acf,#9a9aef)}
+  .mor.sh > i{background:linear-gradient(90deg,#d48b3a,#e8c060)}
+  .mor.wv > i{background:linear-gradient(90deg,#c24a3a,#e07a4a)}
+  .ammo > i{background:linear-gradient(90deg,#9a86c0,#c0aee0)}
+  .defrow{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+  .chip{font-size:10px; font-family:'JetBrains Mono'; padding:2px 7px; border-radius:3px; border:1px solid var(--line);
+    background:rgba(0,0,0,.3); color:var(--txt)}
+  .chip b{color:var(--gold-hi); font-weight:600}
+  .flags{display:flex; gap:5px; flex-wrap:wrap; margin-top:8px; min-height:18px}
+  .flag{font-size:9px; font-family:'Cinzel'; letter-spacing:.8px; text-transform:uppercase; padding:2px 7px; border-radius:2px}
+  .flag.danger{background:rgba(194,74,58,.18); border:1px solid rgba(194,74,58,.6); color:#e88858}
+  .flag.good{background:rgba(74,154,106,.18); border:1px solid rgba(74,154,106,.6); color:#8fe0aa}
+  .flag.state{background:rgba(90,122,160,.16); border:1px solid rgba(90,122,160,.5); color:#a8c4e0}
+  .mstate{font-size:10px; font-family:'Cinzel'; letter-spacing:1px; text-transform:uppercase}
+
+  /* center column */
+  .center{display:flex; flex-direction:column; align-items:center; gap:8px; padding-top:4px}
+  .roundbox{text-align:center}
+  .roundbox .rl{font-size:9px; color:var(--txt-lo); font-family:'Cinzel'; letter-spacing:2px; text-transform:uppercase}
+  .roundbox .rn{font-size:34px; color:var(--gold-hi); font-family:'Cinzel'; line-height:1}
+  .ctitle{font-size:9px; color:var(--txt-lo); font-family:'Cinzel'; letter-spacing:1.5px; text-transform:uppercase}
+  .ctype{font-size:13px; color:var(--gold); font-family:'Cinzel'; text-transform:uppercase; text-align:center}
+  .cbonus{font-size:10px; color:var(--txt); font-style:italic; text-align:center; line-height:1.35; min-height:28px}
+  .posbar{width:100%; height:14px; background:linear-gradient(90deg, rgba(194,74,58,.25), rgba(0,0,0,.5), rgba(212,168,67,.25));
+    border:1px solid var(--line); border-radius:99px; position:relative; overflow:visible}
+  .posbar .mid{position:absolute; left:50%; top:-3px; bottom:-3px; width:1px; background:rgba(255,255,255,.25)}
+  .posbar .knob{position:absolute; top:50%; width:14px; height:14px; border-radius:50%; transform:translate(-50%,-50%);
+    background:var(--gold); box-shadow:0 0 8px var(--gold); transition:left .35s ease; border:1px solid #000}
+  .posends{display:flex; justify-content:space-between; width:100%; font-size:8.5px; color:var(--txt-lo); font-family:'JetBrains Mono'}
+  .ctrltier{font-size:10px; color:var(--txt); font-family:'JetBrains Mono'; text-align:center; margin-top:2px}
+  .ctrltier b{color:var(--gold-hi)}
+  .dice{display:flex; gap:10px; margin-top:6px}
+  .die{width:42px; height:42px; border:1px solid var(--line); border-radius:5px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; background:rgba(0,0,0,.35); position:relative}
+  .die .dl{position:absolute; top:2px; left:4px; font-size:8px; color:var(--txt-lo); font-family:'JetBrains Mono'}
+  .die .dv{font-size:20px; color:var(--txt-hi); font-family:'Cinzel'}
+  .die.empty .dv{color:var(--txt-lo)}
+  .die .dbonus{position:absolute; bottom:1px; right:3px; font-size:9px; font-family:'JetBrains Mono'; color:#8fe0aa; font-weight:600}
+
+  /* orders */
+  .orders{padding:0 16px 12px}
+  .osec{font-size:11px; color:var(--gold); font-family:'Cinzel'; letter-spacing:1.5px; text-transform:uppercase; margin:6px 0 8px;
+    border-top:1px solid var(--line); padding-top:10px; display:flex; justify-content:space-between; align-items:center}
+  .ogrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px}
+  .obtn{text-align:left; background:var(--panel2); border:1px solid var(--line); border-left:3px solid var(--gold);
+    border-radius:3px; padding:9px 10px; cursor:pointer; transition:all .12s; color:var(--txt)}
+  .obtn:hover:not(:disabled){border-color:var(--gold); background:#241f31; transform:translateY(-1px)}
+  .obtn:disabled{opacity:.38; cursor:not-allowed}
+  .obtn .on{font-family:'Cinzel'; font-size:12px; color:var(--txt-hi); text-transform:uppercase; font-weight:600; display:flex; align-items:center; gap:6px}
+  .obtn .od{font-size:10.5px; color:var(--txt-lo); font-style:italic; line-height:1.35; margin-top:3px}
+  .obtn .ox{font-size:9px; font-family:'JetBrains Mono'; color:var(--txt-lo); margin-top:5px; display:flex; gap:8px; flex-wrap:wrap}
+  .obtn .ox b{color:var(--gold-hi)}
+  .sub-charge{border-left-color:var(--charge)} .sub-charge .on{color:#e8a878}
+  .sub-harass{border-left-color:var(--harass)} .sub-harass .on{color:#c0aee0}
+  .sub-push{border-left-color:var(--push)} .sub-push .on{color:#9ac0d0}
+  .sub-siege{border-left-color:var(--siege)} .sub-siege .on{color:#e0a080}
+  .sub-move{border-left-color:var(--move)} .sub-move .on{color:#9ad09a}
+  .sub-moral{border-left-color:var(--moral)} .sub-moral .on{color:var(--gold-hi)}
+
+  /* log */
+  .log{margin:0 16px 16px; background:rgba(0,0,0,.4); border:1px solid var(--line); border-radius:3px;
+    padding:10px 12px; height:170px; overflow-y:auto; font-size:12px; line-height:1.6}
+  .log .ln{padding:1px 0; color:var(--txt)}
+  .log .head{color:var(--gold-hi); font-family:'Cinzel'; letter-spacing:1px; text-transform:uppercase; font-size:11px; margin-top:6px}
+  .log .you{color:#9ac8e8}
+  .log .en{color:#e8a090}
+  .log .crit{color:#ffcf6a; font-weight:600}
+  .log .mor{color:#b0a0e0}
+  .log .out{color:var(--gold-hi); font-family:'Cinzel'; font-size:13px; text-transform:uppercase; letter-spacing:1px; margin-top:8px}
+
+  .endpanel{padding:18px 16px; text-align:center}
+  .endpanel .et{font-family:'Cinzel'; font-size:22px; letter-spacing:2px; text-transform:uppercase}
+  .endpanel.win .et{color:#8fe0aa} .endpanel.lose .et{color:#e88858}
+  .endpanel .es{font-size:13px; color:var(--txt); font-style:italic; margin-top:6px}
+  .legend{font-size:11px; color:var(--txt-lo); padding:10px 16px 18px; line-height:1.6; border-top:1px solid var(--line); margin:0 0 0}
+  .legend b{color:var(--gold)}
+  .restart{background:transparent; border:1px solid var(--line); color:var(--gold); font-family:'Cinzel'; font-size:11px;
+    letter-spacing:1px; text-transform:uppercase; padding:6px 14px; border-radius:3px; cursor:pointer; margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <h1>Iter Belli · Battle Rework</h1>
+    <span class="sub">playable prototype — formation → orders · additive power stats · dynamic morale</span>
+  </div>
+
+  <!-- ════════ SETUP ════════ -->
+  <div id="setup" class="frame">
+    <h2>Deployment</h2>
+    <div class="hint">Your legate brings base discipline and a pool of formations (common + trait-unlocked). Discipline unlocks formations and the complex orders within them. Pick ONE — it stays locked for the whole battle.</div>
+
+    <div class="disc-pick">
+      <label>Legate discipline</label>
+      <input id="disc" type="range" min="2" max="10" value="6" />
+      <span class="pill" id="discVal">6 / 10</span>
+      <span class="pill" id="discBonus">dmg bonus +30%</span>
+      <span class="pill" style="color:#c79ae0">traits: Veteran · Engineer · Shock</span>
+    </div>
+
+    <div class="disc-pick">
+      <label>Army strength on arrival</label>
+      <input id="strength" type="range" min="40" max="100" value="100" />
+      <span class="pill" id="strengthVal">100%</span>
+      <span class="pill" id="strengthFx">10,000 HP · mass stats ×1.00</span>
+      <span class="pill" style="color:#9ad09a">the march thins the ranks: HP + charge/harass/push/siege scale down (movement holds)</span>
+    </div>
+
+    <div class="disc-pick">
+      <label>Morale on arrival</label>
+      <input id="morale" type="range" min="2" max="10" step="0.5" value="10" />
+      <span class="pill" id="moraleVal">10.0 / 10</span>
+      <span class="pill" style="color:#b0a0e0">inherited from the campaign — and written back when the battle ends</span>
+    </div>
+
+    <div class="disc-pick">
+      <label>Legate</label>
+      <span id="legatePills" style="display:flex; gap:6px; flex-wrap:wrap"></span>
+      <span class="pill" id="legateDesc"></span>
+    </div>
+
+    <div class="disc-pick">
+      <label>Armor tier</label>
+      <span id="armorPills" style="display:flex; gap:6px; flex-wrap:wrap"></span>
+      <span class="pill" id="armorDesc"></span>
+    </div>
+
+    <div class="disc-pick">
+      <label>Battlefield</label>
+      <span id="centerPills" style="display:flex; gap:6px; flex-wrap:wrap"></span>
+      <span class="pill" id="centerDesc"></span>
+    </div>
+
+    <div class="disc-pick">
+      <label>Enemy</label>
+      <span id="enemyPills" style="display:flex; gap:6px; flex-wrap:wrap"></span>
+    </div>
+    <div id="enemyDesc" class="ladder" style="border-color:rgba(178,58,58,.3); background:rgba(178,58,58,.06)"></div>
+
+    <div id="discLadder" class="ladder"></div>
+
+    <div class="forms" id="forms"></div>
+
+    <button class="startbtn" id="start" disabled>Begin battle</button>
+  </div>
+
+  <!-- ════════ BATTLE ════════ -->
+  <div id="battle" class="frame">
+    <canvas id="battleCanvas"></canvas>
+    <div class="arena">
+      <div class="army you" id="youPanel"></div>
+      <div class="center" id="centerCol"></div>
+      <div class="army enemy" id="enemyPanel"></div>
+    </div>
+    <div class="orders" id="ordersZone"></div>
+    <div class="log" id="log"></div>
+    <div class="legend">
+      <b>Tiered center:</b> dominating the position climbs tiers and each tier <b>grows your die +1 face</b> (d6→d9, up to +3) — affects damage and checks. Pushing takes the <b>center</b> (bigger die + type bonus) but exposes you to <b>flanking</b> (crits). ·
+      Skirmish = safe damage but <b>cedes the center</b> and is blunted by <b>armor</b> · costs ammo. ·
+      Charge = <b>impact + recoil</b>: a braced line halts it; breaks weakened <b>morale</b> (finisher). ·
+      Siege <b>pierces</b> armor and fortification. · Maneuver = envelop / flank.
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════ DATA ════════════════
+const SUB = { push:'push', harass:'harass', charge:'charge', siege:'siege', move:'move', moral:'moral' };
+const SUB_ICON = { push:'🛡', harass:'🪨', charge:'🐎', siege:'🏹', move:'👣', moral:'🥁' };
+const NF = n => Math.round(n).toLocaleString('en-US');
+
+// Master order catalog
+const ORDERS = {
+  advance:    { name:'Advance', sub:'push', stat:'push', mult:0.55, disc:2, push:22,
+                desc:'Steady push. Gains ground toward the center; low, safe damage.' },
+  holdLine:   { name:'Hold the Line', sub:'push', stat:'push', mult:0.30, disc:2, push:14, defensive:true, protect:0.38,
+                desc:'Defensive brace. Halts the enemy charge (recoil ×1.8) and protects your morale.' },
+  charge:     { name:'Charge', sub:'charge', stat:'charge', mult:1.05, disc:2, eMorale:1,
+                desc:'Impact + recoil. Big burst but you take a return blow; breaks morale.' },
+  skirmish:   { name:'Skirmish', sub:'harass', stat:'harass', mult:0.85, disc:2, ammo:9, eMorale:0.4,
+                desc:'Safe ranged damage (velites). Costs ammo, blunted by armor, does NOT push the center.' },
+  siege:      { name:'Siege Assault', sub:'siege', stat:'siege', mult:1.45, disc:4, pierce:true, eMorale:0.7,
+                desc:'Pierces armor and fortification. The answer to an armored/entrenched foe.' },
+  envelop:    { name:'Envelopment', sub:'move', stat:'movement', mult:1.1, disc:6, check:12, eMorale:1.0, effect:'encircle',
+                desc:'Check (die+movement ≥ 12). Success: encircles the enemy (~2 rounds) + high damage.' },
+  flank:      { name:'Flank', sub:'move', stat:'movement', mult:0.7, disc:5, check:9, effect:'flank',
+                desc:'Check (die+movement ≥ 9). CRIT (×2.5) if the enemy holds the center.' },
+  drums:      { name:'War Drums', sub:'moral', disc:3, sMorale:1.6, drums:true,
+                desc:'Cornu and drums. Raises your morale steadily (scales with discipline), no damage.' },
+  taunt:      { name:'Taunt', sub:'moral', disc:3, eMorale:1.0, mult:0.05, stat:'harass',
+                desc:'Jeers and war cries. Hits enemy morale directly, almost no physical damage.' },
+  rally:      { name:'Rally', sub:'moral', disc:2, sMorale:2.6,
+                desc:'Reforms the line. Recovers strong morale; you forgo the offensive round.' },
+  // ── Morale-focused / more double-edged variants ──
+  warCry:     { name:'War Cry', sub:'push', stat:'push', mult:0.35, disc:3, push:16, eMorale:0.85, sMorale:0.5,
+                desc:'Push with a roar (barritus). Gains some ground and hits enemy morale hard.' },
+  fireMissiles:{ name:'Fire Missiles', sub:'harass', stat:'harass', mult:0.8, disc:4, ammo:14, eMorale:1.4, fire:true,
+                desc:'Incendiary volleys. Safe damage + terror (heavy enemy morale). Burns more ammo.' },
+  hitRun:     { name:'Hit and Run', sub:'move', stat:'movement', mult:0.65, disc:4, check:9, effect:'hitrun', eMorale:0.5,
+                desc:'Check. Strike and withdraw (Numidians): damage and you AVOID nearly all incoming damage. Cedes the center.' },
+  // ── Heavy shock: the wedge pierces, the all-out gambles ──
+  wedge:      { name:'Wedge (Caput Porci)', sub:'charge', stat:'charge', mult:1.35, disc:5, eMorale:1.5, pierceBrace:true, breakCenter:true, wedge:true,
+                desc:'Boar’s head. Pierces the shield wall (ignores the defensive brace) and, on a hit, SEIZES the center.' },
+  allOut:     { name:'All-Out Charge', sub:'charge', stat:'charge', mult:2.2, disc:6, eMorale:2.5, sMorale:-3, reckless:true, allIn:true,
+                desc:'The total gamble. Devastating impact and shock; if braced or you roll low, the recoil wrecks you.' },
+  // ── Hallmark of the manipular system ──
+  lineRelief: { name:'Line Relief', sub:'moral', disc:6, sMorale:1.5, refresh:true,
+                desc:'Manipular relief: hastati→principes→triarii. Fresh troops to the front: +morale and you take less damage this round.' },
+  // ── Escape valve (concern #10): retreat is a movement check, harder when encircled ──
+  retreat:    { name:'Retreat', sub:'move', stat:'movement', disc:1, check:11, effect:'retreat',
+                desc:'Movement check (+6 if encircled). Break off the battle: a fast army escapes saving most troops; slow/ringed ones get caught.' },
+};
+
+// Formations: which orders, discipline req, common/unique
+const FORMATIONS = {
+  battleLine: { name:'Battle Line', kind:'common', disc:2, trait:null,
+             desc:'Balanced. The reliable default: push, charge, skirmish and rally.',
+             orders:['advance','charge','skirmish','holdLine','rally'] },
+  openOrder: { name:'Open Order', kind:'common', disc:2, trait:null,
+             desc:'Light, mobile skirmish (velites/Numidians). Harasses, kites with hit&run, flanks; cedes the center.',
+             orders:['skirmish','fireMissiles','hitRun','flank','charge','rally'] },
+  shieldWall:{ name:'Shield Wall', kind:'common', disc:3, trait:null,
+             desc:'Defensive and morale-driven. Owns the center and breaks the foe with cries, drums and jeers.',
+             orders:['holdLine','warCry','drums','taunt','advance','rally'] },
+  triplex:   { name:'Triplex Acies', kind:'unique', disc:6, trait:'Roman Veteran',
+             desc:'The full manipular machine. Line relief, envelopment and a solid line.',
+             orders:['advance','charge','holdLine','lineRelief','envelop','rally'] },
+  testudo:   { name:'Testudo', kind:'unique', disc:5, trait:'Engineer', antiMissile:true,
+             desc:'Tortoise fortress. Immune to skirmishing (absorbs missiles), advances and pierces with siege.',
+             orders:['holdLine','advance','siege','rally'] },
+  cuneus:    { name:'Cuneus (Wedge)', kind:'unique', disc:5, trait:'Shock',
+             desc:'Heavy shock. Advances, pierces with the wedge, gambles all-out and flanks.',
+             orders:['charge','wedge','allOut','flank','advance','rally'] },
+};
+
+// Center types & bonuses
+// Concern #6: the center type derives from the spoke terrain (not random).
+const CENTERS = {
+  hill:  { name:'Hill', terrain:'hills', desc:'+15% damage to whoever holds it', dmg:0.15 },
+  ford:  { name:'River Ford', terrain:'river', desc:'−25% enemy charge', enemyChargePenalty:0.25 },
+  camp:  { name:'Camp', terrain:'settlement', desc:'+0.8 morale/round to the holder', moraleRegen:0.8 },
+  plain: { name:'Open Plain', terrain:'plains', desc:'+25% charge to the holder', chargeBonus:0.25 },
+};
+/** Real game: map IterBelliState.spokeTerrain → a center key. */
+const TERRAIN_CENTER = { plains:'plain', hills:'hill', river:'ford', settlement:'camp', forest:'hill' };
+
+const ARMORS = { copper:5, bronze:12, iron:20, steel:30 };
+
+// Concern #4: enemy = authored archetype (aggregate army profile + armor + formation + fort + ammo).
+// A scenario references one of these and parameterizes baseSoldiers/threat. Each teaches a counter.
+const ENEMY_ARCHETYPES = {
+  carthage:  { name:'Carthaginian Host', formation:'cuneus',     hp:10000, morale:10, disc:6,
+               stats:{charge:15,harass:9,push:12,siege:5,movement:12}, armorPct:ARMORS.bronze, armorName:'Bronze', ammo:26, fortPct:15, fortName:'Camp',
+               desc:'Cavalry & elephants — high charge and mobility, entrenched. Brace the charge, watch the flank.' },
+  gauls:     { name:'Gallic Warband',    formation:'openOrder',  hp:11000, morale:10, disc:3,
+               stats:{charge:20,harass:4,push:8,siege:2,movement:9},  armorPct:ARMORS.copper, armorName:'Copper', ammo:14, fortPct:0,
+               desc:'Furious chargers, no discipline, no armor. Hold the line and let the wall break them.' },
+  iberians:  { name:'Iberian Caetrati',  formation:'openOrder',  hp:9000,  morale:10, disc:5,
+               stats:{charge:8,harass:16,push:6,siege:3,movement:16},  armorPct:ARMORS.copper, armorName:'Copper', ammo:42, fortPct:0,
+               desc:'Light skirmishers & kiters. Hard to pin — close fast or eat javelins; take the center.' },
+  garrison:  { name:'Fortified Garrison', formation:'shieldWall', hp:9000, morale:10, disc:6,
+               stats:{charge:4,harass:8,push:18,siege:6,movement:5},   armorPct:ARMORS.steel, armorName:'Steel', ammo:30, fortPct:35, fortName:'Wall',
+               desc:'Steel wall behind ramparts. Normal blows bounce — bring siege to crack armor & fortification.' },
+};
+
+// Concern #7: the legate carries the army's UNIQUE formation (via its trait). No legate → commons only.
+const LEGATES = {
+  none:     { name:'No legate', traits:[],               desc:'Common formations only — no trait, no unique formation.' },
+  veteran:  { name:'Veteran',   traits:['Roman Veteran'], desc:'Unlocks Triplex Acies (the manipular machine).' },
+  engineer: { name:'Engineer',  traits:['Engineer'],      desc:'Unlocks Testudo (anti-missile / siege).' },
+  shock:    { name:'Shock',     traits:['Shock'],         desc:'Unlocks Cuneus (heavy breakthrough).' },
+};
+// Concern #5: army armor is an upgradeable tier (bought with gold / unlocked by events in the Hub).
+const PLAYER_ARMOR_TIERS = [['copper','Copper'],['bronze','Bronze'],['iron','Iron'],['steel','Steel']];
+
+// ════════════════ BALANCE KNOBS ════════════════
+// Tuned so a solid attack does ~7–10% of the 10k HP pool, battles last ~8–14 rounds,
+// bracing flips a charge exchange, and discipline meaningfully cushions morale.
+const BAL = {
+  DMG_SCALE:     17,    // global damage multiplier (raw stat math → casualties)
+  RECOIL_SCALE:  26,    // charge return-blow scale (braced recoil ≈ the impact it stopped)
+  CENTER_MOVE:   0.55,  // how fast push moves the position bar
+  START_MORALE:  10,    // both sides open at full morale
+  MORALE_K:      10,    // casualties → morale conversion (HP loss also shakes morale)
+  MORALE_RESIST: 0.05,  // discipline resists ALL morale loss, multiplicatively (disc6 ≈ −30%)
+  DISC_DMG:      0.05,  // damage bonus per discipline point (+5%/pt)
+  MAX_ROUNDS:    14,    // attrition cap (a stalemate is decided by who holds the field)
+};
+
+// ════════════════ STATE ════════════════
+let S = null;
+const d = id => document.getElementById(id);
+const rollDn = n => 1 + Math.floor(Math.random()*n);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+// ════════════════ SETUP UI ════════════════
+let chosenForm = null;
+let chosenLegate = 'veteran';   // concern #7
+let chosenArmor = 'iron';       // concern #5
+
+// A formation is available if discipline meets its req AND (it's common OR your legate's trait unlocks it).
+function formAvailable(key){
+  const f=FORMATIONS[key]; const disc=+d('disc').value; const legate=LEGATES[chosenLegate];
+  if(disc<f.disc) return false;
+  if(f.kind==='unique' && !legate.traits.includes(f.trait)) return false;
+  return true;
+}
+function renderLegates(){
+  const z=d('legatePills'); z.innerHTML='';
+  Object.entries(LEGATES).forEach(([k,l])=>{
+    const b=document.createElement('button');
+    b.className='cpill'+(chosenLegate===k?' sel':''); b.textContent=l.name;
+    b.onclick=()=>{ chosenLegate=k; renderLegates(); renderForms(); };
+    z.appendChild(b);
+  });
+  d('legateDesc').textContent = LEGATES[chosenLegate].desc;
+}
+function renderArmor(){
+  const z=d('armorPills'); z.innerHTML='';
+  PLAYER_ARMOR_TIERS.forEach(([k,name])=>{
+    const b=document.createElement('button');
+    b.className='cpill'+(chosenArmor===k?' sel':''); b.textContent=`${name} ${ARMORS[k]}%`;
+    b.onclick=()=>{ chosenArmor=k; renderArmor(); };
+    z.appendChild(b);
+  });
+  d('armorDesc').textContent = `Reduces physical damage by ${ARMORS[chosenArmor]}% (siege pierces it).`;
+}
+function renderForms(){
+  const disc = +d('disc').value;
+  d('discVal').textContent = disc + ' / 10';
+  d('discBonus').textContent = 'dmg bonus +' + (disc*5) + '%';
+  if(chosenForm && !formAvailable(chosenForm)) chosenForm=null;
+  const legate=LEGATES[chosenLegate];
+  const zone = d('forms'); zone.innerHTML='';
+  Object.entries(FORMATIONS).forEach(([key,f])=>{
+    const avail = formAvailable(key);
+    const traitLocked = f.kind==='unique' && !legate.traits.includes(f.trait);
+    const el = document.createElement('div');
+    el.className = 'fcard'+(f.kind==='unique'?' uniq':'')+(avail?'':' locked')+(chosenForm===key?' sel':'');
+    if(!avail) el.title = traitLocked ? `Needs a legate with the “${f.trait}” trait` : `Needs discipline ${f.disc}`;
+    const ords = f.orders.map(o=>ORDERS[o].name).join(' · ');
+    el.innerHTML =
+      `<div class="req">disc ${f.disc}</div>`+
+      `<div class="fn">${f.name}</div>`+
+      (f.trait?`<span class="tag" style="border-color:#b07acc;color:#c79ae0">${f.trait}${traitLocked?' 🔒':''}</span>`:`<span class="tag" style="border-color:var(--line);color:var(--txt-lo)">common</span>`)+
+      `<div class="ft">${f.desc}</div>`+
+      `<div class="fo">${ords}</div>`;
+    if(avail) el.onclick = ()=>{ chosenForm=key; renderForms(); };
+    zone.appendChild(el);
+  });
+  d('start').disabled = !chosenForm;
+  renderLadder(disc);
+}
+
+// Discipline ladder: what your current discipline unlocks, and the next rung.
+function renderLadder(disc){
+  const formsUp = Object.values(FORMATIONS).filter(f=>f.disc<=disc).map(f=>f.name);
+  const rungs = [...Object.values(FORMATIONS).map(f=>f.disc), ...Object.values(ORDERS).map(o=>o.disc)].filter(x=>x>disc);
+  let nextStr = 'everything unlocked';
+  if(rungs.length){
+    const nd = Math.min(...rungs);
+    const f = Object.values(FORMATIONS).filter(x=>x.disc===nd).map(x=>x.name);
+    const o = Object.values(ORDERS).filter(x=>x.disc===nd).map(x=>x.name);
+    nextStr = `at disc ${nd} — ${[...f,...o].join(', ')}`;
+  }
+  d('discLadder').innerHTML =
+    `Discipline ${disc}: <b>damage bonus +${disc*5}%</b> · formations available: ${formsUp.join(' · ')||'—'}`+
+    `<span class="next">Next unlock <b>${nextStr}</b> — climb discipline during the march (drill cards) to reach it.</span>`;
+}
+d('disc').oninput = renderForms;
+renderLegates();
+renderArmor();
+renderForms();
+
+// Concern #1 fix preview: army strength on arrival scales HP + mass power stats.
+const BASE_STATS = { charge:10, harass:8, push:16, siege:5, movement:9 };
+function strengthFrac(){ return (+d('strength').value)/100; }
+function scaledStats(frac){ return {
+  charge:   Math.max(0, Math.round(BASE_STATS.charge*frac)),
+  harass:   Math.max(0, Math.round(BASE_STATS.harass*frac)),
+  push:     Math.max(0, Math.round(BASE_STATS.push*frac)),
+  siege:    Math.max(0, Math.round(BASE_STATS.siege*frac)),
+  movement: BASE_STATS.movement, // maneuver does not shrink with the ranks
+}; }
+function updateStrength(){
+  const pct=+d('strength').value, frac=pct/100;
+  d('strengthVal').textContent = pct+'%';
+  d('strengthFx').textContent = `${NF(10000*frac)} HP · mass stats ×${frac.toFixed(2)}`;
+}
+d('strength').oninput = updateStrength;
+updateStrength();
+
+// Concern #2 fix: morale is INHERITED from the campaign (not reset to full).
+function updateMorale(){ d('moraleVal').textContent = (+d('morale').value).toFixed(1)+' / 10'; }
+d('morale').oninput = updateMorale;
+updateMorale();
+
+// Concern #6: pick the battlefield (its center type derives from terrain).
+let chosenCenter = 'hill';
+function renderCenters(){
+  const z=d('centerPills'); z.innerHTML='';
+  Object.entries(CENTERS).forEach(([k,c])=>{
+    const b=document.createElement('button');
+    b.className='cpill'+(chosenCenter===k?' sel':'');
+    b.textContent=c.name;
+    b.onclick=()=>{ chosenCenter=k; renderCenters(); };
+    z.appendChild(b);
+  });
+  d('centerDesc').textContent = CENTERS[chosenCenter].desc;
+}
+renderCenters();
+
+// Concern #4: pick the enemy archetype to fight.
+let chosenEnemy = 'carthage';
+function renderEnemies(){
+  const z=d('enemyPills'); z.innerHTML='';
+  Object.entries(ENEMY_ARCHETYPES).forEach(([k,e])=>{
+    const b=document.createElement('button');
+    b.className='epill'+(chosenEnemy===k?' sel':'');
+    b.textContent=e.name;
+    b.onclick=()=>{ chosenEnemy=k; renderEnemies(); };
+    z.appendChild(b);
+  });
+  const e=ENEMY_ARCHETYPES[chosenEnemy];
+  const fort = e.fortPct>0 ? ` · fort ${e.fortName} ${e.fortPct}%` : '';
+  d('enemyDesc').innerHTML = `<b>${e.name}</b> — ${e.desc}<span class="next">${FORMATIONS[e.formation].name} · disc ${e.disc} · armor ${e.armorName} ${e.armorPct}%${fort} · 🐎${e.stats.charge} 🪨${e.stats.harass} 🛡${e.stats.push} 🏹${e.stats.siege} 👣${e.stats.movement}</span>`;
+}
+renderEnemies();
+
+d('start').onclick = startBattle;
+
+// ════════════════ BATTLE START ════════════════
+function makeArmy(opts){
+  return {
+    name:opts.name, side:opts.side,
+    hp:opts.hp, maxHp:opts.hp,
+    morale:opts.morale, maxMorale:10,
+    discipline:opts.disc,
+    // summed power stats across the army roster
+    stats:opts.stats,
+    armorPct:opts.armorPct, armorName:opts.armorName,
+    fortPct:opts.fortPct||0, fortName:opts.fortName||null,
+    ammo:opts.ammo, maxAmmo:opts.ammo,
+    formation:opts.formation,
+    // flags
+    encircled:false, drums:0, lastSub:null, defendedLast:false,
+  };
+}
+
+function startBattle(){
+  const disc = +d('disc').value;
+  const f = FORMATIONS[chosenForm];
+
+  // Player summed power stats (≈ a 10-cohort legion composition).
+  // Roman identity: heavy line — high push + armor, modest charge/movement.
+  // Concern #1 fix: the march thins the ranks → HP and mass stats scale with strength.
+  const frac = strengthFrac();
+  const you = makeArmy({
+    name:'Your legion', side:'you', hp:Math.round(10000*frac), morale:(+d('morale').value), disc,
+    stats:scaledStats(frac),
+    armorPct:ARMORS[chosenArmor], armorName:chosenArmor.charAt(0).toUpperCase()+chosenArmor.slice(1),
+    ammo:32, formation:f,
+  });
+  you.strengthPct = Math.round(frac*100);
+
+  // Enemy: authored archetype (concern #4). Fortification belongs to the defender (here, the enemy).
+  const ea = ENEMY_ARCHETYPES[chosenEnemy];
+  const enemy = makeArmy({
+    name:ea.name, side:'enemy', hp:ea.hp, morale:ea.morale, disc:ea.disc,
+    stats:{ ...ea.stats },
+    armorPct:ea.armorPct, armorName:ea.armorName,
+    fortPct:ea.fortPct||0, fortName:ea.fortName||null,
+    formation:FORMATIONS[ea.formation],
+    ammo:ea.ammo,
+  });
+
+  S = { you, enemy, round:0, control:0, center:CENTERS[chosenCenter], centerKey:chosenCenter,
+        finished:false, victory:null, lastDice:{you:null,enemy:null} };
+
+  d('setup').style.display='none';
+  d('battle').style.display='block';
+  vizResize();
+  d('log').innerHTML='';
+  logHead('Battle begins');
+  log(`Your legion deploys in <b>${f.name}</b> · discipline ${disc} (dmg bonus +${disc*5}%).`,'you');
+  log(`${enemy.name} forms up in <b>${enemy.formation.name}</b> · discipline ${enemy.discipline}.`,'en');
+  log(`Battlefield: <b>${S.center.name}</b> — ${S.center.desc}. The center is contested.`);
+  render();
+}
+
+// ════════════════ RENDER ════════════════
+function moraleState(m){
+  if(m<=0) return {k:'',lbl:'Broken',mult:0};
+  if(m<3)  return {k:'wv',lbl:'Wavering',mult:0.6};
+  if(m<6)  return {k:'sh',lbl:'Shaken',mult:0.8};
+  return {k:'',lbl:'Steady',mult:1.0};
+}
+function controllerOf(){ // 'you', 'enemy', or null
+  if(S.control>=25) return 'you';
+  if(S.control<=-25) return 'enemy';
+  return null;
+}
+// Tiered center control: each tier dominated grows the die +1 face (legate-alterable later).
+function centerTier(side){
+  const c = side==='you' ? S.control : -S.control;
+  if(c<25) return 0;
+  if(c<50) return 1;
+  if(c<75) return 2;
+  return 3; // cap +3 faces
+}
+
+function armyHTML(a){
+  const hpPct = clamp(a.hp/a.maxHp*100,0,100);
+  const morPct = clamp(a.morale/10*100,0,100);
+  const ms = moraleState(a.morale);
+  const hpCls = hpPct<25?'crit':hpPct<55?'low':'';
+  const ctrl = controllerOf();
+  const hasCenter = ctrl===a.side;
+  const flags=[];
+  flags.push(`<span class="flag state">${ms.lbl}</span>`);
+  if(hasCenter) flags.push('<span class="flag good">holds center</span>');
+  if(a.encircled) flags.push('<span class="flag danger">encircled</span>');
+  if(a.drums>0) flags.push('<span class="flag good">drums</span>');
+  const ammoRow = a.side==='you'
+    ? `<div class="bar-wrap"><div class="bar-lbl"><span>Ammunition</span><span>${a.ammo}/${a.maxAmmo}</span></div><div class="bar ammo"><i style="width:${clamp(a.ammo/a.maxAmmo*100,0,100)}%"></i></div></div>` : '';
+  const def = [`<span class="chip">Armor <b>${a.armorName} ${a.armorPct}%</b></span>`];
+  if(a.fortPct>0) def.push(`<span class="chip">Fort <b>${a.fortPct}%</b></span>`);
+  def.push(`<span class="chip">Disc <b>${a.discipline}</b></span>`);
+  const st=a.stats;
+  const statsRow = `<div class="defrow" style="margin-top:6px">
+      <span class="chip">🐎<b>${st.charge}</b></span><span class="chip">🪨<b>${st.harass}</b></span>
+      <span class="chip">🛡<b>${st.push}</b></span><span class="chip">🏹<b>${st.siege}</b></span>
+      <span class="chip">👣<b>${st.movement}</b></span></div>`;
+  return `
+    <div class="nm">${a.name}</div>
+    <div class="fm">${a.formation.name}${a.strengthPct && a.strengthPct<100 ? ` · <span style="color:#e8a848">${a.strengthPct}% strength</span>` : ''}</div>
+    <div class="bar-wrap"><div class="bar-lbl"><span>Soldiers (HP)</span><span>${NF(a.hp)} / ${NF(a.maxHp)}</span></div>
+      <div class="bar hp ${hpCls}"><i style="width:${hpPct}%"></i></div></div>
+    <div class="bar-wrap"><div class="bar-lbl"><span>Morale · <span class="mstate">${ms.lbl}</span></span><span>${a.morale.toFixed(1)} / 10</span></div>
+      <div class="bar mor ${ms.k}"><i style="width:${morPct}%"></i></div></div>
+    ${ammoRow}
+    <div class="defrow">${def.join('')}</div>
+    ${statsRow}
+    <div class="flags">${flags.join('')}</div>`;
+}
+
+function dieBox(data, baseFaces){
+  if(!data) return `<div class="die empty"><span class="dl">d${baseFaces}</span><span class="dv">—</span></div>`;
+  // Dn = base + center bonus → the die grows in size (d6 → d9)
+  const grown = data.bonus>0 ? `<span class="dbonus">d${data.faces}</span>` : '';
+  return `<div class="die"><span class="dl">d${data.faces}</span><span class="dv">${data.raw}</span>${grown}</div>`;
+}
+function centerHTML(){
+  const knob = clamp(50 + S.control/2, 2, 98);
+  const dy=S.lastDice.you, de=S.lastDice.enemy;
+  return `
+    <div class="roundbox"><div class="rl">Round</div><div class="rn">${S.round}</div></div>
+    <div class="ctitle">Central point</div>
+    <div class="ctype">${S.center.name}</div>
+    <div class="cbonus">${S.center.desc}</div>
+    <div class="posbar"><div class="mid"></div><div class="knob" style="left:${knob}%"></div></div>
+    <div class="posends"><span>◀ Enemy</span><span>position</span><span>You ▶</span></div>
+    <div class="ctrltier">Die: You <b>d${6+centerTier('you')}</b> · Enemy <b>d${6+centerTier('enemy')}</b> <span style="color:var(--txt-lo)">(center: +1 face/tier)</span></div>
+    <div class="dice">
+      ${dieBox(dy,6+centerTier('you'))}
+      ${dieBox(de,6+centerTier('enemy'))}
+    </div>`;
+}
+
+function ordersHTML(){
+  if(S.finished){
+    const w=S.victory;
+    return `<div class="endpanel ${w?'win':'lose'}">
+      <div class="et">${w?'Victory':'Defeat'}</div>
+      <div class="es">${S.endMsg}</div>
+      <div class="es" style="color:#b0a0e0; margin-top:8px">↩ Carried back to the campaign: <b style="color:#ece3d0">${NF(S.you.hp)}</b> soldiers · morale <b style="color:#ece3d0">${S.you.morale.toFixed(1)}</b> <span style="color:var(--txt-lo)">(survivors rescale your cohorts; morale writes to campaign state)</span></div>
+      <button class="restart" onclick="location.reload()">New battle</button></div>`;
+  }
+  const a=S.you;
+  const ms=moraleState(a.morale);
+  let html = `<div class="osec"><span>Choose your order — ${a.formation.name}</span><span class="mono" style="font-size:10px;color:var(--txt-lo)">morale ${ms.lbl}</span></div><div class="ogrid">`;
+  a.formation.orders.forEach(key=>{
+    const o=ORDERS[key];
+    const lockDisc = a.discipline < o.disc;
+    const lockAmmo = o.ammo && a.ammo < o.ammo;
+    const lockMorale = ms.mult<1 && (o.reckless || o.disc>=6) && !o.sMorale; // bold orders blocked when shaken
+    const locked = lockDisc||lockAmmo||lockMorale;
+    let why='';
+    if(lockDisc) why=`requires disc ${o.disc}`;
+    else if(lockAmmo) why=`out of ammo (needs ${o.ammo})`;
+    else if(lockMorale) why='morale too low for this order';
+    const xtra=[];
+    if(o.stat) xtra.push(`${SUB_ICON[o.sub]} ${o.stat}`);
+    if(o.ammo) xtra.push(`<b>−${o.ammo} ammo</b>`);
+    if(o.check) xtra.push(`<b>check ≥${o.check}</b>`);
+    if(o.sMorale) xtra.push(`<b>morale +${o.sMorale}</b>`);
+    if(o.eMorale) xtra.push(`<b>enemy −${o.eMorale}</b>`);
+    if(o.disc>2) xtra.push(`disc ${o.disc}`);
+    html += `<button class="obtn sub-${o.sub}" ${locked?'disabled title="'+why+'"':''} onclick="play('${key}')">
+      <div class="on">${SUB_ICON[o.sub]} ${o.name}</div>
+      <div class="od">${o.desc}</div>
+      <div class="ox">${xtra.join(' ')}</div></button>`;
+  });
+  // Retreat — always available (concern #10); a movement check, harder when encircled.
+  html += `<button class="obtn sub-move" onclick="play('retreat')" title="Break off the battle">
+      <div class="on">👣 ${ORDERS.retreat.name}</div>
+      <div class="od">${ORDERS.retreat.desc}</div>
+      <div class="ox"><b>check ≥${ORDERS.retreat.check}${a.encircled?' +6 encircled':''}</b> · ends battle</div></button>`;
+  html+='</div>';
+  return html;
+}
+
+function render(){
+  d('youPanel').innerHTML = armyHTML(S.you);
+  d('enemyPanel').innerHTML = armyHTML(S.enemy);
+  d('centerCol').innerHTML = centerHTML();
+  d('ordersZone').innerHTML = ordersHTML();
+  const lg=d('log'); lg.scrollTop=lg.scrollHeight;
+}
+
+// ════════════════ LOG ════════════════
+function log(t,cls=''){ const e=document.createElement('div'); e.className='ln '+cls; e.innerHTML=t; d('log').appendChild(e); }
+function logHead(t){ const e=document.createElement('div'); e.className='ln head'; e.textContent=t; d('log').appendChild(e); }
+
+// ════════════════ AI ════════════════
+function enemyChoose(){
+  const e=S.enemy, y=S.you, ms=moraleState(e.morale);
+  const av=e.formation.orders.filter(k=>{
+    const o=ORDERS[k];
+    if(e.discipline<o.disc) return false;
+    if(o.ammo && e.ammo<o.ammo) return false;
+    if(ms.mult<1 && (o.reckless||o.disc>=6) && !o.sMorale) return false;
+    return true;
+  });
+  const has=k=>av.includes(k);
+  // recompose if wavering (line relief preferred when available)
+  if(e.morale<3 && has('lineRelief')) return 'lineRelief';
+  if(e.morale<2.5 && has('rally')) return 'rally';
+  // if you are encircled or low morale → press the charge / go all-out to finish
+  if((y.encircled || y.morale<3) && has('allOut')) return 'allOut';
+  if((y.encircled || y.morale<3) && has('charge')) return 'charge';
+  // if you are turtling on the center with a shield wall → the wedge punches through
+  if(controllerOf()==='you' && y.defendedLast && has('wedge')) return 'wedge';
+  // if you control the center → flank it
+  if(controllerOf()==='you' && has('flank')) return 'flank';
+  // if you are armored and they have siege
+  if(y.armorPct>=20 && has('siege')) return 'siege';
+  // envelop when the maneuver is likely to land and you aren't already ringing them
+  if(has('envelop') && !y.encircled && e.stats.movement+4>=ORDERS.envelop.check) return 'envelop';
+  // contest the center if losing it
+  if(S.control>20 && has('advance')) return 'advance';
+  if(S.control>20 && has('holdLine')) return 'holdLine';
+  // default by formation flavor — prefer charge if strong
+  const pref=['charge','wedge','allOut','fireMissiles','skirmish','warCry','advance','holdLine','hitRun','drums','taunt','flank','rally'];
+  for(const p of pref) if(has(p)) return p;
+  return av[0]||'rally';
+}
+
+// ════════════════ RESOLUTION ════════════════
+function play(key){
+  if(S.finished) return;
+  S.round++;
+  // reset per-round modifiers (hit&run evasion)
+  S.you.guardMult=1; S.enemy.guardMult=1;
+  const yKey=key, eKey=enemyChoose();
+  const yO=ORDERS[yKey], eO=ORDERS[eKey];
+  // Center control sets the DIE SIZE this round: Dn = base + tier.
+  // Measured from control earned in prior rounds (before the center moves this turn).
+  const yTier=centerTier('you'), eTier=centerTier('enemy');
+  const yFaces=6+yTier, eFaces=6+eTier;
+  const yDie=rollDn(yFaces), eDie=rollDn(eFaces);
+  S.lastDice={ you:{raw:yDie,faces:yFaces,bonus:yTier}, enemy:{raw:eDie,faces:eFaces,bonus:eTier} };
+  logHead(`Round ${S.round} — You: ${yO.name} (d${yFaces}) · Enemy: ${eO.name} (d${eFaces})`);
+
+  // snapshot for morale-from-casualties
+  const yHpBefore=S.you.hp, eHpBefore=S.enemy.hp;
+
+  // center movement happens first (only push orders move it)
+  resolveCenter(yKey,eKey,yDie,eDie);
+
+  // resolve each side's order (damage / effects)
+  const yRes = resolveOrder(S.you,S.enemy,yO,yDie,'you',eO);
+  const eRes = resolveOrder(S.enemy,S.you,eO,eDie,'enemy',yO);
+
+  // apply morale: casualties + order morale ops + center regen
+  applyMorale(S.you, yHpBefore, yO, eO, eRes.eMoraleHit);
+  applyMorale(S.enemy, eHpBefore, eO, yO, yRes.eMoraleHit);
+
+  // tick drums
+  if(S.you.drums>0){ S.you.morale=clamp(S.you.morale+1.0+S.you.discipline*0.06,0,10); S.you.drums--; }
+  if(S.enemy.drums>0){ S.enemy.morale=clamp(S.enemy.morale+1.0+S.enemy.discipline*0.06,0,10); S.enemy.drums--; }
+
+  // encirclement is temporary — the ring wears thin after ~2 rounds
+  [S.you,S.enemy].forEach(a=>{ if(a.encircled){ a.encircleTurns=(a.encircleTurns||1)-1; if(a.encircleTurns<=0){ a.encircled=false; log(`${a.side==='you'?'Your legion':'The enemy'} breaks out of the encirclement.`, a.side==='you'?'you':'en'); } } });
+
+  S.you.lastSub=yO.sub; S.enemy.lastSub=eO.sub;
+  S.you.defendedLast=!!yO.defensive; S.enemy.defendedLast=!!eO.defensive;
+
+  // ── Graphics hooks ──
+  triggerVisualEffects('you', yKey);
+  triggerVisualEffects('enemy', eKey);
+  const yLoss=yHpBefore-S.you.hp, eLoss=eHpBefore-S.enemy.hp;
+  if(eLoss>0){ spawnDamageFloat('enemy', eLoss); anim.enemy.flash=12; if(eLoss>700) anim.enemy.recoil=10; }
+  if(yLoss>0){ spawnDamageFloat('you', yLoss); anim.you.flash=12; if(yLoss>700) anim.you.recoil=10; }
+
+  // Successful retreat ends the battle: defeat, but most of the army is saved.
+  // Ordered (high discipline) retreats bleed less than a rout.
+  if(S.you.retreated && !S.finished){
+    const loss = clamp(0.25 - S.you.discipline*0.015, 0.08, 0.25);
+    S.you.hp = Math.round(S.you.hp*(1-loss));
+    finish(false, `You withdraw from the field — ${Math.round(loss*100)}% lost covering the retreat. The army lives to fight again.`);
+  }
+
+  checkEnd();
+  render();
+}
+
+function resolveCenter(yKey,eKey,yDie,eDie){
+  const yO=ORDERS[yKey], eO=ORDERS[eKey];
+  const yPush = yO.push ? (S.you.stats.push + yDie) * (yO.push/14) : 0;
+  const ePush = eO.push ? (S.enemy.stats.push + eDie) * (eO.push/14) : 0;
+  const delta = (yPush - ePush);
+  if(delta!==0){
+    S.control = clamp(S.control + delta*BAL.CENTER_MOVE, -100, 100);
+  }
+  if(yO.push && !eO.push) log(`You push${ORDERS[eKey].sub!=='push'?" while the enemy doesn't contest the ground":''} → you gain position.`,'you');
+}
+
+// returns {eMoraleHit} = morale damage THIS army inflicted on the target via its order
+function resolveOrder(att, def, o, die, side, defO){
+  const cls = side==='you'?'you':'en';
+  const who = side==='you'?'You':'Enemy';
+  const tgt = side==='you'?'the enemy':'your legion';
+  // The center bonus is ALREADY baked in as extra die faces (d6→d9).
+  let eMoraleHit = o.eMorale||0;
+  const discBonus = 1 + att.discipline*BAL.DISC_DMG;
+  const ms = moraleState(att.morale).mult;
+  const ctrl = controllerOf();
+  const attHasCenter = ctrl===att.side;
+  let centerDmgBonus = (attHasCenter && S.center.dmg)? S.center.dmg : 0;
+
+  // pure morale orders
+  if(o.sub==='moral' && !o.mult){
+    if(o.drums){ att.drums=3; log(`${who} sound the <b>war drums</b> — morale rising.`,'mor'); }
+    else if(o.refresh){ att.morale=clamp(att.morale+o.sMorale,0,10); att.guardMult=0.5; log(`${who} <b>relieve the line</b> — fresh troops to the front (+${o.sMorale} morale, take less damage this round).`,'mor'); }
+    else if(o.sMorale){ att.morale=clamp(att.morale+o.sMorale,0,10); log(`${who} rally the line (+${o.sMorale} morale).`,'mor'); }
+    if(eMoraleHit) log(`${who} taunt the enemy — heavy morale pressure.`,'mor');
+    return {eMoraleHit}; // applied via applyMorale (discipline-resisted)
+  }
+
+  const statVal = o.stat? att.stats[o.stat] : 0;
+
+  // MOVEMENT checks
+  if(o.sub==='move'){
+    // Retreat: special — break off the battle on a successful movement check (concern #10).
+    if(o.effect==='retreat'){
+      const need = o.check + (att.encircled?6:0);
+      const total = die + att.stats.movement;
+      if(total>=need){ att.retreated=true; log(`${who} disengage and pull back (check ${total}≥${need}).`, cls); }
+      else { log(`${who} fail to break off (check ${total} < ${need})${att.encircled?' — the ring holds them':''}; the enemy strikes the exposed rear.`, cls); }
+      return {eMoraleHit:0};
+    }
+    const total = die + att.stats.movement;
+    const ok = total >= o.check;
+    if(!ok){ log(`${who} attempt ${o.name} (die ${die}+move ${att.stats.movement}=${total} < ${o.check}) — <b>fail</b>, maneuver lost.`,cls); return {eMoraleHit:0}; }
+    let mult=o.mult, note='';
+    if(o.effect==='flank'){
+      const defHasCenter = controllerOf()===def.side;
+      if(defHasCenter){ mult*=2.5; note=' <b>FLANKING CRIT!</b>'; }
+    }
+    let dmg = mitigate(statVal*die*mult*discBonus*ms*(1+centerDmgBonus)*BAL.DMG_SCALE, def, o);
+    def.hp=Math.max(0,def.hp-dmg);
+    if(o.effect==='encircle'){ def.encircled=true; def.encircleTurns=2; eMoraleHit+=1.0; note+=' — enemy <b>encircled</b>.'; }
+    if(o.effect==='hitrun'){ att.guardMult=0.25; note+=' — strike and withdraw (<b>avoids the return blow</b>).'; }
+    log(`${who} execute ${o.name} (${total}≥${o.check}) → ${NF(dmg)} casualties to ${tgt}${note}`, note.includes('CRIT')?'crit':cls);
+    return {eMoraleHit};
+  }
+
+  // CHARGE: impact + recoil
+  if(o.sub==='charge'){
+    let impactMult=o.mult;
+    let recoilMult=0.55;
+    const defBraced = defO && defO.defensive;
+    // The wedge (caput porci) is built to PIERCE the wall: it ignores the defensive brace.
+    if(defBraced && !o.pierceBrace){ impactMult*=0.6; recoilMult=1.8; }
+    if(o.allIn){ recoilMult*=1.5; } // all-out: even more double-edged
+    // center charge bonuses
+    if(S.center.chargeBonus && attHasCenter) impactMult*=(1+S.center.chargeBonus);
+    if(S.center.enemyChargePenalty && controllerOf()===def.side) impactMult*=(1-S.center.enemyChargePenalty);
+    let impact = mitigate(statVal*die*impactMult*discBonus*ms*(1+centerDmgBonus)*BAL.DMG_SCALE, def, o);
+    def.hp=Math.max(0,def.hp-impact);
+    // recoil onto attacker (defender's line strikes back). Scales with the defender's
+    // push; braced lines hit back hard. A LOW roll leaves you exposed → the charge's
+    // risk depends on the die.
+    const exposure = 1 + Math.max(0, 7-die)/10; // low die = more recoil
+    let recoil = mitigate(def.stats.push*recoilMult*exposure*BAL.RECOIL_SCALE, att, {});
+    att.hp=Math.max(0,att.hp-recoil);
+    // morale shock scales with how hard the impact landed
+    eMoraleHit += impact>recoil ? 0.6 : -0.2;
+    if(o.sMorale) att.morale=clamp(att.morale+o.sMorale,0,10);
+    let extra='';
+    if(o.breakCenter && impact>recoil){ S.control = clamp(S.control + (att.side==='you'?1:-1)*32, -100, 100); extra=' — <b>the wedge breaks the line and seizes the center</b>'; }
+    const verdict = impact>recoil? 'the charge lands' : (defBraced && !o.pierceBrace?'<b>the defense halts it</b>':'even exchange');
+    log(`${who} ${o.wedge?'drive the wedge':'charge'} → impact ${NF(impact)} / recoil ${NF(recoil)} taken — ${verdict}${extra}. ${tgt} morale −${Math.max(0,eMoraleHit).toFixed(1)}.`,cls);
+    return {eMoraleHit:Math.max(0,eMoraleHit)};
+  }
+
+  // HARASS
+  if(o.sub==='harass'){
+    att.ammo=Math.max(0,att.ammo-(o.ammo||0));
+    let dmg = mitigate(statVal*die*o.mult*discBonus*ms*BAL.DMG_SCALE, def, o); // armor applies (not pierce)
+    // Testudo: the tortoise absorbs missiles (historical anti-skirmish immunity).
+    const turtled = def.formation && def.formation.antiMissile;
+    if(turtled){ dmg*=0.12; eMoraleHit*=0.3; }
+    def.hp=Math.max(0,def.hp-dmg);
+    log(`${who} harass at range → ${NF(dmg)} casualties to ${tgt}${turtled?' (<b>the testudo absorbs the missiles</b>)':''} (ammo ${att.ammo}). Does not contest the center.`,cls);
+    return {eMoraleHit};
+  }
+
+  // SIEGE (pierce)
+  if(o.sub==='siege'){
+    let dmg = statVal*die*o.mult*discBonus*ms*(1+centerDmgBonus)*BAL.DMG_SCALE; // ignores armor & fort
+    dmg *= (def.guardMult||1); // evasion (hit & run) still applies
+    def.hp=Math.max(0,def.hp-dmg);
+    log(`${who} storm with siege → ${NF(dmg)} casualties to ${tgt} (<b>pierces armor & fortification</b>).`,cls);
+    return {eMoraleHit};
+  }
+
+  // PUSH (damage + already moved center; may carry morale, e.g. War Cry)
+  if(o.sub==='push'){
+    let dmg = mitigate(statVal*die*o.mult*discBonus*ms*(1+centerDmgBonus)*BAL.DMG_SCALE, def, o);
+    def.hp=Math.max(0,def.hp-dmg);
+    if(o.sMorale) att.morale=clamp(att.morale+o.sMorale,0,10);
+    const verb = o.defensive?'hold the line':(o.eMorale?'advance with war cries':'advance, pushing');
+    log(`${who} ${verb} → ${NF(dmg)} casualties to ${tgt}${eMoraleHit?` · ${tgt} morale −${eMoraleHit}`:''}.`,cls);
+    return {eMoraleHit};
+  }
+  return {eMoraleHit:0};
+}
+
+function mitigate(raw, def, o){
+  let m = raw;
+  if(!(o && o.pierce)){
+    m *= (1-def.armorPct/100);
+    if(def.fortPct>0) m*=(1-def.fortPct/100);
+  }
+  m *= (def.guardMult||1); // evasion (hit & run)
+  return m;
+}
+
+function applyMorale(army, hpBefore, ownO, foeO, incomingMoraleHit){
+  // 1) casualty shock this round
+  const frac = (hpBefore - army.hp)/Math.max(hpBefore,1);
+  let casualtyLoss = frac*BAL.MORALE_K;
+  if(ownO.defensive && ownO.protect) casualtyLoss*=(1-ownO.protect); // bracing steadies the line
+  // 2) enemy morale orders (charge shock, taunt, war cry, encircle) routed here
+  let loss = casualtyLoss + (incomingMoraleHit||0);
+  if(army.encircled) loss += 1.0; // surrounded panic
+  // 3) discipline resists ALL of the above, multiplicatively
+  loss *= Math.max(0, 1 - army.discipline*BAL.MORALE_RESIST);
+  loss = Math.max(0, loss);
+  // 4) self-inflicted cost of reckless orders is NOT resisted
+  if(ownO.sMorale && ownO.sMorale<0) loss += -ownO.sMorale;
+  // 5) center regen (camp)
+  if(controllerOf()===army.side && S.center.moraleRegen) army.morale=clamp(army.morale+S.center.moraleRegen,0,10);
+  army.morale = clamp(army.morale - loss, 0, 10);
+}
+
+function checkEnd(){
+  if(S.finished) return; // a retreat or prior resolution already ended it
+  const y=S.you, e=S.enemy;
+  if(e.hp<=0){ finish(true, e.name+' is annihilated.'); return; }
+  if(y.hp<=0){ finish(false, 'Your legion is annihilated.'); return; }
+  if(e.morale<=0){
+    if(e.encircled){ e.hp=Math.round(e.hp*0.05); finish(true, 'The enemy breaks while encircled — <b>total annihilation</b> in the ring.'); }
+    else { e.hp=Math.round(e.hp*0.4); finish(true, 'Enemy morale collapses — they flee the field.'); }
+    return;
+  }
+  if(y.morale<=0){
+    if(y.encircled){ finish(false, 'Your line breaks while encircled — slaughter in the rout.'); }
+    else { finish(false, 'Your morale collapses — the legion routs.'); }
+    return;
+  }
+  if(S.round>=BAL.MAX_ROUNDS){
+    // stalemate at the cap → the side in better overall shape (HP + morale) holds the field
+    const ys=y.hp/y.maxHp+y.morale/10, es=e.hp/e.maxHp+e.morale/10;
+    finish(ys>=es, 'The battle grinds out — '+(ys>=es?'you hold the field.':'the enemy holds the field.'));
+  }
+}
+
+function finish(victory,msg){
+  S.finished=true; S.victory=victory; S.endMsg=msg;
+  log(msg, 'out');
+}
+window.play=play;
+
+// ══════════════════════════════════════════════════════════════════════════
+//  PROCEDURAL 2D BATTLE ENGINE  (HTML5 Canvas) — spec: "ITER BELLI"
+// ══════════════════════════════════════════════════════════════════════════
+let cv=null, cx2=null, VT=0, shake=0;
+let projectiles=[], pinned=[], fxParticles=[], floats=[], ambient=[];
+const anim = { you:{lunge:0,recoil:0,flash:0}, enemy:{lunge:0,recoil:0,flash:0} };
+const rnd = (a,b)=>a+Math.random()*(b-a);
+
+function vizResize(){
+  if(!cv) return;
+  const r=cv.getBoundingClientRect();
+  cv.width=Math.max(320,r.width); cv.height=Math.max(180,r.height);
+}
+function vizInit(){
+  cv=d('battleCanvas'); if(!cv) return;
+  cx2=cv.getContext('2d');
+  vizResize();
+  addEventListener('resize', vizResize);
+  ambient=Array.from({length:46},()=>({x:Math.random(),y:Math.random(),vx:rnd(-0.0006,0.0006),vy:rnd(-0.0003,0.0003),r:rnd(0.5,2.2),a:rnd(0.05,0.25)}));
+  requestAnimationFrame(vizLoop);
+}
+
+function battleLineX(w){ return w/2 + (S.control/100)*(w*0.25); }
+function squadX(side,w){ const bx=battleLineX(w); return side==='you'? bx-85 : bx+85; }
+
+// ── Terrain ──
+function bg(ctx,w,h,base){ const g=ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,base); g.addColorStop(1,'#07050a'); ctx.fillStyle=g; ctx.fillRect(0,0,w,h); }
+function drawTerrain(ctx,w,h){
+  const cx=w/2, cy=h/2, k=S.centerKey;
+  if(k==='hill'){
+    bg(ctx,w,h,'#2d381b');
+    ctx.strokeStyle='rgba(212,168,67,0.07)'; ctx.lineWidth=1;
+    for(const r of [60,105,150,195,240]){ ctx.beginPath(); ctx.ellipse(cx,cy+50,r,r*0.55,0,0,Math.PI*2); ctx.stroke(); }
+  } else if(k==='ford'){
+    bg(ctx,w,h,'#132c3a');
+    ctx.fillStyle='#102d3d'; ctx.beginPath();
+    ctx.moveTo(cx-40,0); ctx.lineTo(cx+40,0);
+    ctx.bezierCurveTo(cx+10,cy, cx+90,cy, cx+60,h); ctx.lineTo(cx-20,h);
+    ctx.bezierCurveTo(cx-90,cy, cx-70,cy, cx-40,0); ctx.fill();
+    ctx.strokeStyle='#2980b9'; ctx.lineWidth=2; ctx.beginPath();
+    for(let y=0;y<=h;y+=8){ const xx=cx + Math.sin(y*0.05+VT)*5; (y===0?ctx.moveTo:ctx.lineTo).call(ctx,xx,y); } ctx.stroke();
+  } else if(k==='camp'){
+    bg(ctx,w,h,'#352920');
+    ctx.strokeStyle='#4a3728'; ctx.lineWidth=4;
+    for(const px of [cx-80,cx+80]) for(let y=20;y<h-10;y+=18){ ctx.beginPath(); ctx.moveTo(px,y); ctx.lineTo(px,y+12); ctx.stroke(); }
+  } else { // plain
+    bg(ctx,w,h,'#1a331f');
+  }
+  // central guide line
+  ctx.strokeStyle='rgba(255,255,255,0.05)'; ctx.lineWidth=1; ctx.setLineDash([4,6]);
+  ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,h); ctx.stroke(); ctx.setLineDash([]);
+}
+function drawAmbient(ctx,w,h){
+  const windK = S.centerKey==='plain'?2:1;
+  for(const m of ambient){ m.x+=m.vx*windK; m.y+=m.vy; if(m.x>1)m.x=0; if(m.x<0)m.x=1; if(m.y>1)m.y=0; if(m.y<0)m.y=1;
+    ctx.fillStyle=`rgba(200,190,160,${m.a})`; ctx.beginPath(); ctx.arc(m.x*w,m.y*h,m.r,0,7); ctx.fill(); }
+}
+
+// ── Standards ──
+function drawStandard(ctx,side){
+  const w=cv.width,h=cv.height,cy=h/2; const roman=side==='you';
+  const x=squadX(side,w)+(roman?-25:25);
+  ctx.save(); ctx.translate(x,cy+35); ctx.rotate(Math.sin(VT*1.5)*0.08);
+  ctx.strokeStyle='#5c4033'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-65); ctx.stroke();
+  ctx.fillStyle=roman?'#d4a843':'#b08d57'; ctx.beginPath(); ctx.arc(0,-66,3,0,7); ctx.fill();
+  if(roman){
+    ctx.strokeStyle='#d4a843'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-9,-58); ctx.lineTo(9,-58); ctx.stroke();
+    const yw=-35+Math.sin(VT*2.5)*2; ctx.fillStyle='#b21f1f'; ctx.fillRect(-9,-58,18,(yw+58));
+    ctx.fillStyle='#f5d782'; ctx.font='5px Inter, sans-serif'; ctx.textAlign='center'; ctx.fillText('SPQR',0,-46);
+  } else {
+    const yw=-25+Math.cos(VT*2)*3; ctx.strokeStyle='#2980b9'; ctx.lineWidth=2;
+    for(const off of [-5,0,5]){ ctx.beginPath(); ctx.moveTo(off,-58); ctx.lineTo(off+Math.sin(VT*2+off)*2,yw); ctx.stroke(); }
+  }
+  ctx.restore();
+}
+
+// ── Soldiers ──
+function drawSoldier(ctx,x,y,side){
+  const roman=side==='you';
+  ctx.beginPath(); ctx.arc(x,y,9,0,7); ctx.fillStyle=roman?'#b21f1f':'#1f4e70'; ctx.fill();
+  ctx.lineWidth=1; ctx.strokeStyle='#000'; ctx.stroke();
+  // helmet
+  if(roman){
+    ctx.beginPath(); ctx.arc(x,y-5,5,Math.PI,0); ctx.fillStyle='#d4a843'; ctx.fill();
+    ctx.save(); ctx.translate(x,y-9); ctx.rotate(-0.6); ctx.beginPath(); ctx.ellipse(0,0,5,2,0,0,7); ctx.fillStyle='#c0392b'; ctx.fill(); ctx.restore();
+  } else {
+    ctx.beginPath(); ctx.arc(x,y-4,6,Math.PI,0); ctx.fillStyle='#d35400'; ctx.fill();
+    ctx.beginPath(); ctx.arc(x,y-6,4,Math.PI,0); ctx.fillStyle='#7f8c8d'; ctx.fill();
+  }
+  // shield (facing the foe)
+  const sx=x+(roman?7:-7);
+  if(roman){
+    ctx.fillStyle='#b21f1f'; ctx.fillRect(sx-2,y-7,4,14); ctx.strokeStyle='#d4a843'; ctx.lineWidth=1; ctx.strokeRect(sx-2,y-7,4,14);
+    ctx.beginPath(); ctx.arc(sx,y,1.5,0,7); ctx.fillStyle='#f5d782'; ctx.fill();
+  } else {
+    ctx.beginPath(); ctx.arc(sx,y,6,0,7); ctx.fillStyle='#4a2c11'; ctx.fill();
+    ctx.strokeStyle='#bdc3c7'; ctx.lineWidth=1; ctx.stroke();
+  }
+  // weapon
+  const wx=x+(roman?10:-10); ctx.strokeStyle='#7f8c8d'; ctx.lineWidth=roman?2:1.5;
+  ctx.beginPath(); ctx.moveTo(x,y+1); ctx.lineTo(wx,y+1-(roman?0:6)); ctx.stroke();
+}
+function drawSquad(ctx,side){
+  const w=cv.width,h=cv.height,cy=h/2; const army=S[side]; const a=anim[side];
+  const dir=side==='you'?1:-1; const base=squadX(side,w);
+  const unstable=army.morale<3; const A=unstable?2.8:1.2;
+  const x=base + a.lunge*1.5*dir + a.recoil*-1.2*dir;
+  ctx.save();
+  if(a.flash>0){ ctx.shadowColor='rgba(231,76,60,0.9)'; ctx.shadowBlur=a.flash; }
+  for(let i=0;i<5;i++){ const y=cy-52+i*26 + Math.sin(VT*2+i)*A; drawSoldier(ctx,x,y,side); }
+  ctx.restore();
+}
+
+// ── Projectiles / particles / floats ──
+function addParticles(x,y,n,color,spread,life){ for(let i=0;i<n;i++) fxParticles.push({x,y,vx:rnd(-spread,spread),vy:rnd(-spread,spread),r:rnd(1,3),color,life:life||rnd(20,40),max:life||40}); }
+function spawnArrow(fromX,toX,cy,fire){ projectiles.push({x0:fromX,y0:cy,x1:toX,y1:cy+rnd(-40,40),t:0,step:0.03,H:50,fire,color:fire?'#f39c12':'#ffffff'}); }
+function spawnRock(fromX,toX,cy){ projectiles.push({x0:fromX,y0:cy,x1:toX,y1:cy+rnd(-30,30),t:0,step:0.015,H:100,rock:true,color:'#bdc3c7'}); shake=Math.max(shake,14); }
+function spawnDamageFloat(side,amount){ const w=cv.width,cy=cv.height/2; const x=side==='you'?battleLineX(w)-130:battleLineX(w)+110; floats.push({x,y:cy-10,vy:-0.6,text:'-'+NF(amount),color:'#e74c3c',life:60,max:60}); }
+
+function updateProjectiles(ctx){
+  for(let i=projectiles.length-1;i>=0;i--){ const p=projectiles[i]; p.t+=p.step;
+    const x=p.x0+(p.x1-p.x0)*p.t, y=p.y0+(p.y1-p.y0)*p.t + Math.sin(p.t*Math.PI)*(-p.H);
+    if(p.t<1){ addParticles(x,y,1,p.fire?'#e74c3c':(p.rock?'#7f8c8d':'#888'),0.4,12);
+      ctx.strokeStyle=p.color; ctx.lineWidth=p.rock?4:2; ctx.beginPath();
+      if(p.rock){ ctx.arc(x,y,4,0,7); ctx.fillStyle=p.color; ctx.fill(); }
+      else { const px=p.x0+(p.x1-p.x0)*(p.t-0.04), py=p.y0+(p.y1-p.y0)*(p.t-0.04)+Math.sin((p.t-0.04)*Math.PI)*(-p.H); ctx.moveTo(px,py); ctx.lineTo(x,y); ctx.stroke(); }
+    } else { addParticles(x,y,p.rock?14:4,p.rock?'#dfc282':(p.fire?'#f39c12':'#bbb'),p.rock?2.4:1.2);
+      if(!p.rock && Math.random()<0.6) pinned.push({x,y,ang:rnd(-0.2,0.2)+(p.x1>p.x0?0.3:-0.3),life:120,max:120,color:p.color});
+      projectiles.splice(i,1); }
+  }
+}
+function drawPinned(ctx){ for(let i=pinned.length-1;i>=0;i--){ const p=pinned[i]; p.life--; if(p.life<=0){pinned.splice(i,1);continue;}
+  ctx.save(); ctx.globalAlpha=p.life<40?p.life/40:1; ctx.translate(p.x,p.y); ctx.rotate(p.ang);
+  ctx.strokeStyle=p.color; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-8); ctx.stroke(); ctx.restore(); } }
+function updateParticles(ctx){ for(let i=fxParticles.length-1;i>=0;i--){ const p=fxParticles[i]; p.x+=p.vx; p.y+=p.vy; p.life--; if(p.life<=0){fxParticles.splice(i,1);continue;}
+  ctx.globalAlpha=p.life/p.max; ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill(); ctx.globalAlpha=1; } }
+function drawFloats(ctx){ for(let i=floats.length-1;i>=0;i--){ const f=floats[i]; f.y+=f.vy; f.life--; if(f.life<=0){floats.splice(i,1);continue;}
+  ctx.globalAlpha=Math.min(1,f.life/20); ctx.fillStyle=f.color; ctx.font='bold 16px Cinzel, serif'; ctx.textAlign='center'; ctx.fillText(f.text,f.x,f.y); ctx.globalAlpha=1; } }
+
+function drawLabels(ctx,w){
+  ctx.textAlign='left'; ctx.font='600 11px Cinzel, serif';
+  ctx.fillStyle='#f5d782'; ctx.fillText('ROMAN LEGION',14,22);
+  ctx.fillStyle='#bdb3a0'; ctx.font='10px EB Garamond, serif'; ctx.fillText(S.you.formation.name,14,36);
+  ctx.textAlign='right'; ctx.font='600 11px Cinzel, serif';
+  ctx.fillStyle='#e8a090'; ctx.fillText('ENEMY HOST',w-14,22);
+  ctx.fillStyle='#bdb3a0'; ctx.font='10px EB Garamond, serif'; ctx.fillText(S.enemy.formation.name,w-14,36);
+  ctx.textAlign='left';
+}
+
+// ── Order → visual mapping ──
+function triggerVisualEffects(side,key){
+  const o=ORDERS[key]; if(!o) return; const w=cv.width,cy=cv.height/2;
+  const ax=squadX(side,w), dx=squadX(side==='you'?'enemy':'you',w), mid=(ax+dx)/2;
+  if(o.sub==='charge'){ anim[side].lunge=18; addParticles(mid,cy,25,'#dfc282',2.2); shake=Math.max(shake,10); }
+  else if(o.sub==='harass'){ const fire=key==='fireMissiles'; const n=fire?7:6;
+    for(let j=0;j<n;j++) setTimeout(()=>{ if(S) spawnArrow(ax,dx,cy,fire); },j*50); }
+  else if(o.sub==='siege'){ spawnRock(ax,dx,cy); }
+  else if(o.sub==='moral'){ const heal=!o.eMorale; const col=heal?'#f1c40f':'#9b59b6';
+    for(let j=0;j<15;j++) fxParticles.push({x:(heal?ax:dx)+rnd(-14,14),y:cy+rnd(-10,10),vx:rnd(-0.2,0.2),vy:rnd(-1.2,-0.5),r:rnd(1.5,3),color:col,life:rnd(30,55),max:55}); }
+  else if(o.sub==='push'){ anim[side].lunge=8; addParticles(mid,cy,8,'#cbb98a',1.2); if(o.eMorale){ for(let j=0;j<8;j++) fxParticles.push({x:dx+rnd(-12,12),y:cy,vx:0,vy:rnd(-1,-0.4),r:2,color:'#9b59b6',life:40,max:40}); } }
+  else if(o.sub==='move'){ anim[side].lunge=12; addParticles(mid,cy,10,'#cbb98a',1.6); }
+}
+
+// ── Main loop (pipeline order per spec) ──
+function vizLoop(){
+  requestAnimationFrame(vizLoop);
+  if(!cv||!cx2) return; const ctx=cx2, w=cv.width, h=cv.height; VT+=0.05;
+  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,w,h);
+  if(!S){ ctx.fillStyle='#07050a'; ctx.fillRect(0,0,w,h); return; }
+  ctx.save();
+  if(shake>0){ ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake); shake*=0.9; if(shake<0.3)shake=0; }
+  drawTerrain(ctx,w,h);
+  drawAmbient(ctx,w,h);
+  drawPinned(ctx);
+  for(const s of ['you','enemy']){ const a=anim[s]; a.lunge*=0.85; a.recoil*=0.85; if(a.flash>0)a.flash-=1; }
+  drawStandard(ctx,'you'); drawStandard(ctx,'enemy');
+  drawSquad(ctx,'you'); drawSquad(ctx,'enemy');
+  updateProjectiles(ctx);
+  updateParticles(ctx);
+  drawFloats(ctx);
+  drawLabels(ctx,w);
+  ctx.restore();
+}
+vizInit();
+</script>
+</body>
+</html>

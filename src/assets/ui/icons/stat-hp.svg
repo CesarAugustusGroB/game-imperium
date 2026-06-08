@@ -1,0 +1,14 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="hpFill" x1="16" y1="3" x2="16" y2="29" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF8A78"/>
+      <stop offset="0.5" stop-color="#C53D45"/>
+      <stop offset="1" stop-color="#641823"/>
+    </linearGradient>
+    <filter id="hpShadow" x="-3" y="-2" width="38" height="38" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="1.6" stdDeviation="1.3" flood-color="#050208" flood-opacity="0.75"/>
+    </filter>
+  </defs>
+  <path filter="url(#hpShadow)" d="M16 28C9.2 23.4 5 19.1 5 13.2C5 9.6 7.5 7 10.8 7C13.1 7 15 8.2 16 10C17 8.2 18.9 7 21.2 7C24.5 7 27 9.6 27 13.2C27 19.1 22.8 23.4 16 28Z" fill="url(#hpFill)" stroke="#F8CBA9" stroke-width="1.4"/>
+  <path d="M16 25.5C10.9 21.9 7.5 18.3 7.5 13.5C7.5 11.5 8.9 9.6 11 9.6C13.1 9.6 14.6 11.1 15.2 13.1H16.8C17.4 11.1 18.9 9.6 21 9.6C23.1 9.6 24.5 11.5 24.5 13.5C24.5 18.3 21.1 21.9 16 25.5Z" fill="#FFB09C" fill-opacity="0.18"/>
+</svg>

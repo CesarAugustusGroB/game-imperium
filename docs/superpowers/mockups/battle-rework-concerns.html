@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Iter Belli · Battle Rework — Exploración &amp; Inquietudes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:ital@0;1&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0e0c16; --panel:#16131f; --panel2:#1d1929; --line:rgba(212,168,67,.18);
+    --gold:#d4a843; --gold-hi:#f0d080; --txt-hi:#ece3d0; --txt:#c4baa6; --txt-lo:#8a8170;
+    --red:#c24a3a; --orange:#d48b3a; --yellow:#d4c043; --green:#5a9a6a; --blue:#5a7aa0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'EB Garamond',serif;
+    background:radial-gradient(1200px 700px at 50% -10%, #221a2e 0%, var(--ink) 60%), var(--ink);
+    color:var(--txt); min-height:100vh; padding:28px 18px 60px; letter-spacing:.2px; line-height:1.6;
+  }
+  .wrap{max-width:920px; margin:0 auto}
+  h1,h2,h3{font-family:'Cinzel',serif; letter-spacing:1px}
+  code,.mono{font-family:'JetBrains Mono',monospace; font-size:.92em}
+  code{background:rgba(212,168,67,.1); border:1px solid var(--line); border-radius:3px; padding:1px 5px; color:var(--gold-hi)}
+
+  header{border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:8px}
+  header h1{font-size:24px; color:var(--gold-hi); text-transform:uppercase}
+  header .sub{font-size:14px; color:var(--txt-lo); font-style:italic; margin-top:4px}
+  header .meta{font-size:11px; color:var(--txt-lo); font-family:'JetBrains Mono'; margin-top:8px}
+
+  .tier{margin-top:30px}
+  .tier-head{display:flex; align-items:center; gap:10px; font-family:'Cinzel'; font-size:16px;
+    text-transform:uppercase; letter-spacing:1.5px; padding-bottom:8px; border-bottom:1px solid var(--line); margin-bottom:14px}
+  .dot{width:12px; height:12px; border-radius:50%; flex:0 0 auto; box-shadow:0 0 8px currentColor}
+  .t-red .dot{background:var(--red); color:var(--red)} .t-red .tier-head{color:#e88858}
+  .t-orange .dot{background:var(--orange); color:var(--orange)} .t-orange .tier-head{color:#e8a848}
+  .t-yellow .dot{background:var(--yellow); color:var(--yellow)} .t-yellow .tier-head{color:#e8d048}
+  .t-green .dot{background:var(--green); color:var(--green)} .t-green .tier-head{color:#8fe0aa}
+  .tier-head .count{margin-left:auto; font-size:11px; font-family:'JetBrains Mono'; color:var(--txt-lo); letter-spacing:0}
+
+  .card{background:linear-gradient(180deg, var(--panel) 0%, #12101a 100%); border:1px solid var(--line);
+    border-left:3px solid var(--gold); border-radius:4px; padding:14px 18px; margin-bottom:12px;
+    box-shadow:0 6px 22px rgba(0,0,0,.35)}
+  .t-red .card{border-left-color:var(--red)}
+  .t-orange .card{border-left-color:var(--orange)}
+  .t-yellow .card{border-left-color:var(--yellow)}
+  .t-green .card{border-left-color:var(--green)}
+  .card h3{font-size:14px; color:var(--txt-hi); margin-bottom:6px; display:flex; gap:8px; align-items:baseline}
+  .card h3 .n{font-family:'JetBrains Mono'; color:var(--gold); font-size:13px; flex:0 0 auto}
+  .card p{font-size:14px; margin:5px 0}
+  .card .q{color:var(--gold-hi); font-style:italic}
+  .card .take{margin-top:8px; font-size:13px; color:var(--txt-lo); border-top:1px dashed var(--line); padding-top:7px}
+  .card .take b{color:var(--gold)}
+
+  .threads{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; margin-top:10px}
+  .thread{background:var(--panel2); border:1px solid var(--line); border-radius:3px; padding:11px 13px}
+  .thread .tl{font-family:'Cinzel'; font-size:12px; color:var(--gold-hi); text-transform:uppercase; letter-spacing:1px}
+  .thread .td{font-size:12.5px; color:var(--txt); margin-top:4px}
+
+  .ask{margin-top:34px; background:rgba(212,168,67,.07); border:1px solid var(--line); border-radius:4px; padding:18px 20px}
+  .ask h2{font-size:15px; color:var(--gold-hi); text-transform:uppercase; margin-bottom:8px}
+  .ask p{font-size:14px}
+  .ask .opt{margin-top:8px; padding-left:14px; border-left:2px solid var(--gold); font-size:14px}
+  .footer{margin-top:30px; text-align:center; font-size:11px; color:var(--txt-lo); font-style:italic}
+  a{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Battle Rework — Exploración &amp; Inquietudes</h1>
+    <div class="sub">Qué me preocupa antes de pasar al spec — aterrizado contra el código real de Iter Belli</div>
+    <div class="meta">explorado: iter-belli-state.ts · -types.ts · -combat.ts · unit-types.ts · cohort.ts · ExercitusTab.tsx</div>
+  </header>
+
+  <!-- ══════ RED ══════ -->
+  <section class="tier t-red">
+    <div class="tier-head"><span class="dot"></span> Lo que más me inquieta — decisiones sin resolver <span class="count">bloquean el spec</span></div>
+
+    <div class="card">
+      <h3><span class="n">1</span> Los power stats no existen durante la campaña</h3>
+      <p><code>IterBelliState</code> solo guarda <code>soldiers</code> (un número = pool de HP). El roster de cohortes —de donde salen carga/acoso/empuje/asedio/movimiento— vive en <code>preparedArmy</code> (el Hub), no en la campaña. Durante la marcha <code>soldiers</code> baja por hambre/escaramuzas/emboscadas, pero el roster es fijo.</p>
+      <p class="q">¿Si perdés 40% de soldados a la atrición, bajan tus power stats?</p>
+      <p class="take"><b>Mi instinto:</b> sí — escalar <code>stat × (soldiers/initialSoldiers)</code>. El prototipo usa stats fijos y lo ignora. Es un hueco de modelado central.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="n">2</span> ¿La moral de batalla es la de campaña o se resetea a 10?</h3>
+      <p>El motor actual <b>arrastra la moral de campaña a la batalla y la escribe de vuelta</b> (<code>applyBattleOutcome(victory, survivors, finalMorale)</code>). Mi balance asumió moral 10 al inicio.</p>
+      <p class="take"><b>Es la conexión campaña↔batalla más importante</b> (que la marcha importe). Heredar moral = integración rica pero rebalanceo. Resetear = batalla independiente. Me inclino por <b>heredar</b>.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="n">3</span> Disciplina es 1–5 en el código; el diseño quiere 0–10</h3>
+      <p><code>computeStartingDiscipline</code> clampa 1–5; hay <code>DISCIPLINE_BY_ARCHETYPE</code>, <code>B.ROMAN[disc]</code> (numeral romano), mods de legate (±1) y cartas que suman disciplina. Pasar a 0–10 ripplea por todo eso.</p>
+      <p class="take">Y es <b>delicado de balance</b>: en el sim la disciplina mueve el win-rate de <b>26% (disc2) a 88% (disc10)</b>. Si la progresión no deja llegar a disc 6+, las formaciones élite y el bono de daño quedan fuera de alcance. <b>La velocidad de subir disciplina decide si el juego es ganable.</b></p>
+    </div>
+
+    <div class="card">
+      <h3><span class="n">4</span> El enemigo es hoy <code>{baseSoldiers, morale, discipline, doctrine}</code> — le faltan 5 campos</h3>
+      <p>Para el combate simétrico el enemigo necesita: power stats, armadura, fortificación, formación y munición. ¿Autorados por escenario a mano, o generados de un roster enemigo?</p>
+      <p class="take"><b>Carga de autoría</b> real + riesgo de balance: un enemigo mal tuneado rompe la curva.</p>
+    </div>
+  </section>
+
+  <!-- ══════ ORANGE ══════ -->
+  <section class="tier t-orange">
+    <div class="tier-head"><span class="dot"></span> Fricciones de integración / modelo de datos</div>
+
+    <div class="card">
+      <h3><span class="n">5</span> Munición y Armadura son estado nuevo y persistente</h3>
+      <p><b>Munición:</b> campo nuevo en <code>IterBelliState</code> + sembrado en embark + consumo + UI en la barra de recursos + write-back + <b>migración de saves</b> (<code>loadIterBelliState</code>).</p>
+      <p><b>Armadura (material×calidad):</b> vive en <code>preparedArmy</code> (Hub), no en la campaña — UI de mejora en Exercitus (sink de oro), gating por evento, fluye a la batalla. Más el ladder de contenido nuevo.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="n">6</span> El tipo de centro debería derivar del terreno, no ser random</h3>
+      <p>La batalla ocurre en <code>spokeTerrain</code> (string: 'plains'/'forest'…). El prototipo elige Hill/Ford/Camp/Plain al azar; en el juego debería mapear <b>terreno → centro</b>.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="n">7</span> Formaciones desde el legate, con legate opcional</h3>
+      <p><code>preparedLegate</code> puede ser <code>null</code>. Hay que definir qué tiene un ejército <b>sin legate</b> (¿solo comunes a disciplina base?). Falta el mapeo trait→formación-única + una <b>pantalla de despliegue pre-batalla</b> (hoy <code>BattleModal</code> arranca solo, sin elegir formación).</p>
+    </div>
+  </section>
+
+  <!-- ══════ YELLOW ══════ -->
+  <section class="tier t-yellow">
+    <div class="tier-head"><span class="dot"></span> Caveats de balance — el sim no es la verdad</div>
+
+    <div class="card">
+      <h3><span class="n">8</span> El balance es AI-vs-AI con un ejército fijo</h3>
+      <p>El jugador real elige órdenes a mano (mejor que mi AI greedy) → probablemente gane <b>más</b> que el ~50% del sim. Y los stats fijos (push16/charge10) son arbitrarios: la viabilidad de cada formación <b>oscila según la composición</b>. Punto de partida, no destino — necesita playtest.</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="n">9</span> La victoria es casi siempre por moral (88–99%)</h3>
+      <p>La aniquilación por HP es rarísima. Es realista, pero el pool de HP importa más como buffer de moral y conteo de supervivientes que como vía de matar. Y los supervivientes vuelven al Hub (escalan cohortes) → batallas ganadas por moral con HP intacto = <b>recuperación barata</b>. ¿Es lo que querés?</p>
+    </div>
+
+    <div class="card">
+      <h3><span class="n">10</span> Quité la retirada</h3>
+      <p>El motor viejo tenía Retirada ordenada/desordenada (terminar la batalla cortando pérdidas). En una campaña, <b>poder retirarte y salvar el ejército</b> es estratégicamente clave. Lo dejamos fuera — quizá deba volver.</p>
+    </div>
+  </section>
+
+  <!-- ══════ GREEN ══════ -->
+  <section class="tier t-green">
+    <div class="tier-head"><span class="dot"></span> Proceso — esto es grande, partirlo en hilos</div>
+    <div class="card">
+      <p>Reescritura completa del motor + tipos + <code>BattleModal</code> + 2 recursos de economía + UI de Hub + migración de saves. Encaja con tu cadencia de <i>integration-threads</i> (brainstorm→spec→plan→exec por hilo). Lo partiría en cuatro:</p>
+      <div class="threads">
+        <div class="thread"><div class="tl">Hilo A</div><div class="td">Motor + tipos + <code>BattleModal</code> nuevos (reemplazo del combate, stats fijos).</div></div>
+        <div class="thread"><div class="tl">Hilo B</div><div class="td">Power stats reales desde el roster + escala por atrición (resuelve 🔴1).</div></div>
+        <div class="thread"><div class="tl">Hilo C</div><div class="td">Armadura / munición / fortificación (economía + Hub).</div></div>
+        <div class="thread"><div class="tl">Hilo D</div><div class="td">Formaciones desde el legate + pantalla de despliegue.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="ask">
+    <h2>Lo que NO me preocupa</h2>
+    <p>El modelo de combate en sí (la red de trade-offs es coherente y se valida en el sim), que sea self-contained (Iter Belli ya está desacoplado de bellum), y la estética/UX del prototipo.</p>
+  </div>
+
+  <div class="ask">
+    <h2>Siguiente paso — a tu elección</h2>
+    <div class="opt"><b>Opción 1:</b> Resolver primero las decisiones 🔴 1–4 (bloquean el spec).</div>
+    <div class="opt"><b>Opción 2:</b> Escribir ya el spec del <b>Hilo A</b> (motor + modal con stats fijos) y dejar stats reales / economía / formaciones para hilos siguientes.</div>
+  </div>
+
+  <div class="footer">Iter Belli · Battle Rework — documento de exploración · acompaña a battle-rework.html (prototipo jugable)</div>
+</div>
+</body>
+</html>
