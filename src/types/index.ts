@@ -22,6 +22,8 @@ export interface NationData {
   capital: number;
 }
 
+export type ArmorMaterial = 'copper' | 'bronze' | 'iron' | 'steel';
+
 export interface ArmyData {
   id: number;
   owner: string;
@@ -51,6 +53,10 @@ export interface ArmyData {
    * per node traversal in `spoke.advanceNode`.
    */
   supplies: number;
+  /** Upgradeable armor tier (Exercitus gold sink). Omitted → 'copper'. */
+  armorMaterial?: ArmorMaterial;
+  /** Battle harass budget carried from the Hub. Omitted → AMMO_STARTING_STOCK. */
+  ammunition?: number;
   /**
    * FT-SUP: absolute morale penalty (>= 0) accumulated from consecutive
    * deficit traversals. Undefined/0 means no penalty. Cleared the instant

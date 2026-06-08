@@ -290,6 +290,13 @@ export const SUPPLIES_STARTING_STOCK = 28;
 /** Cap on supplies an army can carry into a spoke. */
 export const SUPPLY_MAX_CARRY = 80;
 
+/** Starting ammunition stock for a freshly composed army. */
+export const AMMO_STARTING_STOCK = 24;
+/** Cap on ammunition an army can carry into a campaign. */
+export const AMMO_MAX_CARRY = 60;
+/** Ammunition received per 1 gold spent in the Exercitus tab. */
+export const AMMO_PER_GOLD = 1;
+
 /** Fraction of max HP each cohort loses on a deficit node traversal. */
 export const SUPPLY_HP_DAMAGE_PCT = 0.20;
 
