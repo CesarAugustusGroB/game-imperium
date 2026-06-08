@@ -7,7 +7,7 @@ import type { Archetype } from './iter-belli-types';
 // ── Starting campaign defaults (the hybrid seed fills in soldiers + gold) ──
 export const START = {
   morale: 8.0,
-  discipline: 4,
+  discipline: 2,
   supplies: 28,
   threat: 2,
   timeRemaining: 12,
@@ -52,7 +52,7 @@ export const ENEMY_MIN_SOLDIERS = 2000;
 export const ENEMY_THREAT_DIVISOR = 20;
 export const ENEMY_WEAKEN_PER_POINT = 0.07;
 export const ENEMY_MORALE = 8.0;
-export const ENEMY_DISCIPLINE = 5;
+export const ENEMY_DISCIPLINE = 6;
 export const FORTIFIED_TERRAIN_MULT = 1.15;
 export const BATTLE_MAX_ROUNDS = 15;
 
@@ -70,14 +70,14 @@ export const LEVY_IUNIORES_SOLDIERS = 500;
 export const QUEST_WINDOW_BASE = 3;
 
 // ── Commander identity ──
-/** Starting discipline (1–5) by archetype; overrides START.discipline at embark. */
+/** Additive starting-discipline bonus by archetype on the 0–10 scale (base = START.discipline). */
 export const DISCIPLINE_BY_ARCHETYPE: Record<Archetype, number> = {
-  Warlord: 2,
-  Religious: 3,
-  Merchant: 4,
-  Diplomat: 5,
+  Warlord: 0,
+  Religious: 0,
+  Merchant: 1,
+  Diplomat: 2,
 };
-/** Legate trait id → discipline contribution. Net is clamped to ±1 by the caller. */
+/** Legate trait id → discipline contribution. Net is clamped to ±2 by the caller. */
 export const LEGATE_DISCIPLINE_TRAIT_MOD: Record<string, number> = {
   disciplined: 1, cautious: 1, tactician: 1, stoic: 1,
   aggressive: -1, rallying: -1,
@@ -96,8 +96,8 @@ export const SIGNATURE = {
 // ── Clamps ──
 export const MORALE_MIN = 0;
 export const MORALE_MAX = 10;
-export const DISCIPLINE_MIN = 1;
-export const DISCIPLINE_MAX = 5;
+export const DISCIPLINE_MIN = 0;
+export const DISCIPLINE_MAX = 10;
 export const THREAT_MIN = 0;
 export const THREAT_MAX = 10;
 
@@ -111,5 +111,5 @@ export const ALERT = {
   clockAlert: 3,
 } as const;
 
-/** Roman numerals for discipline display (index 0 unused). */
-export const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'] as const;
+/** Roman numerals for discipline display, index 0..10 (0 shown as a dash). */
+export const ROMAN = ['—', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'] as const;
