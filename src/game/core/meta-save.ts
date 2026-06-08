@@ -50,7 +50,8 @@ import {
 import { faith, gold, influence, initResources, iuniores, momentum, type Resources } from './resources';
 import type { Legate } from '../army/legate';
 import { normalizeCohortRoster } from '../army/cohort';
-import { SUPPLY_MAX_CARRY, SUPPLY_MORALE_PENALTY_CAP } from '../../config/game-config';
+import { SUPPLY_MAX_CARRY, SUPPLY_MORALE_PENALTY_CAP, AMMO_MAX_CARRY } from '../../config/game-config';
+import { ARMOR_LADDER } from '../progression/arsenal';
 import { serializeIterBelli, restoreIterBelli, type IterBelliSave } from '../iterBelli/iter-belli-save';
 import { computeDoctrineModifiers } from '../../data/iter-belli-doctrines';
 
@@ -192,6 +193,12 @@ export function normalizeArmySnapshot(army: ArmyData | null | undefined): ArmyDa
     ...army,
     cohorts: normalizeCohortRoster(army.cohorts),
     supplies: clamp(asFiniteNumber(army.supplies, 0), 0, SUPPLY_MAX_CARRY),
+    armorMaterial: ARMOR_LADDER.includes(army.armorMaterial as never)
+      ? army.armorMaterial
+      : 'copper',
+    ammunition: army.ammunition === undefined
+      ? undefined
+      : clamp(asFiniteNumber(army.ammunition, 0), 0, AMMO_MAX_CARRY),
     supplyMoralePenalty: army.supplyMoralePenalty === undefined
       ? undefined
       : clamp(asFiniteNumber(army.supplyMoralePenalty, 0), 0, SUPPLY_MORALE_PENALTY_CAP),
