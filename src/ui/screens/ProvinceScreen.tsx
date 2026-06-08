@@ -40,6 +40,9 @@ import foodIcon from '../../assets/ui/resources/food-icon.png';
 import populationIcon from '../../assets/ui/resources/population-icon.png';
 import unrestIcon from '../../assets/ui/resources/unrest-icon.png';
 import wealthIcon from '../../assets/ui/resources/wealth-icon.png';
+import lowerClassIcon from '../../assets/ui/resources/lower-class-icon.png';
+import upperClassIcon from '../../assets/ui/resources/upper-class-icon.png';
+import taxRateSeal from '../../assets/ui/resources/tax-rate-seal.png';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('province-styles')) {
@@ -311,8 +314,9 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
     .pa-admin-gov-name { font-family: var(--font-display); font-size: 12px; font-weight: 700; color: var(--color-text-primary); letter-spacing: 2px; text-transform: uppercase; }
     .pa-admin-gov-desc { font-size: 9px; color: var(--color-text-muted); line-height: 1.35; font-style: italic; }
     .pa-admin-tax { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
-    .pa-admin-rate-badge { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, rgba(60,45,15,0.9), rgba(40,30,10,0.95)); border: 2px solid var(--color-gold-secondary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 10px rgba(240,208,128,0.12); }
-    .pa-admin-rate-value { font-family: var(--font-display); font-size: 11px; font-weight: 700; color: var(--color-gold-primary); }
+    .pa-admin-rate-badge { width: 66px; height: 66px; position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; filter: drop-shadow(0 5px 9px rgba(0,0,0,0.62)); }
+    .pa-admin-rate-seal { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+    .pa-admin-rate-value { position: relative; z-index: 1; font-family: var(--font-display); font-size: 18px; font-weight: 800; color: #e9bd58; text-shadow: -1px -1px 0 rgba(50,28,7,0.95), 1px 1px 0 rgba(255,224,140,0.4), 0 2px 4px rgba(0,0,0,0.9); }
     .pa-admin-tax-row { display: flex; flex-direction: column; gap: 2px; }
     .pa-admin-tax-row-header { display: flex; justify-content: space-between; align-items: center; }
     .pa-admin-tax-label { font-size: 9px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 1.2px; }
@@ -967,8 +971,12 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
               <InlineImageIcon src={populationIcon} size={15} style={{ verticalAlign: 'middle' }} /> {province.population} <span style={{ color: 'var(--color-text-muted)', fontSize: '9px' }}>{settlementLabel}</span>
             </span>
-            <span style={{ marginLeft: 'auto', fontSize: '9px', color: 'var(--color-text-muted)' }}>
-              {invCount}/{slotMax} □
+            <span
+              title="Building slots"
+              style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: '9px', color: 'var(--color-text-muted)' }}
+            >
+              {invCount}/{slotMax}
+              <BuildingIcon type="basilica" size={12} color="var(--color-text-muted)" style={{ filter: 'none' }} />
             </span>
           </div>
 
@@ -978,7 +986,7 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
               <UnrestBar unrest={province.unrest} modifier={unrestMod} width={80} />
             </div>
             <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: netGoldColor, whiteSpace: 'nowrap', flexShrink: 0 }}>
-              {netGold >= 0 ? '+' : ''}{netGold}g
+              <ResourceAmount type="gold" amount={netGold} sign={netGold >= 0 ? '+' : ''} iconSize={11} />
             </span>
           </div>
         </div>
@@ -1013,7 +1021,6 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
             key={gov.id}
             class="gov-picker-card"
             style={{
-              borderBottom: '1px solid rgba(212, 168, 67, 0.12)',
               padding: '8px 2px 14px',
             }}
           >
@@ -2148,13 +2155,16 @@ const PA_TAX_COLORS: Record<TaxLevel, string> = {
 };
 const PA_TAX_LEVELS: TaxLevel[] = [1, 2, 3, 4, 5];
 
-function PATaxStep({ label, value, onChange }: { label: string; value: TaxLevel; onChange: (v: TaxLevel) => void }) {
+function PATaxStep({ label, icon, value, onChange }: { label: string; icon: string; value: TaxLevel; onChange: (v: TaxLevel) => void }) {
   const color = PA_TAX_COLORS[value];
   const fillPct = ((value - 1) / 4) * 100;
   return (
     <div class="pa-admin-tax-row">
       <div class="pa-admin-tax-row-header">
-        <span class="pa-admin-tax-label">{label}</span>
+        <span class="pa-admin-tax-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <InlineImageIcon src={icon} size={23} title={label} style={{ verticalAlign: 'middle' }} />
+          {label}
+        </span>
         <span class="pa-admin-tax-badge" style={{ color, background: `${color}18`, border: `1px solid ${color}40` }}>{getTaxLabel(value)}</span>
       </div>
       <div class="pa-admin-tax-track">
@@ -2260,11 +2270,14 @@ function ProvinceAdminPanel({ province }: { province: Province }) {
         {/* Tax */}
         <div class="pa-admin-tax">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
-            <div class="pa-admin-rate-badge"><span class="pa-admin-rate-value">{rateStr}</span></div>
+            <div class="pa-admin-rate-badge" title={`Current tax rate: ${rateStr}`}>
+              <img class="pa-admin-rate-seal" src={taxRateSeal} alt="" aria-hidden="true" />
+              <span class="pa-admin-rate-value">{rateStr}</span>
+            </div>
             <span style={{ fontSize: '7px', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', fontWeight: 700 }}>Rate</span>
           </div>
-          <PATaxStep label="Lower Class" value={province.lowerTax} onChange={setLower} />
-          <PATaxStep label="Upper Class" value={province.upperTax} onChange={setUpper} />
+          <PATaxStep label="Lower Class" icon={lowerClassIcon} value={province.lowerTax} onChange={setLower} />
+          <PATaxStep label="Upper Class" icon={upperClassIcon} value={province.upperTax} onChange={setUpper} />
         </div>
       </div>
       <div class="pa-admin-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -14,7 +14,7 @@ import {
 } from '../../../../game/army/army-replenishment';
 import { getLegateTraitById } from '../../../../game/army/legate-traits';
 import { playSfx } from '../../../sound/sfx';
-import type { UnitRole } from '../../../../game/army/unit-types';
+import type { PowerStat, UnitRole } from '../../../../game/army/unit-types';
 import { POWER_STATS } from '../../../../game/army/unit-types';
 import { BentoCard } from '../../../components/BentoCard';
 import { Masthead } from '../Masthead';
@@ -25,8 +25,61 @@ import {
   SUPPLIES_PER_GOLD,
   SUPPLY_MAX_CARRY,
 } from '../../../../config/game-config';
+import statHpIcon from '../../../../assets/ui/icons/stat-hp-generated.png';
+import statChargeIcon from '../../../../assets/ui/icons/stat-charge-generated.png';
+import statHarassIcon from '../../../../assets/ui/icons/stat-harass-generated.png';
+import statPushIcon from '../../../../assets/ui/icons/stat-push-generated.png';
+import statSiegeIcon from '../../../../assets/ui/icons/stat-siege-generated.png';
+import statMovementIcon from '../../../../assets/ui/icons/stat-movement-generated.png';
 
 const LEGATE_HIRE_COST = 80;
+
+const STAT_ICON_SRC: Record<PowerStat, string> = {
+  charge: statChargeIcon,
+  harass: statHarassIcon,
+  push: statPushIcon,
+  siege: statSiegeIcon,
+  movement: statMovementIcon,
+};
+
+function RecruitStatIcon({
+  src,
+  label,
+  value,
+  muted = false,
+}: {
+  src: string;
+  label: string;
+  value: number;
+  muted?: boolean;
+}) {
+  return (
+    <span
+      title={`${label}: ${value}`}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 3,
+        minWidth: 32,
+        opacity: muted ? 0.35 : 1,
+      }}
+    >
+      <img
+        src={src}
+        alt=""
+        aria-hidden="true"
+        style={{
+          width: 14,
+          height: 14,
+          objectFit: 'contain',
+          filter: 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.75))',
+          flex: '0 0 auto',
+        }}
+      />
+      <span>{value}</span>
+    </span>
+  );
+}
 
 const ROLE_COLORS: Record<UnitRole, string> = {
   vanguard: '#b23a3a',  // crimson — frontline
@@ -232,11 +285,15 @@ export function ExercitusTab() {
             color: 'var(--imp-text-lo)',
             flexWrap: 'wrap',
           }}>
-            <span>HP {c.stats.hp}</span>
+            <RecruitStatIcon src={statHpIcon} label="HP" value={c.stats.hp} />
             {POWER_STATS.map((p) => (
-              <span key={p.key} title={p.label} style={{ opacity: c.stats[p.key] > 0 ? 1 : 0.3 }}>
-                {p.glyph} {c.stats[p.key]}
-              </span>
+              <RecruitStatIcon
+                key={p.key}
+                src={STAT_ICON_SRC[p.key]}
+                label={p.label}
+                value={c.stats[p.key]}
+                muted={c.stats[p.key] <= 0}
+              />
             ))}
             <ResourceAmount type="gold" amount={c.aurumCost} iconSize={14} />
             {!c.mercenary && <ResourceAmount type="iuniores" amount={IUNIORES.recruitCost} iconSize={14} />}

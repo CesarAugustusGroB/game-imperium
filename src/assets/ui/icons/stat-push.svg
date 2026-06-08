@@ -1,0 +1,22 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="scutumFill" x1="7" y1="4" x2="25" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E36A55"/>
+      <stop offset="0.5" stop-color="#A72E32"/>
+      <stop offset="1" stop-color="#4C121C"/>
+    </linearGradient>
+    <linearGradient id="pushGold" x1="16" y1="4" x2="16" y2="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE5A2"/>
+      <stop offset="1" stop-color="#8B5A22"/>
+    </linearGradient>
+    <filter id="pushShadow" x="-3" y="-2" width="38" height="38" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="#050208" flood-opacity="0.78"/>
+    </filter>
+  </defs>
+  <g filter="url(#pushShadow)">
+    <path d="M9.2 5.2H22.8C24.4 8.6 25 12.3 24.8 16.1C24.5 21.1 22.4 25.1 16 28.5C9.6 25.1 7.5 21.1 7.2 16.1C7 12.3 7.6 8.6 9.2 5.2Z" fill="url(#scutumFill)" stroke="url(#pushGold)" stroke-width="1.4"/>
+    <path d="M16 6.3V27.2" stroke="#F1C96F" stroke-width="1.2"/>
+    <ellipse cx="16" cy="15.4" rx="4.3" ry="5" fill="#2E1B20" stroke="#F2D48B" stroke-width="1.2"/>
+    <path d="M10.5 10.2H13.6M18.4 10.2H21.5M10.3 20H13.3M18.7 20H21.7" stroke="#F4D590" stroke-width="1.2" stroke-linecap="round"/>
+  </g>
+</svg>
