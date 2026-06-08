@@ -35,6 +35,18 @@ export const CARD_DEFS: OperationCard[] = [
     weight: 4,
   },
   {
+    id: 'reabastecer_municion',
+    name: 'Reabastecer munición',
+    category: 'Logística',
+    desc: 'Comprar flechas, jabalinas y proyectiles al arsenal de la ciudad aliada. Llena las aljabas para la batalla decisiva.',
+    cost: { time: 1, gold: 30 },
+    effects: () => ({ ammunition: 18 }),
+    expiry: 5,
+    locations: ['tarraco'],
+    requires: ({ state }) => state.gold >= 30,
+    weight: 3,
+  },
+  {
     id: 'saquear_convoy',
     name: 'Saquear convoy enemigo',
     category: 'Logística',
