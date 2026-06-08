@@ -60,6 +60,8 @@ export interface ScenarioEnemy {
   minSoldiers: number;
   morale: number;
   discipline: number;
+  /** Key into ENEMY_ARCHETYPES for the decisive battle (drives the new battle engine). */
+  archetypeKey: string;
 }
 
 /** Narrative strings shown at campaign end. The two interpolated battle logs are

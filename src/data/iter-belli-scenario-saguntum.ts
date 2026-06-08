@@ -22,6 +22,7 @@ export const SAGUNTUM: CampaignScenario = {
     minSoldiers: B.ENEMY_MIN_SOLDIERS,
     morale: B.ENEMY_MORALE,
     discipline: B.ENEMY_DISCIPLINE,
+    archetypeKey: 'carthage',
   },
   narrative: {
     victoryTitle: 'Triunfo en Hispania',

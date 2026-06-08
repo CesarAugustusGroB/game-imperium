@@ -35,7 +35,7 @@ export function BattleModal() {
     const options = availableFormations(legate, seed0.discipline);
     const formationOptions: FormationKey[] = options.length ? options : ['battleLine'];
     const enemySoldiers = Math.max(scenario.enemy.minSoldiers, Math.round(scenario.enemy.baseSoldiers * (1 - cs.enemyWeaken * 0.07)));
-    const enemyKey = (scenario.enemy as { archetypeKey?: string }).archetypeKey ?? 'carthage';
+    const enemyKey = scenario.enemy.archetypeKey;
     const enemy = buildEnemyArchetype(enemyKey, cs.enemyWeaken, enemySoldiers);
     beginBattleSession({
       playerSeedFor: (f) => buildPlayerSeed(snap, roster, legate, FORMATIONS[f], armor, undefined, fortified),
