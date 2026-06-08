@@ -444,16 +444,16 @@ export function applyBattleOutcome(victory: boolean, survivors: number, finalMor
 }
 
 /**
- * Starting campaign discipline = archetype base + legate modifier (net ±1), clamped 1–5.
- * Reads legate trait ids as plain strings; does not touch the legate/battle system.
+ * Starting campaign discipline (0–10) = base + archetype bonus + legate modifier (net ±2),
+ * clamped 0–10. Reads legate trait ids as plain strings; does not touch the legate/battle system.
  */
 export function computeStartingDiscipline(
   archetype: Archetype | null,
   legateTraitIds: readonly string[],
 ): number {
-  const base = archetype ? B.DISCIPLINE_BY_ARCHETYPE[archetype] : B.START.discipline;
+  const base = B.START.discipline + (archetype ? B.DISCIPLINE_BY_ARCHETYPE[archetype] : 0);
   const rawMod = legateTraitIds.reduce((sum, id) => sum + (B.LEGATE_DISCIPLINE_TRAIT_MOD[id] ?? 0), 0);
-  const legateMod = clamp(rawMod, -1, 1);
+  const legateMod = clamp(rawMod, -2, 2);
   return clamp(base + legateMod, B.DISCIPLINE_MIN, B.DISCIPLINE_MAX);
 }
 
