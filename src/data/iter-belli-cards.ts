@@ -418,4 +418,18 @@ export const CARD_DEFS: OperationCard[] = [
     locations: ['frontera', 'tarraco', 'llanura', 'bosques'],
     weight: 2,
   },
+
+  // ── ADIESTRAMIENTO ───────────────────────────────────────────────────────────
+  {
+    id: 'instruccion_campamento',
+    name: 'Instrucción de campamento',
+    category: 'Postura',
+    desc: 'Maniobras de formación en el campamento. Los hombres aprenden a moverse como una sola unidad. Cuesta tiempo y raciones, pero sube la disciplina.',
+    cost: { time: 1, supplies: 4 },
+    effects: () => ({ discipline: 1 }),
+    expiry: 99,
+    locations: ['*'],
+    requires: ({ state }) => state.discipline < 10 && state.supplies >= 4,
+    weight: 3,
+  },
 ];
