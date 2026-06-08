@@ -31,6 +31,7 @@ function freshState(): IterBelliState {
     supplies: B.START.supplies,
     gold: B.START.fallbackGold,
     iuniores: 0,
+    ammunition: B.START.ammunition,
     threat: B.START.threat,
     timeRemaining: B.START.timeRemaining,
     turnNum: 0,
@@ -96,6 +97,7 @@ function applyChange(key: keyof IterBelliState, delta: number): void {
     case 'supplies':   S.supplies = Math.max(0, S.supplies + delta); break;
     case 'gold':       S.gold = Math.max(0, S.gold + delta); break;
     case 'iuniores':   S.iuniores = Math.max(0, S.iuniores + delta); break;
+    case 'ammunition': S.ammunition = Math.max(0, S.ammunition + delta); break;
     case 'threat':     S.threat = clamp(S.threat + delta, B.THREAT_MIN, B.THREAT_MAX); break;
     default: break;
   }
@@ -183,6 +185,7 @@ function applyEffects(eff: CardEffects): boolean {
       case 'morale':     applyChange('morale', v as number); break;
       case 'discipline': applyChange('discipline', v as number); break;
       case 'supplies':   applyChange('supplies', v as number); break;
+      case 'ammunition': applyChange('ammunition', v as number); break;
       case 'gold':       applyChange('gold', v as number); break;
       case 'threat':     applyChange('threat', v as number); break;
       case 'enemyWeaken':
@@ -467,6 +470,8 @@ export interface CampaignSeed {
   spokeDuration: number;
   /** Supplies carried from the Hub army stock; omitted → keeps the START default. */
   supplies?: number;
+  /** Override starting ammunition; omitted → START.ammunition. */
+  ammunition?: number;
   /** Campaign mission id (Consilium-derived); omitted → no mission. */
   missionId?: string;
   /** Override starting threat (Consilium modifier); omitted → START.threat. */
@@ -503,6 +508,7 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
   if (seed.startThreat != null) S.threat = clamp(seed.startThreat, B.THREAT_MIN, B.THREAT_MAX);
   if (seed.startMorale != null) S.morale = clamp(seed.startMorale, B.MORALE_MIN, B.MORALE_MAX);
   if (seed.supplies != null) S.supplies = Math.max(0, Math.floor(seed.supplies));
+  if (seed.ammunition != null) S.ammunition = Math.max(0, Math.floor(seed.ammunition));
   if (seed.enemyWeaken != null) S.enemyWeaken = Math.max(0, Math.floor(seed.enemyWeaken));
   if (seed.extraDays) S.timeRemaining += Math.floor(seed.extraDays);
 

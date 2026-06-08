@@ -110,6 +110,7 @@ export interface CardEffects {
   morale?: number;
   discipline?: number;
   supplies?: number;
+  ammunition?: number;
   gold?: number;
   threat?: number;
   /** Erodes the final enemy army (each point = −7% effectives). */
@@ -254,11 +255,13 @@ export interface IterBelliState {
   // Resources
   soldiers: number;
   morale: number;       // clamped 0–10
-  discipline: number;   // clamped 1–5
+  discipline: number;   // clamped 0–10
   supplies: number;
   gold: number;
   /** Recruit pool carried from the run (seeded at embark, written back on return). */
   iuniores: number;
+  /** Battle harass budget (proyectiles). Seeded at embark, refilled by cards, spent only in the decisive battle. */
+  ammunition: number;
   threat: number;       // clamped 0–10
   timeRemaining: number;
   turnNum: number;

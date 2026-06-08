@@ -9,6 +9,7 @@ export const START = {
   morale: 8.0,
   discipline: 2,
   supplies: 28,
+  ammunition: 30,
   threat: 2,
   timeRemaining: 12,
   /** Fallback soldiers if the run has no prepared army. */
