@@ -5,8 +5,9 @@ import {
   preparedArmy, preparedLegate, legateHiringPool,
   ensurePreparedArmy, recruitCohort, removeCohort, getRecruitCohortFailure,
   ensureLegatePool, hireLegate, dismissLegate,
-  buySupplies,
+  buySupplies, upgradeArmor, buyAmmunition,
 } from '../../../../game/progression/strategic-store';
+import { nextArmorTier, armorUpgradeCost } from '../../../../game/progression/arsenal';
 import {
   previewHubReplenishment,
   replenishHubRoster,
@@ -24,6 +25,8 @@ import {
   IUNIORES,
   SUPPLIES_PER_GOLD,
   SUPPLY_MAX_CARRY,
+  AMMO_MAX_CARRY,
+  AMMO_PER_GOLD,
 } from '../../../../config/game-config';
 
 const LEGATE_HIRE_COST = 80;
@@ -100,6 +103,19 @@ export function ExercitusTab() {
   );
   const atCap = currentSupplies >= SUPPLY_MAX_CARRY;
 
+  // ── Arsenal (armor tier + ammunition) ──
+  const armorMaterial = army?.armorMaterial ?? 'copper';
+  const ARMOR_PCT: Record<string, number> = { copper: 5, bronze: 12, iron: 20, steel: 30 };
+  const armorLabel = armorMaterial.charAt(0).toUpperCase() + armorMaterial.slice(1);
+  const nextArmor = nextArmorTier(armorMaterial);
+  const nextArmorLabel = nextArmor ? nextArmor.charAt(0).toUpperCase() + nextArmor.slice(1) : null;
+  const armorCost = armorUpgradeCost(armorMaterial);
+  const canUpgradeArmor = nextArmor != null && armorCost != null && currentGold >= armorCost;
+  const currentAmmo = army?.ammunition ?? 0;
+  const ammoRatio = AMMO_MAX_CARRY > 0 ? currentAmmo / AMMO_MAX_CARRY : 0;
+  const ammoAtCap = currentAmmo >= AMMO_MAX_CARRY;
+  const ammoBuyable = Math.min(currentGold * AMMO_PER_GOLD, AMMO_MAX_CARRY - currentAmmo);
+
   function handleRecruit(id: string) { if (recruitCohort(id).ok) playSfx('ui_equip'); }
   function handleRemove(id: string)  { removeCohort(id); playSfx('ui_sell'); }
   function handleHire(id: string)    { if (hireLegate(id, LEGATE_HIRE_COST)) playSfx('ui_equip'); }
@@ -159,6 +175,9 @@ export function ExercitusTab() {
   function handleBuyMax() {
     if (maxBuyable > 0) handleBuySupplies(maxBuyable);
   }
+  function handleUpgradeArmor() { if (upgradeArmor()) playSfx('ui_equip'); }
+  function handleBuyAmmo(qty: number) { if (buyAmmunition(qty)) playSfx('ui_equip'); }
+  function handleBuyAmmoMax() { if (ammoBuyable > 0) handleBuyAmmo(ammoBuyable); }
 
   function renderRecruitCard(c: Cohort) {
     const recruitFailure = getRecruitCohortFailure(c.id);
@@ -776,7 +795,147 @@ export function ExercitusTab() {
             )}
           </BentoCard>
 
+          {/* ── Arsenal: armor tier + ammunition ── */}
           <BentoCard accent={accent} index={3}>
+            <SectionHeader
+              title="Arsenal"
+              accent={accent}
+              right={<span style={{
+                fontFamily: 'var(--imp-font-mono)',
+                fontSize: 11, color: 'var(--imp-text-mid)',
+              }}>
+                {armorLabel} · {ARMOR_PCT[armorMaterial]}% mitig.
+              </span>}
+            />
+
+            {/* Armor row */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '10px 12px', marginBottom: 8,
+              background: 'rgba(20, 18, 32, 0.6)',
+              border: '1px solid rgba(212, 168, 67, 0.15)',
+              borderLeft: `3px solid ${accent}`,
+              borderRadius: 2,
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontFamily: 'var(--imp-font-display)',
+                  fontSize: 12, color: 'var(--imp-text-hi)',
+                  letterSpacing: 1.5, textTransform: 'uppercase',
+                }}>
+                  {armorLabel} Armor
+                </div>
+                <div style={{
+                  fontSize: 10, color: 'var(--imp-text-lo)',
+                  fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: 2,
+                }}>
+                  {ARMOR_PCT[armorMaterial]}% damage mitigation
+                  {nextArmorLabel
+                    ? ` · next: ${nextArmorLabel} (${ARMOR_PCT[nextArmor!]}%)`
+                    : ' · max tier'}
+                </div>
+              </div>
+              <button
+                onClick={handleUpgradeArmor}
+                disabled={!canUpgradeArmor}
+                title={nextArmor == null
+                  ? 'Armor is at the highest tier.'
+                  : `Upgrade to ${nextArmorLabel} for ${armorCost} gold.`}
+                style={{
+                  flexShrink: 0,
+                  padding: '6px 12px',
+                  background: canUpgradeArmor
+                    ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`
+                    : 'rgba(80, 70, 50, 0.3)',
+                  border: 'none', borderRadius: 2,
+                  color: canUpgradeArmor ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
+                  fontFamily: 'var(--imp-font-display)',
+                  fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase',
+                  cursor: canUpgradeArmor ? 'pointer' : 'not-allowed',
+                  transition: 'all 160ms',
+                }}
+              >
+                {nextArmor == null ? 'Max' : <>Upgrade — <ResourceAmount type="gold" amount={armorCost ?? 0} iconSize={14} /></>}
+              </button>
+            </div>
+
+            {/* Ammunition row */}
+            <div style={{
+              display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+              marginBottom: 6,
+            }}>
+              <span style={{
+                fontFamily: 'var(--imp-font-display)', fontSize: 11,
+                letterSpacing: 1.5, textTransform: 'uppercase', color: 'var(--imp-text-mid)',
+              }}>
+                ➶ Ammunition
+              </span>
+              <span style={{ fontFamily: 'var(--imp-font-mono)', fontSize: 11, color: 'var(--imp-text-mid)' }}>
+                {currentAmmo} / {AMMO_MAX_CARRY}
+              </span>
+            </div>
+            <div style={{
+              position: 'relative', height: 8,
+              background: 'rgba(20, 18, 32, 0.7)',
+              border: '1px solid rgba(212, 168, 67, 0.25)',
+              borderRadius: 2, overflow: 'hidden', marginBottom: 10,
+            }}>
+              <div style={{
+                position: 'absolute', top: 0, left: 0, bottom: 0,
+                width: `${Math.min(ammoRatio * 100, 100)}%`,
+                background: ammoRatio > 0.5
+                  ? `linear-gradient(90deg, ${accent} 0%, #f0d080 100%)`
+                  : ammoRatio > 0.2
+                    ? 'linear-gradient(90deg, #d48b3a 0%, #e8a848 100%)'
+                    : 'linear-gradient(90deg, #c24a3a 0%, #d4604a 100%)',
+                transition: 'width 300ms ease', borderRadius: 2,
+              }} />
+            </div>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+              <button
+                onClick={() => handleBuyAmmo(10)}
+                disabled={ammoAtCap || currentGold < Math.ceil(10 / AMMO_PER_GOLD) || currentAmmo + 10 > AMMO_MAX_CARRY}
+                style={{
+                  flex: 1, padding: '6px 0',
+                  background: (!ammoAtCap && currentGold >= Math.ceil(10 / AMMO_PER_GOLD) && currentAmmo + 10 <= AMMO_MAX_CARRY)
+                    ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`
+                    : 'rgba(80, 70, 50, 0.3)',
+                  border: 'none', borderRadius: 2,
+                  color: (!ammoAtCap && currentGold >= Math.ceil(10 / AMMO_PER_GOLD) && currentAmmo + 10 <= AMMO_MAX_CARRY) ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
+                  fontFamily: 'var(--imp-font-display)', fontSize: 11, fontWeight: 700, letterSpacing: 1,
+                  cursor: (!ammoAtCap && currentGold >= Math.ceil(10 / AMMO_PER_GOLD) && currentAmmo + 10 <= AMMO_MAX_CARRY) ? 'pointer' : 'not-allowed',
+                  transition: 'all 160ms',
+                }}
+              >
+                +10
+              </button>
+              <button
+                onClick={handleBuyAmmoMax}
+                disabled={ammoBuyable <= 0}
+                style={{
+                  flex: 1.5, padding: '6px 0',
+                  background: ammoBuyable > 0
+                    ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`
+                    : 'rgba(80, 70, 50, 0.3)',
+                  border: 'none', borderRadius: 2,
+                  color: ammoBuyable > 0 ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
+                  fontFamily: 'var(--imp-font-display)', fontSize: 11, fontWeight: 700, letterSpacing: 1,
+                  cursor: ammoBuyable > 0 ? 'pointer' : 'not-allowed',
+                  transition: 'all 160ms',
+                }}
+              >
+                Max{ammoBuyable > 0 ? ` (+${ammoBuyable})` : ''}
+              </button>
+            </div>
+            <div style={{
+              fontSize: 9, color: 'var(--imp-text-lo)',
+              fontFamily: 'var(--imp-font-serif)', letterSpacing: 0.5,
+            }}>
+              <ResourceAmount type="gold" amount={1} iconSize={14} /> = {AMMO_PER_GOLD} ammo · the harass budget for the decisive battle
+            </div>
+          </BentoCard>
+
+          <BentoCard accent={accent} index={4}>
             <SectionHeader
               title="Recruit"
               accent={accent}
