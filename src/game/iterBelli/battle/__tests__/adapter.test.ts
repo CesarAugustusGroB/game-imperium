@@ -73,6 +73,21 @@ describe('adapter army builders', () => {
     expect(seed.stats.push).toBe(3);          // 6 × 0.5 strength
     expect(seed.stats.movement).toBe(2);      // movement NOT scaled
   });
+  it('player seed maps the armor material to mitigation %', () => {
+    const seed = buildPlayerSeed(
+      { soldiers: 5000, initialSoldiers: 10000, morale: 7, discipline: 3 } as any,
+      roster, null, undefined, { material: 'steel' },
+    );
+    expect(seed.armorPct).toBe(30);
+    expect(seed.armorName).toBe('Steel');
+  });
+  it('entrenchment grants a Camp-tier fort bonus', () => {
+    const plain = buildPlayerSeed({ soldiers: 1, initialSoldiers: 1, morale: 5, discipline: 0 } as any, roster, null);
+    expect(plain.fortPct).toBe(0);
+    const dug = buildPlayerSeed({ soldiers: 1, initialSoldiers: 1, morale: 5, discipline: 0 } as any, roster, null, undefined, null, undefined, true);
+    expect(dug.fortPct).toBe(10);
+    expect(dug.fortName).toBe('Camp');
+  });
   it('player seed takes ammunition from the snapshot when present', () => {
     const seed = buildPlayerSeed(
       { soldiers: 5000, initialSoldiers: 10000, morale: 7, discipline: 3, ammunition: 21 } as any,

@@ -3,7 +3,7 @@ import type { PowerStats, EnemyArchetype, FormationDef } from './types';
 import type { Legate } from '../../army/legate';
 import type { FormationKey } from './types';
 import { FORMATIONS, TERRAIN_CENTER, ENEMY_ARCHETYPES } from './orders';
-import { ARMORS } from './balance';
+import { ARMORS, FORTS } from './balance';
 
 export function sumRosterStats(cohorts: readonly Cohort[]): PowerStats {
   const t: PowerStats = { charge: 0, harass: 0, push: 0, siege: 0, movement: 0 };
@@ -65,6 +65,7 @@ export interface CampaignSnapshot { soldiers: number; initialSoldiers: number; m
 export interface PlayerSeed {
   hp: number; morale: number; discipline: number;
   stats: PowerStats; armorPct: number; armorName: string; ammo: number;
+  fortPct?: number; fortName?: string | null;
   formation: FormationDef;
 }
 
@@ -75,6 +76,7 @@ export function buildPlayerSeed(
   formation: FormationDef = FORMATIONS.battleLine,
   armor: { material: keyof typeof ARMORS } | null = null,
   ammunition = 32,
+  fortified = false,
 ): PlayerSeed {
   void legate; // formation chosen separately; legate gates that choice upstream
   const frac = strengthFrac(snap.soldiers, snap.initialSoldiers);
@@ -94,6 +96,8 @@ export function buildPlayerSeed(
     armorPct: ARMORS[material],
     armorName: material.charAt(0).toUpperCase() + material.slice(1),
     ammo: snap.ammunition ?? ammunition,
+    fortPct: fortified ? FORTS.camp : 0,
+    fortName: fortified ? 'Camp' : null,
     formation,
   };
 }

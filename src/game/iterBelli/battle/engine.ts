@@ -5,7 +5,7 @@ import { enemyChoose } from './enemy-ai';
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
-type ArmySeed = Partial<BattleArmy> & Pick<BattleArmy, 'hp' | 'morale' | 'discipline' | 'stats' | 'armorPct' | 'armorName' | 'ammo' | 'formation'> & { fortPct?: number; fortName?: string; name?: string };
+type ArmySeed = Partial<BattleArmy> & Pick<BattleArmy, 'hp' | 'morale' | 'discipline' | 'stats' | 'armorPct' | 'armorName' | 'ammo' | 'formation'> & { fortPct?: number; fortName?: string | null; name?: string };
 
 export function makeBattleArmy(side: Side, seed: ArmySeed | EnemyArchetype): BattleArmy {
   const s = seed as any;
