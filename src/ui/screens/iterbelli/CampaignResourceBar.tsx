@@ -32,13 +32,19 @@ function resources(s: IterBelliState): ResourceDef[] {
     },
     {
       key: 'discipline', glyph: '⛨', icon: 'res-discipline', label: 'Disciplina', value: ROMAN[s.discipline],
-      tip: 'Nivel táctico (I–V). Desbloquea posturas de batalla más avanzadas.',
+      tip: 'Nivel táctico (0–X). Desbloquea formaciones y órdenes más avanzadas; súbela con la instrucción de campamento.',
     },
     {
       key: 'supplies', glyph: '❦', icon: 'res-supplies', label: 'Suministros', value: String(s.supplies),
       tip: 'Víveres. Se consume 1 por turno. A 0 llega el hambre: deserciones y caída de moral.',
       alert: s.supplies <= 0,
       warn: s.supplies > 0 && s.supplies < ALERT.suppliesWarn,
+    },
+    {
+      key: 'ammunition', glyph: '➶', label: 'Munición', value: String(s.ammunition),
+      tip: 'Proyectiles para hostigar en la batalla decisiva. Hostigar sin munición es casi inútil. Recárgala en ciudades aliadas.',
+      alert: s.ammunition <= 0,
+      warn: s.ammunition > 0 && s.ammunition < 10,
     },
     {
       key: 'gold', glyph: '', iconType: 'gold', label: 'Oro', value: String(s.gold),
