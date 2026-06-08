@@ -18,6 +18,7 @@ import { getActiveScenario, setActiveScenario } from './iter-belli-scenario';
 import { SAGUNTUM } from '../../data/iter-belli-scenario-saguntum';
 import { CARD_DEFS } from '../../data/iter-belli-cards';
 import { makeQuestCard } from '../../data/iter-belli-quests';
+import { START } from './iter-belli-balance';
 import type {
   AnyCardDef, CampaignScenario, CardInstance, DoctrineCampaignModifier,
   IterBelliState, LogLine, SecondaryQuest,
@@ -28,8 +29,8 @@ export const SCENARIOS_BY_ID: Record<string, CampaignScenario> = {
   [SAGUNTUM.id]: SAGUNTUM,
 };
 
-/** Save schema version. v2 introduced the 0–10 discipline scale (was 1–5 in v1). */
-export const ITER_BELLI_SAVE_VERSION = 2;
+/** Save schema version. v2: 0–10 discipline scale (was 1–5 in v1). v3: ammunition resource. */
+export const ITER_BELLI_SAVE_VERSION = 3;
 
 /** A pool card reduced to its persistable identity. */
 export interface SavedCardInstance {
@@ -63,7 +64,7 @@ export function serializeIterBelli(): IterBelliSave | null {
     scenarioId: getActiveScenario().id,
     schemaVersion: ITER_BELLI_SAVE_VERSION,
     soldiers: s.soldiers, morale: s.morale, discipline: s.discipline, supplies: s.supplies,
-    gold: s.gold, iuniores: s.iuniores, threat: s.threat, timeRemaining: s.timeRemaining,
+    gold: s.gold, iuniores: s.iuniores, ammunition: s.ammunition, threat: s.threat, timeRemaining: s.timeRemaining,
     turnNum: s.turnNum, locationIdx: s.locationIdx, cardIdCounter: s.cardIdCounter,
     ambushDetected: s.ambushDetected, fortified: s.fortified, truceTurns: s.truceTurns,
     finished: s.finished, enemyWeaken: s.enemyWeaken, brokenCommitments: s.brokenCommitments,
@@ -97,13 +98,21 @@ function resolveCardDef(defId: string, scenario: CampaignScenario, quests: Secon
 
 /**
  * Forward-migrate a save to the current schema. v1 saves (no schemaVersion) used the
- * 1–5 discipline scale; double the value into the 0–10 engine scale (clamped).
+ * 1–5 discipline scale → double into 0–10 (clamped). Saves before v3 lack ammunition →
+ * backfill the START budget. Each step is independent so partial-version saves heal fully.
  */
 export function migrateSave(save: IterBelliSave): IterBelliSave {
-  if ((save.schemaVersion ?? 1) < 2) {
-    return { ...save, discipline: Math.max(0, Math.min(10, save.discipline * 2)), schemaVersion: 2 };
+  let out = save;
+  if ((out.schemaVersion ?? 1) < 2) {
+    out = { ...out, discipline: Math.max(0, Math.min(10, out.discipline * 2)) };
   }
-  return save;
+  if (out.ammunition == null) {
+    out = { ...out, ammunition: START.ammunition };
+  }
+  if ((out.schemaVersion ?? 1) < ITER_BELLI_SAVE_VERSION) {
+    out = { ...out, schemaVersion: ITER_BELLI_SAVE_VERSION };
+  }
+  return out;
 }
 
 /**
@@ -125,7 +134,7 @@ export function restoreIterBelli(save: IterBelliSave, doctrineModifiers: Doctrin
 
   const state: IterBelliState = {
     soldiers: save.soldiers, morale: save.morale, discipline: save.discipline, supplies: save.supplies,
-    gold: save.gold, iuniores: save.iuniores, threat: save.threat, timeRemaining: save.timeRemaining,
+    gold: save.gold, iuniores: save.iuniores, ammunition: save.ammunition, threat: save.threat, timeRemaining: save.timeRemaining,
     turnNum: save.turnNum, locationIdx: save.locationIdx, cardIdCounter: save.cardIdCounter,
     ambushDetected: save.ambushDetected, fortified: save.fortified, truceTurns: save.truceTurns,
     finished: save.finished, enemyWeaken: save.enemyWeaken, brokenCommitments: save.brokenCommitments,
