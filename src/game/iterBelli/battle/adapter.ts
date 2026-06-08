@@ -19,9 +19,9 @@ export function strengthFrac(soldiers: number, initialSoldiers: number): number 
   return Math.max(0, Math.min(1, soldiers / initialSoldiers));
 }
 
-/** STOPGAP: campaign discipline is 1–5; engine wants 0–10. ×2 until Thread B migrates the scale. */
-export function scaleDiscipline(campaignDiscipline: number): number {
-  return Math.max(0, Math.min(10, Math.round(campaignDiscipline * 2)));
+/** Campaign discipline is now native 0–10 (Thread B); just clamp into the engine range. */
+export function clampEngineDiscipline(campaignDiscipline: number): number {
+  return Math.max(0, Math.min(10, Math.round(campaignDiscipline)));
 }
 
 /**
@@ -83,7 +83,7 @@ export function buildPlayerSeed(
   return {
     hp: Math.max(1, Math.round(snap.soldiers)),
     morale: snap.morale,
-    discipline: scaleDiscipline(snap.discipline),
+    discipline: clampEngineDiscipline(snap.discipline),
     stats: {
       charge: Math.round(raw.charge * frac),
       harass: Math.round(raw.harass * frac),

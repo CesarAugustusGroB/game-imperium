@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sumRosterStats, strengthFrac, scaleDiscipline } from '../adapter';
+import { sumRosterStats, strengthFrac, clampEngineDiscipline } from '../adapter';
 import { legateFormationKeys, terrainToCenterKey, availableFormations } from '../adapter';
 import { CENTERS } from '../orders';
 
@@ -17,11 +17,11 @@ describe('adapter stat summation', () => {
     expect(strengthFrac(12000, 10000)).toBe(1);
     expect(strengthFrac(0, 0)).toBe(0);
   });
-  it('scaleDiscipline maps campaign 1..5 onto engine 0..10 (×2), clamped', () => {
-    expect(scaleDiscipline(2)).toBe(4);
-    expect(scaleDiscipline(5)).toBe(10);
-    expect(scaleDiscipline(7)).toBe(10);
-    expect(scaleDiscipline(0)).toBe(0);
+  it('clampEngineDiscipline passes campaign 0..10 through, clamped', () => {
+    expect(clampEngineDiscipline(2)).toBe(2);
+    expect(clampEngineDiscipline(6)).toBe(6);
+    expect(clampEngineDiscipline(13)).toBe(10);
+    expect(clampEngineDiscipline(-1)).toBe(0);
   });
 });
 
@@ -69,7 +69,7 @@ describe('adapter army builders', () => {
     );
     expect(seed.hp).toBe(5000);
     expect(seed.morale).toBe(7);
-    expect(seed.discipline).toBe(6);          // scaleDiscipline(3)
+    expect(seed.discipline).toBe(3);          // pass-through (no ×2)
     expect(seed.stats.push).toBe(3);          // 6 × 0.5 strength
     expect(seed.stats.movement).toBe(2);      // movement NOT scaled
   });
