@@ -7,6 +7,7 @@ export const BAL = {
   MORALE_RESIST: 0.05,
   DISC_DMG:      0.05,
   MAX_ROUNDS:    14,
+  DRY_HARASS_MULT: 0.15,
 } as const;
 
 /** Armor material → physical mitigation %. */

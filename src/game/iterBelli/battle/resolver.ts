@@ -54,11 +54,13 @@ export function resolveOrder(
   }
 
   if (o.sub === 'harass') {
+    const dry = att.ammo <= 0;
     att.ammo = Math.max(0, att.ammo - (o.ammo ?? 0));
     let dmg = mitigate(statVal * die * (o.mult ?? 0) * discBonus * ms * BAL.DMG_SCALE, def, o);
+    if (dry) { dmg *= BAL.DRY_HARASS_MULT; eMoraleHit *= 0.3; }
     if (def.formation.antiMissile) { dmg *= 0.12; eMoraleHit *= 0.3; }
     def.hp = Math.max(0, def.hp - dmg);
-    log.push({ text:`${who} harass ${tgt} for ${Math.round(dmg)} (ammo ${att.ammo}).`, kind: cls });
+    log.push({ text:`${who} harass ${tgt} for ${Math.round(dmg)} (ammo ${att.ammo}${dry ? ' — out of ammo!' : ''}).`, kind: cls });
     return { eMoraleHit, log };
   }
 
