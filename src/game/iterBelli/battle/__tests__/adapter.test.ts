@@ -73,6 +73,13 @@ describe('adapter army builders', () => {
     expect(seed.stats.push).toBe(3);          // 6 × 0.5 strength
     expect(seed.stats.movement).toBe(2);      // movement NOT scaled
   });
+  it('player seed takes ammunition from the snapshot when present', () => {
+    const seed = buildPlayerSeed(
+      { soldiers: 5000, initialSoldiers: 10000, morale: 7, discipline: 3, ammunition: 21 } as any,
+      roster, null,
+    );
+    expect(seed.ammo).toBe(21);
+  });
   it('enemy archetype scales mass stats by enemyWeaken', () => {
     const e = buildEnemyArchetype('carthage', 0, 10000); // no weaken
     expect(e.stats.charge).toBe(ENEMY_ARCHETYPES.carthage.stats.charge);

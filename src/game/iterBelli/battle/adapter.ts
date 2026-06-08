@@ -60,7 +60,7 @@ export function availableFormations(legate: Legate | null, engineDiscipline: num
 }
 
 /** Minimal shape this adapter reads from the campaign — keeps it decoupled from the full state type. */
-export interface CampaignSnapshot { soldiers: number; initialSoldiers: number; morale: number; discipline: number; }
+export interface CampaignSnapshot { soldiers: number; initialSoldiers: number; morale: number; discipline: number; ammunition?: number; }
 
 export interface PlayerSeed {
   hp: number; morale: number; discipline: number;
@@ -93,7 +93,7 @@ export function buildPlayerSeed(
     },
     armorPct: ARMORS[material],
     armorName: material.charAt(0).toUpperCase() + material.slice(1),
-    ammo: ammunition,
+    ammo: snap.ammunition ?? ammunition,
     formation,
   };
 }

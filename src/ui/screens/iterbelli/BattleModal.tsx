@@ -28,7 +28,7 @@ export function BattleModal() {
     const roster = preparedArmy.value?.cohorts ?? [];
     const legate = preparedLegate.value;
     const scenario = getActiveScenario();
-    const snap = { soldiers: cs.soldiers, initialSoldiers: cs.initialSoldiers, morale: cs.morale, discipline: cs.discipline };
+    const snap = { soldiers: cs.soldiers, initialSoldiers: cs.initialSoldiers, morale: cs.morale, discipline: cs.discipline, ammunition: cs.ammunition };
     const seed0 = buildPlayerSeed(snap, roster, legate);
     const options = availableFormations(legate, seed0.discipline);
     const formationOptions: FormationKey[] = options.length ? options : ['battleLine'];
