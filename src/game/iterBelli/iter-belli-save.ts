@@ -28,6 +28,9 @@ export const SCENARIOS_BY_ID: Record<string, CampaignScenario> = {
   [SAGUNTUM.id]: SAGUNTUM,
 };
 
+/** Save schema version. v2 introduced the 0–10 discipline scale (was 1–5 in v1). */
+export const ITER_BELLI_SAVE_VERSION = 2;
+
 /** A pool card reduced to its persistable identity. */
 export interface SavedCardInstance {
   instanceId: number;
@@ -42,6 +45,7 @@ export interface SavedCardInstance {
  */
 export type IterBelliSave = Omit<IterBelliState, 'pool' | 'doctrineModifiers'> & {
   scenarioId: string;
+  schemaVersion?: number;
   pool: SavedCardInstance[];
   log: LogLine[];
 };
@@ -57,6 +61,7 @@ export function serializeIterBelli(): IterBelliSave | null {
   const s = iterBelliState.value;
   return {
     scenarioId: getActiveScenario().id,
+    schemaVersion: ITER_BELLI_SAVE_VERSION,
     soldiers: s.soldiers, morale: s.morale, discipline: s.discipline, supplies: s.supplies,
     gold: s.gold, iuniores: s.iuniores, threat: s.threat, timeRemaining: s.timeRemaining,
     turnNum: s.turnNum, locationIdx: s.locationIdx, cardIdCounter: s.cardIdCounter,
@@ -91,11 +96,23 @@ function resolveCardDef(defId: string, scenario: CampaignScenario, quests: Secon
 }
 
 /**
+ * Forward-migrate a save to the current schema. v1 saves (no schemaVersion) used the
+ * 1–5 discipline scale; double the value into the 0–10 engine scale (clamped).
+ */
+export function migrateSave(save: IterBelliSave): IterBelliSave {
+  if ((save.schemaVersion ?? 1) < 2) {
+    return { ...save, discipline: Math.max(0, Math.min(10, save.discipline * 2)), schemaVersion: 2 };
+  }
+  return save;
+}
+
+/**
  * Restore a saved campaign into the live engine. `doctrineModifiers` are supplied
  * by the caller (recomputed from the restored equipped doctrines) so this module
  * need not depend on the Hub doctrine store.
  */
 export function restoreIterBelli(save: IterBelliSave, doctrineModifiers: DoctrineCampaignModifier[]): void {
+  save = migrateSave(save);
   const scenario = SCENARIOS_BY_ID[save.scenarioId] ?? SAGUNTUM;
   setActiveScenario(scenario);
 
