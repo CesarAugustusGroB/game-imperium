@@ -64,15 +64,15 @@ export const TERRAIN_CENTER: Record<string, string> = {
 };
 
 export const ENEMY_ARCHETYPES: Record<string, EnemyArchetype> = {
-  carthage:  { name:'Carthaginian Host', formation:'cuneus', hp:10000, morale:10, disc:6,
-    stats:{charge:15,harass:9,push:12,siege:5,movement:12}, armorPct:ARMORS.bronze, armorName:'Bronze', ammo:26, fortPct:15, fortName:'Camp',
-    desc:'Cavalry & elephants — high charge and mobility, entrenched.' },
+  carthage:  { name:'Carthaginian Host', formation:'battleLine', hp:10000, morale:10, disc:6,
+    stats:{charge:11,harass:9,push:13,siege:5,movement:11}, armorPct:ARMORS.iron, armorName:'Iron', ammo:26, fortPct:15, fortName:'Camp',
+    desc:'Hannibal’s combined-arms host — disciplined, mobile, well-supplied, dug in.' },
   gauls:     { name:'Gallic Warband', formation:'openOrder', hp:11000, morale:10, disc:3,
     stats:{charge:20,harass:4,push:8,siege:2,movement:9}, armorPct:ARMORS.copper, armorName:'Copper', ammo:14, fortPct:0,
     desc:'Furious chargers, no discipline, no armor.' },
-  iberians:  { name:'Iberian Caetrati', formation:'openOrder', hp:9000, morale:10, disc:5,
-    stats:{charge:8,harass:16,push:6,siege:3,movement:16}, armorPct:ARMORS.copper, armorName:'Copper', ammo:42, fortPct:0,
-    desc:'Light skirmishers & kiters.' },
+  iberians:  { name:'Iberian Caetrati', formation:'openOrder', hp:10000, morale:10, disc:6,
+    stats:{charge:14,harass:16,push:12,siege:3,movement:16}, armorPct:ARMORS.bronze, armorName:'Bronze', ammo:42, fortPct:0,
+    desc:'Fierce chargers and tireless skirmishers — fast, relentless, lightly armored.' },
   garrison:  { name:'Fortified Garrison', formation:'shieldWall', hp:9000, morale:10, disc:6,
     stats:{charge:4,harass:8,push:18,siege:6,movement:5}, armorPct:ARMORS.steel, armorName:'Steel', ammo:30, fortPct:35, fortName:'Wall',
     desc:'Steel wall behind ramparts. Bring siege.' },
