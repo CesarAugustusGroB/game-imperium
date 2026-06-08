@@ -73,6 +73,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
       discipline: discipline + embark.discipline,
       archetype, spokeTerrain, spokeDuration,
       supplies: supplies + embark.supplies,
+      ammunition: army?.ammunition,
       missionId: consilium.missionId ?? undefined,
       startThreat: START.threat - consilium.threat,
       startMorale: START.morale + consilium.morale + embark.morale,
