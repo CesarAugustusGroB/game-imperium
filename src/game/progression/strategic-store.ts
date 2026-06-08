@@ -8,6 +8,8 @@ import { getCohortById } from '../army/cohort-data';
 import { computeArmySize, createCohortInstance } from '../army/cohort';
 import { rollHiringPool, rollLegateCandidate } from '../army/legate-pool';
 import { SUPPLIES_PER_GOLD, SUPPLIES_STARTING_STOCK, SUPPLY_MAX_CARRY, IUNIORES } from '../../config/game-config';
+import { AMMO_STARTING_STOCK, AMMO_MAX_CARRY, AMMO_PER_GOLD } from '../../config/game-config';
+import { nextArmorTier, armorUpgradeCost } from './arsenal';
 import { getShopDiscount } from '../items/doctrine-store';
 
 // Advisor shop-discount is pushed in from game-state to avoid an import cycle
@@ -220,6 +222,7 @@ export function ensurePreparedArmy(): ArmyData {
   const shell: ArmyData = {
     id: 0, owner, name: 'Legio I', size: 0, cohorts: [], legateId: null,
     supplies: SUPPLIES_STARTING_STOCK,
+    armorMaterial: 'copper', ammunition: AMMO_STARTING_STOCK,
     provinceIndex: 0, targetProvinceIndex: null, progress: 0, path: [],
     inCombat: false, combatTarget: null, lastRoll: 0,
   };
@@ -244,6 +247,35 @@ export function buySupplies(qty: number): boolean {
   if (!canAfford('gold', cost)) return false;
   if (!spendResource('gold', cost)) return false;
   preparedArmy.value = { ...army, supplies: army.supplies + buyable };
+  return true;
+}
+
+/** Upgrade the prepared army's armor one tier with gold. False if at top or unaffordable. */
+export function upgradeArmor(): boolean {
+  const army = ensurePreparedArmy();
+  const current = army.armorMaterial ?? 'copper';
+  const next = nextArmorTier(current);
+  const base = armorUpgradeCost(current);
+  if (!next || base == null) return false;
+  const cost = discountedGold(base);
+  if (!canAfford('gold', cost)) return false;
+  if (!spendResource('gold', cost)) return false;
+  preparedArmy.value = { ...army, armorMaterial: next };
+  return true;
+}
+
+/** Buy `qty` ammunition with gold (clamped to the carry cap). */
+export function buyAmmunition(qty: number): boolean {
+  if (qty <= 0) return false;
+  const army = ensurePreparedArmy();
+  const current = army.ammunition ?? AMMO_STARTING_STOCK;
+  const room = AMMO_MAX_CARRY - current;
+  if (room <= 0) return false;
+  const buyable = Math.min(qty, room);
+  const cost = discountedGold(Math.ceil(buyable / AMMO_PER_GOLD));
+  if (!canAfford('gold', cost)) return false;
+  if (!spendResource('gold', cost)) return false;
+  preparedArmy.value = { ...army, ammunition: current + buyable };
   return true;
 }
 
