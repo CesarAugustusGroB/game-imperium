@@ -1,4 +1,6 @@
 import type { JSX } from 'preact';
+import type { IconSize } from './icon-system';
+import { resolveIconSize } from './icon-system';
 
 // ── Hub sidebar nav + tutorial/abandon/collapse ──
 import navForum from '../../assets/ui/icons/nav-forum.png';
@@ -79,20 +81,17 @@ export const GAME_ICONS = {
 
 export type GameIconName = keyof typeof GAME_ICONS;
 
-/** Global bump: render every meaning-bearing medallion icon 50% larger than its requested size. */
-const ICON_SCALE = 1.5;
-
 interface GameIconProps {
   name: GameIconName;
-  size?: number;
+  size?: IconSize;
   className?: string;
   style?: JSX.CSSProperties;
   title?: string;
 }
 
 /** Renders a sliced Roman medallion icon at the given pixel size. */
-export function GameIcon({ name, size = 16, className, style, title }: GameIconProps) {
-  const px = Math.round(size * ICON_SCALE);
+export function GameIcon({ name, size = 'row', className, style, title }: GameIconProps) {
+  const px = resolveIconSize(size);
   return (
     <img
       src={GAME_ICONS[name]}

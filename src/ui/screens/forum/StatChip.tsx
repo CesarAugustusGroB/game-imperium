@@ -43,14 +43,14 @@ export function StatChip({ r, accent = '#d4a843' }: StatChipProps) {
       )}
       <span style={{
         fontFamily: 'var(--imp-font-mono)',
-        fontSize: 13, fontWeight: 600,
+        fontSize: 'var(--imp-text-md)', fontWeight: 700,
         color: 'var(--imp-text-hi)',
       }}>
         {valueLabel}
       </span>
       {r.delta !== undefined && (
         <span style={{
-          fontSize: 9,
+          fontSize: 'var(--imp-text-xs)',
           color: deltaColor,
           fontFamily: 'var(--imp-font-mono)',
         }}>
@@ -86,7 +86,7 @@ export function StatChip({ r, accent = '#d4a843' }: StatChipProps) {
             </div>
           )}
           {r.description && (
-            <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--font-size-sm)', lineHeight: 1.4 }}>
+            <div style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--imp-text-sm)', lineHeight: 1.4 }}>
               {r.description}
             </div>
           )}

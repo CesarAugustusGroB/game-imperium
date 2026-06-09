@@ -1,6 +1,7 @@
 import { equippedDoctrines } from '../../../../game/items/doctrine-store';
 import { FACTION_COLORS } from '../../../../game/core/commander';
 import { BentoCard } from '../../../components/BentoCard';
+import { getPriorityStyle, priorityClass } from '../../../components/card-priority';
 import { SectionHeader, LinkButton } from '../components/SectionHeader';
 import { setForumTab } from '../state';
 
@@ -11,9 +12,10 @@ interface DoctrinaePanelProps {
 
 export function DoctrinaePanel({ accent = '#d4a843', index = 0 }: DoctrinaePanelProps) {
   const slots = equippedDoctrines.value;
+  const emptySlots = slots.filter((d) => d === null).length;
 
   return (
-    <BentoCard accent={accent} index={index}>
+    <BentoCard accent={accent} index={index} priority={emptySlots > 0 ? 'urgent' : 'actionable'}>
       <SectionHeader
         title="Doctrinae"
         accent={accent}
@@ -23,12 +25,13 @@ export function DoctrinaePanel({ accent = '#d4a843', index = 0 }: DoctrinaePanel
         {slots.map((d, i) => {
           if (!d) {
             return (
-              <div key={i} style={{
+              <div key={i} class={priorityClass('urgent')} style={{
                 aspectRatio: '3/2',
                 background: 'rgba(20, 18, 32, 0.3)',
                 border: '1px dashed rgba(212, 168, 67, 0.15)',
                 borderRadius: 2, padding: '8px 10px',
                 position: 'relative',
+                ...getPriorityStyle('urgent', accent),
               }}>
                 <div style={{
                   position: 'absolute', inset: 0,
@@ -47,20 +50,21 @@ export function DoctrinaePanel({ accent = '#d4a843', index = 0 }: DoctrinaePanel
           const desc = currentTierData?.description ?? '';
 
           return (
-            <div key={d.id} style={{
+            <div key={d.id} class={priorityClass('actionable')} style={{
               aspectRatio: '3/2',
               background: `linear-gradient(135deg, ${color}22 0%, rgba(20, 18, 32, 0.9) 100%)`,
               border: `1px solid ${color}66`,
               borderRadius: 2,
               padding: '8px 10px',
               position: 'relative',
+              ...getPriorityStyle('actionable', color),
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{
                   fontFamily: 'var(--imp-font-display)',
-                  fontSize: 10, fontWeight: 600,
+                  fontSize: 'var(--imp-text-xs)', fontWeight: 600,
                   color: 'var(--imp-text-hi)',
-                  letterSpacing: 1, textTransform: 'uppercase',
+                  letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
                   lineHeight: 1.2,
                 }}>
                   {d.name}
@@ -75,7 +79,7 @@ export function DoctrinaePanel({ accent = '#d4a843', index = 0 }: DoctrinaePanel
                 </div>
               </div>
               <div style={{
-                fontSize: 9,
+                fontSize: 'var(--imp-text-xs)',
                 color: 'var(--imp-text-mid)',
                 fontStyle: 'italic',
                 marginTop: 4,

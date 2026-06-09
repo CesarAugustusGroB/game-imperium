@@ -14,6 +14,7 @@ import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 import { CostInline, ResourceAmount } from '../../../components/ResourceIcon';
+import { getPriorityStyle, priorityClass, type CardPriority } from '../../../components/card-priority';
 
 
 export function DecretaTab() {
@@ -66,8 +67,8 @@ export function DecretaTab() {
             title="Hand"
             accent={accent}
             right={<span style={{
-              fontSize: 9, color: 'var(--imp-text-lo)',
-              letterSpacing: 1, textTransform: 'uppercase',
+              fontSize: 'var(--imp-text-xs)', color: 'var(--imp-text-mid)',
+              letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
             }}>
               Cast at hub
             </span>}
@@ -79,7 +80,7 @@ export function DecretaTab() {
               border: '1px solid rgba(122, 168, 106, 0.35)',
               borderRadius: 2,
               fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic',
-              fontSize: 11, color: 'var(--imp-text-mid)',
+              fontSize: 'var(--imp-text-sm)', color: 'var(--imp-text-mid)',
             }}>
               {activeDecretumEffects.value.map((a) => (
                 <div key={a.decretumId}>
@@ -99,14 +100,14 @@ export function DecretaTab() {
               <div style={{
                 fontFamily: 'var(--imp-font-display)',
                 fontSize: 14, color: 'var(--imp-text-hi)',
-                letterSpacing: 2, textTransform: 'uppercase',
+                letterSpacing: 'var(--imp-title-letter)', textTransform: 'uppercase',
               }}>
                 Empty hand
               </div>
               <div style={{
                 fontFamily: 'var(--imp-font-serif)',
                 fontStyle: 'italic', fontSize: 12,
-                color: 'var(--imp-text-lo)',
+                color: 'var(--imp-text-mid)',
                 textAlign: 'center', maxWidth: 320,
               }}>
                 Scrolls are dealt between campaigns and at run start.
@@ -185,11 +186,13 @@ function ScrollCard({ d, castable, selected, accent, onSelect }: ScrollCardProps
     ? (Object.entries(d.castCost) as [ResourceType, number][]).find(([, amt]) => amt > 0) ?? null
     : null;
   const costLabel = costEntry
-    ? <ResourceAmount type={costEntry[0]} amount={costEntry[1]} iconSize={13} />
+    ? <ResourceAmount type={costEntry[0]} amount={costEntry[1]} iconSize="inline" />
     : '—';
+  const priority: CardPriority = selected ? 'selected' : castable ? 'actionable' : 'disabled';
 
   return (
     <div
+      class={priorityClass(priority)}
       onClick={onSelect}
       style={{
         padding: '14px 14px 12px',
@@ -204,6 +207,7 @@ function ScrollCard({ d, castable, selected, accent, onSelect }: ScrollCardProps
         transition: 'all 180ms',
         position: 'relative',
         boxShadow: selected ? `0 0 16px ${accent}50` : 'none',
+        ...getPriorityStyle(priority, color),
       }}
     >
       <Corners color={color} size={8} inset={3} thickness={1} />
@@ -223,7 +227,7 @@ function ScrollCard({ d, castable, selected, accent, onSelect }: ScrollCardProps
         </div>
         <div style={{
           fontSize: 8, color: 'var(--imp-text-lo)',
-          letterSpacing: 1.5, textTransform: 'uppercase',
+          letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
         }}>
           {d.rarity}
         </div>
@@ -231,14 +235,14 @@ function ScrollCard({ d, castable, selected, accent, onSelect }: ScrollCardProps
       <div style={{
         fontFamily: 'var(--imp-font-display)',
         fontSize: 14, color: 'var(--imp-text-hi)',
-        letterSpacing: 1.5, textTransform: 'uppercase',
+        letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
         fontWeight: 600, marginBottom: 6, lineHeight: 1.2,
       }}>
         {d.name}
       </div>
       <div style={{
         fontFamily: 'var(--imp-font-serif)',
-        fontStyle: 'italic', fontSize: 11,
+        fontStyle: 'italic', fontSize: 'var(--imp-text-sm)',
         color: 'var(--imp-text-mid)',
         lineHeight: 1.4,
       }}>
@@ -246,8 +250,8 @@ function ScrollCard({ d, castable, selected, accent, onSelect }: ScrollCardProps
       </div>
       {!castable && (
         <div style={{
-          fontSize: 9, color: '#c24a3a',
-          letterSpacing: 1, textTransform: 'uppercase',
+          fontSize: 'var(--imp-text-xs)', color: '#c24a3a',
+          letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
           marginTop: 6,
         }}>
           Faction-locked
@@ -273,7 +277,7 @@ function DecretumDetail({ d, hubCastable, accent, onSell, onCast }: DecretumDeta
     ? (Object.entries(d.castCost) as [ResourceType, number][]).filter(([, amt]) => amt > 0)
     : [];
   const costLabel = costEntries.length > 0
-    ? <CostInline cost={d.castCost ?? {}} iconSize={14} />
+    ? <CostInline cost={d.castCost ?? {}} iconSize="inline" />
     : 'Free';
   const sellPrice = DECRETUM_SELL_PRICE[d.rarity];
   const hubEffect = toHubEffect(d);
@@ -281,8 +285,8 @@ function DecretumDetail({ d, hubCastable, accent, onSell, onCast }: DecretumDeta
   return (
     <>
       <div style={{
-        fontSize: 9, letterSpacing: 2.5,
-        color: 'var(--imp-text-lo)',
+        fontSize: 'var(--imp-text-xs)', letterSpacing: 'var(--imp-meta-letter)',
+        color: 'var(--imp-text-mid)',
         textTransform: 'uppercase', marginBottom: 4,
       }}>
         Decretum
@@ -291,7 +295,7 @@ function DecretumDetail({ d, hubCastable, accent, onSell, onCast }: DecretumDeta
         fontFamily: 'var(--imp-font-display)',
         fontSize: 22, fontWeight: 500,
         color: 'var(--imp-text-hi)',
-        letterSpacing: 2, textTransform: 'uppercase',
+        letterSpacing: 'var(--imp-title-letter)', textTransform: 'uppercase',
         marginBottom: 6, lineHeight: 1.15,
       }}>
         {d.name}
@@ -324,8 +328,8 @@ function DecretumDetail({ d, hubCastable, accent, onSell, onCast }: DecretumDeta
           border: '1px solid rgba(212, 168, 67, 0.15)',
           borderRadius: 2,
           fontFamily: 'var(--imp-font-serif)',
-          fontStyle: 'italic', fontSize: 11,
-          color: 'var(--imp-text-lo)',
+          fontStyle: 'italic', fontSize: 'var(--imp-text-sm)',
+          color: 'var(--imp-text-mid)',
           lineHeight: 1.4,
         }}>
           {hubEffect
@@ -336,16 +340,18 @@ function DecretumDetail({ d, hubCastable, accent, onSell, onCast }: DecretumDeta
           <button
             onClick={onCast}
             disabled={!hubCastable}
+            class={`imp-card-cta imp-card-cta-${hubCastable ? 'actionable' : 'disabled'}`}
             style={{
               flex: 1,
               padding: '10px 16px',
               background: hubCastable ? `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)` : 'rgba(80, 70, 50, 0.4)',
               border: 'none', borderRadius: 2,
               color: hubCastable ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
-              fontSize: 11, fontWeight: 700,
-              letterSpacing: 2, textTransform: 'uppercase',
+              fontSize: 'var(--imp-text-sm)', fontWeight: 700,
+              letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
               fontFamily: 'var(--imp-font-display)',
               cursor: hubCastable ? 'pointer' : 'not-allowed',
+              ...getPriorityStyle(hubCastable ? 'actionable' : 'disabled', accent),
             }}
           >
             Lanzar
@@ -359,13 +365,13 @@ function DecretumDetail({ d, hubCastable, accent, onSell, onCast }: DecretumDeta
               border: '1px solid rgba(194, 74, 58, 0.55)',
               borderRadius: 2,
               color: '#c24a3a',
-              fontSize: 11, fontWeight: 700,
-              letterSpacing: 2, textTransform: 'uppercase',
+              fontSize: 'var(--imp-text-sm)', fontWeight: 700,
+              letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
               fontFamily: 'var(--imp-font-display)',
               cursor: 'pointer',
             }}
           >
-            Sell · <ResourceAmount type="gold" amount={sellPrice} iconSize={14} />
+            Sell · <ResourceAmount type="gold" amount={sellPrice} iconSize="inline" />
           </button>
         </div>
       </div>
@@ -382,8 +388,8 @@ function InfoBox({ label, value, color, capitalize }: { label: string; value: Co
       borderRadius: 2,
     }}>
       <div style={{
-        fontSize: 9, letterSpacing: 1.5,
-        color: 'var(--imp-text-lo)',
+        fontSize: 'var(--imp-text-xs)', letterSpacing: 'var(--imp-meta-letter)',
+        color: 'var(--imp-text-mid)',
         textTransform: 'uppercase', marginBottom: 3,
       }}>
         {label}

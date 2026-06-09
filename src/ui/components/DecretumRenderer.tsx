@@ -3,6 +3,7 @@ import { DECRETUM_SELL_PRICE } from '../../game/items/decretum';
 import { FACTION_COLORS } from '../../game/core/commander';
 import { Tooltip } from './Tooltip';
 import { CostInline, ResourceAmount } from './ResourceIcon';
+import { getPriorityStyle, priorityClass, type CardPriority } from './card-priority';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('decretum-card-styles')) {
@@ -107,6 +108,7 @@ interface DecretumCardProps {
 export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSell }: DecretumCardProps) {
   const factionColor = FACTION_COLORS[decretum.color];
   const dots = RARITY_DOTS[decretum.rarity];
+  const priority: CardPriority = selected ? 'selected' : castable ? 'actionable' : 'disabled';
 
   // Box-shadow: selected = bright gold, castable = faction glow, otherwise none
   const boxShadow = selected
@@ -135,6 +137,7 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
     flexShrink: 0,
     transition: 'transform var(--duration-fast) var(--ease-default), box-shadow var(--duration-fast) var(--ease-default), filter var(--duration-fast) var(--ease-default)',
     cursor: castable ? 'pointer' : 'default',
+    ...getPriorityStyle(priority, factionColor),
   };
 
   const handleClick = () => {
@@ -158,11 +161,11 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
       </div>
       {decretum.castCost && Object.keys(decretum.castCost).length > 0 && (
         <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-          Cast cost: <CostInline cost={decretum.castCost} iconSize={14} />
+          Cast cost: <CostInline cost={decretum.castCost} iconSize="inline" />
         </div>
       )}
       <div style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-        Sell: <ResourceAmount type="gold" amount={DECRETUM_SELL_PRICE[decretum.rarity]} iconSize={14} />
+        Sell: <ResourceAmount type="gold" amount={DECRETUM_SELL_PRICE[decretum.rarity]} iconSize="inline" />
       </div>
     </div>
   );
@@ -171,7 +174,7 @@ export function DecretumCard({ decretum, castable, selected, isNew, onCast, onSe
     <Tooltip content={decretumTooltip} variant="rich" position="above">
     <div
       style={containerStyle}
-      class={`decretum-card${castable ? ' decretum-castable' : ''}${selected ? ' decretum-selected' : ''}${isNew ? ' decretum-card-new' : ''}`}
+      class={`decretum-card ${priorityClass(priority)}${castable ? ' decretum-castable' : ''}${selected ? ' decretum-selected' : ''}${isNew ? ' decretum-card-new' : ''}`}
       onClick={handleClick}
     >
       {/* Top row: rarity dots + optional SELL tag */}

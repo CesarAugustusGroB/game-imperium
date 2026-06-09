@@ -2,6 +2,7 @@ import { preparedArmy, preparedLegate } from '../../../../game/progression/strat
 import { getLegateTraitById } from '../../../../game/army/legate-traits';
 import { BentoCard } from '../../../components/BentoCard';
 import { GameIcon } from '../../../components/GameIcon';
+import { getPriorityStyle, priorityClass, type CardPriority } from '../../../components/card-priority';
 import { SectionHeader, LinkButton, ROLE_COLORS } from '../components/SectionHeader';
 import { setForumTab } from '../state';
 import { SUPPLY_MAX_CARRY } from '../../../../config/game-config';
@@ -24,9 +25,18 @@ export function ExercitusPanel({ accent = '#d4a843', index = 0 }: ExercitusPanel
   const supplyLow = SUPPLY_MAX_CARRY > 0 && supplies < SUPPLY_MAX_CARRY * 0.25;
   const currentHpTotal = cohorts.reduce((sum, c) => sum + getCohortCurrentHp(c), 0);
   const maxHpTotal = cohorts.reduce((sum, c) => sum + c.stats.hp, 0);
+  const hasOoA = cohorts.some((c) => c.outOfAction);
+  const hasWounded = cohorts.some((c) => getCohortCurrentHp(c) < c.stats.hp);
+  const panelPriority: CardPriority = hasOoA || (cohorts.length > 0 && supplyLow)
+    ? 'critical'
+    : hasWounded
+      ? 'urgent'
+      : cohorts.length > 0
+        ? 'actionable'
+        : 'neutral';
 
   return (
-    <BentoCard accent={accent} index={index}>
+    <BentoCard accent={accent} index={index} priority={panelPriority}>
       <SectionHeader
         title="Exercitus"
         accent={accent}
@@ -37,8 +47,8 @@ export function ExercitusPanel({ accent = '#d4a843', index = 0 }: ExercitusPanel
           <div style={{
             padding: '10px 4px',
             fontFamily: 'var(--imp-font-serif)',
-            fontStyle: 'italic', fontSize: 11,
-            color: 'var(--imp-text-lo)',
+            fontStyle: 'italic', fontSize: 'var(--imp-text-sm)',
+            color: 'var(--imp-text-mid)',
           }}>
             No cohorts prepared.
           </div>
@@ -47,8 +57,8 @@ export function ExercitusPanel({ accent = '#d4a843', index = 0 }: ExercitusPanel
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             padding: '2px 0 4px',
-            fontSize: 10,
-            color: 'var(--imp-text-lo)',
+            fontSize: 'var(--imp-text-xs)',
+            color: 'var(--imp-text-mid)',
             fontFamily: 'var(--imp-font-mono)',
             letterSpacing: 0.5,
           }}>
@@ -61,7 +71,18 @@ export function ExercitusPanel({ accent = '#d4a843', index = 0 }: ExercitusPanel
           const maxHp = c.stats.hp;
           const wounded = currentHp < maxHp || !!c.outOfAction;
           return (
-            <div key={c.instanceId ?? c.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div
+              key={c.instanceId ?? c.id}
+              class={priorityClass(c.outOfAction ? 'critical' : wounded ? 'urgent' : 'neutral')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '2px 4px',
+                borderRadius: 2,
+                ...getPriorityStyle(c.outOfAction ? 'critical' : wounded ? 'urgent' : 'neutral', ROLE_COLORS[c.role] ?? accent),
+              }}
+            >
               <div style={{
                 width: 6, height: 16,
                 background: ROLE_COLORS[c.role] ?? accent,
@@ -92,18 +113,22 @@ export function ExercitusPanel({ accent = '#d4a843', index = 0 }: ExercitusPanel
       <div style={{
         marginTop: 8, display: 'flex', alignItems: 'center', gap: 8,
       }}>
-        <div title={`Supplies: ${supplies} / ${SUPPLY_MAX_CARRY}`} style={{
+        <div
+          title={`Supplies: ${supplies} / ${SUPPLY_MAX_CARRY}`}
+          class={priorityClass(supplyLow ? 'critical' : 'neutral')}
+          style={{
           display: 'inline-flex', alignItems: 'center', gap: 4,
           padding: '2px 7px',
           background: supplyLow ? 'rgba(194, 74, 58, 0.15)' : 'rgba(212, 168, 67, 0.1)',
           border: `1px solid ${supplyLow ? 'rgba(194, 74, 58, 0.45)' : 'rgba(212, 168, 67, 0.3)'}`,
           borderRadius: 10,
-          fontSize: 9,
+          fontSize: 'var(--imp-text-xs)',
           color: supplyLow ? '#d48b3a' : 'var(--imp-text-mid)',
           fontFamily: 'var(--imp-font-mono)',
           letterSpacing: 0.5,
+          ...getPriorityStyle(supplyLow ? 'critical' : 'neutral', accent),
         }}>
-          <GameIcon name="supplies-crate" size={12} />
+          <GameIcon name="supplies-crate" size="micro" />
           <span>{supplies}/{SUPPLY_MAX_CARRY}</span>
         </div>
       </div>
@@ -135,8 +160,8 @@ export function ExercitusPanel({ accent = '#d4a843', index = 0 }: ExercitusPanel
               {legate.name}
             </div>
             <div style={{
-              fontSize: 9,
-              color: 'var(--imp-text-lo)',
+              fontSize: 'var(--imp-text-xs)',
+              color: 'var(--imp-text-mid)',
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {legate.traitIds.map((id) => getLegateTraitById(id)?.name).filter(Boolean).join(' · ') || '—'}

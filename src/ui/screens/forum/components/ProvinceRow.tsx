@@ -9,6 +9,7 @@ import { ROMAN } from '../../../ui-constants';
 import { TERRAIN_ICONS, TRADE_GOOD_ICONS } from '../../ProvinceScreen';
 import { Tooltip } from '../../../components/Tooltip';
 import { ResourceAmount } from '../../../components/ResourceIcon';
+import { getPriorityStyle, priorityClass, type CardPriority } from '../../../components/card-priority';
 
 interface ProvinceRowProps {
   p: Province;
@@ -51,6 +52,15 @@ export function ProvinceRow({ p, accent = '#d4a843', onClick, selected = false }
     p.unrest < 40 ? 'var(--color-success)' :
     p.unrest < 70 ? 'var(--color-warning)' :
     'var(--color-danger)';
+  const priority: CardPriority = selected
+    ? 'selected'
+    : p.unrest >= 70
+      ? 'critical'
+      : p.unrest >= 45
+        ? 'urgent'
+        : totalIncome > 0
+          ? 'actionable'
+          : 'neutral';
 
   const rowTooltip = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -67,7 +77,7 @@ export function ProvinceRow({ p, accent = '#d4a843', onClick, selected = false }
         Unrest: {p.unrest}/100
       </div>
       <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-        Net: <ResourceAmount type="gold" amount={totalIncome} sign={totalIncome >= 0 ? '+' : ''} iconSize={14} /> / turn · Governor: {governorName ?? 'none'}
+        Net: <ResourceAmount type="gold" amount={totalIncome} sign={totalIncome >= 0 ? '+' : ''} iconSize="inline" /> / turn · Governor: {governorName ?? 'none'}
       </div>
       {p.investments.length > 0 && (
         <div style={{ marginTop: '3px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
@@ -80,6 +90,7 @@ export function ProvinceRow({ p, accent = '#d4a843', onClick, selected = false }
   return (
     <Tooltip content={rowTooltip} variant="rich" position="right">
     <div
+      class={priorityClass(priority)}
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
@@ -95,6 +106,7 @@ export function ProvinceRow({ p, accent = '#d4a843', onClick, selected = false }
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 150ms',
         display: 'flex', alignItems: 'center', gap: 10,
+        ...getPriorityStyle(priority, accent),
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -108,8 +120,8 @@ export function ProvinceRow({ p, accent = '#d4a843', onClick, selected = false }
           {p.name}
         </div>
         <div style={{
-          fontSize: 9, letterSpacing: 1,
-          color: 'var(--imp-text-lo)',
+          fontSize: 'var(--imp-text-xs)', letterSpacing: 'var(--imp-meta-letter)',
+          color: 'var(--imp-text-mid)',
           textTransform: 'uppercase',
         }}>
           {p.terrain} · {governorName ?? 'ungoverned'}
@@ -117,8 +129,8 @@ export function ProvinceRow({ p, accent = '#d4a843', onClick, selected = false }
       </div>
       <div style={{ width: 56 }}>
         <div style={{
-          fontSize: 8, letterSpacing: 1,
-          color: 'var(--imp-text-lo)',
+          fontSize: 'var(--imp-text-xs)', letterSpacing: 'var(--imp-meta-letter)',
+          color: 'var(--imp-text-mid)',
           textTransform: 'uppercase',
           marginBottom: 2,
         }}>
@@ -140,15 +152,15 @@ export function ProvinceRow({ p, accent = '#d4a843', onClick, selected = false }
       <div style={{ textAlign: 'right', minWidth: 50 }}>
         <div style={{
           fontFamily: 'var(--imp-font-mono)',
-          fontSize: 11,
+          fontSize: 'var(--imp-text-sm)',
           color: totalIncome >= 0 ? '#7a9a6a' : '#c24a3a',
           fontWeight: 600,
         }}>
-          <ResourceAmount type="gold" amount={totalIncome} sign={totalIncome >= 0 ? '+' : ''} iconSize={15} />
+          <ResourceAmount type="gold" amount={totalIncome} sign={totalIncome >= 0 ? '+' : ''} iconSize="row" />
         </div>
         <div style={{
-          fontSize: 8,
-          color: 'var(--imp-text-lo)',
+          fontSize: 'var(--imp-text-xs)',
+          color: 'var(--imp-text-mid)',
           letterSpacing: 0.5,
         }}>
           {p.investments.length} built

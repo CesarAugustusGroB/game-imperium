@@ -2,6 +2,7 @@ import { councilSlots } from '../../../../game/council/council-store';
 import type { Advisor } from '../../../../game/council/advisor';
 import { FACTION_COLORS } from '../../../../game/core/commander';
 import { BentoCard } from '../../../components/BentoCard';
+import { getPriorityStyle, priorityClass } from '../../../components/card-priority';
 import { SectionHeader, LinkButton } from '../components/SectionHeader';
 import { setForumTab } from '../state';
 
@@ -15,9 +16,10 @@ interface ConsiliumPanelProps {
 
 export function ConsiliumPanel({ accent = '#d4a843', index = 0 }: ConsiliumPanelProps) {
   const slots = councilSlots.value;
+  const emptySeats = slots.filter((advisor) => advisor === null).length;
 
   return (
-    <BentoCard accent={accent} index={index}>
+    <BentoCard accent={accent} index={index} priority={emptySeats > 0 ? 'urgent' : 'actionable'}>
       <SectionHeader
         title="Consilium"
         accent={accent}
@@ -59,6 +61,7 @@ function AdvisorSlot({ advisor, label, accent }: AdvisorSlotProps) {
 
   return (
     <div
+      class={priorityClass(advisor ? 'actionable' : 'urgent')}
       onClick={() => setForumTab('consilium')}
       style={{
         flex: 1, aspectRatio: '2/3',
@@ -71,6 +74,7 @@ function AdvisorSlot({ advisor, label, accent }: AdvisorSlotProps) {
         borderRadius: 2,
         overflow: 'hidden',
         transition: 'all 200ms',
+        ...getPriorityStyle(advisor ? 'actionable' : 'urgent', color ?? accent),
       }}
     >
       {/* Empty seat — simple + affordance, no advisor yet. */}
@@ -136,9 +140,9 @@ function AdvisorSlot({ advisor, label, accent }: AdvisorSlotProps) {
         background: 'linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.85) 60%)',
         padding: '16px 6px 6px',
         fontFamily: 'var(--imp-font-display)',
-        fontSize: 9, fontWeight: 600,
-        letterSpacing: 2,
-        color: advisor ? 'var(--imp-text-hi)' : 'var(--imp-text-lo)',
+        fontSize: 'var(--imp-text-xs)', fontWeight: 600,
+        letterSpacing: 'var(--imp-meta-letter)',
+        color: advisor ? 'var(--imp-text-hi)' : 'var(--imp-text-mid)',
         textAlign: 'center', textTransform: 'uppercase',
       }}>
         {advisor?.name ?? label}

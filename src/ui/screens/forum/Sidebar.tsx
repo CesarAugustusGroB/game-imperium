@@ -104,8 +104,8 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
         {!collapsed && (
           <div class="fade-in" style={{ flex: 1, minWidth: 0 }}>
             <div style={{
-              fontSize: 8, letterSpacing: 2,
-              color: 'var(--imp-text-lo)',
+              fontSize: 'var(--imp-text-xs)', letterSpacing: 'var(--imp-meta-letter)',
+              color: 'var(--imp-text-mid)',
               textTransform: 'uppercase',
             }}>
               Turn {turn}
@@ -114,7 +114,7 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
               fontFamily: 'var(--imp-font-display)',
               fontSize: 14, fontWeight: 500,
               color: 'var(--imp-text-hi)',
-              letterSpacing: 3, textTransform: 'uppercase',
+              letterSpacing: 'var(--imp-title-letter)', textTransform: 'uppercase',
             }}>
               Imperivm
             </div>
@@ -146,8 +146,8 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{
-              fontSize: 8, color: 'var(--imp-text-lo)',
-              letterSpacing: 1, textTransform: 'uppercase',
+              fontSize: 'var(--imp-text-xs)', color: 'var(--imp-text-mid)',
+              letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
             }}>
               Princeps
             </div>
@@ -204,7 +204,7 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
             >
               <GameIcon
                 name={n.icon}
-                size={22}
+                size="hud"
                 style={{ opacity: active ? 1 : 0.78, transition: 'opacity 140ms' }}
               />
               {!collapsed && (
@@ -212,7 +212,7 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
                   <span style={{
                     flex: 1,
                     fontFamily: 'var(--imp-font-display)',
-                    fontSize: 12, letterSpacing: 2,
+                    fontSize: 'var(--imp-text-sm)', letterSpacing: 'var(--imp-meta-letter)',
                   }}>
                     {n.l}
                   </span>
@@ -257,14 +257,14 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6,
             fontFamily: 'var(--imp-font-display)',
-            fontSize: 10, color: accent,
-            letterSpacing: 2, textTransform: 'uppercase',
+            fontSize: 'var(--imp-text-xs)', color: accent,
+            letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
           }}>
-            <InlineImageIcon src={seasonIcon} size={15} />
+            <InlineImageIcon src={seasonIcon} size="row" />
             {cal.season}
           </div>
           <div style={{
-            fontSize: 9, color: 'var(--imp-text-lo)',
+            fontSize: 'var(--imp-text-xs)', color: 'var(--imp-text-mid)',
             fontStyle: 'italic',
             fontFamily: 'var(--imp-font-serif)',
           }}>
@@ -305,11 +305,11 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
             t.style.background = 'transparent';
           }}
         >
-          <GameIcon name="nav-tutorial" size={16} />
+          <GameIcon name="nav-tutorial" size="row" />
           {!collapsed && (
             <span style={{
-              letterSpacing: 2, textTransform: 'uppercase',
-              fontSize: 9,
+              letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
+              fontSize: 'var(--imp-text-xs)',
               fontFamily: 'var(--imp-font-display)',
             }}>
               Tutorial
@@ -333,7 +333,7 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
             borderRadius: 2,
             color: 'rgba(200, 110, 100, 0.78)',
             fontFamily: 'var(--imp-font-display)',
-            fontSize: 10, letterSpacing: 2,
+            fontSize: 'var(--imp-text-xs)', letterSpacing: 'var(--imp-meta-letter)',
             textTransform: 'uppercase',
             cursor: 'pointer',
             transition: 'background 120ms, border-color 120ms, color 120ms',
@@ -352,7 +352,7 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
             t.style.background = 'transparent';
           }}
         >
-          <GameIcon name="nav-abandon" size={16} />
+          <GameIcon name="nav-abandon" size="row" />
           {!collapsed && (
             <span style={{ marginLeft: 10 }}>Abandon Run</span>
           )}
@@ -376,11 +376,11 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
           fontFamily: 'var(--imp-font-body)',
         }}
       >
-        <GameIcon name={collapsed ? 'nav-next' : 'nav-prev'} size={16} />
+        <GameIcon name={collapsed ? 'nav-next' : 'nav-prev'} size="row" />
         {!collapsed && (
           <span style={{
-            letterSpacing: 2, textTransform: 'uppercase',
-            fontSize: 9,
+            letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
+            fontSize: 'var(--imp-text-xs)',
             fontFamily: 'var(--imp-font-display)',
           }}>
             Collapse

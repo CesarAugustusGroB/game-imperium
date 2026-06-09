@@ -4,6 +4,7 @@ import { getDiscountedAdvisorCost } from '../../../../../game/council/council-st
 import { FACTION_COLORS } from '../../../../../game/core/commander';
 import { Corners } from '../../../../components/motifs/Corners';
 import { ResourceAmount } from '../../../../components/ResourceIcon';
+import { getPriorityStyle, priorityClass } from '../../../../components/card-priority';
 import { TraitGlyph } from './TraitGlyph';
 
 const ROMAN: readonly string[] = ['I', 'II', 'III'];
@@ -33,6 +34,7 @@ export function AdvisorMarketCard({
 }: AdvisorMarketCardProps) {
   const factionColor = FACTION_COLORS[advisor.color];
   const initial = advisor.name.charAt(0).toUpperCase();
+  const priority = selected ? 'selected' : disabled ? 'disabled' : 'actionable';
 
   function handleHire(event: MouseEvent) {
     event.stopPropagation();
@@ -41,6 +43,7 @@ export function AdvisorMarketCard({
 
   return (
     <article
+      class={priorityClass(priority)}
       onClick={() => onSelect?.(advisor)}
       style={{
         position: 'relative',
@@ -59,6 +62,7 @@ export function AdvisorMarketCard({
         opacity: disabled ? 0.68 : 1,
         transition: 'border-color var(--duration-fast) var(--ease-default), box-shadow var(--duration-fast) var(--ease-default)',
         overflow: 'hidden',
+        ...getPriorityStyle(priority, selected ? accent : factionColor),
         ...style,
       }}
     >
@@ -121,7 +125,7 @@ export function AdvisorMarketCard({
           alignItems: 'center',
           justifyContent: 'center',
           fontFamily: 'var(--imp-font-display)',
-          fontSize: 9,
+          fontSize: 'var(--imp-text-xs)',
           fontWeight: 800,
         }}>
           {ROMAN[advisor.currentTier - 1] ?? 'I'}
@@ -146,10 +150,10 @@ export function AdvisorMarketCard({
           </div>
           <div style={{
             marginTop: 3,
-            color: 'var(--imp-text-lo)',
+            color: 'var(--imp-text-mid)',
             fontFamily: 'var(--imp-font-body)',
-            fontSize: 9,
-            letterSpacing: 1.1,
+            fontSize: 'var(--imp-text-xs)',
+            letterSpacing: 'var(--imp-meta-letter)',
             textTransform: 'uppercase',
           }}>
             Political offer
@@ -177,13 +181,14 @@ export function AdvisorMarketCard({
             fontWeight: 800,
             whiteSpace: 'nowrap',
           }}>
-            <ResourceAmount type="gold" amount={getDiscountedAdvisorCost(advisor)} iconSize={14} />
+            <ResourceAmount type="gold" amount={getDiscountedAdvisorCost(advisor)} iconSize="inline" />
           </div>
           <button
             type="button"
             disabled={disabled}
             title={disabled ? unavailableReason : actionLabel}
             onClick={handleHire}
+            class={`imp-card-cta imp-card-cta-${disabled ? 'disabled' : 'actionable'}`}
             style={{
               minWidth: 0,
               maxWidth: 132,
@@ -196,13 +201,14 @@ export function AdvisorMarketCard({
               color: disabled ? 'var(--imp-text-lo)' : 'var(--imp-ink)',
               cursor: disabled ? 'not-allowed' : 'pointer',
               fontFamily: 'var(--imp-font-display)',
-              fontSize: 9,
+              fontSize: 'var(--imp-text-xs)',
               fontWeight: 800,
-              letterSpacing: 1.1,
+              letterSpacing: 'var(--imp-meta-letter)',
               textTransform: 'uppercase',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
+              ...getPriorityStyle(disabled ? 'disabled' : 'actionable', accent),
             }}
           >
             {actionLabel}

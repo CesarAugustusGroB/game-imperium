@@ -55,8 +55,8 @@ export function Masthead({ title, subtitle, accent = '#d4a843' }: MastheadProps)
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
             fontFamily: 'var(--imp-font-body)',
-            fontSize: 9, letterSpacing: 3,
-            color: 'var(--imp-text-lo)',
+            fontSize: 'var(--imp-text-xs)', letterSpacing: 'var(--imp-meta-letter)',
+            color: 'var(--imp-text-mid)',
             textTransform: 'uppercase',
             marginBottom: 2,
           }}>
@@ -64,7 +64,7 @@ export function Masthead({ title, subtitle, accent = '#d4a843' }: MastheadProps)
           </div>
           <div style={{
             fontFamily: 'var(--imp-font-display)',
-            fontSize: 26, fontWeight: 500, letterSpacing: 4,
+            fontSize: 26, fontWeight: 500, letterSpacing: 'var(--imp-title-letter)',
             color: 'var(--imp-text-hi)',
             textTransform: 'uppercase',
           }}>

@@ -15,7 +15,12 @@ export function DecretaPanel({ accent = '#d4a843', index = 0 }: DecretaPanelProp
   const commander = selectedCommander.value;
 
   return (
-    <BentoCard accent={accent} index={index} style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+    <BentoCard
+      accent={accent}
+      index={index}
+      priority={hand.length > 0 ? 'actionable' : 'neutral'}
+      style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}
+    >
       <SectionHeader
         title="Decreta"
         accent={accent}
@@ -29,8 +34,8 @@ export function DecretaPanel({ accent = '#d4a843', index = 0 }: DecretaPanelProp
           <div style={{
             padding: '12px 4px',
             fontFamily: 'var(--imp-font-serif)',
-            fontStyle: 'italic', fontSize: 11,
-            color: 'var(--imp-text-lo)',
+            fontStyle: 'italic', fontSize: 'var(--imp-text-sm)',
+            color: 'var(--imp-text-mid)',
           }}>
             No decreta in hand.
           </div>

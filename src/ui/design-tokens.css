@@ -11,7 +11,7 @@
   --color-border-strong:   rgba(220, 190, 100, 0.50);
   --color-text-primary:    rgba(240, 208, 128, 0.9);
   --color-text-secondary:  rgba(200, 190, 160, 0.7);
-  --color-text-muted:      rgba(180, 170, 150, 0.45);
+  --color-text-muted:      rgba(180, 170, 150, 0.58);
   --color-danger:          #c24a3a;
   --color-success:         #5a8a4a;
   --color-warning:         #d4a843;
@@ -27,6 +27,14 @@
   --font-size-lg:          16px;
   --font-size-xl:          20px;
   --font-size-display:     52px;
+
+  /* === Imperium readable text scale === */
+  --imp-text-xs:           10px;
+  --imp-text-sm:           12px;
+  --imp-text-md:           13px;
+  --imp-text-lg:           16px;
+  --imp-meta-letter:       1px;
+  --imp-title-letter:      2.5px;
 
   /* === Spacing === */
   --space-xs:  4px;
@@ -103,7 +111,7 @@
   --imp-text-hi:       rgba(240, 230, 200, 0.95);
   --imp-text:          rgba(225, 215, 185, 0.85);
   --imp-text-mid:      rgba(200, 190, 160, 0.65);
-  --imp-text-lo:       rgba(180, 170, 150, 0.4);
+  --imp-text-lo:       rgba(180, 170, 150, 0.55);
 
   /* Text on marble */
   --imp-ink-hi:        #1a1410;

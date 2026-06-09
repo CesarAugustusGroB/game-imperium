@@ -113,7 +113,7 @@ export function EndgameCard() {
             <div>
               <span>Misión · {mission.title}</span>
               <strong style={{ color: missionMet ? 'var(--imp-gold-hi)' : 'var(--imp-text-lo)' }}>
-                {missionMet ? <>cumplida <ResourceAmount type="gold" amount={mission.bonusGold} sign="+" iconSize={14} /></> : 'no cumplida'}
+                {missionMet ? <>cumplida <ResourceAmount type="gold" amount={mission.bonusGold} sign="+" iconSize="inline" /></> : 'no cumplida'}
               </strong>
             </div>
           )}

@@ -75,7 +75,7 @@ export function CampaignResourceBar({ state }: { state: IterBelliState }) {
           content={
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, color: 'var(--imp-gold-hi)' }}>
-                {r.icon ? <GameIcon name={r.icon} size={18} /> : r.iconType ? <ResourceIcon type={r.iconType} size={18} /> : r.glyph}
+                {r.icon ? <GameIcon name={r.icon} size="panel" /> : r.iconType ? <ResourceIcon type={r.iconType} size="panel" /> : r.glyph}
                 {r.label}
               </div>
               <div style={{ color: 'var(--imp-text-mid)', fontSize: 'var(--font-size-sm)' }}>{r.tip}</div>
@@ -84,7 +84,7 @@ export function CampaignResourceBar({ state }: { state: IterBelliState }) {
         >
           <div class={`ib-res${r.alert ? ' alert' : ''}${r.warn ? ' warn' : ''}`}>
             <span class="ib-res-label">
-              {r.icon ? <GameIcon name={r.icon} size={16} /> : r.iconType ? <ResourceIcon type={r.iconType} size={16} /> : r.glyph} {r.label}
+              {r.icon ? <GameIcon name={r.icon} size="row" /> : r.iconType ? <ResourceIcon type={r.iconType} size="row" /> : r.glyph} {r.label}
             </span>
             <span class="ib-res-value">{r.value}</span>
           </div>

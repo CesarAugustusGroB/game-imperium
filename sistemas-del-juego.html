@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imperium · Sistemas del Main Loop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Violeta + blanco — paleta imperial */
+    --vio-900:#2a1147;
+    --vio-800:#3d1a63;
+    --vio-700:#532388;
+    --vio-600:#6d28d9;
+    --vio-500:#7c3aed;
+    --vio-400:#9560f0;
+    --vio-300:#b794f6;
+    --vio-200:#d6bcfa;
+    --vio-100:#ede4fb;
+    --vio-50:#f6f1fd;
+
+    --paper:#fbf9ff;
+    --paper-2:#f4eefc;
+    --ink:#241038;
+    --ink-soft:#5a4a72;
+    --ink-faint:#8b7ca3;
+    --line:#e3d6f5;
+    --white:#ffffff;
+
+    --shadow-sm:0 1px 2px rgba(42,17,71,.06), 0 2px 8px rgba(109,40,217,.05);
+    --shadow-md:0 4px 12px rgba(42,17,71,.08), 0 12px 40px rgba(109,40,217,.10);
+    --shadow-lg:0 18px 60px rgba(61,26,99,.18);
+
+    --font-display:'Cinzel', serif;
+    --font-body:'Cormorant Garamond', serif;
+    --font-mono:'Spline Sans Mono', monospace;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--font-body);
+    background:
+      radial-gradient(1200px 600px at 85% -10%, var(--vio-100), transparent 60%),
+      radial-gradient(900px 500px at -5% 10%, var(--vio-50), transparent 55%),
+      var(--paper);
+    color:var(--ink);
+    font-size:18px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+
+  /* grano sutil */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.025;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px;position:relative;z-index:2}
+
+  /* ---------- HEADER ---------- */
+  header.masthead{
+    padding:64px 0 30px;
+    text-align:center;
+    position:relative;
+  }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:12px;letter-spacing:.42em;text-transform:uppercase;
+    color:var(--vio-500);
+    display:inline-flex;align-items:center;gap:14px;
+    margin-bottom:18px;
+  }
+  .eyebrow::before,.eyebrow::after{
+    content:"";width:42px;height:1px;background:linear-gradient(90deg,transparent,var(--vio-300),transparent);
+  }
+  header.masthead h1{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:clamp(42px,6.5vw,82px);
+    line-height:.98;
+    letter-spacing:.02em;
+    color:var(--vio-900);
+    text-shadow:0 1px 0 var(--white);
+  }
+  header.masthead h1 .amp{color:var(--vio-500);font-weight:500;font-style:italic;font-family:var(--font-body)}
+  header.masthead .sub{
+    font-size:21px;color:var(--ink-soft);font-style:italic;
+    margin-top:14px;max-width:640px;margin-left:auto;margin-right:auto;
+  }
+  .seal{
+    width:60px;height:60px;margin:0 auto 8px;display:grid;place-items:center;
+    border:2px solid var(--vio-600);border-radius:50%;
+    font-family:var(--font-display);font-weight:900;font-size:22px;color:var(--vio-700);
+    box-shadow:0 0 0 5px var(--white),0 0 0 6px var(--vio-200),var(--shadow-sm);
+    background:radial-gradient(circle at 50% 35%,var(--white),var(--vio-50));
+  }
+
+  /* ---------- TABS NAV ---------- */
+  .tabbar{
+    position:sticky;top:0;z-index:30;
+    background:rgba(251,249,255,.82);
+    backdrop-filter:blur(14px) saturate(1.4);
+    border-bottom:1px solid var(--line);
+    margin-top:18px;
+  }
+  .tabbar .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:10px;padding-bottom:0;scrollbar-width:thin}
+  .tabbar .wrap::-webkit-scrollbar{height:5px}
+  .tabbar .wrap::-webkit-scrollbar-thumb{background:var(--vio-200);border-radius:99px}
+  .tab{
+    flex:0 0 auto;
+    border:none;background:none;cursor:pointer;
+    font-family:var(--font-mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-faint);
+    padding:14px 16px 16px;
+    border-bottom:2px solid transparent;
+    transition:color .2s, border-color .2s;
+    white-space:nowrap;
+    display:flex;align-items:center;gap:8px;
+  }
+  .tab .glyph{font-size:14px;color:var(--vio-300);transition:color .2s}
+  .tab:hover{color:var(--vio-700)}
+  .tab:hover .glyph{color:var(--vio-500)}
+  .tab.active{color:var(--vio-800);border-color:var(--vio-600);font-weight:600}
+  .tab.active .glyph{color:var(--vio-600)}
+
+  /* ---------- PANELS ---------- */
+  main{padding:46px 0 120px}
+  .panel{display:none;animation:rise .5s cubic-bezier(.2,.7,.2,1)}
+  .panel.active{display:block}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  .panel-head{margin-bottom:34px;display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:22px}
+  .panel-head .num{
+    font-family:var(--font-display);font-weight:900;font-size:54px;line-height:.8;
+    color:var(--vio-200);-webkit-text-stroke:1px var(--vio-300);
+  }
+  .panel-head h2{font-family:var(--font-display);font-weight:700;font-size:34px;color:var(--vio-900);letter-spacing:.01em}
+  .panel-head p{color:var(--ink-soft);font-size:19px;font-style:italic;flex-basis:100%;max-width:760px;margin-top:2px}
+
+  /* card grid */
+  .grid{display:grid;gap:20px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
+
+  .card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 26px 24px;
+    box-shadow:var(--shadow-sm);
+    position:relative;
+    transition:transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s, border-color .25s;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:linear-gradient(var(--vio-400),var(--vio-600));
+    opacity:.0;transition:opacity .25s;
+  }
+  .card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:var(--vio-200)}
+  .card:hover::before{opacity:1}
+  .card h3{
+    font-family:var(--font-display);font-weight:600;font-size:21px;color:var(--vio-800);
+    margin-bottom:6px;display:flex;align-items:center;gap:10px;
+  }
+  .card h3 .ic{
+    width:30px;height:30px;flex:0 0 auto;display:grid;place-items:center;border-radius:8px;
+    background:var(--vio-50);color:var(--vio-600);font-size:15px;border:1px solid var(--vio-100);
+  }
+  .card .tag{
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--vio-500);background:var(--vio-50);border:1px solid var(--vio-100);
+    padding:3px 9px;border-radius:99px;display:inline-block;margin-bottom:12px;
+  }
+  .card p{color:var(--ink-soft);font-size:17px}
+  .card ul{list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:7px}
+  .card ul li{
+    position:relative;padding-left:20px;color:var(--ink-soft);font-size:16.5px;line-height:1.4;
+  }
+  .card ul li::before{content:"❖";position:absolute;left:0;top:1px;color:var(--vio-300);font-size:11px}
+  .card ul li b,.card p b{color:var(--ink);font-weight:600}
+  code,.mono{font-family:var(--font-mono);font-size:13.5px;background:var(--vio-50);color:var(--vio-700);padding:1px 6px;border-radius:5px;border:1px solid var(--vio-100)}
+
+  /* resource chips row */
+  .chips{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 30px}
+  .chip{
+    display:flex;align-items:center;gap:11px;
+    background:var(--white);border:1px solid var(--line);border-radius:13px;
+    padding:13px 18px;box-shadow:var(--shadow-sm);flex:1 1 180px;min-width:170px;
+    transition:transform .2s, box-shadow .2s;
+  }
+  .chip:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+  .chip .sym{
+    width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+    font-family:var(--font-display);font-weight:800;font-size:19px;color:var(--white);flex:0 0 auto;
+  }
+  .chip .meta b{display:block;font-family:var(--font-display);font-size:15px;color:var(--vio-900);font-weight:600;letter-spacing:.02em}
+  .chip .meta span{font-size:14.5px;color:var(--ink-faint);font-style:italic}
+
+  /* faction swatches */
+  .fac-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:8px}
+  @media(max-width:760px){.fac-row{grid-template-columns:repeat(2,1fr)}}
+  .fac{border-radius:14px;padding:20px 16px;color:var(--white);position:relative;overflow:hidden;box-shadow:var(--shadow-sm);min-height:140px;display:flex;flex-direction:column;justify-content:flex-end}
+  .fac h4{font-family:var(--font-display);font-weight:700;font-size:18px;margin-bottom:2px}
+  .fac small{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;opacity:.85;text-transform:uppercase}
+  .fac .res{margin-top:8px;font-size:15px;font-style:italic;opacity:.95}
+  .fac .big{position:absolute;top:-10px;right:6px;font-family:var(--font-display);font-weight:900;font-size:64px;opacity:.18}
+
+  /* flow steps */
+  .flow{display:flex;flex-direction:column;gap:0;margin-top:6px}
+  .step{display:flex;gap:20px;padding:16px 0;border-bottom:1px dashed var(--line)}
+  .step:last-child{border-bottom:none}
+  .step .n{
+    flex:0 0 auto;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+    font-family:var(--font-display);font-weight:700;color:var(--vio-700);
+    background:var(--vio-50);border:1.5px solid var(--vio-200);font-size:16px;
+  }
+  .step .body b{font-family:var(--font-display);font-size:18px;color:var(--vio-900);display:block;margin-bottom:2px}
+  .step .body p{color:var(--ink-soft);font-size:16.5px}
+
+  /* note callout */
+  .note{
+    background:linear-gradient(180deg,var(--vio-50),var(--white));
+    border:1px solid var(--vio-100);border-left:3px solid var(--vio-500);
+    border-radius:12px;padding:18px 22px;margin:8px 0 26px;font-style:italic;color:var(--ink-soft);
+  }
+  .note b{font-style:normal;color:var(--vio-700);font-family:var(--font-display);font-weight:600}
+
+  /* component pills */
+  .pillwrap{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+  .pill{font-family:var(--font-mono);font-size:12.5px;color:var(--vio-700);background:var(--vio-50);border:1px solid var(--vio-100);padding:6px 12px;border-radius:8px;transition:all .18s}
+  .pill:hover{background:var(--vio-600);color:var(--white);border-color:var(--vio-600);transform:translateY(-2px)}
+
+  /* sub section title */
+  .subtitle{font-family:var(--font-display);font-weight:600;font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--vio-500);margin:36px 0 16px;display:flex;align-items:center;gap:14px}
+  .subtitle::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--vio-200),transparent)}
+
+  footer{border-top:1px solid var(--line);padding:34px 0 60px;text-align:center;color:var(--ink-faint);font-style:italic}
+  footer .mono{font-style:normal;background:none;border:none;color:var(--vio-500);padding:0}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="seal">SPQR</div>
+    <div class="eyebrow">Codex Systemae · Main Loop</div>
+    <h1>IMPERIVM <span class="amp">&amp;</span> ITER BELLI</h1>
+    <p class="sub">Referencia de los sistemas y componentes que viven hoy en el bucle principal del juego: el Foro Imperial y la campaña Iter Belli.</p>
+  </div>
+</header>
+
+<nav class="tabbar">
+  <div class="wrap" id="tabbar">
+    <button class="tab active" data-tab="overview"><span class="glyph">◉</span>Visión General</button>
+    <button class="tab" data-tab="recursos"><span class="glyph">⚜</span>Recursos &amp; Facciones</button>
+    <button class="tab" data-tab="foro"><span class="glyph">▣</span>Foro Imperial</button>
+    <button class="tab" data-tab="consilium"><span class="glyph">◎</span>Consilium</button>
+    <button class="tab" data-tab="exercitus"><span class="glyph">⚔</span>Exercitus</button>
+    <button class="tab" data-tab="provinciae"><span class="glyph">⬢</span>Provinciae</button>
+    <button class="tab" data-tab="cartas"><span class="glyph">◈</span>Doctrinae &amp; Decreta</button>
+    <button class="tab" data-tab="iterbelli"><span class="glyph">⚑</span>Iter Belli</button>
+    <button class="tab" data-tab="componentes"><span class="glyph">❖</span>Componentes UI</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- ============ OVERVIEW ============ -->
+  <section class="panel active" id="overview">
+    <div class="panel-head">
+      <div class="num">I</div>
+      <h2>Visión General</h2>
+      <p>El main loop actual se reduce a dos pilares vivos: el <b>Foro Imperial</b> (hub de gestión entre marchas) e <b>Iter Belli</b> (la campaña de marcha y batalla decisiva). Todo lo demás —bellum clásico, node-map, batallas legacy— está deprecado.</p>
+    </div>
+
+    <div class="note">
+      <b>Punto de entrada.</b> &nbsp;<code>src/main.tsx</code> → <code>App.tsx</code>. La señal reactiva <code>currentScreen</code> dirige el enrutado de pantallas; dentro del Foro, <code>activeForumTab</code> controla la pestaña activa.
+    </div>
+
+    <div class="grid g3">
+      <div class="card">
+        <span class="tag">Hub</span>
+        <h3><span class="ic">▣</span>Foro Imperial</h3>
+        <p>El cuartel general entre marchas. Concentra recursos, consejo, ejército, provincias, doctrinas y decretos en un shell de pestañas.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Campaña</span>
+        <h3><span class="ic">⚑</span>Iter Belli</h3>
+        <p>La marcha por etapas con operaciones, gestión de suministros/moral y una batalla decisiva sobre Canvas.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Núcleo</span>
+        <h3><span class="ic">⚜</span>Recursos &amp; Estado</h3>
+        <p>Señales Preact reactivas para oro, fe, influencia, momentum e iuniores; estado de run persistido en <code>meta-save</code>.</p>
+      </div>
+    </div>
+
+    <div class="subtitle">El bucle, paso a paso</div>
+    <div class="flow">
+      <div class="step"><div class="n">1</div><div class="body"><b>Selección de Comandante</b><p>Eliges Princeps y facción. Define recursos primarios, bonos de inicio y caminos de victoria.</p></div></div>
+      <div class="step"><div class="n">2</div><div class="body"><b>Foro Imperial</b><p>Preparas la marcha: recluta cohortes, contrata legado y asesores, equipa doctrinas, ajusta provincias y compra suministros.</p></div></div>
+      <div class="step"><div class="n">3</div><div class="body"><b>Embark → Iter Belli</b><p>La <code>EmbarkCard</code> lanza la siguiente marcha. Avanzas por operaciones gestionando moral, comida y amenaza.</p></div></div>
+      <div class="step"><div class="n">4</div><div class="body"><b>Batalla decisiva</b><p>Al llegar al objetivo, choque por <b>posturas resueltas con dados</b> contra el enemigo del escenario. La munición alimenta el hostigamiento.</p></div></div>
+      <div class="step"><div class="n">5</div><div class="body"><b>Endgame → Foro</b><p>Los supervivientes vuelven a escalar a cohortes y el oro/iuniores regresa al hub. Vuelta al Foro a reclutar y avanzar la estación.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ============ RECURSOS ============ -->
+  <section class="panel" id="recursos">
+    <div class="panel-head">
+      <div class="num">II</div>
+      <h2>Recursos &amp; Facciones</h2>
+      <p>En este worktree el Foro solo opera con <b>tres lecturas vivas</b>: Aurum, Iuniores y la estación. La facción del Princeps ya no es un recurso primario — es identidad de color que bloquea qué doctrinas y decretos puedes usar.</p>
+    </div>
+
+    <div class="note">
+      <b>Recursos deprecados.</b> &nbsp;<code>faith</code>, <code>influence</code> y <code>momentum</code> siguen en el tipo <code>ResourceType</code> pero están marcados <code>@deprecated</code> y <b>ocultos</b>. El <code>TreasuryPanel</code> (Aerarium) los omite a propósito: <i>"only the resources actually live in this worktree are shown"</i>.
+    </div>
+
+    <div class="subtitle">Recursos vivos del Foro</div>
+    <div class="chips">
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#c79a2e,#9a7415)">⚜</div><div class="meta"><b>Aurum · Oro</b><span>Ingreso, upkeep, reclutamiento, cartas</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#7c3aed,#532388)">🛡</div><div class="meta"><b>Iuniores</b><span>Reserva de reclutas · refuerzo de cohortes</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#6d28d9,#9560f0)">❉</div><div class="meta"><b>Season</b><span>Estación / temporada (actual / máx)</span></div></div>
+    </div>
+
+    <div class="note">
+      <b>Modificadores de ingreso.</b> &nbsp;Al sumar oro, <i>War Profiteer</i> (+50%) y las doctrinas (aditivo) elevan el ingreso hasta un tope del <b>75%</b> (<code>addResource</code> en <code>resources.ts</code>).
+    </div>
+
+    <div class="subtitle">Facciones &amp; arquetipos del Princeps</div>
+    <div class="note" style="margin-top:0">Las 5 facciones de color siguen vivas como <b>identidad del comandante</b>: tematizan la UI y, vía <code>isColorMatch</code>, deciden qué doctrinas/decretos puede equipar (color igual, o ítem blanco universal, o comandante blanco = todo).</div>
+    <div class="fac-row">
+      <div class="fac" style="background:linear-gradient(160deg,#caa23a,#8a6a16)"><span class="big">✦</span><h4>Gold</h4><small>Religious</small><div class="res">#d4a843</div></div>
+      <div class="fac" style="background:linear-gradient(160deg,#c24a3a,#7d271b)"><span class="big">⚡</span><h4>Red</h4><small>Warlord</small><div class="res">#c24a3a</div></div>
+      <div class="fac" style="background:linear-gradient(160deg,#4a7cc2,#274f87)"><span class="big">◈</span><h4>Blue</h4><small>Diplomat</small><div class="res">#4a7cc2</div></div>
+      <div class="fac" style="background:linear-gradient(160deg,#8a5cc2,#532388)"><span class="big">⚜</span><h4>Purple</h4><small>Merchant</small><div class="res">#8a5cc2</div></div>
+      <div class="fac" style="background:linear-gradient(160deg,#9a8f80,#5f574b)"><span class="big">❖</span><h4>White</h4><small>Universal</small><div class="res">acceso total</div></div>
+    </div>
+
+    <div class="subtitle">Comandante</div>
+    <div class="grid g2">
+      <div class="card">
+        <h3><span class="ic">♛</span>Princeps</h3>
+        <p>Define toda la run desde <code>commander.ts</code>:</p>
+        <ul>
+          <li>Nombre, cultura, retrato, facción y arquetipo</li>
+          <li>Pasiva + habilidad <b>estratégica</b> + <b>táctica</b></li>
+          <li>Recursos y bonos de inicio · enfoque de juego</li>
+          <li>Unidades únicas y caminos de victoria</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="ic">⚙</span>Capa de estado</h3>
+        <p>Persistencia y estado de run:</p>
+        <ul>
+          <li><code>resources.ts</code> — señales + lógica de ingreso</li>
+          <li><code>game-state.ts</code> — comandante, spokes completados, estación global</li>
+          <li><code>meta-save.ts</code> — localStorage, restauración de run, flag de tutorial</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FORO ============ -->
+  <section class="panel" id="foro">
+    <div class="panel-head">
+      <div class="num">III</div>
+      <h2>Foro Imperial</h2>
+      <p>El shell de gestión: <code>ForumShell.tsx</code> con barra lateral de navegación, masthead de recursos y las pestañas de dominio que estructuran toda la preparación.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <span class="tag">Sidebar.tsx</span>
+        <h3><span class="ic">▤</span>Barra lateral</h3>
+        <p>Sello SPQR, título <b>IMPERIVM</b> y chip de retrato del Princeps. Botones de navegación con badges contextuales:</p>
+        <ul>
+          <li><b>Overview</b> ◉ · <b>Provinciae</b> ⬢ (nº provincias)</li>
+          <li><b>Consilium</b> ◎ (asesores sentados/total)</li>
+          <li><b>Exercitus</b> ⚔ (nº cohortes)</li>
+          <li><b>Doctrinae</b> ◈ · <b>Decreta</b> ❖ (tamaño de mano)</li>
+          <li>Chip de estación (Hiems/Ver/Aestas/Auctumnus + año AUC)</li>
+          <li>Re-disparar tutorial · Abandonar run (destructivo)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="tag">Masthead.tsx · TreasuryPanel</span>
+        <h3><span class="ic">▦</span>Masthead &amp; Aerarium</h3>
+        <p>Cabecera del Foro con el lectorado de tesorería (<code>StatChip</code> / <code>BentoCard</code>). Solo los recursos vivos:</p>
+        <ul>
+          <li>Aurum (oro) ⚜ · con cap blando 2000 y delta</li>
+          <li>Iuniores 🛡 · cap blando 50</li>
+          <li>Season ❉ · actual / <code>MAX_SEASONS</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="subtitle">Pestaña Overview</div>
+    <div class="grid g3">
+      <div class="card">
+        <h3><span class="ic">◧</span>Columna izquierda</h3>
+        <ul><li>Panel <b>Consilium</b> — 3 miniaturas de asiento + "Abrir →"</li><li>Panel <b>Exercitus</b> — roster resumido + barra HP</li></ul>
+      </div>
+      <div class="card">
+        <h3><span class="ic">◨</span>Columna central</h3>
+        <ul><li><b>EmbarkCard</b> — lanza la siguiente marcha</li><li>Lista de <b>Provinciae</b> con ingreso/descontento</li></ul>
+      </div>
+      <div class="card">
+        <h3><span class="ic">▥</span>Columna derecha</h3>
+        <ul><li><b>DoctrinaePanel</b> — rejilla equipada (drag-drop)</li><li><b>DecretaPanel</b> — mano de pergaminos</li></ul>
+      </div>
+    </div>
+
+    <div class="note">Cada pestaña de dominio (Consilium, Exercitus, Provinciae, Doctrinae, Decreta) tiene su sección dedicada en este códex — usa las pestañas superiores.</div>
+  </section>
+
+  <!-- ============ CONSILIUM ============ -->
+  <section class="panel" id="consilium">
+    <div class="panel-head">
+      <div class="num">IV</div>
+      <h2>Consilium</h2>
+      <p>El consejo de 3 asesores: Consiliarius, Legatus y Augur. Mercado político, fichaje, progresión por XP y bonos pasivos por asiento.</p>
+    </div>
+
+    <div class="grid g3">
+      <div class="card">
+        <h3><span class="ic">◎</span>Panel de asientos</h3>
+        <p>Tres ranuras de rol. Vacías muestran <b>+</b> punteado; ocupadas muestran retrato + badge de tier.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ic">♟</span>Detalle del asesor</h3>
+        <ul><li>Retrato grande + nombre, tier y rol</li><li>Rasgos en badges de color</li><li>Barra de XP al siguiente tier</li><li>Pasiva + botón de despido</li></ul>
+      </div>
+      <div class="card">
+        <h3><span class="ic">＋</span>Bonos sentados</h3>
+        <p>Tarjeta por asesor con su efecto: +recurso/spoke, alivio de upkeep, descuento de tienda, opciones de evento, ritmo de curación, reducción de amenaza, bono de botín.</p>
+      </div>
+    </div>
+
+    <div class="subtitle">Mercado político</div>
+    <div class="card">
+      <h3><span class="ic">⚖</span>Political Market</h3>
+      <p>Toggle <i>Political Market / Available Advisors</i>. Filtro por categoría (Diplomático · Económico · Intriga · Militar) y orden (coste · nombre · tier). Las tarjetas muestran mini-retrato, coste, tres glifos de rasgo y botón de fichaje (bloqueado sin asiento libre u oro insuficiente).</p>
+      <div class="pillwrap">
+        <span class="pill">advisor.ts</span><span class="pill">council-store.ts</span>
+        <span class="pill">AdvisorMarketCard</span><span class="pill">BonusCard</span>
+        <span class="pill">CeremonialTrack</span><span class="pill">TraitChip</span><span class="pill">TraitGlyph</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ EXERCITUS ============ -->
+  <section class="panel" id="exercitus">
+    <div class="panel-head">
+      <div class="num">V</div>
+      <h2>Exercitus</h2>
+      <p>Gestión del ejército: cohortes, salud del roster, suministros, reclutamiento y el Legado de campo con su pool de candidatos.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <span class="tag">Cohorts</span>
+        <h3><span class="ic">⚔</span>Cohortes</h3>
+        <p>Agrupadas por tipo (mismo ID plegado a un contador). Muestran icono de rol, nombre, HP total y coste (⚜ + 🛡). Roles con color: <b>Vanguard</b> carmesí, <b>Reserve</b> oro, <b>Guard</b> lapislázuli.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Roster Health</span>
+        <h3><span class="ic">✚</span>Salud del roster</h3>
+        <ul><li>Filas por instancia herida con barra HP en gradiente</li><li>Botón de curación (coste 🛡, mercs solo con oro)</li><li>"Replenish Roster" en bloque con preview</li><li>Flags: fuera de combate ⚕ · mercenario</li></ul>
+      </div>
+      <div class="card">
+        <span class="tag">Supplies</span>
+        <h3><span class="ic">▰</span>Suministros</h3>
+        <ul><li>Barra de progreso roja→oro</li><li>Compra rápida: +2, +10, Max</li><li><code>1⚜ = N suministros</code> · 1 por cohorte por nodo</li></ul>
+      </div>
+      <div class="card">
+        <span class="tag">Recruit</span>
+        <h3><span class="ic">＋</span>Reclutamiento</h3>
+        <ul><li>Catálogo de cohortes ciudadanas (ATK/DEF/HP/AGI)</li><li>Sección separada de contratos mercenarios</li><li>Mensajes de fallo por oro/iuniores insuficientes</li></ul>
+      </div>
+    </div>
+
+    <div class="subtitle">Legatus</div>
+    <div class="card">
+      <h3><span class="ic">♞</span>Legado de campo</h3>
+      <p>Retrato grande, nombre y título, rasgos en badges de color, botón de despido. Si no hay legado, aparece el <b>Hiring Pool</b> con candidatos (retrato + rasgos + "Hire — 80⚜"). Los rasgos (Cavalry Master, Archery Expert…) aplican efectos especiales en batalla.</p>
+      <div class="pillwrap">
+        <span class="pill">cohort.ts</span><span class="pill">cohort-data.ts</span>
+        <span class="pill">legate.ts</span><span class="pill">legate-traits.ts</span><span class="pill">legate-pool.ts</span>
+        <span class="pill">morale.ts</span><span class="pill">supplies.ts</span><span class="pill">army-replenishment.ts</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PROVINCIAE ============ -->
+  <section class="panel" id="provinciae">
+    <div class="panel-head">
+      <div class="num">VI</div>
+      <h2>Provinciae</h2>
+      <p>El motor económico: libro mayor de provincias, detalle con gobernador, edificios, impuestos y economía de comida; más el pool de gobernadores.</p>
+    </div>
+
+    <div class="grid g3">
+      <div class="card">
+        <h3><span class="ic">▤</span>Ledger</h3>
+        <p>Lista desplazable de provincias. Cada fila: territorio, terreno, nivel de impuesto, descontento y cambio de riqueza por turno.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ic">▣</span>Detalle</h3>
+        <ul><li>Asignar/destituir gobernador</li><li>Inventario de edificios por terreno</li><li>Inversiones: Fortificación, Taller, Templo, Biblioteca, Mercado</li><li>Comida (producción/consumo/excedente)</li><li>Slider de impuestos con impacto en descontento</li></ul>
+      </div>
+      <div class="card">
+        <h3><span class="ic">♟</span>Pool de gobernadores</h3>
+        <p>Fichaje desde el pool disponible (coste en oro), con rasgos y salario del gobernador.</p>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Renderizado.</b> &nbsp;<code>BuildingIcon.tsx</code> dibuja 13 tipos de edificio con Pixi; <code>Portrait.tsx</code> los retratos de gobernador; <code>OrnateFrame</code> aporta el marco temático.
+    </div>
+
+    <div class="card">
+      <h3><span class="ic">⚙</span>Capa de sistema</h3>
+      <div class="pillwrap">
+        <span class="pill">province.ts</span><span class="pill">province-store.ts</span>
+        <span class="pill">governor.ts</span><span class="pill">governor-store.ts</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CARTAS ============ -->
+  <section class="panel" id="cartas">
+    <div class="panel-head">
+      <div class="num">VII</div>
+      <h2>Doctrinae &amp; Decreta</h2>
+      <p>Los dos sistemas de cartas: doctrinas pasivas equipables y decretos —pergaminos de un solo uso lanzables en batalla.</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <span class="tag">Doctrinae · 3 slots</span>
+        <h3><span class="ic">◈</span>Doctrinas</h3>
+        <p>Rejilla equipada de 3 ranuras con <b>drag-drop</b> (reordenar entre slots o equipar desde colección con swap opcional). Lock de color por facción (Gold/Red/Blue/Purple/White universal).</p>
+        <ul><li>3 tiers de mejora (I → II → III)</li><li>Efectos pasivos por nivel</li><li>Detalle con hero en gradiente + botón de mejora/venta</li></ul>
+        <div class="pillwrap"><span class="pill">doctrine.ts</span><span class="pill">doctrine-store.ts</span><span class="pill">DoctrineRenderer.tsx</span></div>
+      </div>
+      <div class="card">
+        <span class="tag">Decreta · mano</span>
+        <h3><span class="ic">❖</span>Decretos</h3>
+        <p>Mano de pergaminos de combate. Cada carta: nombre, descripción, coste (recurso + cantidad) e indicador de "lanzable" (match de facción + recurso disponible).</p>
+        <ul><li>Tamaño de mano según progresión de la run</li><li>Se reparten entre nodos y al inicio</li><li>Se lanzan en batalla: gastas recurso, el efecto resuelve</li><li>Vender devuelve a oro</li></ul>
+        <div class="pillwrap"><span class="pill">decretum.ts</span><span class="pill">decretum-store.ts</span><span class="pill">DecretumRenderer.tsx</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ITER BELLI ============ -->
+  <section class="panel" id="iterbelli">
+    <div class="panel-head">
+      <div class="num">VIII</div>
+      <h2>Iter Belli</h2>
+      <p>La campaña de <b>cartas</b> (no de hexágonos): una "marcha de guerra" por un itinerario en Hispania hasta el choque decisivo. El escenario actual es <b>SAGUNTUM</b> — llega antes de que venza el plazo consular o el Senado te releva.</p>
+    </div>
+
+    <div class="note">
+      Módulo autocontenido en <code>src/game/iterBelli/</code> — <i>no</i> referencia el viejo sistema Bellum/hex de <code>src/game/campaign/</code>. Tiene su <b>propio modelo de recursos</b>, distinto al del Foro.
+    </div>
+
+    <div class="subtitle">Recursos de campaña</div>
+    <div class="chips">
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#7c3aed,#4a1d8f)">⚔</div><div class="meta"><b>Soldados</b><span>Si bajan de 1000 → la campaña fracasa</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#9560f0,#532388)">♺</div><div class="meta"><b>Moral</b><span>0–10 · bajo 3 hay riesgo de motín</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#6d28d9,#3d1a63)">⛨</div><div class="meta"><b>Disciplina</b><span>0–10 · desbloquea formaciones/órdenes</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#b794f6,#7c3aed)">❦</div><div class="meta"><b>Suministros</b><span>−1 por turno · a 0 llega el hambre</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#9560f0,#6d28d9)">➶</div><div class="meta"><b>Munición</b><span>Hostigamiento en la batalla decisiva</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#c24a3a,#8f2d20)">☠</div><div class="meta"><b>Amenaza</b><span>0–10 · dispara escaramuzas/emboscadas</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#c79a2e,#9a7415)">⚜</div><div class="meta"><b>Oro · Iuniores</b><span>Heredados del run · vuelven al hub</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#532388,#2a1147)">⧗</div><div class="meta"><b>Plazo</b><span>Días consulares restantes</span></div></div>
+    </div>
+
+    <div class="subtitle">Cartas de operación</div>
+    <div class="grid g2">
+      <div class="card">
+        <span class="tag">OperationCard</span>
+        <h3><span class="ic">◈</span>Dos clases de carta</h3>
+        <ul>
+          <li><b>Compromiso</b> — beneficio seguro, pero romperlo aplica una <code>penalty</code></li>
+          <li><b>Arriesgada</b> (gamble) — tiene <code>successChance</code> y efectos de fracaso</li>
+          <li>Cada carta tiene coste (días, oro, suministros, iuniores), expiry y peso de robo</li>
+          <li>Gated por ubicación, arquetipo del comandante y requisitos</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="ic">❖</span>Ocho categorías</h3>
+        <div class="pillwrap">
+          <span class="pill">Logística</span><span class="pill">Movimiento</span><span class="pill">Inteligencia</span><span class="pill">Coerción</span><span class="pill">Diplomacia</span><span class="pill">Postura</span><span class="pill">Operaciones</span><span class="pill">Crisis</span>
+        </div>
+        <p style="margin-top:14px">Las <b>crisis</b> (no jugables) entran al pool por presión: <b>hambre</b>, <b>motín</b> y <b>encuentro</b>.</p>
+      </div>
+    </div>
+
+    <div class="subtitle">Itinerario &amp; modificadores</div>
+    <div class="grid g3">
+      <div class="card">
+        <h3><span class="ic">⚑</span>Itinerario</h3>
+        <p>Cadena de <b>ubicaciones</b> (neutral / aliado / enemigo / objetivo) con amenaza por turno. Avanzas con cartas de <code>advance</code> hasta el objetivo.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ic">◎</span>Misiones &amp; quests</h3>
+        <p>El Consilium siembra una <b>misión</b> (color del primer asesor sentado) y <b>quests secundarias</b> que inyectan cartas en su ubicación.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ic">⚙</span>Doctrinas en campaña</h3>
+        <p>Las doctrinas equipadas en el Foro aportan <code>DoctrineCampaignModifier</code>: pesos de robo, descuentos y efectos por turno.</p>
+      </div>
+    </div>
+
+    <div class="subtitle">Batalla decisiva (por posturas)</div>
+    <div class="grid g2">
+      <div class="card">
+        <span class="tag">battle/ · BattleModal</span>
+        <h3><span class="ic">⚔</span>Choque de dados</h3>
+        <p>Batalla por <b>posturas (stances)</b> resueltas con dados (<code>DieData</code>), no power-stats en tiempo real. Cada postura tiene requisito de disciplina, agresividad y % de bajas.</p>
+        <div class="pillwrap">
+          <span class="pill">Frontal</span><span class="pill">Línea pesada</span><span class="pill">Hostigamiento</span><span class="pill">Envolvimiento</span><span class="pill">Falsa retirada</span><span class="pill">Doble línea</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="ic">♟</span>Doctrinas enemigas</h3>
+        <p>El enemigo del escenario declara su doctrina y <code>archetypeKey</code>: <b>Tribal · Cauta · Maniobrera · Disciplinada · Agresiva</b>. La munición alimenta el hostigamiento; el terreno aplica multiplicadores.</p>
+        <div class="pillwrap"><span class="pill">engine.ts</span><span class="pill">orders.ts</span><span class="pill">resolver.ts</span><span class="pill">enemy-ai.ts</span><span class="pill">controller.ts</span></div>
+      </div>
+    </div>
+
+    <div class="subtitle">Ciclo: campaign → battle → endgame</div>
+    <div class="flow">
+      <div class="step"><div class="n">1</div><div class="body"><b>Embark</b><p>La <code>EmbarkCard</code> del Foro siembra soldados, oro, iuniores, munición, misiones y modificadores de doctrina.</p></div></div>
+      <div class="step"><div class="n">2</div><div class="body"><b>Campaign</b><p>Juegas cartas turno a turno: gestionas suministros, moral, disciplina y amenaza mientras avanzas el itinerario.</p></div></div>
+      <div class="step"><div class="n">3</div><div class="body"><b>Battle</b><p>Al llegar al objetivo, la carta decisiva dispara el choque por posturas contra el enemigo del escenario.</p></div></div>
+      <div class="step"><div class="n">4</div><div class="body"><b>Endgame → Foro</b><p>La <code>EndgameCard</code> muestra el desenlace; los supervivientes vuelven a escalar a cohortes y el oro/iuniores regresa al hub.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ============ COMPONENTES ============ -->
+  <section class="panel" id="componentes">
+    <div class="panel-head">
+      <div class="num">IX</div>
+      <h2>Componentes UI</h2>
+      <p>La biblioteca compartida de Preact en <code>src/ui/components/</code> — renderizadores de carta, chips de recurso, motivos decorativos y el icon-system.</p>
+    </div>
+
+    <div class="grid g3">
+      <div class="card">
+        <h3><span class="ic">◈</span>Renderizado</h3>
+        <ul><li><b>DecretumRenderer</b> — carta de pergamino completa</li><li><b>DoctrineRenderer</b> — carta de doctrina con badge de nivel</li><li><b>ChoiceButton</b> — botón de elección de evento</li><li><b>ResourceBar / ResourceIcon</b> — chips de recurso</li><li><b>GameIcon</b> — glifos del juego (+ <code>icon-system.ts</code>)</li></ul>
+      </div>
+      <div class="card">
+        <h3><span class="ic">▣</span>Elementos compartidos</h3>
+        <div class="pillwrap">
+          <span class="pill">Tooltip</span><span class="pill">ConfirmDialog</span><span class="pill">BentoCard</span><span class="pill">NotificationFeed</span><span class="pill">MusicToggle</span><span class="pill">CustomCursor</span><span class="pill">ErrorBoundary</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="ic">❖</span>Motivos del Foro</h3>
+        <ul><li><b>motifs/</b> — Corners, LaurelWreath, MosaicBand, textures (<code>NOISE_SVG</code>)</li><li><b>StatChip</b> · <b>SectionHeader</b> — piezas del shell</li></ul>
+      </div>
+    </div>
+
+    <div class="subtitle">Componentes de pantalla</div>
+    <div class="grid g2">
+      <div class="card">
+        <h3><span class="ic">▦</span>Foro (forum/)</h3>
+        <div class="pillwrap">
+          <span class="pill">ForumShell</span><span class="pill">Sidebar</span><span class="pill">Masthead</span>
+          <span class="pill">EmbarkCard</span><span class="pill">TreasuryPanel</span><span class="pill">ConsiliumPanel</span><span class="pill">ExercitusPanel</span><span class="pill">ProvinciaeListPanel</span><span class="pill">DoctrinaePanel</span><span class="pill">DecretaPanel</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="ic">⚑</span>Iter Belli (iterbelli/)</h3>
+        <div class="pillwrap">
+          <span class="pill">IterBelliScreen</span><span class="pill">CampaignResourceBar</span><span class="pill">OperationCard</span><span class="pill">Itinerary</span><span class="pill">CampaignLog</span><span class="pill">BattleModal</span><span class="pill">EndgameCard</span>
+          <span class="pill">battle/BattleCanvas</span><span class="pill">battle/OrderBar</span><span class="pill">battle/DeploymentPanel</span><span class="pill">battle/ArmyStatus</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="subtitle">Pantallas montadas &amp; tokens</div>
+    <div class="grid g2">
+      <div class="card">
+        <h3><span class="ic">◐</span>SCREEN_COMPONENTS</h3>
+        <p>Lo único que monta <code>App.tsx</code>:</p>
+        <div class="pillwrap"><span class="pill">title</span><span class="pill">commander-select</span><span class="pill">forum / hub</span><span class="pill">iterbelli</span></div>
+        <p style="margin-top:12px">Fuentes: <code>--imp-font-display / body / serif / mono</code>. Acento oro <code>#d4a843</code>; tematización por <code>FACTION_COLORS</code>.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ic">▱</span>Balance de campaña</h3>
+        <ul>
+          <li><code>iter-belli-balance.ts</code> — umbrales <code>ALERT</code> (soldados, moral, suministros, amenaza, plazo)</li>
+          <li><code>ROMAN[]</code> — disciplina en números romanos</li>
+          <li><code>iter-belli-scenario.ts</code> — escenario <b>SAGUNTUM</b></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <p><span class="mono">Codex Systemae</span> · Imperium &amp; Iter Belli · Referencia del main loop actual</p>
+</footer>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.panel');
+  tabs.forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      const id = tab.dataset.tab;
+      tabs.forEach(t=>t.classList.toggle('active', t===tab));
+      panels.forEach(p=>p.classList.toggle('active', p.id===id));
+      tab.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
+      window.scrollTo({top:0, behavior:'smooth'});
+    });
+  });
+</script>
+</body>
+</html>

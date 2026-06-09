@@ -21,7 +21,7 @@ if (typeof document !== 'undefined' && !document.getElementById('resource-bar-st
     }
     @media (max-width: 600px) {
       .resource-bar { gap: 12px !important; height: 34px !important; padding: 0 8px !important; }
-      .resource-bar .resource-counter { font-size: 11px !important; }
+      .resource-bar .resource-counter { font-size: var(--imp-text-sm) !important; }
     }
   `;
   document.head.appendChild(el);
@@ -57,7 +57,7 @@ function ResourceCounter({ type }: { type: LiveResource }) {
   const ref = useRef<HTMLSpanElement>(null);
   const prevValue = useRef(sig.value);
   const [delta, setDelta] = useState<number | null>(null);
-  const renderIcon = () => <ResourceIcon type={type} size={22} />;
+  const renderIcon = () => <ResourceIcon type={type} size="hud" />;
 
   // Flash on value change + capture delta
   useEffect(() => {
@@ -154,7 +154,7 @@ export function ResourceBar() {
           aria-label={`Season ${globalSeason.value} of ${MAX_SEASONS}`}
           style={{ marginLeft: '12px', paddingLeft: '12px', borderLeft: '1px solid var(--color-border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}
         >
-          <InlineImageIcon src={seasonIcon} size={20} />
+          <InlineImageIcon src={seasonIcon} size="hud" />
           <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', fontWeight: 400, lineHeight: '1' }}>
             S{globalSeason.value}/{MAX_SEASONS}
           </span>

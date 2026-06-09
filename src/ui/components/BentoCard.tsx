@@ -1,4 +1,5 @@
 import type { JSX, ComponentChildren } from 'preact';
+import { getPriorityStyle, priorityClass, type CardPriority } from './card-priority';
 
 interface BentoCardProps {
   children: ComponentChildren;
@@ -13,6 +14,7 @@ interface BentoCardProps {
   onClick?: () => void;
   style?: JSX.CSSProperties;
   className?: string;
+  priority?: CardPriority;
 }
 
 /**
@@ -30,15 +32,17 @@ export function BentoCard({
   onClick,
   style,
   className,
+  priority = 'neutral',
 }: BentoCardProps) {
   return (
     <div
-      class={`imp-bento${interactive ? ' imp-bento--interactive' : ''}${className ? ` ${className}` : ''}`}
+      class={`imp-bento ${priorityClass(priority)}${interactive ? ' imp-bento--interactive' : ''}${className ? ` ${className}` : ''}`}
       onClick={onClick}
       style={{
         // Consumed by the :hover glow and the staggered entrance in globals.css.
         '--imp-panel-accent': accent,
         '--bento-i': index,
+        ...getPriorityStyle(priority, accent),
         ...style,
       }}
     >

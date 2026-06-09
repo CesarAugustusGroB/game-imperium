@@ -3,24 +3,23 @@ import type { ResourceType } from '../../game/core/commander';
 import { RESOURCE_INFO } from '../../game/core/commander';
 import goldStackIcon from '../../assets/ui/resources/gold-stack-icon.png';
 import iunioresIcon from '../../assets/ui/resources/iuniores-icon-color.png';
+import type { IconSize } from './icon-system';
+import { resolveIconSize } from './icon-system';
 
 const RESOURCE_ICON_SRC: Partial<Record<ResourceType, string>> = {
   gold: goldStackIcon,
   iuniores: iunioresIcon,
 };
 
-/** Global bump: render every meaning-bearing resource disc 50% larger than its requested size. */
-const ICON_SCALE = 1.5;
-
 interface InlineImageIconProps {
   src: string;
-  size?: number;
+  size?: IconSize;
   title?: string;
   style?: JSX.CSSProperties;
 }
 
-export function InlineImageIcon({ src, size = 18, title, style }: InlineImageIconProps) {
-  const px = Math.round(size * ICON_SCALE);
+export function InlineImageIcon({ src, size = 'inline', title, style }: InlineImageIconProps) {
+  const px = resolveIconSize(size);
   return (
     <img
       src={src}
@@ -41,12 +40,13 @@ export function InlineImageIcon({ src, size = 18, title, style }: InlineImageIco
 
 interface ResourceIconProps {
   type: ResourceType;
-  size?: number;
+  size?: IconSize;
   title?: string;
   style?: JSX.CSSProperties;
 }
 
-export function ResourceIcon({ type, size = 18, title, style }: ResourceIconProps) {
+export function ResourceIcon({ type, size = 'inline', title, style }: ResourceIconProps) {
+  const px = resolveIconSize(size);
   const src = RESOURCE_ICON_SRC[type];
   if (src) {
     return <InlineImageIcon src={src} size={size} title={title} style={style} />;
@@ -56,7 +56,7 @@ export function ResourceIcon({ type, size = 18, title, style }: ResourceIconProp
     <span
       title={title}
       aria-hidden={title ? undefined : 'true'}
-      style={{ color: RESOURCE_INFO[type].color, fontSize: Math.round(size * ICON_SCALE), lineHeight: 1, ...style }}
+      style={{ color: RESOURCE_INFO[type].color, fontSize: px, lineHeight: 1, ...style }}
     >
       {RESOURCE_INFO[type].icon}
     </span>
@@ -66,7 +66,7 @@ export function ResourceIcon({ type, size = 18, title, style }: ResourceIconProp
 interface ResourceAmountProps {
   type: ResourceType;
   amount: number | string;
-  iconSize?: number;
+  iconSize?: IconSize;
   sign?: string;
   label?: boolean;
   style?: JSX.CSSProperties;
@@ -75,7 +75,7 @@ interface ResourceAmountProps {
 export function ResourceAmount({
   type,
   amount,
-  iconSize = 18,
+  iconSize = 'inline',
   sign = '',
   label = false,
   style,
@@ -99,10 +99,10 @@ export function ResourceAmount({
 
 interface CostInlineProps {
   cost: Partial<Record<ResourceType, number>>;
-  iconSize?: number;
+  iconSize?: IconSize;
 }
 
-export function CostInline({ cost, iconSize = 16 }: CostInlineProps) {
+export function CostInline({ cost, iconSize = 'row' }: CostInlineProps) {
   const entries = (Object.entries(cost) as [ResourceType, number][])
     .filter(([, amt]) => amt > 0);
 

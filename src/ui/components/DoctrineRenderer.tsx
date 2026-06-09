@@ -4,6 +4,7 @@ import { FACTION_COLORS } from '../../game/core/commander';
 import type { ResourceType } from '../../game/core/commander';
 import { Tooltip } from './Tooltip';
 import { CostInline, ResourceAmount } from './ResourceIcon';
+import { getPriorityStyle, priorityClass, type CardPriority } from './card-priority';
 
 // ── One-time CSS injection ──
 if (typeof document !== 'undefined' && !document.getElementById('doctrine-slot-styles')) {
@@ -161,7 +162,7 @@ export function DoctrineSlot({
   if (doctrine === null) {
     return (
       <div
-        class={`doctrine-slot-empty${onEquip ? ' doctrine-slot-clickable' : ''}`}
+        class={`doctrine-slot-empty ${priorityClass(onEquip ? 'urgent' : 'neutral')}${onEquip ? ' doctrine-slot-clickable' : ''}`}
         onClick={onEquip}
         style={{
           width: 'min(140px, calc(25vw - 8px))',
@@ -175,6 +176,7 @@ export function DoctrineSlot({
           justifyContent: 'center',
           gap: '8px',
           userSelect: 'none',
+          ...getPriorityStyle(onEquip ? 'urgent' : 'neutral'),
         }}
       >
         <span style={{
@@ -210,6 +212,7 @@ export function DoctrineSlot({
   const isOffColor = !equippable;
   const sellPrice = getDoctrineSellPrice(doctrine);
   const effectDesc = formatEffectDescription(doctrine);
+  const priority: CardPriority = isOffColor ? 'disabled' : upgradeCost ? 'actionable' : 'neutral';
 
   const doctrineTooltip = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -223,7 +226,7 @@ export function DoctrineSlot({
       ))}
       {getUpgradeCost(doctrine) && (
         <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-          Upgrade: <CostInline cost={getUpgradeCost(doctrine)!} iconSize={14} />
+          Upgrade: <CostInline cost={getUpgradeCost(doctrine)!} iconSize="inline" />
         </div>
       )}
     </div>
@@ -232,7 +235,7 @@ export function DoctrineSlot({
   return (
     <Tooltip content={doctrineTooltip} variant="rich" position="above">
     <div
-      class="doctrine-slot-card"
+      class={`doctrine-slot-card ${priorityClass(priority)}`}
       style={{
         width: 'min(140px, calc(25vw - 8px))',
         height: '180px',
@@ -246,6 +249,7 @@ export function DoctrineSlot({
         position: 'relative',
         opacity: isOffColor ? 0.55 : 1,
         fontFamily: 'var(--font-family)',
+        ...getPriorityStyle(priority, factionColor),
       }}
     >
       {/* Off-color sell price badge */}
@@ -263,7 +267,7 @@ export function DoctrineSlot({
           borderRadius: '3px',
           zIndex: 2,
         }}>
-          <ResourceAmount type="gold" amount={sellPrice} iconSize={12} />
+          <ResourceAmount type="gold" amount={sellPrice} iconSize="micro" />
         </div>
       )}
 
@@ -372,7 +376,7 @@ export function DoctrineSlot({
               textAlign: 'center',
             }}
           >
-            Upgrade · <CostInline cost={upgradeCost} iconSize={14} />
+            Upgrade · <CostInline cost={upgradeCost} iconSize="inline" />
           </button>
         ) : (
           <div style={{

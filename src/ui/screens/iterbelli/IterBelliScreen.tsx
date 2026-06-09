@@ -26,14 +26,14 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
     font-family: var(--imp-font-body);
   }
   .ib-head { text-align: center; margin-bottom: 14px; }
-  .ib-head .eyebrow { font-size: 10px; letter-spacing: 5px; text-transform: uppercase; color: var(--imp-gold-mid); }
+  .ib-head .eyebrow { font-size: var(--imp-text-xs); letter-spacing: var(--imp-title-letter); text-transform: uppercase; color: var(--imp-gold-mid); }
   .ib-head h1 {
     font-family: var(--imp-font-display); font-weight: 600; font-size: clamp(26px, 4vw, 40px);
     letter-spacing: 4px; color: var(--imp-gold-hi); margin: 2px 0 0; text-shadow: 0 2px 12px rgba(0,0,0,0.6);
   }
   .ib-head .sub { font-style: italic; color: var(--imp-text-mid); font-size: 13px; }
   .ib-mission { margin-top: 6px; font-family: var(--imp-font-display); font-size: 13px; letter-spacing: 1px; color: var(--imp-gold); }
-  .ib-mission-cond { color: var(--imp-text-lo); letter-spacing: 0; }
+  .ib-mission-cond { color: var(--imp-text-mid); letter-spacing: 0; }
 
   /* ── Resource bar ── */
   .ib-resbar { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 14px; }
@@ -42,7 +42,7 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
     min-width: 92px; padding: 7px 12px;
     background: var(--imp-panel); border: 1px solid var(--imp-gold-faint); border-radius: var(--radius-sm);
   }
-  .ib-res-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--imp-text-lo); }
+  .ib-res-label { font-size: var(--imp-text-xs); letter-spacing: var(--imp-meta-letter); text-transform: uppercase; color: var(--imp-text-mid); }
   .ib-res-value { font-family: var(--imp-font-mono); font-size: 17px; font-weight: 600; color: var(--imp-text-hi); }
   .ib-res.warn { border-color: rgba(212,168,67,0.55); }
   .ib-res.warn .ib-res-value { color: var(--imp-gold-hi); }
@@ -59,7 +59,7 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
   .ib-stop.current .ib-dot { background: var(--imp-gold-hi); box-shadow: 0 0 10px rgba(240,208,128,0.7); border-color: var(--imp-gold-hi); }
   .ib-stop.objective .ib-dot { border-color: var(--imp-crimson); }
   .ib-stop.objective.current .ib-dot { background: var(--imp-crimson); box-shadow: 0 0 10px rgba(178,58,58,0.8); }
-  .ib-stop-name { font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--imp-text-mid); }
+  .ib-stop-name { font-size: var(--imp-text-xs); letter-spacing: 0.5px; text-transform: uppercase; color: var(--imp-text-mid); }
   .ib-stop.current .ib-stop-name { color: var(--imp-gold-hi); }
   .ib-line { width: 28px; height: 2px; background: var(--imp-gold-faint); }
   .ib-line.done { background: var(--imp-gold-mid); }
@@ -102,15 +102,15 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
   .ib-card.commitment { border-style: dashed; }
   .ib-card.arriesgada { border-top-style: double; border-top-width: 4px; }
   .ib-card.quest { border-top-width: 4px; border-color: var(--imp-gold-faint); }
-  .ib-card-timer { position: absolute; top: 8px; right: 8px; font-family: var(--imp-font-mono); font-size: 10px; color: var(--imp-text-mid); background: rgba(0,0,0,0.35); padding: 1px 6px; border-radius: 8px; }
+  .ib-card-timer { position: absolute; top: 8px; right: 8px; font-family: var(--imp-font-mono); font-size: var(--imp-text-xs); color: var(--imp-text-mid); background: rgba(0,0,0,0.35); padding: 1px 6px; border-radius: 8px; }
   .ib-card-timer.urgent { color: var(--imp-crimson); }
-  .ib-card-header { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--card-color, var(--imp-gold)); font-weight: 700; }
+  .ib-card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: var(--imp-text-xs); letter-spacing: var(--imp-meta-letter); text-transform: uppercase; color: var(--card-color, var(--imp-gold)); font-weight: 700; }
   .ib-card-icon { margin-right: 2px; }
   .ib-card-name { font-family: var(--imp-font-display); font-size: 17px; font-weight: 600; color: var(--imp-text-hi); line-height: 1.15; }
   .ib-card-desc { font-size: 12px; color: var(--imp-text-mid); line-height: 1.4; flex: 1; }
   .ib-card-effects { display: flex; flex-direction: column; gap: 3px; border-top: 1px solid var(--imp-gold-faint); padding-top: 7px; }
   .ib-effect { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
-  .ib-effect .label { color: var(--imp-text-lo); }
+  .ib-effect .label { color: var(--imp-text-mid); }
   .ib-effect .pos { color: var(--imp-oxidize); font-weight: 600; }
   .ib-effect .neg { color: var(--imp-crimson); font-weight: 600; }
   .ib-gamble-chance { text-align: center; font-family: var(--imp-font-mono); font-size: 12px; color: var(--imp-gold-hi); margin-top: 4px; }
@@ -118,8 +118,8 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
   .ib-gamble-col { padding: 6px; border-radius: 3px; background: rgba(0,0,0,0.22); }
   .ib-gamble-col.success { border: 1px solid rgba(122,154,106,0.4); }
   .ib-gamble-col.failure { border: 1px solid rgba(178,58,58,0.4); }
-  .ib-gamble-col-title { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--imp-text-lo); margin-bottom: 3px; }
-  .ib-commit-penalty { font-size: 11px; font-style: italic; color: var(--imp-gold-mid); border-top: 1px dashed var(--imp-gold-faint); padding-top: 6px; }
+  .ib-gamble-col-title { font-size: var(--imp-text-xs); text-transform: uppercase; letter-spacing: var(--imp-meta-letter); color: var(--imp-text-mid); margin-bottom: 3px; }
+  .ib-commit-penalty { font-size: var(--imp-text-sm); font-style: italic; color: var(--imp-gold-mid); border-top: 1px dashed var(--imp-gold-faint); padding-top: 6px; }
 
   /* ── Log ── */
   .ib-log {
@@ -137,27 +137,27 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
     position: fixed; inset: 0; z-index: 600; display: flex; align-items: center; justify-content: center;
     background: rgba(0,0,0,0.62); backdrop-filter: blur(4px); padding: 16px;
   }
-  .ib-section-title { font-family: var(--imp-font-display); font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: var(--imp-gold-hi); margin-bottom: 8px; }
+  .ib-section-title { font-family: var(--imp-font-display); font-size: var(--imp-text-lg); letter-spacing: var(--imp-title-letter); text-transform: uppercase; color: var(--imp-gold-hi); margin-bottom: 8px; }
 
   /* ── Battle modal ── */
   .ib-bm-arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: stretch; margin-bottom: 14px; }
   @media (max-width: 640px) { .ib-bm-arena { grid-template-columns: 1fr; } }
   .ib-bm-army { background: var(--imp-panel); border: 1px solid var(--imp-gold-faint); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; gap: 6px; }
   .ib-bm-army-name { font-family: var(--imp-font-display); font-size: 16px; color: var(--imp-gold-hi); }
-  .ib-bm-army-meta { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--imp-text-lo); }
+  .ib-bm-army-meta { font-size: var(--imp-text-xs); letter-spacing: var(--imp-meta-letter); text-transform: uppercase; color: var(--imp-text-mid); }
   .ib-bm-flags { display: flex; gap: 4px; flex-wrap: wrap; min-height: 18px; }
-  .ib-bm-flag { font-size: 9px; padding: 1px 6px; border-radius: 8px; background: rgba(0,0,0,0.3); color: var(--imp-text-mid); border: 1px solid var(--imp-gold-faint); }
+  .ib-bm-flag { font-size: var(--imp-text-xs); padding: 1px 6px; border-radius: 8px; background: rgba(0,0,0,0.3); color: var(--imp-text-mid); border: 1px solid var(--imp-gold-faint); }
   .ib-bm-flag.danger { color: var(--imp-crimson); border-color: var(--imp-danger); }
-  .ib-bm-stat-row { display: flex; justify-content: space-between; font-size: 11px; color: var(--imp-text-mid); margin-bottom: 2px; }
+  .ib-bm-stat-row { display: flex; justify-content: space-between; font-size: var(--imp-text-sm); color: var(--imp-text-mid); margin-bottom: 2px; }
   .ib-bm-bar { height: 6px; border-radius: 3px; background: rgba(0,0,0,0.4); overflow: hidden; }
   .ib-bm-bar-fill { height: 100%; background: var(--imp-gold); transition: width var(--duration-slow) var(--ease-default); }
   .ib-bm-bar-fill.morale { background: var(--imp-lapis); }
-  .ib-bm-stance-active { align-self: flex-start; font-size: 10px; padding: 2px 8px; border-radius: 8px; background: rgba(212,168,67,0.14); color: var(--imp-gold-hi); border: 1px solid var(--imp-gold-faint); }
+  .ib-bm-stance-active { align-self: flex-start; font-size: var(--imp-text-xs); padding: 2px 8px; border-radius: 8px; background: rgba(212,168,67,0.14); color: var(--imp-gold-hi); border: 1px solid var(--imp-gold-faint); }
   .ib-bm-die { align-self: center; width: 48px; height: 48px; border-radius: 6px; display: flex; align-items: center; justify-content: center; position: relative; font-family: var(--imp-font-mono); font-size: 22px; font-weight: 700; color: var(--imp-gold-hi); background: rgba(0,0,0,0.35); border: 1px solid var(--imp-gold-dim); }
-  .ib-bm-die.empty { color: var(--imp-text-lo); }
+  .ib-bm-die.empty { color: var(--imp-text-mid); }
   .ib-bm-die-corner { position: absolute; top: 2px; left: 4px; font-size: 8px; color: var(--imp-text-lo); font-weight: 400; }
   .ib-bm-round { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
-  .ib-bm-round-label { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--imp-text-lo); }
+  .ib-bm-round-label { font-size: var(--imp-text-xs); letter-spacing: var(--imp-meta-letter); text-transform: uppercase; color: var(--imp-text-mid); }
   .ib-bm-round-num { font-family: var(--imp-font-mono); font-size: 30px; color: var(--imp-gold-hi); }
   .ib-bm-stances-section { margin-bottom: 12px; }
   .ib-bm-warn { font-size: 12px; color: var(--imp-crimson); margin-bottom: 8px; }
@@ -166,8 +166,8 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
   .ib-bm-stance-btn:hover:not(:disabled) { border-color: var(--imp-gold); background: var(--imp-panel-hover); }
   .ib-bm-stance-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .ib-bm-stance-name { font-size: 13px; font-weight: 700; color: var(--imp-gold-hi); }
-  .ib-bm-stance-desc { font-size: 10px; color: var(--imp-text-mid); margin-top: 2px; line-height: 1.3; }
-  .ib-bm-log { background: rgba(0,0,0,0.3); border: 1px solid var(--imp-gold-faint); border-radius: var(--radius-sm); padding: 10px 12px; max-height: 26vh; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; font-size: 11px; }
+  .ib-bm-stance-desc { font-size: var(--imp-text-xs); color: var(--imp-text-mid); margin-top: 2px; line-height: 1.35; }
+  .ib-bm-log { background: rgba(0,0,0,0.3); border: 1px solid var(--imp-gold-faint); border-radius: var(--radius-sm); padding: 10px 12px; max-height: 26vh; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; font-size: var(--imp-text-sm); }
   .ib-bm-log-line { color: var(--imp-text-mid); }
   .ib-bm-log-line.head { color: var(--imp-gold-hi); font-weight: 600; border-top: 1px solid var(--imp-gold-faint); padding-top: 5px; margin-top: 2px; }
   .ib-bm-log-line.outcome { color: var(--imp-crimson); font-weight: 700; }
@@ -180,7 +180,7 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
   .ib-end-text { font-size: 14px; color: var(--imp-text-mid); line-height: 1.5; margin-bottom: 14px; }
   .ib-end-stats { display: flex; flex-direction: column; gap: 5px; text-align: left; max-width: 360px; margin: 0 auto; font-size: 13px; }
   .ib-end-stats > div { display: flex; justify-content: space-between; border-bottom: 1px solid var(--imp-gold-faint); padding-bottom: 3px; }
-  .ib-end-stats span { color: var(--imp-text-lo); }
+  .ib-end-stats span { color: var(--imp-text-mid); }
   .ib-end-stats strong { color: var(--imp-text-hi); font-family: var(--imp-font-mono); }
   .ib-bm-canvas { display:block; width:100%; height:300px; background:#07050a; border:1px solid var(--imp-gold-faint); border-radius: var(--radius-sm); margin-bottom: 12px; }
   .ib-bm-deploy { padding: 6px 2px 2px; }
@@ -189,14 +189,14 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
   .ib-bm-form:hover:not(:disabled) { border-color: var(--imp-gold); background: var(--imp-panel-hover); }
   .ib-bm-form.locked, .ib-bm-form:disabled { opacity:.4; cursor:not-allowed; }
   .ib-bm-form-name { font-family: var(--imp-font-display); font-size:14px; color: var(--imp-gold-hi); }
-  .ib-bm-form-req { font-size:10px; letter-spacing:1px; text-transform:uppercase; color: var(--imp-text-lo); margin:2px 0 4px; }
-  .ib-bm-form-desc { font-size:11px; color: var(--imp-text-mid); line-height:1.35; }
+  .ib-bm-form-req { font-size: var(--imp-text-xs); letter-spacing: var(--imp-meta-letter); text-transform:uppercase; color: var(--imp-text-mid); margin:2px 0 4px; }
+  .ib-bm-form-desc { font-size: var(--imp-text-sm); color: var(--imp-text-mid); line-height:1.35; }
   .ib-bm-orders { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap:8px; margin-bottom:12px; }
   .ib-bm-order { text-align:left; padding:8px 10px; border-radius:3px; cursor:pointer; background: var(--imp-panel-soft); border:1px solid var(--imp-gold-dim); border-left:3px solid var(--imp-gold); color: var(--imp-text); }
   .ib-bm-order:hover:not(:disabled) { border-color: var(--imp-gold); background: var(--imp-panel-hover); }
   .ib-bm-order:disabled { opacity:.4; cursor:not-allowed; }
   .ib-bm-order-name { font-size:12px; font-weight:700; color: var(--imp-gold-hi); }
-  .ib-bm-order-desc { font-size:10px; color: var(--imp-text-mid); margin-top:2px; line-height:1.3; }
+  .ib-bm-order-desc { font-size: var(--imp-text-xs); color: var(--imp-text-mid); margin-top:2px; line-height:1.35; }
   `;
   document.head.appendChild(el);
 }
@@ -230,13 +230,13 @@ export function IterBelliScreen() {
                   <ResourceAmount
                     type={mission.conditionResource.type}
                     amount={mission.conditionResource.amount}
-                    iconSize={11}
+                    iconSize="micro"
                   />{' '}
                   {mission.conditionResource.tail}
                 </>
               ) : mission.conditionDesc}
               {' · Recompensa '}
-              <ResourceAmount type="gold" amount={mission.bonusGold} sign="+" iconSize={11} />
+              <ResourceAmount type="gold" amount={mission.bonusGold} sign="+" iconSize="micro" />
             </span>
           </div>
         )}

@@ -4,6 +4,7 @@ import type { CardEffects, CardInstance, IterBelliState, OperationCard as Card }
 import { isCrisisDef } from '../../../game/iterBelli/iter-belli-types';
 import { GameIcon } from '../../components/GameIcon';
 import type { GameIconName } from '../../components/GameIcon';
+import { getPriorityStyle, PriorityBadge, priorityClass, type CardPriority } from '../../components/card-priority';
 
 /** Operation-card category → sliced medallion icon. */
 const CAT_ICON: Record<string, GameIconName> = {
@@ -31,7 +32,7 @@ function signClass(key: string, v: number): string {
 function EffectLines({ eff }: { eff: CardEffects }) {
   const entries = Object.entries(eff).filter(([, v]) => v !== undefined && v !== 0 && v !== false);
   if (entries.length === 0) {
-    return <div class="ib-effect"><span style={{ color: 'var(--imp-text-lo)', fontStyle: 'italic' }}>sin efecto</span></div>;
+    return <div class="ib-effect"><span style={{ color: 'var(--imp-text-mid)', fontStyle: 'italic' }}>sin efecto</span></div>;
   }
   return (
     <>
@@ -39,7 +40,7 @@ function EffectLines({ eff }: { eff: CardEffects }) {
         if (k === 'advance') return <div class="ib-effect" key={k}><span class="label">Avance</span><span class="pos">→ siguiente</span></div>;
         if (k === 'ambushDetected') return <div class="ib-effect" key={k}><span class="label">Anti-emboscada</span><span class="pos">activo</span></div>;
         if (k === 'fortified') return <div class="ib-effect" key={k}><span class="label">Fortificación</span><span class="pos">activa</span></div>;
-        if (k === 'triggerFinalBattle') return <div class="ib-effect" key={k} style={{ justifyContent: 'center', alignItems: 'center', gap: 5 }}><GameIcon name="op-final-battle" size={14} /><span style={{ color: 'var(--imp-crimson)', fontWeight: 700, letterSpacing: 1 }}>BATALLA DECISIVA</span></div>;
+        if (k === 'triggerFinalBattle') return <div class="ib-effect" key={k} style={{ justifyContent: 'center', alignItems: 'center', gap: 5 }}><GameIcon name="op-final-battle" size="inline" /><span style={{ color: 'var(--imp-crimson)', fontWeight: 700, letterSpacing: 1 }}>BATALLA DECISIVA</span></div>;
         if (typeof v === 'number') {
           const sign = v > 0 ? '+' : '';
           return <div class="ib-effect" key={k}><span class="label">{EFFECT_LABELS[k] ?? k}</span><span class={signClass(k, v)}>{sign}{v}</span></div>;
@@ -67,8 +68,11 @@ export function OperationCard({ card, state, onPlay }: Props) {
     else if (def.id === 'crisis_motin') note = 'Riesgo de deserción 30%';
     else if (def.id === 'crisis_encuentro') note = 'Decide: jugar o sufrir';
     return (
-      <div class="ib-card crisis" style={{ '--card-color': cat.color } as preact.JSX.CSSProperties}>
-        <div class="ib-card-header"><span><span class="ib-card-icon"><GameIcon name={CAT_ICON[def.category] ?? 'cat-crisis'} size={15} /></span> Crisis</span></div>
+      <div
+        class={`ib-card crisis ${priorityClass('critical')}`}
+        style={{ '--card-color': cat.color, ...getPriorityStyle('critical') } as preact.JSX.CSSProperties}
+      >
+      <div class="ib-card-header"><span><span class="ib-card-icon"><GameIcon name={CAT_ICON[def.category] ?? 'cat-crisis'} size="row" /></span> Crisis</span><PriorityBadge priority="critical" label="Crisis" /></div>
         <div class="ib-card-name">{def.name}</div>
         <div class="ib-card-desc">{def.desc}</div>
         <div class="ib-card-effects" style={{ textAlign: 'center', color: 'var(--imp-crimson)', fontWeight: 700 }}>{note}</div>
@@ -89,20 +93,30 @@ export function OperationCard({ card, state, onPlay }: Props) {
 
   const cardCtx = { state, loc: currentLocation() };
   const typeLabel = isQuest ? 'Objetivo' : isCommitment ? 'Compromiso' : isGamble ? 'Arriesgada' : def.category;
+  const priority: CardPriority = !canPlay
+    ? 'disabled'
+    : card.timer <= 1
+      ? 'critical'
+      : isQuest || card.timer <= 2
+        ? 'urgent'
+        : 'actionable';
   const cls = ['ib-card', isQuest ? 'quest' : '', isCommitment ? 'commitment' : '', isGamble ? 'arriesgada' : '', canPlay ? '' : 'disabled']
     .filter(Boolean).join(' ');
 
   return (
     <div
-      class={cls}
-      style={{ '--card-color': isQuest ? 'var(--imp-gold-hi)' : cat.color } as preact.JSX.CSSProperties}
+      class={`${cls} ${priorityClass(priority)}`}
+      style={{ '--card-color': isQuest ? 'var(--imp-gold-hi)' : cat.color, ...getPriorityStyle(priority, isQuest ? 'var(--imp-gold-hi)' : cat.color) } as preact.JSX.CSSProperties}
       onClick={canPlay ? () => onPlay(card.instanceId) : undefined}
       role={canPlay ? 'button' : undefined}
     >
       {card.timer < 99 && (
         <div class={`ib-card-timer${card.timer <= 1 ? ' urgent' : ''}`}>⧗ {card.timer}d</div>
       )}
-      <div class="ib-card-header"><span><span class="ib-card-icon"><GameIcon name={isQuest ? 'op-quest' : (CAT_ICON[def.category] ?? 'cat-operaciones')} size={15} /></span> {typeLabel}</span></div>
+      <div class="ib-card-header">
+        <span><span class="ib-card-icon"><GameIcon name={isQuest ? 'op-quest' : (CAT_ICON[def.category] ?? 'cat-operaciones')} size="row" /></span> {typeLabel}</span>
+        {priority !== 'actionable' && <PriorityBadge priority={priority} label={priority === 'disabled' ? 'Blocked' : priority === 'critical' ? 'Now' : 'Soon'} />}
+      </div>
       <div class="ib-card-name">{opCard.name}</div>
       <div class="ib-card-desc">{opCard.desc}</div>
 

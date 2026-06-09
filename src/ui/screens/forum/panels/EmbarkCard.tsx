@@ -14,6 +14,7 @@ import { navigateToIterBelli } from '../../../screens';
 import { playSfx } from '../../../sound/sfx';
 import { BentoCard } from '../../../components/BentoCard';
 import { GameIcon } from '../../../components/GameIcon';
+import { getPriorityStyle, priorityClass } from '../../../components/card-priority';
 import { ResourceAmount } from '../../../components/ResourceIcon';
 import campaignBriefingBackground from '../../../../assets/ui/campaign/campaign-briefing-background.png';
 import missionParchmentScroll from '../../../../assets/ui/campaign/mission-parchment-scroll.png';
@@ -90,6 +91,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
     <BentoCard
       accent={accent}
       index={index}
+      priority={supplyWarning ? 'critical' : canEmbark ? 'actionable' : 'neutral'}
       style={{
         minHeight: 292,
         display: 'flex',
@@ -130,7 +132,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8,
           fontFamily: 'var(--imp-font-body)',
-          fontSize: 9, letterSpacing: 2,
+          fontSize: 'var(--imp-text-xs)', letterSpacing: 'var(--imp-meta-letter)',
           color: canEmbark ? 'rgba(158, 211, 180, 0.9)' : 'rgba(223, 205, 172, 0.5)',
           textTransform: 'uppercase',
           marginBottom: 9,
@@ -147,9 +149,9 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
           {canEmbark ? 'Legions Ready' : 'Standing By'} · {seatedCount}/{seatTotal} Seated · {cohortCount} Cohort{cohortCount === 1 ? '' : 's'}
         </div>
         <div style={{
-          fontSize: 9,
-          letterSpacing: 2.4,
-          color: 'rgba(223, 205, 172, 0.55)',
+          fontSize: 'var(--imp-text-xs)',
+          letterSpacing: 'var(--imp-meta-letter)',
+          color: 'rgba(223, 205, 172, 0.7)',
           textTransform: 'uppercase',
           marginBottom: 3,
           textShadow: '0 1px 2px rgba(0, 0, 0, 0.95)',
@@ -160,7 +162,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
           fontFamily: 'var(--imp-font-display)',
           fontSize: 22,
           fontWeight: 500,
-          letterSpacing: 2.3,
+          letterSpacing: 'var(--imp-title-letter)',
           color: 'rgba(246, 233, 210, 0.95)',
           textTransform: 'uppercase',
           marginBottom: 27,
@@ -208,7 +210,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
                       <ResourceAmount
                         type={mission.conditionResource.type}
                         amount={mission.conditionResource.amount}
-                        iconSize={11}
+                        iconSize="micro"
                         style={{ color: '#3e220e', fontWeight: 700 }}
                       />
                       <span>{mission.conditionResource.tail}.</span>
@@ -233,7 +235,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
                       type="gold"
                       amount={mission.bonusGold}
                       sign="+"
-                      iconSize={11}
+                      iconSize="micro"
                       style={{ color: '#4a2810', fontWeight: 800 }}
                     />
                     <span>al completar la misión.</span>
@@ -258,7 +260,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
         )}
 
         {supplyWarning && (
-          <div style={{
+          <div class={priorityClass('critical')} style={{
             marginBottom: 12,
             padding: '8px 12px',
             background: 'rgba(20, 10, 5, 0.58)',
@@ -267,10 +269,11 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
             display: 'flex',
             alignItems: 'flex-start',
             gap: 8,
+            ...getPriorityStyle('critical'),
           }}>
-            <GameIcon name="supplies-crate" size={18} style={{ flexShrink: 0 }} />
+            <GameIcon name="supplies-crate" size="panel" style={{ flexShrink: 0 }} />
             <div style={{
-              fontSize: 10,
+              fontSize: 'var(--imp-text-sm)',
               color: '#d48b3a',
               fontFamily: 'var(--imp-font-serif)',
               fontStyle: 'italic',

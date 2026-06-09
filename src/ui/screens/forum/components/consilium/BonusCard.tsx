@@ -1,4 +1,5 @@
 import type { JSX, ComponentChildren } from 'preact';
+import { getPriorityStyle, priorityClass } from '../../../../components/card-priority';
 
 interface BonusCardProps {
   icon: ComponentChildren;
@@ -18,7 +19,7 @@ export function BonusCard({
   style,
 }: BonusCardProps) {
   return (
-    <div style={{
+    <div class={priorityClass(muted ? 'disabled' : 'actionable')} style={{
       position: 'relative',
       minWidth: 0,
       padding: '10px 11px',
@@ -29,6 +30,7 @@ export function BonusCard({
         : 'linear-gradient(180deg, rgba(122, 36, 50, 0.18) 0%, rgba(13, 11, 20, 0.82) 100%)',
       boxShadow: muted ? undefined : `inset 0 0 18px ${accent}10`,
       overflow: 'hidden',
+      ...getPriorityStyle(muted ? 'disabled' : 'actionable', accent),
       ...style,
     }}>
       <div style={{
@@ -68,11 +70,11 @@ export function BonusCard({
           </div>
           <div style={{
             marginTop: 4,
-            color: 'var(--imp-text-lo)',
+            color: 'var(--imp-text-mid)',
             fontFamily: 'var(--imp-font-body)',
-            fontSize: 9,
+            fontSize: 'var(--imp-text-xs)',
             fontWeight: 700,
-            letterSpacing: 1.2,
+            letterSpacing: 'var(--imp-meta-letter)',
             lineHeight: 1.2,
             textTransform: 'uppercase',
             overflow: 'hidden',

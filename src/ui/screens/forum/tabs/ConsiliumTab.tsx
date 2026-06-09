@@ -21,6 +21,7 @@ import { BentoCard } from '../../../components/BentoCard';
 import { LaurelWreath } from '../../../components/motifs/LaurelWreath';
 import { Laurel } from '../../../components/motifs/Laurel';
 import { ResourceAmount } from '../../../components/ResourceIcon';
+import { getPriorityStyle, priorityClass } from '../../../components/card-priority';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 import {
@@ -395,7 +396,7 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
           <div style={{ position: 'relative', zIndex: 1, minWidth: 0 }}>
             <div style={{
               color: 'var(--imp-gold-mid)', fontFamily: 'var(--imp-font-body)',
-              fontSize: 'clamp(9px, 0.78vw, 11px)', fontWeight: 700, letterSpacing: 3.4,
+              fontSize: 'clamp(10px, 0.78vw, 11px)', fontWeight: 700, letterSpacing: 'var(--imp-meta-letter)',
               textTransform: 'uppercase',
             }}>
               Tier {ROMAN[tier - 1] ?? 'I'} · {role}
@@ -418,7 +419,7 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
                 boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.55)',
                 color: 'var(--imp-gold-hi)', fontFamily: 'var(--imp-font-mono)', fontSize: 17, fontWeight: 700,
               }}>
-                <ResourceAmount type="gold" amount={cost} iconSize={18} />
+                <ResourceAmount type="gold" amount={cost} iconSize="panel" />
               </div>
             </div>
 
@@ -444,7 +445,7 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
                 <Laurel size={18} color="var(--imp-gold-hi)" />
                 <span style={{
                   color: 'var(--imp-gold-hi)', fontFamily: 'var(--imp-font-display)',
-                  fontSize: 15, fontWeight: 700, letterSpacing: 3.5, textTransform: 'uppercase',
+                  fontSize: 15, fontWeight: 700, letterSpacing: 'var(--imp-title-letter)', textTransform: 'uppercase',
                 }}>Seated</span>
                 <Laurel size={18} color="var(--imp-gold-hi)" flip />
               </div>
@@ -454,7 +455,7 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
                 padding: '7px 16px', borderRadius: 3,
                 border: '1px solid var(--imp-gold-dim)', background: 'rgba(13, 11, 20, 0.7)',
                 color: 'var(--imp-gold)', fontFamily: 'var(--imp-font-display)',
-                fontSize: 14, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase',
+                fontSize: 14, fontWeight: 700, letterSpacing: 'var(--imp-title-letter)', textTransform: 'uppercase',
               }}>
                 Candidate
               </div>
@@ -593,7 +594,7 @@ function ReservedColumn({ slots }: { slots: (Advisor | null)[] }) {
               color: 'var(--imp-text-hi)',
               fontFamily: 'var(--imp-font-display)',
               fontSize: 15,
-              letterSpacing: 2,
+              letterSpacing: 'var(--imp-meta-letter)',
               textTransform: 'uppercase',
             }}>
               No seated bonuses
@@ -605,7 +606,7 @@ function ReservedColumn({ slots }: { slots: (Advisor | null)[] }) {
               fontSize: 12,
               fontStyle: 'italic',
               lineHeight: 1.35,
-              color: 'var(--imp-text-lo)',
+              color: 'var(--imp-text-mid)',
             }}>
               Seat a councilor to surface the passive gains shaping your next campaign.
             </div>
@@ -675,7 +676,7 @@ function PoliticalMarketPanel({
         <SectionHeader
           title="Political Market"
           accent={CONSILIUM_ACCENT}
-          right={<span style={countPillStyle}>{totalOffers} offers · <ResourceAmount type="gold" amount={currentGold} iconSize={13} /></span>}
+          right={<span style={countPillStyle}>{totalOffers} offers · <ResourceAmount type="gold" amount={currentGold} iconSize="inline" /></span>}
         />
 
         <div style={{
@@ -719,11 +720,11 @@ function PoliticalMarketPanel({
           {view === 'market' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <span style={{
-              color: 'var(--imp-text-lo)',
+              color: 'var(--imp-text-mid)',
               fontFamily: 'var(--imp-font-body)',
-              fontSize: 9,
+              fontSize: 'var(--imp-text-xs)',
               fontWeight: 800,
-              letterSpacing: 1.2,
+              letterSpacing: 'var(--imp-meta-letter)',
               textTransform: 'uppercase',
             }}>
               Sort
@@ -757,7 +758,7 @@ function PoliticalMarketPanel({
             justifyContent: 'center',
             border: '1px dashed var(--imp-gold-faint)',
             background: 'rgba(13, 11, 20, 0.44)',
-            color: 'var(--imp-text-lo)',
+            color: 'var(--imp-text-mid)',
             fontFamily: 'var(--imp-font-serif)',
             fontSize: 13,
             fontStyle: 'italic',
@@ -884,6 +885,9 @@ function AdvisorMarketRow({
   onSelect,
   onHire,
 }: AdvisorMarketRowProps) {
+  const priority = selected ? 'selected' : disabled ? 'disabled' : actionLabel ? 'actionable' : 'neutral';
+  const rowAccent = FACTION_COLORS[advisor.color] ?? CONSILIUM_ACCENT;
+
   function handleHire(event: MouseEvent) {
     event.stopPropagation();
     if (!disabled) onHire?.(advisor);
@@ -899,7 +903,7 @@ function AdvisorMarketRow({
     <div
       role="button"
       tabIndex={0}
-      class="consilium-selectable"
+      class={`consilium-selectable ${priorityClass(priority)}`}
       onClick={() => onSelect(advisor)}
       onKeyDown={handleRowKeyDown}
       style={{
@@ -915,6 +919,7 @@ function AdvisorMarketRow({
         color: 'inherit',
         cursor: 'pointer',
         textAlign: 'left',
+        ...getPriorityStyle(priority, selected ? CONSILIUM_ACCENT : rowAccent),
       }}
     >
       <MiniPortrait advisor={advisor} size={38} />
@@ -939,7 +944,7 @@ function AdvisorMarketRow({
         fontWeight: 800,
         whiteSpace: 'nowrap',
       }}>
-        <ResourceAmount type="gold" amount={getDiscountedAdvisorCost(advisor)} iconSize={13} />
+        <ResourceAmount type="gold" amount={getDiscountedAdvisorCost(advisor)} iconSize="inline" />
       </div>
       {actionLabel && (
         <button
@@ -947,6 +952,7 @@ function AdvisorMarketRow({
           disabled={disabled}
           title={disabled ? unavailableReason : actionLabel}
           onClick={handleHire}
+          class={`imp-card-cta imp-card-cta-${disabled ? 'disabled' : 'actionable'}`}
           style={{
             flex: '0 0 auto',
             maxWidth: 104,
@@ -959,14 +965,15 @@ function AdvisorMarketRow({
             color: disabled ? 'var(--imp-text-lo)' : 'var(--imp-ink)',
             cursor: disabled ? 'not-allowed' : 'pointer',
             fontFamily: 'var(--imp-font-display)',
-            fontSize: 9,
+            fontSize: 'var(--imp-text-xs)',
             fontWeight: 800,
-            letterSpacing: 1.1,
+            letterSpacing: 'var(--imp-meta-letter)',
             textTransform: 'uppercase',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             textAlign: 'center',
+            ...getPriorityStyle(disabled ? 'disabled' : 'actionable', CONSILIUM_ACCENT),
           }}
         >
           {actionLabel}
@@ -1128,9 +1135,9 @@ function chipButtonStyle(active: boolean): preact.JSX.CSSProperties {
     color: active ? 'var(--imp-text-hi)' : 'var(--imp-text-mid)',
     cursor: 'pointer',
     fontFamily: 'var(--imp-font-body)',
-    fontSize: 9,
+    fontSize: 'var(--imp-text-xs)',
     fontWeight: 800,
-    letterSpacing: 1,
+    letterSpacing: 'var(--imp-meta-letter)',
     textTransform: 'uppercase',
   };
 }
@@ -1157,9 +1164,9 @@ const MARKET_VIEWS: Array<{ value: MarketView; label: string }> = [
 const smallCapsStyle: preact.JSX.CSSProperties = {
   color: 'var(--imp-text-mid)',
   fontFamily: 'var(--imp-font-display)',
-  fontSize: 11,
+  fontSize: 'var(--imp-text-sm)',
   fontWeight: 700,
-  letterSpacing: 1.8,
+  letterSpacing: 'var(--imp-meta-letter)',
   textTransform: 'uppercase',
 };
 
@@ -1176,9 +1183,9 @@ const rowNameStyle: preact.JSX.CSSProperties = {
 };
 
 const mutedItalicStyle: preact.JSX.CSSProperties = {
-  color: 'var(--imp-text-lo)',
+  color: 'var(--imp-text-mid)',
   fontFamily: 'var(--imp-font-serif)',
-  fontSize: 10,
+  fontSize: 'var(--imp-text-sm)',
   fontStyle: 'italic',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
@@ -1193,16 +1200,16 @@ const emptySealStyle: preact.JSX.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  color: 'var(--imp-text-lo)',
+  color: 'var(--imp-text-mid)',
   fontSize: 18,
   flex: '0 0 auto',
 };
 
 const countPillStyle: preact.JSX.CSSProperties = {
-  color: 'var(--imp-text-lo)',
+  color: 'var(--imp-text-mid)',
   fontFamily: 'var(--imp-font-mono)',
-  fontSize: 9,
+  fontSize: 'var(--imp-text-xs)',
   fontWeight: 800,
-  letterSpacing: 1,
+  letterSpacing: 'var(--imp-meta-letter)',
   textTransform: 'uppercase',
 };

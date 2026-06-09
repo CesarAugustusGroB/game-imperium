@@ -3,6 +3,7 @@ import { gold, iuniores } from '../../../../game/core/resources';
 import { globalSeason, MAX_SEASONS } from '../../../../game/core/game-state';
 import { BentoCard } from '../../../components/BentoCard';
 import { GameIcon } from '../../../components/GameIcon';
+import { type CardPriority } from '../../../components/card-priority';
 import { SectionHeader } from '../components/SectionHeader';
 import goldStackIcon from '../../../../assets/ui/resources/gold-stack-icon.png';
 import iunioresIcon from '../../../../assets/ui/resources/iuniores-icon-color.png';
@@ -20,8 +21,13 @@ interface TreasuryPanelProps {
  * observed delta, and a fill bar toward a soft reference cap.
  */
 export function TreasuryPanel({ accent = '#d4a843', index = 0 }: TreasuryPanelProps) {
+  const priority: CardPriority = gold.value <= 0
+    ? 'critical'
+    : gold.value < 10 || iuniores.value <= 0
+      ? 'urgent'
+      : 'neutral';
   return (
-    <BentoCard accent={accent} index={index} interactive>
+    <BentoCard accent={accent} index={index} interactive priority={priority}>
       <SectionHeader title="Aerarium · Treasury" accent={accent} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 18px' }}>
         <Meter label="Aurum" value={gold.value} cap={2000} color="#f0d080" iconSrc={goldStackIcon} />
@@ -69,8 +75,8 @@ function Meter({ label, value, cap, color, iconSrc, display }: MeterProps) {
         <img src={iconSrc} alt="" style={{ width: 16, height: 16, objectFit: 'contain', flexShrink: 0 }} />
         <span style={{
           fontFamily: 'var(--imp-font-body)',
-          fontSize: 9, letterSpacing: 2,
-          color: 'var(--imp-text-lo)',
+          fontSize: 'var(--imp-text-xs)', letterSpacing: 'var(--imp-meta-letter)',
+          color: 'var(--imp-text-mid)',
           textTransform: 'uppercase',
         }}>
           {label}
@@ -92,7 +98,7 @@ function Meter({ label, value, cap, color, iconSrc, display }: MeterProps) {
             fontSize: 10,
             color: delta > 0 ? 'var(--imp-oxidize)' : 'var(--imp-danger)',
           }}>
-            <GameIcon name={delta > 0 ? 'delta-up' : 'delta-down'} size={9} />
+            <GameIcon name={delta > 0 ? 'delta-up' : 'delta-down'} size="stat" />
             {Math.abs(delta)}
           </span>
         )}

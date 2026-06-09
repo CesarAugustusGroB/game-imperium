@@ -64,7 +64,7 @@ function EffectPill({ resource, amount }: { resource: ResourceType; amount: numb
 
   return (
     <span style={pillStyle}>
-      <ResourceIcon type={resource} size={14} />
+      <ResourceIcon type={resource} size="inline" />
       <span>{positive ? `+${amount}` : `${amount}`}</span>
     </span>
   );
@@ -154,7 +154,7 @@ export function ChoiceButton({
             .filter(r => (choice.requiresResource![r] ?? 0) > (currentResources?.[r] ?? 0))
             .map(r => (
               <span key={r} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                Requires <ResourceAmount type={r} amount={choice.requiresResource![r] ?? 0} iconSize={14} />
+                Requires <ResourceAmount type={r} amount={choice.requiresResource![r] ?? 0} iconSize="inline" />
               </span>
             ))}
         </div>

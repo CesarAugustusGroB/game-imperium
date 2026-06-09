@@ -3,6 +3,7 @@ import type { Decretum } from '../../../../game/items/decretum';
 import type { Commander } from '../../../../game/core/commander';
 import { FACTION_COLORS } from '../../../../game/core/commander';
 import { isDecretumCastable } from '../../../../game/items/decretum';
+import { getPriorityStyle, priorityClass } from '../../../components/card-priority';
 
 interface ScrollRowProps {
   s: Decretum;
@@ -21,6 +22,7 @@ export function ScrollRow({ s, commander }: ScrollRowProps) {
 
   return (
     <div
+      class={priorityClass(castable ? 'actionable' : 'disabled')}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
@@ -31,6 +33,7 @@ export function ScrollRow({ s, commander }: ScrollRowProps) {
         borderRadius: 2,
         opacity: castable ? 1 : 0.45,
         transition: 'all 150ms',
+        ...getPriorityStyle(castable ? 'actionable' : 'disabled', color),
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -54,13 +57,13 @@ export function ScrollRow({ s, commander }: ScrollRowProps) {
             {s.name}
           </div>
           {hover ? (
-            <div style={{ fontSize: 9, color: 'var(--imp-text-mid)', marginTop: 2 }}>
+            <div style={{ fontSize: 'var(--imp-text-xs)', color: 'var(--imp-text-mid)', marginTop: 2 }}>
               {s.description}
             </div>
           ) : (
             <div style={{
-              fontSize: 8, color: 'var(--imp-text-lo)',
-              letterSpacing: 1, textTransform: 'uppercase', marginTop: 1,
+              fontSize: 'var(--imp-text-xs)', color: 'var(--imp-text-mid)',
+              letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase', marginTop: 1,
             }}>
               {s.rarity}
             </div>

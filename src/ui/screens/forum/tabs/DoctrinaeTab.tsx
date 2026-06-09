@@ -19,6 +19,7 @@ import { Corners } from '../../../components/motifs/Corners';
 import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 import { CostInline, ResourceAmount } from '../../../components/ResourceIcon';
+import { getPriorityStyle, priorityClass, type CardPriority } from '../../../components/card-priority';
 
 const CAMPAIGN_EFFECT_BY_COLOR: Record<string, string> = {
   red: 'Campaña: las cartas de Coerción erosionan más al enemigo.',
@@ -163,8 +164,8 @@ export function DoctrinaeTab() {
               title="Equipped"
               accent={accent}
               right={<span style={{
-                fontSize: 9, color: 'var(--imp-text-lo)',
-                letterSpacing: 1, textTransform: 'uppercase',
+                fontSize: 'var(--imp-text-xs)', color: 'var(--imp-text-mid)',
+                letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
               }}>
                 Click to inspect
               </span>}
@@ -195,8 +196,8 @@ export function DoctrinaeTab() {
               title="Collection"
               accent={accent}
               right={<span style={{
-                fontSize: 9, color: 'var(--imp-text-lo)',
-                letterSpacing: 1, textTransform: 'uppercase',
+                fontSize: 'var(--imp-text-xs)', color: 'var(--imp-text-mid)',
+                letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
               }}>
                 {collection.length} available
               </span>}
@@ -206,8 +207,8 @@ export function DoctrinaeTab() {
                 <div style={{
                   padding: '10px 4px',
                   fontFamily: 'var(--imp-font-serif)',
-                  fontStyle: 'italic', fontSize: 11,
-                  color: 'var(--imp-text-lo)',
+                  fontStyle: 'italic', fontSize: 'var(--imp-text-sm)',
+                  color: 'var(--imp-text-mid)',
                 }}>
                   No unequipped doctrines. Acquire them from events or rewards.
                 </div>
@@ -297,6 +298,7 @@ function EquippedSlotCard({
     return (
       <div
         {...dropHandlers}
+        class={priorityClass('urgent')}
         style={{
           aspectRatio: '3/2', position: 'relative',
           background: dragOver
@@ -308,17 +310,18 @@ function EquippedSlotCard({
           borderRadius: 2, padding: '12px 14px',
           boxShadow: dragOver ? `0 0 0 1px ${accent}, 0 0 16px ${accent}50` : 'none',
           transition: 'all 140ms',
+          ...getPriorityStyle('urgent', accent),
         }}
       >
         <div style={{
           position: 'absolute', inset: 0,
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
-          color: 'var(--imp-text-lo)', gap: 4,
+          color: 'var(--imp-text-mid)', gap: 4,
         }}>
           <div style={{ fontSize: 24 }}>+</div>
           <div style={{
-            fontSize: 9, letterSpacing: 2, textTransform: 'uppercase',
+            fontSize: 'var(--imp-text-xs)', letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
             fontFamily: 'var(--imp-font-display)',
           }}>
             Empty slot
@@ -331,9 +334,11 @@ function EquippedSlotCard({
   const color = FACTION_COLORS[doctrine.color];
   const romanLevel = ROMAN[doctrine.currentLevel - 1] ?? '·';
   const desc = doctrine.levels[doctrine.currentLevel - 1]?.description ?? '';
+  const priority: CardPriority = selected ? 'selected' : 'actionable';
 
   return (
     <div
+      class={priorityClass(priority)}
       onClick={onSelect}
       draggable={true}
       onDragStart={(e: JSX.TargetedDragEvent<HTMLDivElement>) => onDragStart(e as unknown as DragEvent)}
@@ -353,6 +358,7 @@ function EquippedSlotCard({
           selected ? `0 0 0 1px ${accent}, 0 0 16px ${accent}50` :
           'none',
         transition: 'all 200ms',
+        ...getPriorityStyle(priority, color),
       }}
     >
       <Corners color={color} size={8} inset={3} thickness={1} />
@@ -364,7 +370,7 @@ function EquippedSlotCard({
           fontFamily: 'var(--imp-font-display)',
           fontSize: 13, fontWeight: 600,
           color: 'var(--imp-text-hi)',
-          letterSpacing: 1.5, textTransform: 'uppercase',
+          letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
           lineHeight: 1.2,
         }}>
           {doctrine.name}
@@ -417,9 +423,11 @@ function CollectionRow({
   const desc = doctrine.levels[doctrine.currentLevel - 1]?.description ?? '';
   const canAdopt = canEquip && hasEmptySlot;
   const sellPrice = getDoctrineSellPrice(doctrine);
+  const priority: CardPriority = selected ? 'selected' : canAdopt ? 'actionable' : canEquip ? 'urgent' : 'disabled';
 
   return (
     <div
+      class={priorityClass(priority)}
       onClick={onSelect}
       draggable={canEquip}
       onDragStart={canEquip
@@ -440,20 +448,21 @@ function CollectionRow({
         opacity: dragging ? 0.4 : 1,
         transform: dragging ? 'scale(0.97)' : 'none',
         transition: 'all 140ms',
+        ...getPriorityStyle(priority, color),
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontFamily: 'var(--imp-font-display)',
           fontSize: 12, color: 'var(--imp-text-hi)',
-          letterSpacing: 1.5, textTransform: 'uppercase',
+          letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
           fontWeight: 600,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {doctrine.name}
         </div>
         <div style={{
-          fontSize: 10, color: 'var(--imp-text-mid)',
+          fontSize: 'var(--imp-text-sm)', color: 'var(--imp-text-mid)',
           fontStyle: 'italic',
           fontFamily: 'var(--imp-font-serif)',
           marginTop: 2,
@@ -466,6 +475,7 @@ function CollectionRow({
         onClick={(e) => { e.stopPropagation(); onEquip(); }}
         disabled={!canAdopt}
         title={!canEquip ? 'Faction lock' : !hasEmptySlot ? 'All 4 slots are full' : 'Adopt into the first empty slot'}
+        class={`imp-card-cta imp-card-cta-${canAdopt ? 'actionable' : 'disabled'}`}
         style={{
           padding: '5px 10px',
           background: canAdopt
@@ -474,11 +484,12 @@ function CollectionRow({
           border: 'none',
           borderRadius: 2,
           color: canAdopt ? 'var(--imp-ink)' : 'var(--imp-text-lo)',
-          fontSize: 9, fontWeight: 700,
-          letterSpacing: 1.5, textTransform: 'uppercase',
+          fontSize: 'var(--imp-text-xs)', fontWeight: 700,
+          letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
           fontFamily: 'var(--imp-font-display)',
           cursor: canAdopt ? 'pointer' : 'not-allowed',
           flexShrink: 0,
+          ...getPriorityStyle(canAdopt ? 'actionable' : 'disabled', accent),
         }}
       >
         Adopt
@@ -492,14 +503,14 @@ function CollectionRow({
           border: '1px solid rgba(194, 74, 58, 0.4)',
           borderRadius: 2,
           color: '#c24a3a',
-          fontSize: 9, fontWeight: 600,
-          letterSpacing: 1.5, textTransform: 'uppercase',
+          fontSize: 'var(--imp-text-xs)', fontWeight: 600,
+          letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
           fontFamily: 'var(--imp-font-body)',
           cursor: 'pointer',
           flexShrink: 0,
         }}
       >
-        Sell · <ResourceAmount type="gold" amount={sellPrice} iconSize={14} />
+        Sell · <ResourceAmount type="gold" amount={sellPrice} iconSize="inline" />
       </button>
     </div>
   );
@@ -534,8 +545,8 @@ function DoctrineDetail({ doctrine, slotIndex, accent, onUnequip, onUpgrade, onS
   return (
     <>
       <div style={{
-        fontSize: 9, letterSpacing: 2.5,
-        color: 'var(--imp-text-lo)',
+        fontSize: 'var(--imp-text-xs)', letterSpacing: 'var(--imp-meta-letter)',
+        color: 'var(--imp-text-mid)',
         textTransform: 'uppercase', marginBottom: 4,
       }}>
         Tier {romanLevel} · {isEquipped ? 'Equipped' : 'In collection'}
@@ -544,7 +555,7 @@ function DoctrineDetail({ doctrine, slotIndex, accent, onUnequip, onUpgrade, onS
         fontFamily: 'var(--imp-font-display)',
         fontSize: 26, fontWeight: 500,
         color: 'var(--imp-text-hi)',
-        letterSpacing: 2, textTransform: 'uppercase',
+        letterSpacing: 'var(--imp-title-letter)', textTransform: 'uppercase',
         marginBottom: 6, lineHeight: 1.15,
       }}>
         {doctrine.name}
@@ -558,7 +569,7 @@ function DoctrineDetail({ doctrine, slotIndex, accent, onUnequip, onUpgrade, onS
         "{currentTier?.description ?? ''}"
       </div>
 
-      <div style={{ fontSize: 11, color: 'var(--imp-text-lo)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: 6, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 'var(--imp-text-sm)', color: 'var(--imp-text-mid)', fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: 6, lineHeight: 1.4 }}>
         {CAMPAIGN_EFFECT_BY_COLOR[doctrine.color] ?? ''}
       </div>
 
@@ -584,7 +595,7 @@ function DoctrineDetail({ doctrine, slotIndex, accent, onUnequip, onUpgrade, onS
             style={btnPrimary(accent, !canAffordUpgrade)}
             title={!canAffordUpgrade ? 'Not enough resources' : 'Upgrade to next tier'}
           >
-            Upgrade · <CostInline cost={upgradeCost} iconSize={14} />
+            Upgrade · <CostInline cost={upgradeCost} iconSize="inline" />
           </button>
         )}
         {isEquipped && !upgradeCost && (
@@ -599,7 +610,7 @@ function DoctrineDetail({ doctrine, slotIndex, accent, onUnequip, onUpgrade, onS
         )}
         {!isEquipped && onSell && (
           <button onClick={onSell} style={btnOutline('#c24a3a')}>
-            Sell · <ResourceAmount type="gold" amount={getDoctrineSellPrice(doctrine)} iconSize={14} />
+            Sell · <ResourceAmount type="gold" amount={getDoctrineSellPrice(doctrine)} iconSize="inline" />
           </button>
         )}
       </div>
@@ -616,14 +627,14 @@ function InfoBox({ label, value, color, serif }: { label: string; value: string;
       borderRadius: 2,
     }}>
       <div style={{
-        fontSize: 9, letterSpacing: 1.5,
-        color: 'var(--imp-text-lo)',
+        fontSize: 'var(--imp-text-xs)', letterSpacing: 'var(--imp-meta-letter)',
+        color: 'var(--imp-text-mid)',
         textTransform: 'uppercase', marginBottom: 4,
       }}>
         {label}
       </div>
       <div style={{
-        fontSize: 11,
+        fontSize: 'var(--imp-text-sm)',
         color,
         fontStyle: serif ? 'italic' : 'normal',
         fontFamily: serif ? 'var(--imp-font-serif)' : 'var(--imp-font-body)',
@@ -655,8 +666,8 @@ function btnPrimary(accent: string, disabled: boolean): preact.JSX.CSSProperties
       : `linear-gradient(180deg, ${accent} 0%, #b8892a 100%)`,
     border: 'none', borderRadius: 2,
     color: disabled ? 'var(--imp-text-lo)' : 'var(--imp-ink)',
-    fontSize: 11, fontWeight: 700,
-    letterSpacing: 2, textTransform: 'uppercase',
+    fontSize: 'var(--imp-text-sm)', fontWeight: 700,
+    letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
     cursor: disabled ? 'not-allowed' : 'pointer',
     fontFamily: 'var(--imp-font-display)',
   };
@@ -669,8 +680,8 @@ function btnOutline(color: string): preact.JSX.CSSProperties {
     border: '1px solid rgba(212, 168, 67, 0.35)',
     borderRadius: 2,
     color,
-    fontSize: 10,
-    letterSpacing: 1.5, textTransform: 'uppercase',
+    fontSize: 'var(--imp-text-xs)',
+    letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
     cursor: 'pointer',
     fontFamily: 'var(--imp-font-body)',
     fontWeight: 600,

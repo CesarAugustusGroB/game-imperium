@@ -19,7 +19,7 @@ export function SectionHeader({ title, right, accent = '#d4a843' }: SectionHeade
       <div style={{
         fontFamily: 'var(--imp-font-display)',
         fontSize: 14, fontWeight: 600,
-        letterSpacing: 2.5,
+        letterSpacing: 'var(--imp-title-letter)',
         color: accent,
         textTransform: 'uppercase',
       }}>
@@ -46,8 +46,8 @@ export function LinkButton({ label, onClick, accent = '#d4a843' }: LinkButtonPro
         display: 'inline-flex',
         alignItems: 'center',
         gap: 4,
-        fontSize: 9,
-        letterSpacing: 1.5,
+        fontSize: 'var(--imp-text-xs)',
+        letterSpacing: 'var(--imp-meta-letter)',
         color: accent,
         textTransform: 'uppercase',
         background: 'transparent',
@@ -60,7 +60,7 @@ export function LinkButton({ label, onClick, accent = '#d4a843' }: LinkButtonPro
       }}
     >
       {text}
-      {hasArrow && <GameIcon name="arrow-right" size={10} />}
+      {hasArrow && <GameIcon name="arrow-right" size="stat" />}
     </button>
   );
 }

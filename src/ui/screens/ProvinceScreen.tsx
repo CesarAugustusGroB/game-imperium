@@ -34,6 +34,7 @@ import { Tooltip } from '../components/Tooltip';
 import { BuildingIcon } from '../components/BuildingIcon';
 import { OrnateFrame, OrnateHeader } from '../components/OrnateFrame';
 import { BentoCard } from '../components/BentoCard';
+import { getPriorityStyle, priorityClass, type CardPriority } from '../components/card-priority';
 import { Masthead } from './forum/Masthead';
 import { CostInline, InlineImageIcon, ResourceAmount } from '../components/ResourceIcon';
 import foodIcon from '../../assets/ui/resources/food-icon.png';
@@ -301,26 +302,26 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
     /* ── Province Administration panel ── */
     .pa-admin { border: 1px solid var(--color-border-default); border-radius: var(--radius-md); background: linear-gradient(90deg, rgba(40,30,60,0.45), rgba(20,16,32,0.35)); overflow: hidden; }
     .pa-admin-title-bar { text-align: center; padding: 14px 16px 0; }
-    .pa-admin-title { font-family: var(--font-display); font-size: 12px; font-weight: 700; color: var(--color-gold-primary); letter-spacing: 5px; text-transform: uppercase; text-shadow: 0 1px 6px rgba(240,208,128,0.15); }
+    .pa-admin-title { font-family: var(--font-display); font-size: var(--imp-text-sm); font-weight: 700; color: var(--color-gold-primary); letter-spacing: var(--imp-title-letter); text-transform: uppercase; text-shadow: 0 1px 6px rgba(240,208,128,0.15); }
     .pa-admin-divider { height: 1px; margin-top: 10px; background: linear-gradient(90deg, transparent, var(--color-gold-secondary), transparent); }
     .pa-admin-col-labels { display: flex; justify-content: space-between; padding: 8px 16px 4px; }
-    .pa-admin-col-label { font-size: 8px; font-weight: 700; color: var(--color-text-muted); letter-spacing: 2px; text-transform: uppercase; }
+    .pa-admin-col-label { font-size: var(--imp-text-xs); font-weight: 700; color: var(--color-text-secondary); letter-spacing: var(--imp-meta-letter); text-transform: uppercase; }
     .pa-admin-content { display: flex; gap: 16px; padding: 4px 16px 14px; }
     .pa-admin-vsep { width: 1px; align-self: stretch; background: linear-gradient(180deg, transparent, var(--color-border-default), transparent); }
     .pa-admin-gov { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; min-width: 0; }
     .pa-admin-gov-portrait { width: 64px; height: 64px; border-radius: var(--radius-sm); background: linear-gradient(135deg, rgba(20,18,32,0.9), rgba(35,30,50,0.9)); border: 1px solid var(--color-border-default); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .pa-admin-gov-portrait-dashed { border: 1.5px dashed var(--color-border-default); background: transparent; }
     .pa-admin-gov-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-    .pa-admin-gov-name { font-family: var(--font-display); font-size: 12px; font-weight: 700; color: var(--color-text-primary); letter-spacing: 2px; text-transform: uppercase; }
-    .pa-admin-gov-desc { font-size: 9px; color: var(--color-text-muted); line-height: 1.35; font-style: italic; }
+    .pa-admin-gov-name { font-family: var(--font-display); font-size: var(--imp-text-sm); font-weight: 700; color: var(--color-text-primary); letter-spacing: var(--imp-meta-letter); text-transform: uppercase; }
+    .pa-admin-gov-desc { font-size: var(--imp-text-sm); color: var(--color-text-secondary); line-height: 1.35; font-style: italic; }
     .pa-admin-tax { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
     .pa-admin-rate-badge { width: 66px; height: 66px; position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; filter: drop-shadow(0 5px 9px rgba(0,0,0,0.62)); }
     .pa-admin-rate-seal { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
     .pa-admin-rate-value { position: relative; z-index: 1; font-family: var(--font-display); font-size: 18px; font-weight: 800; color: #e9bd58; text-shadow: -1px -1px 0 rgba(50,28,7,0.95), 1px 1px 0 rgba(255,224,140,0.4), 0 2px 4px rgba(0,0,0,0.9); }
     .pa-admin-tax-row { display: flex; flex-direction: column; gap: 2px; }
     .pa-admin-tax-row-header { display: flex; justify-content: space-between; align-items: center; }
-    .pa-admin-tax-label { font-size: 9px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 1.2px; }
-    .pa-admin-tax-badge { font-size: 8px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; }
+    .pa-admin-tax-label { font-size: var(--imp-text-xs); font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: var(--imp-meta-letter); }
+    .pa-admin-tax-badge { font-size: var(--imp-text-xs); font-weight: 700; letter-spacing: var(--imp-meta-letter); text-transform: uppercase; padding: 1px 6px; border-radius: 3px; }
     .pa-admin-tax-track { position: relative; height: 3px; border-radius: 2px; background: rgba(180,160,100,0.1); margin: 1px 2px; }
     .pa-admin-tax-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 2px; transition: width var(--duration-fast) var(--ease-default); }
     .pa-admin-tax-dots { position: absolute; top: 50%; left: 0; right: 0; display: flex; justify-content: space-between; transform: translateY(-50%); padding: 0 1px; }
@@ -331,25 +332,189 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
     .pa-admin-tax-step { font-size: 7px; color: var(--color-text-muted); cursor: pointer; user-select: none; transition: color var(--duration-fast); }
     .pa-admin-tax-step:hover { color: var(--color-text-secondary); }
     .pa-admin-tax-step.active { font-weight: 700; }
-    .pa-admin-footer { text-align: center; padding: 8px 16px 10px; border-top: 1px solid var(--color-border-subtle); font-size: 8px; color: var(--color-text-muted); letter-spacing: 0.4px; }
+    .pa-admin-footer { text-align: center; padding: 8px 16px 10px; border-top: 1px solid var(--color-border-subtle); font-size: var(--imp-text-xs); color: var(--color-text-secondary); letter-spacing: 0.4px; }
     .pa-admin-footer-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; vertical-align: middle; margin-right: 2px; }
     .pa-admin-footer-tri { display: inline-block; width: 0; height: 0; border-left: 3px solid transparent; border-right: 3px solid transparent; border-bottom: 6px solid; vertical-align: middle; margin-right: 2px; }
     .pa-admin-gov-traits { display: flex; flex-direction: column; gap: 2px; padding-top: 4px; border-top: 1px solid rgba(180,160,100,0.1); margin-top: 3px; }
-    .pa-admin-gov-trait-row { display: flex; align-items: center; gap: 4px; font-size: 8px; color: var(--color-text-secondary); }
+    .pa-admin-gov-trait-row { display: flex; align-items: center; gap: 4px; font-size: var(--imp-text-xs); color: var(--color-text-secondary); }
     @media (max-width: 720px) {
       .pa-admin-content { flex-direction: column; gap: 10px; }
       .pa-admin-vsep { width: auto; height: 1px; align-self: auto; background: linear-gradient(90deg, transparent, var(--color-border-default), transparent); }
     }
 
-    /* ── Wealth tier bar ── */
-    .wealth-section {
-      display: flex; flex-direction: column; gap: 8px;
-      padding-bottom: 14px;
+    /* ── Province compact metric cards ── */
+    .province-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      width: 100%;
+      align-items: stretch;
     }
-    /* ── Population bar ── */
-    .pop-section {
-      display: flex; flex-direction: column; gap: 8px;
-      padding-bottom: 14px;
+    .province-metric-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+      min-height: 0;
+      padding: 10px 12px 12px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(145deg, rgba(24, 19, 36, 0.72), rgba(14, 11, 24, 0.52));
+      overflow: hidden;
+    }
+    .province-metric-card.imp-card-priority::after {
+      border-radius: inherit;
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--imp-card-priority-color) 13%, transparent), transparent 48%),
+        linear-gradient(180deg, color-mix(in srgb, var(--imp-card-priority-color) 6%, transparent), transparent 70%);
+      box-shadow:
+        inset 2px 0 0 var(--imp-card-priority-color),
+        inset 0 0 0 1px color-mix(in srgb, var(--imp-card-priority-color) 42%, transparent);
+      opacity: 0.78;
+    }
+    .province-metric-header {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+    .province-metric-header-icon {
+      flex: 0 0 auto;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.55));
+    }
+    .province-metric-title {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: var(--font-display);
+      font-size: var(--imp-text-xs);
+      font-weight: 700;
+      color: var(--color-text-secondary);
+      letter-spacing: var(--imp-meta-letter);
+      text-transform: uppercase;
+    }
+    .province-metric-main {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      min-width: 0;
+    }
+    .province-metric-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-width: 0;
+    }
+    .province-metric-value {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      max-width: 100%;
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .province-metric-alert-dot {
+      width: 9px;
+      height: 9px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--color-danger);
+      box-shadow: 0 0 8px rgba(219, 78, 68, 0.65);
+      animation: unrest-flash 0.8s ease-in-out infinite;
+    }
+    .province-metric-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+      padding-top: 1px;
+    }
+    .province-metric-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(58px, max-content);
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+    }
+    .province-metric-label,
+    .province-metric-row-value,
+    .province-metric-footer-label,
+    .province-metric-footer-value {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .province-metric-label {
+      font-size: var(--imp-text-xs);
+      letter-spacing: var(--imp-meta-letter);
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+    }
+    .province-metric-row-value {
+      justify-self: end;
+      text-align: right;
+      font-size: var(--imp-text-xs);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .province-metric-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-width: 0;
+      border-top: 1px solid var(--color-border-subtle);
+      padding-top: 6px;
+      font-size: var(--imp-text-xs);
+      font-weight: 700;
+      letter-spacing: var(--imp-meta-letter);
+      text-transform: uppercase;
+    }
+    .province-metric-footer-value {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .province-metric-scale {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) 28px;
+      gap: 6px;
+      align-items: center;
+      min-width: 0;
+      font-size: var(--imp-text-xs);
+      color: var(--color-text-secondary);
+    }
+    .province-metric-scale-status {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: center;
+      font-weight: 700;
+    }
+    @media (max-width: 980px) {
+      .province-metrics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .wealth-section,
+    .pop-section,
+    .unrest-section {
+      min-width: 0;
     }
     .pop-bar {
       position: relative; height: 10px;
@@ -405,10 +570,6 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
     }
 
     /* ── Unrest section ── */
-    .unrest-section {
-      display: flex; flex-direction: column; gap: 8px;
-      padding-bottom: 14px;
-    }
     .unrest-bar {
       position: relative; height: 10px;
     }
@@ -593,7 +754,7 @@ function UnrestBar({ unrest, modifier, width = 60 }: { unrest: number; modifier:
   const barColor = pct > 70 ? 'var(--color-danger)' : pct > 40 ? 'var(--color-gold-secondary)' : 'var(--color-success)';
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-      <InlineImageIcon src={unrestIcon} size={14} style={{ verticalAlign: 'middle' }} />
+      <InlineImageIcon src={unrestIcon} size="inline" style={{ verticalAlign: 'middle' }} />
       <div style={{ width: `${width}px`, height: '5px', background: 'rgba(40, 35, 60, 0.8)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: barColor, borderRadius: 'var(--radius-sm)', transition: 'width var(--duration-slow) var(--ease-default)' }} />
       </div>
@@ -678,13 +839,13 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
           {(Object.entries(dispIncome) as [ResourceType, number][]).map(([res, amt]) => (
             amt > 0 ? (
               <div key={res} style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
-                <ResourceAmount type={res} amount={amt} sign="+" iconSize={14} /> per season
+                <ResourceAmount type={res} amount={amt} sign="+" iconSize="inline" /> per season
               </div>
             ) : null
           ))}
           {dispFood > 0 && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
-              +{dispFood} <InlineImageIcon src={foodIcon} size={14} /> per season
+              +{dispFood} <InlineImageIcon src={foodIcon} size="inline" /> per season
             </div>
           )}
           {dispUnrest < 0 && (
@@ -696,7 +857,7 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
       )}
       {nextLevel > 0 && cost && (
         <div style={{ marginTop: '4px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-xs)' }}>
-          {currentLevel === 0 ? 'Build' : `Upgrade to Lv.${nextLevel}`}: <CostInline cost={cost} iconSize={14} />
+          {currentLevel === 0 ? 'Build' : `Upgrade to Lv.${nextLevel}`}: <CostInline cost={cost} iconSize="inline" />
         </div>
       )}
       {isSlotLocked && (
@@ -712,12 +873,24 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
     : `linear-gradient(180deg, rgba(40, 32, 60, 0.5), rgba(18, 14, 32, 0.85))`;
 
   const slotCapped = isSlotLocked && currentLevel === 0;
+  const priority: CardPriority = slotCapped || rubbleBlocked
+    ? 'disabled'
+    : affordable && currentLevel === 0
+      ? 'actionable'
+      : affordable && currentLevel > 0
+        ? 'urgent'
+        : currentLevel > 0
+          ? 'neutral'
+          : 'disabled';
 
   return (
     <Tooltip content={investmentTooltip} variant="rich" position="above">
       <div
-        class={`inv-card${currentLevel === 0 ? ' inv-locked' : ''}${buildingSlotType.value === type ? ' inv-slot-building' : ''}${slotCapped ? ' inv-slot-capped' : ''}`}
-        style={{ borderTop: `2px solid ${currentLevel > 0 ? fColor : 'rgba(180, 160, 100, 0.18)'}` }}
+        class={`inv-card ${priorityClass(priority)}${currentLevel === 0 ? ' inv-locked' : ''}${buildingSlotType.value === type ? ' inv-slot-building' : ''}${slotCapped ? ' inv-slot-capped' : ''}`}
+        style={{
+          borderTop: `2px solid ${currentLevel > 0 ? fColor : 'rgba(180, 160, 100, 0.18)'}`,
+          ...getPriorityStyle(priority, fColor),
+        }}
       >
         <div class="inv-hero" style={{ background: heroBg }}>
           <BuildingIcon type={type} size={64} color={currentLevel > 0 ? fColor : 'var(--color-gold-secondary)'} />
@@ -739,8 +912,13 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
           </div>
         )}
         {!maxed && cost && (
-          <button class="ornate-btn" disabled={!affordable} onClick={handleBuild}>
-            {currentLevel === 0 ? 'Build' : `${ROMAN[currentLevel]} → ${ROMAN[nextLevel]}`} · <CostInline cost={cost} iconSize={14} />
+          <button
+            class={`ornate-btn imp-card-cta imp-card-cta-${affordable ? 'actionable' : 'disabled'}`}
+            disabled={!affordable}
+            onClick={handleBuild}
+            style={getPriorityStyle(affordable ? 'actionable' : 'disabled', fColor)}
+          >
+            {currentLevel === 0 ? 'Build' : `${ROMAN[currentLevel]} → ${ROMAN[nextLevel]}`} · <CostInline cost={cost} iconSize="inline" />
           </button>
         )}
         {maxed && <div class="inv-maxed">Max Level</div>}
@@ -771,8 +949,11 @@ function LockedBuildingCard({ building }: { building: InvestmentType }) {
   return (
     <Tooltip content={tooltip} variant="rich" position="above">
       <div
-        class="inv-card inv-locked inv-terrain-locked"
-        style={{ borderTop: `2px solid rgba(180, 160, 100, 0.08)` }}
+        class={`inv-card inv-locked inv-terrain-locked ${priorityClass('disabled')}`}
+        style={{
+          borderTop: `2px solid rgba(180, 160, 100, 0.08)`,
+          ...getPriorityStyle('disabled', fColor),
+        }}
       >
         <div class="inv-hero" style={{ background: 'linear-gradient(180deg, rgba(30, 24, 48, 0.35), rgba(14, 10, 24, 0.65))' }}>
           <BuildingIcon type={building} size={64} color={`${fColor}40`} />
@@ -904,6 +1085,15 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
     : 'var(--color-danger)';
   const wealthTrendColor = netWealthChange > 0.3 ? 'var(--color-success)' : netWealthChange < -0.3 ? 'var(--color-danger)' : 'var(--color-text-muted)';
   const netGoldColor = netGold > 0 ? 'var(--color-success)' : netGold < 0 ? 'var(--color-danger)' : 'var(--color-text-muted)';
+  const priority: CardPriority = selected
+    ? 'selected'
+    : province.unrest >= 70
+      ? 'critical'
+      : province.unrest >= 45 || netGold < 0 || netWealthChange < -0.3
+        ? 'urgent'
+        : netGold > 0
+          ? 'actionable'
+          : 'neutral';
 
   const rowTooltip = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -931,7 +1121,7 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
     <div style={{ display: 'contents' }}>
       <Tooltip content={rowTooltip} variant="rich" position="right">
         <div
-          class={`prov-row${selected ? ' prov-row-selected' : ''}`}
+          class={`prov-row ${priorityClass(priority)}${selected ? ' prov-row-selected' : ''}`}
           onClick={() => { selectedProvinceId.value = province.id; }}
           style={{
             padding: '10px 12px',
@@ -940,6 +1130,7 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
             border: `1px solid ${selected ? 'var(--color-gold-primary)' : 'var(--color-border-default)'}`,
             display: 'flex', flexDirection: 'column', gap: '5px',
             cursor: 'pointer',
+            ...getPriorityStyle(priority),
           }}
         >
           {/* Row 1: name + terrain+trade icons */}
@@ -962,14 +1153,14 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
           {/* Row 2: wealth + wealth trend + pop */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-primary)', fontWeight: 700 }}>
-              <InlineImageIcon src={wealthIcon} size={15} style={{ verticalAlign: 'middle' }} /> {Math.round(province.wealth)}
+              <InlineImageIcon src={wealthIcon} size="row" style={{ verticalAlign: 'middle' }} /> {Math.round(province.wealth)}
             </span>
             <span style={{ fontSize: '9px', color: wealthTrendColor }}>
               {netWealthChange >= 0 ? '+' : ''}{netWealthChange.toFixed(1)}/s
             </span>
             <span style={{ fontSize: '9px', color: 'var(--color-border-default)' }}>·</span>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-              <InlineImageIcon src={populationIcon} size={15} style={{ verticalAlign: 'middle' }} /> {province.population} <span style={{ color: 'var(--color-text-muted)', fontSize: '9px' }}>{settlementLabel}</span>
+              <InlineImageIcon src={populationIcon} size="row" style={{ verticalAlign: 'middle' }} /> {province.population} <span style={{ color: 'var(--color-text-muted)', fontSize: '9px' }}>{settlementLabel}</span>
             </span>
             <span
               title="Building slots"
@@ -986,7 +1177,7 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
               <UnrestBar unrest={province.unrest} modifier={unrestMod} width={80} />
             </div>
             <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: netGoldColor, whiteSpace: 'nowrap', flexShrink: 0 }}>
-              <ResourceAmount type="gold" amount={netGold} sign={netGold >= 0 ? '+' : ''} iconSize={11} />
+              <ResourceAmount type="gold" amount={netGold} sign={netGold >= 0 ? '+' : ''} iconSize="micro" />
             </span>
           </div>
         </div>
@@ -1081,7 +1272,7 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
                     <span style={{ fontSize: '8px', opacity: 0.6, fontWeight: 400, textTransform: 'none', lineHeight: '1.3', textAlign: 'center' }}>
                       {tierData.description.split(' ').slice(0, 6).join(' ')}
                     </span>
-                    <span style={{ fontSize: '9px', color: 'var(--color-gold-secondary)', fontWeight: 700 }}><CostInline cost={cost} iconSize={13} /></span>
+                    <span style={{ fontSize: '9px', color: 'var(--color-gold-secondary)', fontWeight: 700 }}><CostInline cost={cost} iconSize="inline" /></span>
                     <span style={{ fontSize: '8px', color: 'rgba(230, 130, 80, 0.75)', fontWeight: 600, textTransform: 'none', letterSpacing: 0 }}>then {tier}g/season</span>
                   </button>
                 );
@@ -1141,33 +1332,12 @@ function getSettlementColor(pop: number): string {
 
 // ── Population bar ──
 
-// ── Stat panel SVG icons ──
-
-// ── Shared stat panel header: [BADGE] ─── TITLE ─── [BADGE] ──
+// ── Shared compact metric header ──
 function StatPanelHeader({ title, icon }: { title: string; icon?: ComponentChildren }) {
-  const badgeStyle = {
-    width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
-    background: 'linear-gradient(145deg, rgba(44,38,64,0.96), rgba(18,14,30,0.98))',
-    border: '1.5px solid var(--color-gold-secondary)',
-    boxShadow: '0 0 5px rgba(212,168,67,0.18), inset 0 1px 0 rgba(240,208,128,0.08)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-  } as const;
-
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '9px' }}>
-      {icon ? <div style={badgeStyle}>{icon}</div> : <div style={{ flex: 0, width: '4px' }} />}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '5px' }}>
-        <div style={{ flex: 1, height: '1px', background: 'var(--color-border-default)' }} />
-        <span style={{
-          fontFamily: 'var(--font-display)', fontSize: '7px', fontWeight: 700,
-          letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)',
-          whiteSpace: 'nowrap',
-        }}>
-          {title}
-        </span>
-        <div style={{ flex: 1, height: '1px', background: 'var(--color-border-default)' }} />
-      </div>
-      {icon ? <div style={badgeStyle}>{icon}</div> : <div style={{ flex: 0, width: '4px' }} />}
+    <div class="province-metric-header">
+      {icon && <span class="province-metric-header-icon">{icon}</span>}
+      <span class="province-metric-title">{title}</span>
     </div>
   );
 }
@@ -1209,11 +1379,11 @@ function PopBar({ province }: { province: Province }) {
         {settlementLabel} — Pop {province.population}
       </div>
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-        <InlineImageIcon src={foodIcon} size={14} />
+        <InlineImageIcon src={foodIcon} size="inline" />
         <span>{foodProd.toFixed(0)} produced{foodEffective < foodProd ? ` (${foodEffective.toFixed(1)} after tax)` : ''} — {foodCons} consumed</span>
       </div>
       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--font-size-xs)', color: surplusColor }}>
-        <InlineImageIcon src={foodIcon} size={14} />
+        <InlineImageIcon src={foodIcon} size="inline" />
         <span>Surplus: {foodSurplus >= 0 ? '+' : ''}{foodSurplus.toFixed(1)} {foodSurplus > 0 ? '(growing)' : foodSurplus < 0 ? '(starving!)' : '(equilibrium)'}</span>
       </div>
       {beautiness > 0 && (
@@ -1234,54 +1404,55 @@ function PopBar({ province }: { province: Province }) {
 
   const growthColor = surplusColor;
   const growthArrow = foodSurplus > 0 ? '↑' : foodSurplus < 0 ? '↓' : '→';
+  const priority: CardPriority = province.famineTimer >= FOOD.famineHardThreshold
+    ? 'critical'
+    : province.famineTimer > 0 || foodSurplus < 0
+      ? 'urgent'
+      : foodSurplus > 0
+        ? 'actionable'
+        : 'neutral';
 
   return (
     <Tooltip content={tooltipContent} variant="rich" position="above" align="start">
-      <div class="pop-section">
+      <div class={`pop-section province-metric-card ${priorityClass(priority)}`} style={getPriorityStyle(priority, settlementColor)}>
         <StatPanelHeader
           title="Settlement Population"
-          icon={<InlineImageIcon src={populationIcon} size={18} style={{ verticalAlign: 'middle' }} />}
+          icon={<InlineImageIcon src={populationIcon} size="panel" style={{ verticalAlign: 'middle' }} />}
         />
 
-        {/* Hero + breakdown rows */}
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '6px' }}>
-          {/* Left: icon + pop number */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', flexShrink: 0 }}>
-            <InlineImageIcon src={populationIcon} size={26} style={{ verticalAlign: 'middle' }} />
-            <span style={{
-              fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700,
-              color: settlementColor, lineHeight: 1,
-            }}>
+        <div class="province-metric-main">
+          <div class="province-metric-hero">
+            <InlineImageIcon src={populationIcon} size="hero" style={{ verticalAlign: 'middle' }} />
+            <span class="province-metric-value" style={{ color: settlementColor }}>
               {province.population}
             </span>
           </div>
 
-          {/* Right: stacked rows */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '2px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Settlement</span>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: settlementColor, fontWeight: 700 }}>
+          <div class="province-metric-rows">
+            <div class="province-metric-row">
+              <span class="province-metric-label">Settlement</span>
+              <span class="province-metric-row-value" title={settlementLabel} style={{ color: settlementColor }}>
                 {settlementLabel}
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Slots</span>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+            <div class="province-metric-row">
+              <span class="province-metric-label">Slots</span>
+              <span class="province-metric-row-value" style={{ color: 'var(--color-text-secondary)' }}>
                 {builtCount} / {slotMax}
               </span>
             </div>
             {beautiness > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Beauty</span>
-                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-gold-secondary)', fontWeight: 600 }}>
+              <div class="province-metric-row">
+                <span class="province-metric-label">Beauty</span>
+                <span class="province-metric-row-value" style={{ color: 'var(--color-gold-secondary)' }}>
                   {beautiness}%
                 </span>
               </div>
             )}
             {province.famineTimer > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-danger)' }}>Famine</span>
-                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)', fontWeight: 700 }}>
+              <div class="province-metric-row">
+                <span class="province-metric-label" style={{ color: 'var(--color-danger)' }}>Famine</span>
+                <span class="province-metric-row-value" style={{ color: 'var(--color-danger)' }}>
                   {province.famineTimer >= FOOD.famineHardThreshold ? 'CRITICAL' : `${province.famineTimer}s`}
                 </span>
               </div>
@@ -1290,7 +1461,7 @@ function PopBar({ province }: { province: Province }) {
         </div>
 
         {/* Fill bar */}
-        <div class="pop-bar" style={{ marginBottom: '5px' }}>
+        <div class="pop-bar">
           <div class="pop-fill" style={{ width: `${popFillPct}%`, background: settlementColor }} />
           {accumWidthPct > 0 && (
             <div class="pop-accumulator" style={{ left: `${popFillPct}%`, width: `${accumWidthPct}%` }} />
@@ -1298,16 +1469,12 @@ function PopBar({ province }: { province: Province }) {
         </div>
 
         {/* Footer rate line */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderTop: '1px solid var(--color-border-subtle)', paddingTop: '5px',
-          fontSize: '9px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
-        }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: growthColor }}>
-            <InlineImageIcon src={foodIcon} size={14} />
+        <div class="province-metric-footer">
+          <span class="province-metric-footer-value" style={{ color: growthColor }}>
+            <InlineImageIcon src={foodIcon} size="inline" />
             {foodSurplus >= 0 ? '+' : ''}{foodSurplus.toFixed(1)} {growthArrow}
           </span>
-          <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>
+          <span class="province-metric-footer-value" style={{ color: 'var(--color-text-secondary)', fontWeight: 400 }}>
             {seasonsToNext !== null ? `Next in ${seasonsToNext}s` : 'No growth'}
           </span>
         </div>
@@ -1331,20 +1498,21 @@ function WealthDisplay({ province }: { province: Province }) {
     : isShrinking
     ? 'var(--color-danger)'
     : 'var(--color-text-muted)';
+  const priority: CardPriority = isShrinking ? 'urgent' : isGrowing ? 'actionable' : 'neutral';
 
   const tooltipContent = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
       <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)' }}>
         Provincial Wealth
       </div>
-      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+      <div style={{ fontSize: 'var(--imp-text-sm)', color: 'var(--color-text-secondary)' }}>
         Tax revenue: {Math.round(province.wealth)} x {formatTaxRate(taxRate)} ={' '}
         <strong style={{ color: 'var(--color-gold-primary)' }}>+{taxRevenue}g</strong>
       </div>
-      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+      <div style={{ fontSize: 'var(--imp-text-sm)', color: 'var(--color-text-secondary)' }}>
         Growth: {netChange >= 0 ? '+' : ''}{netChange.toFixed(1)}/season
       </div>
-      <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+      <div style={{ fontSize: 'var(--imp-text-sm)', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
         Higher taxes extract more gold but drain wealth faster
       </div>
     </div>
@@ -1352,55 +1520,40 @@ function WealthDisplay({ province }: { province: Province }) {
 
   return (
     <Tooltip content={tooltipContent} variant="rich" position="above" align="start">
-      <div class="wealth-section">
+      <div class={`wealth-section province-metric-card ${priorityClass(priority)}`} style={getPriorityStyle(priority, 'var(--color-gold-primary)')}>
         <StatPanelHeader
           title="Wealth Economy"
-          icon={<InlineImageIcon src={wealthIcon} size={18} style={{ verticalAlign: 'middle' }} />}
+          icon={<InlineImageIcon src={wealthIcon} size="panel" style={{ verticalAlign: 'middle' }} />}
         />
 
-        {/* Hero + breakdown rows */}
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '6px' }}>
-          {/* Left: coin + number */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', flexShrink: 0 }}>
-            <InlineImageIcon src={wealthIcon} size={26} style={{ verticalAlign: 'middle' }} />
-            <span style={{
-              fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700,
-              color: 'var(--color-gold-primary)', lineHeight: 1,
-            }}>
+        <div class="province-metric-main">
+          <div class="province-metric-hero">
+            <InlineImageIcon src={wealthIcon} size="hero" style={{ verticalAlign: 'middle' }} />
+            <span class="province-metric-value" style={{ color: 'var(--color-gold-primary)' }}>
               {Math.round(province.wealth)}
             </span>
           </div>
 
-          {/* Right: stacked rows */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '2px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
-                Seasonal
-              </span>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: trendColor, fontWeight: 600 }}>
+          <div class="province-metric-rows">
+            <div class="province-metric-row">
+              <span class="province-metric-label">Seasonal</span>
+              <span class="province-metric-row-value" style={{ color: trendColor }}>
                 {netChange >= 0 ? '+' : ''}{netChange.toFixed(1)}/s {trendArrow}
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>
-                Taxes
-              </span>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
+            <div class="province-metric-row">
+              <span class="province-metric-label">Taxes</span>
+              <span class="province-metric-row-value" style={{ color: 'var(--color-text-secondary)' }}>
                 x{formatTaxRate(taxRate)}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Footer: net income */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          borderTop: '1px solid var(--color-border-subtle)', paddingTop: '5px',
-          fontSize: '9px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
-        }}>
-          <span style={{ color: 'var(--color-text-muted)' }}>Net Income</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
-            <ResourceAmount type="gold" amount={taxRevenue} sign="+" iconSize={11} /> /season
+        <div class="province-metric-footer">
+          <span class="province-metric-footer-label" style={{ color: 'var(--color-text-secondary)' }}>Net Income</span>
+          <span class="province-metric-footer-value" style={{ color: 'var(--color-success)' }}>
+            <ResourceAmount type="gold" amount={taxRevenue} sign="+" iconSize="micro" /> /season
           </span>
         </div>
       </div>
@@ -1449,7 +1602,7 @@ function IdentityStrip({ province }: { province: Province }) {
   const mods = terrain.baseModifiers;
   interface ModRow { icon: ComponentChildren; label: string; value: string; positive: boolean }
   const modRows: ModRow[] = [];
-  if (mods.growthModifier !== 0) modRows.push({ icon: <InlineImageIcon src={populationIcon} size={12} />, label: 'Pop Growth',    value: `${mods.growthModifier > 0 ? '+' : ''}${mods.growthModifier}/s`, positive: mods.growthModifier > 0 });
+  if (mods.growthModifier !== 0) modRows.push({ icon: <InlineImageIcon src={populationIcon} size="micro" />, label: 'Pop Growth',    value: `${mods.growthModifier > 0 ? '+' : ''}${mods.growthModifier}/s`, positive: mods.growthModifier > 0 });
   if (mods.pwgModifier    !== 0) modRows.push({ icon: '💰', label: 'Wealth Growth',  value: `${mods.pwgModifier > 0 ? '+' : ''}${mods.pwgModifier}/s`,    positive: mods.pwgModifier > 0 });
   if (mods.garrisonBonus  !== 0) modRows.push({ icon: '🛡', label: 'Garrison',      value: `+${mods.garrisonBonus}`,                                        positive: true });
 
@@ -1531,7 +1684,7 @@ function IdentityStrip({ province }: { province: Province }) {
     interface TGRow { icon: ComponentChildren; label: string; value: string }
     const rows: TGRow[] = [];
     if (tradeGood.flatGold          > 0) rows.push({ icon: '🪙', label: 'Gold',         value: `+${tradeGood.flatGold}g/s` });
-    if (tradeGood.flatGrowth        > 0) rows.push({ icon: <InlineImageIcon src={populationIcon} size={12} />, label: 'Pop Growth',   value: `+${tradeGood.flatGrowth}/s` });
+    if (tradeGood.flatGrowth        > 0) rows.push({ icon: <InlineImageIcon src={populationIcon} size="micro" />, label: 'Pop Growth',   value: `+${tradeGood.flatGrowth}/s` });
     if (tradeGood.flatIuniores      > 0) rows.push({ icon: '⚔️', label: 'Iuniores',     value: `+${tradeGood.flatIuniores}/s` });
     if (tradeGood.wealthGrowthBonus > 0) rows.push({ icon: '💰', label: 'Wealth Growth',value: `+${tradeGood.wealthGrowthBonus}/s` });
 
@@ -1804,40 +1957,41 @@ function UnrestSection({ province }: { province: Province }) {
     : 'var(--color-danger)';
 
   const unrestStatusLabel = isRising ? 'Unrest Rising' : isFalling ? 'Unrest Falling' : 'Stabilizing';
+  const priority: CardPriority = isCritical || seasonsToRebel !== null && seasonsToRebel <= 2
+    ? 'critical'
+    : isRising || province.unrest >= 45
+      ? 'urgent'
+      : isFalling
+        ? 'actionable'
+        : 'neutral';
 
   return (
     <Tooltip content={tooltipContent} variant="rich" position="above" align="start">
-      <div class="unrest-section">
+      <div class={`unrest-section province-metric-card ${priorityClass(priority)}`} style={getPriorityStyle(priority, barColor)}>
         <StatPanelHeader
           title="Regional Order"
-          icon={<InlineImageIcon src={unrestIcon} size={18} style={{ verticalAlign: 'middle' }} />}
+          icon={<InlineImageIcon src={unrestIcon} size="panel" style={{ verticalAlign: 'middle' }} />}
         />
 
-        {/* Hero icon + number + change rows */}
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '5px' }}>
-          {/* Left: icon + unrest number */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', flexShrink: 0 }}>
-            <InlineImageIcon src={unrestIcon} size={26} style={{ verticalAlign: 'middle' }} />
-            <span style={{
-              fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700,
-              color: barColor, lineHeight: 1,
-            }}>
+        <div class="province-metric-main">
+          <div class="province-metric-hero">
+            <InlineImageIcon src={unrestIcon} size="hero" style={{ verticalAlign: 'middle' }} />
+            <span class="province-metric-value" style={{ color: barColor }}>
               {province.unrest}
-              {isCritical && <span style={{ fontSize: '10px', marginLeft: '2px', animation: 'unrest-flash 0.8s ease-in-out infinite' }}>🔴</span>}
+              {isCritical && <span class="province-metric-alert-dot" aria-hidden="true" />}
             </span>
-          </div>  {/* end left icon col */}
+          </div>
 
-          {/* Right: change + stabilizing */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '3px', paddingTop: '2px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Change</span>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: trendColor, fontWeight: 600 }}>
+          <div class="province-metric-rows">
+            <div class="province-metric-row">
+              <span class="province-metric-label">Change</span>
+              <span class="province-metric-row-value" style={{ color: trendColor }}>
                 {delta >= 0 ? '+' : ''}{delta.toFixed(1)}/s {trendArrow}
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Rebel At</span>
-              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-warning)' }}>
+            <div class="province-metric-row">
+              <span class="province-metric-label">Rebel At</span>
+              <span class="province-metric-row-value" style={{ color: 'var(--color-warning)' }}>
                 {rebelThreshold >= 101 ? '—' : rebelThreshold}
               </span>
             </div>
@@ -1845,7 +1999,7 @@ function UnrestSection({ province }: { province: Province }) {
         </div>
 
         {/* Bar 0–100 with threshold marker */}
-        <div class="unrest-bar" style={{ marginBottom: '4px' }}>
+        <div class="unrest-bar">
           <div class="unrest-bar-track">
             <div
               class={`unrest-fill${isCritical ? ' unrest-fill-critical' : ''}`}
@@ -1858,22 +2012,16 @@ function UnrestSection({ province }: { province: Province }) {
         </div>
 
         {/* 0 / 100 scale */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8px', color: 'var(--color-text-muted)', marginBottom: '5px' }}>
+        <div class="province-metric-scale">
           <span>0</span>
-          <span style={{ color: trendColor, fontWeight: 600 }}>{unrestStatusLabel}</span>
+          <span class="province-metric-scale-status" style={{ color: trendColor }}>{unrestStatusLabel}</span>
           <span>100</span>
         </div>
 
-        {/* Footer: order status */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '5px',
-          borderTop: '1px solid var(--color-border-subtle)', paddingTop: '5px',
-          fontSize: '9px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase',
-          color: orderStatusColor,
-        }}>
-          ✦ Order Status: {orderStatus}
+        <div class="province-metric-footer" style={{ color: orderStatusColor }}>
+          <span class="province-metric-footer-label">Order Status: {orderStatus}</span>
           {seasonsToRebel !== null && (
-            <span style={{ marginLeft: 'auto', fontWeight: 400, fontSize: '8px', color: 'var(--color-danger)', letterSpacing: 0 }}>
+            <span class="province-metric-footer-value" style={{ fontWeight: 400, color: 'var(--color-danger)', letterSpacing: 0 }}>
               Rebels in {seasonsToRebel}s
             </span>
           )}
@@ -1898,7 +2046,7 @@ function LedgerRow({
     : 'var(--color-text-secondary)';
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--font-size-xs)', minHeight: '17px' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 'var(--imp-text-xs)', minHeight: '17px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flex: 1, minWidth: 0 }}>
         {badge === 'trade' && (
           <span style={{
@@ -2023,16 +2171,17 @@ function IncomeLedger({ province, accent = '#d4a843', index = 0 }: { province: P
 
   const net      = goldTotal - totalExpenses;
   const netColor = net >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+  const priority: CardPriority = net < 0 ? 'urgent' : net > 0 ? 'actionable' : 'neutral';
 
   const nonGoldEntries = (Object.entries(nonGoldIncome) as [ResourceType, number][]).filter(([, v]) => v > 0);
 
   return (
-    <BentoCard accent={accent} index={index} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+    <BentoCard accent={accent} index={index} priority={priority} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
       {/* Summary header — always visible */}
       <div class="ledger-header" onClick={() => { isExpanded.value = !isExpanded.value; }}>
         <span style={{
           fontFamily: 'var(--font-display)',
-          fontSize: 'var(--font-size-xs)',
+          fontSize: 'var(--imp-text-xs)',
           fontWeight: 600,
           color: 'var(--color-gold-secondary)',
           letterSpacing: '3px',
@@ -2041,15 +2190,15 @@ function IncomeLedger({ province, accent = '#d4a843', index = 0 }: { province: P
           Income
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 700, color: netColor }}>
-            NET <ResourceAmount type="gold" amount={net} sign={net >= 0 ? '+' : ''} iconSize={11} /> /season
+          <span style={{ fontSize: 'var(--imp-text-xs)', fontWeight: 700, color: netColor }}>
+            NET <ResourceAmount type="gold" amount={net} sign={net >= 0 ? '+' : ''} iconSize="micro" /> /season
           </span>
           {nonGoldEntries.map(([res, amt]) => (
-            <span key={res} style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-              <ResourceAmount type={res} amount={amt} sign="+" iconSize={14} />
+            <span key={res} style={{ fontSize: 'var(--imp-text-xs)', color: 'var(--color-text-secondary)' }}>
+              <ResourceAmount type={res} amount={amt} sign="+" iconSize="inline" />
             </span>
           ))}
-          <span class="ledger-toggle" style={{ fontSize: '10px', color: 'var(--color-text-muted)', transition: 'color var(--duration-fast)' }}>
+          <span class="ledger-toggle" style={{ fontSize: 'var(--imp-text-xs)', color: 'var(--color-text-secondary)', transition: 'color var(--duration-fast)' }}>
             {isExpanded.value ? '▲' : '▼'}
           </span>
         </div>
@@ -2099,11 +2248,11 @@ function IncomeLedger({ province, accent = '#d4a843', index = 0 }: { province: P
 
           {/* Non-gold resources */}
           {nonGoldEntries.map(([res, amt]) => (
-            <LedgerRow key={res} label={RESOURCE_INFO[res].label} value={<ResourceAmount type={res} amount={amt} sign="+" iconSize={14} />} positive />
+            <LedgerRow key={res} label={RESOURCE_INFO[res].label} value={<ResourceAmount type={res} amount={amt} sign="+" iconSize="inline" />} positive />
           ))}
           <LedgerRow
             label="Iuniores / season"
-            value={<ResourceAmount type="iuniores" amount={iunioresYield} sign="+" iconSize={14} />}
+            value={<ResourceAmount type="iuniores" amount={iunioresYield} sign="+" iconSize="inline" />}
             positive={iunioresYield > 0}
             detail={`${province.population} pop × ${IUNIORES.perPop}/pop = ${iunioresYield}`}
           />
@@ -2132,13 +2281,13 @@ function IncomeLedger({ province, accent = '#d4a843', index = 0 }: { province: P
           <div class="ledger-divider-strong" />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 0' }}>
             <span style={{
-              fontSize: 'var(--font-size-xs)', fontWeight: 700,
-              color: 'var(--color-text-primary)', letterSpacing: '2px', textTransform: 'uppercase',
+              fontSize: 'var(--imp-text-xs)', fontWeight: 700,
+              color: 'var(--color-text-primary)', letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
             }}>
               Net
             </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 'var(--font-size-sm)', fontWeight: 700, color: netColor }}>
-              <ResourceAmount type="gold" amount={net} sign={net >= 0 ? '+' : ''} iconSize={12} /> /season
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 'var(--imp-text-sm)', fontWeight: 700, color: netColor }}>
+              <ResourceAmount type="gold" amount={net} sign={net >= 0 ? '+' : ''} iconSize="micro" /> /season
             </span>
           </div>
         </div>
@@ -2162,7 +2311,7 @@ function PATaxStep({ label, icon, value, onChange }: { label: string; icon: stri
     <div class="pa-admin-tax-row">
       <div class="pa-admin-tax-row-header">
         <span class="pa-admin-tax-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-          <InlineImageIcon src={icon} size={23} title={label} style={{ verticalAlign: 'middle' }} />
+          <InlineImageIcon src={icon} size="classLabel" title={label} style={{ verticalAlign: 'middle' }} />
           {label}
         </span>
         <span class="pa-admin-tax-badge" style={{ color, background: `${color}18`, border: `1px solid ${color}40` }}>{getTaxLabel(value)}</span>
@@ -2204,6 +2353,13 @@ function ProvinceAdminPanel({ province }: { province: Province }) {
   const currentRate = getTaxRate(province.lowerTax, province.upperTax);
   const rateStr = formatTaxRate(currentRate);
   const netIncome = getNetGoldIncome(province);
+  const priority: CardPriority = netIncome < 0 || currentRate >= 0.22
+    ? 'critical'
+    : currentRate >= 0.16
+      ? 'urgent'
+      : !assigned
+        ? 'actionable'
+        : 'neutral';
 
   function setLower(v: TaxLevel) { playSfx('ui_click'); setProvinceTax(province.id, v, province.upperTax); }
   function setUpper(v: TaxLevel) { playSfx('ui_click'); setProvinceTax(province.id, province.lowerTax, v); }
@@ -2211,7 +2367,7 @@ function ProvinceAdminPanel({ province }: { province: Province }) {
   const accent = getSettlementColor(province.population);
 
   return (
-    <BentoCard accent={accent} index={1} style={{ overflow: 'hidden', padding: 0 }}>
+    <BentoCard accent={accent} index={1} priority={priority} style={{ overflow: 'hidden', padding: 0 }}>
       <div class="pa-admin-title-bar">
         <div class="pa-admin-title">Province Administration</div>
         <div class="pa-admin-divider" />
@@ -2309,14 +2465,12 @@ function ProvinceDetail({ province }: { province: Province }) {
       <ProvinceAdminPanel key={province.id} province={province} />
 
       {/* Wealth · Population · Unrest — same row */}
-      <BentoCard accent={accent} index={2} style={{
-        display: 'flex', alignItems: 'stretch',
-      }}>
-        <div style={{ flex: '1 1 0', minWidth: 0, paddingRight: '12px' }}><WealthDisplay province={province} /></div>
-        <div style={{ width: '1px', background: 'var(--color-border-subtle)', flexShrink: 0 }} />
-        <div style={{ flex: '1 1 0', minWidth: 0, padding: '0 12px' }}><PopBar province={province} /></div>
-        <div style={{ width: '1px', background: 'var(--color-border-subtle)', flexShrink: 0 }} />
-        <div style={{ flex: '1 1 0', minWidth: 0, paddingLeft: '12px' }}><UnrestSection province={province} /></div>
+      <BentoCard accent={accent} index={2}>
+        <div class="province-metrics-grid">
+          <WealthDisplay province={province} />
+          <PopBar province={province} />
+          <UnrestSection province={province} />
+        </div>
       </BentoCard>
 
       {/* Income Ledger (S18-04) */}
@@ -2385,7 +2539,7 @@ export function ProvinciaeTab() {
     : (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
         {allProvinces.length} Holding{allProvinces.length === 1 ? '' : 's'} ·
-        <ResourceAmount type="gold" amount={netGold} sign={netGold >= 0 ? '+' : ''} iconSize={14} />
+        <ResourceAmount type="gold" amount={netGold} sign={netGold >= 0 ? '+' : ''} iconSize="inline" />
         · Avg unrest {avgUnrest}%
       </span>
     );
@@ -2416,8 +2570,8 @@ export function ProvinciaeTab() {
                 isn't lost when the empty state hides the detail panels. */}
             {totalPop > 0 && (
               <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-                <span class="ornate-stat-chip" title="Total Population"><InlineImageIcon src={populationIcon} size={16} /> <strong>{totalPop}</strong></span>
-                <span class="ornate-stat-chip" title="Avg Wealth"><InlineImageIcon src={wealthIcon} size={16} /> <strong>{avgWealth}</strong></span>
+                <span class="ornate-stat-chip" title="Total Population"><InlineImageIcon src={populationIcon} size="row" /> <strong>{totalPop}</strong></span>
+                <span class="ornate-stat-chip" title="Avg Wealth"><InlineImageIcon src={wealthIcon} size="row" /> <strong>{avgWealth}</strong></span>
               </div>
             )}
           </div>
