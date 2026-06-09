@@ -350,11 +350,19 @@ if (typeof document !== 'undefined' && !document.getElementById('province-styles
       width: 100%;
       align-items: stretch;
     }
+    /* Each card is wrapped by a Tooltip span; make that wrapper stretch to the
+       grid row height so every metric card matches the tallest one. */
+    .province-metrics-grid > * {
+      display: flex;
+      min-width: 0;
+    }
     .province-metric-card {
       position: relative;
       display: flex;
       flex-direction: column;
       gap: 8px;
+      width: 100%;
+      height: 100%;
       min-width: 0;
       min-height: 0;
       padding: 10px 12px 12px;

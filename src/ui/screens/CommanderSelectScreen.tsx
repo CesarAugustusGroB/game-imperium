@@ -423,6 +423,22 @@ if (typeof document !== 'undefined' && !document.getElementById('cmdr-select-sty
       display: none;
     }
 
+    /* All commanders' detail grids are stacked in one grid cell so the panel is
+       always sized to the TALLEST commander — switching commanders never resizes
+       the panel. Only the selected grid is visible; hidden ones keep their
+       layout box (visibility:hidden) so they still drive the shared height. */
+    .cmdr-details-stack {
+      display: grid;
+    }
+    .cmdr-details-stack > .cmdr-details-grid {
+      grid-area: 1 / 1;
+      transition: opacity 220ms var(--ease-default);
+    }
+    .cmdr-details-grid[data-active='false'] {
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
     .cmdr-details-grid {
       display: grid;
       grid-template-columns: 1.25fr 1fr 1fr 1fr;
@@ -1148,11 +1164,23 @@ export function CommanderSelectScreen() {
 
       <section class="cmdr-panel" aria-label={`${commander.archetype} details`}>
         <AssetImage className="cmdr-panel__frame" src={COMMANDER_UI_ASSETS.panelFrameLarge} />
-        <div class="cmdr-details-grid">
-          <ArchetypeSummary commander={commander} />
-          <StrategicAbilitiesColumn commander={commander} />
-          <UniqueUnitsColumn commander={commander} />
-          <VictoryPathsColumn commander={commander} />
+        <div class="cmdr-details-stack">
+          {COMMANDERS.map((candidate, index) => {
+            const active = selectedIndex.value === index;
+            return (
+              <div
+                key={candidate.id}
+                class="cmdr-details-grid"
+                data-active={active ? 'true' : 'false'}
+                aria-hidden={active ? undefined : 'true'}
+              >
+                <ArchetypeSummary commander={candidate} />
+                <StrategicAbilitiesColumn commander={candidate} />
+                <UniqueUnitsColumn commander={candidate} />
+                <VictoryPathsColumn commander={candidate} />
+              </div>
+            );
+          })}
         </div>
 
         <div class="cmdr-bottom-bar">
