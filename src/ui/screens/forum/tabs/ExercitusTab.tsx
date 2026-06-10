@@ -247,6 +247,8 @@ interface CohortGroup {
   /** Array index of the most-damaged healable (citizen) instance in this group; null if none. */
   healIndex: number | null;
   healCost: number;
+  /** HP ratio of the current heal target — used to pick the most-damaged instance. */
+  healRatio: number;
 }
 
 export function ExercitusTab() {
@@ -278,7 +280,7 @@ export function ExercitusTab() {
       g = {
         id: c.id, name: c.name, role: c.role, stats: c.stats,
         count: 0, aurumCost: c.aurumCost, mercenary: c.mercenary === true,
-        curHp: 0, maxHp: 0, ooaCount: 0, damagedCount: 0, healIndex: null, healCost: 0,
+        curHp: 0, maxHp: 0, ooaCount: 0, damagedCount: 0, healIndex: null, healCost: 0, healRatio: 2,
       };
       groupMap.set(c.id, g);
     }
@@ -291,9 +293,9 @@ export function ExercitusTab() {
       g.damagedCount++;
       // Track the single most-damaged citizen instance as the inline-heal target.
       if (!g.mercenary) {
-        const prevRatio = g.healIndex == null ? 2 : 1 - (g.healCost / 1000);
-        if (ratio < prevRatio) {
+        if (ratio < g.healRatio) {
           g.healIndex = index;
+          g.healRatio = ratio;
           g.healCost = Math.round((maxHp - cur) * 1000 / maxHp);
         }
       }

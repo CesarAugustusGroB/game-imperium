@@ -205,9 +205,10 @@ export function DoctrinaeTab() {
       return;
     }
 
-    // Collection-to-slot equip
+    // Collection-to-slot equip. Guard the dataTransfer fallback against
+    // "slot:N" payloads from a slot-drag whose signal state was already reset.
     const id = draggedId.value ?? e.dataTransfer?.getData('text/plain') ?? null;
-    if (!id) return;
+    if (!id || id.startsWith('slot:')) return;
     const d = collection.find((x) => x.id === id);
     if (!d || !faction || !isDoctrineEquippable(d, faction)) return;
     equipDoctrine(slotIndex, d);
@@ -476,6 +477,7 @@ function EquippedSlotCard({
         <span>Slot {slotIndex + 1}</span>
         <button
           onClick={(e) => { e.stopPropagation(); onUnequip(); }}
+          disabled={dragging}
           title="Unequip"
           style={{
             width: 20, height: 20, padding: 0,

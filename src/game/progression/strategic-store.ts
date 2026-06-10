@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import { selectedCommander, completedSpokes } from '../core/game-state';
-import { spendResource, addResource, canAfford } from '../core/resources';
+import { spendResource, refundResource, canAfford } from '../core/resources';
 import type { ArmyData } from '../../types/index';
 import type { Cohort } from '../army/cohort';
 import type { Legate } from '../army/legate';
@@ -336,8 +336,9 @@ function getRecruitFailureForCohort(cohort: Cohort): RecruitCohortFailure | null
 
 /**
  * Remove the last cohort of the given type from the prepared army.
- * Refunds the cohort's aurumCost to gold. Regular citizen cohorts also refund
- * their iuniores recruit cost while still in the Hub-prep roster.
+ * Refunds what recruiting it costs today: the DISCOUNTED gold price (the same
+ * one recruitCohort charges) plus the iuniores recruit cost for citizens —
+ * at face value, with no income modifiers, so recruit→remove can't print gold.
  */
 export function removeCohort(cohortId: string): void {
   const army = preparedArmy.value;
@@ -348,8 +349,8 @@ export function removeCohort(cohortId: string): void {
   const removeIdx = exactIdx !== -1 ? exactIdx : lastTypeIdx;
   if (removeIdx === -1) return;
   const [removed] = cohorts.splice(removeIdx, 1);
-  addResource('gold', removed.aurumCost);
-  if (!removed.mercenary) addResource('iuniores', IUNIORES.recruitCost);
+  refundResource('gold', discountedGold(removed.aurumCost));
+  if (!removed.mercenary) refundResource('iuniores', IUNIORES.recruitCost);
   preparedArmy.value = { ...army, cohorts, size: computeArmySize(cohorts) };
 }
 

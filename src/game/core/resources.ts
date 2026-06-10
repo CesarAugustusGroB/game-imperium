@@ -61,6 +61,16 @@ export function addResource(type: ResourceType, amount: number): number {
 }
 
 /**
+ * Refund a resource at face value — NO income modifiers applied (unlike
+ * addResource). Use for returning what a player previously paid, so refunds
+ * can't be inflated by War Profiteer / doctrine income bonuses.
+ */
+export function refundResource(type: ResourceType, amount: number): void {
+  if (amount <= 0) return;
+  resourceSignals[type].value += amount;
+}
+
+/**
  * Spend a resource. Returns false if insufficient or negative (no deduction).
  */
 export function spendResource(type: ResourceType, amount: number): boolean {
