@@ -134,6 +134,11 @@
   .tier.active{border-color:var(--vio-500);background:var(--vio-50)}
   .tier.active .tn{background:var(--vio-600);color:#fff;border-color:var(--vio-600)}
   .tier.lockt{opacity:.5}
+  /* Rareza de decretos */
+  .gem{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;text-transform:uppercase}
+  .gem::before{content:'◆';font-size:10px}
+  .gem.common{color:#8a857a}.gem.rare{color:#4a7cc2}.gem.legendary{color:#bd8f2c}
+  .fxchip{display:inline-flex;align-items:center;gap:6px;background:#eaf6e6;border:1px solid #9cc28e;border-radius:999px;padding:3px 10px;font-family:var(--mono);font-size:9px;color:#3f6e34}
   footer{border-top:1px solid var(--line);padding:28px 0 50px;text-align:center;color:var(--ink-faint);font-style:italic}
 </style>
 </head>
@@ -519,25 +524,102 @@
     <div class="note"><b>Cambios propuestos:</b> doctrinas como <b>cartas 3:4</b> (banda superior con escuela + nivel romano, emblema, nombre, <b>pips de progreso I–III</b>, efecto actual en una línea, pie con acciones) · slots equipados como <b>zócalos de carta</b> (vacío = silueta punteada con "+") · cartas fuera de tu color en gris con 🔒 color-lock · detalle con <b>pista de niveles</b> (hecho ✓ / actual / siguiente con botón Upgrade y coste inline) y el efecto de campaña destacado en violeta. <b>Solo wireframe — aún no aplicado al juego.</b></div>
   </section>
 
-  <!-- ============ DECRETA ============ -->
+  <!-- ============ DECRETA (overhaul propuesto) ============ -->
   <section class="screen-panel" id="decreta">
-    <div class="screen-head"><span class="id">tab: decreta</span><h2>Decreta Tab</h2><span class="file">DecretaTab.tsx</span>
-      <p>2 columnas (1 / 360): izq mano de pergaminos · dcha detalle del decreto.</p></div>
-    <div class="screen"><div class="canvas" style="min-height:520px;display:flex;flex-direction:column;gap:12px">
-      <div class="panel"><span class="lbl">Masthead</span><div class="ttl" style="font-size:15px">DECRETA · X/Y in hand</div></div>
+    <div class="screen-head"><span class="id">tab: decreta</span><h2>Decreta Tab</h2><span class="file">DecretaTab.tsx · PROPUESTA</span>
+      <p>Overhaul tipo cartas, coherente con Doctrinae: pergaminos como <b>cartas 3:4</b> con banda de escuela, <b>gema de rareza</b> (común/raro/legendario), coste de cast y pie de acciones. Huecos de mano como zócalos. Efectos activos como fichas verdes arriba. Detalle con desglose de efectos.</p></div>
+    <div class="screen"><div class="canvas" style="min-height:620px;display:flex;flex-direction:column;gap:12px">
+      <div class="panel"><span class="lbl">Masthead</span><div class="ttl" style="font-size:15px">DECRETA · 3/5 in hand</div></div>
+
+      <!-- Efectos activos -->
+      <div class="panel"><span class="lbl">Efectos activos · hub</span>
+        <div class="row wrapf" style="gap:8px">
+          <span class="fxchip">◆ Pax Deorum · −upkeep · 2 temporadas</span>
+          <span class="fxchip">◆ Annona · +2 comida/temporada · 1 temporada</span>
+        </div>
+      </div>
+
       <div class="row grow" style="gap:12px;align-items:stretch">
-        <div class="region grow" style="flex:1"><span class="lbl">Hand · cast in battle</span>
-          <div class="row wrapf" style="gap:10px">
-            <div class="panel solid" style="width:130px;border-top:3px solid var(--vio-500)"><div class="row between"><span class="chip">⚜2</span><span class="tag">rare</span></div><div class="ph w90" style="margin-top:8px"></div><div class="ph w60"></div><div class="ph w75" style="margin-top:6px"></div></div>
-            <div class="panel solid" style="width:130px;border-top:3px solid var(--vio-400)"><div class="row between"><span class="chip">⚜1</span></div><div class="ph w90" style="margin-top:8px"></div><div class="ph w60"></div></div>
-            <div class="panel solid" style="width:130px;border-top:3px solid var(--vio-300);opacity:.55"><div class="row between"><span class="chip">⚜3</span><span class="tag">lock</span></div><div class="ph w90" style="margin-top:8px"></div></div>
+        <div class="region grow" style="flex:1 1 0;min-width:0"><span class="lbl">Hand · cartas de pergamino</span>
+          <div class="panel grow"><div class="row between"><div class="ttl">Hand</div><span class="sub">cast at hub · o llévalos a batalla</span></div>
+            <div class="row wrapf" style="gap:12px;margin-top:4px">
+
+              <div class="panel solid dcard sch-gold" style="outline:2px solid var(--vio-500);outline-offset:3px">
+                <div class="band"><span>Gold</span><span>⚜2</span></div>
+                <div class="emblem">📜</div>
+                <div class="dbody">
+                  <div class="row between"><div class="ttl" style="margin:0;font-size:11.5px">Pax Deorum</div></div>
+                  <span class="gem legendary">legendary</span>
+                  <div class="sub" style="line-height:1.45">Sin upkeep durante 2 temporadas</div>
+                </div>
+                <div class="dfoot"><span class="btn" style="padding:3px 9px">Cast</span><span>Sell 10g</span></div>
+              </div>
+
+              <div class="panel solid dcard sch-red">
+                <div class="band"><span>Red</span><span>⚜1</span></div>
+                <div class="emblem">📜</div>
+                <div class="dbody">
+                  <div class="ttl" style="margin:0;font-size:11.5px">Sanguis Hostium</div>
+                  <span class="gem rare">rare</span>
+                  <div class="sub" style="line-height:1.45">Daño 800 a un enemigo al iniciar batalla</div>
+                </div>
+                <div class="dfoot"><span class="tag">⚔ battle only</span><span>Sell 5g</span></div>
+              </div>
+
+              <div class="panel solid dcard sch-white">
+                <div class="band"><span>White · univ.</span><span>—</span></div>
+                <div class="emblem">📜</div>
+                <div class="dbody">
+                  <div class="ttl" style="margin:0;font-size:11.5px">Annona</div>
+                  <span class="gem common">common</span>
+                  <div class="sub" style="line-height:1.45">+2 comida por temporada, 1 temporada</div>
+                </div>
+                <div class="dfoot"><span class="btn" style="padding:3px 9px">Cast</span><span>Sell 2g</span></div>
+              </div>
+
+              <div class="panel solid dcard sch-blue locked">
+                <div class="band"><span>Blue</span><span>⚜3</span></div>
+                <div class="emblem">📜</div>
+                <div class="dbody">
+                  <div class="ttl" style="margin:0;font-size:11.5px">Verba Mollia</div>
+                  <span class="gem rare">rare</span>
+                  <div class="sub" style="line-height:1.45">Convierte 1 enemigo en la próxima batalla</div>
+                </div>
+                <div class="dfoot"><span>🔒 color-lock</span><span>Sell 5g</span></div>
+              </div>
+
+              <div class="socket"><span style="font-size:22px">＋</span><span>hueco de mano</span><span style="font-size:8.5px">se reparten entre campañas</span></div>
+              <div class="socket"><span style="font-size:22px">＋</span><span>hueco de mano</span></div>
+            </div>
           </div>
         </div>
-        <div class="region" style="width:300px;flex:0 0 auto"><span class="lbl">Scroll Detail 360px</span>
-          <div class="panel" style="height:100%"><div class="sub">Decretum</div><div class="ttl" style="font-size:17px">SCROLL NAME</div><div class="ph w90"></div><div class="ph w75"></div><div class="row" style="gap:8px;margin:10px 0"><div class="panel solid grow"><div class="sub">Cost</div></div><div class="panel solid grow"><div class="sub">Rarity</div></div></div><div class="row" style="gap:8px"><div class="panel solid grow"><div class="sub">Castable</div></div><div class="panel solid grow"><div class="sub">Color</div></div></div><div class="btn ghost" style="margin-top:10px">Sell · Xg</div></div>
+
+        <!-- Detalle del pergamino -->
+        <div class="region" style="width:300px;flex:0 1 auto;min-width:260px"><span class="lbl">Detalle · 300px</span>
+          <div class="panel" style="height:100%;border-top:3px solid #bd8f2c">
+            <div class="row between"><span class="tag" style="background:#bd8f2c;color:#fff;border-color:#bd8f2c">GOLD</span><span class="gem legendary">legendary</span></div>
+            <div class="ttl" style="font-size:17px;margin-top:8px">PAX DEORUM</div>
+            <div class="sub" style="font-style:italic;margin-bottom:10px">"Los dioses callan; las legiones marchan gratis."</div>
+
+            <div class="subtitle" style="margin:10px 0 6px">Efectos</div>
+            <div class="col" style="gap:7px">
+              <div class="tier active"><span class="tn">1</span><div class="grow"><div class="sub" style="color:var(--ink)">Upkeep del ejército suspendido · 2 temporadas</div><div class="sub" style="font-size:9px">EFECTO PRINCIPAL</div></div></div>
+              <div class="tier"><span class="tn">+</span><div class="grow"><div class="sub" style="color:var(--ink)">+1 moral al lanzarlo</div><div class="sub" style="font-size:9px">EFECTO SECUNDARIO</div></div></div>
+            </div>
+
+            <div class="row" style="gap:8px;margin:12px 0">
+              <div class="panel solid grow"><div class="sub" style="font-size:9px">COSTE DE CAST</div><div class="ttl" style="margin:2px 0 0;font-size:13px">⚜ 2</div></div>
+              <div class="panel solid grow"><div class="sub" style="font-size:9px">DÓNDE</div><div class="ttl" style="margin:2px 0 0;font-size:13px">✓ Hub</div></div>
+            </div>
+
+            <div class="panel solid" style="border-left:3px solid #7c3aed"><div class="sub" style="line-height:1.5">Lanzarlo lo descarta de la mano. Los efectos por temporada aparecen arriba como ficha verde.</div></div>
+
+            <div class="row" style="gap:7px;margin-top:12px"><span class="btn grow" style="text-align:center">Cast · ⚜2</span><span class="btn ghost grow" style="text-align:center">Sell · 10g</span></div>
+          </div>
         </div>
       </div>
     </div></div>
+    <div class="note"><b>Cambios propuestos:</b> pergaminos como <b>cartas 3:4</b> coherentes con Doctrinae (banda de escuela con coste de cast en la esquina, emblema de pergamino, nombre, <b>gema de rareza</b> common/rare/legendary, efecto en una línea, pie con Cast/Sell) · estados claros en el pie: <b>Cast</b> (lanzable en hub) / <b>⚔ battle only</b> / <b>🔒 color-lock</b> · huecos de mano restantes como zócalos punteados (la mano tiene tamaño máximo) · <b>efectos activos como fichas verdes</b> bajo el masthead con temporadas restantes · detalle con desglose efecto principal + secundarios, coste y dónde se lanza. <b>Solo wireframe — aún no aplicado al juego.</b></div>
   </section>
 
   <!-- ============ ITER BELLI ============ -->
