@@ -103,6 +103,17 @@
   .role.van{background:#bb4538}.role.res{background:#bd8f2c}.role.gua{background:#5a7aa0}
   .cohort{border-left:3px solid var(--vio-400)}
   .cohort.van{border-left-color:#bb4538}.cohort.res{border-left-color:#bd8f2c}.cohort.gua{border-left-color:#5a7aa0}
+  /* Carta vertical 9:16 (unidades) */
+  .vcard{aspect-ratio:9/16;width:172px;flex:0 0 auto;display:flex;flex-direction:column;padding:0;overflow:hidden;border-top:3px solid var(--vio-400)}
+  .vcard.van{border-top-color:#bb4538}.vcard.res{border-top-color:#bd8f2c}.vcard.gua{border-top-color:#5a7aa0}
+  .vcard .art{position:relative;flex:0 0 32%;background:repeating-linear-gradient(45deg,var(--vio-50),var(--vio-50) 7px,var(--vio-100) 7px,var(--vio-100) 8px);border-bottom:1px solid var(--vio-200);display:flex;align-items:center;justify-content:center;color:var(--ink-faint);font-family:var(--mono);font-size:9px}
+  .vcard .art .role{position:absolute;top:6px;left:6px}
+  .vcard .art .chip{position:absolute;top:5px;right:6px}
+  .vcard .body{display:flex;flex-direction:column;gap:6px;padding:8px 9px;flex:1}
+  .vcard .foot{margin-top:auto;border-top:1px dashed var(--vio-200);padding-top:7px}
+  .vcard .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+  .vcard .statgrid .statpill{justify-content:space-between;padding:3px 6px}
+  .vcard.mini{width:128px}
   footer{border-top:1px solid var(--line);padding:28px 0 50px;text-align:center;color:var(--ink-faint);font-style:italic}
 </style>
 </head>
@@ -332,26 +343,35 @@
       </div>
 
       <div class="row grow" style="gap:12px;align-items:stretch">
-        <!-- Cohortes: tarjetas técnicas en grid 2-col -->
-        <div class="region grow" style="flex:1.45"><span class="lbl">Cohorts · roster</span>
-          <div class="row wrapf" style="gap:10px">
-            <div class="panel solid cohort van grow" style="min-width:240px">
-              <div class="row between"><div class="row center" style="gap:9px"><div class="img" style="width:34px;height:34px"></div><div><div class="ttl" style="margin:0;font-size:12px">Hastati</div><div class="sub">Citizen cohort</div></div></div><div class="row center" style="gap:6px"><span class="role van">Vanguard</span><span class="chip">×3</span></div></div>
-              <div class="row center" style="gap:8px;margin-top:9px"><div class="hpbar grow"><i style="width:82%"></i></div><span class="sub" style="white-space:nowrap">2,460 / 3,000</span></div>
-              <div class="row wrapf" style="gap:5px;margin-top:8px"><span class="statpill">HP <b>100</b></span><span class="statpill">Charge <b>7</b></span><span class="statpill">Push <b>5</b></span><span class="statpill">Move <b>4</b></span></div>
-              <div class="row between" style="margin-top:9px"><span class="sub">⚜120 · 🛡3</span><span class="btn ghost">– Remove</span></div>
+        <!-- Cohortes: cartas verticales 9:16 -->
+        <div class="region grow" style="flex:1.45"><span class="lbl">Cohorts · roster (cartas 9:16)</span>
+          <div class="row wrapf" style="gap:12px">
+            <div class="panel solid vcard van">
+              <div class="art">[ unit art ]<span class="role van">Vanguard</span><span class="chip">×3</span></div>
+              <div class="body">
+                <div><div class="ttl" style="margin:0;font-size:12px">Hastati</div><div class="sub">Citizen cohort</div></div>
+                <div><div class="hpbar"><i style="width:82%"></i></div><div class="sub" style="text-align:right;margin-top:3px">2,460 / 3,000</div></div>
+                <div class="statgrid"><span class="statpill">HP <b>100</b></span><span class="statpill">Charge <b>7</b></span><span class="statpill">Push <b>5</b></span><span class="statpill">Move <b>4</b></span></div>
+                <div class="foot"><div class="row between" style="align-items:center"><span class="sub">⚜120 · 🛡3</span><span class="btn ghost">–</span></div></div>
+              </div>
             </div>
-            <div class="panel solid cohort gua grow" style="min-width:240px">
-              <div class="row between"><div class="row center" style="gap:9px"><div class="img" style="width:34px;height:34px"></div><div><div class="ttl" style="margin:0;font-size:12px">Triarii</div><div class="sub">Citizen cohort</div></div></div><div class="row center" style="gap:6px"><span class="role gua">Guard</span><span class="chip">×1</span></div></div>
-              <div class="row center" style="gap:8px;margin-top:9px"><div class="hpbar warn grow"><i style="width:46%"></i></div><span class="sub" style="white-space:nowrap">⚕ 550 / 1,200</span></div>
-              <div class="row wrapf" style="gap:5px;margin-top:8px"><span class="statpill">HP <b>120</b></span><span class="statpill">Push <b>9</b></span><span class="statpill">Siege <b>6</b></span><span class="statpill">Move <b>2</b></span></div>
-              <div class="row between" style="margin-top:9px"><span class="sub">⚜150 · 🛡4</span><div class="row" style="gap:5px"><span class="btn">Heal · 🛡2</span><span class="btn ghost">–</span></div></div>
+            <div class="panel solid vcard gua">
+              <div class="art">[ unit art ]<span class="role gua">Guard</span><span class="chip">×1</span></div>
+              <div class="body">
+                <div><div class="ttl" style="margin:0;font-size:12px">Triarii</div><div class="sub">Citizen cohort</div></div>
+                <div><div class="hpbar warn"><i style="width:46%"></i></div><div class="sub" style="text-align:right;margin-top:3px">⚕ 550 / 1,200</div></div>
+                <div class="statgrid"><span class="statpill">HP <b>120</b></span><span class="statpill">Push <b>9</b></span><span class="statpill">Siege <b>6</b></span><span class="statpill">Move <b>2</b></span></div>
+                <div class="foot"><div class="sub" style="margin-bottom:5px">⚜150 · 🛡4</div><div class="row between" style="align-items:center"><span class="btn">Heal 🛡2</span><span class="btn ghost">–</span></div></div>
+              </div>
             </div>
-            <div class="panel solid cohort res grow" style="min-width:240px">
-              <div class="row between"><div class="row center" style="gap:9px"><div class="img" style="width:34px;height:34px"></div><div><div class="ttl" style="margin:0;font-size:12px">Mercennarii</div><div class="sub">Mercenary</div></div></div><div class="row center" style="gap:6px"><span class="role res">Reserve</span><span class="chip">×2</span></div></div>
-              <div class="row center" style="gap:8px;margin-top:9px"><div class="hpbar grow"><i style="width:100%"></i></div><span class="sub" style="white-space:nowrap">1,600 / 1,600</span></div>
-              <div class="row wrapf" style="gap:5px;margin-top:8px"><span class="statpill">HP <b>80</b></span><span class="statpill">Harass <b>9</b></span><span class="statpill">Move <b>6</b></span><span class="statpill">Charge <b>4</b></span></div>
-              <div class="row between" style="margin-top:9px"><span class="sub">⚜200 · gold-only heal</span><span class="btn ghost">– Remove</span></div>
+            <div class="panel solid vcard res">
+              <div class="art">[ unit art ]<span class="role res">Reserve</span><span class="chip">×2</span></div>
+              <div class="body">
+                <div><div class="ttl" style="margin:0;font-size:12px">Mercennarii</div><div class="sub">Mercenary</div></div>
+                <div><div class="hpbar"><i style="width:100%"></i></div><div class="sub" style="text-align:right;margin-top:3px">1,600 / 1,600</div></div>
+                <div class="statgrid"><span class="statpill">HP <b>80</b></span><span class="statpill">Harass <b>9</b></span><span class="statpill">Move <b>6</b></span><span class="statpill">Charge <b>4</b></span></div>
+                <div class="foot"><div class="row between" style="align-items:center"><span class="sub">⚜200 · gold heal</span><span class="btn ghost">–</span></div></div>
+              </div>
             </div>
           </div>
           <div class="row between" style="margin-top:11px;border-top:1px solid var(--vio-200);padding-top:10px"><span class="sub">1 damaged · 1 mercenary</span><span class="btn">Replenish roster · ⚜X</span></div>
@@ -361,14 +381,29 @@
         <div class="region col" style="width:300px;flex:0 0 auto"><span class="lbl">Legatus + Recruit</span>
           <div class="panel row center" style="gap:11px"><div class="img circle" style="width:54px;height:54px;flex:0 0 auto"></div><div class="grow"><div class="ttl" style="margin:0;font-size:12px">Legate Name</div><div class="row wrapf" style="gap:5px;margin-top:5px"><span class="tag">Cavalry Master</span><span class="tag">trait</span></div></div><span class="btn danger">✕</span></div>
           <div class="panel grow"><div class="row between"><div class="ttl">Recruit</div><span class="chip">⚜ X · 🛡 Y</span></div>
-            <div class="panel solid cohort res" style="margin-bottom:7px"><div class="row between" style="align-items:flex-start"><div class="grow"><div class="row center" style="gap:6px"><span class="ttl" style="margin:0;font-size:11px">Principes</span><span class="role res">Reserve</span></div><div class="row wrapf" style="gap:4px;margin-top:6px"><span class="statpill">HP<b>120</b></span><span class="statpill">Push<b>8</b></span><span class="statpill">Charge<b>6</b></span><span class="statpill">Siege<b>3</b></span></div></div><div class="col" style="align-items:flex-end;gap:6px"><span class="sub" style="white-space:nowrap">⚜150·🛡4</span><span class="btn">Recruit</span></div></div></div>
-            <div class="sub" style="margin:8px 0 6px;border-top:1px dashed var(--vio-200);padding-top:7px">— Mercenary contracts —</div>
-            <div class="panel solid cohort van"><div class="row between" style="align-items:flex-start"><div class="grow"><div class="row center" style="gap:6px"><span class="ttl" style="margin:0;font-size:11px">Auxilia</span><span class="role van">Vanguard</span></div><div class="row wrapf" style="gap:4px;margin-top:6px"><span class="statpill">HP<b>80</b></span><span class="statpill">Harass<b>9</b></span><span class="statpill">Move<b>6</b></span><span class="statpill">Charge<b>4</b></span></div></div><div class="col" style="align-items:flex-end;gap:6px"><span class="sub" style="white-space:nowrap">⚜200</span><span class="btn">Hire</span></div></div></div>
+            <div class="row" style="gap:10px;margin-top:8px">
+              <div class="panel solid vcard mini res">
+                <div class="art">[ art ]<span class="role res">Reserve</span></div>
+                <div class="body">
+                  <div class="ttl" style="margin:0;font-size:11px">Principes</div>
+                  <div class="statgrid"><span class="statpill">HP<b>120</b></span><span class="statpill">Push<b>8</b></span><span class="statpill">Chg<b>6</b></span><span class="statpill">Sge<b>3</b></span></div>
+                  <div class="foot"><div class="sub" style="text-align:center;margin-bottom:5px">⚜150 · 🛡4</div><span class="btn" style="display:block;text-align:center">Recruit</span></div>
+                </div>
+              </div>
+              <div class="panel solid vcard mini van">
+                <div class="art">[ art ]<span class="role van">Vanguard</span></div>
+                <div class="body">
+                  <div class="ttl" style="margin:0;font-size:11px">Auxilia <span class="sub">merc.</span></div>
+                  <div class="statgrid"><span class="statpill">HP<b>80</b></span><span class="statpill">Hrs<b>9</b></span><span class="statpill">Move<b>6</b></span><span class="statpill">Chg<b>4</b></span></div>
+                  <div class="foot"><div class="sub" style="text-align:center;margin-bottom:5px">⚜200</div><span class="btn" style="display:block;text-align:center">Hire</span></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div></div>
-    <div class="note"><b>Cambios:</b> suministros + munición + totales en una franja de una línea · salud del roster fusionada en cada tarjeta de cohorte (barra HP + ⚕ + Heal inline) · stats técnicos visibles (ATK/DEF/HP/AGI) · rol en color (Vanguard/Guard/Reserve) · munición en violeta (presupuesto de hostigamiento de la batalla decisiva) · legado compacto. <b>Solo wireframe — aún no aplicado al juego.</b></div>
+    <div class="note"><b>Cambios:</b> suministros + munición + totales en una franja de una línea · cohortes y reclutamiento como <b>cartas verticales 9:16</b> (arte arriba con rol y contador superpuestos, nombre + HP + stats en rejilla 2×2, coste y acciones ancladas abajo) · rol en color como banda superior (Vanguard/Guard/Reserve) · munición en violeta (presupuesto de hostigamiento de la batalla decisiva) · legado compacto. <b>Solo wireframe — aún no aplicado al juego.</b></div>
   </section>
 
   <!-- ============ DOCTRINAE ============ -->
