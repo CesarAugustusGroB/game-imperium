@@ -1,0 +1,131 @@
+# Plan de Consolidación — Jugabilidad & Sistemas
+
+> **Objetivo:** terminar de desarrollar, pulir y consolidar el main loop (Foro Imperial ↔ Iter Belli) hasta que **todo lo que el juego promete en pantalla sea real**, el bucle sea rejugable con identidad por comandante, y los números estén blindados contra regresiones.
+>
+> Basado en la auditoría de sistemas de junio 2026 (ver `sistemas-del-juego.html` → pestaña *Efectos & Auditoría*). Convención de sprints: continúa la serie S-N existente.
+
+---
+
+## Estado de partida (qué ya está hecho)
+
+- **UI consolidada en lenguaje de cartas**: Exercitus (unidades 9:16 con sprites), Doctrinae (cartas de escuela 3:4 + pista de niveles), Decreta (pergaminos 3:4 con gemas de rareza), modal de detalle de edificio en Provinciae. Wireframes sincronizados.
+- **Código muerto eliminado**: renderer WebGL legacy, bellum/node-map, sistema de eventos antiguo, recursos fe/influencia/momentum.
+- **Dos pasadas de bugs**: exploit de oro en reclutar→quitar, doble coste de moral en All-Out, dead-end de despliegue, upkeep×timeCost, pool del asalto, deep links, etc. 83 unit tests + scripts `verify-*` en verde.
+- **Auditoría completa**: números coherentes (tensiones intencionales documentadas); la brecha real es el **contrato de efectos** — texto que promete cosas que el código no aplica.
+
+---
+
+## FASE 1 — Cerrar el contrato de efectos (consolidar)
+
+*Principio: ningún texto visible promete algo que el código no hace. O se implementa, o se reescribe.*
+
+### S-A · Decreta en batalla ⭐ (la mejora con más identidad)
+El módulo de batalla no importa decreta: ~10 de 30 pergaminos son inlanzables en todo el juego.
+
+- [ ] Slot **«Decretum»** en `OrderBar` de la batalla decisiva: un lanzamiento por batalla, consume el pergamino de la mano (pasa por `removeDecretum`).
+- [ ] Mapear `DecretumEffect` → efectos de batalla en un `toBattleEffect()` espejo de `toHubEffect()`:
+  - `buff` (atk/def) → multiplicador de daño propio / mitigación durante N rondas
+  - `damage` (single/area) → daño directo al HP enemigo (escala con `DMG_SCALE`)
+  - `heal` → restaura % de HP propio
+  - `prevent-death` → flag: la primera vez que HP llegaría a 0, queda a 5%
+  - `convert-enemy-next-battle` → resta soldados al enemigo y los suma al jugador al inicio
+  - `spawn` → +HP equivalente (count × 250 de seed)
+  - `reveal` → muestra la próxima orden de la IA enemiga en la UI
+- [ ] Los pergaminos color-locked siguen bloqueados; el coste de cast se paga del oro de campaña.
+- [ ] UI: fila de pergaminos lanzables bajo la OrderBar (reutilizar la carta mini de DecretaTab).
+- **DoD**: los 30 decreta son lanzables en hub o en batalla; la fila `Decreta · batalla` pasa a `vivo` en la auditoría.
+
+### S-B · Legados y comandantes con peso real
+- [ ] **Bonos de stats de traits de legado** aplicados en `buildPlayerSeed` (adapter): veteran +15% charge, swift +20% movement, stoic +15% hp, charismatic/inspiring +moral inicial, etc. (~10 líneas + tests).
+- [ ] **Habilidades estratégicas de comandante**: recablearlas a Iter Belli como **carta firma adicional** por arquetipo (la maquinaria de firmas ya existe) — War Cry, Call Crusade, Manipulate (re-roll de carta del pool), Golden Opportunity (+2 días). Eliminar los signals huérfanos que queden (`manipulateUsesLeft` sin consumidor, etc.).
+- [ ] **Pasiva Veteran Stacks** (Boudicca): +5% daño por victoria, se aplica en `buildPlayerSeed`; ya se persiste en meta-save.
+- **DoD**: elegir legado cambia mediblemente la batalla; cada comandante tiene pasiva + 2 firmas funcionales.
+
+### S-C · Pasada de honestidad (edificios, doctrinas, asesores, features)
+- [ ] **Villa T3** «farmland yield doubled» → implementar (×2 food de terreno farmland en `calculateFoodProduction`).
+- [ ] **Market T3** «exchange rates» → reescribir a «+1 PWG/season» e implementar.
+- [ ] **Fishery T3 / Stables** → reescribir descripciones a lo que ya hacen (food/iuniores) o darles un efecto pequeño real.
+- [ ] **Castrum T2/T3 (unidad gratis) y Pantheon T3 (revive)**: conectar `getProvinceEffects()` a la batalla (unidad gratis = +500/+800 HP de seed; revive = mismo flag que `prevent-death`). Si no, reescribir.
+- [ ] **Doctrina `upkeep-reduction`** (Infrastructure, Annona) → aplicar a expenses de provincia en el tick de temporada.
+- [ ] **`shop-discount` de Smuggler** → añadir el caso a `passiveModifier()` (embark) o quitarlo de sus tiers.
+- [ ] **Features especiales de provincia** (`extra-event-choice`, `cavalry-bonus`, `unit-discount`, `famine-immunity`): implementar `unit-discount` y `famine-immunity` (baratos); re-flavor de los otros dos (dependían del sistema de eventos eliminado).
+- [ ] **Gobernadores**: cablear `population-growth` (sumar al growth accumulator) y `garrison-strength` (− pérdidas por rebelión) o retirarlos de los datos.
+- **DoD**: cero filas `muerto` en la tabla de auditoría, salvo las marcadas explícitamente como «contenido futuro».
+
+### S-D · Blindaje
+- [ ] **`tools/verify-effects.ts`**: recorre doctrinas/decreta/traits/features/governors y FALLA si un tipo de efecto declarado no tiene sitio de aplicación registrado (mapa explícito tipo→módulo). Se añade al ritual de verificación.
+- [ ] Unit tests para los invariantes económicos: refund ≤ pagado, caps de income/descuentos, clamps de campaña.
+- [ ] Actualizar `sistemas-del-juego.html` (tabla de auditoría) y wireframes en el mismo PR de cada item.
+
+---
+
+## FASE 2 — Profundidad del bucle (desarrollar)
+
+*Principio: que la decisión de cada run sea distinta — más ejes, no más botones.*
+
+### S-E · Sinergias y edificios que faltan
+- [ ] Añadir **Forge** (red/mountains: −coste de reclutamiento local), **Sacred Grove** (gold/forest: −unrest, +beautiness), **Mine** (purple/mountains: +oro, +PWG) — completa las 3 sinergias muertas. Pipeline existente: INVESTMENT_DATA + SVG en BuildingIcon + arte hi-res opcional.
+- [ ] Sinergias restantes verificadas con test (Aqueduct+Granary food, Insula+Aqueduct unrest).
+
+### S-F · Segundo escenario de campaña
+- [ ] Escenario 2 post-Saguntum (p. ej. **cruce del Ebro / Gallia**): nuevo `iter-belli-scenario-*.ts` con localizaciones, crisis y enemigo (`gauls` ya existe como arquetipo de batalla con identidad propia: carga 20, disciplina 3).
+- [ ] Selector de campaña en EmbarkCard cuando hay >1 escenario desbloqueado (victoria desbloquea el siguiente).
+- [ ] 6–8 cartas nuevas específicas del escenario (el motor ya soporta `locations` por id).
+- **DoD**: dos campañas jugables encadenadas; el meta-save persiste el progreso de escenarios.
+
+### S-G · Variedad táctica de la batalla
+- [ ] Usar los 4 arquetipos enemigos existentes (carthage/gauls/iberians/garrison) según escenario/quest — hoy solo se ve carthage en el flujo normal.
+- [ ] 1 formación común nueva (p. ej. **acies duplex**, disc 4) para suavizar el salto disc 3→5 de las únicas.
+- [ ] Centro: 1–2 terrenos nuevos (bosque: −charge ambos; colina fortificada) ligados al terreno del escenario.
+
+---
+
+## FASE 3 — Pulido (pulir)
+
+### S-H · Consistencia visual final
+- [ ] Pasada del lenguaje de cartas a lo que falta: Consilium (asesores como cartas — coordinar con el WIP de codex) y Overview/EmbarkCard.
+- [ ] Arte: generar los 15 PNG hi-res de edificios que faltan (solo existen basilica/castrum/pantheon) y emblemas por doctrina/decretum (la zona de emblema ya está preparada para sustituir el glifo). Dirección: color variado, no all-gold (`docs/icon-art-direction.md`).
+- [ ] Microinteracciones: transiciones de modal, hover de cartas, feedback de compra (animación ya existe en buildInvestment — extender a recruit/heal/equip).
+- [ ] Sonido: sfx faltantes (cast de decretum, upgrade de doctrina, abrir modal).
+
+### S-I · Onboarding y legibilidad
+- [ ] **Tutorial contextual** (el icono nav-tutorial ya existe): primera visita a cada tab → 2–3 tooltips guiados; primera campaña → explicación de upkeep/amenaza/plazo.
+- [ ] Tooltips de fórmulas: en la batalla, desglose del daño esperado por orden (stat × dado × mult); en provincias, desglose del income.
+- [ ] Estados vacíos consistentes (ya hay en Decreta/Provinciae; revisar Consilium/Doctrinae).
+
+---
+
+## FASE 4 — Balance y cierre (consolidar)
+
+### S-J · Telemetría de playtest + balance
+- [ ] Log local de runs (JSON): duración, recursos al final, causa de derrota, cartas jugadas, órdenes usadas. Sin backend — descarga manual.
+- [ ] 10+ runs de playtest guiados por las tensiones de la auditoría: ¿el colchón de 4 suministros es divertido o frustrante? ¿se usa siege alguna vez contra carthage? ¿el plazo de 12 días fuerza decisiones o solo castiga?
+- [ ] Ajustes de números SOLO después de los datos (la auditoría dice que son coherentes; tocar por sensación, no por especulación).
+
+### S-K · Robustez de saves y release-readiness
+- [ ] Test de migración de saves: cargar un save de cada versión anterior del formato (fixtures en `tools/fixtures/`).
+- [ ] Pasada de rendimiento: bundle, imágenes (vite-imagetools para los nuevos PNG), RAF/listeners.
+- [ ] `npm run build` + smoke test del build de producción en el ritual de cada sprint.
+
+---
+
+## Orden recomendado y dependencias
+
+```
+FASE 1 (S-A → S-D)  ······ 1ª — sin esto, todo lo demás construye sobre promesas rotas
+FASE 2 (S-E → S-G)  ······ 2ª — S-F depende de S-A/S-B (las campañas usan los efectos nuevos)
+FASE 3 (S-H → S-I)  ······ 3ª — pulir cuando el contenido está estable (S-H puede solapar F2)
+FASE 4 (S-J → S-K)  ······ 4ª — balance con datos al final; saves/build continuo desde F1
+```
+
+- **Quick wins de una tarde** (se pueden adelantar): Smuggler fix, Villa/Market T3, upkeep-reduction, bonos de legado (S-B.1).
+- **El gordo**: S-A (decreta en batalla) — tocarlo primero también valida la arquitectura de efectos para Castrum/Pantheon (S-C) y las firmas (S-B).
+- **Regla transversal**: cada item actualiza en el mismo cambio la fila de la auditoría en `sistemas-del-juego.html` y, si toca pantalla, su wireframe.
+
+## Definición de «consolidado» (criterio de salida global)
+
+1. Cero texto-mentira: todo efecto visible tiene código o fue reescrito.
+2. `verify-effects.ts` + unit tests + `verify-*` en verde en cada PR.
+3. Dos campañas jugables con identidad de comandante funcional (pasiva + firmas).
+4. Toda pantalla del loop usa el lenguaje de cartas y coincide con su wireframe.
+5. 10+ runs de playtest registradas y al menos una pasada de balance basada en datos.
