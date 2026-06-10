@@ -1,4 +1,5 @@
 import { signal, useSignal } from '@preact/signals';
+import { useEffect } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
 import { selectedCommander } from '../../../../game/core/game-state';
 import { playSfx } from '../../../sound/sfx';
@@ -753,6 +754,8 @@ function getTerrainsForBuilding(building: string): string[] {
 const selectedProvinceId = signal<string | null>(null);
 const showGovernorPicker = signal(false);
 const buildingSlotType = signal<string | null>(null);
+/** Building whose detail modal is open (null = closed). */
+const buildingModalType = signal<InvestmentType | null>(null);
 
 // ── Helpers ──
 
@@ -895,8 +898,10 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
     <Tooltip content={investmentTooltip} variant="rich" position="above">
       <div
         class={`inv-card ${priorityClass(priority)}${currentLevel === 0 ? ' inv-locked' : ''}${buildingSlotType.value === type ? ' inv-slot-building' : ''}${slotCapped ? ' inv-slot-capped' : ''}`}
+        onClick={() => { buildingModalType.value = type; }}
         style={{
           borderTop: `2px solid ${currentLevel > 0 ? fColor : 'rgba(180, 160, 100, 0.18)'}`,
+          cursor: 'pointer',
           ...getPriorityStyle(priority, fColor),
         }}
       >
@@ -923,7 +928,7 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
           <button
             class={`ornate-btn imp-card-cta imp-card-cta-${affordable ? 'actionable' : 'disabled'}`}
             disabled={!affordable}
-            onClick={handleBuild}
+            onClick={(e) => { e.stopPropagation(); handleBuild(); }}
             style={getPriorityStyle(affordable ? 'actionable' : 'disabled', fColor)}
           >
             {currentLevel === 0 ? 'Build' : `${ROMAN[currentLevel]} → ${ROMAN[nextLevel]}`} · <CostInline cost={cost} iconSize="inline" />
@@ -932,6 +937,252 @@ function InvestmentSlot({ province, type, isSlotLocked, synergyBadges }: {
         {maxed && <div class="inv-maxed">Max Level</div>}
       </div>
     </Tooltip>
+  );
+}
+
+// ── Building detail modal ──
+// Click on an InvestmentSlot card → centered overlay with the building art at
+// max resolution (hi-res PNG when present, ornamental SVG fallback otherwise),
+// an I→III level track with per-level stats, and inline upgrade.
+// See wireframes.html → Provinciae → "Building Detail Modal".
+
+function BuildingDetailModal({ province, type }: { province: Province; type: InvestmentType }) {
+  const data = INVESTMENT_DATA[type];
+  const fColor = FACTION_COLORS[data.color];
+  const existing = province.investments.find(i => i.type === type);
+  const currentLevel = existing?.level ?? 0;
+  const nextLevel = getNextInvestmentLevel(province, type);
+
+  // Same affordability rules as the InvestmentSlot card.
+  const traits = getGovernorTraits(province.id);
+  const effectiveDiscount = Math.min(90, getInvestmentDiscount(traits, province) + nextInvestmentDiscount.value);
+  const baseCost = nextLevel > 0 ? data.levels[nextLevel - 1].buildCost : null;
+  const cost = baseCost && effectiveDiscount > 0 ? applyInvestmentDiscount(baseCost, effectiveDiscount) : baseCost;
+  const rubbleBlocked = province.rubbleTimer > 0 && currentLevel === 0;
+  const slotMax = getBuildingSlots(province.population);
+  const slotLocked = currentLevel === 0 && province.investments.length >= slotMax;
+  const affordable = cost ? canAffordCost(cost) && !rubbleBlocked && !slotLocked : false;
+
+  // Force signal reads for reactivity on resource changes
+  getResource('gold');
+  getResource('iuniores');
+
+  const synergies = getBuildingSynergies(type, province);
+  const displayBeauty = (currentLevel > 0 ? data.levels[currentLevel - 1] : data.levels[0]).beautinessBonus ?? 0;
+
+  function close() { buildingModalType.value = null; }
+
+  function handleUpgrade() {
+    if (nextLevel > 0 && affordable) {
+      playSfx('ui_click');
+      buildInvestment(province.id, type);
+    }
+  }
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(0,0,0,0.72)',
+        zIndex: 200,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px',
+      }}
+      onClick={close}
+    >
+      <div
+        onClick={(e: MouseEvent) => e.stopPropagation()}
+        style={{
+          width: 'min(880px, 94vw)', maxHeight: '86vh',
+          display: 'flex', overflow: 'hidden',
+          background: 'linear-gradient(180deg, rgba(28, 24, 44, 0.98), rgba(16, 13, 28, 0.99))',
+          border: '1px solid rgba(212, 168, 67, 0.3)',
+          borderTop: `3px solid ${fColor}`,
+          borderRadius: 4,
+          boxShadow: '0 24px 70px rgba(0, 0, 0, 0.75)',
+        }}
+      >
+        {/* Left: art at max resolution */}
+        <div style={{
+          flex: '0 0 46%', minHeight: 420, position: 'relative',
+          background: `radial-gradient(ellipse at 50% 58%, ${fColor}2e 0%, rgba(10, 8, 18, 0.95) 75%)`,
+          borderRight: '1px solid rgba(212, 168, 67, 0.2)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 20,
+        }}>
+          <BuildingIcon type={type} size={330} color={fColor} />
+          <span style={{
+            position: 'absolute', top: 12, left: 12,
+            padding: '2px 9px', background: fColor, color: '#fff',
+            borderRadius: 2, fontFamily: 'var(--font-display)',
+            fontSize: 'var(--font-size-xs)', fontWeight: 700,
+            letterSpacing: '1px', textTransform: 'uppercase',
+          }}>
+            {data.color}
+          </span>
+          {displayBeauty !== 0 && (
+            <span class="ornate-stat-chip" title="Beautiness" style={{ position: 'absolute', bottom: 12, left: 12 }}>
+              ✦ {displayBeauty > 0 ? '+' : ''}{displayBeauty}
+            </span>
+          )}
+        </div>
+
+        {/* Right: detail */}
+        <div style={{ flex: 1, minWidth: 0, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+            <div style={{
+              fontFamily: 'var(--font-display)', fontSize: 'var(--font-size-xl)',
+              color: currentLevel > 0 ? fColor : 'var(--color-text-primary)',
+              letterSpacing: '2px', textTransform: 'uppercase', lineHeight: 1.15,
+            }}>
+              {data.name}
+            </div>
+            <button
+              onClick={close}
+              title="Close"
+              style={{
+                flexShrink: 0, width: 26, height: 26, padding: 0,
+                background: 'transparent', border: '1px solid rgba(212, 168, 67, 0.35)',
+                borderRadius: 2, color: 'var(--color-text-secondary)', fontSize: 13, lineHeight: 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+              }}
+            >
+              ✕
+            </button>
+          </div>
+          <div style={{ fontStyle: 'italic', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+            "{data.flavour}"
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <span class="ornate-stat-chip">{currentLevel > 0 ? `Level ${ROMAN[currentLevel]} / III` : 'Not built'}</span>
+            <span class="ornate-stat-chip">{province.name}</span>
+            <span class="ornate-stat-chip" title="Building slots used">{province.investments.length}/{slotMax} slots</span>
+          </div>
+
+          {/* Level track */}
+          <div style={{
+            fontSize: 'var(--font-size-xs)', letterSpacing: '2px', textTransform: 'uppercase',
+            color: 'var(--color-gold-secondary)', marginTop: 4,
+          }}>
+            Levels
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {data.levels.map((lvl, idx) => {
+              const n = idx + 1;
+              const state: 'done' | 'active' | 'next' | 'locked' =
+                n < currentLevel ? 'done' : n === currentLevel ? 'active' : n === currentLevel + 1 ? 'next' : 'locked';
+              const isUpgradeTier = state === 'next' && nextLevel === n;
+              return (
+                <div key={n} style={{
+                  display: 'flex', gap: 10, alignItems: 'flex-start',
+                  padding: '9px 11px',
+                  background: state === 'active' ? `${fColor}16` : 'rgba(20, 18, 32, 0.6)',
+                  border: `1px solid ${state === 'active' ? `${fColor}88` : 'rgba(212, 168, 67, 0.15)'}`,
+                  borderRadius: 2,
+                  opacity: state === 'locked' ? 0.55 : state === 'next' ? 0.85 : 1,
+                }}>
+                  <span style={{
+                    width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-display)',
+                    background: state === 'active' ? fColor : 'transparent',
+                    color: state === 'active' ? '#fff' : 'var(--color-text-secondary)',
+                    border: `1px solid ${state === 'active' ? fColor : 'rgba(212, 168, 67, 0.35)'}`,
+                  }}>
+                    {ROMAN[n]}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: 'var(--font-size-sm)',
+                      color: state === 'active' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                      lineHeight: 1.45,
+                    }}>
+                      {lvl.description}
+                    </div>
+                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 3, display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                      {state === 'active'
+                        ? <span style={{ color: fColor, letterSpacing: '1px', textTransform: 'uppercase' }}>Current level</span>
+                        : <><CostInline cost={lvl.buildCost} iconSize="inline" /></>}
+                      <span>· upkeep +{lvl.expensesBonus}</span>
+                      {(lvl.beautinessBonus ?? 0) !== 0 && <span>· ✦{(lvl.beautinessBonus ?? 0) > 0 ? '+' : ''}{lvl.beautinessBonus}</span>}
+                    </div>
+                    {isUpgradeTier && cost && (
+                      <button
+                        class={`ornate-btn imp-card-cta imp-card-cta-${affordable ? 'actionable' : 'disabled'}`}
+                        disabled={!affordable}
+                        onClick={handleUpgrade}
+                        title={rubbleBlocked ? 'Rubble blocks construction this season.'
+                          : slotLocked ? 'Building slots full — grow population to unlock more.'
+                          : affordable ? (currentLevel === 0 ? `Build ${data.name}` : `Upgrade to ${ROMAN[n]}`)
+                          : 'Cannot afford the cost right now.'}
+                        style={{ marginTop: 7, ...getPriorityStyle(affordable ? 'actionable' : 'disabled', fColor) }}
+                      >
+                        {currentLevel === 0 ? 'Build' : 'Upgrade'} · <CostInline cost={cost} iconSize="inline" />
+                        {effectiveDiscount > 0 && <span style={{ opacity: 0.75 }}> (−{effectiveDiscount}%)</span>}
+                      </button>
+                    )}
+                  </div>
+                  {state === 'done' && <span title="Level achieved" style={{ color: fColor, fontSize: 13, flexShrink: 0 }}>✓</span>}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Synergies */}
+          {synergies.length > 0 && (
+            <>
+              <div style={{
+                fontSize: 'var(--font-size-xs)', letterSpacing: '2px', textTransform: 'uppercase',
+                color: 'var(--color-gold-secondary)', marginTop: 4,
+              }}>
+                Synergies
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {synergies.map(b => (
+                  <div key={b.label} style={{
+                    padding: '7px 11px',
+                    background: 'rgba(20, 18, 32, 0.6)',
+                    border: '1px solid rgba(212, 168, 67, 0.15)',
+                    borderLeft: `3px solid ${b.active ? FACTION_COLORS.purple : 'rgba(138, 92, 194, 0.35)'}`,
+                    borderRadius: 2,
+                    fontSize: 'var(--font-size-sm)',
+                    color: b.active ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+                    lineHeight: 1.4,
+                  }}>
+                    {b.active ? '⚡' : '○'} <strong>{b.label}</strong>{!b.active && b.partnerName ? ` — build ${b.partnerName} to activate` : ''}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Footer */}
+          <div style={{ marginTop: 'auto', paddingTop: 10, display: 'flex', gap: 8 }}>
+            <button
+              onClick={close}
+              style={{
+                flex: 1, padding: '9px 14px',
+                background: 'transparent',
+                border: '1px solid rgba(212, 168, 67, 0.35)',
+                borderRadius: 2,
+                color: 'var(--color-text-secondary)',
+                fontSize: 'var(--font-size-sm)', fontWeight: 600,
+                letterSpacing: '1px', textTransform: 'uppercase',
+                fontFamily: 'var(--font-display)', cursor: 'pointer',
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -2655,6 +2906,11 @@ export function ProvinciaeTab() {
             <GovernorPicker provinceId={selected.id} />
           </OrnateFrame>
         </div>
+      )}
+
+      {/* ── Building Detail Modal ── */}
+      {buildingModalType.value && selected && (
+        <BuildingDetailModal province={selected} type={buildingModalType.value} />
       )}
     </>
   );
