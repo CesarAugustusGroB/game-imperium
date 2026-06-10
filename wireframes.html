@@ -114,6 +114,26 @@
   .vcard .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
   .vcard .statgrid .statpill{justify-content:space-between;padding:3px 6px}
   .vcard.mini{width:128px}
+  /* Carta de doctrina 3:4 (tarot) */
+  .dcard{aspect-ratio:3/4;width:150px;flex:0 0 auto;display:flex;flex-direction:column;padding:0;overflow:hidden;position:relative}
+  .dcard .band{height:22px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;color:#fff;font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;text-transform:uppercase}
+  .dcard .emblem{flex:0 0 34%;display:flex;align-items:center;justify-content:center;font-size:24px;border-bottom:1px solid var(--vio-100);background:repeating-linear-gradient(45deg,var(--vio-50),var(--vio-50) 7px,var(--vio-100) 7px,var(--vio-100) 8px)}
+  .dcard .dbody{padding:8px 9px;display:flex;flex-direction:column;gap:5px;flex:1}
+  .dcard .dfoot{margin-top:auto;border-top:1px dashed var(--vio-200);padding:6px 9px;font-family:var(--mono);font-size:8.5px;color:var(--ink-faint);display:flex;justify-content:space-between;align-items:center}
+  .dcard.locked{opacity:.55;filter:saturate(.4)}
+  .pips{display:flex;gap:3px}
+  .pips i{width:14px;height:5px;border-radius:3px;background:var(--vio-100)}
+  .pips i.on{background:var(--vio-500)}
+  .sch-gold{--sch:#bd8f2c}.sch-red{--sch:#bb4538}.sch-blue{--sch:#4a7cc2}.sch-purple{--sch:#7c3aed}.sch-white{--sch:#9a958a}
+  .dcard[class*=sch-]{border-top:3px solid var(--sch)}
+  .dcard[class*=sch-] .band{background:var(--sch)}
+  .dcard[class*=sch-] .emblem{color:var(--sch)}
+  .socket{aspect-ratio:3/4;width:150px;flex:0 0 auto;border:2px dashed var(--vio-200);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--ink-faint);font-family:var(--mono);font-size:10px;background:var(--vio-50)}
+  .tier{border:1px solid var(--vio-100);border-radius:8px;padding:8px 10px;display:flex;gap:9px;align-items:flex-start;background:var(--white)}
+  .tier .tn{font-family:var(--mono);font-size:10px;width:22px;height:22px;border-radius:50%;border:1px solid var(--vio-300);display:flex;align-items:center;justify-content:center;flex:0 0 auto;color:var(--vio-700)}
+  .tier.active{border-color:var(--vio-500);background:var(--vio-50)}
+  .tier.active .tn{background:var(--vio-600);color:#fff;border-color:var(--vio-600)}
+  .tier.lockt{opacity:.5}
   footer{border-top:1px solid var(--line);padding:28px 0 50px;text-align:center;color:var(--ink-faint);font-style:italic}
 </style>
 </head>
@@ -406,24 +426,97 @@
     <div class="note"><b>Cambios:</b> suministros + munición + totales en una franja de una línea · cohortes y reclutamiento como <b>cartas verticales 9:16</b> (arte arriba con rol y contador superpuestos, nombre + HP + stats en rejilla 2×2, coste y acciones ancladas abajo) · rol en color como banda superior (Vanguard/Guard/Reserve) · munición en violeta (presupuesto de hostigamiento de la batalla decisiva) · legado compacto. <b>Solo wireframe — aún no aplicado al juego.</b></div>
   </section>
 
-  <!-- ============ DOCTRINAE ============ -->
+  <!-- ============ DOCTRINAE (overhaul propuesto) ============ -->
   <section class="screen-panel" id="doctrinae">
-    <div class="screen-head"><span class="id">tab: doctrinae</span><h2>Doctrinae Tab</h2><span class="file">DoctrinaeTab.tsx</span>
-      <p>2 columnas (1.1 / 1): izq slots equipados (drag-drop) + colección · dcha detalle.</p></div>
-    <div class="screen"><div class="canvas" style="min-height:520px;display:flex;flex-direction:column;gap:12px">
-      <div class="panel"><span class="lbl">Masthead</span><div class="ttl" style="font-size:15px">DOCTRINAE · X/Y equipped</div></div>
+    <div class="screen-head"><span class="id">tab: doctrinae</span><h2>Doctrinae Tab</h2><span class="file">DoctrinaeTab.tsx · PROPUESTA</span>
+      <p>Overhaul tipo cartas: doctrinas como <b>cartas 3:4</b> con banda de escuela en color, emblema, pips de nivel y efecto resumido. Slots equipados = zócalos de carta. Detalle a la derecha con <b>pista de niveles I→III</b> y mejora inline.</p></div>
+    <div class="screen"><div class="canvas" style="min-height:620px;display:flex;flex-direction:column;gap:12px">
+      <div class="panel"><span class="lbl">Masthead</span><div class="ttl" style="font-size:15px">DOCTRINAE · 2/3 equipped · 4 in collection</div></div>
+
       <div class="row grow" style="gap:12px;align-items:stretch">
-        <div class="region col grow" style="flex:1.1"><span class="lbl">Izq</span>
-          <div class="panel"><div class="row between"><div class="ttl">Equipped</div><span class="sub">drag ↔ · click to inspect</span></div>
-            <div class="row wrapf" style="gap:9px"><div class="panel solid grow" style="min-width:130px"><div class="row between"><span class="tag">Doctrina</span><span class="chip">II</span></div><div class="ph w90" style="margin-top:7px"></div></div><div class="ghostbox grow center" style="min-width:130px;min-height:54px;color:var(--ink-faint);font-family:var(--mono);font-size:18px">+</div></div>
+        <div class="region col grow" style="flex:1 1 0;min-width:0"><span class="lbl">Izq · cartas</span>
+
+          <!-- Slots equipados: zócalos de carta -->
+          <div class="panel"><div class="row between"><div class="ttl">Equipped · battle slots</div><span class="sub">drag ↔ reordena · click inspecciona</span></div>
+            <div class="row wrapf" style="gap:12px;margin-top:4px">
+              <div class="panel solid dcard sch-gold" style="outline:2px solid var(--vio-500);outline-offset:3px">
+                <div class="band"><span>Gold · Fides</span><span>II</span></div>
+                <div class="emblem">☩</div>
+                <div class="dbody">
+                  <div class="ttl" style="margin:0;font-size:11.5px">Doctrine of Faith</div>
+                  <div class="pips"><i class="on"></i><i class="on"></i><i></i></div>
+                  <div class="sub" style="line-height:1.45">+2 moral por turno de campaña</div>
+                </div>
+                <div class="dfoot"><span>SLOT 1</span><span class="btn ghost" style="padding:2px 7px">✕</span></div>
+              </div>
+              <div class="panel solid dcard sch-red">
+                <div class="band"><span>Red · Ferrum</span><span>I</span></div>
+                <div class="emblem">⚔</div>
+                <div class="dbody">
+                  <div class="ttl" style="margin:0;font-size:11.5px">Blood Tithe</div>
+                  <div class="pips"><i class="on"></i><i></i><i></i></div>
+                  <div class="sub" style="line-height:1.45">Coerción erosiona +1 al enemigo</div>
+                </div>
+                <div class="dfoot"><span>SLOT 2</span><span class="btn ghost" style="padding:2px 7px">✕</span></div>
+              </div>
+              <div class="socket"><span style="font-size:22px">+</span><span>SLOT 3 · vacío</span><span style="font-size:8.5px">arrastra una carta aquí</span></div>
+            </div>
           </div>
-          <div class="panel grow"><div class="row between"><div class="ttl">Collection</div><span class="chip">N avail</span></div><div class="panel solid row between" style="border-left:3px solid var(--vio-500)"><div class="grow"><div class="ph w60"></div><div class="sub">effect</div></div><div class="row" style="gap:5px"><span class="btn ghost">Adopt</span><span class="btn ghost">Sell</span></div></div></div>
+
+          <!-- Colección: mismas cartas, lock por color -->
+          <div class="panel grow"><div class="row between"><div class="ttl">Collection</div><div class="row" style="gap:6px"><span class="chip">4</span><span class="tag">⬒ tu color: GOLD</span></div></div>
+            <div class="row wrapf" style="gap:12px;margin-top:4px">
+              <div class="panel solid dcard sch-gold">
+                <div class="band"><span>Gold</span><span>I</span></div>
+                <div class="emblem">✦</div>
+                <div class="dbody"><div class="ttl" style="margin:0;font-size:11.5px">Miracles</div><div class="pips"><i class="on"></i><i></i><i></i></div><div class="sub" style="line-height:1.45">Cura 200 HP tras cada batalla</div></div>
+                <div class="dfoot"><span class="btn" style="padding:3px 9px">Equip</span><span>Sell 8g</span></div>
+              </div>
+              <div class="panel solid dcard sch-white">
+                <div class="band"><span>White · univ.</span><span>III</span></div>
+                <div class="emblem">❂</div>
+                <div class="dbody"><div class="ttl" style="margin:0;font-size:11.5px">Via Romana</div><div class="pips"><i class="on"></i><i class="on"></i><i class="on"></i></div><div class="sub" style="line-height:1.45">+2 suministros por turno</div></div>
+                <div class="dfoot"><span class="btn" style="padding:3px 9px">Equip</span><span>Sell 16g</span></div>
+              </div>
+              <div class="panel solid dcard sch-blue locked">
+                <div class="band"><span>Blue</span><span>I</span></div>
+                <div class="emblem">◈</div>
+                <div class="dbody"><div class="ttl" style="margin:0;font-size:11.5px">Silver Tongue</div><div class="pips"><i class="on"></i><i></i><i></i></div><div class="sub" style="line-height:1.45">Diplomacia cuesta −1 oro</div></div>
+                <div class="dfoot"><span>🔒 color-lock</span><span>Sell 8g</span></div>
+              </div>
+              <div class="panel solid dcard sch-purple locked">
+                <div class="band"><span>Purple</span><span>II</span></div>
+                <div class="emblem">⚖</div>
+                <div class="dbody"><div class="ttl" style="margin:0;font-size:11.5px">Quartermaster</div><div class="pips"><i class="on"></i><i class="on"></i><i></i></div><div class="sub" style="line-height:1.45">Logística da +2 suministros</div></div>
+                <div class="dfoot"><span>🔒 color-lock</span><span>Sell 12g</span></div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="region grow" style="flex:1"><span class="lbl">Detalle</span>
-          <div class="panel" style="height:100%"><div class="sub">Tier I · Equipped</div><div class="ttl" style="font-size:18px">DOCTRINE NAME</div><div class="ph w90"></div><div class="ph w75"></div><div class="row" style="gap:8px;margin:10px 0"><div class="panel solid grow"><div class="sub">Current</div></div><div class="panel solid grow"><div class="sub">Next Tier</div></div></div><div class="row wrapf" style="gap:7px"><span class="btn">Upgrade</span><span class="btn ghost">Unequip</span><span class="btn ghost">Sell</span></div></div>
+
+        <!-- Detalle: carta inspeccionada + pista de niveles -->
+        <div class="region" style="width:300px;flex:0 1 auto;min-width:260px"><span class="lbl">Detalle · 300px</span>
+          <div class="panel" style="height:100%;border-top:3px solid #bd8f2c">
+            <div class="row between"><span class="tag" style="background:#bd8f2c;color:#fff;border-color:#bd8f2c">GOLD · FIDES</span><span class="chip">Slot 1</span></div>
+            <div class="ttl" style="font-size:17px;margin-top:8px">DOCTRINE OF FAITH</div>
+            <div class="sub" style="font-style:italic;margin-bottom:10px">"La fe sostiene a las legiones cuando el acero flaquea."</div>
+
+            <div class="subtitle" style="margin:10px 0 6px">Niveles</div>
+            <div class="col" style="gap:7px">
+              <div class="tier"><span class="tn">I</span><div class="grow"><div class="sub" style="color:var(--ink)">+1 moral por turno</div></div><span class="tag">✓</span></div>
+              <div class="tier active"><span class="tn">II</span><div class="grow"><div class="sub" style="color:var(--ink)">+2 moral por turno</div><div class="sub" style="font-size:9px">NIVEL ACTUAL</div></div></div>
+              <div class="tier lockt"><span class="tn">III</span><div class="grow"><div class="sub" style="color:var(--ink)">+3 moral y +1 disciplina por turno</div><span class="btn" style="display:inline-block;margin-top:6px">Upgrade · ⚜25</span></div></div>
+            </div>
+
+            <div class="subtitle" style="margin:12px 0 6px">Efecto de campaña</div>
+            <div class="panel solid" style="border-left:3px solid #7c3aed"><div class="sub" style="line-height:1.5">Iter Belli: +moral cada turno mientras esté equipada.</div></div>
+
+            <div class="row" style="gap:7px;margin-top:12px"><span class="btn ghost grow" style="text-align:center">Unequip</span><span class="btn ghost grow" style="text-align:center">Sell · 12g</span></div>
+          </div>
         </div>
       </div>
     </div></div>
+    <div class="note"><b>Cambios propuestos:</b> doctrinas como <b>cartas 3:4</b> (banda superior con escuela + nivel romano, emblema, nombre, <b>pips de progreso I–III</b>, efecto actual en una línea, pie con acciones) · slots equipados como <b>zócalos de carta</b> (vacío = silueta punteada con "+") · cartas fuera de tu color en gris con 🔒 color-lock · detalle con <b>pista de niveles</b> (hecho ✓ / actual / siguiente con botón Upgrade y coste inline) y el efecto de campaña destacado en violeta. <b>Solo wireframe — aún no aplicado al juego.</b></div>
   </section>
 
   <!-- ============ DECRETA ============ -->
