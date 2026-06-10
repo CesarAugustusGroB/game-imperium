@@ -240,6 +240,16 @@
   .subtitle{font-family:var(--font-display);font-weight:600;font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--vio-500);margin:36px 0 16px;display:flex;align-items:center;gap:14px}
   .subtitle::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--vio-200),transparent)}
 
+  /* audit status badges + tables */
+  .st{display:inline-block;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;border-radius:6px;padding:2px 9px;font-style:normal}
+  .st.ok{background:#e7f4e2;color:#3f6e34;border:1px solid #9cc28e}
+  .st.part{background:#fdf3df;color:#8a6420;border:1px solid #ddbe7e}
+  .st.dead{background:#fbe7e4;color:#9a3527;border:1px solid #dd9a8e}
+  .audit-table{width:100%;border-collapse:collapse;margin:8px 0 26px;font-size:15px}
+  .audit-table th{font-family:var(--font-display);font-weight:600;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--vio-500);text-align:left;padding:8px 12px;border-bottom:2px solid var(--vio-200)}
+  .audit-table td{padding:9px 12px;border-bottom:1px solid var(--vio-100);color:var(--ink-soft);vertical-align:top}
+  .audit-table td:first-child{font-family:var(--font-display);font-weight:600;color:var(--vio-900);white-space:nowrap}
+
   footer{border-top:1px solid var(--line);padding:34px 0 60px;text-align:center;color:var(--ink-faint);font-style:italic}
   footer .mono{font-style:normal;background:none;border:none;color:var(--vio-500);padding:0}
 </style>
@@ -266,6 +276,7 @@
     <button class="tab" data-tab="cartas"><span class="glyph">◈</span>Doctrinae &amp; Decreta</button>
     <button class="tab" data-tab="iterbelli"><span class="glyph">⚑</span>Iter Belli</button>
     <button class="tab" data-tab="componentes"><span class="glyph">❖</span>Componentes UI</button>
+    <button class="tab" data-tab="efectos"><span class="glyph">⚖</span>Efectos &amp; Auditoría</button>
   </div>
 </nav>
 
@@ -659,7 +670,7 @@
     <div class="grid g3">
       <div class="card">
         <h3><span class="ic">◈</span>Renderizado</h3>
-        <ul><li><b>DecretumRenderer</b> — carta de pergamino completa</li><li><b>DoctrineRenderer</b> — carta de doctrina con badge de nivel</li><li><b>ChoiceButton</b> — botón de elección de evento</li><li><b>ResourceBar / ResourceIcon</b> — chips de recurso</li><li><b>GameIcon</b> — glifos del juego (+ <code>icon-system.ts</code>)</li></ul>
+        <ul><li><b>DecretumRenderer</b> — carta de pergamino completa</li><li><b>DoctrineRenderer</b> — carta de doctrina con badge de nivel</li><li><b>ResourceBar / ResourceIcon</b> — chips de recurso</li><li><b>GameIcon</b> — glifos del juego (+ <code>icon-system.ts</code>)</li></ul>
       </div>
       <div class="card">
         <h3><span class="ic">▣</span>Elementos compartidos</h3>
@@ -707,6 +718,54 @@
           <li><code>iter-belli-scenario.ts</code> — escenario <b>SAGUNTUM</b></li>
         </ul>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ EFECTOS & AUDITORÍA ============ -->
+  <section class="panel" id="efectos">
+    <div class="panel-head">
+      <div class="num">X</div>
+      <h2>Efectos &amp; Auditoría</h2>
+      <p>Inventario de <b>todos los sistemas de efectos</b> con su estado real en el código (auditoría de junio 2026), más el veredicto de coherencia numérica. Si reescribes un efecto o lo implementas, actualiza su fila aquí.</p>
+    </div>
+
+    <div class="note">
+      <b>Veredicto numérico: coherente, ajustado a propósito.</b> &nbsp;Sin deadlocks económicos. Iuniores como cuello de botella (100/pop/temporada vs 1.000 por recluta o curación completa). Suministros de campaña con colchón fino (28 inicio vs 24 de upkeep en 12 días). Caps consistentes: income +75%, tienda −75%, inversión −90% con suelo 1. Las 33 cartas de campaña tienen puertas de oro exactas y ninguna domina a otra. En batalla, los 5 stats tienen órdenes y todas las constantes <code>BAL</code> se usan.
+    </div>
+
+    <div class="subtitle">Estado por sistema de efectos</div>
+    <table class="audit-table">
+      <tr><th>Sistema</th><th>Estado</th><th>Detalle</th></tr>
+      <tr><td>Doctrinas · embark</td><td><span class="st ok">vivo</span></td><td>Bonos de embark (soldados/oro/moral) agregados por <code>getEmbarkBonus()</code> y aplicados al iniciar campaña.</td></tr>
+      <tr><td>Doctrinas · income / tienda</td><td><span class="st ok">vivo</span></td><td><code>income-modifier</code> (cap +75%) y <code>shop-discount</code> (cap −75%) conectados a recursos y mercado de asesores.</td></tr>
+      <tr><td>Doctrinas · campaña</td><td><span class="st ok">vivo</span></td><td>Hooks por color en <code>iter-belli-doctrines.ts</code>: rojo +enemyWeaken en Coerción, azul −coste Diplomacia, púrpura +suministros Logística, oro +moral/turno, blanco +suministros/turno. Stackean por slot.</td></tr>
+      <tr><td>Doctrinas · upkeep-reduction</td><td><span class="st dead">muerto</span></td><td>Tipo declarado (Infrastructure, Annona) que <b>nadie lee</b>. La descripción promete reducir upkeep de provincia sin efecto real.</td></tr>
+      <tr><td>Decreta · hub</td><td><span class="st ok">vivo</span></td><td><code>toHubEffect()</code> mapea <code>resource-gain</code> → oro/iuniores, <code>heal</code> → cura ejército, <code>spawn</code> → recluta iuniores, <code>upkeep-reduction</code> → exime upkeep por temporadas (ficha verde con countdown).</td></tr>
+      <tr><td>Decreta · batalla</td><td><span class="st dead">muerto</span></td><td><b>El módulo de batalla nunca importa decreta.</b> ~10 de 30 pergaminos (buffs, daño de área, prevent-death, convert-enemy, reveal) no se pueden lanzar en ningún sitio.</td></tr>
+      <tr><td>Asesores · embark</td><td><span class="st part">parcial</span></td><td>10 de 11 tipos de pasiva mapeados por <code>passiveModifier()</code> (upkeep, amenaza, botín, moral, soldados, días extra…). <b>Excepción:</b> <code>shop-discount</code> de Smuggler Gaius — el switch omite el caso y el bono de embark se pierde en silencio (el descuento de mercado del hub sí funciona).</td></tr>
+      <tr><td>Asesores · consilium</td><td><span class="st ok">vivo</span></td><td>Misión del primer asiento (+50/80 oro condicional) y quests secundarias por color (ventana 3+tier turnos) inyectadas en campaña.</td></tr>
+      <tr><td>Traits de legado · formaciones</td><td><span class="st ok">vivo</span></td><td>Los traits desbloquean las formaciones únicas: veteran/disciplined/tactician → <b>triplex</b>, cautious/stoic → <b>testudo</b>, aggressive/swift → <b>cuneus</b>.</td></tr>
+      <tr><td>Traits de legado · stats</td><td><span class="st dead">muerto</span></td><td>Los bonos declarados (+15% charge, +20% movement, +moral…) <b>no se aplican</b> en <code>buildPlayerSeed</code>. Hoy el legado solo es llave de formación.</td></tr>
+      <tr><td>Comandantes · habilidades</td><td><span class="st part">parcial</span></td><td>Cartas firma por arquetipo en campaña: <span class="st ok">vivo</span>. Habilidades estratégicas (<code>useStrategic</code>): lógica completa pero <b>sin UI que las dispare</b>; Manipulate y Golden Opportunity ni siquiera tienen consumidor. Pasiva Veteran Stacks sin medir.</td></tr>
+      <tr><td>Edificios · efectos base</td><td><span class="st ok">vivo</span></td><td>Income/unrest/food/upkeep por nivel aplicados en el tick. Aqueduct T3 (+10% income imperial), Insula T2/T3 (umbral de rebelión 90/101) y Granary T3 (retrasa la hambruna dura) <b>verificados en código</b>.</td></tr>
+      <tr><td>Edificios · textos especiales</td><td><span class="st dead">muerto</span></td><td>Texto sin código: Market T3 «exchange rates», Villa T3 «yield doubled», Fishery T3 «coastal fed», Stables «cavalry units». Castrum (unidad gratis) y Pantheon T3 (revive) generan el efecto pero <b>la batalla no lo consume</b>.</td></tr>
+      <tr><td>Sinergias de edificios</td><td><span class="st part">parcial</span></td><td>Market+Port (Trade Hub) vivo. <b>3 de 6 apuntan a edificios inexistentes</b> (Forge, Sacred Grove, Mine).</td></tr>
+      <tr><td>Features únicas de provincia</td><td><span class="st part">parcial</span></td><td>Outputs planos (oro/comida/iuniores por temporada) vivos. Los 4 especiales (<code>extra-event-choice</code>, <code>cavalry-bonus</code>, <code>unit-discount</code>, <code>famine-immunity</code>) declarados y sin aplicar.</td></tr>
+      <tr><td>Gobernadores</td><td><span class="st part">parcial</span></td><td><code>income-bonus</code>, <code>expense-reduction</code> e <code>investment-discount</code> conectados. <code>garrison-strength</code> y <code>population-growth</code> sin sitio de aplicación localizado.</td></tr>
+    </table>
+
+    <div class="subtitle">Roadmap de mejora (priorizado)</div>
+    <div class="flow">
+      <div class="step"><div class="n">1</div><div class="body"><b>Decreta en batalla</b><p>Un slot «Decretum» en la barra de órdenes de la batalla decisiva (un lanzamiento por batalla, descarta el pergamino). Revive los ~10 scrolls muertos y conecta hub ↔ batalla. La mejora con más identidad.</p></div></div>
+      <div class="step"><div class="n">2</div><div class="body"><b>Pasada de honestidad</b><p>Implementar o reescribir los 4 textos de edificio que mienten. Villa T3 (duplicar food de farmland) y Market T3 (cambiar a +1 PWG) son triviales.</p></div></div>
+      <div class="step"><div class="n">3</div><div class="body"><b>Bonos de legado en el seed</b><p>Aplicar los stat-bonus de los traits en <code>buildPlayerSeed</code> (~10 líneas). El legado pasa de llave de formación a elección con peso.</p></div></div>
+      <div class="step"><div class="n">4</div><div class="body"><b>Conectar upkeep-reduction</b><p>Doctrinas Infrastructure/Annona → expenses de provincia, o re-flavor a suministros de campaña (la maquinaria de los asesores ya existe).</p></div></div>
+      <div class="step"><div class="n">5</div><div class="body"><b>Fixes de 2 líneas</b><p>Caso <code>shop-discount</code> en <code>passiveModifier()</code>. Y decidir destino de las habilidades estratégicas de comandante (recablear a Iter Belli como firma extra, o eliminar).</p></div></div>
+      <div class="step"><div class="n">6</div><div class="body"><b>Blindar con verify-effects.ts</b><p>Script que recorra doctrinas/decreta/traits y falle si un tipo de efecto declarado no tiene sitio de aplicación — el drift que esta auditoría encontró a mano.</p></div></div>
+    </div>
+
+    <div class="note">
+      <b>Números clave de referencia.</b> &nbsp;Cohortes 20–100 oro + 1.000 iuniores (HP plano 1.000, identidad por stats) · legado 80 oro · armadura 60/120/220 oro (5→12→20→30% mitig.) · suministros 2/oro (cap 80), munición 1/oro (cap 60) · campaña: 12 días, upkeep 2×día, motín moral&lt;3 (30%), emboscada amenaza≥5 (30%), escaramuza ≥7 (50%) · Aníbal 7.000 soldados ×(1+amenaza/20)×(1−weaken×0,07), suelo 2.000, disciplina 6 · batalla: d6→d9 por control del centro, 14 rondas máx, moral 0–15 (mult. 0,6–1,5).
     </div>
   </section>
 
