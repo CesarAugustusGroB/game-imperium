@@ -297,8 +297,8 @@
 
   <!-- ============ PROVINCIAE ============ -->
   <section class="screen-panel" id="provinciae">
-    <div class="screen-head"><span class="id">tab: provinciae</span><h2>Provinciae Tab</h2><span class="file">ProvinceScreen.tsx</span>
-      <p>3 columnas (260 / 1 / 360): ledger · detalle (admin + 3 métricas + edificios) · inversiones / gobernadores.</p></div>
+    <div class="screen-head"><span class="id">tab: provinciae</span><h2>Provinciae Tab</h2><span class="file">forum/tabs/ProvinciaeTab.tsx</span>
+      <p>3 columnas (260 / 1 / 360): ledger · detalle (admin + 3 métricas + edificios) · inversiones / gobernadores. <b>Click en un edificio → modal de detalle</b> (abajo).</p></div>
     <div class="screen"><div class="canvas" style="min-height:540px;display:flex;flex-direction:column;gap:12px">
       <div class="panel"><span class="lbl">Masthead</span><div class="ttl" style="font-size:15px">PROVINCIAE</div></div>
       <div class="row grow" style="gap:12px;align-items:stretch">
@@ -319,6 +319,42 @@
       </div>
     </div></div>
     <div class="note"><b>Fix aplicado:</b> las 3 tarjetas de métrica (Wealth/Population/Order) ahora comparten altura = la mayor.</div>
+
+    <!-- Modal de detalle de edificio (PROPUESTA) -->
+    <div class="screen-head" style="margin-top:18px"><span class="id">modal: building</span><h2>Building Detail Modal</h2><span class="file">PROPUESTA</span>
+      <p>Al clicar un edificio en el grid: overlay con el <b>arte a máxima resolución</b> a la izquierda y, a la derecha, descripción + <b>pista de niveles I→III</b> con los stats de cada nivel y la mejora inline.</p></div>
+    <div class="screen"><div class="canvas" style="min-height:480px;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,var(--vio-50),var(--vio-50) 7px,var(--vio-100) 7px,var(--vio-100) 8px)">
+      <div class="panel solid" style="width:min(880px,96%);border-top:3px solid #bd8f2c;box-shadow:0 18px 50px rgba(60,30,120,.25);display:flex;gap:0;padding:0;overflow:hidden">
+
+        <!-- Izquierda: arte a máxima resolución -->
+        <div style="flex:0 0 46%;min-height:420px;background:repeating-linear-gradient(45deg,var(--vio-100),var(--vio-100) 9px,var(--vio-50) 9px,var(--vio-50) 10px);display:flex;align-items:center;justify-content:center;position:relative;border-right:1px solid var(--vio-200)">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--ink-faint)">[ building_pantheon.png · máx. resolución ]</span>
+          <span class="tag" style="position:absolute;top:10px;left:10px;background:#bd8f2c;color:#fff;border-color:#bd8f2c">GOLD</span>
+          <span class="chip" style="position:absolute;bottom:10px;left:10px">✦ Beautiness +8</span>
+        </div>
+
+        <!-- Derecha: detalle -->
+        <div class="col grow" style="padding:16px 18px;gap:8px">
+          <div class="row between" style="align-items:flex-start">
+            <div><div class="ttl" style="font-size:19px;margin:0">PANTHEON</div><div class="sub" style="font-style:italic">"Temples to the Roman gods maintain divine favour and civic morale."</div></div>
+            <span class="btn ghost" style="padding:3px 9px">✕</span>
+          </div>
+          <div class="row" style="gap:6px"><span class="chip">Nivel II / III</span><span class="chip">Roma</span><span class="chip">slot 2/4</span></div>
+
+          <div class="subtitle" style="margin:8px 0 4px">Niveles</div>
+          <div class="col" style="gap:6px">
+            <div class="tier"><span class="tn">I</span><div class="grow"><div class="sub" style="color:var(--ink)">+1 Gold/season · −5 Unrest/season</div><div class="sub" style="font-size:9px">⚜5 · upkeep +1 · ✦+5</div></div><span class="tag">✓</span></div>
+            <div class="tier active"><span class="tn">II</span><div class="grow"><div class="sub" style="color:var(--ink)">+2 Gold/season · −10 Unrest/season</div><div class="sub" style="font-size:9px">NIVEL ACTUAL · upkeep +1 · ✦+8</div></div></div>
+            <div class="tier lockt"><span class="tn">III</span><div class="grow"><div class="sub" style="color:var(--ink)">+3 Gold/season · −15 Unrest/season · las unidades reviven una vez</div><div class="sub" style="font-size:9px">upkeep +2 · ✦+10</div><span class="btn" style="display:inline-block;margin-top:6px">Upgrade · ⚜26</span></div></div>
+          </div>
+
+          <div class="panel solid" style="border-left:3px solid #7c3aed;margin-top:8px"><div class="sub" style="line-height:1.5"><b>Sinergia activa:</b> Pantheon + Gardens → +1 oro/temporada extra (Ciudad Sagrada).</div></div>
+
+          <div class="row" style="gap:7px;margin-top:auto;padding-top:10px"><span class="btn grow" style="text-align:center">Upgrade · ⚜26</span><span class="btn ghost grow" style="text-align:center">Cerrar</span></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="note"><b>Modal propuesto:</b> overlay centrado (~880px) con backdrop oscurecido · izquierda 46% el <b>arte del edificio a máxima resolución</b> (PNG hi-res si existe — basilica/castrum/pantheon — o el SVG ornamental como fallback) con tag de escuela y beautiness · derecha nombre + flavour + chips de contexto (nivel, provincia, slot) + <b>pista de niveles</b> con income/unrest/upkeep/coste por nivel (✓ hechas, actual resaltado, siguiente con Upgrade inline) + sinergias activas en violeta · cerrar con ✕, click fuera o Esc. <b>Solo wireframe — aún no aplicado al juego.</b></div>
   </section>
 
   <!-- ============ CONSILIUM ============ -->
