@@ -1,5 +1,5 @@
 export type Faction = 'gold' | 'red' | 'blue' | 'purple' | 'white';
-export type ResourceType = 'gold' | 'faith' | 'influence' | 'momentum' | 'iuniores';
+export type ResourceType = 'gold' | 'iuniores';
 
 export interface CommanderAbility {
   name: string;
@@ -59,8 +59,5 @@ export function isColorMatch(itemColor: Faction, commanderColor: Faction): boole
 /** Resource display info. */
 export const RESOURCE_INFO: Record<ResourceType, { icon: string; label: string; color: string }> = {
   gold: { icon: '\uD83D\uDCB0', label: 'Gold', color: '#d4a843' },
-  faith: { icon: '\u2B50', label: 'Faith', color: '#e8c84a' },
-  influence: { icon: '\uD83D\uDC51', label: 'Influence', color: '#4a7cc2' },
-  momentum: { icon: '\uD83D\uDD25', label: 'Momentum', color: '#c24a3a' },
   iuniores: { icon: '\uD83D\uDEE1\uFE0F', label: 'Iuniores', color: '#a88b5c' },
 };

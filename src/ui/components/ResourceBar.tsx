@@ -4,7 +4,6 @@ import { gold, iuniores } from '../../game/core/resources';
 import { selectedCommander, globalSeason, MAX_SEASONS } from '../../game/core/game-state';
 import { RESOURCE_INFO } from '../../game/core/commander';
 
-/** Only gold and iuniores are live; faith/influence/momentum are deprecated and never shown. */
 type LiveResource = 'gold' | 'iuniores';
 import { Tooltip } from './Tooltip';
 import { InlineImageIcon, ResourceIcon } from './ResourceIcon';

@@ -60,9 +60,6 @@ const LEVEL_NUMERALS = ['I', 'II', 'III'] as const;
 
 const RESOURCE_LABELS: Record<ResourceType, string> = {
   gold: 'Gold',
-  faith: 'Faith',
-  influence: 'Influence',
-  momentum: 'Momentum',
   iuniores: 'Iuniores',
 };
 

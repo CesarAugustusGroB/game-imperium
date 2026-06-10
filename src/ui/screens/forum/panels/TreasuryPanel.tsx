@@ -15,10 +15,9 @@ interface TreasuryPanelProps {
 }
 
 /**
- * Aerarium — the treasury readout. Only the resources actually live in this
- * worktree are shown (Aurum/gold, Iuniores, Season); faith/influence/momentum
- * are deprecated and intentionally omitted. Each meter shows value, the last
- * observed delta, and a fill bar toward a soft reference cap.
+ * Aerarium — the treasury readout (Aurum/gold, Iuniores, Season). Each meter
+ * shows value, the last observed delta, and a fill bar toward a soft
+ * reference cap.
  */
 export function TreasuryPanel({ accent = '#d4a843', index = 0 }: TreasuryPanelProps) {
   const priority: CardPriority = gold.value <= 0

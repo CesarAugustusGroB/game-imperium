@@ -12,7 +12,7 @@ import {
 import type { Doctrine } from '../../../../game/items/doctrine';
 import { FACTION_COLORS } from '../../../../game/core/commander';
 import type { ResourceType } from '../../../../game/core/commander';
-import { gold, faith, influence, momentum, iuniores } from '../../../../game/core/resources';
+import { gold, iuniores } from '../../../../game/core/resources';
 import { playSfx } from '../../../sound/sfx';
 import { BentoCard } from '../../../components/BentoCard';
 import { Corners } from '../../../components/motifs/Corners';
@@ -651,9 +651,6 @@ function InfoBox({ label, value, color, serif }: { label: string; value: string;
 function resourceValue(type: ResourceType): number {
   switch (type) {
     case 'gold':      return gold.value;
-    case 'faith':     return faith.value;
-    case 'influence': return influence.value;
-    case 'momentum':  return momentum.value;
     case 'iuniores':  return iuniores.value;
   }
 }

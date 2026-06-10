@@ -297,7 +297,7 @@
       <div class="card">
         <span class="tag">Núcleo</span>
         <h3><span class="ic">⚜</span>Recursos &amp; Estado</h3>
-        <p>Señales Preact reactivas para oro, fe, influencia, momentum e iuniores; estado de run persistido en <code>meta-save</code>.</p>
+        <p>Señales Preact reactivas para oro e iuniores; estado de run persistido en <code>meta-save</code>.</p>
       </div>
     </div>
 
@@ -320,7 +320,7 @@
     </div>
 
     <div class="note">
-      <b>Recursos deprecados.</b> &nbsp;<code>faith</code>, <code>influence</code> y <code>momentum</code> siguen en el tipo <code>ResourceType</code> pero están marcados <code>@deprecated</code> y <b>ocultos</b>. El <code>TreasuryPanel</code> (Aerarium) los omite a propósito: <i>"only the resources actually live in this worktree are shown"</i>.
+      <b>Recursos eliminados.</b> &nbsp;<code>faith</code>, <code>influence</code> y <code>momentum</code> fueron <b>eliminados del código</b>: <code>ResourceType</code> es ahora <code>'gold' | 'iuniores'</code>. Los saves antiguos siguen cargando (las claves sobrantes se ignoran al deserializar).
     </div>
 
     <div class="subtitle">Recursos vivos del Foro</div>
@@ -576,7 +576,7 @@
     <div class="subtitle">Recursos de campaña</div>
     <div class="chips">
       <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#7c3aed,#4a1d8f)">⚔</div><div class="meta"><b>Soldados</b><span>Si bajan de 1000 → la campaña fracasa</span></div></div>
-      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#9560f0,#532388)">♺</div><div class="meta"><b>Moral</b><span>0–10 · bajo 3 hay riesgo de motín</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#9560f0,#532388)">♺</div><div class="meta"><b>Moral</b><span>0–15 · bajo 3 hay riesgo de motín</span></div></div>
       <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#6d28d9,#3d1a63)">⛨</div><div class="meta"><b>Disciplina</b><span>0–10 · desbloquea formaciones/órdenes</span></div></div>
       <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#b794f6,#7c3aed)">❦</div><div class="meta"><b>Suministros</b><span>−1 por turno · a 0 llega el hambre</span></div></div>
       <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#9560f0,#6d28d9)">➶</div><div class="meta"><b>Munición</b><span>Hostigamiento en la batalla decisiva</span></div></div>

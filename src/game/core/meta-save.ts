@@ -47,7 +47,7 @@ import {
   threatLevel,
   veteranStacks,
 } from './game-state';
-import { faith, gold, influence, initResources, iuniores, momentum, type Resources } from './resources';
+import { gold, initResources, iuniores, type Resources } from './resources';
 import type { Legate } from '../army/legate';
 import { normalizeCohortRoster } from '../army/cohort';
 import { SUPPLY_MAX_CARRY, SUPPLY_MORALE_PENALTY_CAP, AMMO_MAX_CARRY } from '../../config/game-config';
@@ -171,9 +171,6 @@ export const metaSave = signal<MetaSave>(createDefaultSave());
 function normalizeResources(resources: Partial<SavedResources> | null | undefined): Resources {
   const normalized: Resources = {
     gold: typeof resources?.gold === 'number' ? resources.gold : 0,
-    faith: typeof resources?.faith === 'number' ? resources.faith : 0,
-    influence: typeof resources?.influence === 'number' ? resources.influence : 0,
-    momentum: typeof resources?.momentum === 'number' ? resources.momentum : 0,
     iuniores: typeof resources?.iuniores === 'number' ? resources.iuniores : 0,
   };
   return normalized;
@@ -399,9 +396,6 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     commanderId: commander.id,
     resources: {
       gold: gold.value,
-      faith: faith.value,
-      influence: influence.value,
-      momentum: momentum.value,
       iuniores: iuniores.value,
     },
     iunioresSeeded: true,
@@ -586,9 +580,6 @@ export async function restoreActiveRun(): Promise<boolean> {
         ...snapshot,
         resources: {
           gold: gold.value,
-          faith: faith.value,
-          influence: influence.value,
-          momentum: momentum.value,
           iuniores: iuniores.value,
         },
         iunioresSeeded: true,
