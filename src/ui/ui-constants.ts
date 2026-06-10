@@ -1,7 +1,7 @@
 import type { ResourceType } from '../game/core/commander';
 
 // ── Shared panel style tokens ──
-// Used by HubScreen, ProvinceScreen, and any future screens that use the
+// Used by the Forum tabs and any future screens that use the
 // standard dark-glass panel aesthetic.
 
 export const PANEL = {

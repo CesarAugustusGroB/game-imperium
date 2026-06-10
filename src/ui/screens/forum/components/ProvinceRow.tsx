@@ -6,7 +6,7 @@ import {
 } from '../../../../game/province/province';
 import { getAssignedGovernor, getGovernorTraits, getGovernorSalary } from '../../../../game/province/governor-store';
 import { ROMAN } from '../../../ui-constants';
-import { TERRAIN_ICONS, TRADE_GOOD_ICONS } from '../../ProvinceScreen';
+import { TERRAIN_ICONS, TRADE_GOOD_ICONS } from '../tabs/ProvinciaeTab';
 import { Tooltip } from '../../../components/Tooltip';
 import { ResourceAmount } from '../../../components/ResourceIcon';
 import { getPriorityStyle, priorityClass, type CardPriority } from '../../../components/card-priority';

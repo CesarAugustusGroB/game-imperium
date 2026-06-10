@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imperium · Wireframes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cormorant+Garamond:ital@0;1&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --vio-900:#2a1147;--vio-800:#3d1a63;--vio-700:#532388;--vio-600:#6d28d9;--vio-500:#7c3aed;
+    --vio-400:#9560f0;--vio-300:#b794f6;--vio-200:#d6bcfa;--vio-100:#ede4fb;--vio-50:#f6f1fd;
+    --paper:#fbf9ff;--ink:#241038;--ink-soft:#5a4a72;--ink-faint:#8b7ca3;--line:#e3d6f5;--white:#fff;
+    --fill:#f3eefb;--fill-2:#eadff8;
+    --display:'Cinzel',serif;--body:'Cormorant Garamond',serif;--mono:'Spline Sans Mono',monospace;
+    --shadow:0 4px 14px rgba(61,26,99,.10),0 14px 44px rgba(109,40,217,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--body);color:var(--ink);font-size:17px;min-height:100vh;
+    background:radial-gradient(1100px 560px at 88% -8%,var(--vio-100),transparent 60%),var(--paper)}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 26px}
+
+  header.top{padding:50px 0 18px;text-align:center}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.4em;text-transform:uppercase;color:var(--vio-500);
+    display:inline-flex;align-items:center;gap:13px;margin-bottom:13px}
+  .eyebrow::before,.eyebrow::after{content:"";width:38px;height:1px;background:linear-gradient(90deg,transparent,var(--vio-300),transparent)}
+  header.top h1{font-family:var(--display);font-weight:800;font-size:clamp(36px,5.5vw,60px);color:var(--vio-900);letter-spacing:.02em;line-height:1}
+  header.top p{color:var(--ink-soft);font-style:italic;font-size:19px;margin-top:9px}
+
+  .tabbar{position:sticky;top:0;z-index:30;background:rgba(251,249,255,.86);backdrop-filter:blur(12px) saturate(1.3);
+    border-bottom:1px solid var(--line);margin-top:16px}
+  .tabbar .wrap{display:flex;gap:2px;overflow-x:auto;padding-top:9px;scrollbar-width:thin}
+  .tabbar .wrap::-webkit-scrollbar{height:5px}.tabbar .wrap::-webkit-scrollbar-thumb{background:var(--vio-200);border-radius:99px}
+  .tab{flex:0 0 auto;border:none;background:none;cursor:pointer;font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--ink-faint);padding:12px 13px 14px;border-bottom:2px solid transparent;white-space:nowrap;transition:.2s}
+  .tab:hover{color:var(--vio-700)}
+  .tab.active{color:var(--vio-800);border-color:var(--vio-600);font-weight:600}
+
+  main{padding:34px 0 110px}
+  .screen-panel{display:none;animation:rise .45s cubic-bezier(.2,.7,.2,1)}
+  .screen-panel.active{display:block}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+  .screen-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:22px}
+  .screen-head .id{font-family:var(--mono);font-size:12px;color:var(--vio-400);background:var(--vio-50);border:1px solid var(--vio-100);padding:3px 9px;border-radius:7px}
+  .screen-head h2{font-family:var(--display);font-weight:700;font-size:28px;color:var(--vio-900)}
+  .screen-head .file{font-family:var(--mono);font-size:12px;color:var(--ink-faint)}
+  .screen-head p{flex-basis:100%;color:var(--ink-soft);font-style:italic;font-size:17px;margin-top:2px}
+
+  /* ── wireframe kit ── */
+  .screen{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+  .canvas{background:
+      linear-gradient(0deg,rgba(124,58,237,.03),rgba(124,58,237,.03)),
+      repeating-linear-gradient(0deg,transparent,transparent 23px,rgba(124,58,237,.045) 23px,rgba(124,58,237,.045) 24px),
+      repeating-linear-gradient(90deg,transparent,transparent 23px,rgba(124,58,237,.045) 23px,rgba(124,58,237,.045) 24px);
+    padding:16px}
+  .region{position:relative;border:1.5px dashed var(--vio-300);border-radius:7px;padding:14px 11px 11px}
+  .region>.lbl,.panel>.lbl{position:absolute;top:-8px;left:9px;background:#fff;padding:0 6px;font-family:var(--mono);
+    font-size:9.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--vio-500)}
+  .panel{position:relative;border:1px solid var(--vio-200);border-radius:7px;background:var(--fill);padding:13px 11px 11px}
+  .panel.solid{background:var(--white)}
+  .panel .lbl{color:var(--vio-600)}
+  .ttl{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--vio-800);margin-bottom:7px}
+  .sub{font-family:var(--mono);font-size:9.5px;color:var(--ink-faint);margin-top:5px}
+  .ph{height:7px;border-radius:4px;background:var(--vio-100)}
+  .ph+.ph{margin-top:6px}
+  .ph.w90{width:90%}.ph.w75{width:75%}.ph.w60{width:60%}.ph.w45{width:45%}.ph.w30{width:30%}
+  .row{display:flex;gap:10px}.col{display:flex;flex-direction:column;gap:10px}
+  .between{justify-content:space-between;align-items:center}
+  .center{align-items:center;justify-content:center}
+  .wrapf{flex-wrap:wrap}
+  .grow{flex:1;min-width:0}
+  .btn{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#fff;background:var(--vio-600);
+    border-radius:6px;padding:8px 12px;text-align:center;white-space:nowrap}
+  .btn.ghost{background:transparent;color:var(--vio-600);border:1px solid var(--vio-300)}
+  .btn.danger{background:transparent;color:#b85a5a;border:1px solid #e3b8b8}
+  .btn.cta{background:linear-gradient(180deg,var(--vio-600),var(--vio-700));padding:11px 18px;font-size:11px}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9.5px;color:var(--vio-700);
+    background:var(--vio-50);border:1px solid var(--vio-100);border-radius:99px;padding:4px 9px}
+  .chip .dot{width:9px;height:9px;border-radius:3px;background:var(--vio-400)}
+  .img{background:
+      linear-gradient(135deg,var(--fill-2),var(--vio-100));
+    border:1px solid var(--vio-200);border-radius:6px;position:relative;overflow:hidden}
+  .img::after{content:"";position:absolute;inset:0;background:
+      linear-gradient(45deg,transparent calc(50% - 1px),var(--vio-200) 50%,transparent calc(50% + 1px)),
+      linear-gradient(-45deg,transparent calc(50% - 1px),var(--vio-200) 50%,transparent calc(50% + 1px))}
+  .circle{border-radius:50%}
+  .tag{font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--vio-500);
+    background:var(--vio-50);border:1px solid var(--vio-100);border-radius:5px;padding:2px 6px;display:inline-block}
+  .note{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:14px;display:flex;gap:8px;align-items:flex-start}
+  .note b{color:var(--vio-600);font-weight:600}
+  .ghostbox{border:1.5px dashed var(--vio-200);border-radius:6px;background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(124,58,237,.05) 6px,rgba(124,58,237,.05) 12px)}
+
+  /* ── exercitus redesign helpers ── */
+  .hpbar{height:8px;border-radius:5px;background:var(--vio-100);overflow:hidden}
+  .hpbar>i{display:block;height:100%;background:linear-gradient(90deg,#4f9e5c,#86c97e)}
+  .hpbar.warn>i{background:linear-gradient(90deg,#d39b34,#ecc869)}
+  .hpbar.crit>i{background:linear-gradient(90deg,#c24a3a,#df8472)}
+  .statpill{font-family:var(--mono);font-size:9.5px;color:var(--ink-soft);background:var(--white);border:1px solid var(--vio-100);border-radius:5px;padding:3px 7px;display:inline-flex;gap:4px;align-items:center}
+  .statpill b{color:var(--vio-900);font-weight:600}
+  .role{font-family:var(--mono);font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;border-radius:5px;padding:2px 7px;color:#fff;white-space:nowrap}
+  .role.van{background:#bb4538}.role.res{background:#bd8f2c}.role.gua{background:#5a7aa0}
+  .cohort{border-left:3px solid var(--vio-400)}
+  .cohort.van{border-left-color:#bb4538}.cohort.res{border-left-color:#bd8f2c}.cohort.gua{border-left-color:#5a7aa0}
+  footer{border-top:1px solid var(--line);padding:28px 0 50px;text-align:center;color:var(--ink-faint);font-style:italic}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">Codex · Wireframes</div>
+    <h1>Mockups de Pantallas</h1>
+    <p>Blueprint estructural de todas las pantallas del main loop — Title, Commander Select, el Foro y sus 6 pestañas, e Iter Belli + batalla.</p>
+  </div>
+</header>
+
+<nav class="tabbar"><div class="wrap" id="tabbar">
+  <button class="tab active" data-t="title">Title</button>
+  <button class="tab" data-t="commander">Commander Select</button>
+  <button class="tab" data-t="shell">Forum Shell</button>
+  <button class="tab" data-t="overview">Overview</button>
+  <button class="tab" data-t="provinciae">Provinciae</button>
+  <button class="tab" data-t="consilium">Consilium</button>
+  <button class="tab" data-t="exercitus">Exercitus</button>
+  <button class="tab" data-t="doctrinae">Doctrinae</button>
+  <button class="tab" data-t="decreta">Decreta</button>
+  <button class="tab" data-t="iterbelli">Iter Belli</button>
+  <button class="tab" data-t="battle">Batalla</button>
+</div></nav>
+
+<main class="wrap">
+
+  <!-- ============ TITLE ============ -->
+  <section class="screen-panel active" id="title">
+    <div class="screen-head"><span class="id">#title</span><h2>Title Screen</h2><span class="file">TitleScreen.tsx</span>
+      <p>Pantalla de inicio centrada sobre fondo romano con partículas de polvo dorado.</p></div>
+    <div class="screen">
+      <div class="canvas" style="min-height:540px;display:flex;align-items:center;justify-content:center">
+        <div class="region" style="position:absolute;inset:14px"><span class="lbl">Fondo · parallax + gold dust + viñeta</span></div>
+        <div class="col center" style="gap:18px;z-index:2;width:min(460px,80%)">
+          <div class="img circle" style="width:88px;height:88px"></div>
+          <div class="panel solid" style="width:100%;padding:26px 24px 24px;text-align:center">
+            <span class="lbl">OrnateFrame</span>
+            <div class="tag" style="margin-bottom:8px">A Roman strategy game</div>
+            <div style="font-family:var(--display);font-weight:800;font-size:34px;color:var(--vio-900);letter-spacing:.1em;margin-bottom:20px">IMPERIVM</div>
+            <div class="col" style="gap:11px">
+              <div class="btn cta">New Game</div>
+              <div class="btn ghost">Continue</div>
+              <div class="btn ghost">Quick Battle</div>
+            </div>
+          </div>
+        </div>
+        <div class="chip" style="position:absolute;right:18px;bottom:16px">v0.5 · Sprint</div>
+        <div class="chip" style="position:absolute;left:18px;bottom:16px">🔇 música</div>
+      </div>
+    </div>
+    <div class="note"><b>Regiones:</b> fondo a pantalla completa · stack central (escudo + marco + botones) · badge de versión (abajo-dcha) · toggle de música.</div>
+  </section>
+
+  <!-- ============ COMMANDER ============ -->
+  <section class="screen-panel" id="commander">
+    <div class="screen-head"><span class="id">#commander-select</span><h2>Commander Select</h2><span class="file">CommanderSelectScreen.tsx</span>
+      <p>Carrusel de 4 comandantes + panel de detalle de 4 columnas. (Panel ahora a altura fija = el mayor.)</p></div>
+    <div class="screen">
+      <div class="canvas" style="min-height:560px;display:flex;flex-direction:column;gap:14px">
+        <div class="region" style="text-align:center;border:none;padding:4px">
+          <div class="tag">Choose your</div>
+          <div style="font-family:var(--display);font-weight:700;font-size:30px;color:var(--vio-900);letter-spacing:.12em">COMMANDER</div>
+          <div class="sub">Lead your civilization. Shape history.</div>
+        </div>
+        <div class="region row center" style="gap:14px;align-items:stretch">
+          <span class="lbl">Carrusel</span>
+          <div class="panel center" style="width:42px">◀</div>
+          <div class="row grow" style="gap:12px">
+            <div class="panel solid grow" style="aspect-ratio:.7;border:2px solid var(--vio-500)"><div class="img" style="position:absolute;inset:6px"></div></div>
+            <div class="panel grow" style="aspect-ratio:.7"><div class="img" style="position:absolute;inset:6px;opacity:.6"></div></div>
+            <div class="panel grow" style="aspect-ratio:.7"><div class="img" style="position:absolute;inset:6px;opacity:.6"></div></div>
+            <div class="panel grow" style="aspect-ratio:.7"><div class="img" style="position:absolute;inset:6px;opacity:.6"></div></div>
+          </div>
+          <div class="panel center" style="width:42px">▶</div>
+        </div>
+        <div class="region col" style="gap:12px">
+          <span class="lbl">Details Panel · altura fija (= comandante más alto)</span>
+          <div class="row" style="gap:14px;align-items:stretch">
+            <div class="panel grow" style="flex:1.25"><div class="ttl">Archetype</div><div class="img" style="height:30px;margin-bottom:7px"></div><div class="ph w90"></div><div class="ph w75"></div><div class="sub">Starting Bonuses · Playstyle</div><div class="ph w60"></div></div>
+            <div class="panel grow"><div class="ttl">Strategic Abilities</div><div class="ph"></div><div class="ph w75"></div><div class="ph"></div><div class="ph w60"></div></div>
+            <div class="panel grow"><div class="ttl">Unique Units</div><div class="ph"></div><div class="ph w75"></div><div class="ph"></div><div class="ph w60"></div></div>
+            <div class="panel grow"><div class="ttl">Victory Paths</div><div class="ph"></div><div class="ph w75"></div><div class="ph"></div><div class="ph w60"></div></div>
+          </div>
+          <div class="row between" style="border-top:1px solid var(--vio-200);padding-top:11px">
+            <div class="btn ghost">📖 View Civilization</div>
+            <div class="chip">Difficulty ◆ Soon</div>
+            <div class="btn cta">Begin Your Legacy 👑</div>
+          </div>
+        </div>
+        <div class="chip" style="position:absolute;right:16px;top:14px">✕ ESC</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SHELL ============ -->
+  <section class="screen-panel" id="shell">
+    <div class="screen-head"><span class="id">#forum</span><h2>Forum Shell</h2><span class="file">ForumShell.tsx · Sidebar · Masthead</span>
+      <p>Contenedor del Hub: barra lateral (212px, colapsable a 64px) + contenido de pestaña. 6 ítems de navegación.</p></div>
+    <div class="screen">
+      <div class="canvas" style="min-height:540px;display:flex;gap:14px;padding:14px">
+        <div class="region col" style="width:190px;flex:0 0 auto;gap:9px"><span class="lbl">Sidebar 212px</span>
+          <div class="row center" style="gap:8px"><div class="img circle" style="width:34px;height:34px"></div><div><div class="sub">Turn 0</div><div style="font-family:var(--display);font-size:12px;color:var(--vio-800);letter-spacing:.18em">IMPERIVM</div></div></div>
+          <div class="panel row center" style="gap:7px;padding:7px"><div class="img circle" style="width:26px;height:26px"></div><div class="grow"><div class="sub">Princeps</div><div class="ph w75"></div></div></div>
+          <div class="col" style="gap:4px;margin-top:4px">
+            <div class="panel" style="padding:8px;border-left:2px solid var(--vio-600)"><div class="row between"><span class="tag">◉ Forum</span></div></div>
+            <div class="panel" style="padding:8px"><div class="row between"><span class="tag">⬢ Provinciae</span><span class="chip">1</span></div></div>
+            <div class="panel" style="padding:8px"><div class="row between"><span class="tag">◎ Consilium</span><span class="chip">3/3</span></div></div>
+            <div class="panel" style="padding:8px"><div class="row between"><span class="tag">⚔ Exercitus</span><span class="chip">2</span></div></div>
+            <div class="panel" style="padding:8px"><div class="row between"><span class="tag">◈ Doctrinae</span><span class="chip">4/4</span></div></div>
+            <div class="panel" style="padding:8px"><div class="row between"><span class="tag">❖ Decreta</span><span class="chip">5</span></div></div>
+          </div>
+          <div class="grow"></div>
+          <div class="panel" style="padding:7px"><span class="tag">❉ Hiems · DCCXII AUC</span></div>
+          <div class="btn danger">Abandon Run</div>
+          <div class="btn ghost">‹ Collapse</div>
+        </div>
+        <div class="region col grow" style="gap:12px"><span class="lbl">Main content</span>
+          <div class="panel"><span class="lbl">Masthead</span>
+            <div class="row between wrapf" style="gap:10px">
+              <div><div class="sub">Strategic Hub · Turn 0</div><div class="ttl" style="font-size:16px">MARCUS CRASSUS</div></div>
+              <div class="row wrapf" style="gap:7px"><span class="chip"><i class="dot"></i>Aurum</span><span class="chip"><i class="dot"></i>Iuniores</span><span class="chip"><i class="dot"></i>Season</span></div>
+            </div>
+          </div>
+          <div class="ghostbox grow center" style="min-height:300px;color:var(--ink-faint);font-family:var(--mono);font-size:12px">[ Tab activa → Overview / Provinciae / Consilium / Exercitus / Doctrinae / Decreta ]</div>
+        </div>
+      </div>
+    </div>
+    <div class="note"><b>Nota:</b> solo 6 ítems de nav (sin Bellum/Mercator). El masthead muestra únicamente <b>Aurum · Iuniores · Season</b>.</div>
+  </section>
+
+  <!-- ============ OVERVIEW ============ -->
+  <section class="screen-panel" id="overview">
+    <div class="screen-head"><span class="id">tab: overview</span><h2>Overview Tab</h2><span class="file">OverviewTab.tsx</span>
+      <p>Masthead + grid de 3 columnas (1 / 1.2 / 1) con los paneles resumen de cada dominio.</p></div>
+    <div class="screen"><div class="canvas" style="min-height:520px;display:flex;flex-direction:column;gap:12px">
+      <div class="panel"><span class="lbl">Masthead</span><div class="row between wrapf"><div class="ttl" style="font-size:15px">Strategic Hub · Princeps</div><div class="row" style="gap:6px"><span class="chip">Aurum</span><span class="chip">Iuniores</span><span class="chip">Season</span></div></div></div>
+      <div class="row grow" style="gap:12px;align-items:stretch">
+        <div class="region col grow" style="flex:1"><span class="lbl">Columna izq</span>
+          <div class="panel grow"><div class="ttl">Consilium · 3 seats</div><div class="row" style="gap:7px"><div class="img circle grow" style="height:40px"></div><div class="img circle grow" style="height:40px"></div><div class="img circle grow" style="height:40px"></div></div><div class="sub">Open →</div></div>
+          <div class="panel grow"><div class="ttl">Exercitus · roster</div><div class="ph w90"></div><div class="ph w60"></div><div class="ph" style="height:9px;margin-top:8px"></div><div class="sub">Open →</div></div>
+        </div>
+        <div class="region col grow" style="flex:1.2"><span class="lbl">Columna centro</span>
+          <div class="panel"><div class="ttl">Embark Card → Iter Belli</div><div class="ph w90"></div><div class="ph w75"></div><div class="btn cta" style="margin-top:9px;width:fit-content">Embark</div></div>
+          <div class="panel grow"><div class="ttl">Provinciae · lista</div><div class="ph"></div><div class="ph w90"></div><div class="ph w75"></div><div class="ph w90"></div></div>
+        </div>
+        <div class="region col grow" style="flex:1"><span class="lbl">Columna dcha</span>
+          <div class="panel grow"><div class="ttl">Doctrinae · equipadas</div><div class="row wrapf" style="gap:7px"><div class="img grow" style="height:34px"></div><div class="img grow" style="height:34px"></div></div></div>
+          <div class="panel grow"><div class="ttl">Decreta · mano</div><div class="row wrapf" style="gap:6px"><div class="img" style="width:40px;height:48px"></div><div class="img" style="width:40px;height:48px"></div><div class="img" style="width:40px;height:48px"></div></div></div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ============ PROVINCIAE ============ -->
+  <section class="screen-panel" id="provinciae">
+    <div class="screen-head"><span class="id">tab: provinciae</span><h2>Provinciae Tab</h2><span class="file">ProvinceScreen.tsx</span>
+      <p>3 columnas (260 / 1 / 360): ledger · detalle (admin + 3 métricas + edificios) · inversiones / gobernadores.</p></div>
+    <div class="screen"><div class="canvas" style="min-height:540px;display:flex;flex-direction:column;gap:12px">
+      <div class="panel"><span class="lbl">Masthead</span><div class="ttl" style="font-size:15px">PROVINCIAE</div></div>
+      <div class="row grow" style="gap:12px;align-items:stretch">
+        <div class="region col" style="width:220px;flex:0 0 auto"><span class="lbl">Ledger 260px</span>
+          <div class="panel" style="border-left:2px solid var(--vio-600)"><div class="row between"><span class="tag">Roma</span><span class="chip">+7</span></div><div class="sub">terreno · unrest 20%</div></div>
+          <div class="panel"><div class="ph w75"></div><div class="sub">+ holding</div></div>
+          <div class="panel"><div class="ph w60"></div></div>
+        </div>
+        <div class="region col grow" style="flex:1"><span class="lbl">Detalle de provincia</span>
+          <div class="panel"><div class="ttl">Province Administration</div><div class="row" style="gap:10px"><div class="grow"><div class="sub">Gobernador</div><div class="ph w75"></div></div><div class="grow"><div class="sub">Tax slider</div><div class="ph" style="height:9px"></div></div></div></div>
+          <div class="row" style="gap:10px"><div class="panel grow"><div class="ttl">Wealth</div><div class="img" style="height:30px"></div><div class="ph w60"></div></div><div class="panel grow"><div class="ttl">Population</div><div class="img" style="height:30px"></div><div class="ph w60"></div><div class="ph w45"></div></div><div class="panel grow"><div class="ttl">Order</div><div class="img" style="height:30px"></div><div class="ph w60"></div><div class="ph w45"></div></div></div>
+          <div class="panel grow"><div class="ttl">Building grid</div><div class="row wrapf" style="gap:8px"><div class="img grow" style="height:40px"></div><div class="img grow" style="height:40px"></div><div class="img grow" style="height:40px"></div></div></div>
+        </div>
+        <div class="region col" style="width:280px;flex:0 0 auto"><span class="lbl">Inversiones / pool 360px</span>
+          <div class="panel"><div class="ttl">Investments</div><div class="img" style="height:36px;margin-bottom:7px"></div><div class="ph w75"></div><div class="btn" style="margin-top:8px;width:fit-content">Build</div></div>
+          <div class="panel grow"><div class="ttl">Governor Pool</div><div class="row center" style="gap:7px"><div class="img circle" style="width:30px;height:30px"></div><div class="grow"><div class="ph w75"></div></div><div class="btn ghost">Hire</div></div></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="note"><b>Fix aplicado:</b> las 3 tarjetas de métrica (Wealth/Population/Order) ahora comparten altura = la mayor.</div>
+  </section>
+
+  <!-- ============ CONSILIUM ============ -->
+  <section class="screen-panel" id="consilium">
+    <div class="screen-head"><span class="id">tab: consilium</span><h2>Consilium Tab</h2><span class="file">ConsiliumTab.tsx</span>
+      <p>3 columnas (asientos / héroe-asesor / bonos) + mercado político a lo ancho abajo.</p></div>
+    <div class="screen"><div class="canvas" style="min-height:560px;display:flex;flex-direction:column;gap:12px">
+      <div class="panel"><span class="lbl">Masthead</span><div class="ttl" style="font-size:15px">CONSILIUM · 3/3 seated</div></div>
+      <div class="row" style="gap:12px;align-items:stretch">
+        <div class="region col" style="width:200px;flex:0 0 auto"><span class="lbl">Seats</span>
+          <div class="panel row center" style="gap:8px"><div class="img circle" style="width:34px;height:34px"></div><div class="grow"><div class="sub">Consiliarius</div><div class="ph w75"></div></div></div>
+          <div class="panel row center" style="gap:8px"><div class="img circle" style="width:34px;height:34px"></div><div class="grow"><div class="sub">Legatus</div><div class="ph w75"></div></div></div>
+          <div class="panel row center" style="gap:8px"><div class="img circle" style="width:34px;height:34px"></div><div class="grow"><div class="sub">Augur</div><div class="ph w75"></div></div></div>
+        </div>
+        <div class="region grow" style="flex:1"><span class="lbl">Advisor hero</span>
+          <div class="panel" style="padding:0;overflow:hidden"><div class="img" style="height:170px;border-radius:0"></div>
+            <div style="padding:12px"><div class="sub">Tier III · Consul</div><div class="ttl" style="font-size:16px">Nomen Advisor</div><div class="row wrapf" style="gap:6px;margin:7px 0"><span class="tag">trait</span><span class="tag">trait</span></div><div class="ph w90"></div><div class="ph w75"></div><div class="btn danger" style="margin-top:9px;width:fit-content">Dismiss</div></div></div>
+        </div>
+        <div class="region col" style="width:200px;flex:0 0 auto"><span class="lbl">Bonuses</span>
+          <div class="panel"><div class="row between"><span class="tag">⚜ +Gold/spoke</span><span class="ph w30"></span></div></div>
+          <div class="panel"><div class="row between"><span class="tag">⛨ Upkeep</span><span class="ph w30"></span></div></div>
+          <div class="panel"><div class="row between"><span class="tag">✦ Heal rate</span><span class="ph w30"></span></div></div>
+        </div>
+      </div>
+      <div class="region" style="margin-top:2px"><span class="lbl">Political Market</span>
+        <div class="row between wrapf" style="margin-bottom:9px"><div class="row" style="gap:6px"><span class="btn">Political Market</span><span class="btn ghost">Available Advisors</span></div><div class="row wrapf" style="gap:5px"><span class="tag">All</span><span class="tag">Diplomatic</span><span class="tag">Economic</span><span class="tag">Intrigue</span><span class="tag">Military</span><span class="chip">Sort: Cost</span></div></div>
+        <div class="row wrapf" style="gap:10px"><div class="panel row center grow" style="gap:8px;min-width:230px"><div class="img circle" style="width:30px;height:30px"></div><div class="grow"><div class="ph w75"></div><div class="row" style="gap:4px;margin-top:5px"><span class="tag">◆</span><span class="tag">◆</span><span class="tag">◆</span></div></div><div class="btn">Hire 80⚜</div></div><div class="panel row center grow" style="gap:8px;min-width:230px"><div class="img circle" style="width:30px;height:30px"></div><div class="grow"><div class="ph w75"></div></div><div class="btn">Hire</div></div></div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ============ EXERCITUS (rediseño propuesto) ============ -->
+  <section class="screen-panel" id="exercitus">
+    <div class="screen-head"><span class="id">tab: exercitus</span><h2>Exercitus Tab</h2><span class="file">ExercitusTab.tsx · PROPUESTA</span>
+      <p>Rediseño: franja de estado con <b>suministros en una sola línea</b> · cohortes como tarjetas limpias con rol en color, barra de HP + curar inline, stats ATK/DEF/HP/AGI y coste · legado compacto + reclutar a la derecha.</p></div>
+    <div class="screen"><div class="canvas" style="min-height:580px;display:flex;flex-direction:column;gap:12px">
+      <div class="panel"><span class="lbl">Masthead</span><div class="ttl" style="font-size:15px">EXERCITUS</div></div>
+
+      <!-- Status strip: todo en una línea -->
+      <div class="panel"><span class="lbl">Army Status · una línea</span>
+        <div class="row between wrapf" style="gap:16px;align-items:center">
+          <span class="chip">⚔ 3 cohorts</span>
+          <div class="row center grow" style="gap:8px;min-width:170px"><span class="sub" style="white-space:nowrap">♥ Total HP</span><div class="hpbar grow"><i style="width:78%"></i></div><span class="sub" style="white-space:nowrap">4.6K / 5.9K</span></div>
+          <div class="row center" style="gap:7px"><span class="sub" style="white-space:nowrap">❦ Supplies</span><div class="hpbar warn" style="width:84px"><i style="width:40%"></i></div><span class="sub">12/30</span><span class="btn ghost">+2</span><span class="btn ghost">+10</span><span class="btn ghost">Max</span></div>
+          <div class="row center" style="gap:7px"><span class="sub" style="white-space:nowrap">➶ Munición</span><div class="hpbar" style="width:84px"><i style="width:60%;background:linear-gradient(90deg,#7c3aed,#b794f6)"></i></div><span class="sub">24/40</span><span class="btn ghost">+5</span><span class="btn ghost">Max</span></div>
+        </div>
+      </div>
+
+      <div class="row grow" style="gap:12px;align-items:stretch">
+        <!-- Cohortes: tarjetas técnicas en grid 2-col -->
+        <div class="region grow" style="flex:1.45"><span class="lbl">Cohorts · roster</span>
+          <div class="row wrapf" style="gap:10px">
+            <div class="panel solid cohort van grow" style="min-width:240px">
+              <div class="row between"><div class="row center" style="gap:9px"><div class="img" style="width:34px;height:34px"></div><div><div class="ttl" style="margin:0;font-size:12px">Hastati</div><div class="sub">Citizen cohort</div></div></div><div class="row center" style="gap:6px"><span class="role van">Vanguard</span><span class="chip">×3</span></div></div>
+              <div class="row center" style="gap:8px;margin-top:9px"><div class="hpbar grow"><i style="width:82%"></i></div><span class="sub" style="white-space:nowrap">2,460 / 3,000</span></div>
+              <div class="row wrapf" style="gap:5px;margin-top:8px"><span class="statpill">HP <b>100</b></span><span class="statpill">Charge <b>7</b></span><span class="statpill">Push <b>5</b></span><span class="statpill">Move <b>4</b></span></div>
+              <div class="row between" style="margin-top:9px"><span class="sub">⚜120 · 🛡3</span><span class="btn ghost">– Remove</span></div>
+            </div>
+            <div class="panel solid cohort gua grow" style="min-width:240px">
+              <div class="row between"><div class="row center" style="gap:9px"><div class="img" style="width:34px;height:34px"></div><div><div class="ttl" style="margin:0;font-size:12px">Triarii</div><div class="sub">Citizen cohort</div></div></div><div class="row center" style="gap:6px"><span class="role gua">Guard</span><span class="chip">×1</span></div></div>
+              <div class="row center" style="gap:8px;margin-top:9px"><div class="hpbar warn grow"><i style="width:46%"></i></div><span class="sub" style="white-space:nowrap">⚕ 550 / 1,200</span></div>
+              <div class="row wrapf" style="gap:5px;margin-top:8px"><span class="statpill">HP <b>120</b></span><span class="statpill">Push <b>9</b></span><span class="statpill">Siege <b>6</b></span><span class="statpill">Move <b>2</b></span></div>
+              <div class="row between" style="margin-top:9px"><span class="sub">⚜150 · 🛡4</span><div class="row" style="gap:5px"><span class="btn">Heal · 🛡2</span><span class="btn ghost">–</span></div></div>
+            </div>
+            <div class="panel solid cohort res grow" style="min-width:240px">
+              <div class="row between"><div class="row center" style="gap:9px"><div class="img" style="width:34px;height:34px"></div><div><div class="ttl" style="margin:0;font-size:12px">Mercennarii</div><div class="sub">Mercenary</div></div></div><div class="row center" style="gap:6px"><span class="role res">Reserve</span><span class="chip">×2</span></div></div>
+              <div class="row center" style="gap:8px;margin-top:9px"><div class="hpbar grow"><i style="width:100%"></i></div><span class="sub" style="white-space:nowrap">1,600 / 1,600</span></div>
+              <div class="row wrapf" style="gap:5px;margin-top:8px"><span class="statpill">HP <b>80</b></span><span class="statpill">Harass <b>9</b></span><span class="statpill">Move <b>6</b></span><span class="statpill">Charge <b>4</b></span></div>
+              <div class="row between" style="margin-top:9px"><span class="sub">⚜200 · gold-only heal</span><span class="btn ghost">– Remove</span></div>
+            </div>
+          </div>
+          <div class="row between" style="margin-top:11px;border-top:1px solid var(--vio-200);padding-top:10px"><span class="sub">1 damaged · 1 mercenary</span><span class="btn">Replenish roster · ⚜X</span></div>
+        </div>
+
+        <!-- Derecha: legado + reclutar -->
+        <div class="region col" style="width:300px;flex:0 0 auto"><span class="lbl">Legatus + Recruit</span>
+          <div class="panel row center" style="gap:11px"><div class="img circle" style="width:54px;height:54px;flex:0 0 auto"></div><div class="grow"><div class="ttl" style="margin:0;font-size:12px">Legate Name</div><div class="row wrapf" style="gap:5px;margin-top:5px"><span class="tag">Cavalry Master</span><span class="tag">trait</span></div></div><span class="btn danger">✕</span></div>
+          <div class="panel grow"><div class="row between"><div class="ttl">Recruit</div><span class="chip">⚜ X · 🛡 Y</span></div>
+            <div class="panel solid cohort res" style="margin-bottom:7px"><div class="row between" style="align-items:flex-start"><div class="grow"><div class="row center" style="gap:6px"><span class="ttl" style="margin:0;font-size:11px">Principes</span><span class="role res">Reserve</span></div><div class="row wrapf" style="gap:4px;margin-top:6px"><span class="statpill">HP<b>120</b></span><span class="statpill">Push<b>8</b></span><span class="statpill">Charge<b>6</b></span><span class="statpill">Siege<b>3</b></span></div></div><div class="col" style="align-items:flex-end;gap:6px"><span class="sub" style="white-space:nowrap">⚜150·🛡4</span><span class="btn">Recruit</span></div></div></div>
+            <div class="sub" style="margin:8px 0 6px;border-top:1px dashed var(--vio-200);padding-top:7px">— Mercenary contracts —</div>
+            <div class="panel solid cohort van"><div class="row between" style="align-items:flex-start"><div class="grow"><div class="row center" style="gap:6px"><span class="ttl" style="margin:0;font-size:11px">Auxilia</span><span class="role van">Vanguard</span></div><div class="row wrapf" style="gap:4px;margin-top:6px"><span class="statpill">HP<b>80</b></span><span class="statpill">Harass<b>9</b></span><span class="statpill">Move<b>6</b></span><span class="statpill">Charge<b>4</b></span></div></div><div class="col" style="align-items:flex-end;gap:6px"><span class="sub" style="white-space:nowrap">⚜200</span><span class="btn">Hire</span></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="note"><b>Cambios:</b> suministros + munición + totales en una franja de una línea · salud del roster fusionada en cada tarjeta de cohorte (barra HP + ⚕ + Heal inline) · stats técnicos visibles (ATK/DEF/HP/AGI) · rol en color (Vanguard/Guard/Reserve) · munición en violeta (presupuesto de hostigamiento de la batalla decisiva) · legado compacto. <b>Solo wireframe — aún no aplicado al juego.</b></div>
+  </section>
+
+  <!-- ============ DOCTRINAE ============ -->
+  <section class="screen-panel" id="doctrinae">
+    <div class="screen-head"><span class="id">tab: doctrinae</span><h2>Doctrinae Tab</h2><span class="file">DoctrinaeTab.tsx</span>
+      <p>2 columnas (1.1 / 1): izq slots equipados (drag-drop) + colección · dcha detalle.</p></div>
+    <div class="screen"><div class="canvas" style="min-height:520px;display:flex;flex-direction:column;gap:12px">
+      <div class="panel"><span class="lbl">Masthead</span><div class="ttl" style="font-size:15px">DOCTRINAE · X/Y equipped</div></div>
+      <div class="row grow" style="gap:12px;align-items:stretch">
+        <div class="region col grow" style="flex:1.1"><span class="lbl">Izq</span>
+          <div class="panel"><div class="row between"><div class="ttl">Equipped</div><span class="sub">drag ↔ · click to inspect</span></div>
+            <div class="row wrapf" style="gap:9px"><div class="panel solid grow" style="min-width:130px"><div class="row between"><span class="tag">Doctrina</span><span class="chip">II</span></div><div class="ph w90" style="margin-top:7px"></div></div><div class="ghostbox grow center" style="min-width:130px;min-height:54px;color:var(--ink-faint);font-family:var(--mono);font-size:18px">+</div></div>
+          </div>
+          <div class="panel grow"><div class="row between"><div class="ttl">Collection</div><span class="chip">N avail</span></div><div class="panel solid row between" style="border-left:3px solid var(--vio-500)"><div class="grow"><div class="ph w60"></div><div class="sub">effect</div></div><div class="row" style="gap:5px"><span class="btn ghost">Adopt</span><span class="btn ghost">Sell</span></div></div></div>
+        </div>
+        <div class="region grow" style="flex:1"><span class="lbl">Detalle</span>
+          <div class="panel" style="height:100%"><div class="sub">Tier I · Equipped</div><div class="ttl" style="font-size:18px">DOCTRINE NAME</div><div class="ph w90"></div><div class="ph w75"></div><div class="row" style="gap:8px;margin:10px 0"><div class="panel solid grow"><div class="sub">Current</div></div><div class="panel solid grow"><div class="sub">Next Tier</div></div></div><div class="row wrapf" style="gap:7px"><span class="btn">Upgrade</span><span class="btn ghost">Unequip</span><span class="btn ghost">Sell</span></div></div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ============ DECRETA ============ -->
+  <section class="screen-panel" id="decreta">
+    <div class="screen-head"><span class="id">tab: decreta</span><h2>Decreta Tab</h2><span class="file">DecretaTab.tsx</span>
+      <p>2 columnas (1 / 360): izq mano de pergaminos · dcha detalle del decreto.</p></div>
+    <div class="screen"><div class="canvas" style="min-height:520px;display:flex;flex-direction:column;gap:12px">
+      <div class="panel"><span class="lbl">Masthead</span><div class="ttl" style="font-size:15px">DECRETA · X/Y in hand</div></div>
+      <div class="row grow" style="gap:12px;align-items:stretch">
+        <div class="region grow" style="flex:1"><span class="lbl">Hand · cast in battle</span>
+          <div class="row wrapf" style="gap:10px">
+            <div class="panel solid" style="width:130px;border-top:3px solid var(--vio-500)"><div class="row between"><span class="chip">⚜2</span><span class="tag">rare</span></div><div class="ph w90" style="margin-top:8px"></div><div class="ph w60"></div><div class="ph w75" style="margin-top:6px"></div></div>
+            <div class="panel solid" style="width:130px;border-top:3px solid var(--vio-400)"><div class="row between"><span class="chip">⚜1</span></div><div class="ph w90" style="margin-top:8px"></div><div class="ph w60"></div></div>
+            <div class="panel solid" style="width:130px;border-top:3px solid var(--vio-300);opacity:.55"><div class="row between"><span class="chip">⚜3</span><span class="tag">lock</span></div><div class="ph w90" style="margin-top:8px"></div></div>
+          </div>
+        </div>
+        <div class="region" style="width:300px;flex:0 0 auto"><span class="lbl">Scroll Detail 360px</span>
+          <div class="panel" style="height:100%"><div class="sub">Decretum</div><div class="ttl" style="font-size:17px">SCROLL NAME</div><div class="ph w90"></div><div class="ph w75"></div><div class="row" style="gap:8px;margin:10px 0"><div class="panel solid grow"><div class="sub">Cost</div></div><div class="panel solid grow"><div class="sub">Rarity</div></div></div><div class="row" style="gap:8px"><div class="panel solid grow"><div class="sub">Castable</div></div><div class="panel solid grow"><div class="sub">Color</div></div></div><div class="btn ghost" style="margin-top:10px">Sell · Xg</div></div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ============ ITER BELLI ============ -->
+  <section class="screen-panel" id="iterbelli">
+    <div class="screen-head"><span class="id">#iterbelli</span><h2>Iter Belli</h2><span class="file">IterBelliScreen.tsx</span>
+      <p>Campaña de cartas: header de misión · barra de recursos · itinerario · grid (cartas de operación / log).</p></div>
+    <div class="screen"><div class="canvas" style="min-height:580px;display:flex;flex-direction:column;gap:12px">
+      <div class="region" style="text-align:center;border:none;padding:4px"><div class="tag">Iter Belli · Campaña en Hispania</div><div style="font-family:var(--display);font-weight:700;font-size:24px;color:var(--vio-900);letter-spacing:.08em">MARCHA DE GUERRA</div><div class="sub">Misión: … — condición · ◆ objetivo: N turnos</div></div>
+      <div class="panel"><span class="lbl">CampaignResourceBar</span><div class="row wrapf center" style="gap:8px"><span class="chip">⚔ Soldados</span><span class="chip">♺ Moral</span><span class="chip">⛨ Disciplina</span><span class="chip">❦ Suministros</span><span class="chip">➶ Munición</span><span class="chip">☠ Amenaza</span><span class="chip">⚜ Oro</span><span class="chip">🛡 Iuniores</span><span class="chip">⧗ Plazo</span></div></div>
+      <div class="panel"><span class="lbl">Itinerary</span><div class="row center" style="gap:6px"><span class="chip">● Lvl1</span><span style="color:var(--vio-300)">———</span><span class="chip">● Lvl2</span><span style="color:var(--vio-300)">———</span><span class="chip">◆ Obj</span></div></div>
+      <div class="row grow" style="gap:12px;align-items:stretch">
+        <div class="region col grow" style="flex:1"><span class="lbl">Ubicación + cartas de operación</span>
+          <div class="panel"><div class="ttl">Location name</div><div class="ph w75"></div></div>
+          <div class="row wrapf grow" style="gap:10px">
+            <div class="panel solid grow" style="min-width:180px"><div class="row between"><span class="tag">Logística</span><span class="chip">⧗3</span></div><div class="ttl" style="margin-top:6px">Carta op</div><div class="ph w90"></div><div class="ph w60"></div><div class="sub">efectos · compromiso</div></div>
+            <div class="panel solid grow" style="min-width:180px"><div class="row between"><span class="tag">Postura</span><span class="chip">arriesgada</span></div><div class="ttl" style="margin-top:6px">Carta op</div><div class="ph w90"></div><div class="sub">% éxito · efectos</div></div>
+          </div>
+          <div class="btn cta" style="width:fit-content">Acampar</div>
+        </div>
+        <div class="region col" style="width:280px;flex:0 0 auto"><span class="lbl">Campaign Log</span>
+          <div class="panel grow" style="font-family:var(--mono);font-size:10px;color:var(--ink-soft)"><div style="color:var(--vio-600)">Turn 1</div><div class="ph w90" style="margin-top:7px"></div><div class="ph w75"></div><div class="ph w60"></div><div class="ph w90" style="margin-top:6px"></div></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="note"><b>Overlays:</b> <span class="tag" style="margin:0 4px">BattleModal</span> (fase battle) y <span class="tag" style="margin:0 4px">EndgameCard</span> (fase endgame) — ver pestaña Batalla.</div>
+  </section>
+
+  <!-- ============ BATTLE ============ -->
+  <section class="screen-panel" id="battle">
+    <div class="screen-head"><span class="id">overlay: battle / endgame</span><h2>Batalla Decisiva</h2><span class="file">BattleModal.tsx · battle/*</span>
+      <p>Modal de choque por posturas resueltas con dados: arena (jugador / dados / enemigo) + despliegue + órdenes + log + posturas.</p></div>
+    <div class="screen"><div class="canvas" style="min-height:580px;display:flex;flex-direction:column;gap:12px;background:#241038">
+      <div class="region" style="border-color:var(--vio-500)"><span class="lbl" style="background:#241038;color:var(--vio-200)">Arena</span>
+        <div class="row" style="gap:12px;align-items:stretch">
+          <div class="panel grow" style="background:rgba(124,58,237,.14);border-color:var(--vio-500)"><div class="ttl" style="color:var(--vio-100)">Player Army</div><div class="ph w75" style="background:var(--vio-400)"></div><div class="ph w60" style="background:var(--vio-400)"></div><div class="sub" style="color:var(--vio-200)">moral · HP bar</div><div class="ph" style="height:8px;background:var(--vio-300);margin-top:6px"></div></div>
+          <div class="panel center" style="width:90px;background:rgba(124,58,237,.14);border-color:var(--vio-500)"><div style="font-family:var(--display);color:var(--vio-100);font-size:13px">Round</div><div class="img" style="width:40px;height:40px;margin-top:6px"></div></div>
+          <div class="panel grow" style="background:rgba(194,74,58,.14);border-color:#c24a3a"><div class="ttl" style="color:#f0c0b8">Enemy Army</div><div class="ph w75" style="background:#c24a3a"></div><div class="ph w60" style="background:#c24a3a"></div><div class="sub" style="color:#f0c0b8">doctrina · HP bar</div><div class="ph" style="height:8px;background:#d98b80;margin-top:6px"></div></div>
+        </div>
+      </div>
+      <div class="row" style="gap:12px;align-items:stretch">
+        <div class="region grow" style="border-color:var(--vio-400)"><span class="lbl" style="background:#241038;color:var(--vio-200)">Deployment / Order bar</span><div class="row wrapf" style="gap:7px"><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Forma</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Orden</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Hostigar</span></div></div>
+        <div class="region" style="width:240px;flex:0 0 auto;border-color:var(--vio-400)"><span class="lbl" style="background:#241038;color:var(--vio-200)">Battle Log</span><div class="ph w90" style="background:var(--vio-700);margin-top:4px"></div><div class="ph w75" style="background:var(--vio-700)"></div><div class="ph w60" style="background:var(--vio-700)"></div></div>
+      </div>
+      <div class="region" style="border-color:var(--vio-400)"><span class="lbl" style="background:#241038;color:var(--vio-200)">Stance selection</span><div class="row wrapf" style="gap:7px"><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Frontal</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Línea pesada</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Envolvimiento</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Falsa retirada</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Doble línea</span></div></div>
+    </div></div>
+    <div class="note"><b>EndgameCard:</b> al resolver — marca victoria/derrota · resumen de supervivientes · botones <span class="tag" style="margin-left:4px">Return to Forum</span> / <span class="tag">New Run</span>.</div>
+  </section>
+
+</main>
+
+<footer class="wrap"><p>Wireframes de baja fidelidad · 11 pantallas del main loop</p></footer>
+
+<script>
+  const tabs=[...document.querySelectorAll('.tab')],panels=[...document.querySelectorAll('.screen-panel')];
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    const id=t.dataset.t;
+    tabs.forEach(x=>x.classList.toggle('active',x===t));
+    panels.forEach(p=>p.classList.toggle('active',p.id===id));
+    t.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
+    window.scrollTo({top:0,behavior:'smooth'});
+  }));
+</script>
+</body>
+</html>

@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imperium · Catálogo de Iconos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cormorant+Garamond:ital@0;1&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --vio-900:#2a1147; --vio-800:#3d1a63; --vio-700:#532388; --vio-600:#6d28d9;
+    --vio-500:#7c3aed; --vio-300:#b794f6; --vio-200:#d6bcfa; --vio-100:#ede4fb; --vio-50:#f6f1fd;
+    --paper:#fbf9ff; --ink:#241038; --ink-soft:#5a4a72; --ink-faint:#8b7ca3; --line:#e3d6f5; --white:#fff;
+    --tile-bg:#150d24; /* default dark tile so gold medallions read well */
+    --font-display:'Cinzel',serif; --font-body:'Cormorant Garamond',serif; --font-mono:'Spline Sans Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:var(--font-body);color:var(--ink);font-size:17px;
+    background:radial-gradient(1100px 560px at 88% -8%,var(--vio-100),transparent 60%),var(--paper);
+    min-height:100vh;
+  }
+  .wrap{max-width:1280px;margin:0 auto;padding:0 28px}
+
+  header{padding:54px 0 22px;text-align:center}
+  .eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.4em;text-transform:uppercase;color:var(--vio-500);
+    display:inline-flex;align-items:center;gap:13px;margin-bottom:14px}
+  .eyebrow::before,.eyebrow::after{content:"";width:38px;height:1px;background:linear-gradient(90deg,transparent,var(--vio-300),transparent)}
+  header h1{font-family:var(--font-display);font-weight:800;font-size:clamp(38px,6vw,64px);color:var(--vio-900);letter-spacing:.02em;line-height:1}
+  header p{color:var(--ink-soft);font-style:italic;font-size:20px;margin-top:10px}
+
+  .toolbar{position:sticky;top:0;z-index:20;background:rgba(251,249,255,.86);backdrop-filter:blur(12px) saturate(1.3);
+    border-bottom:1px solid var(--line);margin-top:18px}
+  .toolbar .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px;padding-top:13px;padding-bottom:13px}
+  .stat{font-family:var(--font-mono);font-size:13px;color:var(--ink-soft)}
+  .stat b{color:var(--vio-700)}
+  .spacer{flex:1}
+  .search{font-family:var(--font-mono);font-size:13px;color:var(--ink);background:var(--white);border:1px solid var(--line);
+    border-radius:9px;padding:9px 13px;min-width:220px;outline:none}
+  .search:focus{border-color:var(--vio-400);box-shadow:0 0 0 3px var(--vio-100)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--white)}
+  .seg button{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:none;
+    background:none;cursor:pointer;padding:9px 13px;color:var(--ink-faint)}
+  .seg button.on{background:var(--vio-600);color:#fff}
+  .seg-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+
+  main{padding:30px 0 110px}
+  .group{margin-bottom:42px}
+  .group h2{font-family:var(--font-display);font-weight:600;font-size:21px;color:var(--vio-800);
+    display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .group h2 .count{font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--vio-500);
+    background:var(--vio-50);border:1px solid var(--vio-100);border-radius:99px;padding:2px 9px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px}
+  .tile{background:var(--white);border:1px solid var(--line);border-radius:13px;overflow:hidden;cursor:pointer;
+    transition:transform .18s,box-shadow .18s,border-color .18s;display:flex;flex-direction:column}
+  .tile:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(61,26,99,.16);border-color:var(--vio-200)}
+  .tile.hidden{display:none}
+  .thumb{aspect-ratio:1;display:grid;place-items:center;background:var(--tile-bg);background-size:18px 18px;padding:18px}
+  .thumb img{max-width:100%;max-height:100%;object-fit:contain;image-rendering:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4))}
+  figcaption{padding:9px 11px 11px;border-top:1px solid var(--line)}
+  .name{display:block;font-family:var(--font-mono);font-size:12px;color:var(--ink);word-break:break-all;line-height:1.3}
+  .meta{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:5px}
+  .badge{font-family:var(--font-mono);font-size:9px;font-weight:600;letter-spacing:.05em;color:#fff;background:var(--vio-600);
+    border-radius:5px;padding:2px 6px;font-style:normal}
+  .ext{font-family:var(--font-mono);font-size:9.5px;color:var(--ink-faint);letter-spacing:.08em;margin-left:auto}
+
+  .copied{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:var(--vio-800);color:#fff;font-family:var(--font-mono);font-size:13px;padding:11px 20px;border-radius:10px;
+    box-shadow:0 12px 30px rgba(42,17,71,.4);transition:opacity .2s,transform .2s;pointer-events:none;z-index:50}
+  .copied.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  footer{border-top:1px solid var(--line);padding:30px 0 50px;text-align:center;color:var(--ink-faint);font-style:italic}
+
+  /* tile background variants */
+  body.bg-light{--tile-bg:#f4eefc}
+  body.bg-light .thumb img{filter:drop-shadow(0 2px 5px rgba(80,40,120,.25))}
+  body.bg-check .thumb{background-image:
+    linear-gradient(45deg,#cbb8e8 25%,transparent 25%),linear-gradient(-45deg,#cbb8e8 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#cbb8e8 75%),linear-gradient(-45deg,transparent 75%,#cbb8e8 75%);
+    background-position:0 0,0 9px,9px -9px,-9px 0;background-color:#ece2f8}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Codex Iconorum</div>
+    <h1>Catálogo de Iconos</h1>
+    <p>Todos los iconos de UI del juego — 62 en total · 33 expuestos vía <code>&lt;GameIcon&gt;</code>.</p>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="wrap">
+    <span class="stat"><b id="shown">62</b> mostrados</span>
+    <input id="search" class="search" type="search" placeholder="filtrar por nombre…" autocomplete="off">
+    <span class="spacer"></span>
+    <span class="seg-label">Fondo</span>
+    <div class="seg" id="bgseg">
+      <button data-bg="dark" class="on">Oscuro</button>
+      <button data-bg="light">Claro</button>
+      <button data-bg="check">Damero</button>
+    </div>
+    <div class="seg" id="filterseg">
+      <button data-filter="all" class="on">Todos</button>
+      <button data-filter="game">Solo GameIcon</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+      <section class="group">
+        <h2>Navegación (sidebar del Foro) <span class="count">10</span></h2>
+        <div class="grid">
+        <figure class="tile" data-name="nav-abandon" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/nav-abandon.png" alt="nav-abandon"></div>
+          <figcaption>
+            <span class="name">nav-abandon</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="nav-consilium" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/nav-consilium.png" alt="nav-consilium"></div>
+          <figcaption>
+            <span class="name">nav-consilium</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="nav-decreta" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/nav-decreta.png" alt="nav-decreta"></div>
+          <figcaption>
+            <span class="name">nav-decreta</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="nav-doctrinae" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/nav-doctrinae.png" alt="nav-doctrinae"></div>
+          <figcaption>
+            <span class="name">nav-doctrinae</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="nav-exercitus" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/nav-exercitus.png" alt="nav-exercitus"></div>
+          <figcaption>
+            <span class="name">nav-exercitus</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="nav-forum" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/nav-forum.png" alt="nav-forum"></div>
+          <figcaption>
+            <span class="name">nav-forum</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="nav-next" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/nav-next.png" alt="nav-next"></div>
+          <figcaption>
+            <span class="name">nav-next</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="nav-prev" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/nav-prev.png" alt="nav-prev"></div>
+          <figcaption>
+            <span class="name">nav-prev</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="nav-provinciae" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/nav-provinciae.png" alt="nav-provinciae"></div>
+          <figcaption>
+            <span class="name">nav-provinciae</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="nav-tutorial" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/nav-tutorial.png" alt="nav-tutorial"></div>
+          <figcaption>
+            <span class="name">nav-tutorial</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        </div>
+      </section>
+      <section class="group">
+        <h2>Nodos de campaña <span class="count">4</span></h2>
+        <div class="grid">
+        <figure class="tile" data-name="node-battle" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/node-battle.png" alt="node-battle"></div>
+          <figcaption>
+            <span class="name">node-battle</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="node-boss" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/node-boss.png" alt="node-boss"></div>
+          <figcaption>
+            <span class="name">node-boss</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="node-event" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/node-event.png" alt="node-event"></div>
+          <figcaption>
+            <span class="name">node-event</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="node-rest" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/node-rest.png" alt="node-rest"></div>
+          <figcaption>
+            <span class="name">node-rest</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        </div>
+      </section>
+      <section class="group">
+        <h2>Recursos de campaña (Iter Belli) <span class="count">5</span></h2>
+        <div class="grid">
+        <figure class="tile" data-name="res-discipline" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/res-discipline.png" alt="res-discipline"></div>
+          <figcaption>
+            <span class="name">res-discipline</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="res-morale" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/res-morale.png" alt="res-morale"></div>
+          <figcaption>
+            <span class="name">res-morale</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="res-soldiers" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/res-soldiers.png" alt="res-soldiers"></div>
+          <figcaption>
+            <span class="name">res-soldiers</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="res-supplies" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/res-supplies.png" alt="res-supplies"></div>
+          <figcaption>
+            <span class="name">res-supplies</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="res-threat" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/res-threat.png" alt="res-threat"></div>
+          <figcaption>
+            <span class="name">res-threat</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        </div>
+      </section>
+      <section class="group">
+        <h2>Categorías de carta de operación <span class="count">8</span></h2>
+        <div class="grid">
+        <figure class="tile" data-name="cat-coercion" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/cat-coercion.png" alt="cat-coercion"></div>
+          <figcaption>
+            <span class="name">cat-coercion</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="cat-crisis" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/cat-crisis.png" alt="cat-crisis"></div>
+          <figcaption>
+            <span class="name">cat-crisis</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="cat-diplomacia" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/cat-diplomacia.png" alt="cat-diplomacia"></div>
+          <figcaption>
+            <span class="name">cat-diplomacia</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="cat-inteligencia" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/cat-inteligencia.png" alt="cat-inteligencia"></div>
+          <figcaption>
+            <span class="name">cat-inteligencia</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="cat-logistica" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/cat-logistica.png" alt="cat-logistica"></div>
+          <figcaption>
+            <span class="name">cat-logistica</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="cat-movimiento" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/cat-movimiento.png" alt="cat-movimiento"></div>
+          <figcaption>
+            <span class="name">cat-movimiento</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="cat-operaciones" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/cat-operaciones.png" alt="cat-operaciones"></div>
+          <figcaption>
+            <span class="name">cat-operaciones</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="cat-postura" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/cat-postura.png" alt="cat-postura"></div>
+          <figcaption>
+            <span class="name">cat-postura</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        </div>
+      </section>
+      <section class="group">
+        <h2>Operaciones especiales <span class="count">2</span></h2>
+        <div class="grid">
+        <figure class="tile" data-name="op-final-battle" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/op-final-battle.png" alt="op-final-battle"></div>
+          <figcaption>
+            <span class="name">op-final-battle</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="op-quest" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/op-quest.png" alt="op-quest"></div>
+          <figcaption>
+            <span class="name">op-quest</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        </div>
+      </section>
+      <section class="group">
+        <h2>Estadísticas de combate <span class="count">9</span></h2>
+        <div class="grid">
+        <figure class="tile" data-name="stat-agility" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/stat-agility.svg" alt="stat-agility"></div>
+          <figcaption>
+            <span class="name">stat-agility</span>
+            <span class="meta"><span class="ext">SVG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="stat-attack" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/stat-attack.svg" alt="stat-attack"></div>
+          <figcaption>
+            <span class="name">stat-attack</span>
+            <span class="meta"><span class="ext">SVG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="stat-charge" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/stat-charge.svg" alt="stat-charge"></div>
+          <figcaption>
+            <span class="name">stat-charge</span>
+            <span class="meta"><span class="ext">SVG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="stat-defense" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/stat-defense.svg" alt="stat-defense"></div>
+          <figcaption>
+            <span class="name">stat-defense</span>
+            <span class="meta"><span class="ext">SVG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="stat-harass" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/stat-harass.svg" alt="stat-harass"></div>
+          <figcaption>
+            <span class="name">stat-harass</span>
+            <span class="meta"><span class="ext">SVG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="stat-hp" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/stat-hp.svg" alt="stat-hp"></div>
+          <figcaption>
+            <span class="name">stat-hp</span>
+            <span class="meta"><span class="ext">SVG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="stat-movement" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/stat-movement.svg" alt="stat-movement"></div>
+          <figcaption>
+            <span class="name">stat-movement</span>
+            <span class="meta"><span class="ext">SVG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="stat-push" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/stat-push.svg" alt="stat-push"></div>
+          <figcaption>
+            <span class="name">stat-push</span>
+            <span class="meta"><span class="ext">SVG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="stat-siege" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/stat-siege.svg" alt="stat-siege"></div>
+          <figcaption>
+            <span class="name">stat-siege</span>
+            <span class="meta"><span class="ext">SVG</span></span>
+          </figcaption>
+        </figure>
+        </div>
+      </section>
+      <section class="group">
+        <h2>Misceláneos del Hub <span class="count">6</span></h2>
+        <div class="grid">
+        <figure class="tile" data-name="arrow-right" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/arrow-right.png" alt="arrow-right"></div>
+          <figcaption>
+            <span class="name">arrow-right</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="delta-down" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/delta-down.png" alt="delta-down"></div>
+          <figcaption>
+            <span class="name">delta-down</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="delta-up" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/delta-up.png" alt="delta-up"></div>
+          <figcaption>
+            <span class="name">delta-up</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="imperium-icon-sheet" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/imperium-icon-sheet.png" alt="imperium-icon-sheet"></div>
+          <figcaption>
+            <span class="name">imperium-icon-sheet</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="improved-seal" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/improved-seal.png" alt="improved-seal"></div>
+          <figcaption>
+            <span class="name">improved-seal</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="supplies-crate" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/icons/supplies-crate.png" alt="supplies-crate"></div>
+          <figcaption>
+            <span class="name">supplies-crate</span>
+            <span class="meta"><b class="badge">GameIcon</b><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        </div>
+      </section>
+      <section class="group">
+        <h2>Recursos (Hub: economía, población, estaciones) <span class="count">10</span></h2>
+        <div class="grid">
+        <figure class="tile" data-name="food-icon" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/resources/food-icon.png" alt="food-icon"></div>
+          <figcaption>
+            <span class="name">food-icon</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="gold-stack-icon" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/resources/gold-stack-icon.png" alt="gold-stack-icon"></div>
+          <figcaption>
+            <span class="name">gold-stack-icon</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="iuniores-icon-color" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/resources/iuniores-icon-color.png" alt="iuniores-icon-color"></div>
+          <figcaption>
+            <span class="name">iuniores-icon-color</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="lower-class-icon" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/resources/lower-class-icon.png" alt="lower-class-icon"></div>
+          <figcaption>
+            <span class="name">lower-class-icon</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="population-icon" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/resources/population-icon.png" alt="population-icon"></div>
+          <figcaption>
+            <span class="name">population-icon</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="season-icon-color" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/resources/season-icon-color.png" alt="season-icon-color"></div>
+          <figcaption>
+            <span class="name">season-icon-color</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="tax-rate-seal" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/resources/tax-rate-seal.png" alt="tax-rate-seal"></div>
+          <figcaption>
+            <span class="name">tax-rate-seal</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="unrest-icon" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/resources/unrest-icon.png" alt="unrest-icon"></div>
+          <figcaption>
+            <span class="name">unrest-icon</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="upper-class-icon" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/resources/upper-class-icon.png" alt="upper-class-icon"></div>
+          <figcaption>
+            <span class="name">upper-class-icon</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="wealth-icon" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/resources/wealth-icon.png" alt="wealth-icon"></div>
+          <figcaption>
+            <span class="name">wealth-icon</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        </div>
+      </section>
+      <section class="group">
+        <h2>Campaña (marcas y pergaminos) <span class="count">4</span></h2>
+        <div class="grid">
+        <figure class="tile" data-name="campaign-briefing-background" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/campaign/campaign-briefing-background.png" alt="campaign-briefing-background"></div>
+          <figcaption>
+            <span class="name">campaign-briefing-background</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="campaign-watermark" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/campaign/campaign-watermark.svg" alt="campaign-watermark"></div>
+          <figcaption>
+            <span class="name">campaign-watermark</span>
+            <span class="meta"><span class="ext">SVG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="mission-parchment-glow" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/campaign/mission-parchment-glow.png" alt="mission-parchment-glow"></div>
+          <figcaption>
+            <span class="name">mission-parchment-glow</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="mission-parchment-scroll" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/campaign/mission-parchment-scroll.png" alt="mission-parchment-scroll"></div>
+          <figcaption>
+            <span class="name">mission-parchment-scroll</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        </div>
+      </section>
+      <section class="group">
+        <h2>Cursor <span class="count">3</span></h2>
+        <div class="grid">
+        <figure class="tile" data-name="roman-gladius-cursor-128" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/cursor/roman-gladius-cursor-128.png" alt="roman-gladius-cursor-128"></div>
+          <figcaption>
+            <span class="name">roman-gladius-cursor-128</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="roman-gladius-cursor-64" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/cursor/roman-gladius-cursor-64.png" alt="roman-gladius-cursor-64"></div>
+          <figcaption>
+            <span class="name">roman-gladius-cursor-64</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        <figure class="tile" data-name="roman-gladius-cursor" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/cursor/roman-gladius-cursor.png" alt="roman-gladius-cursor"></div>
+          <figcaption>
+            <span class="name">roman-gladius-cursor</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        </div>
+      </section>
+      <section class="group">
+        <h2>Sello / medallón <span class="count">1</span></h2>
+        <div class="grid">
+        <figure class="tile" data-name="consilium-medallion" title="Click para copiar el nombre">
+          <div class="thumb"><img loading="lazy" src="src/assets/ui/consilium-medallion.png" alt="consilium-medallion"></div>
+          <figcaption>
+            <span class="name">consilium-medallion</span>
+            <span class="meta"><span class="ext">PNG</span></span>
+          </figcaption>
+        </figure>
+        </div>
+      </section>
+</main>
+
+<footer class="wrap"><p>Generado desde <span style="font-family:var(--font-mono)">src/assets/ui</span> · tools/gen-icon-gallery.mjs</p></footer>
+<div class="copied" id="toast">copiado</div>
+
+<script>
+  const tiles=[...document.querySelectorAll('.tile')];
+  const shown=document.getElementById('shown');
+  let q='',filter='all';
+  function apply(){
+    let n=0;
+    for(const t of tiles){
+      const name=t.dataset.name;
+      const isGame=!!t.querySelector('.badge');
+      const ok=(filter==='all'||isGame)&&name.includes(q);
+      t.classList.toggle('hidden',!ok);
+      if(ok)n++;
+    }
+    shown.textContent=n;
+    for(const g of document.querySelectorAll('.group')){
+      const any=[...g.querySelectorAll('.tile')].some(t=>!t.classList.contains('hidden'));
+      g.style.display=any?'':'none';
+    }
+  }
+  document.getElementById('search').addEventListener('input',e=>{q=e.target.value.trim().toLowerCase();apply();});
+  document.getElementById('filterseg').addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    filter=b.dataset.filter;[...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));apply();
+  });
+  document.getElementById('bgseg').addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    document.body.classList.remove('bg-light','bg-check');
+    if(b.dataset.bg==='light')document.body.classList.add('bg-light');
+    if(b.dataset.bg==='check')document.body.classList.add('bg-check');
+    [...e.currentTarget.children].forEach(x=>x.classList.toggle('on',x===b));
+  });
+  const toast=document.getElementById('toast');let tmr;
+  for(const t of tiles)t.addEventListener('click',()=>{
+    const name=t.dataset.name;
+    navigator.clipboard?.writeText(name).catch(()=>{});
+    toast.textContent='copiado: '+name;toast.classList.add('show');
+    clearTimeout(tmr);tmr=setTimeout(()=>toast.classList.remove('show'),1400);
+  });
+</script>
+</body>
+</html>
