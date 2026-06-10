@@ -49,7 +49,10 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
   const doctrinePreview = [...new Set(doctrineModifiers.map((m) => m.label))].join(' | ');
 
   const campaignTitle = `Campaña — ${getActiveScenario().enemy.name}`;
-  const canEmbark = canEmbarkFromCouncil();
+  // Council requirement + at least one cohort: an empty army would seed a
+  // 0-soldier campaign that is instantly unwinnable.
+  const hasCohorts = (army?.cohorts?.length ?? 0) > 0;
+  const canEmbark = canEmbarkFromCouncil() && hasCohorts;
 
   // Supply warning: warn if the Hub stock is below the campaign's upkeep budget.
   const suppliesHave = army?.supplies ?? SUPPLIES_STARTING_STOCK;

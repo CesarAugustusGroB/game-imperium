@@ -88,10 +88,17 @@ export async function loadTopology(): Promise<void> {
  *
  * No-ops if the topology is not yet loaded or all provinces are claimed.
  */
+/**
+ * Claims requested before topology.json finished loading. Flushed (in order)
+ * by initProvinceMapStore once the topology is available, so an early
+ * conquerProvince (e.g. seeding Roma in startNewRun) is never lost.
+ */
+let pendingClaims: string[] = [];
+
 export function claimTerritory(roguelikeProvinceId: string): void {
   const topology = topologyData.value;
   if (!topology) {
-    console.warn('[province-map-store] claimTerritory called before topology loaded');
+    if (!pendingClaims.includes(roguelikeProvinceId)) pendingClaims.push(roguelikeProvinceId);
     return;
   }
 
@@ -221,6 +228,10 @@ export function claimTerritoryAt(roguelikeProvinceId: string, mapIndex: number):
 export async function initProvinceMapStore(): Promise<void> {
   resetProvinceMapStore();
   await loadTopology();
+  // Replay claims that arrived while the topology was still loading.
+  const queued = pendingClaims;
+  pendingClaims = [];
+  for (const id of queued) claimTerritory(id);
 }
 
 /**
@@ -230,4 +241,5 @@ export async function initProvinceMapStore(): Promise<void> {
 export function resetProvinceMapStore(): void {
   territoryMap.value = new Map();
   claimedIndices.value = new Set();
+  pendingClaims = [];
 }

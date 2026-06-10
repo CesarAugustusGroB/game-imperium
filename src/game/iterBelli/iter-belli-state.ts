@@ -66,7 +66,14 @@ export const iterBelliActive = signal<boolean>(false);
 
 /** Publish the current draft to the signals so subscribers re-render. */
 function commit(): void {
-  iterBelliState.value = { ...S, pool: S.pool.map((c) => ({ ...c })) };
+  // Copy pool AND quests: both have their items mutated in place (timer,
+  // quest.status), so stale references in the previous published value must
+  // not alias the live objects.
+  iterBelliState.value = {
+    ...S,
+    pool: S.pool.map((c) => ({ ...c })),
+    quests: S.quests.map((q) => ({ ...q })),
+  };
   iterBelliLog.value = logLines.slice();
 }
 
@@ -135,12 +142,20 @@ function drawCard(): CardInstance | null {
 
 function refillPool(): void {
   const scenario = getActiveScenario();
-  // At the objective, force the decisive assault to be the only option.
-  if (currentLocation().id === scenario.objectiveLocationId && !S.pool.find((c) => c.def.id === scenario.decisiveCardId)) {
-    const assault = CARD_DEFS.find((c) => c.id === scenario.decisiveCardId);
-    if (assault) {
-      S.pool = [{ instanceId: S.cardIdCounter++, def: assault, timer: 99 }];
+  // At the objective, force the decisive assault to be the only option
+  // (crisis warnings stay visible). No regular refill happens here — otherwise
+  // '*'-location cards would leak back in and let the player stall the assault.
+  if (currentLocation().id === scenario.objectiveLocationId) {
+    if (!S.pool.find((c) => c.def.id === scenario.decisiveCardId)) {
+      const assault = CARD_DEFS.find((c) => c.id === scenario.decisiveCardId);
+      if (assault) {
+        S.pool = [
+          ...S.pool.filter((c) => c.def.category === 'Crisis'),
+          { instanceId: S.cardIdCounter++, def: assault, timer: 99 },
+        ];
+      }
     }
+    return;
   }
   let attempts = B.POOL_REFILL_ATTEMPTS;
   while (S.pool.filter((c) => c.def.category !== 'Crisis').length < B.POOL_TARGET_SIZE && attempts-- > 0) {
@@ -301,8 +316,9 @@ function endTurn(timeCost: number): void {
   S.turnNum++;
   S.timeRemaining -= timeCost;
 
-  // Passive upkeep.
-  if (S.supplies > 0) applyChange('supplies', -B.SUPPLY_UPKEEP_PER_TURN);
+  // Passive upkeep — scaled by the days the action actually took, matching
+  // how the clock and card timers tick (2-day cards consume 2 turns of food).
+  if (S.supplies > 0) applyChange('supplies', -B.SUPPLY_UPKEEP_PER_TURN * timeCost);
 
   // Doctrine passives (after upkeep, before hunger/mutiny so they can offset a crisis).
   for (const m of S.doctrineModifiers) {
@@ -370,10 +386,14 @@ function endTurn(timeCost: number): void {
     handleAmbush();
   }
 
-  injectCrises();
-  refillPool();
-  injectLocationQuests();
+  // End conditions FIRST: if the campaign just ended, don't publish freshly
+  // injected crisis/quest cards alongside the endgame phase.
   checkEndConditions();
+  if (!S.finished) {
+    injectCrises();
+    refillPool();
+    injectLocationQuests();
+  }
   commit();
 }
 

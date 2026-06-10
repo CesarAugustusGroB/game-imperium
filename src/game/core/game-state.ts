@@ -8,9 +8,9 @@ import { STARTER_DECRETUM } from '../../data/decretum-data';
 import { STARTER_DOCTRINES } from '../../data/doctrine-data';
 import { isDoctrineEquippable } from '../items/doctrine';
 import { resetCouncilStore, advisorMarket, seatAdvisor, setAdvisorMarket, advisorShopDiscount, advisorIncomeBonus } from '../council/council-store';
-import { resetProvinceStore, conquerProvince, provinces } from '../province/province-store';
+import { resetProvinceStore, conquerProvince } from '../province/province-store';
 import { initGovernorStore, resetGovernorStore } from '../province/governor-store';
-import { initProvinceMapStore, resetProvinceMapStore, claimTerritory } from '../province/province-map-store';
+import { initProvinceMapStore, resetProvinceMapStore } from '../province/province-map-store';
 import { resetEventStore } from '../events/event-store';
 import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyIds, registerFactionSyncCallback } from '../progression/npc-faction-store';
 import { resetStrategicStore, ensurePreparedArmy, preparedArmy, setExtraShopDiscountFn } from '../progression/strategic-store';
@@ -196,14 +196,11 @@ export function startNewRun(commander: Commander, options?: StartRunOptions): vo
   }
 
   if (seedHomeProvince) {
-    // Create the home province first (no territory claimed yet — topology not loaded)
+    // Create the home province immediately; its claimTerritory call is queued
+    // by the map store and flushed when initProvinceMapStore finishes loading
+    // the topology (see pendingClaims in province-map-store).
     conquerProvince('Roma', { gold: 2, iuniores: 0 }, 1);
-
-    // Load topology, then retroactively claim territory for Roma
-    initProvinceMapStore().then(() => {
-      const roma = provinces.value.find(p => p.name === 'Roma');
-      if (roma) claimTerritory(roma.id);
-    });
+    void initProvinceMapStore();
   }
 
   if (shouldRecordRunStart) {

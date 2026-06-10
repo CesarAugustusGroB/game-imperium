@@ -59,7 +59,11 @@ export function navigateToIterBelli(): void {
 // bookmark from before S22 still lands the user in the right place.
 function getInitialScreen(): ScreenName {
   const hash = window.location.hash.slice(1) as ScreenName;
-  const requested = VALID_SCREENS.includes(hash) ? hash : 'title';
+  let requested = VALID_SCREENS.includes(hash) ? hash : 'title';
+  // No commander exists at module-init time (save restore is async), so any
+  // run-dependent deep link starts at title; the boot-resume flow navigates
+  // to the right screen itself once the run is restored.
+  if (REQUIRES_RUN.includes(requested) && !selectedCommander.value) requested = 'title';
   return resolveScreen(requested);
 }
 
@@ -73,7 +77,10 @@ function applyScreenDOM(_screen: ScreenName): void {
 
 window.addEventListener('hashchange', () => {
   const hash = window.location.hash.slice(1) as ScreenName;
-  const requested = VALID_SCREENS.includes(hash) ? hash : 'title';
+  let requested = VALID_SCREENS.includes(hash) ? hash : 'title';
+  // Same guard as navigateTo: run-dependent screens crash on null run state,
+  // so a hand-typed `#forum` (or Back to a stale hash) lands on title instead.
+  if (REQUIRES_RUN.includes(requested) && !selectedCommander.value) requested = 'title';
   const screen = resolveScreen(requested);
   currentScreen.value = screen;
   applyScreenDOM(screen);

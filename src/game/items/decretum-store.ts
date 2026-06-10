@@ -10,8 +10,11 @@ import type { Faction } from '../core/commander';
 /** The player's current decretum hand. */
 export const decretumHand = signal<Decretum[]>([]);
 
+/** Default hand capacity — restored on run reset. */
+const DEFAULT_HAND_SIZE = 5;
+
 /** Maximum number of scrolls the player can hold. */
-export const maxHandSize = signal<number>(5);
+export const maxHandSize = signal<number>(DEFAULT_HAND_SIZE);
 
 // ── Mutations ──
 
@@ -60,11 +63,13 @@ export function getHandWithCastability(): Array<{ decretum: Decretum; castable: 
 }
 
 /**
- * Clear the decretum hand entirely.
+ * Clear the decretum hand entirely and restore the default capacity
+ * (any in-run hand-size bonus must not leak into the next run).
  * Called on run reset.
  */
 export function resetDecretumHand(): void {
   decretumHand.value = [];
+  maxHandSize.value = DEFAULT_HAND_SIZE;
 }
 
 // Re-export types consumed by callers that import from this module

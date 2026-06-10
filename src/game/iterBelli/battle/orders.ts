@@ -18,8 +18,10 @@ export const ORDERS: Record<OrderKey, OrderDef> = {
                 desc:'Check (die+movement ≥ 9). Crit (×2.5) if the enemy holds the center.' },
   drums:      { name:'War Drums', sub:'moral', disc:3, sMorale:1.6, drums:true,
                 desc:'Raises your morale steadily (scales with discipline), no damage.' },
-  taunt:      { name:'Taunt', sub:'moral', disc:3, eMorale:1.0, mult:0.05, stat:'harass',
-                desc:'Hits enemy morale directly, almost no physical damage.' },
+  // No mult/stat: with a mult set, the resolver's pure-moral branch is skipped
+  // and the order resolves silently (the 0.05 damage path never existed).
+  taunt:      { name:'Taunt', sub:'moral', disc:3, eMorale:1.0,
+                desc:'Hits enemy morale directly, no physical damage.' },
   rally:      { name:'Rally', sub:'moral', disc:2, sMorale:2.6,
                 desc:'Recovers strong morale; you forgo the offensive round.' },
   warCry:     { name:'War Cry', sub:'push', stat:'push', mult:0.35, disc:3, push:16, eMorale:0.85, sMorale:0.5,

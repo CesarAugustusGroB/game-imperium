@@ -888,10 +888,15 @@ export function tickFamine(
 
 /**
  * Famine unrest contribution based on famineTimer.
- * Soft (1-2): +10/season. Hard (3+): +25/season. None (0): 0.
+ * Soft (1..hard-1): +10/season. Hard: +25/season. None (0): 0.
+ * Uses the same Granary-T3-delayed hard threshold as tickFamine, so unrest
+ * and starvation enter the hard phase on the same season.
  */
 export function getFamineUnrest(province: Province): number {
-  if (province.famineTimer >= FOOD.famineHardThreshold) return FOOD.famineUnrestHard;
+  const granary = province.investments.find(i => i.type === 'granary');
+  const hardThreshold = FOOD.famineHardThreshold
+    + (granary && granary.level >= 3 ? FOOD.granaryT3FamineDelay : 0);
+  if (province.famineTimer >= hardThreshold) return FOOD.famineUnrestHard;
   if (province.famineTimer >= 1) return FOOD.famineUnrestSoft;
   return 0;
 }

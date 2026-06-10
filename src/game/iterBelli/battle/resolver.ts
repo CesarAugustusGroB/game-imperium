@@ -25,7 +25,8 @@ export function moraleMult(m: number): number {
   if (m <= 0) return 0;
   if (m < 3) return 0.6;
   if (m < 6) return 0.8;
-  return 1.0;
+  // 6–10 → 1.0 (same bonus as before); 10–15 ramps linearly to +50% (1.5 at morale 15).
+  return Math.min(1.5, 1.0 + Math.max(0, m - 10) * 0.1);
 }
 
 export interface OrderResult { eMoraleHit: number; log: RoundLogLine[]; }
@@ -47,8 +48,8 @@ export function resolveOrder(
   // pure morale orders (drums / rally / line relief / taunt)
   if (o.sub === 'moral' && !o.mult) {
     if (o.drums) { att.drums = 3; log.push({ text:`${who} sound the war drums.`, kind:'mor' }); }
-    else if (o.refresh) { att.morale = clamp(att.morale + (o.sMorale ?? 0), 0, 10); att.guardMult = 0.5; log.push({ text:`${who} relieve the line — fresh troops forward.`, kind:'mor' }); }
-    else if (o.sMorale) { att.morale = clamp(att.morale + o.sMorale, 0, 10); log.push({ text:`${who} rally the line.`, kind:'mor' }); }
+    else if (o.refresh) { att.morale = clamp(att.morale + (o.sMorale ?? 0), 0, 15); att.guardMult = 0.5; log.push({ text:`${who} relieve the line — fresh troops forward.`, kind:'mor' }); }
+    else if (o.sMorale) { att.morale = clamp(att.morale + o.sMorale, 0, 15); log.push({ text:`${who} rally the line.`, kind:'mor' }); }
     if (eMoraleHit) log.push({ text:`${who} taunt the enemy.`, kind:'mor' });
     return { eMoraleHit, log };
   }
@@ -75,7 +76,7 @@ export function resolveOrder(
   if (o.sub === 'push') {
     const dmg = mitigate(statVal * die * (o.mult ?? 0) * discBonus * ms * (1 + centerDmgBonus) * BAL.DMG_SCALE, def, o);
     def.hp = Math.max(0, def.hp - dmg);
-    if (o.sMorale) att.morale = clamp(att.morale + o.sMorale, 0, 10);
+    if (o.sMorale) att.morale = clamp(att.morale + o.sMorale, 0, 15);
     log.push({ text:`${who} ${o.defensive ? 'hold the line' : 'advance'} for ${Math.round(dmg)}.`, kind: cls });
     return { eMoraleHit, log };
   }
@@ -110,7 +111,7 @@ function chargeAndMove(
     const recoil = mitigate(def.stats.push * recoilMult * exposure * BAL.RECOIL_SCALE, att, {});
     att.hp = Math.max(0, att.hp - recoil);
     eMoraleHit += impact > recoil ? 0.6 : -0.2;
-    if (o.sMorale) att.morale = clamp(att.morale + o.sMorale, 0, 10);
+    if (o.sMorale) att.morale = clamp(att.morale + o.sMorale, 0, 15);
     if (o.breakCenter && impact > recoil) S.control = clamp(S.control + (att.side === 'you' ? 1 : -1) * 32, -100, 100);
     const verdict = impact > recoil ? 'the charge lands' : (defBraced && !o.pierceBrace ? 'the defense halts it' : 'even exchange');
     log.push({ text:`${who} ${o.wedge ? 'drive the wedge' : 'charge'} → impact ${Math.round(impact)} / recoil ${Math.round(recoil)} — ${verdict}.`, kind: cls });
@@ -163,9 +164,10 @@ export function applyMorale(S: BattleState, army: BattleArmy, hpBefore: number, 
   if (army.encircled) loss += 1.0;
   loss *= Math.max(0, 1 - army.discipline * BAL.MORALE_RESIST);
   loss = Math.max(0, loss);
-  if (ownO.sMorale && ownO.sMorale < 0) loss += -ownO.sMorale;
-  if (controllerOf(S) === army.side && S.center.moraleRegen) army.morale = clamp(army.morale + S.center.moraleRegen, 0, 10);
-  army.morale = clamp(army.morale - loss, 0, 10);
+  // NOTE: negative sMorale (reckless self-cost, e.g. All-Out Charge) is already
+  // applied directly in the resolver — adding it here would charge it twice.
+  if (controllerOf(S) === army.side && S.center.moraleRegen) army.morale = clamp(army.morale + S.center.moraleRegen, 0, 15);
+  army.morale = clamp(army.morale - loss, 0, 15);
 }
 
 export function checkEnd(S: BattleState): void {

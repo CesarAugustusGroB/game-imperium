@@ -30,7 +30,7 @@ check('enemy doctrine Maniobrera', SAGUNTUM.enemy.doctrine === 'Maniobrera');
 check('enemy baseSoldiers 7000', SAGUNTUM.enemy.baseSoldiers === 7000);
 check('enemy minSoldiers 2000', SAGUNTUM.enemy.minSoldiers === 2000);
 check('enemy morale 8', SAGUNTUM.enemy.morale === 8);
-check('enemy discipline 5', SAGUNTUM.enemy.discipline === 5);
+check('enemy discipline 6', SAGUNTUM.enemy.discipline === 6);
 
 console.log('SAGUNTUM narrative');
 const n = SAGUNTUM.narrative;
