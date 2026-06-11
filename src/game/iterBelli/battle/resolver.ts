@@ -107,6 +107,8 @@ function chargeAndMove(
     if (o.allIn) recoilMult *= 1.5;
     if (S.center.chargeBonus && attHasCenter) impactMult *= (1 + S.center.chargeBonus);
     if (S.center.enemyChargePenalty && controllerOf(S) === def.side) impactMult *= (1 - S.center.enemyChargePenalty);
+    if (S.center.chargeDamp) impactMult *= (1 - S.center.chargeDamp); // broken ground blunts every charge
+
     const impact = mitigate(statVal * die * impactMult * discBonus * ms * (1 + centerDmgBonus) * BAL.DMG_SCALE, def, o);
     def.hp = Math.max(0, def.hp - impact);
     const exposure = 1 + Math.max(0, 7 - die) / 10;

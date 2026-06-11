@@ -69,10 +69,11 @@ El módulo de batalla no importaba decreta: ~10 de 30 pergaminos eran inlanzable
 - [x] Tests: `scenario-unlock.test.ts` (9); 124 total verdes; los 9 `verify-iter-belli-*` pasan.
 - **Nota:** sin cartas nuevas específicas de Gallia más allá de la decisiva — el pool genérico cubre la campaña; añadir 4-6 cartas galas queda como pulido opcional.
 
-### S-G · Variedad táctica de la batalla
-- [ ] Usar los 4 arquetipos enemigos existentes (carthage/gauls/iberians/garrison) según escenario/quest — hoy solo se ve carthage en el flujo normal.
-- [ ] 1 formación común nueva (p. ej. **acies duplex**, disc 4) para suavizar el salto disc 3→5 de las únicas.
-- [ ] Centro: 1–2 terrenos nuevos (bosque: −charge ambos; colina fortificada) ligados al terreno del escenario.
+### S-G · Variedad táctica de la batalla — ✅ HECHO (2026-06-11)
+- [x] **Acies Duplex** (formación común, disc 4): cubre el salto disc 3→5 hacia las formaciones únicas; all-rounder disciplinado.
+- [x] **Centros de terreno nuevos**: `forest` (Dense Woods, −25% impacto de carga **ambos lados** vía nuevo `chargeDamp`) y `marsh` (Boggy Ground, −20% carga + moral al defensor). Mapeados desde el terreno del escenario, así **Gallia (forest) pelea en bosque** — controlar el centro deja de importar para la carga, neutralizando en parte a los galos (carga 20).
+- [x] Arquetipos: Saguntum (carthage) y Gallia (gauls) en uso vivo. Los 4 verificados como bien formados; iberians/garrison quedan listos para los escenarios 3-4.
+- [x] Tests: `sg-tactics.test.ts` (incl. prueba de que chargeDamp reduce el daño de carga real); 130 total verdes.
 
 ---
 

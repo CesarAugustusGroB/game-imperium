@@ -28,7 +28,7 @@ describe('adapter stat summation', () => {
 describe('adapter formations + terrain', () => {
   it('commons always available; null legate → commons only', () => {
     const keys = legateFormationKeys(null);
-    expect(keys).toEqual(['battleLine','openOrder','shieldWall']);
+    expect(keys).toEqual(['battleLine','openOrder','shieldWall','duplex']);
   });
   it('a veteran legate unlocks triplex', () => {
     const keys = legateFormationKeys({ traitIds:['veteran'] } as any);
@@ -44,7 +44,7 @@ describe('adapter formations + terrain', () => {
   });
   it('morale-only traits gate no unique formation (commons only)', () => {
     expect(legateFormationKeys({ traitIds:['charismatic','inspiring','rallying'] } as any))
-      .toEqual(['battleLine','openOrder','shieldWall']);
+      .toEqual(['battleLine','openOrder','shieldWall','duplex']);
   });
   it('terrain maps to a real center; unknown falls back to plain', () => {
     expect(CENTERS[terrainToCenterKey('hills')].name).toBe('Hill');

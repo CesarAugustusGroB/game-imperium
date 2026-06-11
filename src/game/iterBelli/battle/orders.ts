@@ -47,6 +47,9 @@ export const FORMATIONS: Record<FormationKey, FormationDef> = {
     desc:'Light, mobile skirmish. Cedes the center.', orders:['skirmish','fireMissiles','hitRun','flank','charge','rally'] },
   shieldWall: { name:'Shield Wall', kind:'common', disc:3, trait:null,
     desc:'Defensive and morale-driven.', orders:['holdLine','warCry','drums','taunt','advance','rally'] },
+  duplex:     { name:'Acies Duplex', kind:'common', disc:4, trait:null,
+    desc:'Two-line drill. A disciplined all-rounder bridging the gap to the elite formations.',
+    orders:['advance','charge','holdLine','warCry','skirmish','rally'] },
   triplex:    { name:'Triplex Acies', kind:'unique', disc:6, trait:'Roman Veteran',
     desc:'The full manipular machine.', orders:['advance','charge','holdLine','lineRelief','envelop','rally'] },
   testudo:    { name:'Testudo', kind:'unique', disc:5, trait:'Engineer', antiMissile:true,
@@ -56,13 +59,15 @@ export const FORMATIONS: Record<FormationKey, FormationDef> = {
 };
 
 export const CENTERS: Record<string, CenterDef> = {
-  hill:  { name:'Hill', terrain:'hills', desc:'+15% damage to whoever holds it', dmg:0.15 },
-  ford:  { name:'River Ford', terrain:'river', desc:'−25% enemy charge', enemyChargePenalty:0.25 },
-  camp:  { name:'Camp', terrain:'settlement', desc:'+0.8 morale/round to the holder', moraleRegen:0.8 },
-  plain: { name:'Open Plain', terrain:'plains', desc:'+25% charge to the holder', chargeBonus:0.25 },
+  hill:   { name:'Hill', terrain:'hills', desc:'+15% damage to whoever holds it', dmg:0.15 },
+  ford:   { name:'River Ford', terrain:'river', desc:'−25% enemy charge', enemyChargePenalty:0.25 },
+  camp:   { name:'Camp', terrain:'settlement', desc:'+0.8 morale/round to the holder', moraleRegen:0.8 },
+  plain:  { name:'Open Plain', terrain:'plains', desc:'+25% charge to the holder', chargeBonus:0.25 },
+  forest: { name:'Dense Woods', terrain:'forest', desc:'−25% charge impact for both sides — broken ground favours the steady line', chargeDamp:0.25 },
+  marsh:  { name:'Boggy Ground', terrain:'marsh', desc:'−20% charge impact for both sides; +0.4 morale/round to the holder dug in', chargeDamp:0.20, moraleRegen:0.4 },
 };
 export const TERRAIN_CENTER: Record<string, string> = {
-  plains:'plain', hills:'hill', river:'ford', settlement:'camp', forest:'hill',
+  plains:'plain', hills:'hill', river:'ford', settlement:'camp', forest:'forest', marsh:'marsh',
 };
 
 export const ENEMY_ARCHETYPES: Record<string, EnemyArchetype> = {

@@ -39,7 +39,7 @@ export interface OrderDef {
 }
 
 export type FormationKey =
-  | 'battleLine' | 'openOrder' | 'shieldWall' | 'triplex' | 'testudo' | 'cuneus';
+  | 'battleLine' | 'openOrder' | 'shieldWall' | 'duplex' | 'triplex' | 'testudo' | 'cuneus';
 
 export interface FormationDef {
   name: string;
@@ -59,6 +59,7 @@ export interface CenterDef {
   chargeBonus?: number;         // +charge to holder
   enemyChargePenalty?: number;  // −charge to the holder's attacker
   moraleRegen?: number;         // +morale/round to holder
+  chargeDamp?: number;          // −charge impact for BOTH sides (dense/broken ground)
 }
 
 export interface EnemyArchetype {
