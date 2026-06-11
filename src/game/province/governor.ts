@@ -23,6 +23,8 @@ export interface GovernorTier {
 
 export interface Governor extends GameEntity, FactionAffiliated {
   tiers: TierTuple<GovernorTier>;
+  /** Portrait URL under /asset/portraits/. Optional — falls back to the placeholder. */
+  portrait?: string;
 }
 
 // ── Helpers ──

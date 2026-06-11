@@ -6,6 +6,7 @@ export const GOVERNOR_PROCURATOR: Governor = {
   id: 'gov_procurator',
   name: 'Procurator Gaius',
   color: 'gold',
+  portrait: '/asset/portraits/roman-portrait-01.png',
   tiers: [
     {
       description: '+10% gold income.',
@@ -36,6 +37,7 @@ export const GOVERNOR_LEGATUS: Governor = {
   id: 'gov_legatus',
   name: 'Legatus Titus',
   color: 'red',
+  portrait: '/asset/portraits/roman-portrait-03.png',
   tiers: [
     {
       description: '+15% garrison strength.',
@@ -66,6 +68,7 @@ export const GOVERNOR_PONTIFEX: Governor = {
   id: 'gov_pontifex',
   name: 'Pontifex Lucius',
   color: 'blue',
+  portrait: '/asset/portraits/roman-portrait-06.png',
   tiers: [
     {
       description: '+10% gold income.',
@@ -96,6 +99,7 @@ export const GOVERNOR_SENATOR: Governor = {
   id: 'gov_senator',
   name: 'Senator Corvus',
   color: 'purple',
+  portrait: '/asset/portraits/roman-portrait-11.png',
   tiers: [
     {
       description: '+10% gold income.',
@@ -126,6 +130,7 @@ export const GOVERNOR_PREFECT: Governor = {
   id: 'gov_prefect',
   name: 'Prefect Marcellus',
   color: 'white',
+  portrait: '/asset/portraits/roman-portrait-16.png',
   tiers: [
     {
       description: '−5% expenses, −3 unrest.',

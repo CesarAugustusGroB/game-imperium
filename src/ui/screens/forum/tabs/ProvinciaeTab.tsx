@@ -1476,15 +1476,8 @@ function GovernorPicker({ provinceId }: { provinceId: string }) {
               padding: '8px 2px 14px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-              <div style={{
-                width: '28px', height: '28px', borderRadius: '50%',
-                background: `${fColor}22`, border: `2px solid ${fColor}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'var(--font-display)', fontSize: 'var(--font-size-md)', fontWeight: 700, color: fColor,
-              }}>
-                {gov.name[0]}
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+              <Portrait alt={gov.name} src={gov.portrait} size="small" factionColor={fColor} />
               <div
                 style={{
                   fontFamily: 'var(--font-display)',
@@ -2655,7 +2648,7 @@ function ProvinceAdminPanel({ province }: { province: Province }) {
             </>
           ) : (
             <>
-              <Portrait alt={assigned.governor.name} size="small" factionColor={FACTION_COLORS[assigned.governor.color]} tier={assigned.tier as 1 | 2 | 3} />
+              <Portrait alt={assigned.governor.name} src={assigned.governor.portrait} size="small" factionColor={FACTION_COLORS[assigned.governor.color]} tier={assigned.tier as 1 | 2 | 3} />
               <div class="pa-admin-gov-info">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                   <span class="pa-admin-gov-name" style={{ color: FACTION_COLORS[assigned.governor.color] }}>{assigned.governor.name}</span>
