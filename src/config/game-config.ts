@@ -325,6 +325,13 @@ export const IUNIORES = {
   startingSeed: 2000,
 };
 
+/**
+ * Mercenaries heal with GOLD (no citizen iuniores levy). A full heal of a
+ * mercenary cohort costs this fraction of its recruit gold cost; partial heals
+ * scale by missing HP.
+ */
+export const MERC_HEAL_GOLD_FRACTION = 0.5;
+
 // ══════════════════════════════════════════════
 //  VICTORY DAMAGE CAP (FT-HEAL FR-11 / S26-04)
 // ══════════════════════════════════════════════

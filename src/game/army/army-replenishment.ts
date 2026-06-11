@@ -21,8 +21,9 @@
 
 import type { Cohort } from './cohort';
 import { computeArmySize, applyCohortHealthState, cohortInstanceKey } from './cohort';
-import { iuniores, spendResource } from '../core/resources';
+import { iuniores, gold, spendResource } from '../core/resources';
 import { preparedArmy } from '../progression/strategic-store';
+import { MERC_HEAL_GOLD_FRACTION } from '../../config/game-config';
 
 export interface CohortReplenishment {
   cohortInstanceId: string;
@@ -288,6 +289,73 @@ export function healCohortInRoster(cohortIdx: number): CohortReplenishment | nul
   if (healed <= 0) return null;
 
   spendResource('iuniores', spend);
+
+  const newCurrentHp = currentHp + healed;
+  const nextCohorts = [...army.cohorts];
+  nextCohorts[cohortIdx] = applyCohortHealthState(cohort, newCurrentHp, false);
+  preparedArmy.value = {
+    ...army,
+    cohorts: nextCohorts,
+    size: computeArmySize(nextCohorts),
+  };
+
+  return {
+    cohortInstanceId: cohortInstanceKey(cohort),
+    cohortId: cohort.id,
+    cohortName: cohort.name,
+    maxHp,
+    currentHp,
+    missingHp,
+    iunioresToFullHeal: fullCost,
+    iunioresSpent: spend,
+    hpRestored: healed,
+    newCurrentHp,
+  };
+}
+
+/**
+ * Gold cost to fully heal a damaged mercenary cohort at `cohortIdx`
+ * (MERC_HEAL_GOLD_FRACTION × recruit cost, scaled by missing HP). Returns 0 if
+ * the cohort isn't a damaged mercenary.
+ */
+export function getMercHealGoldCost(cohortIdx: number): number {
+  const army = preparedArmy.value;
+  if (!army || cohortIdx < 0 || cohortIdx >= army.cohorts.length) return 0;
+  const cohort = army.cohorts[cohortIdx];
+  if (!cohort.mercenary) return 0;
+  const maxHp = cohort.stats.hp;
+  const missingHp = Math.max(0, maxHp - getCohortCurrentHp(cohort));
+  if (missingHp <= 0) return 0;
+  return Math.max(1, Math.round(cohort.aurumCost * MERC_HEAL_GOLD_FRACTION * missingHp / maxHp));
+}
+
+/**
+ * Heal a single MERCENARY cohort in the Hub roster with GOLD (mercenaries take
+ * no citizen iuniores levy). Spends up to the full gold heal cost; a short
+ * treasury applies a proportional partial heal. Returns the replenishment
+ * summary (gold spent reported in `iunioresSpent` for caller parity) or null.
+ */
+export function healMercenaryWithGold(cohortIdx: number): CohortReplenishment | null {
+  const army = preparedArmy.value;
+  if (!army) return null;
+  if (cohortIdx < 0 || cohortIdx >= army.cohorts.length) return null;
+
+  const cohort = army.cohorts[cohortIdx];
+  if (!cohort.mercenary) return null;
+
+  const maxHp = cohort.stats.hp;
+  const currentHp = getCohortCurrentHp(cohort);
+  const missingHp = Math.max(0, maxHp - currentHp);
+  if (missingHp <= 0) return null;
+
+  const fullCost = Math.max(1, Math.round(cohort.aurumCost * MERC_HEAL_GOLD_FRACTION * missingHp / maxHp));
+  const spend = Math.min(fullCost, gold.value);
+  if (spend <= 0) return null;
+
+  const healed = Math.min(missingHp, Math.round(missingHp * spend / fullCost));
+  if (healed <= 0) return null;
+
+  spendResource('gold', spend);
 
   const newCurrentHp = currentHp + healed;
   const nextCohorts = [...army.cohorts];

@@ -2,6 +2,7 @@ import type { ComponentChildren } from 'preact';
 import { COHORT_CATALOG } from '../../../../game/army/cohort-data';
 import type { Cohort } from '../../../../game/army/cohort';
 import { gold, iuniores } from '../../../../game/core/resources';
+import type { ResourceType } from '../../../../game/core/commander';
 import {
   preparedArmy, preparedLegate, legateHiringPool,
   ensurePreparedArmy, recruitCohort, removeCohort, getRecruitCohortFailure,
@@ -13,6 +14,7 @@ import {
   previewHubReplenishment,
   replenishHubRoster,
   healCohortInRoster,
+  healMercenaryWithGold,
 } from '../../../../game/army/army-replenishment';
 import { getLegateTraitById } from '../../../../game/army/legate-traits';
 import { playSfx } from '../../../sound/sfx';
@@ -26,6 +28,7 @@ import { resolveIconSize } from '../../../components/icon-system';
 import { getPriorityStyle, priorityClass, type CardPriority } from '../../../components/card-priority';
 import {
   IUNIORES,
+  MERC_HEAL_GOLD_FRACTION,
   SUPPLIES_PER_GOLD,
   SUPPLY_MAX_CARRY,
   AMMO_MAX_CARRY,
@@ -291,13 +294,14 @@ export function ExercitusTab() {
     const ratio = maxHp > 0 ? cur / maxHp : 1;
     if (ratio < 1) {
       g.damagedCount++;
-      // Track the single most-damaged citizen instance as the inline-heal target.
-      if (!g.mercenary) {
-        if (ratio < g.healRatio) {
-          g.healIndex = index;
-          g.healRatio = ratio;
-          g.healCost = Math.round((maxHp - cur) * 1000 / maxHp);
-        }
+      // Track the single most-damaged instance as the inline-heal target.
+      // Citizens pay iuniores; mercenaries pay gold (a fraction of recruit cost).
+      if (ratio < g.healRatio) {
+        g.healIndex = index;
+        g.healRatio = ratio;
+        g.healCost = g.mercenary
+          ? Math.max(1, Math.round(c.aurumCost * MERC_HEAL_GOLD_FRACTION * (maxHp - cur) / maxHp))
+          : Math.round((maxHp - cur) * 1000 / maxHp);
       }
     }
   });
@@ -332,7 +336,10 @@ export function ExercitusTab() {
   function handleRemove(id: string)  { removeCohort(id); playSfx('ui_sell'); }
   function handleHire(id: string)    { if (hireLegate(id, LEGATE_HIRE_COST)) playSfx('ui_equip'); }
   function handleDismiss()           { dismissLegate(); playSfx('ui_sell'); }
-  function handleHealOne(idx: number) { if (healCohortInRoster(idx) !== null) playSfx('ui_equip'); }
+  function handleHealOne(idx: number, mercenary: boolean) {
+    const result = mercenary ? healMercenaryWithGold(idx) : healCohortInRoster(idx);
+    if (result !== null) playSfx('ui_equip');
+  }
   function handleReplenishAll() {
     const result = replenishHubRoster();
     if (result && result.iunioresSpent > 0) playSfx('ui_equip');
@@ -449,7 +456,9 @@ export function ExercitusTab() {
       : ratio > 0.6 ? 'linear-gradient(90deg, #4a9a6a 0%, #7ecf97 100%)'
       : ratio > 0.3 ? 'linear-gradient(90deg, #d48b3a 0%, #e8a848 100%)'
       : 'linear-gradient(90deg, #c24a3a 0%, #d4604a 100%)';
-    const canHeal = g.healIndex != null && currentIuniores > 0;
+    // Mercenaries heal with gold, citizens with iuniores.
+    const healResource: ResourceType = g.mercenary ? 'gold' : 'iuniores';
+    const canHeal = g.healIndex != null && (g.mercenary ? currentGold > 0 : currentIuniores > 0);
     const spriteUrl = cohortSpriteUrl(cohorts.find((c) => c.id === g.id)?.spriteId);
 
     return (
@@ -529,13 +538,13 @@ export function ExercitusTab() {
                 : <ResourceAmount type="iuniores" amount={IUNIORES.recruitCost} iconSize="inline" />}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 5 }}>
-              {g.damagedCount > 0 && !g.mercenary ? (
+              {g.damagedCount > 0 ? (
                 <button
-                  onClick={() => g.healIndex != null && handleHealOne(g.healIndex)}
+                  onClick={() => g.healIndex != null && handleHealOne(g.healIndex, g.mercenary)}
                   disabled={!canHeal}
                   title={canHeal
-                    ? `Heal the most-damaged ${g.name} (${g.healCost} iuniores for a full heal; partial if short).`
-                    : 'Insufficient iuniores. Pool is empty.'}
+                    ? `Heal the most-damaged ${g.name} (${g.healCost} ${healResource} for a full heal; partial if short).`
+                    : g.mercenary ? 'Insufficient gold.' : 'Insufficient iuniores. Pool is empty.'}
                   class={`imp-card-cta imp-card-cta-${canHeal ? 'actionable' : 'disabled'}`}
                   style={{
                     flex: 1, padding: '5px 8px',
@@ -549,7 +558,7 @@ export function ExercitusTab() {
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   }}
                 >
-                  Heal <ResourceAmount type="iuniores" amount={g.healCost} iconSize="inline" />
+                  Heal <ResourceAmount type={healResource} amount={g.healCost} iconSize="inline" />
                 </button>
               ) : <span />}
               <button
