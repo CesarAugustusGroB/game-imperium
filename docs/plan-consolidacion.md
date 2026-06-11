@@ -35,16 +35,15 @@ El módulo de batalla no importaba decreta: ~10 de 30 pergaminos eran inlanzable
 - [x] Tests: 7 nuevos en `adapter.test.ts`; verify-iter-belli-commander actualizado a la escala 0–10 viva (era stale del rework de disciplina).
 - **DoD cumplido**: elegir legado cambia mediblemente la batalla; cada arquetipo tiene 2 firmas + (Warlord) pasiva.
 
-### S-C · Pasada de honestidad (edificios, doctrinas, asesores, features)
-- [ ] **Villa T3** «farmland yield doubled» → implementar (×2 food de terreno farmland en `calculateFoodProduction`).
-- [ ] **Market T3** «exchange rates» → reescribir a «+1 PWG/season» e implementar.
-- [ ] **Fishery T3 / Stables** → reescribir descripciones a lo que ya hacen (food/iuniores) o darles un efecto pequeño real.
-- [ ] **Castrum T2/T3 (unidad gratis) y Pantheon T3 (revive)**: conectar `getProvinceEffects()` a la batalla (unidad gratis = +500/+800 HP de seed; revive = mismo flag que `prevent-death`). Si no, reescribir.
-- [ ] **Doctrina `upkeep-reduction`** (Infrastructure, Annona) → aplicar a expenses de provincia en el tick de temporada.
-- [ ] **`shop-discount` de Smuggler** → añadir el caso a `passiveModifier()` (embark) o quitarlo de sus tiers.
-- [ ] **Features especiales de provincia** (`extra-event-choice`, `cavalry-bonus`, `unit-discount`, `famine-immunity`): implementar `unit-discount` y `famine-immunity` (baratos); re-flavor de los otros dos (dependían del sistema de eventos eliminado).
-- [ ] **Gobernadores**: cablear `population-growth` (sumar al growth accumulator) y `garrison-strength` (− pérdidas por rebelión) o retirarlos de los datos.
-- **DoD**: cero filas `muerto` en la tabla de auditoría, salvo las marcadas explícitamente como «contenido futuro».
+### S-C · Pasada de honestidad — ✅ HECHO (2026-06-11)
+- [x] **Villa T3** «farmland yield doubled» → implementado (×2 food de terreno farmland en `calculateFoodProduction`).
+- [x] **Market T3** «exchange rates» → +1 wealth growth real (`buildingPWG.market[3]` 4→5) + texto reescrito.
+- [x] **Castrum T2/T3, Basilica T3, Pantheon T3, Fishery T3, Stables**: textos que prometían sistemas inexistentes (unidades gratis, revive, event-choice, cavalry) reescritos a lo real. `getProvinceEffects()` (nunca consumido) **eliminado**.
+- [x] **Doctrina `upkeep-reduction`** (Infrastructure/Annona) → `getUpkeepReduction()` aplicado a expenses de provincia vía `setUpkeepReductionFn` (patrón inyectado, evita ciclo).
+- [x] **`famine-immunity`** (feature) → el dole de grano mantiene `famineTimer` a 0. **Horses cavalry-bonus** (mentira visible) → eliminado, +2 iuniores reales.
+- [x] **Smuggler shop-discount y gobernadores**: ya funcionaban — la auditoría inicial los marcó mal. Verificado: `advisorShopDiscount` aplicado al coste de asesores; todos los traits de gobernador cableados.
+- [x] Tests: `sc-honesty.test.ts` (6); 108 total verdes. `verify-province-resources` pasa.
+- **DoD cumplido**: cero filas `muerto` en la tabla de auditoría (las features especiales latentes no se muestran → no mienten).
 
 ### S-D · Blindaje
 - [ ] **`tools/verify-effects.ts`**: recorre doctrinas/decreta/traits/features/governors y FALLA si un tipo de efecto declarado no tiene sitio de aplicación registrado (mapa explícito tipo→módulo). Se añade al ritual de verificación.

@@ -97,7 +97,7 @@ export const WEALTH = {
   basePWG: 2,
   /** PWG bonus from commercial buildings by type and level. */
   buildingPWG: {
-    market:       { 1: 2, 2: 3, 3: 4 },
+    market:       { 1: 2, 2: 3, 3: 5 },
     port:         { 1: 2, 2: 3, 3: 4 },
     oasis_market: { 1: 2, 2: 3, 3: 4 },
     caravan_post: { 1: 3, 2: 4, 3: 5 },

@@ -193,6 +193,14 @@ export function getShopDiscount(): number {
   return Math.max(0, Math.min(75, sum));
 }
 
+/** Sum of upkeep-reduction percents from equipped doctrines (Infrastructure/Annona), clamped 0–75. */
+export function getUpkeepReduction(): number {
+  const sum = getActiveEffects()
+    .filter((e): e is Extract<DoctrineEffect, { type: 'upkeep-reduction' }> => e.type === 'upkeep-reduction')
+    .reduce((s, e) => s + e.percent, 0);
+  return Math.max(0, Math.min(75, sum));
+}
+
 /** Aggregate embark-army bonus (per stat) from equipped doctrines. */
 export function getEmbarkBonus(): { soldiers: number; morale: number; supplies: number; discipline: number; gold: number } {
   const out = { soldiers: 0, morale: 0, supplies: 0, discipline: 0, gold: 0 };

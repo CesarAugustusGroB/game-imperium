@@ -13,7 +13,6 @@ import {
   getAvailableBuildings,
 } from './province';
 import type { ResourceType } from '../core/commander';
-import type { DoctrineEffect } from '../items/doctrine';
 import type { ResourceCost, TaxLevel } from '../../types/index';
 import { getResource, spendResource, addResource } from '../core/resources';
 import { getGovernorTraits, getGovernorSalary, dismissGovernor, registerProvinceSyncCallback } from './governor-store';
@@ -423,42 +422,6 @@ export function collectProvinceIncome(): ProvinceIncomeResult {
 
   return { incomeGained, expensesPaid, expenseShortfall, rebellions };
 }
-
-// ── Province bonus aggregation ──
-
-/**
- * Scan all provinces for special investment bonuses and return
- * DoctrineEffect-compatible objects for battle/event consumption.
- *
- * Special bonuses:
- * - Castrum T2: free-units (guard, 1)
- * - Castrum T3: free-units (vanguard, 1)
- * - Basilica T3: extra-event-choices (1)
- * - Pantheon T3: revive (25% HP)
- */
-export function getProvinceEffects(): DoctrineEffect[] {
-  const effects: DoctrineEffect[] = [];
-
-  for (const prov of provinces.value) {
-    for (const inv of prov.investments) {
-      if (inv.type === 'castrum' && inv.level >= 2) {
-        effects.push({ type: 'free-units', unitRole: 'guard', count: 1 });
-      }
-      if (inv.type === 'castrum' && inv.level >= 3) {
-        effects.push({ type: 'free-units', unitRole: 'vanguard', count: 1 });
-      }
-      if (inv.type === 'basilica' && inv.level >= 3) {
-        effects.push({ type: 'extra-event-choices', count: 1 });
-      }
-      if (inv.type === 'pantheon' && inv.level >= 3) {
-        effects.push({ type: 'revive', hpPercent: 25 });
-      }
-    }
-  }
-
-  return effects;
-}
-
 
 /**
  * Check if any province has Aqueduct T3 (all income +10%).

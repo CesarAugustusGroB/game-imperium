@@ -123,8 +123,8 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     flavour: 'A fortified camp that garrisons a permanent legion detachment.',
     levels: [
       { incomeBonus: {},                    expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: 'Garrison deters minor raids. -5 Unrest/season.', beautinessBonus: -3 },
-      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -10, buildCost: { gold: 13 },                      description: 'Full cohort stationed. -10 Unrest/season. Free levy unit in defense battles.', beautinessBonus: -4 },
-      { incomeBonus: { iuniores: 1 },       expensesBonus: 3, unrestChange: -15, buildCost: { gold: 26 },                      description: 'Veteran legion presence. -15 Unrest/season. +1 Iuniores/season. Free veteran unit.', beautinessBonus: -5 },
+      { incomeBonus: {},                    expensesBonus: 2, unrestChange: -10, buildCost: { gold: 13 },                      description: 'Full cohort stationed. -10 Unrest/season.', beautinessBonus: -4 },
+      { incomeBonus: { iuniores: 1 },       expensesBonus: 3, unrestChange: -15, buildCost: { gold: 26 },                      description: 'Veteran legion presence. -15 Unrest/season. +1 Iuniores/season.', beautinessBonus: -5 },
     ],
   },
   basilica: {
@@ -134,7 +134,7 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     levels: [
       { incomeBonus: { gold: 1 },            expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+1 Gold/season.', beautinessBonus: 3 },
       { incomeBonus: { gold: 2 },            expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 13 },                      description: '+2 Gold/season. -5 Unrest/season.', beautinessBonus: 4 },
-      { incomeBonus: { gold: 3 },            expensesBonus: 2, unrestChange: -10, buildCost: { gold: 26 },                      description: '+3 Gold/season. -10 Unrest/season. +1 extra event choice.', beautinessBonus: 5 },
+      { incomeBonus: { gold: 3 },            expensesBonus: 2, unrestChange: -10, buildCost: { gold: 26 },                      description: '+3 Gold/season. -10 Unrest/season.', beautinessBonus: 5 },
     ],
   },
   pantheon: {
@@ -144,7 +144,7 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     levels: [
       { incomeBonus: { gold: 1 },            expensesBonus: 1, unrestChange: -5,  buildCost: { gold: 5 },                       description: '+1 Gold/season. -5 Unrest/season.', beautinessBonus: 5 },
       { incomeBonus: { gold: 2 },            expensesBonus: 1, unrestChange: -10, buildCost: { gold: 13 },                      description: '+2 Gold/season. -10 Unrest/season.', beautinessBonus: 8 },
-      { incomeBonus: { gold: 3 },            expensesBonus: 2, unrestChange: -15, buildCost: { gold: 26 },                      description: '+3 Gold/season. -15 Unrest/season. Units in this province\'s battles revive once.', beautinessBonus: 10 },
+      { incomeBonus: { gold: 3 },            expensesBonus: 2, unrestChange: -15, buildCost: { gold: 26 },                      description: '+3 Gold/season. -15 Unrest/season. A sacred capital — highest beauty.', beautinessBonus: 10 },
     ],
   },
   market: {
@@ -154,7 +154,7 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     levels: [
       { incomeBonus: { gold: 2 },           expensesBonus: 0, unrestChange: 0,   buildCost: { gold: 5 },                       description: '+2 Gold/season.', beautinessBonus: -2 },
       { incomeBonus: { gold: 4 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 12 },                      description: '+4 Gold/season.', beautinessBonus: -2 },
-      { incomeBonus: { gold: 6 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 24 },                      description: '+6 Gold/season. Resource exchange rates in this province improved by 1.', beautinessBonus: -3 },
+      { incomeBonus: { gold: 6 },           expensesBonus: 1, unrestChange: 0,   buildCost: { gold: 24 },                      description: '+6 Gold/season. +1 wealth growth (best market rates).', beautinessBonus: -3 },
     ],
   },
   aqueduct: {
@@ -197,7 +197,7 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     levels: [
       { incomeBonus: { gold: 2 },                 expensesBonus: 0, unrestChange: 0, buildCost: { gold: 4 },                         description: '+2 Gold/season. +1 Food/season.', foodBonus: 1 },
       { incomeBonus: { gold: 3 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 9 },                         description: '+3 Gold/season. +2 Food/season.', foodBonus: 2 },
-      { incomeBonus: { gold: 4 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 16 },                        description: '+4 Gold/season. +3 Food/season. Coastal settlements fed.', foodBonus: 3 },
+      { incomeBonus: { gold: 4 },                 expensesBonus: 1, unrestChange: 0, buildCost: { gold: 16 },                        description: '+4 Gold/season. +3 Food/season.', foodBonus: 3 },
     ],
   },
   villa: {
@@ -215,9 +215,9 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
     name: 'Stables',
     flavour: 'Horses bred on the plains give the legion a decisive edge.',
     levels: [
-      { incomeBonus: { iuniores: 1 },              expensesBonus: 1, unrestChange: 0, buildCost: { gold: 7 },                        description: '+1 Iuniores/season. Cavalry units trained here.' },
-      { incomeBonus: { iuniores: 2 },              expensesBonus: 2, unrestChange: 0, buildCost: { gold: 14 },                       description: '+2 Iuniores/season. +1 cavalry unit in battles.' },
-      { incomeBonus: { iuniores: 3 },              expensesBonus: 3, unrestChange: 0, buildCost: { gold: 24 },                       description: '+3 Iuniores/season. Elite cavalry in battles.' },
+      { incomeBonus: { iuniores: 1 },              expensesBonus: 1, unrestChange: 0, buildCost: { gold: 7 },                        description: '+1 Iuniores/season.' },
+      { incomeBonus: { iuniores: 2 },              expensesBonus: 2, unrestChange: 0, buildCost: { gold: 14 },                       description: '+2 Iuniores/season.' },
+      { incomeBonus: { iuniores: 3 },              expensesBonus: 3, unrestChange: 0, buildCost: { gold: 24 },                       description: '+3 Iuniores/season. Elite bloodstock.' },
     ],
   },
   lumber_camp: {
@@ -416,9 +416,17 @@ export function getProvinceIncome(
   return income;
 }
 
+// Doctrine upkeep-reduction (Infrastructure/Annona) is pushed in from game-state
+// to avoid a circular import (province → doctrine-store → game-state → province).
+let upkeepReductionFn: () => number = () => 0;
+export function setUpkeepReductionFn(fn: () => number): void {
+  upkeepReductionFn = fn;
+}
+
 /**
  * Total gold upkeep cost per season.
- * Governor expense-reduction trait reduces the total by a percentage.
+ * Governor expense-reduction trait and equipped upkeep-reduction doctrines
+ * reduce the total by a percentage.
  */
 export function getProvinceExpenses(
   province: Province,
@@ -434,6 +442,12 @@ export function getProvinceExpenses(
     if (trait.type === 'expense-reduction') {
       total = Math.floor(total * (1 - trait.percent / 100));
     }
+  }
+
+  // Apply equipped doctrine upkeep-reduction (empire-wide, 0–75%).
+  const doctrineUpkeep = upkeepReductionFn();
+  if (doctrineUpkeep > 0) {
+    total = Math.floor(total * (1 - doctrineUpkeep / 100));
   }
 
   return Math.max(0, total);
@@ -679,7 +693,14 @@ export function calculateFoodProduction(
   province: Province,
   governorTraits: GovernorTrait[] = [],
 ): number {
-  let food = FOOD.baseSubsistence + (FOOD.terrainFood[province.terrain] ?? 0);
+  const terrainFood = FOOD.terrainFood[province.terrain] ?? 0;
+  let food = FOOD.baseSubsistence + terrainFood;
+
+  // Villa L3 doubles the farmland terrain yield ("Farmland yield doubled").
+  const villa = province.investments.find(i => i.type === 'villa');
+  if (villa && villa.level >= 3 && province.terrain === 'farmland') {
+    food += terrainFood;
+  }
 
   // Building food bonuses (from InvestmentLevelEffect.foodBonus)
   for (const inv of province.investments) {
@@ -858,6 +879,12 @@ export function tickFamine(
   province: Province,
   governorTraits: GovernorTrait[] = [],
 ): Province {
+  // Famine-immunity unique feature (e.g. the grain dole): the province never
+  // starves — the timer stays at 0 regardless of food surplus.
+  if (province.uniqueFeature?.special?.type === 'famine-immunity') {
+    return province.famineTimer > 0 ? { ...province, famineTimer: 0 } : province;
+  }
+
   const surplus = calculateFoodSurplus(province, governorTraits);
 
   if (surplus >= 0) {

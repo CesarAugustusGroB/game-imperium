@@ -28,7 +28,6 @@ export type TradeGoodSpecial =
   | { type: 'build-cost-discount'; percent: number }
   | { type: 'unrest-reduction'; amount: number }
   | { type: 'enables-building'; building: TerrainBuildingType }
-  | { type: 'cavalry-bonus' }
   | null;
 
 // ── Trade good data shape ──
@@ -97,8 +96,8 @@ export const TRADE_GOOD_DATA: Record<TradeGoodType, TradeGoodData> = {
   },
   horses: {
     id: 'horses', name: 'Horses',
-    flatGold: 0, flatGrowth: 0, flatIuniores: 1, wealthGrowthBonus: 0,
-    special: { type: 'cavalry-bonus' },
+    flatGold: 0, flatGrowth: 0, flatIuniores: 2, wealthGrowthBonus: 0,
+    special: null,
     validTerrains: ['plains'],
   },
   gold_ore: {
