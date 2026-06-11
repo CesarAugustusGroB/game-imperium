@@ -84,7 +84,7 @@ export const LEGATE_DISCIPLINE_TRAIT_MOD: Record<string, number> = {
   aggressive: -1, rallying: -1,
 };
 
-/** Signature card tuning (one card per commander). */
+/** Signature card tuning (two cards per commander archetype). */
 export const SIGNATURE = {
   furiaGalaMorale: 2,
   furiaGalaThreat: 1,
@@ -92,11 +92,21 @@ export const SIGNATURE = {
   mercenariosGold: 40,
   mercenariosSoldiers: 600,
   tratadoThreat: -3,
+  // Second signature per archetype — the old hub "strategic abilities",
+  // rewired as campaign cards (plan S-B).
+  gritoMorale: 1,
+  gritoWeaken: 1,
+  cruzadaGold: 20,
+  cruzadaMorale: 1,
+  cruzadaWeaken: 2,
+  manipularGold: 15,
+  oportunidadGold: 30,
+  oportunidadSupplies: 4,
 } as const;
 
 // ── Clamps ──
 export const MORALE_MIN = 0;
-export const MORALE_MAX = 10;
+export const MORALE_MAX = 15;
 export const DISCIPLINE_MIN = 0;
 export const DISCIPLINE_MAX = 10;
 export const THREAT_MIN = 0;

@@ -279,6 +279,57 @@ export const CARD_DEFS: OperationCard[] = [
     weight: 3,
   },
 
+  // ── FIRMAS DE HABILIDAD (segunda firma por arquetipo — antiguas habilidades
+  //    estratégicas del hub, recableadas como cartas de campaña; plan S-B) ────
+  {
+    id: 'firma_grito_guerra',
+    name: 'Grito de guerra',
+    category: 'Coerción',
+    desc: 'Boudicca lanza su grito: la legión carga la primera y el enemigo llega tocado a Sagunto.',
+    cost: { time: 1 },
+    effects: () => ({ morale: SIGNATURE.gritoMorale, enemyWeaken: SIGNATURE.gritoWeaken }),
+    expiry: 5,
+    locations: ['*'],
+    requires: ({ archetype }) => archetype === 'Warlord',
+    weight: 2,
+  },
+  {
+    id: 'firma_cruzada',
+    name: 'Llamada a la cruzada',
+    category: 'Operaciones',
+    desc: 'Inocencio predica la guerra santa: celo en las filas y pavor en el enemigo.',
+    cost: { time: 1, gold: SIGNATURE.cruzadaGold },
+    effects: () => ({ morale: SIGNATURE.cruzadaMorale, enemyWeaken: SIGNATURE.cruzadaWeaken }),
+    expiry: 5,
+    locations: ['*'],
+    requires: ({ archetype, state }) => archetype === 'Religious' && state.gold >= SIGNATURE.cruzadaGold,
+    weight: 2,
+  },
+  {
+    id: 'firma_manipular',
+    name: 'Manipular',
+    category: 'Inteligencia',
+    desc: 'Augusto mueve los hilos: descarta las operaciones sobre la mesa y baraja otras nuevas.',
+    cost: { time: 1, gold: SIGNATURE.manipularGold },
+    effects: () => ({ refreshPool: true }),
+    expiry: 5,
+    locations: ['*'],
+    requires: ({ archetype, state }) => archetype === 'Diplomat' && state.gold >= SIGNATURE.manipularGold,
+    weight: 2,
+  },
+  {
+    id: 'firma_oportunidad',
+    name: 'Oportunidad dorada',
+    category: 'Logística',
+    desc: 'Craso huele el negocio: una pausa lucrativa llena el cofre y los carros.',
+    cost: { time: 1 },
+    effects: () => ({ gold: SIGNATURE.oportunidadGold, supplies: SIGNATURE.oportunidadSupplies }),
+    expiry: 5,
+    locations: ['*'],
+    requires: ({ archetype }) => archetype === 'Merchant',
+    weight: 2,
+  },
+
   // ── OPERACIONES MAYORES ──────────────────────────────────────────────────────
   {
     id: 'asalto_decisivo',

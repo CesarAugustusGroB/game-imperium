@@ -4,10 +4,12 @@ import type { LegateTrait } from './legate';
  * Starter catalog of Legate traits. Each trait is pure data — the application
  * pipeline dispatches on `effect.type` without any per-trait switch cases.
  *
- * `stat-bonus` effects target the unit power stats (charge/push/movement/…) as
- * percentage multipliers. The live combat engine does not consume them yet —
- * like the unit powers themselves, they are identity/flavor pending a combat
- * hookup.
+ * Applied by `legateSeedMods` in `iterBelli/battle/adapter.ts` (plan S-B):
+ * `stat-bonus` scales the matching role's power stats (stoic scales army HP),
+ * `morale-bonus` adds pre-battle morale (legacy 0–100 amount ÷10 onto the
+ * 0–15 engine scale), `random-rally` boosts the strongest cohort. The
+ * `lieutenant-preset` traits (aggressive/cautious) gate unique formations
+ * via TRAIT_TO_FORMATION_TRAIT, not a stat bonus.
  */
 export const LEGATE_TRAITS: readonly LegateTrait[] = [
   {

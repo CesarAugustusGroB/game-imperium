@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import { OrnateFrame } from '../../components/OrnateFrame';
 import { playSfx } from '../../sound/sfx';
 import { iterBelliState, applyBattleOutcome } from '../../../game/iterBelli/iter-belli-state';
+import { veteranStacks } from '../../../game/core/game-state';
 import { getActiveScenario } from '../../../game/iterBelli/iter-belli-scenario';
 import { preparedArmy, preparedLegate } from '../../../game/progression/strategic-store';
 import {
@@ -32,18 +33,27 @@ export function BattleModal() {
     const snap = { soldiers: cs.soldiers, initialSoldiers: cs.initialSoldiers, morale: cs.morale, discipline: cs.discipline, ammunition: cs.ammunition };
     const armor = { material: preparedArmy.value?.armorMaterial ?? 'copper' } as const;
     const fortified = cs.fortified === true;
-    const seed0 = buildPlayerSeed(snap, roster, legate, undefined, armor, undefined, fortified);
+    // Veteran Stacks (Warlord passive): +5% attack power per stacked victory (cap 5).
+    const statMult = cs.archetype === 'Warlord' ? 1 + 0.05 * veteranStacks.value : 1;
+    const seed0 = buildPlayerSeed(snap, roster, legate, undefined, armor, undefined, fortified, statMult);
     const options = availableFormations(legate, seed0.discipline);
     const formationOptions: FormationKey[] = options.length ? options : ['battleLine'];
     const enemySoldiers = Math.max(scenario.enemy.minSoldiers, Math.round(scenario.enemy.baseSoldiers * (1 - cs.enemyWeaken * 0.07)));
     const enemyKey = scenario.enemy.archetypeKey;
     const enemy = buildEnemyArchetype(enemyKey, cs.enemyWeaken, enemySoldiers);
     beginBattleSession({
-      playerSeedFor: (f) => buildPlayerSeed(snap, roster, legate, FORMATIONS[f], armor, undefined, fortified),
+      playerSeedFor: (f) => buildPlayerSeed(snap, roster, legate, FORMATIONS[f], armor, undefined, fortified, statMult),
       formationOptions,
       enemy,
       center: CENTERS[terrainToCenterKey(cs.spokeTerrain)],
-      onConclude: (r) => applyBattleOutcome(r.victory, r.survivors, r.finalMorale),
+      onConclude: (r) => {
+        // Veteran Stacks (Warlord passive): each decisive victory stacks +5%
+        // attack power for future battles (cap 5); a defeat shatters the streak.
+        if (cs.archetype === 'Warlord') {
+          veteranStacks.value = r.victory ? Math.min(5, veteranStacks.value + 1) : 0;
+        }
+        applyBattleOutcome(r.victory, r.survivors, r.finalMorale);
+      },
     });
   }, []);
 

@@ -15,16 +15,10 @@ import { consequenceFlags, seenEventsThisSpoke } from '../events/event-store';
 import type { NPCFaction } from '../progression/npc-faction-store';
 import { npcFactions } from '../progression/npc-faction-store';
 import {
-  crusadeBattlesLeft,
-  goldenOpportunityPending,
   legateHiringPool,
-  manipulateUsesLeft,
   nextInvestmentDiscount,
-  pendingEnemyConversions,
   preparedArmy,
   preparedLegate,
-  warCryActive,
-  warCryLastUsedSpoke,
 } from '../progression/strategic-store';
 import type { Governor } from '../province/governor';
 import type { ProvinceFeature } from '../../data/province-features';
@@ -100,12 +94,6 @@ export interface ActiveRunSave {
   consequenceFlags: string[];
   seenEventsThisSpoke: string[];
   npcFactions: NPCFaction[];
-  crusadeBattlesLeft: number;
-  warCryLastUsedSpoke: number;
-  warCryActive: boolean;
-  manipulateUsesLeft: number;
-  goldenOpportunityPending: number;
-  pendingEnemyConversions: number;
   nextInvestmentDiscount: number;
   preparedArmy: ArmyData | null;
   preparedLegate: Legate | null;
@@ -323,12 +311,6 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     consequenceFlags: Array.isArray(run.consequenceFlags) ? run.consequenceFlags : [],
     seenEventsThisSpoke: Array.isArray(run.seenEventsThisSpoke) ? run.seenEventsThisSpoke : [],
     npcFactions: Array.isArray(run.npcFactions) ? run.npcFactions : [],
-    crusadeBattlesLeft: typeof run.crusadeBattlesLeft === 'number' ? run.crusadeBattlesLeft : 0,
-    warCryLastUsedSpoke: typeof run.warCryLastUsedSpoke === 'number' ? run.warCryLastUsedSpoke : -99,
-    warCryActive: run.warCryActive === true,
-    manipulateUsesLeft: typeof run.manipulateUsesLeft === 'number' ? run.manipulateUsesLeft : 0,
-    goldenOpportunityPending: typeof run.goldenOpportunityPending === 'number' ? run.goldenOpportunityPending : 0,
-    pendingEnemyConversions: typeof run.pendingEnemyConversions === 'number' ? run.pendingEnemyConversions : 0,
     nextInvestmentDiscount: typeof run.nextInvestmentDiscount === 'number' ? run.nextInvestmentDiscount : 0,
     preparedArmy: preparedArmySnapshot,
     preparedLegate: run.preparedLegate ?? null,
@@ -417,12 +399,6 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     consequenceFlags: Array.from(consequenceFlags.value),
     seenEventsThisSpoke: Array.from(seenEventsThisSpoke.value),
     npcFactions: npcFactions.value,
-    crusadeBattlesLeft: crusadeBattlesLeft.value,
-    warCryLastUsedSpoke: warCryLastUsedSpoke.value,
-    warCryActive: warCryActive.value,
-    manipulateUsesLeft: manipulateUsesLeft.value,
-    goldenOpportunityPending: goldenOpportunityPending.value,
-    pendingEnemyConversions: pendingEnemyConversions.value,
     nextInvestmentDiscount: nextInvestmentDiscount.value,
     preparedArmy: normalizeArmySnapshot(preparedArmy.value),
     preparedLegate: preparedLegate.value,
@@ -553,12 +529,6 @@ export async function restoreActiveRun(): Promise<boolean> {
     enemies.value = snapshot.npcFactions.filter(f => f.relation === 'hostile').map(f => f.id);
     allies.value = snapshot.npcFactions.filter(f => f.relation === 'friendly').map(f => f.id);
 
-    crusadeBattlesLeft.value = snapshot.crusadeBattlesLeft;
-    warCryLastUsedSpoke.value = snapshot.warCryLastUsedSpoke;
-    warCryActive.value = snapshot.warCryActive;
-    manipulateUsesLeft.value = snapshot.manipulateUsesLeft;
-    goldenOpportunityPending.value = snapshot.goldenOpportunityPending;
-    pendingEnemyConversions.value = snapshot.pendingEnemyConversions;
     nextInvestmentDiscount.value = snapshot.nextInvestmentDiscount;
     preparedArmy.value = normalizeArmySnapshot(snapshot.preparedArmy);
     preparedLegate.value = snapshot.preparedLegate;

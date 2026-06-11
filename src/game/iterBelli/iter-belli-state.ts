@@ -234,6 +234,11 @@ function applyEffects(eff: CardEffects): boolean {
       case 'ambushDetected': S.ambushDetected = true; break;
       case 'fortified':      S.fortified = true; break;
       case 'triggerFinalBattle': goingToBattle = true; break;
+      case 'refreshPool':
+        // Discard everything except crisis warnings; endTurn's refillPool deals fresh cards.
+        S.pool = S.pool.filter((c) => c.def.category === 'Crisis');
+        logEvent('El destino se reescribe: nuevas oportunidades sobre la mesa.', 'event');
+        break;
       default: break;
     }
   }

@@ -28,11 +28,12 @@ El módulo de batalla no importaba decreta: ~10 de 30 pergaminos eran inlanzable
 - [x] Cobertura: `battle-decreta.test.ts` (12 tests) incluye el invariante «todo pergamino lanzable en hub o batalla».
 - **DoD cumplido**: fila `Decreta · batalla` → `vivo` en la auditoría.
 
-### S-B · Legados y comandantes con peso real
-- [ ] **Bonos de stats de traits de legado** aplicados en `buildPlayerSeed` (adapter): veteran +15% charge, swift +20% movement, stoic +15% hp, charismatic/inspiring +moral inicial, etc. (~10 líneas + tests).
-- [ ] **Habilidades estratégicas de comandante**: recablearlas a Iter Belli como **carta firma adicional** por arquetipo (la maquinaria de firmas ya existe) — War Cry, Call Crusade, Manipulate (re-roll de carta del pool), Golden Opportunity (+2 días). Eliminar los signals huérfanos que queden (`manipulateUsesLeft` sin consumidor, etc.).
-- [ ] **Pasiva Veteran Stacks** (Boudicca): +5% daño por victoria, se aplica en `buildPlayerSeed`; ya se persiste en meta-save.
-- **DoD**: elegir legado cambia mediblemente la batalla; cada comandante tiene pasiva + 2 firmas funcionales.
+### S-B · Legados y comandantes con peso real — ✅ HECHO (2026-06-11)
+- [x] **Bonos de stats de traits de legado** en `legateSeedMods` (adapter), consumidos por `buildPlayerSeed`: stat-bonus por rol (veteran/disciplined/tactician/swift), stoic +15% HP, charismatic/inspiring +moral (legacy ÷10), rallying +25% a la cohorte más fuerte.
+- [x] **Habilidades estratégicas → cartas firma** (2 por arquetipo): `firma_grito_guerra` (Warlord: +moral +enemyWeaken), `firma_cruzada` (Religious: +moral +enemyWeaken, cuesta oro), `firma_manipular` (Diplomat: `refreshPool` rebaraja el pool), `firma_oportunidad` (Merchant: +oro +suministros). Signals huérfanos (`crusadeBattlesLeft`/`warCryActive`/`manipulateUsesLeft`/`goldenOpportunityPending`/`pendingEnemyConversions` + `useStrategic`/`canUseStrategic`/`consume*`) eliminados de strategic-store y meta-save.
+- [x] **Pasiva Veteran Stacks** (Warlord): +5% ataque por victoria decisiva (cap 5), se rompe al perder; aplicada como `statMult` en `buildPlayerSeed`, persiste en meta-save (`veteranStacks`).
+- [x] Tests: 7 nuevos en `adapter.test.ts`; verify-iter-belli-commander actualizado a la escala 0–10 viva (era stale del rework de disciplina).
+- **DoD cumplido**: elegir legado cambia mediblemente la batalla; cada arquetipo tiene 2 firmas + (Warlord) pasiva.
 
 ### S-C · Pasada de honestidad (edificios, doctrinas, asesores, features)
 - [ ] **Villa T3** «farmland yield doubled» → implementar (×2 food de terreno farmland en `calculateFoodProduction`).

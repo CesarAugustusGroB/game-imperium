@@ -124,6 +124,8 @@ export interface CardEffects {
   ambushDetected?: boolean;
   fortified?: boolean;
   triggerFinalBattle?: boolean;
+  /** Discard all non-crisis cards; the end-of-turn refill deals a fresh pool (Manipulate). */
+  refreshPool?: boolean;
 }
 
 /** Player archetype, mirrors Commander['archetype']. null when no commander. */
@@ -256,7 +258,7 @@ export interface CampaignOutcome {
 export interface IterBelliState {
   // Resources
   soldiers: number;
-  morale: number;       // clamped 0–10
+  morale: number;       // clamped 0–15
   discipline: number;   // clamped 0–10
   supplies: number;
   gold: number;

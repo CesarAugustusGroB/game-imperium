@@ -15,19 +15,20 @@ function check(label: string, cond: boolean): void {
   else { console.error(`  ✗ ${label}`); failures++; }
 }
 
-check('Warlord → II', computeStartingDiscipline('Warlord', []) === 2);
-check('Religious → III', computeStartingDiscipline('Religious', []) === 3);
-check('Merchant → IV', computeStartingDiscipline('Merchant', []) === 4);
-check('Diplomat → V', computeStartingDiscipline('Diplomat', []) === 5);
+// 0–10 native scale (Thread B): START.discipline 2 + archetype bonus {Warlord 0, Religious 0, Merchant 1, Diplomat 2}.
+check('Warlord → 2', computeStartingDiscipline('Warlord', []) === 2);
+check('Religious → 2', computeStartingDiscipline('Religious', []) === 2);
+check('Merchant → 3', computeStartingDiscipline('Merchant', []) === 3);
+check('Diplomat → 4', computeStartingDiscipline('Diplomat', []) === 4);
 check('null archetype → START.discipline', computeStartingDiscipline(null, []) === START.discipline);
 
-check('disciplined legate → +1 (Religious 3→4)', computeStartingDiscipline('Religious', ['disciplined']) === 4);
-check('aggressive legate → −1 (Religious 3→2)', computeStartingDiscipline('Religious', ['aggressive']) === 2);
-check('mixed traits net 0', computeStartingDiscipline('Religious', ['disciplined', 'aggressive']) === 3);
-check('multiple +1 traits clamp to +1', computeStartingDiscipline('Religious', ['disciplined', 'cautious', 'tactician']) === 4);
-check('neutral trait → 0', computeStartingDiscipline('Religious', ['veteran']) === 3);
+check('disciplined legate → +1 (Religious 2→3)', computeStartingDiscipline('Religious', ['disciplined']) === 3);
+check('aggressive legate → −1 (Religious 2→1)', computeStartingDiscipline('Religious', ['aggressive']) === 1);
+check('mixed traits net 0 (Religious 2)', computeStartingDiscipline('Religious', ['disciplined', 'aggressive']) === 2);
+check('multiple +1 traits clamp to +2 (Religious 2→4)', computeStartingDiscipline('Religious', ['disciplined', 'cautious', 'tactician']) === 4);
+check('neutral trait → 0 (Religious 2)', computeStartingDiscipline('Religious', ['veteran']) === 2);
 
-check('Diplomat 5 + disciplined clamps to 5', computeStartingDiscipline('Diplomat', ['disciplined']) === 5);
+check('Diplomat 4 + disciplined = 5', computeStartingDiscipline('Diplomat', ['disciplined']) === 5);
 check('Warlord 2 − aggressive = 1', computeStartingDiscipline('Warlord', ['aggressive']) === 1);
 
 startIterBelliCampaign({ soldiers: 1000, gold: 0, iuniores: 0, discipline: 5, archetype: 'Diplomat' });

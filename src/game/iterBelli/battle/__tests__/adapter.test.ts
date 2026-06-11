@@ -103,3 +103,57 @@ describe('adapter army builders', () => {
     expect(w.stats.movement).toBe(ENEMY_ARCHETYPES.carthage.stats.movement); // movement unscaled
   });
 });
+
+describe('legate trait bonuses in the seed (plan S-B)', () => {
+  const full = { soldiers: 100, initialSoldiers: 100, morale: 8, discipline: 5 } as any;
+
+  it('veteran (+15% charge to vanguard) scales only vanguard charge', () => {
+    const roster = [
+      cohort({ charge: 100 }), // vanguard (default role in helper)
+      { ...cohort({ charge: 100 }), role: 'reserve' } as any,
+    ];
+    const seed = buildPlayerSeed(full, roster, { traitIds: ['veteran'] } as any);
+    expect(seed.stats.charge).toBe(Math.round(100 * 1.15) + 100); // 115 + 100
+  });
+
+  it('swift (+20% movement to all) scales every cohort movement', () => {
+    const roster = [cohort({ movement: 50 }), { ...cohort({ movement: 50 }), role: 'guard' } as any];
+    const seed = buildPlayerSeed(full, roster, { traitIds: ['swift'] } as any);
+    expect(seed.stats.movement).toBe(120); // (50+50) × 1.2
+  });
+
+  it('stoic (+15% hp) inflates seed hp', () => {
+    const roster = [cohort({ push: 10 })];
+    const seed = buildPlayerSeed(full, roster, { traitIds: ['stoic'] } as any);
+    expect(seed.hp).toBe(Math.round(100 * 1.15));
+  });
+
+  it('inspiring (+25 legacy morale → +2.5 engine) lifts pre-battle morale, clamped 0..15', () => {
+    const roster = [cohort({ push: 10 })];
+    const seed = buildPlayerSeed({ ...full, morale: 8 }, roster, { traitIds: ['inspiring'] } as any);
+    expect(seed.morale).toBeCloseTo(10.5);
+    const high = buildPlayerSeed({ ...full, morale: 14 }, roster, { traitIds: ['inspiring'] } as any);
+    expect(high.morale).toBe(15); // clamped
+  });
+
+  it('rallying (+25% all stats) boosts the single strongest cohort only', () => {
+    const strong = cohort({ charge: 100 });
+    const weak = cohort({ charge: 10 });
+    const seed = buildPlayerSeed(full, [strong, weak], { traitIds: ['rallying'] } as any);
+    expect(seed.stats.charge).toBe(Math.round(100 * 1.25) + 10); // 125 + 10
+  });
+
+  it('null legate applies no mods (regression)', () => {
+    const roster = [cohort({ charge: 100 })];
+    const seed = buildPlayerSeed(full, roster, null);
+    expect(seed.stats.charge).toBe(100);
+    expect(seed.hp).toBe(100);
+    expect(seed.morale).toBe(8);
+  });
+
+  it('statMult (Veteran Stacks passive) scales attack stats', () => {
+    const roster = [cohort({ charge: 100 })];
+    const seed = buildPlayerSeed(full, roster, null, undefined, null, undefined, false, 1.25);
+    expect(seed.stats.charge).toBe(125);
+  });
+});
