@@ -1,6 +1,6 @@
-# Plan — Adquisición de doctrinas a mitad de run
+﻿# Plan — Adquisición de doctrinas a mitad de run
 
-**Fecha:** 2026-06-12 · **Estado:** diseño propuesto, pendiente de aprobación
+**Fecha:** 2026-06-12 · **Estado:** ✅ implementado (2026-06-12)
 **Origen:** auditoría funcional de doctrinas (2026-06-11): el único camino de adquisición es el reparto íntegro al inicio del run; la pestaña Doctrinae ya promete «Acquire them from events or rewards» sin que exista tal sistema.
 
 ## Problema

@@ -4,6 +4,7 @@ import type { ResourceCost } from '../../types/index';
 import { isDoctrineEquippable, getCurrentEffects, getUpgradeCost, getDoctrineSellPrice } from './doctrine';
 import { addResource, spendResource, canAfford } from '../core/resources';
 import { selectedCommander } from '../core/game-state';
+import { DOCTRINE_CATALOG } from '../../data/doctrine-data';
 import type { ResourceType } from '../core/commander';
 
 // ── Doctrine slot signals ──
@@ -160,6 +161,60 @@ export function addDoctrineToCollection(doctrine: Doctrine): void {
   doctrineCollection.value = [...doctrineCollection.value, doctrine];
 }
 
+// ── Victory draft ──
+
+/**
+ * Doctrines offered by the pending victory draft, or null when no draft is
+ * pending. Set after a victorious Iter Belli campaign; cleared on pick.
+ * Persists (via meta-save) until the player chooses.
+ */
+export const pendingDoctrineDraft = signal<Doctrine[] | null>(null);
+
+/**
+ * Roll a victory draft: up to `count` random doctrines the commander could
+ * equip but does not own yet. Returns false (and clears the draft) when the
+ * acquirable pool is exhausted or no commander is selected.
+ */
+export function rollDoctrineDraft(count = 3): boolean {
+  const commander = selectedCommander.value;
+  if (!commander) return false;
+
+  const owned = new Set(
+    [...equippedDoctrines.value, ...doctrineCollection.value]
+      .filter((d): d is Doctrine => d !== null)
+      .map((d) => d.id),
+  );
+  const pool = DOCTRINE_CATALOG.filter(
+    (d) => !owned.has(d.id) && isDoctrineEquippable(d, commander.faction),
+  );
+  if (pool.length === 0) {
+    pendingDoctrineDraft.value = null;
+    return false;
+  }
+
+  const shuffled = pool.slice();
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  pendingDoctrineDraft.value = shuffled.slice(0, count).map((d) => ({ ...d, currentLevel: 1 as const }));
+  return true;
+}
+
+/**
+ * Pick one doctrine from the pending draft into the collection.
+ * Returns false if there is no draft or the id is not among the offers.
+ */
+export function chooseDraftDoctrine(doctrineId: string): boolean {
+  const draft = pendingDoctrineDraft.value;
+  if (!draft) return false;
+  const pick = draft.find((d) => d.id === doctrineId);
+  if (!pick) return false;
+  addDoctrineToCollection(pick);
+  pendingDoctrineDraft.value = null;
+  return true;
+}
+
 // ── Effect aggregation ──
 
 /**
@@ -216,4 +271,5 @@ export function getEmbarkBonus(): { soldiers: number; morale: number; supplies: 
 export function resetDoctrineStore(): void {
   equippedDoctrines.value = [null, null, null, null];
   doctrineCollection.value = [];
+  pendingDoctrineDraft.value = null;
 }

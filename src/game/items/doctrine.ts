@@ -25,6 +25,11 @@ export interface Doctrine extends Collectible {
   levels: TierTuple<DoctrineLevel>;
   /** 1-indexed current level (displays as I/II/III). */
   currentLevel: TierLevel;
+  /**
+   * Part of the starter core granted at run start. Non-starter doctrines are
+   * only acquirable mid-run via the victory draft.
+   */
+  starter?: boolean;
 }
 
 // ── Color-lock rule ──

@@ -283,7 +283,7 @@ export function DoctrinaeTab() {
                   fontStyle: 'italic', fontSize: 'var(--imp-text-sm)',
                   color: 'var(--imp-text-mid)',
                 }}>
-                  No unequipped doctrines. Acquire them from events or rewards.
+                  No unequipped doctrines. Win campaigns to draft new ones.
                 </div>
               )}
               {collection.map((d) => (

@@ -13,6 +13,7 @@ import { conquerProvince, provinces, collectProvinceIncome } from '../../../game
 import { councilSlots, grantAdvisorXp } from '../../../game/council/council-store';
 import { pickConquestName, PROVINCE_REWARD } from '../../../data/iter-belli-conquest';
 import { getMissionById } from '../../../data/iter-belli-consilium';
+import { rollDoctrineDraft } from '../../../game/items/doctrine-store';
 import type { TerrainType } from '../../../data/terrain-data';
 import type { ResourceType } from '../../../game/core/commander';
 import { SUPPLY_MAX_CARRY } from '../../../config/game-config';
@@ -51,6 +52,9 @@ function returnToHub(): void {
     conquerProvince(name, PROVINCE_REWARD as Record<ResourceType, number>, 1, {
       terrain: s.spokeTerrain as TerrainType,
     });
+
+    // The Senate rewards the triumph: a doctrine draft awaits at the Forum.
+    rollDoctrineDraft();
 
     // Winning a campaign unlocks the next one in the progression.
     const unlockedId = unlockNextScenario(getActiveScenario().id);

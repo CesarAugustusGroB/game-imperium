@@ -567,6 +567,22 @@
       </div>
     </div></div>
     <div class="note"><b>Cambios propuestos:</b> doctrinas como <b>cartas 3:4</b> (banda superior con escuela + nivel romano, emblema, nombre, <b>pips de progreso I–III</b>, efecto actual en una línea, pie con acciones) · slots equipados como <b>zócalos de carta</b> (vacío = silueta punteada con "+") · cartas fuera de tu color en gris con 🔒 color-lock · detalle con <b>pista de niveles</b> (hecho ✓ / actual / siguiente con botón Upgrade y coste inline) y el efecto de campaña destacado en violeta. <b>Solo wireframe — aún no aplicado al juego.</b></div>
+
+    <!-- Draft de victoria (modal sobre el Foro) -->
+    <div class="screen" style="margin-top:14px"><div class="canvas" style="min-height:260px;display:flex;align-items:center;justify-content:center">
+      <div class="panel solid" style="width:min(560px,90%);text-align:center;padding:18px">
+        <span class="lbl">DoctrineDraftModal · overlay z-90 · bloquea el Foro</span>
+        <div class="sub" style="letter-spacing:3px;text-transform:uppercase">Senatus Populusque Romanus</div>
+        <div class="ttl" style="font-size:16px;margin:4px 0 2px">El Senado premia tu triunfo</div>
+        <div class="sub" style="margin-bottom:10px">Elige una nueva doctrina para tu colección</div>
+        <div class="row" style="gap:10px;justify-content:center">
+          <div class="panel dcard sch-red" style="width:150px"><div class="band"><span>red · Nivel I</span></div><div class="dbody"><div class="ttl" style="margin:0;font-size:11px">Disciplina Ferrea</div><div class="sub">+1 discipline on embark</div></div></div>
+          <div class="panel dcard sch-white" style="width:150px"><div class="band"><span>white · Nivel I</span></div><div class="dbody"><div class="ttl" style="margin:0;font-size:11px">Doctrine of the Hearth</div><div class="sub">+4 supplies + 1 morale</div></div></div>
+          <div class="panel dcard sch-red" style="width:150px"><div class="band"><span>red · Nivel I</span></div><div class="dbody"><div class="ttl" style="margin:0;font-size:11px">Vis Bellica</div><div class="sub">+200 soldiers + 1 morale</div></div></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="note"><b>Draft de victoria (vivo):</b> al ganar una campaña de Iter Belli, <code>returnToHub()</code> sortea hasta 3 doctrinas elegibles no poseídas; el Foro muestra este modal hasta que el jugador elige exactamente 1 (entra en colección a nivel I). El reparto inicial del run es solo el núcleo <code>starter</code> (2 por color). El draft pendiente persiste en el meta-save.</div>
   </section>
 
   <!-- ============ DECRETA (overhaul propuesto) ============ -->

@@ -5,7 +5,7 @@ import { addDecretum, resetDecretumHand } from '../items/decretum-store';
 import { resetActiveDecretumEffects } from '../items/decretum-hub';
 import { resetDoctrineStore, getIncomeModifier, getUpkeepReduction, addDoctrineToCollection, doctrineCollection, equipDoctrine } from '../items/doctrine-store';
 import { STARTER_DECRETUM } from '../../data/decretum-data';
-import { STARTER_DOCTRINES } from '../../data/doctrine-data';
+import { DOCTRINE_CATALOG } from '../../data/doctrine-data';
 import { isDoctrineEquippable } from '../items/doctrine';
 import { resetCouncilStore, advisorMarket, seatAdvisor, setAdvisorMarket, advisorShopDiscount, advisorIncomeBonus } from '../council/council-store';
 import { resetProvinceStore, conquerProvince, getEmpireRecruitDiscount } from '../province/province-store';
@@ -138,10 +138,11 @@ function initializeRunScaffold(commander: Commander): void {
     if (!addDecretum(d)) break;
   }
 
-  // Give starter Doctrines matching commander color + white (fresh copies)
+  // Give the starter core matching commander color + white (fresh copies).
+  // Non-starter doctrines are earned mid-run via the victory draft.
   resetDoctrineStore();
-  for (const d of STARTER_DOCTRINES) {
-    if (isDoctrineEquippable(d, commander.faction)) {
+  for (const d of DOCTRINE_CATALOG) {
+    if (d.starter && isDoctrineEquippable(d, commander.faction)) {
       addDoctrineToCollection({ ...d, currentLevel: 1 });
     }
   }

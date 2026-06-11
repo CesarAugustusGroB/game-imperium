@@ -552,10 +552,10 @@
 
     <div class="grid g2">
       <div class="card">
-        <span class="tag">Doctrinae · 3 slots</span>
+        <span class="tag">Doctrinae · 4 slots</span>
         <h3><span class="ic">◈</span>Doctrinas</h3>
-        <p>Rejilla equipada de 3 ranuras con <b>drag-drop</b> (reordenar entre slots o equipar desde colección con swap opcional). Lock de color por facción (Gold/Red/Blue/Purple/White universal).</p>
-        <ul><li>3 tiers de mejora (I → II → III)</li><li>Efectos pasivos por nivel</li><li>Detalle con hero en gradiente + botón de mejora/venta</li></ul>
+        <p>Rejilla equipada de 4 ranuras con <b>drag-drop</b> (reordenar entre slots o equipar desde colección con swap opcional). Lock de color por facción (Gold/Red/Blue/Purple/White universal).</p>
+        <ul><li>Núcleo inicial: solo las doctrinas <code>starter</code> (2 por color) se reparten al empezar el run</li><li>El resto se adquiere por <b>draft de victoria</b>: al ganar una campaña, elige 1 de 3 no poseídas (modal en el Foro, persiste en el save)</li><li>3 tiers de mejora (I → II → III)</li><li>Efectos pasivos por nivel</li><li>Detalle con hero en gradiente + botón de mejora/venta</li></ul>
         <div class="pillwrap"><span class="pill">doctrine.ts</span><span class="pill">doctrine-store.ts</span><span class="pill">DoctrineRenderer.tsx</span></div>
       </div>
       <div class="card">
@@ -734,6 +734,7 @@
     <table class="audit-table">
       <tr><th>Sistema</th><th>Estado</th><th>Detalle</th></tr>
       <tr><td>Doctrinas · embark</td><td><span class="st ok">vivo</span></td><td>Bonos de embark (soldados/oro/moral/suministros/disciplina) agregados por <code>getEmbarkBonus()</code> y aplicados al iniciar campaña.</td></tr>
+      <tr><td>Doctrinas · adquisición</td><td><span class="st ok">vivo</span></td><td>Draft de victoria: <code>rollDoctrineDraft()</code> al volver al hub tras ganar una campaña ofrece 3 doctrinas elegibles no poseídas; <code>DoctrineDraftModal</code> en el Foro, elección obligatoria, persiste en meta-save. El reparto inicial es solo el núcleo <code>starter</code> (test <code>doctrine-draft.test.ts</code>).</td></tr>
       <tr><td>Doctrinas · income / tienda</td><td><span class="st ok">vivo</span></td><td><code>income-modifier</code> (cap +75%) y <code>shop-discount</code> (cap −75%) conectados a recursos y mercado de asesores.</td></tr>
       <tr><td>Doctrinas · campaña</td><td><span class="st ok">vivo</span></td><td>Hooks por color en <code>iter-belli-doctrines.ts</code>: rojo +enemyWeaken en Coerción, azul −coste Diplomacia, púrpura +suministros Logística, oro +moral/turno, blanco +suministros/turno. Stackean por slot.</td></tr>
       <tr><td>Doctrinas · upkeep-reduction</td><td><span class="st ok">vivo</span></td><td><code>getUpkeepReduction()</code> suma los percent de Infrastructure/Annona (cap 0–75%) y se aplica a los expenses de cada provincia en el tick, inyectado desde game-state vía <code>setUpkeepReductionFn</code> (evita el ciclo de imports).</td></tr>

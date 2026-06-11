@@ -7,6 +7,7 @@ import { ConsiliumTab } from './tabs/ConsiliumTab';
 import { ExercitusTab } from './tabs/ExercitusTab';
 import { DoctrinaeTab } from './tabs/DoctrinaeTab';
 import { DecretaTab } from './tabs/DecretaTab';
+import { DoctrineDraftModal } from './DoctrineDraftModal';
 
 const TAB_COMPONENTS: Record<ForumTab, () => preact.JSX.Element> = {
   overview:   OverviewTab,
@@ -45,6 +46,7 @@ export function ForumShell() {
       }}>
         <Tab />
       </div>
+      <DoctrineDraftModal />
     </div>
   );
 }

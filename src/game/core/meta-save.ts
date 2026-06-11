@@ -10,7 +10,7 @@ import { decretumHand, maxHandSize } from '../items/decretum-store';
 import type { ActiveDecretumEffect } from '../items/decretum-hub';
 import { activeDecretumEffects } from '../items/decretum-hub';
 import type { Doctrine } from '../items/doctrine';
-import { doctrineCollection, equippedDoctrines } from '../items/doctrine-store';
+import { doctrineCollection, equippedDoctrines, pendingDoctrineDraft } from '../items/doctrine-store';
 import { consequenceFlags, seenEventsThisSpoke } from '../events/event-store';
 import type { NPCFaction } from '../progression/npc-faction-store';
 import { npcFactions } from '../progression/npc-faction-store';
@@ -103,6 +103,8 @@ export interface ActiveRunSave {
   legateHiringPool: Legate[];
   doctrineCollection: Doctrine[];
   equippedDoctrines: (Doctrine | null)[];
+  /** Unresolved victory draft offers. Optional for backwards compat. */
+  pendingDoctrineDraft?: Doctrine[] | null;
   decretumHand: Decretum[];
   maxHandSize: number;
   /** Continuous Hub effects in flight (e.g. upkeep waivers). Optional for backwards compat. */
@@ -321,6 +323,7 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     legateHiringPool: Array.isArray(run.legateHiringPool) ? run.legateHiringPool : [],
     doctrineCollection: Array.isArray(run.doctrineCollection) ? run.doctrineCollection : [],
     equippedDoctrines: Array.isArray(run.equippedDoctrines) ? run.equippedDoctrines : [null, null, null, null],
+    pendingDoctrineDraft: Array.isArray(run.pendingDoctrineDraft) ? run.pendingDoctrineDraft : null,
     decretumHand: Array.isArray(run.decretumHand) ? run.decretumHand : [],
     maxHandSize: typeof run.maxHandSize === 'number' ? run.maxHandSize : 5,
     activeDecretumEffects: Array.isArray(run.activeDecretumEffects) ? run.activeDecretumEffects : [],
@@ -410,6 +413,7 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     legateHiringPool: legateHiringPool.value,
     doctrineCollection: doctrineCollection.value,
     equippedDoctrines: equippedDoctrines.value,
+    pendingDoctrineDraft: pendingDoctrineDraft.value,
     decretumHand: decretumHand.value,
     maxHandSize: maxHandSize.value,
     activeDecretumEffects: activeDecretumEffects.value,
@@ -542,6 +546,7 @@ export async function restoreActiveRun(): Promise<boolean> {
 
     doctrineCollection.value = snapshot.doctrineCollection;
     equippedDoctrines.value = snapshot.equippedDoctrines;
+    pendingDoctrineDraft.value = snapshot.pendingDoctrineDraft ?? null;
     decretumHand.value = snapshot.decretumHand;
     maxHandSize.value = snapshot.maxHandSize;
     activeDecretumEffects.value = snapshot.activeDecretumEffects ?? [];
