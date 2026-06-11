@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Iter Belli — Sistema de Eventos</title>
+<style>
+  :root {
+    --bg: #14121c; --bg2: #1b1826; --panel: #211d2e; --panel2: #272235;
+    --gold: #d4a843; --gold-hi: #f0d080; --gold-faint: rgba(212,168,67,0.22);
+    --text: #d8d2c4; --mid: #a59c88; --lo: #6f6757; --hi: #f2ecdf;
+    --crimson: #d4604a; --danger: #c24a3a; --green: #8fbe7e; --blue: #5a8ab0;
+    --ink: #14121c;
+    --mov:#5a8ab0; --intel:#7faa6a; --coer:#b23a3a; --dip:#d4a843; --post:#9a9aa6; --ops:#a972a9; --log:#c9a23f; --crisis:#c24a3a;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: radial-gradient(1200px 800px at 50% -10%, #221d30, var(--bg)) fixed;
+    color: var(--text); font-family: 'EB Garamond', Georgia, serif; font-size: 17px; line-height: 1.55;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 22px 120px; }
+  header.hero { text-align: center; padding: 56px 20px 30px; }
+  header.hero h1 {
+    font-family: 'Cinzel', serif; font-weight: 700; font-size: 40px; letter-spacing: 2px;
+    margin: 0; color: var(--gold-hi); text-shadow: 0 2px 18px rgba(212,168,67,0.25);
+  }
+  header.hero p { color: var(--mid); max-width: 720px; margin: 12px auto 0; }
+  .tagline { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--lo); }
+
+  nav.toc {
+    position: sticky; top: 0; z-index: 20; background: rgba(20,18,28,0.92); backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--gold-faint); display: flex; flex-wrap: wrap; gap: 4px;
+    justify-content: center; padding: 10px; margin-bottom: 30px;
+  }
+  nav.toc a {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--mid); text-decoration: none; padding: 6px 11px; border-radius: 4px; border: 1px solid transparent;
+  }
+  nav.toc a:hover { color: var(--gold-hi); border-color: var(--gold-faint); background: var(--panel); }
+
+  section { margin: 0 0 46px; scroll-margin-top: 64px; }
+  h2 {
+    font-family: 'Cinzel', serif; font-size: 26px; color: var(--gold-hi); letter-spacing: 1px;
+    border-bottom: 1px solid var(--gold-faint); padding-bottom: 8px; margin: 10px 0 18px;
+  }
+  h3 { font-family: 'Cinzel', serif; font-size: 18px; color: var(--gold); margin: 26px 0 10px; letter-spacing: .5px; }
+  p.lead { color: var(--mid); }
+  a.anchor-note { color: var(--blue); text-decoration: none; }
+
+  .grid { display: grid; gap: 14px; }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .g3 { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .card {
+    background: linear-gradient(180deg, var(--panel), var(--panel2)); border: 1px solid var(--gold-faint);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .card h4 { margin: 0 0 6px; font-family: 'Cinzel', serif; color: var(--hi); font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .card p { margin: 6px 0 0; color: var(--mid); font-size: 15px; }
+
+  .pill {
+    display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .5px;
+    padding: 2px 9px; border-radius: 999px; border: 1px solid var(--gold-faint); color: var(--gold-hi);
+    background: rgba(212,168,67,0.08); margin: 2px 3px 2px 0; white-space: nowrap;
+  }
+  .pill.bad { color: #f3b4a6; border-color: rgba(194,74,58,0.5); background: rgba(194,74,58,0.12); }
+  .pill.good { color: #cfe8c2; border-color: rgba(143,190,126,0.5); background: rgba(143,190,126,0.12); }
+  .pill.dim { color: var(--mid); }
+
+  .flow { counter-reset: step; display: flex; flex-direction: column; gap: 0; }
+  .flow .step {
+    position: relative; padding: 12px 16px 12px 52px; border-left: 2px solid var(--gold-faint); margin-left: 16px;
+  }
+  .flow .step::before {
+    counter-increment: step; content: counter(step); position: absolute; left: -16px; top: 10px;
+    width: 30px; height: 30px; border-radius: 50%; background: var(--panel2); border: 1px solid var(--gold);
+    color: var(--gold-hi); font-family: 'JetBrains Mono', monospace; font-weight: 700; display: flex;
+    align-items: center; justify-content: center; font-size: 14px;
+  }
+  .flow .step.danger { border-left-color: var(--danger); }
+  .flow .step.danger::before { border-color: var(--danger); color: var(--crimson); }
+  .flow .step b { color: var(--hi); }
+  .flow .step .muted { color: var(--mid); font-size: 14px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(212,168,67,0.12); vertical-align: top; }
+  th { font-family: 'JetBrains Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); position: sticky; }
+  tbody tr:hover { background: rgba(212,168,67,0.05); }
+  td.name { color: var(--hi); font-weight: 600; white-space: nowrap; }
+  .mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  .pos { color: var(--green); } .neg { color: var(--crimson); } .neu { color: var(--mid); }
+  .catdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+  .callout {
+    border-left: 4px solid var(--danger); background: rgba(194,74,58,0.10); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0;
+  }
+  .callout.gold { border-left-color: var(--gold); background: rgba(212,168,67,0.08); }
+  .callout b { color: var(--hi); }
+  .num { font-family: 'JetBrains Mono', monospace; color: var(--gold-hi); }
+  .small { font-size: 13px; color: var(--lo); }
+  code { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: rgba(0,0,0,0.3); padding: 1px 6px; border-radius: 4px; color: var(--gold-hi); }
+  footer { text-align: center; color: var(--lo); font-size: 13px; border-top: 1px solid var(--gold-faint); padding-top: 22px; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="tagline">Imperium · Iter Belli</div>
+  <h1>Sistema de Eventos</h1>
+  <p>Cómo nacen, se barajan, se juegan y caducan las <b>cartas</b> de la campaña, y qué <b>eventos pasivos</b> ocurren cada turno aunque ninguna carta los anuncie. Documento vivo: si el código y esto discrepan, esto es el bug.</p>
+</header>
+
+<nav class="toc">
+  <a href="#turno">El turno</a>
+  <a href="#mazo">El mazo</a>
+  <a href="#anatomia">Anatomía de carta</a>
+  <a href="#tipos">Tipos de carta</a>
+  <a href="#efectos">Efectos</a>
+  <a href="#pasivos">Eventos pasivos ⚠</a>
+  <a href="#crisis">Crisis</a>
+  <a href="#mapa">Itinerario</a>
+  <a href="#quests">Quests & doctrinas</a>
+  <a href="#fin">Fin de campaña</a>
+  <a href="#catalogo">Catálogo</a>
+</nav>
+
+<div class="wrap">
+
+  <!-- ───────────────────────── EL TURNO ───────────────────────── -->
+  <section id="turno">
+    <h2>El turno: qué pasa cuando juegas (o acampas)</h2>
+    <p class="lead">Cada acción (jugar una carta o <b>Acampar</b>) consume días y dispara una secuencia de resolución de fin de turno (<code>endTurn</code>). <b>La mayoría de las sorpresas — la moral que cae «sin motivo» — ocurren aquí</b>, después de que la carta haya hecho lo suyo. Esta es la secuencia exacta, en orden:</p>
+
+    <div class="flow">
+      <div class="step"><b>Coste de la carta</b> <span class="muted">— se pagan tiempo / oro / suministros / iuniores (con descuentos de doctrina), pase lo que pase en una carta arriesgada.</span></div>
+      <div class="step"><b>Efecto de la carta</b> <span class="muted">— se aplica su <code>effects</code> (o <code>failureEffects</code> si era una apuesta y falló). <span class="neg">Aquí entra el coste de moral «oculto» de cartas como Marcha forzada (−1) que la descripción no recalca.</span></span></div>
+      <div class="step"><b>Bonos de doctrina al jugar</b> <span class="muted">— cada doctrina equipada puede añadir efectos (<code>onPlay</code>).</span></div>
+      <div class="step">Avanza el reloj: <b>turno +1</b>, <span class="num">−tiempo</span> del plazo consular.</div>
+      <div class="step">Mantenimiento: <b>−<span class="num">2</span> suministros/día</b> (<code>SUPPLY_UPKEEP_PER_TURN</code>, escala con días de la carta).</div>
+      <div class="step"><b>Pasivas de doctrina</b> <span class="muted">(<code>onTurn</code>) — p. ej. una doctrina de fe puede regenerar moral. Se aplican antes del hambre para poder amortiguar una crisis.</span></div>
+      <div class="step danger"><b>Hambre</b> <span class="muted">— si suministros ≤ 0: <span class="neg">moral −1</span> y −2% de soldados (desertores).</span></div>
+      <div class="step danger"><b>Motín</b> <span class="muted">— si moral &lt; 3: <span class="num">30%</span> de probabilidad de −5% soldados (no quita moral, pero la moral baja lo provoca).</span></div>
+      <div class="step">Cuenta atrás de tregua, y luego <b>amenaza pasiva del lugar</b> (<code>threatPerTurn</code>: la llanura +1, los bosques +1.5, Tarraco −0.5…).</div>
+      <div class="step">Temporizadores de cartas: <b>−tiempo</b> a cada carta del mazo; las que llegan a 0 <b>caducan</b> (los compromisos aplican su penalización).</div>
+      <div class="step danger"><b>Escaramuza</b> <span class="muted">— si amenaza ≥ 7 y estás en territorio enemigo: <span class="num">50%</span> → <span class="neg">moral −0.5</span> + soldados.</span></div>
+      <div class="step danger"><b>Emboscada</b> <span class="muted">— en los bosques con amenaza ≥ 5: <span class="num">30%</span> → <span class="neg">moral −1.5</span> + 6% de bajas (se previene con «Detectar emboscada»).</span></div>
+      <div class="step"><b>Condiciones de fin</b> (plazo, &lt;1000 soldados, moral 0). Si sigue viva: inyectar crisis, <b>rellenar el mazo</b>, inyectar quests del lugar.</div>
+    </div>
+
+    <div class="callout">
+      <b>Por qué la moral baja «aunque la carta no lo diga».</b> Las tres fuentes de pasos rojos —hambre (fijo), escaramuza (50%) y emboscada (30%)— se resuelven al final del turno, después de tu carta. El <b>«a veces»</b> es justo eso: escaramuza y emboscada son tiradas de azar. Todas se registran en el log (líneas rojas <span class="pill bad">crisis</span>) y, desde la última actualización, el chip de cada recurso <b>parpadea el delta</b> (verde sube / rojo baja) con el número del cambio neto del turno.
+    </div>
+  </section>
+
+  <!-- ───────────────────────── EL MAZO ───────────────────────── -->
+  <section id="mazo">
+    <h2>El mazo: cómo se eligen las cartas que ves</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h4>Elegibilidad</h4>
+        <p>Una carta puede salir en tu lugar actual solo si:</p>
+        <p>• su lista <code>locations</code> incluye el lugar (o <code>['*']</code> = en cualquier sitio), <b>y</b><br>
+        • su gate <code>requires(ctx)</code> devuelve <code>true</code> (p. ej. tener oro suficiente, o ser un arquetipo de comandante concreto para las firmas).</p>
+      </div>
+      <div class="card">
+        <h4>Sorteo ponderado</h4>
+        <p>De las elegibles se sortea por <code>weight</code> (peso relativo). Las doctrinas pueden multiplicar el peso de ciertas cartas (<code>weight()</code>), sesgando el mazo hacia un estilo de juego. Peso más alto = aparece más.</p>
+      </div>
+      <div class="card">
+        <h4>Relleno (refill)</h4>
+        <p>Al final de cada turno el mazo se rellena hasta <b><span class="num">4</span> cartas</b> no-crisis (<code>POOL_TARGET_SIZE</code>), hasta 20 intentos, sin repetir ids. En el objetivo (Sagunto/Alesia) se fuerza <b>solo</b> la carta decisiva — no puedes seguir estancado.</p>
+      </div>
+      <div class="card">
+        <h4>Caducidad</h4>
+        <p>Cada carta lleva un <code>expiry</code> (turnos en mesa). Al expirar: una oportunidad normal se pierde sin más; un <b>compromiso</b> aplica su penalización; una quest se marca <b>fallida</b>. <code>expiry: 99</code> = no caduca (movimiento básico, instrucción, decisivas).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── ANATOMÍA ───────────────────────── -->
+  <section id="anatomia">
+    <h2>Anatomía de una carta</h2>
+    <table>
+      <thead><tr><th>Campo</th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td class="name">category</td><td>Familia temática → color y glifo del encabezado. Ver <a class="anchor-note" href="#tipos">categorías</a>.</td></tr>
+        <tr><td class="name">cost</td><td><code>time</code> (días, def. 1), <code>gold</code>, <code>supplies</code>, <code>iuniores</code>. Se paga antes de resolver.</td></tr>
+        <tr><td class="name">effects(ctx)</td><td>Función pura → un saco de <a class="anchor-note" href="#efectos">efectos</a>. Recibe el estado, el lugar y el arquetipo.</td></tr>
+        <tr><td class="name">locations</td><td>Dónde puede aparecer. <code>['*']</code> = en cualquier lugar.</td></tr>
+        <tr><td class="name">expiry</td><td>Turnos antes de caducar. <code>99</code> = nunca.</td></tr>
+        <tr><td class="name">weight</td><td>Peso de sorteo (probabilidad relativa de salir).</td></tr>
+        <tr><td class="name">requires(ctx)</td><td>Gate opcional: solo aparece si devuelve true.</td></tr>
+        <tr><td class="name">cardType</td><td><code>compromiso</code> o <code>arriesgada</code> (ver tipos). Ausente = operación normal.</td></tr>
+        <tr><td class="name">successChance / failureEffects / failureMsg</td><td>Solo apuestas: % de éxito y qué pasa si falla.</td></tr>
+        <tr><td class="name">penalty / penaltyDesc</td><td>Solo compromisos: castigo si caduca sin atenderse.</td></tr>
+        <tr><td class="name">questId</td><td>Enlaza la carta con una quest secundaria del Consilium.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ───────────────────────── TIPOS ───────────────────────── -->
+  <section id="tipos">
+    <h2>Tipos de carta &amp; categorías</h2>
+    <h3>Las 8 categorías</h3>
+    <div>
+      <span class="pill"><span class="catdot" style="background:var(--log)"></span>Logística ❦</span>
+      <span class="pill"><span class="catdot" style="background:var(--mov)"></span>Movimiento →</span>
+      <span class="pill"><span class="catdot" style="background:var(--intel)"></span>Inteligencia ✦</span>
+      <span class="pill"><span class="catdot" style="background:var(--coer)"></span>Coerción ✜</span>
+      <span class="pill"><span class="catdot" style="background:var(--dip)"></span>Diplomacia ✋</span>
+      <span class="pill"><span class="catdot" style="background:var(--post)"></span>Postura ⛨</span>
+      <span class="pill"><span class="catdot" style="background:var(--ops)"></span>Operaciones ⚜</span>
+      <span class="pill"><span class="catdot" style="background:var(--crisis)"></span>Crisis ✖</span>
+    </div>
+    <h3>Los 5 comportamientos</h3>
+    <div class="grid g2">
+      <div class="card"><h4>Operación normal</h4><p>Pagas y obtienes su efecto, garantizado. La mayoría del mazo.</p></div>
+      <div class="card"><h4>Arriesgada <span class="pill">apuesta</span></h4><p>Tiene <code>successChance</code>. El coste se paga igual; el resultado es éxito (<code>effects</code>) o fracaso (<code>failureEffects</code>). Ej.: Cruzar por vado (65%), Soborno (50%).</p></div>
+      <div class="card"><h4>Compromiso <span class="pill">deadline</span></h4><p>Una obligación con reloj. Si la juegas, cumples; si <b>caduca</b>, pagas su <code>penalty</code> y sube el contador de compromisos rotos. Ej.: Tributo al Senado (−60 oro si lo ignoras).</p></div>
+      <div class="card"><h4>Firma <span class="pill">comandante</span></h4><p>Cartas gated por arquetipo (Warlord / Religious / Merchant / Diplomat). Dos por comandante. Solo aparecen con ese comandante. Ej.: Furia gala, Te Deum, Mercenarios de Craso.</p></div>
+      <div class="card"><h4>Crisis <span class="pill bad">no jugable</span></h4><p>No se juega: es una <b>advertencia</b> roja inyectada en el mazo cuando estás en hambre (suministros 0) o al borde del motín (moral &lt; 3). Desaparece al corregir la causa.</p></div>
+      <div class="card"><h4>Decisiva <span class="pill">batalla</span></h4><p>La gran operación del objetivo (Asalto a Sagunto / Alesia). Cuesta 0 días y dispara la <b>batalla decisiva</b>. En el objetivo es la única opción.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── EFECTOS ───────────────────────── -->
+  <section id="efectos">
+    <h2>Vocabulario de efectos</h2>
+    <p class="lead">Todo lo que una carta (o un evento) puede hacer al estado. Solo se aplican las claves presentes; los recursos se recortan a sus límites.</p>
+    <table>
+      <thead><tr><th>Clave</th><th>Efecto</th><th>Límites</th></tr></thead>
+      <tbody>
+        <tr><td class="name">soldiers</td><td>Efectivos del ejército.</td><td class="mono">≥ 0 · &lt;1000 = derrota</td></tr>
+        <tr><td class="name">morale</td><td>Cohesión.</td><td class="mono">0 – 15 · &lt;3 motín · 0 = derrota</td></tr>
+        <tr><td class="name">discipline</td><td>Nivel táctico (formaciones/órdenes en batalla).</td><td class="mono">0 – 10</td></tr>
+        <tr><td class="name">supplies</td><td>Víveres. −2/turno; a 0 = hambre.</td><td class="mono">≥ 0</td></tr>
+        <tr><td class="name">ammunition</td><td>Proyectiles para hostigar en la batalla decisiva.</td><td class="mono">≥ 0</td></tr>
+        <tr><td class="name">gold</td><td>Oro de campaña (heredado del run).</td><td class="mono">≥ 0</td></tr>
+        <tr><td class="name">threat</td><td>Atención enemiga. Dispara escaramuzas/emboscadas.</td><td class="mono">0 – 10</td></tr>
+        <tr><td class="name">enemyWeaken</td><td>Erosiona al ejército final: <b>cada punto = −7%</b> de efectivos enemigos.</td><td class="mono">acumulativo</td></tr>
+        <tr><td class="name">time_bonus</td><td>Extiende el plazo consular N días.</td><td class="mono">+días</td></tr>
+        <tr><td class="name">advance</td><td>Avanza una parada del itinerario.</td><td class="mono">+1 parada</td></tr>
+        <tr><td class="name">ambushDetected</td><td>Anula la próxima emboscada.</td><td class="mono">flag</td></tr>
+        <tr><td class="name">fortified</td><td>Ventaja de terreno en la batalla (×1.15).</td><td class="mono">flag</td></tr>
+        <tr><td class="name">triggerFinalBattle</td><td>Lanza la batalla decisiva.</td><td class="mono">flag</td></tr>
+        <tr><td class="name">refreshPool</td><td>Descarta el mazo (salvo crisis) y reparte nuevo.</td><td class="mono">flag</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ───────────────────────── PASIVOS ───────────────────────── -->
+  <section id="pasivos">
+    <h2>⚠ Eventos pasivos de fin de turno</h2>
+    <p class="lead">No son cartas y <b>no los anuncia nada antes de pasar</b>: se disparan en <code>endTurn</code> según tus recursos. Son la respuesta a «¿por qué me baja la moral?». Todos escriben una línea roja <span class="pill bad">crisis</span> en el log.</p>
+    <table>
+      <thead><tr><th>Evento</th><th>Se dispara cuando…</th><th>Prob.</th><th>Efecto</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="name">Mantenimiento</td>
+          <td>Siempre, cada día.</td>
+          <td class="mono">100%</td>
+          <td class="mono neg">−2 suministros/día</td>
+        </tr>
+        <tr>
+          <td class="name">Hambre</td>
+          <td>Suministros ≤ 0.</td>
+          <td class="mono">100%</td>
+          <td class="mono"><span class="neg">moral −1</span> · soldados −2%</td>
+        </tr>
+        <tr>
+          <td class="name">Motín</td>
+          <td>Moral &lt; 3.</td>
+          <td class="mono">30%</td>
+          <td class="mono">soldados −5% <span class="small">(no toca moral)</span></td>
+        </tr>
+        <tr>
+          <td class="name">Amenaza del lugar</td>
+          <td>En tregua = 0; si no, cada turno.</td>
+          <td class="mono">100%</td>
+          <td class="mono">±amenaza según <a class="anchor-note" href="#mapa">lugar</a></td>
+        </tr>
+        <tr>
+          <td class="name">Escaramuza</td>
+          <td>Amenaza ≥ 7 <b>y</b> lugar enemigo.</td>
+          <td class="mono">50%</td>
+          <td class="mono"><span class="neg">moral −0.5</span> · soldados −2%×intensidad</td>
+        </tr>
+        <tr>
+          <td class="name">Emboscada</td>
+          <td>En <b>bosques</b> y amenaza ≥ 5.</td>
+          <td class="mono">30%</td>
+          <td class="mono"><span class="neg">moral −1.5</span> · soldados −6% <span class="small">(anulable)</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout gold">
+      <b>Cómo evitarlos:</b> mantén suministros &gt; 0 (Forrajear, Asegurar suministros, saqueos); baja la amenaza por debajo de 5 (Exploradores −1, Embajada −1.5, Espía −2, Tributo −3) antes de cruzar territorio hostil; sal rápido de los bosques o juega <b>Detectar emboscada</b>; y recupera moral con Acampar (+0.5), Concentrar fuerzas (+1) o cartas firma.
+    </div>
+  </section>
+
+  <!-- ───────────────────────── CRISIS ───────────────────────── -->
+  <section id="crisis">
+    <h2>Crisis: advertencias inyectadas</h2>
+    <p class="lead">Las crisis son cartas <b>no jugables</b> que aparecen arriba del mazo como aviso visual. Se recalculan cada turno: aparecen al entrar en el estado y se quitan solas al salir.</p>
+    <div class="grid g3">
+      <div class="card"><h4 style="color:var(--crimson)">✖ Hambre en filas</h4><p>Aparece con <b>suministros ≤ 0</b>. Mientras siga, cada turno hay hambre (moral −1 + desertores).</p></div>
+      <div class="card"><h4 style="color:var(--crimson)">✖ Riesgo de motín</h4><p>Aparece con <b>moral &lt; 3</b>. Señala el 30%/turno de deserciones por motín.</p></div>
+      <div class="card"><h4 style="color:var(--crimson)">✖ Vanguardia avistada</h4><p>Aviso de encuentro enemigo cercano (variante narrativa del escenario).</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── MAPA ───────────────────────── -->
+  <section id="mapa">
+    <h2>Itinerario &amp; amenaza por lugar</h2>
+    <p class="lead">Avanzas parada a parada (efecto <code>advance</code>). El <b>tipo</b> de lugar decide qué cartas salen y cuánta amenaza acumulas por turno (Saguntum mostrado; Gallia reusa la estructura con nombres galos).</p>
+    <table>
+      <thead><tr><th>Parada</th><th>Tipo</th><th>Amenaza/turno</th><th>Notas</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Frontera de Hispania</td><td><span class="pill dim">neutral</span></td><td class="mono neu">0</td><td>Inicio. Tranquilidad relativa, diplomacia disponible.</td></tr>
+        <tr><td class="name">Tarraco</td><td><span class="pill good">aliado</span></td><td class="mono pos">−0.5</td><td>Mercado, arsenal, inteligencia: comprar suministros/munición/espías.</td></tr>
+        <tr><td class="name">Llanura ibera</td><td><span class="pill bad">enemigo</span></td><td class="mono neg">+1</td><td>Hostil. La amenaza sube; saqueos y coerción aquí.</td></tr>
+        <tr><td class="name">Bosques saguntinos</td><td><span class="pill bad">enemigo</span></td><td class="mono neg">+1.5</td><td>Terreno de <b>emboscadas</b>. Detectar emboscada se vuelve clave.</td></tr>
+        <tr><td class="name">Sagunto</td><td><span class="pill">objetivo</span></td><td class="mono neu">0</td><td>Solo la carta decisiva. Dispara la batalla final.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ───────────────────────── QUESTS ───────────────────────── -->
+  <section id="quests">
+    <h2>Quests secundarias &amp; modificadores de doctrina</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h4>Quests del Consilium</h4>
+        <p>Se siembran al embarcar desde los asientos no-misión del Consilium. Cuando el ejército <b>llega al lugar</b> de la quest, se inyecta su carta con una ventana de <span class="num">3–5</span> turnos (+1 por tier de asesor sobre I). Jugarla = <b>completada</b>; dejar caducar = <b>fallida</b>.</p>
+      </div>
+      <div class="card">
+        <h4>Modificadores de doctrina</h4>
+        <p>Cada doctrina equipada en el Hub aporta hooks a la campaña: <code>weight()</code> (sesga qué cartas salen), <code>costDelta()</code> (descuentos), <code>onPlay()</code> (bono al jugar) y <code>onTurn()</code> (pasiva por turno, p. ej. regenerar moral). Por eso dos campañas con doctrinas distintas «sienten» mazos distintos.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── FIN ───────────────────────── -->
+  <section id="fin">
+    <h2>Condiciones de fin de campaña</h2>
+    <div class="grid g3">
+      <div class="card"><h4 class="neg">Plazo agotado</h4><p>Tiempo ≤ 0 sin estar en el objetivo → el Senado te releva. <b>Derrota.</b></p></div>
+      <div class="card"><h4 class="neg">Ejército diezmado</h4><p>Soldados &lt; <span class="num">1000</span> → demasiado pequeño para seguir. <b>Derrota.</b></p></div>
+      <div class="card"><h4 class="neg">Colapso moral</h4><p>Moral ≤ 0 → deserción en masa. <b>Derrota.</b></p></div>
+      <div class="card"><h4 class="pos">Batalla decisiva ganada</h4><p>Victoria: +<span class="num">200</span> oro, supervivientes vuelven al Hub, desbloquea el siguiente escenario.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── CATÁLOGO ───────────────────────── -->
+  <section id="catalogo">
+    <h2>Catálogo completo de cartas</h2>
+    <p class="lead">Las 38 cartas vivas. <span class="mono">t</span>=días, <span class="mono">g</span>=oro, <span class="mono">s</span>=suministros, <span class="mono">i</span>=iuniores. <span class="pos">verde</span> = beneficio, <span class="neg">rojo</span> = coste/daño.</p>
+
+    <h3>Logística <span class="catdot" style="background:var(--log)"></span></h3>
+    <table>
+      <thead><tr><th>Carta</th><th>Coste</th><th>Efecto</th><th>Dónde</th><th>Exp·Peso</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Forrajear</td><td class="mono">t1</td><td class="mono"><span class="pos">+6 sum.</span> · <span class="neg">+1 amen. (si enemigo)</span></td><td>frontera·llanura·bosques</td><td class="mono">4·3</td></tr>
+        <tr><td class="name">Asegurar suministros</td><td class="mono">t1 g25</td><td class="mono pos">+14 sum.</td><td>tarraco</td><td class="mono">5·4</td></tr>
+        <tr><td class="name">Reabastecer munición</td><td class="mono">t1 g30</td><td class="mono pos">+18 munición</td><td>tarraco</td><td class="mono">5·3</td></tr>
+        <tr><td class="name">Saquear convoy enemigo</td><td class="mono">t2</td><td class="mono"><span class="pos">+10 sum · +15 oro</span> · <span class="neg">+2 amen.</span></td><td>llanura·bosques</td><td class="mono">3·2</td></tr>
+        <tr><td class="name">Oportunidad dorada <span class="pill">firma·Merchant</span></td><td class="mono">t1</td><td class="mono pos">+30 oro · +4 sum.</td><td>*</td><td class="mono">5·2</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Movimiento <span class="catdot" style="background:var(--mov)"></span></h3>
+    <table>
+      <thead><tr><th>Carta</th><th>Coste</th><th>Efecto</th><th>Dónde</th><th>Exp·Peso</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Marcha cautelosa</td><td class="mono">t2</td><td class="mono"><span class="pos">avanza · −0.5 amen.</span></td><td>*</td><td class="mono">∞·5</td></tr>
+        <tr><td class="name">Marcha forzada</td><td class="mono">t1</td><td class="mono">avanza · <span class="neg">moral −1 · −2 sum.</span></td><td>*</td><td class="mono">∞·5</td></tr>
+        <tr><td class="name">Guías locales</td><td class="mono">t1 g25</td><td class="mono pos">avanza (sin desgaste)</td><td>frontera·llanura</td><td class="mono">3·2</td></tr>
+        <tr><td class="name">Cruzar por vado peligroso <span class="pill">apuesta 65%</span></td><td class="mono">t1</td><td class="mono"><span class="pos">✓ avanza</span> / <span class="neg">✗ −3 sum · moral −1 · −200 sold.</span></td><td>frontera·llanura</td><td class="mono">3·2</td></tr>
+        <tr><td class="name">Marcha nocturna <span class="pill">apuesta 60%</span></td><td class="mono">t1</td><td class="mono"><span class="pos">✓ avanza · −1 amen.</span> / <span class="neg">✗ moral −1 · −300 sold · −1 sum.</span></td><td>frontera·tarraco·llanura·bosques</td><td class="mono">3·2</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Inteligencia <span class="catdot" style="background:var(--intel)"></span></h3>
+    <table>
+      <thead><tr><th>Carta</th><th>Coste</th><th>Efecto</th><th>Dónde</th><th>Exp·Peso</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Enviar exploradores</td><td class="mono">t1</td><td class="mono pos">−1 amenaza</td><td>frontera·llanura·bosques</td><td class="mono">3·3</td></tr>
+        <tr><td class="name">Detectar emboscada</td><td class="mono">t1</td><td class="mono pos">anula próxima emboscada</td><td>bosques</td><td class="mono">2·4</td></tr>
+        <tr><td class="name">Espía local</td><td class="mono">t1 g20</td><td class="mono pos">−2 amenaza</td><td>tarraco</td><td class="mono">4·3</td></tr>
+        <tr><td class="name">Despacho de cónsul <span class="pill">compromiso</span></td><td class="mono">t1</td><td class="mono"><span class="pos">erosiona +1 · −1 amen.</span> · <span class="neg">si caduca: pierdes intel</span></td><td>tarraco·frontera</td><td class="mono">2·2</td></tr>
+        <tr><td class="name">Manipular <span class="pill">firma·Diplomat</span></td><td class="mono">t1 g15</td><td class="mono pos">rebaraja el mazo</td><td>*</td><td class="mono">5·2</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Coerción <span class="catdot" style="background:var(--coer)"></span></h3>
+    <table>
+      <thead><tr><th>Carta</th><th>Coste</th><th>Efecto</th><th>Dónde</th><th>Exp·Peso</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Saquear pueblo ibero</td><td class="mono">t1</td><td class="mono"><span class="pos">+30 oro</span> · <span class="neg">+3 amenaza</span></td><td>llanura</td><td class="mono">3·2</td></tr>
+        <tr><td class="name">Devastar campos</td><td class="mono">t1</td><td class="mono"><span class="pos">erosiona +1</span> · <span class="neg">+2 amenaza</span></td><td>llanura·bosques</td><td class="mono">3·2</td></tr>
+        <tr><td class="name">Asalto a almacén púnico <span class="pill">apuesta 60%</span></td><td class="mono">t1</td><td class="mono"><span class="pos">✓ +12 sum · +20 oro · erosiona +1</span> / <span class="neg">✗ −400 sold · moral −1 · +1 amen.</span></td><td>llanura·bosques</td><td class="mono">3·2</td></tr>
+        <tr><td class="name">Furia gala <span class="pill">firma·Warlord</span></td><td class="mono">t1</td><td class="mono"><span class="pos">moral +2</span> · <span class="neg">+1 amenaza</span></td><td>*</td><td class="mono">5·3</td></tr>
+        <tr><td class="name">Grito de guerra <span class="pill">firma·Warlord</span></td><td class="mono">t1</td><td class="mono pos">moral +1 · erosiona +1</td><td>*</td><td class="mono">5·2</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Diplomacia <span class="catdot" style="background:var(--dip)"></span></h3>
+    <table>
+      <thead><tr><th>Carta</th><th>Coste</th><th>Efecto</th><th>Dónde</th><th>Exp·Peso</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Tributar a tribu local</td><td class="mono">t1 g30</td><td class="mono pos">−3 amenaza</td><td>llanura·frontera</td><td class="mono">4·2</td></tr>
+        <tr><td class="name">Enviar embajada</td><td class="mono">t1 g15</td><td class="mono pos">−1.5 amenaza</td><td>frontera·tarraco·llanura</td><td class="mono">4·2</td></tr>
+        <tr><td class="name">Mensajero al Senado</td><td class="mono">t1 g50</td><td class="mono pos">+3 días de plazo</td><td>frontera·tarraco</td><td class="mono">4·1.5</td></tr>
+        <tr><td class="name">Tributo al Senado <span class="pill">compromiso</span></td><td class="mono">t1 g40</td><td class="mono">— · <span class="neg">si caduca: −60 oro</span></td><td>frontera·tarraco</td><td class="mono">4·2</td></tr>
+        <tr><td class="name">Auxilio a aliado <span class="pill">compromiso</span></td><td class="mono">t2</td><td class="mono"><span class="pos">−1 amen.</span> · <span class="neg">si caduca: −8 sum.</span></td><td>frontera·tarraco</td><td class="mono">3·2</td></tr>
+        <tr><td class="name">Rehenes celtíberos <span class="pill">compromiso</span></td><td class="mono">t1 g25</td><td class="mono"><span class="pos">−2 amen.</span> · <span class="neg">si caduca: +2 amen.</span></td><td>llanura</td><td class="mono">3·2</td></tr>
+        <tr><td class="name">Soborno a oficial púnico <span class="pill">apuesta 50%</span></td><td class="mono">t1 g40</td><td class="mono"><span class="pos">✓ erosiona +2 · −1 amen.</span> / <span class="neg">✗ +2 amenaza</span></td><td>frontera·tarraco·llanura</td><td class="mono">3·1.5</td></tr>
+        <tr><td class="name">Te Deum <span class="pill">firma·Religious</span></td><td class="mono">t1</td><td class="mono pos">moral +2.5</td><td>*</td><td class="mono">5·3</td></tr>
+        <tr><td class="name">Tratado romano <span class="pill">firma·Diplomat</span></td><td class="mono">t1</td><td class="mono pos">−3 amenaza</td><td>*</td><td class="mono">5·3</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Postura <span class="catdot" style="background:var(--post)"></span></h3>
+    <table>
+      <thead><tr><th>Carta</th><th>Coste</th><th>Efecto</th><th>Dónde</th><th>Exp·Peso</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Fortificar campamento</td><td class="mono">t2 s2</td><td class="mono pos">ventaja de terreno (batalla)</td><td>*</td><td class="mono">5·2</td></tr>
+        <tr><td class="name">Concentrar fuerzas</td><td class="mono">t1</td><td class="mono pos">moral +1</td><td>*</td><td class="mono">4·2</td></tr>
+        <tr><td class="name">Leva de iuniores</td><td class="mono">t1 i500</td><td class="mono pos">+500 soldados</td><td>*</td><td class="mono">4·3</td></tr>
+        <tr><td class="name">Instrucción de campamento</td><td class="mono">t1 s4</td><td class="mono pos">disciplina +1</td><td>*</td><td class="mono">∞·3</td></tr>
+        <tr><td class="name">Reclutar mercenarios <span class="pill">apuesta 55%</span></td><td class="mono">t1 g50</td><td class="mono"><span class="pos">✓ +800 sold · moral +0.5</span> / <span class="neg">✗ moral −0.5</span></td><td>frontera·tarraco·llanura</td><td class="mono">3·1.5</td></tr>
+        <tr><td class="name">Mercenarios de Craso <span class="pill">firma·Merchant</span></td><td class="mono">t1 g40</td><td class="mono pos">+600 soldados</td><td>*</td><td class="mono">5·3</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Operaciones <span class="catdot" style="background:var(--ops)"></span></h3>
+    <table>
+      <thead><tr><th>Carta</th><th>Coste</th><th>Efecto</th><th>Dónde</th><th>Exp·Peso</th></tr></thead>
+      <tbody>
+        <tr><td class="name">Llamada a la cruzada <span class="pill">firma·Religious</span></td><td class="mono">t1 g20</td><td class="mono pos">moral +1 · erosiona +2</td><td>*</td><td class="mono">5·2</td></tr>
+        <tr><td class="name">Asalto a Sagunto <span class="pill">decisiva</span></td><td class="mono">t0</td><td class="mono">dispara la batalla final</td><td>sagunto</td><td class="mono">∞·99</td></tr>
+        <tr><td class="name">Asalto a Alesia <span class="pill">decisiva</span></td><td class="mono">t0</td><td class="mono">dispara la batalla final</td><td>alesia</td><td class="mono">∞·99</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    Generado a mano desde el código vivo · <code>iter-belli-state.ts</code> · <code>iter-belli-cards.ts</code> · <code>iter-belli-balance.ts</code> · <code>iter-belli-locations.ts</code><br>
+    Documento vivo: mantener sincronizado cuando cambien las cartas, los números de balance o el flujo de turno.
+  </footer>
+</div>
+</body>
+</html>
