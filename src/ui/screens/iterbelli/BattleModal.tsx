@@ -15,6 +15,7 @@ import type { FormationKey } from '../../../game/iterBelli/battle/types';
 import { DeploymentPanel } from './battle/DeploymentPanel';
 import { ArmyStatus } from './battle/ArmyStatus';
 import { OrderBar } from './battle/OrderBar';
+import { DecretaBar } from './battle/DecretaBar';
 import { BattleCanvas } from './battle/BattleCanvas';
 
 export function BattleModal() {
@@ -67,7 +68,10 @@ export function BattleModal() {
               <ArmyStatus army={s.state.enemy} />
             </div>
             {s.phase === 'fighting' ? (
-              <OrderBar />
+              <>
+                <DecretaBar />
+                <OrderBar />
+              </>
             ) : (
               <div class="ib-bm-stances-section" style={{ textAlign: 'center' }}>
                 <div class="ib-section-title">{s.state.victory ? 'Victory in the field' : 'Defeat in the field'}</div>

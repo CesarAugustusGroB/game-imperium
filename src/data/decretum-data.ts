@@ -36,7 +36,7 @@ export const DECRETUM_TRIBUNE: Decretum = {
   id: 'decretum_tribune',
   name: 'Decretum of the Tribune',
   color: 'blue',
-  description: 'The Tribune speaks — force a favorable outcome on the next event.',
+  description: 'The Tribune speaks — fortune favors you: advantage on your next 2 battle rolls.',
   effect: { type: 'event-modifier', outcome: 'favorable' },
   rarity: 'rare',
 };
@@ -54,7 +54,7 @@ export const DECRETUM_SPY: Decretum = {
   id: 'decretum_spy',
   name: 'Decretum of the Spy',
   color: 'blue',
-  description: 'Your agents reveal enemy positions and strength.',
+  description: 'Your agents expose the enemy\'s intentions for the rest of the battle.',
   effect: { type: 'reveal', target: 'enemies', count: 99 },
   rarity: 'common',
 };
@@ -65,7 +65,7 @@ export const DECRETUM_AUGUR: Decretum = {
   id: 'decretum_augur',
   name: 'Decretum of the Augur',
   color: 'gold',
-  description: 'The priests read the omens — reveal the next 2 node choices.',
+  description: 'The priests read the omens — the enemy\'s next 2 orders are revealed.',
   effect: { type: 'reveal', target: 'choices', count: 2 },
   rarity: 'rare',
 };
@@ -95,7 +95,7 @@ export const DECRETUM_MERCHANT: Decretum = {
   id: 'decretum_merchant',
   name: 'Decretum of the Merchant',
   color: 'purple',
-  description: 'Your trade contacts double the gold from the next node.',
+  description: 'Your trade contacts pay handsomely. Gain 5 Gold immediately.',
   effect: { type: 'resource-gain', resource: 'gold', amount: 5 },
   rarity: 'rare',
 };
@@ -192,7 +192,7 @@ export const DECRETUM_LEGATUS: Decretum = {
   id: 'decretum_legatus',
   name: 'Mandatum Legati',
   color: 'blue',
-  description: 'Your legate secures favorable terms — force the next event to resolve well. The weakest enemy joins your side next battle.',
+  description: 'Your legate secures favorable terms — advantage on your next 2 rolls, and the weakest enemy band defects to your side.',
   effect: { type: 'event-modifier', outcome: 'favorable' },
   rarity: 'legendary',
   castCost: { gold: 1 },
@@ -203,7 +203,7 @@ export const DECRETUM_EXPLORATOR: Decretum = {
   id: 'decretum_explorator',
   name: 'Vox Exploratoris',
   color: 'blue',
-  description: 'Scouts return with vital intelligence. Reveal all enemy units.',
+  description: 'Scouts return with vital intelligence — the enemy\'s intent is revealed for the rest of the battle.',
   effect: { type: 'reveal', target: 'enemies', count: 99 },
   rarity: 'common',
 };
@@ -223,7 +223,7 @@ export const DECRETUM_HARUSPEX: Decretum = {
   id: 'decretum_haruspex',
   name: 'Responsum Haruspicis',
   color: 'gold',
-  description: 'The entrails speak of fortune ahead. Reveal the next 3 node choices.',
+  description: 'The entrails speak of fortune ahead — the enemy\'s next 3 orders are revealed.',
   effect: { type: 'reveal', target: 'choices', count: 3 },
   rarity: 'rare',
 };
@@ -291,10 +291,11 @@ export const DECRETUM_TRIUMPHUS: Decretum = {
   id: 'decretum_triumphus',
   name: 'Decretum Triumphi',
   color: 'white',
-  description: 'The triumph is declared — the crowd\'s frenzy grants all units +50% agility and prevents the next death.',
+  description: 'The triumph is declared — the crowd\'s frenzy grants +50% agility and twice spares your legion from falling.',
   effect: { type: 'prevent-death', count: 2 },
   rarity: 'legendary',
   castCost: { gold: 2 },
+  extraEffects: [{ type: 'buff', stat: 'agi', multiplier: 0.5, duration: 'battle' }],
 };
 
 // ── All starter Decretum ──

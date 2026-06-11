@@ -19,21 +19,14 @@
 
 *Principio: ningún texto visible promete algo que el código no hace. O se implementa, o se reescribe.*
 
-### S-A · Decreta en batalla ⭐ (la mejora con más identidad)
-El módulo de batalla no importa decreta: ~10 de 30 pergaminos son inlanzables en todo el juego.
+### S-A · Decreta en batalla ⭐ — ✅ HECHO (2026-06-11)
+El módulo de batalla no importaba decreta: ~10 de 30 pergaminos eran inlanzables en todo el juego.
 
-- [ ] Slot **«Decretum»** en `OrderBar` de la batalla decisiva: un lanzamiento por batalla, consume el pergamino de la mano (pasa por `removeDecretum`).
-- [ ] Mapear `DecretumEffect` → efectos de batalla en un `toBattleEffect()` espejo de `toHubEffect()`:
-  - `buff` (atk/def) → multiplicador de daño propio / mitigación durante N rondas
-  - `damage` (single/area) → daño directo al HP enemigo (escala con `DMG_SCALE`)
-  - `heal` → restaura % de HP propio
-  - `prevent-death` → flag: la primera vez que HP llegaría a 0, queda a 5%
-  - `convert-enemy-next-battle` → resta soldados al enemigo y los suma al jugador al inicio
-  - `spawn` → +HP equivalente (count × 250 de seed)
-  - `reveal` → muestra la próxima orden de la IA enemiga en la UI
-- [ ] Los pergaminos color-locked siguen bloqueados; el coste de cast se paga del oro de campaña.
-- [ ] UI: fila de pergaminos lanzables bajo la OrderBar (reutilizar la carta mini de DecretaTab).
-- **DoD**: los 30 decreta son lanzables en hub o en batalla; la fila `Decreta · batalla` pasa a `vivo` en la auditoría.
+- [x] **DecretaBar** sobre la OrderBar de la batalla: un lanzamiento por batalla, consume el pergamino (`removeDecretum`), coste pagado del pool de campaña (`spendCampaignCost`).
+- [x] `battle/decreta.ts` espejo de `toHubEffect()`: buff atk/def/agi (stats ×, `dmgTakenMult`), `damage` directo + fuego amigo 10% en área, `heal` (all = % maxHp, single = % de 1000), `prevent-death` (salvación al 5% maxHp, consumida en `playRound`), `spawn`/`convert` (±500 HP/unidad, convert cap 30%), `reveal` (intención enemiga pre-calculada — `enemyChoose` es determinista), `event-modifier` → ventaja en el dado 2 rondas.
+- [x] Color-lock respetado; descripciones de Spy/Augur/Haruspex/Tribune/Legatus/Triumphus/Merchant reescritas a lo que hacen de verdad; Triumphus gana su +50% agility prometido como extraEffect.
+- [x] Cobertura: `battle-decreta.test.ts` (12 tests) incluye el invariante «todo pergamino lanzable en hub o batalla».
+- **DoD cumplido**: fila `Decreta · batalla` → `vivo` en la auditoría.
 
 ### S-B · Legados y comandantes con peso real
 - [ ] **Bonos de stats de traits de legado** aplicados en `buildPlayerSeed` (adapter): veteran +15% charge, swift +20% movement, stoic +15% hp, charismatic/inspiring +moral inicial, etc. (~10 líneas + tests).

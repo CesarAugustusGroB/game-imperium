@@ -18,6 +18,7 @@ export function mitigate(raw: number, def: BattleArmy, o: Partial<OrderDef>): nu
     if (def.fortPct > 0) m *= (1 - def.fortPct / 100);
   }
   m *= (def.guardMult ?? 1);
+  m *= (def.dmgTakenMult ?? 1);
   return m;
 }
 
@@ -68,6 +69,7 @@ export function resolveOrder(
   if (o.sub === 'siege') {
     let dmg = statVal * die * (o.mult ?? 0) * discBonus * ms * (1 + centerDmgBonus) * BAL.DMG_SCALE;
     dmg *= (def.guardMult ?? 1);
+    dmg *= (def.dmgTakenMult ?? 1);
     def.hp = Math.max(0, def.hp - dmg);
     log.push({ text:`${who} storm with siege for ${Math.round(dmg)} (pierces armor & fort).`, kind: cls });
     return { eMoraleHit, log };

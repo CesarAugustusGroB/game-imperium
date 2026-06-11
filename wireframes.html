@@ -686,13 +686,23 @@
   <!-- ============ BATTLE ============ -->
   <section class="screen-panel" id="battle">
     <div class="screen-head"><span class="id">overlay: battle / endgame</span><h2>Batalla Decisiva</h2><span class="file">BattleModal.tsx · battle/*</span>
-      <p>Modal de choque por posturas resueltas con dados: arena (jugador / dados / enemigo) + despliegue + órdenes + log + posturas.</p></div>
+      <p>Modal de choque por posturas resueltas con dados: arena (jugador / dados / enemigo) + despliegue + <b>decreta bar</b> (un pergamino por batalla, con intención enemiga revelada si hay reveal activo) + órdenes + log + posturas.</p></div>
     <div class="screen"><div class="canvas" style="min-height:580px;display:flex;flex-direction:column;gap:12px;background:#241038">
       <div class="region" style="border-color:var(--vio-500)"><span class="lbl" style="background:#241038;color:var(--vio-200)">Arena</span>
         <div class="row" style="gap:12px;align-items:stretch">
           <div class="panel grow" style="background:rgba(124,58,237,.14);border-color:var(--vio-500)"><div class="ttl" style="color:var(--vio-100)">Player Army</div><div class="ph w75" style="background:var(--vio-400)"></div><div class="ph w60" style="background:var(--vio-400)"></div><div class="sub" style="color:var(--vio-200)">moral · HP bar</div><div class="ph" style="height:8px;background:var(--vio-300);margin-top:6px"></div></div>
           <div class="panel center" style="width:90px;background:rgba(124,58,237,.14);border-color:var(--vio-500)"><div style="font-family:var(--display);color:var(--vio-100);font-size:13px">Round</div><div class="img" style="width:40px;height:40px;margin-top:6px"></div></div>
           <div class="panel grow" style="background:rgba(194,74,58,.14);border-color:#c24a3a"><div class="ttl" style="color:#f0c0b8">Enemy Army</div><div class="ph w75" style="background:#c24a3a"></div><div class="ph w60" style="background:#c24a3a"></div><div class="sub" style="color:#f0c0b8">doctrina · HP bar</div><div class="ph" style="height:8px;background:#d98b80;margin-top:6px"></div></div>
+        </div>
+      </div>
+      <div class="region" style="border-color:#bd8f2c"><span class="lbl" style="background:#241038;color:#e8cf8e">Decreta bar · 1 cast por batalla</span>
+        <div class="row between wrapf" style="gap:7px">
+          <div class="row wrapf" style="gap:7px">
+            <span class="chip" style="background:rgba(189,143,44,.18);color:#e8cf8e;border-color:#bd8f2c">📜 Decretum of Mars · 2 iun</span>
+            <span class="chip" style="background:rgba(189,143,44,.18);color:#e8cf8e;border-color:#bd8f2c">📜 Lex Gladii · free</span>
+            <span class="chip" style="background:rgba(189,143,44,.08);color:#8a7a5a;border-color:#6a5a3a">📜 🔒 color-lock</span>
+          </div>
+          <span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">👁 Enemy intent: Charge</span>
         </div>
       </div>
       <div class="row" style="gap:12px;align-items:stretch">

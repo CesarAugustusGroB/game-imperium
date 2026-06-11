@@ -91,6 +91,10 @@ export interface BattleArmy {
   defendedLast: boolean;
   retreated: boolean;
   strengthPct: number;     // display only in Thread A
+  /** Battle-long incoming-damage multiplier from decretum def buffs (<1 = protected). */
+  dmgTakenMult?: number;
+  /** Pending death-prevention charges (decretum Oracle/Triumphus): a killing blow leaves 5% HP instead. */
+  preventDeath?: number;
 }
 
 export interface DieData { raw: number; faces: number; bonus: number; }
@@ -105,6 +109,12 @@ export interface BattleState {
   victory: boolean | null;
   endMsg: string;
   lastDice: { you: DieData | null; enemy: DieData | null };
+  /** Rounds left of revealed enemy intent (decretum Spy/Augur). */
+  revealRounds?: number;
+  /** Pre-picked enemy order for the next round, shown in the UI while reveal is active. */
+  nextEnemyOrder?: OrderKey | null;
+  /** Rounds left of advantage on the player die — roll twice, keep best (decretum Tribune). */
+  advantageRounds?: number;
 }
 
 export type RoundLogLine = { text: string; kind: '' | 'head' | 'you' | 'en' | 'mor' | 'crit' | 'out' };

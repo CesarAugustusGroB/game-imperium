@@ -110,6 +110,20 @@ function applyChange(key: keyof IterBelliState, delta: number): void {
   }
 }
 
+/**
+ * Pay a cost from the campaign pool (used by battle decretum casting).
+ * Atomic: checks both resources before spending. Returns false if unaffordable.
+ */
+export function spendCampaignCost(cost: { gold?: number; iuniores?: number }): boolean {
+  const gold = cost.gold ?? 0;
+  const iuniores = cost.iuniores ?? 0;
+  if (S.gold < gold || S.iuniores < iuniores) return false;
+  if (gold > 0) applyChange('gold', -gold);
+  if (iuniores > 0) applyChange('iuniores', -iuniores);
+  commit();
+  return true;
+}
+
 // ── Pool generation ──────────────────────────────────────────────────────────
 
 function eligibleCards() {

@@ -34,11 +34,18 @@ export function playRound(S: BattleState, playerKey: OrderKey, rng: Rng): { log:
   if (S.finished) return { log: [], enemyOrder: playerKey };
   S.round++;
   S.you.guardMult = 1; S.enemy.guardMult = 1;
-  const eKey = enemyChoose(S);
+  // Honor the pre-picked (revealed) enemy order if a decretum exposed it.
+  const eKey = S.nextEnemyOrder ?? enemyChoose(S);
+  S.nextEnemyOrder = null;
   const yO = ORDERS[playerKey], eO = ORDERS[eKey];
   const yTier = centerTier(S.control, 'you'), eTier = centerTier(S.control, 'enemy');
   const yFaces = 6 + yTier, eFaces = 6 + eTier;
-  const yDie = rng.rollDie(yFaces), eDie = rng.rollDie(eFaces);
+  let yDie = rng.rollDie(yFaces);
+  if ((S.advantageRounds ?? 0) > 0) {
+    yDie = Math.max(yDie, rng.rollDie(yFaces));
+    S.advantageRounds!--;
+  }
+  const eDie = rng.rollDie(eFaces);
   S.lastDice = { you: { raw: yDie, faces: yFaces, bonus: yTier }, enemy: { raw: eDie, faces: eFaces, bonus: eTier } };
 
   const log: RoundLogLine[] = [{ text: `Round ${S.round} — You: ${yO.name} (d${yFaces}) · Enemy: ${eO.name} (d${eFaces})`, kind: 'head' }];
@@ -60,8 +67,17 @@ export function playRound(S: BattleState, playerKey: OrderKey, rng: Rng): { log:
   applyMorale(S, S.enemy, eHp, eO, yRes.eMoraleHit);
 
   for (const a of [S.you, S.enemy]) {
-    if (a.drums > 0) { a.morale = clamp(a.morale + 1.0 + a.discipline * 0.06, 0, 10); a.drums--; }
+    if (a.drums > 0) { a.morale = clamp(a.morale + 1.0 + a.discipline * 0.06, 0, 15); a.drums--; }
     if (a.encircled) { a.encircleTurns--; if (a.encircleTurns <= 0) a.encircled = false; }
+  }
+
+  // Decretum death prevention: a killing blow leaves 5% HP instead (once per charge).
+  for (const a of [S.you, S.enemy]) {
+    if (a.hp <= 0 && (a.preventDeath ?? 0) > 0) {
+      a.preventDeath!--;
+      a.hp = Math.max(1, Math.round(a.maxHp * 0.05));
+      log.push({ text: `Fate intervenes — ${a.side === 'you' ? 'your legion' : a.name} refuses to fall.`, kind: 'crit' });
+    }
   }
 
   S.you.defendedLast = !!yO.defensive; S.enemy.defendedLast = !!eO.defensive;
@@ -75,6 +91,13 @@ export function playRound(S: BattleState, playerKey: OrderKey, rng: Rng): { log:
 
   checkEnd(S);
   if (S.finished && S.endMsg && !log.some((l) => l.kind === 'out')) log.push({ text: S.endMsg, kind: 'out' });
+
+  // While a reveal decretum is active, pre-pick the enemy's next order so the
+  // UI can show it (enemyChoose is deterministic over the current state).
+  if (!S.finished && (S.revealRounds ?? 0) > 0) {
+    S.revealRounds!--;
+    S.nextEnemyOrder = enemyChoose(S);
+  }
   return { log, enemyOrder: eKey };
 }
 
