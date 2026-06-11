@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 import type { JSX } from 'preact/jsx-runtime';
 import type { InvestmentType } from '../../game/province/province';
 
@@ -267,9 +267,20 @@ interface BuildingIconProps {
 export function BuildingIcon({ type, size = 56, color, style, fill = false }: BuildingIconProps) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
-  // Reset state if the type changes (e.g. swapping between cards)
-  useEffect(() => { setFailed(false); setLoaded(false); }, [type]);
+  // Reset state if the type changes (e.g. swapping between cards), then sync
+  // against the cached case: a browser-cached PNG can be `complete` before the
+  // onLoad handler attaches, so onLoad never fires and the art would stay hidden.
+  useEffect(() => {
+    setFailed(false);
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) {
+      setLoaded(true);
+    } else {
+      setLoaded(false);
+    }
+  }, [type]);
 
   // The PNG fills its parent in `fill` mode; the SVG fallback (line art) keeps a
   // fixed box so it stays crisp and centered rather than stretching.
@@ -299,6 +310,8 @@ export function BuildingIcon({ type, size = 56, color, style, fill = false }: Bu
   return (
     <>
       <img
+        key={type}
+        ref={imgRef}
         src={`/asset/buildings/building_${type}.png`}
         alt=""
         onLoad={() => setLoaded(true)}
