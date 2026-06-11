@@ -1,10 +1,14 @@
+import { signal } from '@preact/signals';
 import { useMemo } from 'preact/hooks';
 import { councilSlots, plannedCampaignDuration, canEmbarkFromCouncil } from '../../../../game/council/council-store';
 import { preparedArmy, preparedLegate } from '../../../../game/progression/strategic-store';
 import { getResource } from '../../../../game/core/resources';
 import { selectedCommander } from '../../../../game/core/game-state';
 import { startIterBelliCampaign, computeStartingDiscipline } from '../../../../game/iterBelli/iter-belli-state';
-import { getActiveScenario } from '../../../../game/iterBelli/iter-belli-scenario';
+import {
+  getActiveScenario, getScenarioById, setActiveScenarioById,
+  unlockedScenarios, SCENARIOS,
+} from '../../../../game/iterBelli/iter-belli-scenario';
 import { computeConsiliumSetup, getMissionById, computeSecondaryQuests } from '../../../../data/iter-belli-consilium';
 import { equippedDoctrines, getEmbarkBonus } from '../../../../game/items/doctrine-store';
 import { computeDoctrineModifiers } from '../../../../data/iter-belli-doctrines';
@@ -24,8 +28,16 @@ interface EmbarkCardProps {
   index?: number;
 }
 
+/** Sticky scenario choice for the next embark (null → fall back to the active scenario). */
+const selectedScenarioId = signal<string | null>(null);
+
 export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
   const army = preparedArmy.value;
+  const unlocked = unlockedScenarios.value;
+  const activeScenarioId = (selectedScenarioId.value && unlocked.includes(selectedScenarioId.value))
+    ? selectedScenarioId.value
+    : getActiveScenario().id;
+  const activeScenario = getScenarioById(activeScenarioId) ?? getActiveScenario();
 
   const consilium = computeConsiliumSetup(councilSlots.value);
   const seatedCount = councilSlots.value.filter(Boolean).length;
@@ -48,7 +60,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
   const doctrineModifiers = useMemo(() => computeDoctrineModifiers(equippedDoctrines.value), [equippedDoctrines.value]);
   const doctrinePreview = [...new Set(doctrineModifiers.map((m) => m.label))].join(' | ');
 
-  const campaignTitle = `Campaña — ${getActiveScenario().enemy.name}`;
+  const campaignTitle = `Campaña — ${activeScenario.enemy.name}`;
   // Council requirement + at least one cohort: an empty army would seed a
   // 0-soldier campaign that is instantly unwinnable.
   const hasCohorts = (army?.cohorts?.length ?? 0) > 0;
@@ -62,6 +74,8 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
   function handleEmbark() {
     if (!canEmbark) return;
     playSfx('ui_click');
+    // Lock in the chosen scenario so the campaign + endgame read the right one.
+    setActiveScenarioById(activeScenarioId);
     // Hybrid seed: soldiers from the prepared army's effective HP, gold from the run.
     const cohorts = army?.cohorts ?? [];
     const soldiers = cohorts.reduce((sum, c) => sum + (c.currentHp ?? c.stats.hp), 0);
@@ -168,11 +182,39 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
           letterSpacing: 'var(--imp-title-letter)',
           color: 'rgba(246, 233, 210, 0.95)',
           textTransform: 'uppercase',
-          marginBottom: 27,
+          marginBottom: unlocked.length > 1 ? 12 : 27,
           textShadow: '0 2px 8px rgba(0, 0, 0, 0.86)',
         }}>
           {campaignTitle}
         </div>
+
+        {/* Scenario picker — only when more than one campaign is unlocked (S-F). */}
+        {unlocked.length > 1 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+            {SCENARIOS.filter((sc) => unlocked.includes(sc.id)).map((sc) => {
+              const isActive = sc.id === activeScenarioId;
+              return (
+                <button
+                  key={sc.id}
+                  onClick={() => { selectedScenarioId.value = sc.id; setActiveScenarioById(sc.id); playSfx('ui_click'); }}
+                  title={sc.narrative.victoryTitle}
+                  style={{
+                    padding: '6px 13px',
+                    background: isActive ? 'linear-gradient(180deg, rgba(212,168,67,0.92), rgba(184,137,42,0.9))' : 'rgba(18, 16, 14, 0.7)',
+                    border: `1px solid ${isActive ? 'rgba(240,208,128,0.9)' : 'rgba(212,168,67,0.35)'}`,
+                    borderRadius: 3,
+                    color: isActive ? 'var(--imp-ink)' : 'rgba(223, 205, 172, 0.85)',
+                    fontFamily: 'var(--imp-font-display)', fontSize: 'var(--imp-text-xs)', fontWeight: 700,
+                    letterSpacing: 'var(--imp-meta-letter)', textTransform: 'uppercase',
+                    cursor: 'pointer', whiteSpace: 'nowrap',
+                  }}
+                >
+                  ⚑ {sc.enemy.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {(mission || modSummary || questPreview || doctrinePreview) && (
           <div style={{

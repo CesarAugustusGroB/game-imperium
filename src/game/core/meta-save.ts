@@ -41,6 +41,7 @@ import {
   threatLevel,
   veteranStacks,
 } from './game-state';
+import { unlockedScenarios, setUnlockedScenarios } from '../iterBelli/iter-belli-scenario';
 import { gold, initResources, iuniores, type Resources } from './resources';
 import type { Legate } from '../army/legate';
 import { normalizeCohortRoster } from '../army/cohort';
@@ -76,6 +77,8 @@ export interface ActiveRunSave {
   commanderId: string;
   resources: SavedResources;
   iunioresSeeded?: boolean;
+  /** Iter Belli scenarios unlocked this run (S-F). Optional for backwards compat. */
+  unlockedScenarios?: string[];
   completedSpokes: number;
   threatLevel: number;
   spokesSinceLastBattle: number;
@@ -293,6 +296,7 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     commanderId: run.commanderId,
     resources,
     iunioresSeeded,
+    unlockedScenarios: Array.isArray(run.unlockedScenarios) ? run.unlockedScenarios.filter((s): s is string => typeof s === 'string') : undefined,
     completedSpokes: typeof run.completedSpokes === 'number' ? run.completedSpokes : 0,
     threatLevel: typeof run.threatLevel === 'number' ? run.threatLevel : 0,
     spokesSinceLastBattle: typeof run.spokesSinceLastBattle === 'number' ? run.spokesSinceLastBattle : 0,
@@ -381,6 +385,7 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
       iuniores: iuniores.value,
     },
     iunioresSeeded: true,
+    unlockedScenarios: unlockedScenarios.value,
     completedSpokes: completedSpokes.value,
     threatLevel: threatLevel.value,
     spokesSinceLastBattle: spokesSinceLastBattle.value,
@@ -503,6 +508,7 @@ export async function restoreActiveRun(): Promise<boolean> {
     }
 
     initResources(normalizeResources(snapshot.resources));
+    setUnlockedScenarios(snapshot.unlockedScenarios ?? []);
     completedSpokes.value = snapshot.completedSpokes;
     threatLevel.value = snapshot.threatLevel;
     spokesSinceLastBattle.value = snapshot.spokesSinceLastBattle;

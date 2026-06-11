@@ -1,6 +1,6 @@
 # Grand Strategy Map 2D ("Imperium")
 
-Roman grand-strategy game. Current main loop: Title → Commander Select → Imperium Forum (hub, 6 tabs) → Iter Belli (card-driven Saguntum campaign with stance-based dice battles). The old WebGL2 map renderer, hex Bellum campaign, and node-map battle systems have been removed from this worktree.
+Roman grand-strategy game. Current main loop: Title → Commander Select → Imperium Forum (hub, 6 tabs) → Iter Belli (card-driven campaigns with stance-based dice battles; scenarios Saguntum→Gallia unlock in sequence). The old WebGL2 map renderer, hex Bellum campaign, and node-map battle systems have been removed from this worktree.
 
 ## Reference Docs (read these FIRST, keep them in sync)
 

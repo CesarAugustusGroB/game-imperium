@@ -62,11 +62,12 @@ El módulo de batalla no importaba decreta: ~10 de 30 pergaminos eran inlanzable
 - [x] Tests: `se-synergies.test.ts` (7); 115 total verdes.
 - **Nota:** `training_ground` y `watchtower` siguen pendientes (no son parte de ninguna sinergia).
 
-### S-F · Segundo escenario de campaña
-- [ ] Escenario 2 post-Saguntum (p. ej. **cruce del Ebro / Gallia**): nuevo `iter-belli-scenario-*.ts` con localizaciones, crisis y enemigo (`gauls` ya existe como arquetipo de batalla con identidad propia: carga 20, disciplina 3).
-- [ ] Selector de campaña en EmbarkCard cuando hay >1 escenario desbloqueado (victoria desbloquea el siguiente).
-- [ ] 6–8 cartas nuevas específicas del escenario (el motor ya soporta `locations` por id).
-- **DoD**: dos campañas jugables encadenadas; el meta-save persiste el progreso de escenarios.
+### S-F · Segundo escenario de campaña — ✅ HECHO (2026-06-11)
+- [x] **GALLIA** (`iter-belli-scenario-gallia.ts`): Alesia vs Vercingétorix con el arquetipo `gauls` (carga 20, disc 3, sin armadura) — un combate muy distinto al de Cartago. Reutiliza los ids de localización genéricos (frontera/tarraco/llanura/bosques) con nombres galos para que las cartas existentes sigan disponibles + objetivo `alesia` con su carta decisiva `asalto_alesia`.
+- [x] **Registro `SCENARIOS`** + `getScenarioById`/`setActiveScenarioById`; `unlockedScenarios` signal; `unlockNextScenario` (victoria desbloquea el siguiente). Persistido en `ActiveRunSave` (per-run), reseteado en `resetRun`.
+- [x] **Selector en EmbarkCard** (chips por escenario, solo si hay >1 desbloqueado; fija el activo antes de embarcar). Notificación pinned al desbloquear.
+- [x] Tests: `scenario-unlock.test.ts` (9); 124 total verdes; los 9 `verify-iter-belli-*` pasan.
+- **Nota:** sin cartas nuevas específicas de Gallia más allá de la decisiva — el pool genérico cubre la campaña; añadir 4-6 cartas galas queda como pulido opcional.
 
 ### S-G · Variedad táctica de la batalla
 - [ ] Usar los 4 arquetipos enemigos existentes (carthage/gauls/iberians/garrison) según escenario/quest — hoy solo se ve carthage en el flujo normal.

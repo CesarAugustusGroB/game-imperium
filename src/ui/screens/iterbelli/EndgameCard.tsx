@@ -6,7 +6,8 @@ import { completedSpokes, battlesWon, globalSeason, MAX_SEASONS, spokesSinceLast
 import { preparedArmy } from '../../../game/progression/strategic-store';
 import { computeArmySize } from '../../../game/army/cohort';
 import { iterBelliState, resetIterBelli } from '../../../game/iterBelli/iter-belli-state';
-import { getActiveScenario } from '../../../game/iterBelli/iter-belli-scenario';
+import { getActiveScenario, unlockNextScenario, getScenarioById } from '../../../game/iterBelli/iter-belli-scenario';
+import { addNotification } from '../../notifications/notification-store';
 import { START } from '../../../game/iterBelli/iter-belli-balance';
 import { conquerProvince, provinces, collectProvinceIncome } from '../../../game/province/province-store';
 import { councilSlots, grantAdvisorXp } from '../../../game/council/council-store';
@@ -50,6 +51,18 @@ function returnToHub(): void {
     conquerProvince(name, PROVINCE_REWARD as Record<ResourceType, number>, 1, {
       terrain: s.spokeTerrain as TerrainType,
     });
+
+    // Winning a campaign unlocks the next one in the progression.
+    const unlockedId = unlockNextScenario(getActiveScenario().id);
+    if (unlockedId) {
+      const next = getScenarioById(unlockedId);
+      addNotification({
+        kind: 'pinned',
+        icon: '⚑',
+        title: 'Nueva campaña disponible',
+        message: `Has desbloqueado: ${next?.narrative.victoryTitle ?? unlockedId}. Elígela en el Foro al embarcar.`,
+      });
+    }
   }
 
   const army = preparedArmy.value;

@@ -342,6 +342,17 @@ export const CARD_DEFS: OperationCard[] = [
     locations: ['sagunto'],
     weight: 99,
   },
+  {
+    id: 'asalto_alesia',
+    name: 'Asalto a Alesia',
+    category: 'Operaciones',
+    desc: 'Romper la gran alianza gala bajo los muros de Alesia. Aquí se decide la guerra.',
+    cost: { time: 0 },
+    effects: () => ({ triggerFinalBattle: true }),
+    expiry: 99,
+    locations: ['alesia'],
+    weight: 99,
+  },
 
   // ── COMPROMISOS — penalización si expiran sin atender ──────────────────────────
   {
