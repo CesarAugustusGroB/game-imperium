@@ -12,8 +12,6 @@ import {
   type AdvisorTrait,
   getCurrentPassive,
   getCurrentTier,
-  XP_TIER_2,
-  XP_TIER_3,
 } from '../../../../game/council/advisor';
 import { FACTION_COLORS } from '../../../../game/core/commander';
 import { gold } from '../../../../game/core/resources';
@@ -26,7 +24,6 @@ import { Masthead } from '../Masthead';
 import { SectionHeader } from '../components/SectionHeader';
 import {
   BonusCard,
-  CeremonialTrack,
   getTraitVisual,
   TraitChip,
   TraitGlyph,
@@ -326,11 +323,6 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
   const { advisor, source, slotIndex } = selection;
   const color = FACTION_COLORS[advisor.color];
   const currentTierData = getCurrentTier(advisor);
-  const nextTierThreshold =
-    advisor.currentTier === 1 ? XP_TIER_2 :
-    advisor.currentTier === 2 ? XP_TIER_3 :
-    null;
-  const prevTierThreshold = advisor.currentTier === 1 ? 0 : XP_TIER_2;
   const role = source === 'seat'
     ? SLOT_LABELS[slotIndex ?? 0] ?? 'Seated Advisor'
     : 'Political Candidate';
@@ -466,15 +458,6 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
             ))}
           </div>
 
-          <CeremonialTrack
-            currentTier={advisor.currentTier}
-            xp={advisor.xp}
-            nextTierThreshold={nextTierThreshold}
-            prevTierThreshold={prevTierThreshold}
-            accent={CONSILIUM_ACCENT}
-            factionColor={color}
-            style={{ position: 'relative', zIndex: 1, marginTop: 2 }}
-          />
         </div>
 
         {/* RIGHT — portrait */}

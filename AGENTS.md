@@ -3,6 +3,8 @@
 ## Project Structure & Module Organization
 `src/` contains the application code. Key areas are `src/battle/` for combat systems, `src/game/` for state and progression, `src/ui/` for Preact screens/components, `src/data/` and `src/config/` for game content, and `src/assets/` for raster assets processed by `vite-imagetools`. Static files that are served as-is live in `public/` (`public/data/`, `public/textures/`, `public/asset/`, `public/audio/`). Utility scripts are in `tools/`, and longer-form design notes live in `docs/`.
 
+For generated UI icons and small game assets, follow `docs/icon-art-direction.md`.
+
 ## Build, Test, and Development Commands
 Use `npm run dev` to start the Vite dev server. Use `npm run build` to run `tsc` and produce a production bundle in `dist/`. Use `npx tsc --noEmit` for a fast type-check pass when you want validation without building. Asset helpers include `python tools/generate-test-textures.py` to rebuild derived textures and `npx tsx tools/mcp-server.ts` to run the local MCP map server.
 

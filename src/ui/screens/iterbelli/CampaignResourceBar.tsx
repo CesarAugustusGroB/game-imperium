@@ -27,7 +27,7 @@ function resources(s: IterBelliState): ResourceDef[] {
     },
     {
       key: 'morale', glyph: '♺', icon: 'res-morale', label: 'Moral', value: s.morale.toFixed(1),
-      tip: 'Cohesión del ejército (0–10). Bajo 3 hay riesgo de motín; a 0 el ejército se desbanda.',
+      tip: 'Cohesión del ejército (0–15). Bajo 3 hay riesgo de motín; a 0 el ejército se desbanda.',
       alert: s.morale < ALERT.moraleLow,
     },
     {
