@@ -19,11 +19,18 @@ export function setExtraShopDiscountFn(fn: () => number): void {
   extraShopDiscountFn = fn;
 }
 
+// Empire-wide recruit discount from province synergies (Castrum+Forge =
+// Military-Industrial), pushed in from game-state to avoid an import cycle.
+let recruitDiscountFn: () => number = () => 0;
+export function setRecruitDiscountFn(fn: () => number): void {
+  recruitDiscountFn = fn;
+}
+
 // ── Helpers ──
 
-/** Gold cost after equipped-doctrine shop-discount, min 1. */
+/** Gold cost after equipped-doctrine + advisor shop-discount and province recruit synergies, min 1. */
 function discountedGold(base: number): number {
-  const pct = Math.min(75, getShopDiscount() + extraShopDiscountFn());
+  const pct = Math.min(75, getShopDiscount() + extraShopDiscountFn() + recruitDiscountFn());
   return Math.max(1, Math.round(base * (1 - pct / 100)));
 }
 

@@ -38,7 +38,10 @@ export type InvestmentType =
   | 'oasis_market'  // Desert
   | 'caravan_post'  // Desert
   | 'oracle_shrine' // Marsh
-  | 'reed_harvest'; // Marsh
+  | 'reed_harvest'  // Marsh
+  | 'forge'         // Hills — Military-Industrial synergy with Castrum (S-E)
+  | 'sacred_grove'  // Forest / Marsh — Religious Harmony synergy with Basilica (S-E)
+  | 'mine';         // Hills — Resource Commerce synergy with Market (S-E)
 
 export interface Investment {
   type: InvestmentType;
@@ -301,20 +304,52 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
       { incomeBonus: {},                           expensesBonus: 2, unrestChange: -6, buildCost: { gold: 28 },                         description: '+20% Beautiness. -6 Unrest/season. A jewel of the empire.', beautinessBonus: 20 },
     ],
   },
+  // ── S-E: Terrain buildings that complete the dead synergies ──
+  forge: {
+    type: 'forge', color: 'red',
+    name: 'Forge',
+    flavour: 'Hill-country smithies hammer out blades, mail and ballista bolts for the legion.',
+    levels: [
+      { incomeBonus: { iuniores: 1 },              expensesBonus: 1, unrestChange: 0, buildCost: { gold: 6 },                          description: '+1 Iuniores/season. Arms the levy.', beautinessBonus: -2 },
+      { incomeBonus: { iuniores: 2 },              expensesBonus: 2, unrestChange: 0, buildCost: { gold: 13 },                         description: '+2 Iuniores/season.', beautinessBonus: -2 },
+      { incomeBonus: { iuniores: 3 },              expensesBonus: 2, unrestChange: 0, buildCost: { gold: 24 },                         description: '+3 Iuniores/season. With a Castrum: -10% recruit cost (Military-Industrial).', beautinessBonus: -3 },
+    ],
+  },
+  sacred_grove: {
+    type: 'sacred_grove', color: 'gold',
+    name: 'Sacred Grove',
+    flavour: 'An ancient grove where the old gods are honoured — the province breathes easier.',
+    levels: [
+      { incomeBonus: {},                           expensesBonus: 0, unrestChange: -5,  buildCost: { gold: 5 },                         description: '-5 Unrest/season. A place of peace.', beautinessBonus: 3 },
+      { incomeBonus: { gold: 1 },                  expensesBonus: 1, unrestChange: -8,  buildCost: { gold: 12 },                        description: '+1 Gold/season. -8 Unrest/season.', beautinessBonus: 5 },
+      { incomeBonus: { gold: 1 },                  expensesBonus: 1, unrestChange: -12, buildCost: { gold: 22 },                        description: '+1 Gold/season. -12 Unrest/season. With a Basilica: Religious Harmony (-5 Unrest).', beautinessBonus: 8 },
+    ],
+  },
+  mine: {
+    type: 'mine', color: 'purple',
+    name: 'Mine',
+    flavour: 'Shafts cut into the hills yield iron, silver and the coin that follows ore.',
+    levels: [
+      { incomeBonus: { gold: 2 },                  expensesBonus: 1, unrestChange: 0, buildCost: { gold: 6 },                          description: '+2 Gold/season. +2 wealth growth.', beautinessBonus: -2 },
+      { incomeBonus: { gold: 4 },                  expensesBonus: 1, unrestChange: 0, buildCost: { gold: 14 },                         description: '+4 Gold/season. +3 wealth growth.', beautinessBonus: -2 },
+      { incomeBonus: { gold: 6 },                  expensesBonus: 2, unrestChange: 0, buildCost: { gold: 26 },                         description: '+6 Gold/season. +4 wealth growth. With a Market: Resource Commerce (+1 Gold).', beautinessBonus: -3 },
+    ],
+  },
 };
 
 // ── Building synergies ──
 
 /**
  * Discriminated union of synergy bonus effects.
- * 'unit-cost-discount' is noted but applied by the battle system (deferred).
+ * 'unit-cost-discount' lowers the empire-wide cohort recruit gold cost (applied
+ * in strategic-store's discountedGold via getEmpireRecruitDiscount).
  */
 export type SynergyBonus =
   | { type: 'pwg'; amount: number }                  // +X Wealth Growth per season
   | { type: 'food'; amount: number }                 // +X Food production per season (S20)
   | { type: 'gold'; amount: number }                 // +X gold (× wealth tier × tax, as building income)
   | { type: 'unrest'; amount: number }               // −X Unrest per season (amount is the reduction)
-  | { type: 'unit-cost-discount'; percent: number }; // −X% unit recruit cost (battle system)
+  | { type: 'unit-cost-discount'; percent: number }; // −X% cohort recruit gold cost
 
 export interface SynergyData {
   /**
@@ -668,9 +703,8 @@ export function getSettlementLabel(pop: number): string {
  *
  * Universal buildings are defined in UNIVERSAL_BUILDINGS (terrain-data.ts).
  * Terrain-exclusive buildings are defined per-terrain in TERRAIN_AVAILABLE_BUILDINGS;
- * only those whose slugs appear in INVESTMENT_DATA are included — the remaining 6
- * (granary, mine, forge, sacred_grove, training_ground, watchtower) are pending
- * future tasks.
+ * only those whose slugs appear in INVESTMENT_DATA are included — training_ground
+ * and watchtower remain pending future tasks (forge/sacred_grove/mine added in S-E).
  */
 export function getAvailableBuildings(province: Province): InvestmentType[] {
   const universals: InvestmentType[] = [...UNIVERSAL_BUILDINGS];

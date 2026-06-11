@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Province, InvestmentType } from './province';
+import { getActiveSynergies } from './province';
 import {
   createProvince, INVESTMENT_DATA,
   getInvestmentDiscount, applyInvestmentDiscount,
@@ -433,6 +434,20 @@ export function hasAqueductIncomeBonus(): boolean {
     }
   }
   return false;
+}
+
+/**
+ * Empire-wide recruit-cost discount (%) from active province synergies —
+ * Castrum+Forge "Military-Industrial". Summed across all provinces, capped at 50%.
+ */
+export function getEmpireRecruitDiscount(): number {
+  let pct = 0;
+  for (const prov of provinces.value) {
+    for (const syn of getActiveSynergies(prov)) {
+      if (syn.bonus.type === 'unit-cost-discount') pct += syn.bonus.percent;
+    }
+  }
+  return Math.min(50, pct);
 }
 
 /** Reset all province state (called on run end / new run). */

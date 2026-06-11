@@ -101,6 +101,7 @@ export const WEALTH = {
     port:         { 1: 2, 2: 3, 3: 4 },
     oasis_market: { 1: 2, 2: 3, 3: 4 },
     caravan_post: { 1: 3, 2: 4, 3: 5 },
+    mine:         { 1: 2, 2: 3, 3: 4 },
   } as Record<string, Record<number, number>>,
   /** Negative Wealth Generation formula: NWG = -(flat + mult × PWG). */
   nwgParams: {

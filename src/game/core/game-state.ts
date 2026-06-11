@@ -8,13 +8,13 @@ import { STARTER_DECRETUM } from '../../data/decretum-data';
 import { STARTER_DOCTRINES } from '../../data/doctrine-data';
 import { isDoctrineEquippable } from '../items/doctrine';
 import { resetCouncilStore, advisorMarket, seatAdvisor, setAdvisorMarket, advisorShopDiscount, advisorIncomeBonus } from '../council/council-store';
-import { resetProvinceStore, conquerProvince } from '../province/province-store';
+import { resetProvinceStore, conquerProvince, getEmpireRecruitDiscount } from '../province/province-store';
 import { setUpkeepReductionFn } from '../province/province';
 import { initGovernorStore, resetGovernorStore } from '../province/governor-store';
 import { initProvinceMapStore, resetProvinceMapStore } from '../province/province-map-store';
 import { resetEventStore } from '../events/event-store';
 import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyIds, registerFactionSyncCallback } from '../progression/npc-faction-store';
-import { resetStrategicStore, ensurePreparedArmy, preparedArmy, setExtraShopDiscountFn } from '../progression/strategic-store';
+import { resetStrategicStore, ensurePreparedArmy, preparedArmy, setExtraShopDiscountFn, setRecruitDiscountFn } from '../progression/strategic-store';
 import { getCohortById } from '../army/cohort-data';
 import { computeArmySize, createCohortInstance } from '../army/cohort';
 import { clearActiveRunSave, recordRunStart } from './meta-save';
@@ -94,6 +94,7 @@ export function wireRunBonuses(): void {
   setIncomeModifierFn((res) => getIncomeModifier(res) + advisorIncomeBonus(res));
   setExtraShopDiscountFn(advisorShopDiscount);
   setUpkeepReductionFn(getUpkeepReduction);
+  setRecruitDiscountFn(getEmpireRecruitDiscount);
 }
 
 interface StartRunOptions {
@@ -222,6 +223,7 @@ export function resetRun(): void {
   setIncomeModifierFn(null);
   setExtraShopDiscountFn(() => 0);
   setUpkeepReductionFn(() => 0);
+  setRecruitDiscountFn(() => 0);
   resetDecretumHand();
   resetActiveDecretumEffects();
   resetDoctrineStore();

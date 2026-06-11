@@ -56,9 +56,11 @@ El módulo de batalla no importaba decreta: ~10 de 30 pergaminos eran inlanzable
 
 *Principio: que la decisión de cada run sea distinta — más ejes, no más botones.*
 
-### S-E · Sinergias y edificios que faltan
-- [ ] Añadir **Forge** (red/mountains: −coste de reclutamiento local), **Sacred Grove** (gold/forest: −unrest, +beautiness), **Mine** (purple/mountains: +oro, +PWG) — completa las 3 sinergias muertas. Pipeline existente: INVESTMENT_DATA + SVG en BuildingIcon + arte hi-res opcional.
-- [ ] Sinergias restantes verificadas con test (Aqueduct+Granary food, Insula+Aqueduct unrest).
+### S-E · Sinergias y edificios que faltan — ✅ HECHO (2026-06-11)
+- [x] Añadidos **Forge** (red/hills: +iuniores; Military-Industrial con Castrum → −10% coste de reclutar cohortes vía `getEmpireRecruitDiscount` inyectado en `discountedGold`), **Sacred Grove** (gold/forest/marsh: −unrest +beauty, +oro en T2/T3), **Mine** (purple/hills: +oro +PWG) — InvestmentType + INVESTMENT_DATA + iconos SVG + `buildingPWG.mine`.
+- [x] Las 6 sinergias referencian solo edificios registrados (test lo garantiza). Religious Harmony, Resource Commerce y Military-Industrial ahora vivas.
+- [x] Tests: `se-synergies.test.ts` (7); 115 total verdes.
+- **Nota:** `training_ground` y `watchtower` siguen pendientes (no son parte de ninguna sinergia).
 
 ### S-F · Segundo escenario de campaña
 - [ ] Escenario 2 post-Saguntum (p. ej. **cruce del Ebro / Gallia**): nuevo `iter-belli-scenario-*.ts` con localizaciones, crisis y enemigo (`gauls` ya existe como arquetipo de batalla con identidad propia: carga 20, disciplina 3).

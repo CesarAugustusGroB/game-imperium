@@ -245,6 +245,44 @@ const BUILDING_SVG: Record<InvestmentType, JSX.Element> = {
       <ellipse cx="50" cy="48" rx="10" ry="8" opacity="0.7" />
     </svg>
   ),
+  // Forge — anvil with crossed hammer over a fire
+  forge: (
+    <svg viewBox="0 0 64 64" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 56h56v4H4z" />
+      <path d="M16 38h32l-4 8H20z" opacity="0.85" />
+      <path d="M14 30h28a8 6 0 0 1-8 6H22a8 8 0 0 1-8-6z" />
+      <rect x="28" y="36" width="6" height="6" />
+      <rect x="20" y="46" width="24" height="4" opacity="0.7" />
+      <path d="M40 12l10 10-4 4-10-10z" />
+      <rect x="30" y="16" width="14" height="4" transform="rotate(45 37 18)" opacity="0.8" />
+      <path d="M24 50c0-4 2-6 2-10 2 2 3 5 1 10z" fill="#0a0a14" opacity="0.5" />
+    </svg>
+  ),
+  // Sacred Grove — a great tree with an altar stone
+  sacred_grove: (
+    <svg viewBox="0 0 64 64" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 56h56v4H4z" />
+      <rect x="29" y="36" width="6" height="20" opacity="0.85" />
+      <ellipse cx="32" cy="26" rx="16" ry="14" />
+      <ellipse cx="20" cy="32" rx="9" ry="8" opacity="0.7" />
+      <ellipse cx="44" cy="32" rx="9" ry="8" opacity="0.7" />
+      <rect x="22" y="50" width="20" height="6" opacity="0.6" />
+      <path d="M30 26c-2-6 0-10 2-12 2 2 4 6 2 12z" fill="#0a0a14" opacity="0.35" />
+    </svg>
+  ),
+  // Mine — pithead entrance with crossed pick and an ore cart
+  mine: (
+    <svg viewBox="0 0 64 64" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 56h56v4H4z" />
+      <path d="M14 56V34a18 18 0 0 1 36 0v22h-8V36a10 10 0 0 0-20 0v20z" opacity="0.85" />
+      <path d="M24 56V40a8 8 0 0 1 16 0v16z" fill="#0a0a14" opacity="0.7" />
+      <rect x="8" y="48" width="12" height="8" rx="1" />
+      <circle cx="11" cy="58" r="2" />
+      <circle cx="17" cy="58" r="2" />
+      <path d="M42 14l14 6-2 4-14-6z" opacity="0.8" />
+      <rect x="46" y="14" width="3" height="16" transform="rotate(20 47 22)" />
+    </svg>
+  ),
 };
 
 interface BuildingIconProps {
