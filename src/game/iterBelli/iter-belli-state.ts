@@ -349,14 +349,14 @@ function endTurn(timeCost: number): void {
     applyChange('morale', -B.HUNGER_MORALE_LOSS);
     const losses = Math.floor(S.soldiers * B.HUNGER_DESERTION_PCT);
     applyChange('soldiers', -losses);
-    logEvent(`Hambre: −${losses} desertores, moral −1`, 'event');
+    logEvent(`⚠ Hambre (sin suministros): moral −${B.HUNGER_MORALE_LOSS}, −${losses} desertores`, 'crisis');
   }
 
   // Mutiny.
   if (S.morale < B.MUTINY_MORALE_THRESHOLD && Math.random() < B.MUTINY_CHANCE) {
     const losses = Math.floor(S.soldiers * B.MUTINY_DESERTION_PCT);
     applyChange('soldiers', -losses);
-    logEvent(`Deserciones por moral baja: −${losses} soldados`, 'event');
+    logEvent(`⚠ Deserciones por moral baja: −${losses} soldados`, 'crisis');
   }
 
   // Truce countdown.
@@ -421,7 +421,7 @@ function handleSkirmish(): void {
   const losses = Math.floor(S.soldiers * B.SKIRMISH_DESERTION_PCT * intensity);
   applyChange('soldiers', -losses);
   applyChange('morale', -B.SKIRMISH_MORALE_LOSS);
-  logEvent(`Escaramuza enemiga: −${losses} soldados, moral −0.5`, 'event');
+  logEvent(`⚠ Escaramuza enemiga (amenaza alta): moral −${B.SKIRMISH_MORALE_LOSS}, −${losses} soldados`, 'crisis');
 }
 
 function handleAmbush(): void {
@@ -433,7 +433,7 @@ function handleAmbush(): void {
   const losses = Math.floor(S.soldiers * B.AMBUSH_DESERTION_PCT);
   applyChange('soldiers', -losses);
   applyChange('morale', -B.AMBUSH_MORALE_LOSS);
-  logEvent(`EMBOSCADA en bosques: −${losses} soldados, moral −1.5`, 'event');
+  logEvent(`⚠ EMBOSCADA en los bosques: moral −${B.AMBUSH_MORALE_LOSS}, −${losses} soldados`, 'crisis');
 }
 
 // ── End conditions & lifecycle ─────────────────────────────────────────────────

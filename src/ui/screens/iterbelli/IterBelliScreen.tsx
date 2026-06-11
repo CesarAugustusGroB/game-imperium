@@ -38,16 +38,35 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
   /* ── Resource bar ── */
   .ib-resbar { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 14px; }
   .ib-res, .ib-clock {
+    position: relative;
     display: flex; flex-direction: column; align-items: center; gap: 2px;
     min-width: 92px; padding: 7px 12px;
     background: var(--imp-panel); border: 1px solid var(--imp-gold-faint); border-radius: var(--radius-sm);
+    transition: background var(--duration-fast) var(--ease-default), border-color var(--duration-fast) var(--ease-default);
   }
   .ib-res-label { font-size: var(--imp-text-xs); letter-spacing: var(--imp-meta-letter); text-transform: uppercase; color: var(--imp-text-mid); }
-  .ib-res-value { font-family: var(--imp-font-mono); font-size: 17px; font-weight: 600; color: var(--imp-text-hi); }
+  .ib-res-value { font-family: var(--imp-font-mono); font-size: 17px; font-weight: 600; color: var(--imp-text-hi); transition: color var(--duration-fast) var(--ease-default); }
   .ib-res.warn { border-color: rgba(212,168,67,0.55); }
   .ib-res.warn .ib-res-value { color: var(--imp-gold-hi); }
   .ib-res.alert, .ib-clock.alert { border-color: var(--imp-danger); background: rgba(125,20,20,0.18); }
   .ib-res.alert .ib-res-value, .ib-clock.alert .ib-res-value { color: var(--imp-crimson); }
+
+  /* ── Per-turn delta flash: green on gain, red on loss ── */
+  @keyframes ib-flash-down { 0% { box-shadow: 0 0 0 2px rgba(194,74,58,0.9), 0 0 16px rgba(194,74,58,0.5); border-color: var(--imp-crimson); } 100% { box-shadow: none; } }
+  @keyframes ib-flash-up { 0% { box-shadow: 0 0 0 2px rgba(122,168,106,0.9), 0 0 16px rgba(122,168,106,0.5); border-color: #7aa86a; } 100% { box-shadow: none; } }
+  .ib-res.flash-down { animation: ib-flash-down 1.6s var(--ease-default); }
+  .ib-res.flash-up { animation: ib-flash-up 1.6s var(--ease-default); }
+  .ib-res.flash-down .ib-res-value { color: var(--imp-crimson); }
+  .ib-res.flash-up .ib-res-value { color: #8fbe7e; }
+  @keyframes ib-delta-float { 0% { opacity: 0; transform: translate(-50%, 4px); } 18% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -16px); } }
+  .ib-res-delta {
+    position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
+    font-family: var(--imp-font-mono); font-size: 14px; font-weight: 700;
+    padding: 1px 7px; border-radius: 999px; pointer-events: none; white-space: nowrap;
+    animation: ib-delta-float 1.6s var(--ease-default) forwards; z-index: 5;
+  }
+  .ib-res-delta.up { color: #0c1a0c; background: #8fbe7e; }
+  .ib-res-delta.down { color: #fff; background: var(--imp-crimson); }
 
   /* ── Itinerary ── */
   .ib-itinerary { display: flex; align-items: center; justify-content: center; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -131,6 +150,7 @@ if (typeof document !== 'undefined' && !document.getElementById('iterbelli-style
   .ib-log-line.turn { color: var(--imp-gold-hi); font-weight: 600; border-top: 1px solid var(--imp-gold-faint); padding-top: 6px; margin-top: 2px; }
   .ib-log-line.event { color: var(--imp-text); }
   .ib-log-line.battle { color: var(--imp-crimson); font-weight: 600; }
+  .ib-log-line.crisis { color: var(--imp-crimson); font-weight: 600; padding-left: 8px; border-left: 3px solid var(--imp-crimson); }
 
   /* ── Overlay (battle / endgame) ── */
   .ib-overlay {

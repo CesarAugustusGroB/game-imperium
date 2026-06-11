@@ -238,7 +238,7 @@ export function isCrisisDef(def: AnyCardDef): def is CrisisCard {
 
 export type CampaignPhase = 'campaign' | 'battle' | 'endgame';
 
-export type LogKind = '' | 'event' | 'battle' | 'turn';
+export type LogKind = '' | 'event' | 'battle' | 'turn' | 'crisis';
 
 export interface LogLine {
   text: string;
