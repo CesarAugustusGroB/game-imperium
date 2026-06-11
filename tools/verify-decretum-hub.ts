@@ -11,7 +11,9 @@ import {
 import type { Decretum, DecretumEffect } from '../src/game/items/decretum';
 import { decretumHand } from '../src/game/items/decretum-store';
 import { selectedCommander } from '../src/game/core/game-state';
-import { getResource } from '../src/game/core/resources';
+import { getResource, addResource } from '../src/game/core/resources';
+import { iterBelliActive, iterBelliState } from '../src/game/iterBelli/iter-belli-state';
+import { DECRETUM_PAX, DECRETUM_ANNONA_MILITARIS } from '../src/data/decretum-data';
 import { preparedArmy } from '../src/game/progression/strategic-store';
 import type { ArmyData } from '../src/types/index';
 import type { Commander } from '../src/game/core/commander';
@@ -110,6 +112,44 @@ check('inert cast left scroll in hand', decretumHand.value.length === 1);
 decretumHand.value = [];
 activeDecretumEffects.value = [];
 preparedArmy.value = null;
+selectedCommander.value = null;
+
+// --- campaign-only decreta (Pax Empta / Annona Militaris) ---
+selectedCommander.value = { faction: 'white' } as unknown as Commander;
+iterBelliActive.value = false;
+const pax = toHubEffect(DECRETUM_PAX);
+check('threat-reduction → campaign-threat', pax?.kind === 'campaign-threat' && pax.amount === 2);
+const annona = toHubEffect(DECRETUM_ANNONA_MILITARIS);
+check('supplies-gain → campaign-supplies', annona?.kind === 'campaign-supplies' && annona.amount === 6);
+check('describe campaign-threat', describeHubEffect({ kind: 'campaign-threat', amount: 2 }).includes('2'));
+check('describe campaign-supplies', describeHubEffect({ kind: 'campaign-supplies', amount: 6 }).includes('6'));
+
+addResource('gold', 10); // ensure castCost is affordable so only the campaign gate decides
+check('Annona Militaris NOT castable without active campaign', !isCastableAtHub(DECRETUM_ANNONA_MILITARIS, 'white'));
+check('Pax Empta NOT castable without active campaign', !isCastableAtHub(DECRETUM_PAX, 'white'));
+decretumHand.value = [DECRETUM_PAX];
+check('campaign-gated cast returns false when inactive', castDecretumAtHub(DECRETUM_PAX.id) === false);
+check('campaign-gated cast left scroll in hand', decretumHand.value.length === 1);
+
+iterBelliActive.value = true; // simulate an in-flight campaign (fresh state: threat 0+, supplies START)
+check('Pax Empta castable with active campaign', isCastableAtHub(DECRETUM_PAX, 'white'));
+check('Annona Militaris castable with active campaign', isCastableAtHub(DECRETUM_ANNONA_MILITARIS, 'white'));
+
+const threatBefore = iterBelliState.value.threat;
+const paxGoldBefore = getResource('gold');
+check('cast Pax Empta returns true', castDecretumAtHub(DECRETUM_PAX.id) === true);
+check('Pax Empta reduced threat by 2 (clamped ≥0)', iterBelliState.value.threat === Math.max(0, threatBefore - 2));
+check('Pax Empta paid 2 gold', getResource('gold') === paxGoldBefore - 2);
+check('Pax Empta consumed the scroll', decretumHand.value.length === 0);
+
+const suppliesBefore = iterBelliState.value.supplies;
+decretumHand.value = [DECRETUM_ANNONA_MILITARIS];
+check('cast Annona Militaris returns true', castDecretumAtHub(DECRETUM_ANNONA_MILITARIS.id) === true);
+check('Annona Militaris granted +6 supplies', iterBelliState.value.supplies === suppliesBefore + 6);
+check('Annona Militaris consumed the scroll', decretumHand.value.length === 0);
+
+iterBelliActive.value = false;
+decretumHand.value = [];
 selectedCommander.value = null;
 
 // --- reset helper clears actives ---

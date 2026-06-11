@@ -7,7 +7,8 @@ import type { Decretum } from '../../items/decretum';
 import {
   DECRETUM_MARS, DECRETUM_FORGE, DECRETUM_RIOT, DECRETUM_ORACLE,
   DECRETUM_HEALING, DECRETUM_SPY, DECRETUM_TRIBUNE, DECRETUM_LEGATUS,
-  DECRETUM_LEGION, DECRETUM_SENATE, DECRETUM_SUPPLY, STARTER_DECRETUM,
+  DECRETUM_LEGION, DECRETUM_SENATE, DECRETUM_SUPPLY, DECRETUM_TERROR,
+  DECRETUM_PAX, DECRETUM_ANNONA_MILITARIS, STARTER_DECRETUM,
 } from '../../../data/decretum-data';
 
 const fixedRng = (rolls: number[]): Rng => {
@@ -49,6 +50,20 @@ describe('battle decreta effects', () => {
     expect(S.you.stats.charge).toBe(16);
     expect(S.you.stats.siege).toBe(16);
     expect(S.you.stats.movement).toBe(10); // agility untouched
+  });
+
+  it('Imperium Terroris (−25% atk debuff) weakens enemy attack stats only', () => {
+    const S = makeState();
+    applyDecretumInBattle(S, DECRETUM_TERROR);
+    expect(S.enemy.stats.charge).toBe(8); // 10 × 0.75, rounded
+    expect(S.enemy.stats.siege).toBe(8);
+    expect(S.enemy.stats.movement).toBe(10); // agility untouched
+    expect(S.you.stats.charge).toBe(10);     // own line untouched
+  });
+
+  it('campaign-only scrolls (Pax Empta / Annona Militaris) are not battle-castable', () => {
+    expect(hasBattleEffect(DECRETUM_PAX)).toBe(false);
+    expect(hasBattleEffect(DECRETUM_ANNONA_MILITARIS)).toBe(false);
   });
 
   it('Forge (+20% def) lowers incoming damage multiplier', () => {

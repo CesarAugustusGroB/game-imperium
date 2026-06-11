@@ -25,6 +25,7 @@ import { addNotification } from '../../ui/notifications/notification-store';
 import { TERRAIN_DATA } from '../../data/terrain-data';
 import type { TerrainType } from '../../data/terrain-data';
 import { getTradeGoodsForTerrain, TRADE_GOOD_DATA } from '../../data/trade-goods';
+import { ECONOMY } from '../../config/game-config';
 import type { TradeGoodType } from '../../data/trade-goods';
 
 // ── Province signals ──
@@ -180,7 +181,7 @@ export function buildInvestment(provinceId: string, type: InvestmentType): boole
     const special = TRADE_GOOD_DATA[province.tradeGood].special;
     if (special?.type === 'build-cost-discount') tradeDiscount = special.percent;
   }
-  const effectiveDiscount = Math.min(90, governorDiscount + scrollDiscount + tradeDiscount);
+  const effectiveDiscount = Math.min(ECONOMY.maxInvestmentDiscount, governorDiscount + scrollDiscount + tradeDiscount);
   const cost = effectiveDiscount > 0 ? applyInvestmentDiscount(baseCost, effectiveDiscount) : baseCost;
 
   if (!spendCost(cost)) return false;

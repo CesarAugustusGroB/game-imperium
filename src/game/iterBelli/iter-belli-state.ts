@@ -124,6 +124,20 @@ export function spendCampaignCost(cost: { gold?: number; iuniores?: number }): b
   return true;
 }
 
+/**
+ * Apply a hub-cast decretum's campaign effect (e.g. Pax Empta threat bribe,
+ * Annona Militaris supply grant). Callers gate castability on `iterBelliActive`;
+ * this also no-ops defensively when no campaign is in flight. Threat is clamped
+ * 0–10 and supplies floored at 0 by `applyChange`.
+ */
+export function applyCampaignDecretumEffect(key: 'threat' | 'supplies', delta: number, label?: string): boolean {
+  if (!iterBelliActive.value) return false;
+  applyChange(key, delta);
+  if (label) logEvent(label, 'event');
+  commit();
+  return true;
+}
+
 // ── Pool generation ──────────────────────────────────────────────────────────
 
 function eligibleCards() {

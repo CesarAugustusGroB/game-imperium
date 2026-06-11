@@ -177,28 +177,6 @@ export const SETTLEMENT = {
 };
 
 // ══════════════════════════════════════════════
-//  COUNCIL
-// ══════════════════════════════════════════════
-
-export const COUNCIL = {
-  /** XP required for tier-up. */
-  xpTier2: 5,
-  xpTier3: 12,
-};
-
-// ══════════════════════════════════════════════
-//  NOTIFICATIONS
-// ══════════════════════════════════════════════
-
-export const NOTIFICATIONS = {
-  /** Default auto-dismiss durations in ms. */
-  toastDuration: 3000,
-  alertDuration: 1500,
-  /** Rebellion/famine alert duration. */
-  criticalDuration: 4000,
-};
-
-// ══════════════════════════════════════════════
 //  ASSET PATHS
 // ══════════════════════════════════════════════
 
@@ -232,20 +210,6 @@ export const ASSETS = {
     /** Dynamic building icon path. Use: `ASSETS.ui.buildingIcon('castrum')` */
     buildingIcon: (type: string) => `/asset/buildings/building_${type}.png`,
   },
-};
-
-// ══════════════════════════════════════════════
-//  MAP VIEW
-// ══════════════════════════════════════════════
-
-export const MAP_VIEW = {
-  radiusSelected: 8,
-  radiusOwned: 5,
-  radiusUnclaimed: 3,
-  clickHitRadius: 15,
-  cssHeight: 200,
-  labelFont: '9px "Segoe UI", system-ui, sans-serif',
-  unrestDotMinThreshold: 30,
 };
 
 // ══════════════════════════════════════════════

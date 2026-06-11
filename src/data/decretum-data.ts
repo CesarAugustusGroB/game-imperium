@@ -74,7 +74,7 @@ export const DECRETUM_HEALING: Decretum = {
   id: 'decretum_healing',
   name: 'Decretum of Healing',
   color: 'gold',
-  description: 'Divine light washes over your army. Heal all units by 30%.',
+  description: 'Divine light washes over your army. Restore 30% of max strength to your line.',
   effect: { type: 'heal', amount: 0.3, target: 'all' },
   rarity: 'common',
 };
@@ -177,6 +177,15 @@ export const DECRETUM_TESTUDO: Decretum = {
   rarity: 'rare',
 };
 
+export const DECRETUM_TERROR: Decretum = {
+  id: 'decretum_terror',
+  name: 'Imperium Terroris',
+  color: 'red',
+  description: 'Dread marches before your standards. Enemy attacks are weakened by 25% this battle.',
+  effect: { type: 'debuff', stat: 'atk', multiplier: 0.25, duration: 'battle' },
+  rarity: 'rare',
+};
+
 // ── Blue (Diplomatic) — 3 additional scrolls ──
 
 export const DECRETUM_FOEDUS: Decretum = {
@@ -206,6 +215,16 @@ export const DECRETUM_EXPLORATOR: Decretum = {
   description: 'Scouts return with vital intelligence — the enemy\'s intent is revealed for the rest of the battle.',
   effect: { type: 'reveal', target: 'enemies', count: 99 },
   rarity: 'common',
+};
+
+export const DECRETUM_PAX: Decretum = {
+  id: 'decretum_pax',
+  name: 'Pax Empta',
+  color: 'blue',
+  description: 'Buy the silence of hostile chiefs. Reduce campaign threat by 2. Castable only while a campaign is underway.',
+  effect: { type: 'threat-reduction', amount: 2 },
+  rarity: 'rare',
+  castCost: { gold: 2 },
 };
 
 // ── Gold (Religious) — 3 additional scrolls ──
@@ -264,6 +283,7 @@ export const DECRETUM_CURSUS: Decretum = {
   description: 'Offices and coin flow freely — gain 10 Gold. Next province investment costs 50% less.',
   effect: { type: 'resource-gain', resource: 'gold', amount: 10 },
   rarity: 'legendary',
+  castCost: { gold: 1 },
   extraEffects: [{ type: 'investment-discount', percent: 50 }],
 };
 
@@ -298,15 +318,26 @@ export const DECRETUM_TRIUMPHUS: Decretum = {
   extraEffects: [{ type: 'buff', stat: 'agi', multiplier: 0.5, duration: 'battle' }],
 };
 
+export const DECRETUM_ANNONA_MILITARIS: Decretum = {
+  id: 'decretum_annona_militaris',
+  name: 'Annona Militaris',
+  color: 'white',
+  description: 'The grain convoys reach the column. Gain 6 campaign supplies immediately. Castable only while a campaign is underway.',
+  effect: { type: 'supplies-gain', amount: 6 },
+  rarity: 'common',
+};
+
 // ── All starter Decretum ──
 
 export const STARTER_DECRETUM: Decretum[] = [
   // Red
   DECRETUM_FORGE, DECRETUM_LEGION, DECRETUM_MARS,
   DECRETUM_GLADIUS, DECRETUM_VANGUARD, DECRETUM_TESTUDO,
+  DECRETUM_TERROR,
   // Blue
   DECRETUM_TRIBUNE, DECRETUM_SENATE, DECRETUM_SPY,
   DECRETUM_FOEDUS, DECRETUM_LEGATUS, DECRETUM_EXPLORATOR,
+  DECRETUM_PAX,
   // Gold
   DECRETUM_AUGUR, DECRETUM_HEALING, DECRETUM_ORACLE,
   DECRETUM_PONTIFEX, DECRETUM_HARUSPEX, DECRETUM_PIETAS,
@@ -316,4 +347,5 @@ export const STARTER_DECRETUM: Decretum[] = [
   // White
   DECRETUM_BREAD, DECRETUM_MOB, DECRETUM_RIOT,
   DECRETUM_PLEBS, DECRETUM_FRUMENTUM, DECRETUM_TRIUMPHUS,
+  DECRETUM_ANNONA_MILITARIS,
 ];

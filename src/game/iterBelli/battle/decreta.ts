@@ -57,21 +57,22 @@ function applyOne(S: BattleState, e: DecretumEffect): RoundLogLine[] {
     case 'debuff': {
       const target = e.type === 'buff' ? you : enemy;
       const m = e.type === 'buff' ? e.multiplier : -e.multiplier;
+      const who = e.type === 'buff' ? 'all' : 'enemy';
       switch (e.stat) {
         case 'atk': {
           target.stats.charge = Math.round(target.stats.charge * (1 + m));
           target.stats.harass = Math.round(target.stats.harass * (1 + m));
           target.stats.push = Math.round(target.stats.push * (1 + m));
           target.stats.siege = Math.round(target.stats.siege * (1 + m));
-          return [{ text: `Decretum: all attacks ${m >= 0 ? '+' : ''}${Math.round(m * 100)}% for the battle.`, kind: 'mor' }];
+          return [{ text: `Decretum: ${who} attacks ${m >= 0 ? '+' : ''}${Math.round(m * 100)}% for the battle.`, kind: 'mor' }];
         }
         case 'def': {
           target.dmgTakenMult = clamp((target.dmgTakenMult ?? 1) * (1 - m), 0.25, 2);
-          return [{ text: `Decretum: incoming damage ${m >= 0 ? 'reduced' : 'increased'} ${Math.abs(Math.round(m * 100))}% for the battle.`, kind: 'mor' }];
+          return [{ text: `Decretum: ${who === 'enemy' ? 'enemy ' : ''}incoming damage ${m >= 0 ? 'reduced' : 'increased'} ${Math.abs(Math.round(m * 100))}% for the battle.`, kind: 'mor' }];
         }
         case 'agi': {
           target.stats.movement = Math.round(target.stats.movement * (1 + m));
-          return [{ text: `Decretum: movement ${m >= 0 ? '+' : ''}${Math.round(m * 100)}%.`, kind: 'mor' }];
+          return [{ text: `Decretum: ${who === 'enemy' ? 'enemy ' : ''}movement ${m >= 0 ? '+' : ''}${Math.round(m * 100)}%.`, kind: 'mor' }];
         }
         case 'hp': {
           const healed = Math.round(target.maxHp * Math.abs(m));

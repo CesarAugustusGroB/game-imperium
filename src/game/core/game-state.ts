@@ -122,13 +122,20 @@ function initializeRunScaffold(commander: Commander): void {
 
   veteranStacks.value = 0;
 
-  // Give starter Decretum matching commander color + white
+  // Give starter Decretum matching commander color + white.
+  // The eligible pool exceeds the hand cap, so deal a random hand —
+  // otherwise scrolls past the first 5 of a color are never reachable.
   resetDecretumHand();
   resetActiveDecretumEffects();
-  for (const d of STARTER_DECRETUM) {
-    if (d.color === commander.faction || d.color === 'white') {
-      addDecretum(d);
-    }
+  const decretumPool = STARTER_DECRETUM.filter(
+    (d) => d.color === commander.faction || d.color === 'white',
+  );
+  for (let i = decretumPool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [decretumPool[i], decretumPool[j]] = [decretumPool[j], decretumPool[i]];
+  }
+  for (const d of decretumPool) {
+    if (!addDecretum(d)) break;
   }
 
   // Give starter Doctrines matching commander color + white (fresh copies)

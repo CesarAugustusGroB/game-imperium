@@ -14,6 +14,7 @@ import type { Cohort } from '../army/cohort';
 import type { Decretum } from './decretum';
 import { isDecretumCastable } from './decretum';
 import { decretumHand, removeDecretum } from './decretum-store';
+import { iterBelliActive, applyCampaignDecretumEffect } from '../iterBelli/iter-belli-state';
 
 /** Iuniores granted per spawned unit when a `spawn` decretum is cast at the Hub. Tunable. */
 export const RECRUIT_IUNIORES_PER_UNIT = 250;
@@ -23,7 +24,9 @@ export type HubDecretumEffect =
   | { kind: 'grant'; resource: 'gold' | 'iuniores'; amount: number }   // instant — only live resources
   | { kind: 'heal-army'; fraction: number; target: 'all' | 'single' }  // instant
   | { kind: 'recruit'; iuniores: number }                              // instant
-  | { kind: 'waive-upkeep'; seasons: number };                         // continuous
+  | { kind: 'waive-upkeep'; seasons: number }                          // continuous
+  | { kind: 'campaign-threat'; amount: number }                        // instant — campaign-only (amount = points reduced)
+  | { kind: 'campaign-supplies'; amount: number };                     // instant — campaign-only
 
 /** A continuous Hub effect currently active, with seasons remaining. */
 export interface ActiveDecretumEffect {
@@ -53,6 +56,10 @@ export function toHubEffect(d: Decretum): HubDecretumEffect | null {
       return { kind: 'recruit', iuniores: e.count * RECRUIT_IUNIORES_PER_UNIT };
     case 'upkeep-reduction':
       return { kind: 'waive-upkeep', seasons: e.seasons };
+    case 'threat-reduction':
+      return { kind: 'campaign-threat', amount: e.amount };
+    case 'supplies-gain':
+      return { kind: 'campaign-supplies', amount: e.amount };
     default:
       // Exhaustiveness intentionally open: any unmapped effect type (battle-only
       // or deprecated-resource) is inert at the Hub by design ("set chico vivo").
@@ -60,11 +67,23 @@ export function toHubEffect(d: Decretum): HubDecretumEffect | null {
   }
 }
 
-/** Castable at the Hub: a commander of a matching faction, a live Hub effect, and affordable castCost. */
+/** True if this Hub effect only has meaning while an Iter Belli campaign is in flight. */
+function isCampaignOnly(effect: HubDecretumEffect): boolean {
+  return effect.kind === 'campaign-threat' || effect.kind === 'campaign-supplies';
+}
+
+/**
+ * Castable at the Hub: a commander of a matching faction, a live Hub effect,
+ * and affordable castCost. Campaign-only effects (threat bribes, supply grants)
+ * additionally require an active Iter Belli campaign — outside one they are
+ * visible but not castable (gated, never a silent no-op).
+ */
 export function isCastableAtHub(d: Decretum, faction: Faction | null): boolean {
   if (faction === null) return false;
   if (!isDecretumCastable(d, faction)) return false;
-  if (toHubEffect(d) === null) return false;
+  const effect = toHubEffect(d);
+  if (effect === null) return false;
+  if (isCampaignOnly(effect) && !iterBelliActive.value) return false;
   if (d.castCost) {
     for (const [res, amt] of Object.entries(d.castCost) as [ResourceType, number][]) {
       if (amt > 0 && !canAfford(res, amt)) return false;
@@ -86,6 +105,10 @@ export function describeHubEffect(effect: HubDecretumEffect): string {
       return `Recluta +${effect.iuniores} iuniores`;
     case 'waive-upkeep':
       return `Sin upkeep por ${effect.seasons} ${effect.seasons === 1 ? 'temporada' : 'temporadas'}`;
+    case 'campaign-threat':
+      return `Amenaza de campaña −${effect.amount} (requiere campaña activa)`;
+    case 'campaign-supplies':
+      return `+${effect.amount} suministros de campaña (requiere campaña activa)`;
   }
 }
 
@@ -147,6 +170,12 @@ function applyHubEffect(effect: HubDecretumEffect, scroll: Decretum): void {
         ...activeDecretumEffects.value,
         { decretumId: scroll.id, name: scroll.name, effect, remainingSeasons: effect.seasons },
       ];
+      break;
+    case 'campaign-threat':
+      applyCampaignDecretumEffect('threat', -effect.amount, `${scroll.name}: la amenaza baja ${effect.amount}.`);
+      break;
+    case 'campaign-supplies':
+      applyCampaignDecretumEffect('supplies', effect.amount, `${scroll.name}: +${effect.amount} suministros.`);
       break;
   }
 }

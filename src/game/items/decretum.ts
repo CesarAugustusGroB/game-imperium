@@ -20,7 +20,11 @@ export type DecretumEffect =
   | { type: 'event-modifier'; outcome: 'favorable' }
   | { type: 'upkeep-reduction'; seasons: number }
   | { type: 'convert-enemy-next-battle'; count: number }
-  | { type: 'investment-discount'; percent: number };
+  | { type: 'investment-discount'; percent: number }
+  /** Lower the active Iter Belli campaign's threat by `amount` (clamped 0–10 by the engine). Campaign-only. */
+  | { type: 'threat-reduction'; amount: number }
+  /** Grant `amount` supplies to the active Iter Belli campaign immediately. Campaign-only. */
+  | { type: 'supplies-gain'; amount: number };
 
 // ── Decretum definition ──
 
