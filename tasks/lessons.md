@@ -84,3 +84,7 @@ Rules for Claude to avoid repeating past mistakes.
 **Mistake**: S34 polish caught `FORCE_GREEDY_BATTLE_MOVEMENT = true` in `src/battle/battle-ai.ts`. The constant was added in `af730cf` (commit message: "feat(campaign): add contextual hex events") — completely unrelated to combat. It forced every unit on every faction into the `berserker` movement profile, ignoring all cohort assignments and lieutenant orders. It survived for days in production until the polish triage agent flagged it.
 **Rule**: At sprint polish time, grep changed files for `const FORCE_*`, `const DEBUG_*`, `= true; //`, and any module-scope boolean constant whose name starts with an adjective (`FORCE_`, `SKIP_`, `BYPASS_`, `MOCK_`, `FAKE_`). Treat any module-scope `const X = true` introduced in the sprint window as guilty-until-explained. The fix is two characters; missing it can silently break entire systems.
 **How to apply**: When auditing diffs in /sprint-polish Phase 1, run `git diff <sprint-base>..HEAD -- src/ | grep -E "^\+const [A-Z_]+ = (true|false)"` as a dedicated pass. If a flag is intentional, require it to be either (a) read from an env var, (b) gated by `import.meta.env.DEV`, or (c) accompanied by a TODO with a target removal date.
+
+## PS 5.1: comillas dobles en here-strings hacia exes
+- Un here-string single-quoted pasado a git -m se rompe si CONTIENE comillas dobles: PS 5.1 re-parsea los argumentos nativos y parte el mensaje (el commit falla con 'pathspec did not match'). Evitar "" dentro de mensajes de commit; usar comillas simples o guiones.
+
