@@ -301,10 +301,9 @@
   <section id="crisis">
     <h2>Crisis: advertencias inyectadas</h2>
     <p class="lead">Las crisis son cartas <b>no jugables</b> que aparecen arriba del mazo como aviso visual. Se recalculan cada turno: aparecen al entrar en el estado y se quitan solas al salir.</p>
-    <div class="grid g3">
+    <div class="grid g2">
       <div class="card"><h4 style="color:var(--crimson)">✖ Hambre en filas</h4><p>Aparece con <b>suministros ≤ 0</b>. Mientras siga, cada turno hay hambre (moral −1 + desertores).</p></div>
       <div class="card"><h4 style="color:var(--crimson)">✖ Riesgo de motín</h4><p>Aparece con <b>moral &lt; 3</b>. Señala el 30%/turno de deserciones por motín.</p></div>
-      <div class="card"><h4 style="color:var(--crimson)">✖ Vanguardia avistada</h4><p>Aviso de encuentro enemigo cercano (variante narrativa del escenario).</p></div>
     </div>
   </section>
 
@@ -386,7 +385,7 @@
         <tr><td class="name">Enviar exploradores</td><td class="mono">t1</td><td class="mono pos">−1 amenaza</td><td>frontera·llanura·bosques</td><td class="mono">3·3</td></tr>
         <tr><td class="name">Detectar emboscada</td><td class="mono">t1</td><td class="mono pos">anula próxima emboscada</td><td>bosques</td><td class="mono">2·4</td></tr>
         <tr><td class="name">Espía local</td><td class="mono">t1 g20</td><td class="mono pos">−2 amenaza</td><td>tarraco</td><td class="mono">4·3</td></tr>
-        <tr><td class="name">Despacho de cónsul <span class="pill">compromiso</span></td><td class="mono">t1</td><td class="mono"><span class="pos">erosiona +1 · −1 amen.</span> · <span class="neg">si caduca: pierdes intel</span></td><td>tarraco·frontera</td><td class="mono">2·2</td></tr>
+        <tr><td class="name">Despacho de cónsul vecino <span class="pill">compromiso</span></td><td class="mono">t1</td><td class="mono"><span class="pos">erosiona +1 · −1 amen.</span> · <span class="neg">si caduca: pierdes intel</span></td><td>tarraco·frontera</td><td class="mono">2·2</td></tr>
         <tr><td class="name">Manipular <span class="pill">firma·Diplomat</span></td><td class="mono">t1 g15</td><td class="mono pos">rebaraja el mazo</td><td>*</td><td class="mono">5·2</td></tr>
       </tbody>
     </table>
@@ -411,8 +410,8 @@
         <tr><td class="name">Enviar embajada</td><td class="mono">t1 g15</td><td class="mono pos">−1.5 amenaza</td><td>frontera·tarraco·llanura</td><td class="mono">4·2</td></tr>
         <tr><td class="name">Mensajero al Senado</td><td class="mono">t1 g50</td><td class="mono pos">+3 días de plazo</td><td>frontera·tarraco</td><td class="mono">4·1.5</td></tr>
         <tr><td class="name">Tributo al Senado <span class="pill">compromiso</span></td><td class="mono">t1 g40</td><td class="mono">— · <span class="neg">si caduca: −60 oro</span></td><td>frontera·tarraco</td><td class="mono">4·2</td></tr>
-        <tr><td class="name">Auxilio a aliado <span class="pill">compromiso</span></td><td class="mono">t2</td><td class="mono"><span class="pos">−1 amen.</span> · <span class="neg">si caduca: −8 sum.</span></td><td>frontera·tarraco</td><td class="mono">3·2</td></tr>
-        <tr><td class="name">Rehenes celtíberos <span class="pill">compromiso</span></td><td class="mono">t1 g25</td><td class="mono"><span class="pos">−2 amen.</span> · <span class="neg">si caduca: +2 amen.</span></td><td>llanura</td><td class="mono">3·2</td></tr>
+        <tr><td class="name">Auxilio a aliado itálico <span class="pill">compromiso</span></td><td class="mono">t2</td><td class="mono"><span class="pos">−1 amen.</span> · <span class="neg">si caduca: −8 sum.</span></td><td>frontera·tarraco</td><td class="mono">3·2</td></tr>
+        <tr><td class="name">Rehenes celtíberos ofrecidos <span class="pill">compromiso</span></td><td class="mono">t1 g25</td><td class="mono"><span class="pos">−2 amen.</span> · <span class="neg">si caduca: +2 amen.</span></td><td>llanura</td><td class="mono">3·2</td></tr>
         <tr><td class="name">Soborno a oficial púnico <span class="pill">apuesta 50%</span></td><td class="mono">t1 g40</td><td class="mono"><span class="pos">✓ erosiona +2 · −1 amen.</span> / <span class="neg">✗ +2 amenaza</span></td><td>frontera·tarraco·llanura</td><td class="mono">3·1.5</td></tr>
         <tr><td class="name">Te Deum <span class="pill">firma·Religious</span></td><td class="mono">t1</td><td class="mono pos">moral +2.5</td><td>*</td><td class="mono">5·3</td></tr>
         <tr><td class="name">Tratado romano <span class="pill">firma·Diplomat</span></td><td class="mono">t1</td><td class="mono pos">−3 amenaza</td><td>*</td><td class="mono">5·3</td></tr>

@@ -12,6 +12,7 @@ import {
   availableFormations, buildPlayerSeed, buildEnemyArchetype, terrainToCenterKey,
 } from '../../../game/iterBelli/battle/adapter';
 import { CENTERS, FORMATIONS } from '../../../game/iterBelli/battle/orders';
+import { ENEMY_THREAT_DIVISOR, ENEMY_WEAKEN_PER_POINT } from '../../../game/iterBelli/iter-belli-balance';
 import type { FormationKey } from '../../../game/iterBelli/battle/types';
 import { DeploymentPanel } from './battle/DeploymentPanel';
 import { ArmyStatus } from './battle/ArmyStatus';
@@ -38,7 +39,9 @@ export function BattleModal() {
     const seed0 = buildPlayerSeed(snap, roster, legate, undefined, armor, undefined, fortified, statMult);
     const options = availableFormations(legate, seed0.discipline);
     const formationOptions: FormationKey[] = options.length ? options : ['battleLine'];
-    const enemySoldiers = Math.max(scenario.enemy.minSoldiers, Math.round(scenario.enemy.baseSoldiers * (1 - cs.enemyWeaken * 0.07)));
+    // enemyMult = (1 + threat/THREAT_DIVISOR) * (1 - enemyWeaken*WEAKEN_PER_POINT) — see iter-belli-balance.
+    const enemyMult = (1 + cs.threat / ENEMY_THREAT_DIVISOR) * (1 - cs.enemyWeaken * ENEMY_WEAKEN_PER_POINT);
+    const enemySoldiers = Math.max(scenario.enemy.minSoldiers, Math.round(scenario.enemy.baseSoldiers * enemyMult));
     const enemyKey = scenario.enemy.archetypeKey;
     const enemy = buildEnemyArchetype(enemyKey, cs.enemyWeaken, enemySoldiers);
     beginBattleSession({

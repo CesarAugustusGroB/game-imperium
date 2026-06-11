@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Imperium — Auditoría de Incoherencias</title>
+<style>
+  :root {
+    --bg:#14121c; --bg2:#1b1826; --panel:#211d2e; --panel2:#272235;
+    --gold:#d4a843; --gold-hi:#f0d080; --gold-faint:rgba(212,168,67,0.22);
+    --text:#d8d2c4; --mid:#a59c88; --lo:#6f6757; --hi:#f2ecdf;
+    --red:#d4604a; --redbg:rgba(212,96,74,0.12); --redbd:rgba(212,96,74,0.5);
+    --orange:#e0a84a; --orangebg:rgba(224,168,74,0.10); --orangebd:rgba(224,168,74,0.45);
+    --grey:#9a9aa6; --greybg:rgba(154,154,166,0.10); --greybd:rgba(154,154,166,0.4);
+    --blue:#5a8ab0; --bluebg:rgba(90,138,176,0.10); --bluebd:rgba(90,138,176,0.4);
+    --green:#8fbe7e; --greenbg:rgba(143,190,126,0.10); --greenbd:rgba(143,190,126,0.45);
+    --ink:#14121c;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0; background:radial-gradient(1200px 800px at 50% -10%, #221d30, var(--bg)) fixed;
+    color:var(--text); font-family:'EB Garamond',Georgia,serif; font-size:17px; line-height:1.5;
+  }
+  .wrap { max-width:1120px; margin:0 auto; padding:0 22px 110px; }
+  header.hero { text-align:center; padding:50px 20px 22px; }
+  .tagline { font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:3px; text-transform:uppercase; color:var(--lo); }
+  header.hero h1 { font-family:'Cinzel',serif; font-size:38px; letter-spacing:2px; margin:6px 0 0; color:var(--gold-hi); text-shadow:0 2px 18px rgba(212,168,67,0.25); }
+  header.hero p { color:var(--mid); max-width:680px; margin:12px auto 0; font-size:16px; }
+
+  /* Dashboard */
+  .dash { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin:26px 0 8px; }
+  .tile { border-radius:12px; padding:16px 14px; text-align:center; border:1px solid var(--gold-faint); background:linear-gradient(180deg,var(--panel),var(--panel2)); text-decoration:none; display:block; transition:transform .12s ease, border-color .12s ease; }
+  .tile:hover { transform:translateY(-2px); border-color:var(--gold); }
+  .tile .n { font-family:'JetBrains Mono',monospace; font-size:34px; font-weight:700; line-height:1; }
+  .tile .l { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--mid); margin-top:7px; }
+  .tile.red .n{color:var(--red);} .tile.orange .n{color:var(--orange);} .tile.grey .n{color:var(--grey);} .tile.blue .n{color:var(--blue);} .tile.green .n{color:var(--green);}
+
+  section { margin:34px 0 0; scroll-margin-top:16px; }
+  h2 { font-family:'Cinzel',serif; font-size:22px; letter-spacing:1px; margin:0 0 4px; display:flex; align-items:center; gap:10px; }
+  h2 .count { font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--lo); font-weight:400; }
+  h2.red{color:var(--red);} h2.orange{color:var(--orange);} h2.grey{color:var(--grey);} h2.blue{color:var(--blue);} h2.green{color:var(--green);}
+  .sechint { color:var(--mid); font-size:14px; margin:0 0 14px; }
+
+  .finding { border-radius:11px; border:1px solid var(--gold-faint); background:linear-gradient(180deg,var(--panel),var(--panel2)); padding:0; margin:0 0 13px; overflow:hidden; display:flex; }
+  .stripe { width:5px; flex-shrink:0; }
+  .red .stripe{background:var(--red);} .orange .stripe{background:var(--orange);} .grey .stripe{background:var(--grey);} .blue .stripe{background:var(--blue);}
+  .fbody { padding:14px 18px; flex:1; min-width:0; }
+  .fhead { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .fid { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--ink); border-radius:6px; padding:1px 8px; flex-shrink:0; }
+  .red .fid{background:var(--red);} .orange .fid{background:var(--orange);} .grey .fid{background:var(--grey);} .blue .fid{background:var(--blue);}
+  .ftitle { font-family:'Cinzel',serif; font-size:17px; color:var(--hi); }
+  .tag { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.5px; text-transform:uppercase; padding:2px 7px; border-radius:999px; border:1px solid var(--gold-faint); color:var(--gold-hi); background:rgba(212,168,67,0.08); }
+
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:11px 0 0; }
+  @media(max-width:680px){ .cols{grid-template-columns:1fr;} .dash{grid-template-columns:repeat(2,1fr);} }
+  .col { border-radius:8px; padding:9px 11px; font-size:14px; }
+  .col.say { background:var(--bluebg); border:1px solid var(--bluebd); }
+  .col.do  { background:var(--redbg);  border:1px solid var(--redbd); }
+  .col .k { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--mid); display:block; margin-bottom:3px; }
+  .loc { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--gold-hi); background:rgba(0,0,0,0.28); padding:1px 6px; border-radius:4px; }
+  .fix { margin:11px 0 0; font-size:14px; color:var(--text); }
+  .fix b { color:var(--green); font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1px; text-transform:uppercase; }
+  .single { font-size:14px; color:var(--mid); margin:9px 0 0; }
+  code { font-family:'JetBrains Mono',monospace; font-size:12.5px; background:rgba(0,0,0,0.3); padding:1px 5px; border-radius:4px; color:var(--gold-hi); }
+
+  .clean { border-radius:11px; border:1px solid var(--greenbd); background:var(--greenbg); padding:14px 18px; }
+  .clean ul { margin:8px 0 0; padding-left:18px; } .clean li { margin:4px 0; color:var(--mid); font-size:14px; }
+  .clean li b { color:var(--text); }
+  footer { text-align:center; color:var(--lo); font-size:13px; border-top:1px solid var(--gold-faint); padding-top:22px; margin-top:44px; }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="tagline">Imperium · Auditoría</div>
+  <h1>Incoherencias del juego</h1>
+  <p>Contradicciones verificadas entre docs y código, números muertos y textos que mienten. Cada hallazgo trae evidencia <span class="loc">archivo:línea</span> en ambos lados. 4 investigadores en paralelo, cruzado contra el código.</p>
+  <p style="margin-top:14px; font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:1px; color:var(--green); border:1px solid var(--greenbd); background:var(--greenbg); display:inline-block; padding:8px 18px; border-radius:8px;">&#10003; RESUELTO &middot; los 13 hallazgos fueron corregidos el 11&nbsp;jun&nbsp;2026 &middot; este documento queda como registro hist&oacute;rico</p>
+</header>
+
+<div class="wrap">
+
+  <div class="dash">
+    <a class="tile red" href="#gameplay"><div class="n">2</div><div class="l">Jugabilidad</div></a>
+    <a class="tile orange" href="#drift"><div class="n">4</div><div class="l">Deriva docs</div></a>
+    <a class="tile grey" href="#dead"><div class="n">3</div><div class="l">Código muerto</div></a>
+    <a class="tile blue" href="#cosmetic"><div class="n">4</div><div class="l">Cosmético</div></a>
+    <a class="tile green" href="#clean"><div class="n">✓</div><div class="l">Verificado OK</div></a>
+  </div>
+
+  <!-- ───────────── GAMEPLAY ───────────── -->
+  <section id="gameplay">
+    <h2 class="red">🔴 Incoherencias de jugabilidad <span class="count">· afectan la partida</span></h2>
+    <p class="sechint">Bugs reales que cambian o falsean lo que vive el jugador.</p>
+
+    <div class="finding red">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">G1</span><span class="ftitle">La Amenaza no escala el ejército enemigo en la batalla decisiva</span><span class="tag">alta</span></div>
+        <div class="cols">
+          <div class="col say"><span class="k">Promete</span> <span class="loc">iter-belli-balance.ts:52-53</span> · fórmula <code>enemyMult = (1 + threat/20) × (1 − enemyWeaken×0.07)</code> y la constante <code>ENEMY_THREAT_DIVISOR = 20</code>.</div>
+          <div class="col do"><span class="k">Hace</span> <span class="loc">BattleModal.tsx:41</span> · <code>max(min, base × (1 − enemyWeaken×0.07))</code> — <b>el término de amenaza falta</b>. La constante no la lee nadie.</div>
+        </div>
+        <p class="single">Gestionas la Amenaza toda la campaña y en el clímax no pesa. (Sí afecta a escaramuzas/emboscadas durante la marcha — eso está cableado.)</p>
+        <p class="fix"><b>Fix</b> · aplicar <code>× (1 + threat/20)</code> al cómputo enemigo, o borrar la constante y el comentario.</p>
+      </div>
+    </div>
+
+    <div class="finding red">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">G2</span><span class="ftitle">El tooltip de Suministros miente: dice −1/turno, el consumo real es −2</span><span class="tag">fácil</span></div>
+        <div class="cols">
+          <div class="col say"><span class="k">Dice</span> <span class="loc">CampaignResourceBar.tsx:44</span> + <span class="loc">sistemas-del-juego.html:592</span> · «Se consume 1 por turno».</div>
+          <div class="col do"><span class="k">Hace</span> <span class="loc">balance.ts:26</span> <code>SUPPLY_UPKEEP_PER_TURN = 2</code>, aplicado en <span class="loc">state.ts:340</span> (×días de la carta).</div>
+        </div>
+        <p class="single">Error 2×. Mi <code>sistema-de-eventos.html</code> ya dice −2 correctamente; el tooltip in-game y el doc hermano no.</p>
+        <p class="fix"><b>Fix</b> · corregir ambos textos a «−2 por turno».</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────── DRIFT ───────────── -->
+  <section id="drift">
+    <h2 class="orange">🟠 Deriva docs ↔ código <span class="count">· el doc describe algo que ya no es</span></h2>
+    <p class="sechint">La documentación de referencia discrepa de la realidad viva.</p>
+
+    <div class="finding orange">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">D1</span><span class="ftitle">Los docs describen la batalla como «posturas/stances»; la batalla viva es formaciones → órdenes + power-stats</span><span class="tag">la mayor</span></div>
+        <div class="cols">
+          <div class="col say"><span class="k">Dicen</span> <span class="loc">sistemas:641-643</span> + <span class="loc">wireframes:689,712</span> · stances <code>Frontal · Línea pesada · Hostigamiento · Envolvimiento · Falsa retirada · Doble línea</code>.</div>
+          <div class="col do"><span class="k">Es</span> <code>FORMATIONS</code> (battleLine/openOrder/shieldWall/duplex/triplex/testudo/cuneus) + <code>ORDERS</code> con stats charge/harass/push/siege/movement. Ninguno de esos nombres de stance existe en <code>src/</code>.</div>
+        </div>
+        <p class="fix"><b>Fix</b> · reescribir las secciones de batalla de ambos docs a «formaciones + órdenes + 5 power-stats».</p>
+      </div>
+    </div>
+
+    <div class="finding orange">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">D2</span><span class="ftitle">Pestaña Overview: los docs dibujan 3 columnas; el layout real son 2 filas</span></div>
+        <div class="cols">
+          <div class="col say"><span class="k">Dicen</span> <span class="loc">sistemas:416-430</span> + <span class="loc">wireframes:278</span> · rejilla de 3 columnas (Consilium/Exercitus · Embark/Provinciae · Doctrinae/Decreta).</div>
+          <div class="col do"><span class="k">Es</span> <span class="loc">OverviewTab.tsx:29-54</span> · fila superior hero Embark + Treasury/Consilium; fila inferior de 4 columnas Provinciae/Exercitus/Doctrinae/Decreta.</div>
+        </div>
+        <p class="fix"><b>Fix</b> · actualizar ambos planos de Overview a la estructura de 2 filas.</p>
+      </div>
+    </div>
+
+    <div class="finding orange">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">D3</span><span class="ftitle">Mi doc de eventos lista «Vanguardia avistada» como crisis viva — pero nunca se inyecta</span><span class="tag">mío</span></div>
+        <div class="cols">
+          <div class="col say"><span class="k">Dice</span> <span class="loc">sistema-de-eventos.html:307</span> · la presenta como una de las crisis del mazo.</div>
+          <div class="col do"><span class="k">Hace</span> <span class="loc">state.ts:183-192</span> <code>injectCrises()</code> solo mete <code>hambre</code> y <code>motin</code>. La crisis <code>encuentro</code> (<span class="loc">locations.ts:60</span>) está definida pero muerta.</div>
+        </div>
+        <p class="fix"><b>Fix</b> · quitarla de mi doc (o marcar «definida, sin trigger») y borrar el dato muerto <code>encuentro</code>/<code>crisis_encuentro</code>.</p>
+      </div>
+    </div>
+
+    <div class="finding orange">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">D4</span><span class="ftitle">La nav del sidebar se llama «Forum», no «Overview ◉»</span><span class="tag">leve</span></div>
+        <p class="single"><span class="loc">Sidebar.tsx:39</span> <code>l: 'Forum'</code> (key <code>overview</code>) vs <span class="loc">sistemas:396</span> que lista «Overview ◉». <b>Fix:</b> cambiar el bullet del doc a «Forum ◉ (tab <code>overview</code>)».</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────── DEAD ───────────── -->
+  <section id="dead">
+    <h2 class="grey">⚪ Código y constantes muertas <span class="count">· nadie lo lee</span></h2>
+    <p class="sechint">Sin impacto en jugabilidad, pero confunden y arrastran deuda.</p>
+
+    <div class="finding grey">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">M1</span><span class="ftitle">Constantes de escalado por amenaza, muertas (ligadas a G1)</span></div>
+        <p class="single"><code>ENEMY_THREAT_DIVISOR = 20</code> (<span class="loc">balance.ts:53</span>) y <code>ARMY.threatScalingFactor = 0.05</code> (<span class="loc">game-config.ts:195</span>) describen la misma mecánica con la misma tasa, y <b>ninguna se consume</b>. <b>Fix:</b> consolidar o eliminar al resolver G1.</p>
+      </div>
+    </div>
+
+    <div class="finding grey">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">M2</span><span class="ftitle">El bloque <code>ARMY</code> de game-config es un duplicado obsoleto sin lectores</span></div>
+        <p class="single"><span class="loc">game-config.ts:183-196</span> · <code>ARMY.cohortCosts</code>/<code>legateHireCost</code> no los lee nadie (el coste real es <code>cohort.aurumCost</code>) y además le faltan militia/cretan_archer/merc — quien lo crea, obtiene datos incompletos. <b>Fix:</b> borrar el bloque muerto.</p>
+      </div>
+    </div>
+
+    <div class="finding grey">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">M3</span><span class="ftitle">7 tipos de efecto de doctrina declarados pero sin uso ni consumidor</span></div>
+        <p class="single"><span class="loc">doctrine.ts:8-13</span> · <code>stat-modifier · heal-on-kill · revive · heal-battle-start · free-units · ally-units · extra-event-choices</code> — solo aparecen en la declaración y en texto de UI; deuda de la era de batallas antigua. <b>Fix:</b> eliminarlos del union + sus casos en <code>DoctrineRenderer</code>, o marcarlos «reservados».</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────── COSMETIC ───────────── -->
+  <section id="cosmetic">
+    <h2 class="blue">🔵 Cosmético / honestidad de texto <span class="count">· pulido</span></h2>
+    <p class="sechint">Pequeños desajustes de etiqueta o redacción.</p>
+
+    <div class="finding blue">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">C1</span><span class="ftitle">Nombres truncados en mi doc de eventos</span></div>
+        <p class="single">«Auxilio a aliado <b>itálico</b>», «Rehenes celtíberos <b>ofrecidos</b>», «Despacho de cónsul <b>vecino</b>» (<span class="loc">cards.ts:375,389,404</span>). <b>Fix:</b> usar el nombre completo en el catálogo.</p>
+      </div>
+    </div>
+
+    <div class="finding blue">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">C2</span><span class="ftitle">El efecto <code>ammunition</code> se muestra con la clave cruda</span></div>
+        <p class="single"><span class="loc">OperationCard.tsx:21-24</span> · <code>EFFECT_LABELS</code> no tiene entrada <code>ammunition</code>, así «Reabastecer munición» muestra <code>ammunition</code> en vez de «Munición». <b>Fix:</b> añadir <code>ammunition: 'Munición'</code>.</p>
+      </div>
+    </div>
+
+    <div class="finding blue">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">C3</span><span class="ftitle">Textos de decreta que exageran su efecto</span></div>
+        <p class="single"><b>Legatus</b> (<span class="loc">decretum-data.ts:195</span>) dice «la banda más débil deserta a tu bando», pero drena 30% del HP enemigo (<span class="loc">decreta.ts:120</span>). <b>Triumphus</b> dice «+50% agilidad», que mapea a movimiento. <b>Fix:</b> reescribir a lo que realmente hacen.</p>
+      </div>
+    </div>
+
+    <div class="finding blue">
+      <div class="stripe"></div>
+      <div class="fbody">
+        <div class="fhead"><span class="fid">C4</span><span class="ftitle">El <code>0.07</code> (ENEMY_WEAKEN_PER_POINT) está hardcodeado en 3 sitios</span></div>
+        <p class="single"><span class="loc">balance.ts:54</span> define la constante, pero <span class="loc">BattleModal.tsx:41</span> y <span class="loc">adapter.ts:121</span> reescriben <code>0.07</code> a mano. Hoy coinciden; retunear el balance no se propagaría. <b>Fix:</b> importar la constante en ambos.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────── CLEAN ───────────── -->
+  <section id="clean">
+    <h2 class="green">✅ Verificado coherente <span class="count">· comprobado, no tocar</span></h2>
+    <div class="clean">
+      <ul>
+        <li>Eliminación de <b>faith/influence/momentum</b> completa — solo quedan flavor text y nombres de doctrina.</li>
+        <li>Dos escenarios <b>Saguntum + Gallia</b> desbloqueados en secuencia (archetypes carthage/gauls).</li>
+        <li>Formaciones, centros de terreno y mapeo <b>legado → formación</b> del doc: coinciden con <code>orders.ts</code> / <code>adapter.ts</code>.</li>
+        <li>Routing de pantallas sin remaps colgantes; las 6 pestañas del Forum son alcanzables.</li>
+        <li><b>Todos los contratos de efectos</b> (gobernadores, sinergias de edificios, decreta, traits de legado, doctrinas) están cableados — las fases de remediación se sostienen, sin alucinaciones de «efecto muerto».</li>
+        <li>Casos de <b>diseño</b> (no bugs): cura ciudadana completa = coste de reclutar (1000 iuniores); <code>IUNIORES.perPop=100</code> hace la mano de obra abundante; tiers de gobernador progresan de forma monótona.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    13 incoherencias verificadas · 4 investigadores en paralelo cruzados contra el código vivo<br>
+    Fuentes: <code>BattleModal.tsx</code> · <code>iter-belli-balance.ts</code> · <code>CampaignResourceBar.tsx</code> · <code>OverviewTab.tsx</code> · <code>game-config.ts</code> · <code>doctrine.ts</code> · <code>decretum-data.ts</code>
+  </footer>
+</div>
+</body>
+</html>

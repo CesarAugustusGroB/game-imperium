@@ -41,7 +41,7 @@ function resources(s: IterBelliState): ResourceDef[] {
     },
     {
       key: 'supplies', glyph: '❦', icon: 'res-supplies', label: 'Suministros', value: String(s.supplies), num: s.supplies,
-      tip: 'Víveres. Se consume 1 por turno. A 0 llega el hambre: deserciones y caída de moral.',
+      tip: 'Víveres. Se consumen 2 por turno. A 0 llega el hambre: deserciones y caída de moral.',
       alert: s.supplies <= 0,
       warn: s.supplies > 0 && s.supplies < ALERT.suppliesWarn,
     },

@@ -81,26 +81,10 @@ function formatEffectDescription(doctrine: Doctrine): string {
   if (effects.length === 0) return '—';
   const effect = effects[0];
   switch (effect.type) {
-    case 'stat-modifier':
-      return `${effect.stat} ×${effect.multiplier.toFixed(2)}`;
-    case 'heal-on-kill':
-      return `Heal ${effect.amount} HP on kill`;
-    case 'revive':
-      return `Revive at ${Math.round(effect.hpPercent * 100)}% HP`;
-    case 'heal-battle-start':
-      if (effect.amount === 'full') return 'Full heal at battle start';
-      if (typeof effect.amount === 'object') return `Heal ${Math.round(effect.amount.percent * 100)}% HP at battle start`;
-      return `Heal ${effect.amount} HP at start`;
-    case 'free-units':
-      return `${effect.count} free ${effect.unitRole} unit${effect.count > 1 ? 's' : ''}`;
-    case 'extra-event-choices':
-      return `+${effect.count} event choice${effect.count > 1 ? 's' : ''}`;
     case 'shop-discount':
       return `${effect.percent}% shop discount`;
     case 'income-modifier':
       return `${RESOURCE_LABELS[effect.resource]} income ×${effect.multiplier.toFixed(2)}`;
-    case 'ally-units':
-      return `+${effect.count} ally unit${effect.count > 1 ? 's' : ''}`;
     case 'upkeep-reduction':
       return `${effect.percent}% upkeep reduction`;
     case 'embark-bonus':
@@ -112,30 +96,12 @@ function formatEffectDescription(doctrine: Doctrine): string {
 
 function formatDoctrineEffect(effect: DoctrineEffect): string {
   switch (effect.type) {
-    case 'stat-modifier': {
-      const pct = Math.round((effect.multiplier - 1) * 100);
-      return `${pct >= 0 ? '+' : ''}${pct}% ${effect.stat} modifier`;
-    }
-    case 'heal-on-kill':
-      return `Heal ${effect.amount} HP on kill`;
-    case 'revive':
-      return `Revive at ${Math.round(effect.hpPercent * 100)}% HP`;
-    case 'heal-battle-start':
-      if (effect.amount === 'full') return 'Full heal at battle start';
-      if (typeof effect.amount === 'object') return `Heal ${Math.round(effect.amount.percent * 100)}% HP at battle start`;
-      return `Heal ${effect.amount} HP at battle start`;
-    case 'free-units':
-      return `${effect.count} free ${effect.unitRole} unit${effect.count > 1 ? 's' : ''}`;
-    case 'extra-event-choices':
-      return `+${effect.count} event choice${effect.count > 1 ? 's' : ''}`;
     case 'shop-discount':
       return `${effect.percent}% shop discount`;
     case 'income-modifier': {
       const pct = Math.round((effect.multiplier - 1) * 100);
       return `${pct >= 0 ? '+' : ''}${pct}% ${RESOURCE_LABELS[effect.resource]} income`;
     }
-    case 'ally-units':
-      return `+${effect.count} ally unit${effect.count > 1 ? 's' : ''}`;
     case 'upkeep-reduction':
       return `${effect.percent}% upkeep reduction`;
     case 'embark-bonus':

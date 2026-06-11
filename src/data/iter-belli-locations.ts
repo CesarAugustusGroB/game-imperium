@@ -44,7 +44,7 @@ export const LOCATIONS: Location[] = [
   },
 ];
 
-export const CRISES: Record<'hambre' | 'motin' | 'encuentro', Crisis> = {
+export const CRISES: Record<'hambre' | 'motin', Crisis> = {
   hambre: {
     name: 'Hambre en filas',
     category: 'Crisis',
@@ -55,12 +55,6 @@ export const CRISES: Record<'hambre' | 'motin' | 'encuentro', Crisis> = {
     name: 'Riesgo de motín',
     category: 'Crisis',
     desc: 'La moral está rota. Los oficiales reportan murmullos de deserción.',
-    icon: '✖',
-  },
-  encuentro: {
-    name: 'Vanguardia enemiga avistada',
-    category: 'Crisis',
-    desc: 'Tus exploradores reportan tropa púnica cerca. Decide cómo responder o se decidirá por ti.',
     icon: '✖',
   },
 };

@@ -5,6 +5,7 @@ import type { FormationKey } from './types';
 import { FORMATIONS, TERRAIN_CENTER, ENEMY_ARCHETYPES } from './orders';
 import { ARMORS, FORTS } from './balance';
 import { getLegateTraitById } from '../../army/legate-traits';
+import { ENEMY_WEAKEN_PER_POINT } from '../iter-belli-balance';
 
 export function sumRosterStats(cohorts: readonly Cohort[]): PowerStats {
   const t: PowerStats = { charge: 0, harass: 0, push: 0, siege: 0, movement: 0 };
@@ -117,8 +118,6 @@ export interface PlayerSeed {
   fortPct?: number; fortName?: string | null;
   formation: FormationDef;
 }
-
-const ENEMY_WEAKEN_PER_POINT = 0.07; // mirrors iter-belli-balance
 
 export function buildPlayerSeed(
   snap: CampaignSnapshot, roster: readonly Cohort[], legate: Legate | null,

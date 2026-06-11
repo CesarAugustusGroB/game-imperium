@@ -317,7 +317,7 @@
       <div class="step"><div class="n">1</div><div class="body"><b>Selección de Comandante</b><p>Eliges Princeps y facción. Define recursos primarios, bonos de inicio y caminos de victoria.</p></div></div>
       <div class="step"><div class="n">2</div><div class="body"><b>Foro Imperial</b><p>Preparas la marcha: recluta cohortes, contrata legado y asesores, equipa doctrinas, ajusta provincias y compra suministros.</p></div></div>
       <div class="step"><div class="n">3</div><div class="body"><b>Embark → Iter Belli</b><p>La <code>EmbarkCard</code> lanza la siguiente marcha. Avanzas por operaciones gestionando moral, comida y amenaza.</p></div></div>
-      <div class="step"><div class="n">4</div><div class="body"><b>Batalla decisiva</b><p>Al llegar al objetivo, choque por <b>posturas resueltas con dados</b> contra el enemigo del escenario. La munición alimenta el hostigamiento.</p></div></div>
+      <div class="step"><div class="n">4</div><div class="body"><b>Batalla decisiva</b><p>Al llegar al objetivo, choque de <b>formaciones y órdenes resuelto con dados</b> contra el enemigo del escenario. La munición alimenta las órdenes de hostigamiento.</p></div></div>
       <div class="step"><div class="n">5</div><div class="body"><b>Endgame → Foro</b><p>Los supervivientes vuelven a escalar a cohortes y el oro/iuniores regresa al hub. Vuelta al Foro a reclutar y avanzar la estación.</p></div></div>
     </div>
   </section>
@@ -393,7 +393,7 @@
         <h3><span class="ic">▤</span>Barra lateral</h3>
         <p>Sello SPQR, título <b>IMPERIVM</b> y chip de retrato del Princeps. Botones de navegación con badges contextuales:</p>
         <ul>
-          <li><b>Overview</b> ◉ · <b>Provinciae</b> ⬢ (nº provincias)</li>
+          <li><b>Forum</b> ◉ (tab overview) · <b>Provinciae</b> ⬢ (nº provincias)</li>
           <li><b>Consilium</b> ◎ (asesores sentados/total)</li>
           <li><b>Exercitus</b> ⚔ (nº cohortes)</li>
           <li><b>Doctrinae</b> ◈ · <b>Decreta</b> ❖ (tamaño de mano)</li>
@@ -413,19 +413,15 @@
       </div>
     </div>
 
-    <div class="subtitle">Pestaña Overview</div>
-    <div class="grid g3">
+    <div class="subtitle">Pestaña Overview (2 filas)</div>
+    <div class="grid g2">
       <div class="card">
-        <h3><span class="ic">◧</span>Columna izquierda</h3>
-        <ul><li>Panel <b>Consilium</b> — 3 miniaturas de asiento + "Abrir →"</li><li>Panel <b>Exercitus</b> — roster resumido + barra HP</li></ul>
+        <h3><span class="ic">◧</span>Fila superior — héroe + pila</h3>
+        <ul><li><b>EmbarkCard</b> héroe cinemático (1.55fr) — lanza la siguiente marcha</li><li>Pila derecha (1fr): <b>TreasuryPanel</b> (Aerarium) sobre el panel <b>Consilium</b> — 3 miniaturas de asiento + "Abrir →"</li></ul>
       </div>
       <div class="card">
-        <h3><span class="ic">◨</span>Columna central</h3>
-        <ul><li><b>EmbarkCard</b> — lanza la siguiente marcha</li><li>Lista de <b>Provinciae</b> con ingreso/descontento</li></ul>
-      </div>
-      <div class="card">
-        <h3><span class="ic">▥</span>Columna derecha</h3>
-        <ul><li><b>DoctrinaePanel</b> — rejilla equipada (drag-drop)</li><li><b>DecretaPanel</b> — mano de pergaminos</li></ul>
+        <h3><span class="ic">▤</span>Fila inferior — 4 paneles de dominio</h3>
+        <ul><li><b>Provinciae</b> (1.3fr, lista con ingreso/descontento) · <b>Exercitus</b> (1.3fr, roster resumido + barra HP) · <b>Doctrinae</b> (1fr, rejilla equipada) · <b>Decreta</b> (1fr, mano de pergaminos)</li><li>Los paneles entran escalonados (stagger) bajo la fila héroe</li></ul>
       </div>
     </div>
 
@@ -589,8 +585,8 @@
       <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#7c3aed,#4a1d8f)">⚔</div><div class="meta"><b>Soldados</b><span>Si bajan de 1000 → la campaña fracasa</span></div></div>
       <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#9560f0,#532388)">♺</div><div class="meta"><b>Moral</b><span>0–15 · bajo 3 hay riesgo de motín</span></div></div>
       <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#6d28d9,#3d1a63)">⛨</div><div class="meta"><b>Disciplina</b><span>0–10 · desbloquea formaciones/órdenes</span></div></div>
-      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#b794f6,#7c3aed)">❦</div><div class="meta"><b>Suministros</b><span>−1 por turno · a 0 llega el hambre</span></div></div>
-      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#9560f0,#6d28d9)">➶</div><div class="meta"><b>Munición</b><span>Hostigamiento en la batalla decisiva</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#b794f6,#7c3aed)">❦</div><div class="meta"><b>Suministros</b><span>−2 por turno · a 0 llega el hambre</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#9560f0,#6d28d9)">➶</div><div class="meta"><b>Munición</b><span>Órdenes de hostigamiento (Skirmish / Fire Missiles)</span></div></div>
       <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#c24a3a,#8f2d20)">☠</div><div class="meta"><b>Amenaza</b><span>0–10 · dispara escaramuzas/emboscadas</span></div></div>
       <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#c79a2e,#9a7415)">⚜</div><div class="meta"><b>Oro · Iuniores</b><span>Heredados del run · vuelven al hub</span></div></div>
       <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#532388,#2a1147)">⧗</div><div class="meta"><b>Plazo</b><span>Días consulares restantes</span></div></div>
@@ -633,15 +629,16 @@
       </div>
     </div>
 
-    <div class="subtitle">Batalla decisiva (por posturas)</div>
+    <div class="subtitle">Batalla decisiva (formaciones + órdenes)</div>
     <div class="grid g2">
       <div class="card">
         <span class="tag">battle/ · BattleModal</span>
-        <h3><span class="ic">⚔</span>Choque de dados</h3>
-        <p>Batalla por <b>posturas (stances)</b> resueltas con dados (<code>DieData</code>), no power-stats en tiempo real. Cada postura tiene requisito de disciplina, agresividad y % de bajas.</p>
+        <h3><span class="ic">⚔</span>Formación → orden → dado</h3>
+        <p>Por rondas (máx. 14): despliegas una <b>formación</b> y cada ronda eliges una <b>orden</b> de las que esa formación habilita. Ambos bandos tiran un dado (<code>DieData</code>, d6 base; d7/d8 si controlas el centro) y la orden multiplica una de las <b>5 power-stats</b> aditivas del roster: <b>charge · harass · push · siege · movement</b>. El control del centro es una pista −100..+100; el terreno define el centro (hill/ford/camp/plain/forest/marsh) y sus bonos.</p>
         <div class="pillwrap">
-          <span class="pill">Frontal</span><span class="pill">Línea pesada</span><span class="pill">Hostigamiento</span><span class="pill">Envolvimiento</span><span class="pill">Falsa retirada</span><span class="pill">Doble línea</span>
+          <span class="pill">Battle Line</span><span class="pill">Open Order</span><span class="pill">Shield Wall</span><span class="pill">Acies Duplex</span><span class="pill">Triplex Acies ◆</span><span class="pill">Testudo ◆</span><span class="pill">Cuneus ◆</span>
         </div>
+        <p style="margin-top:12px">17 órdenes con requisito de disciplina (1–6) repartidas por subsistema: <b>push</b> (Advance, Hold the Line, War Cry), <b>charge</b> (Charge, Wedge <i>Caput Porci</i>, All-Out Charge), <b>harass</b> (Skirmish −9 munición, Fire Missiles −14), <b>siege</b> (Siege Assault, perfora armadura y fortificación), <b>move</b> con check de dado+movement (Envelopment ≥12, Flank ≥9, Hit and Run ≥9, Retreat ≥11) y <b>moral</b> (War Drums, Taunt, Rally, Line Relief).</p>
       </div>
       <div class="card">
         <h3><span class="ic">♟</span>Arquetipos enemigos &amp; terreno</h3>
@@ -654,7 +651,7 @@
     <div class="flow">
       <div class="step"><div class="n">1</div><div class="body"><b>Embark</b><p>La <code>EmbarkCard</code> del Foro siembra soldados, oro, iuniores, munición, misiones y modificadores de doctrina.</p></div></div>
       <div class="step"><div class="n">2</div><div class="body"><b>Campaign</b><p>Juegas cartas turno a turno: gestionas suministros, moral, disciplina y amenaza mientras avanzas el itinerario.</p></div></div>
-      <div class="step"><div class="n">3</div><div class="body"><b>Battle</b><p>Al llegar al objetivo, la carta decisiva dispara el choque por posturas contra el enemigo del escenario.</p></div></div>
+      <div class="step"><div class="n">3</div><div class="body"><b>Battle</b><p>Al llegar al objetivo, la carta decisiva dispara el choque de formaciones y órdenes contra el enemigo del escenario.</p></div></div>
       <div class="step"><div class="n">4</div><div class="body"><b>Endgame → Foro</b><p>La <code>EndgameCard</code> muestra el desenlace; los supervivientes vuelven a escalar a cohortes y el oro/iuniores regresa al hub.</p></div></div>
     </div>
   </section>

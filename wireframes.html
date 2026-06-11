@@ -275,20 +275,29 @@
   <!-- ============ OVERVIEW ============ -->
   <section class="screen-panel" id="overview">
     <div class="screen-head"><span class="id">tab: overview</span><h2>Overview Tab</h2><span class="file">OverviewTab.tsx</span>
-      <p>Masthead + grid de 3 columnas (1 / 1.2 / 1) con los paneles resumen de cada dominio.</p></div>
+      <p>Masthead + 2 filas: fila héroe (EmbarkCard 1.55fr · pila Treasury/Consilium 1fr) y fila inferior de 4 paneles de dominio (1.3 / 1.3 / 1 / 1).</p></div>
     <div class="screen"><div class="canvas" style="min-height:520px;display:flex;flex-direction:column;gap:12px">
       <div class="panel"><span class="lbl">Masthead</span><div class="row between wrapf"><div class="ttl" style="font-size:15px">Strategic Hub · Princeps</div><div class="row" style="gap:6px"><span class="chip">Aurum</span><span class="chip">Iuniores</span><span class="chip">Season</span></div></div></div>
-      <div class="row grow" style="gap:12px;align-items:stretch">
-        <div class="region col grow" style="flex:1"><span class="lbl">Columna izq</span>
-          <div class="panel grow"><div class="ttl">Consilium · 3 seats</div><div class="row" style="gap:7px"><div class="img circle grow" style="height:40px"></div><div class="img circle grow" style="height:40px"></div><div class="img circle grow" style="height:40px"></div></div><div class="sub">Open →</div></div>
-          <div class="panel grow"><div class="ttl">Exercitus · roster</div><div class="ph w90"></div><div class="ph w60"></div><div class="ph" style="height:9px;margin-top:8px"></div><div class="sub">Open →</div></div>
+      <div class="row" style="gap:12px;align-items:stretch">
+        <div class="region col grow" style="flex:1.55"><span class="lbl">Fila superior · héroe 1.55fr</span>
+          <div class="panel grow"><div class="ttl">Embark Card → Iter Belli</div><div class="ph w90"></div><div class="row wrapf" style="gap:6px;margin:7px 0"><span class="chip">⚑ Aníbal</span><span class="chip">⚑ Vercingétorix</span></div><div class="sub">selector de escenario si hay &gt;1 desbloqueado</div><div class="btn cta" style="margin-top:9px;width:fit-content">Embark</div></div>
         </div>
-        <div class="region col grow" style="flex:1.2"><span class="lbl">Columna centro</span>
-          <div class="panel"><div class="ttl">Embark Card → Iter Belli</div><div class="ph w90"></div><div class="row wrapf" style="gap:6px;margin:7px 0"><span class="chip">⚑ Aníbal</span><span class="chip">⚑ Vercingétorix</span></div><div class="sub">selector de escenario si hay &gt;1 desbloqueado</div><div class="btn cta" style="margin-top:9px;width:fit-content">Embark</div></div>
+        <div class="region col grow" style="flex:1"><span class="lbl">Pila derecha 1fr</span>
+          <div class="panel"><div class="ttl">Treasury · Aerarium</div><div class="row wrapf" style="gap:6px"><span class="chip">⚜ Aurum</span><span class="chip">🛡 Iuniores</span><span class="chip">❉ Season</span></div></div>
+          <div class="panel grow"><div class="ttl">Consilium · 3 seats</div><div class="row" style="gap:7px"><div class="img circle grow" style="height:40px"></div><div class="img circle grow" style="height:40px"></div><div class="img circle grow" style="height:40px"></div></div><div class="sub">Open →</div></div>
+        </div>
+      </div>
+      <div class="row grow" style="gap:12px;align-items:stretch">
+        <div class="region col grow" style="flex:1.3"><span class="lbl">Provinciae 1.3fr</span>
           <div class="panel grow"><div class="ttl">Provinciae · lista</div><div class="ph"></div><div class="ph w90"></div><div class="ph w75"></div><div class="ph w90"></div></div>
         </div>
-        <div class="region col grow" style="flex:1"><span class="lbl">Columna dcha</span>
+        <div class="region col grow" style="flex:1.3"><span class="lbl">Exercitus 1.3fr</span>
+          <div class="panel grow"><div class="ttl">Exercitus · roster</div><div class="ph w90"></div><div class="ph w60"></div><div class="ph" style="height:9px;margin-top:8px"></div><div class="sub">Open →</div></div>
+        </div>
+        <div class="region col grow" style="flex:1"><span class="lbl">Doctrinae 1fr</span>
           <div class="panel grow"><div class="ttl">Doctrinae · equipadas</div><div class="row wrapf" style="gap:7px"><div class="img grow" style="height:34px"></div><div class="img grow" style="height:34px"></div></div></div>
+        </div>
+        <div class="region col grow" style="flex:1"><span class="lbl">Decreta 1fr</span>
           <div class="panel grow"><div class="ttl">Decreta · mano</div><div class="row wrapf" style="gap:6px"><div class="img" style="width:40px;height:48px"></div><div class="img" style="width:40px;height:48px"></div><div class="img" style="width:40px;height:48px"></div></div></div>
         </div>
       </div>
@@ -686,7 +695,7 @@
   <!-- ============ BATTLE ============ -->
   <section class="screen-panel" id="battle">
     <div class="screen-head"><span class="id">overlay: battle / endgame</span><h2>Batalla Decisiva</h2><span class="file">BattleModal.tsx · battle/*</span>
-      <p>Modal de choque por posturas resueltas con dados: arena (jugador / dados / enemigo) + despliegue + <b>decreta bar</b> (un pergamino por batalla, con intención enemiga revelada si hay reveal activo) + órdenes + log + posturas.</p></div>
+      <p>Modal de choque por <b>formaciones y órdenes</b> resueltas con dados (d6, d7/d8 con el centro): arena (jugador / dado de ronda / enemigo) + <b>decreta bar</b> (un pergamino por batalla, con intención enemiga revelada si hay reveal activo) + barra de despliegue (formación + 5 power-stats: charge · harass · push · siege · movement) + log + selección de orden gated por formación.</p></div>
     <div class="screen"><div class="canvas" style="min-height:580px;display:flex;flex-direction:column;gap:12px;background:#241038">
       <div class="region" style="border-color:var(--vio-500)"><span class="lbl" style="background:#241038;color:var(--vio-200)">Arena</span>
         <div class="row" style="gap:12px;align-items:stretch">
@@ -706,10 +715,10 @@
         </div>
       </div>
       <div class="row" style="gap:12px;align-items:stretch">
-        <div class="region grow" style="border-color:var(--vio-400)"><span class="lbl" style="background:#241038;color:var(--vio-200)">Deployment / Order bar</span><div class="row wrapf" style="gap:7px"><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Forma</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Orden</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Hostigar</span></div></div>
+        <div class="region grow" style="border-color:var(--vio-400)"><span class="lbl" style="background:#241038;color:var(--vio-200)">Deployment · formación + power-stats</span><div class="row wrapf" style="gap:7px"><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Battle Line ▾</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">⚡ charge</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">➶ harass</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">⛨ push</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">⚙ siege</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">➤ movement</span></div></div>
         <div class="region" style="width:240px;flex:0 0 auto;border-color:var(--vio-400)"><span class="lbl" style="background:#241038;color:var(--vio-200)">Battle Log</span><div class="ph w90" style="background:var(--vio-700);margin-top:4px"></div><div class="ph w75" style="background:var(--vio-700)"></div><div class="ph w60" style="background:var(--vio-700)"></div></div>
       </div>
-      <div class="region" style="border-color:var(--vio-400)"><span class="lbl" style="background:#241038;color:var(--vio-200)">Stance selection</span><div class="row wrapf" style="gap:7px"><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Frontal</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Línea pesada</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Envolvimiento</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Falsa retirada</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Doble línea</span></div></div>
+      <div class="region" style="border-color:var(--vio-400)"><span class="lbl" style="background:#241038;color:var(--vio-200)">Order selection · según formación</span><div class="row wrapf" style="gap:7px"><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Advance</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Hold the Line</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Charge</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Skirmish</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Rally</span><span class="chip" style="background:rgba(124,58,237,.08);color:#8a7a9a;border-color:#5a4a7a">Retreat</span></div></div>
     </div></div>
     <div class="note"><b>EndgameCard:</b> al resolver — marca victoria/derrota · resumen de supervivientes · botones <span class="tag" style="margin-left:4px">Return to Forum</span> / <span class="tag">New Run</span>.</div>
   </section>

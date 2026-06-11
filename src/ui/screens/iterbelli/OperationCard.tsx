@@ -21,6 +21,7 @@ const CAT_ICON: Record<string, GameIconName> = {
 const EFFECT_LABELS: Record<string, string> = {
   soldiers: 'Soldados', morale: 'Moral', discipline: 'Disciplina', supplies: 'Suministros',
   gold: 'Oro', threat: 'Amenaza', iuniores: 'Iuniores', enemyWeaken: 'Erosión enem.', advance: 'Avance', time_bonus: 'Plazo',
+  ammunition: 'Munición',
 };
 
 /** A signed numeric effect is "good" unless it's threat (where less is better). */
@@ -66,7 +67,6 @@ export function OperationCard({ card, state, onPlay }: Props) {
     let note = '';
     if (def.id === 'crisis_hambre') note = '−1 moral, −2% soldados/turno';
     else if (def.id === 'crisis_motin') note = 'Riesgo de deserción 30%';
-    else if (def.id === 'crisis_encuentro') note = 'Decide: jugar o sufrir';
     return (
       <div
         class={`ib-card crisis ${priorityClass('critical')}`}

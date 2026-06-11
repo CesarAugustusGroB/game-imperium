@@ -82,7 +82,7 @@ export interface CampaignScenario {
   locations: Location[];
   objectiveLocationId: string;
   decisiveCardId: string;
-  crises: Record<'hambre' | 'motin' | 'encuentro', Crisis>;
+  crises: Record<'hambre' | 'motin', Crisis>;
   enemy: ScenarioEnemy;
   narrative: ScenarioNarrative;
   conquestNames: string[];

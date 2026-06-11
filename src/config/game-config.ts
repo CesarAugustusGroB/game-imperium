@@ -177,25 +177,6 @@ export const SETTLEMENT = {
 };
 
 // ══════════════════════════════════════════════
-//  ARMY
-// ══════════════════════════════════════════════
-
-export const ARMY = {
-  /** Legate hire cost in gold. */
-  legateHireCost: 80,
-  /** Cohort recruitment costs (gold). */
-  cohortCosts: {
-    velites:    30,
-    hastati:    40,
-    principes:  80,
-    equites:    90,
-    triarii:   100,
-  } as Record<string, number>,
-  /** Enemy threat scaling: multiplier = 1 + threat × factor. */
-  threatScalingFactor: 0.05,
-};
-
-// ══════════════════════════════════════════════
 //  COUNCIL
 // ══════════════════════════════════════════════
 
