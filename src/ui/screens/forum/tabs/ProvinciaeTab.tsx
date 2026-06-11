@@ -1008,15 +1008,17 @@ function BuildingDetailModal({ province, type }: { province: Province; type: Inv
           boxShadow: '0 24px 70px rgba(0, 0, 0, 0.75)',
         }}
       >
-        {/* Left: art at max resolution */}
+        {/* Left: art at max resolution — fills the panel as the modal hero */}
         <div style={{
-          flex: '0 0 46%', minHeight: 420, position: 'relative',
+          flex: '0 0 46%', minHeight: 440, position: 'relative',
           background: `radial-gradient(ellipse at 50% 58%, ${fColor}2e 0%, rgba(10, 8, 18, 0.95) 75%)`,
           borderRight: '1px solid rgba(212, 168, 67, 0.2)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: 20,
+          padding: 18,
         }}>
-          <BuildingIcon type={type} size={330} color={fColor} />
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <BuildingIcon type={type} fill size={300} color={fColor} />
+          </div>
           <span style={{
             position: 'absolute', top: 12, left: 12,
             padding: '2px 9px', background: fColor, color: '#fff',

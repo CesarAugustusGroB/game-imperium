@@ -252,6 +252,11 @@ interface BuildingIconProps {
   size?: number;
   color?: string;
   style?: JSX.CSSProperties;
+  /**
+   * When true, the art fills its parent (width/height 100%, object-fit contain)
+   * instead of a fixed `size` box — for the building detail modal hero panel.
+   */
+  fill?: boolean;
 }
 
 /**
@@ -259,12 +264,18 @@ interface BuildingIconProps {
  * if that 404s, falls back to a hand-drawn inline SVG glyph that takes
  * its color from `color` (defaults to gold).
  */
-export function BuildingIcon({ type, size = 56, color, style }: BuildingIconProps) {
+export function BuildingIcon({ type, size = 56, color, style, fill = false }: BuildingIconProps) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
   // Reset state if the type changes (e.g. swapping between cards)
   useEffect(() => { setFailed(false); setLoaded(false); }, [type]);
+
+  // The PNG fills its parent in `fill` mode; the SVG fallback (line art) keeps a
+  // fixed box so it stays crisp and centered rather than stretching.
+  const imgBox: JSX.CSSProperties = fill
+    ? { width: '100%', height: '100%' }
+    : { width: `${size}px`, height: `${size}px` };
 
   const svgFallback = (
     <div
@@ -289,14 +300,11 @@ export function BuildingIcon({ type, size = 56, color, style }: BuildingIconProp
     <>
       <img
         src={`/asset/buildings/building_${type}.png`}
-        width={size}
-        height={size}
         alt=""
         onLoad={() => setLoaded(true)}
         onError={() => setFailed(true)}
         style={{
-          width: `${size}px`,
-          height: `${size}px`,
+          ...imgBox,
           objectFit: 'contain',
           filter: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55))',
           display: loaded ? 'block' : 'none',
