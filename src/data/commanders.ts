@@ -10,7 +10,7 @@ export const COMMANDERS: Commander[] = [
     quote: 'Every battle makes me stronger. Stop fighting and I wither.',
     passive: {
       name: 'Veteran Stacks',
-      description: '+5% damage per battle won (stacks). 3 spokes without battle = lose all stacks.',
+      description: '+5% damage per decisive victory (max 5 stacks). Lose all stacks on defeat.',
     },
     strategicAbility: {
       name: 'War Cry',

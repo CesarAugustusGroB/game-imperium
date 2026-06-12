@@ -26,3 +26,34 @@ hallazgos ya listados aquí.
 | D4 | `applyMorale` confía en un comentario para no re-aplicar `sMorale` negativo (fragilidad, no bug) | Solo defensa documental; ya hay comentario |
 | D5 | IA enemiga: `lineRelief` (moral<3) ensombrece `rally` (moral<2.5) y el check de envelop `movement+4>=12` casi siempre pasa | Comportamiento razonable; «arreglarlo» es rebalancear la IA sin spec |
 | D6 | Merc heal usa `Math.round` vs `Math.floor` del ciudadano (estilo, los caps evitan overheal) | Cosmético puro |
+
+## Iteración 2 — 2026-06-12
+
+Zonas barridas: capa de cartas/quests/misiones de Iter Belli, simulación provincial
+(tick/unrest/hambruna/rebelión), comandantes/progresión/referencias de assets.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 6 | El tooltip de desglose de Unrest omitía la hambruna (+10/+25 por temporada) y el unrest de features únicas — el «por qué sube» quedaba invisible | filas 🌾 Famine y Unique feature en el breakdown | ProvinciaeTab.tsx |
+| 7 | Veteran Stacks prometía «3 spokes without battle = lose all stacks» — inalcanzable: cada spoke culmina en batalla decisiva y `spokesSinceLastBattle` nunca incrementa. El spec vivo es «cap 5, se rompe al perder» (eso SÍ está implementado) | texto → «+5% per decisive victory (max 5). Lose all on defeat» | commanders.ts |
+| 8 | Quests azul y blanca sin `time` explícito (dependían del fallback `cost.time \|\| 1`); el coste real de 1 día no se mostraba como las demás | `time: 1` explícito | iter-belli-quests.ts |
+
+### Dudosos — NO implementados
+
+| # | Hallazgo | Por qué no |
+|---|---|---|
+| D7 | Tick provincial: la hambruna dura mata población ANTES de calcular el surplus de crecimiento — menos bocas ⇒ surplus mayor ⇒ el crecimiento se reanuda antes. ¿Bug o autorregulación realista? Cambiarlo es rebalance sin spec | Decisión de diseño, no de código |
+| D8 | `conquerProvince` con overrides no valida tradeGood vs terrain (el camino sin overrides sí). Hoy ningún caller pasa tradeGood override | Riesgo latente, sin impacto actual |
+| D9 | Filtro redundante `c.timer === 99` en iter-belli-state:412 (cubierto por `timer > 0`); documenta la semántica «permanente» | Cosmético; quitar resta legibilidad |
+
+### Falsos positivos verificados (no re-reportar)
+
+- **`wireRunBonuses` antes del restore en meta-save**: las 4 inyecciones son closures
+  que leen los signals al momento de USO, no al wirear. Restaurar advisors/doctrinas
+  después es inofensivo. NO es bug.
+- **Assets**: todas las referencias GameIcon/playSfx/retratos verificadas — sin rotas.
+- **Capa de cartas**: vocabulario CardEffects completo, sin no-ops; elegibilidad,
+  expiry, gambles, commitments y firma correctos contra sistema-de-eventos.html.
+- **`startingResources` de comandantes**: llegan correctamente al run.

@@ -32,7 +32,7 @@ export const SECONDARY_QUESTS: Record<QuestColor, SecondaryQuestDef> = {
   blue: {
     title: 'Pacifica la tribu',
     desc: 'Repartes regalos y promesas a la tribu local; la región se calma.',
-    cost: { gold: 20 },
+    cost: { time: 1, gold: 20 },
     effects: () => ({ threat: -3 }),
     penalty: () => ({ effects: { threat: 2 }, msg: 'La tribu desairada se vuelve hostil (+2 amenaza).' }),
   },
@@ -53,7 +53,7 @@ export const SECONDARY_QUESTS: Record<QuestColor, SecondaryQuestDef> = {
   white: {
     title: 'Recluta auxiliares',
     desc: 'Levantas auxiliares locales que engrosan las filas.',
-    cost: { gold: 25 },
+    cost: { time: 1, gold: 25 },
     effects: () => ({ soldiers: 800 }),
     penalty: () => ({ effects: { morale: -2 }, msg: 'Los auxiliares prometidos nunca llegaron; cae el ánimo (−2 moral).' }),
   },

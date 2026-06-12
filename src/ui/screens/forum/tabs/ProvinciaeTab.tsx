@@ -12,6 +12,7 @@ import {
   getActiveSynergies,
   getSettlementLabel, getBuildingSlots, calculateGrowthThreshold,
   calculateUnrestDelta, getRebelThreshold, getAvailableBuildings, SYNERGY_DATA,
+  getFamineUnrest,
   calculateFoodProduction, calculateEffectiveFoodProduction, calculateFoodConsumption,
   calculateFoodSurplus, calculateBeautiness,
   type InvestmentType, type Province,
@@ -2142,6 +2143,8 @@ function UnrestSection({ province }: { province: Province }) {
   const bldGovMod   = getUnrestModifier(province, traits); // negative = suppresses
   const naturalDecay = -2;
   const accel        = province.unrest > 60 ? (province.unrest - 60) * 0.25 : 0;
+  const famineUnrest = getFamineUnrest(province);
+  const featureUnrest = province.uniqueFeature?.unrestPerSeason ?? 0;
 
   function fmtSrc(n: number): string {
     return (n >= 0 ? '+' : '') + n.toFixed(n % 1 === 0 ? 0 : 1) + '/s';
@@ -2172,6 +2175,18 @@ function UnrestSection({ province }: { province: Province }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', fontSize: 'var(--font-size-xs)' }}>
           <span style={{ color: 'var(--color-text-muted)' }}>Buildings / Governor</span>
           <span style={{ color: srcColor(bldGovMod) }}>{fmtSrc(bldGovMod)}</span>
+        </div>
+      )}
+      {famineUnrest > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', fontSize: 'var(--font-size-xs)' }}>
+          <span style={{ color: 'var(--color-danger)' }}>🌾 Famine</span>
+          <span style={{ color: 'var(--color-danger)' }}>{fmtSrc(famineUnrest)}</span>
+        </div>
+      )}
+      {featureUnrest !== 0 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', fontSize: 'var(--font-size-xs)' }}>
+          <span style={{ color: 'var(--color-text-muted)' }}>Unique feature</span>
+          <span style={{ color: srcColor(featureUnrest) }}>{fmtSrc(featureUnrest)}</span>
         </div>
       )}
       {accel > 0 && (
