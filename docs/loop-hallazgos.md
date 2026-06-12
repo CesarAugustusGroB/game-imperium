@@ -91,3 +91,32 @@ features), pasada transversal de exports muertos/TODOs/casts.
   deliberado al motor canvas en cada render. No es bug.
 - **Balance/config**: cero constantes muertas restantes; dependencias de package.json
   todas vivas; sin TODOs/FIXMEs pendientes en src/.
+
+## Iteración 4 — 2026-06-12
+
+Plato fuerte: **smoke-test runtime con Playwright** (Title → Commander Select →
+Forum) + barrido estático de Title/CommanderSelect/sonido/CSS (vino casi limpio:
+el audio, GoldDust, keyboard-nav y tokens están todos correctos).
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 11 | **Regresión del draft de doctrinas (cazada en runtime)**: los loadouts por defecto referenciaban doctrinas ya no-starter (`doctrine_blood`, `lex_militaris`, `vis_bellica`, `pantheon`, `divina_providentia`, `alliances`, `foedus_aeternum`, `infrastructure`, `annona`) → 2-3 slots vacíos al empezar + warnings en consola | loadouts = 2 propias starter + People/Militia (blancas) | game-state.ts |
+| 12 | `tools/verify-commander-loadouts.ts` **podrido**: importaba `advisorPool`/`plannedSpoke` que ya no existen — crasheaba, por eso nadie cazó el #11 | actualizado a `advisorMarket` + check nuevo: loadout ⊆ starters | verify-commander-loadouts.ts |
+| 13 | 404 de favicon en cada carga | favicon.png 64×64 (águila romana) + `<link rel=icon>` | index.html, public/favicon.png |
+| 14 | Placeholders «to be defined» visibles en Commander Select (3 bullets de starting bonus, Oppidum Stronghold, Imperial Forum) | bullets con recursos/doctrinas reales; flavor honesto para los edificios | commanders.ts |
+
+### Dudosos — NO implementados
+
+| # | Hallazgo | Por qué no |
+|---|---|---|
+| D16 | Passive «Deus Vult» de Innocent: `description: 'Effect to be defined.'` — no hay implementación detrás. Y el passive de Augustus («each alliance = +1 allied unit») depende del sistema muerto de facciones (D11) | Ambos requieren la decisión de diseño D10/D11: implementar o recortar |
+| D17 | Botón Begin Your Legacy no se deshabilita visualmente durante los 300ms de transición (el guard `selecting` ya evita el doble-run) | UX menor |
+| D18 | Clase CSS `.imp-card-priority-neutral` sin usos | Cosmético |
+
+### Lección de proceso
+
+El verify script roto demostró que **los verify-\*.ts no corren en CI ni en cada
+commit** — se pudren en silencio. Considerar: correr TODOS los verify scripts en
+cada iteración del loop (no solo los «relevantes»), o un `npm run verify` agregado.

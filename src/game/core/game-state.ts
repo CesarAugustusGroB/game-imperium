@@ -60,21 +60,24 @@ type CommanderDefaultLoadout = {
   advisorIds: [string, string, string];
 };
 
+// Default loadouts may only reference STARTER doctrines (2 own-color + the
+// white core) — the rest of the catalog is earned via the victory draft and
+// is not in the collection at run start.
 export const COMMANDER_DEFAULT_LOADOUTS: Record<string, CommanderDefaultLoadout> = {
   innocent: {
-    doctrineIds: ['doctrine_faith', 'doctrine_miracles', 'doctrine_pantheon', 'doctrine_divina_providentia'],
+    doctrineIds: ['doctrine_faith', 'doctrine_miracles', 'doctrine_people', 'doctrine_militia'],
     advisorIds: ['advisor_pontifex', 'advisor_healer', 'advisor_zealot'],
   },
   boudicca: {
-    doctrineIds: ['doctrine_sword', 'doctrine_blood', 'doctrine_lex_militaris', 'doctrine_vis_bellica'],
+    doctrineIds: ['doctrine_sword', 'doctrine_iron', 'doctrine_people', 'doctrine_militia'],
     advisorIds: ['advisor_centurion', 'advisor_siege_master', 'advisor_raider'],
   },
   augustus: {
-    doctrineIds: ['doctrine_diplomacy', 'doctrine_court', 'doctrine_alliances', 'doctrine_foedus_aeternum'],
+    doctrineIds: ['doctrine_diplomacy', 'doctrine_court', 'doctrine_people', 'doctrine_militia'],
     advisorIds: ['advisor_diplomat', 'advisor_scholar', 'advisor_spymaster'],
   },
   crassus: {
-    doctrineIds: ['doctrine_trade', 'doctrine_infrastructure', 'doctrine_market', 'doctrine_annona'],
+    doctrineIds: ['doctrine_trade', 'doctrine_market', 'doctrine_people', 'doctrine_militia'],
     advisorIds: ['advisor_merchant', 'advisor_quartermaster', 'advisor_smuggler'],
   },
 };

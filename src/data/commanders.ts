@@ -29,7 +29,7 @@ export const COMMANDERS: Commander[] = [
     archetype: 'Warlord',
     archetypeDescription: 'Iron and fire forge nations. The strong rule, the weak serve, and every battle makes my people more formidable than the last.',
     startingBonuses: [
-      'Starting bonus to be defined',
+      'Starts with 2 gold and the Sword & Iron doctrines',
       'Each victory grants Veteran Stacks (+5% damage)',
       'War Cry ability unlocked',
     ],
@@ -40,7 +40,7 @@ export const COMMANDERS: Commander[] = [
     ],
     uniqueUnits: [
       { name: 'Gaesatae Berserkers', description: 'Naked shock infantry that hit harder as wounds mount.' },
-      { name: 'Oppidum Stronghold', description: 'Effect to be defined.' },
+      { name: 'Oppidum Stronghold', description: 'Hillfort bastion — the tribes rally behind its ramparts.' },
     ],
     victoryPaths: [
       { name: 'Domination', description: 'Crush every civilization that opposes you.', progress: 4 },
@@ -77,7 +77,7 @@ export const COMMANDERS: Commander[] = [
     archetype: 'Religious',
     archetypeDescription: 'Faith guides my people. Through devotion and righteousness, we will build the greatest civilization the world has ever known.',
     startingBonuses: [
-      'Starting bonus to be defined',
+      'Starts with 3 gold and the Faith & Miracles doctrines',
       'Deus Vult ability unlocked',
     ],
     playstyleFocus: ['Culture', 'Unity'],
@@ -124,7 +124,7 @@ export const COMMANDERS: Commander[] = [
     archetype: 'Diplomat',
     archetypeDescription: 'Empires are not built by swords alone. The right word in the right ear buys a legion and costs no blood.',
     startingBonuses: [
-      'Starting bonus to be defined',
+      'Starts with 2 gold and the Diplomacy & Court doctrines',
       'Each alliance grants a free allied unit in battle',
       'Manipulate ability unlocked',
     ],
@@ -135,7 +135,7 @@ export const COMMANDERS: Commander[] = [
     ],
     uniqueUnits: [
       { name: 'Praetorian Guard', description: 'Elite bodyguard that grows stronger with each alliance.' },
-      { name: 'Imperial Forum', description: 'Effect to be defined.' },
+      { name: 'Imperial Forum', description: 'The marble heart of Rome — where words win wars.' },
     ],
     victoryPaths: [
       { name: 'Diplomatic', description: 'Unite the world under a single banner.', progress: 4 },

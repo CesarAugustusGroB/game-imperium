@@ -1,15 +1,27 @@
 import { COMMANDERS } from '../src/data/commanders';
-import { advisorPool, councilSlots, plannedSpoke } from '../src/game/council/council-store';
+import { advisorMarket, councilSlots } from '../src/game/council/council-store';
 import { COMMANDER_DEFAULT_LOADOUTS, startNewRun } from '../src/game/core/game-state';
 import { doctrineCollection, equippedDoctrines } from '../src/game/items/doctrine-store';
+import { DOCTRINE_CATALOG } from '../src/data/doctrine-data';
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 
+// Loadouts may only reference starter doctrines — the rest of the catalog is
+// earned via the victory draft and is not in the collection at run start.
+const STARTER_IDS = new Set(DOCTRINE_CATALOG.filter(d => d.starter).map(d => d.id));
+
 for (const commander of COMMANDERS) {
   const loadout = COMMANDER_DEFAULT_LOADOUTS[commander.id];
   assert(loadout, `Missing loadout for ${commander.id}`);
+
+  for (const doctrineId of loadout.doctrineIds) {
+    assert(
+      STARTER_IDS.has(doctrineId),
+      `${commander.id}: loadout doctrine ${doctrineId} is not a starter doctrine (unreachable at run start)`,
+    );
+  }
 
   startNewRun(commander, { recordRunStart: false, seedHomeProvince: false });
 
@@ -34,12 +46,10 @@ for (const commander of COMMANDERS) {
 
   for (const advisorId of loadout.advisorIds) {
     assert(
-      !advisorPool.value.some(a => a.id === advisorId),
-      `${commander.id}: seated advisor ${advisorId} remained in pool`,
+      !advisorMarket.value.some(a => a.id === advisorId),
+      `${commander.id}: seated advisor ${advisorId} remained in the market`,
     );
   }
-
-  assert(plannedSpoke.value !== null, `${commander.id}: plannedSpoke was not generated`);
 }
 
 console.log('verify-commander-loadouts: ok');
