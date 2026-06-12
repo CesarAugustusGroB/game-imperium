@@ -530,7 +530,10 @@ export function getUnrestModifier(
 }
 
 /**
- * Get investment cost discount percentage from governor traits.
+ * Get the total investment cost discount percentage for a province: governor
+ * investment-discount traits + the unique feature's build-cost discount + the
+ * trade good's build-cost discount (Marble −15%, Timber −10%). Single source
+ * of truth so the build-cost label and the actual spend never diverge.
  * Returns 0 if no discount applies.
  */
 export function getInvestmentDiscount(governorTraits: GovernorTrait[], province?: Province): number {
@@ -543,6 +546,11 @@ export function getInvestmentDiscount(governorTraits: GovernorTrait[], province?
   // Unique feature build cost discount
   if (province?.uniqueFeature?.buildCostDiscount) {
     discount += province.uniqueFeature.buildCostDiscount;
+  }
+  // Trade good build-cost discount
+  if (province?.tradeGood) {
+    const special = TRADE_GOOD_DATA[province.tradeGood].special;
+    if (special?.type === 'build-cost-discount') discount += special.percent;
   }
   return discount;
 }

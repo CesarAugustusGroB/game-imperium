@@ -24,7 +24,7 @@ import { isUpkeepWaived, tickActiveDecretumEffects } from '../items/decretum-hub
 import { addNotification } from '../../ui/notifications/notification-store';
 import { TERRAIN_DATA } from '../../data/terrain-data';
 import type { TerrainType } from '../../data/terrain-data';
-import { getTradeGoodsForTerrain, TRADE_GOOD_DATA } from '../../data/trade-goods';
+import { getTradeGoodsForTerrain } from '../../data/trade-goods';
 import { ECONOMY } from '../../config/game-config';
 import type { TradeGoodType } from '../../data/trade-goods';
 
@@ -171,17 +171,11 @@ export function buildInvestment(provinceId: string, type: InvestmentType): boole
   const data = INVESTMENT_DATA[type];
   const baseCost = data.levels[nextLevel - 1].buildCost;
 
-  // Apply governor + scroll investment discounts
+  // Apply governor + feature + trade (via getInvestmentDiscount) + scroll discounts.
   const traits = getGovernorTraits(provinceId);
   const governorDiscount = getInvestmentDiscount(traits, province);
   const scrollDiscount = nextInvestmentDiscount.value;
-  // Trade good build-cost discount: Marble -15%, Timber -10%
-  let tradeDiscount = 0;
-  if (province.tradeGood) {
-    const special = TRADE_GOOD_DATA[province.tradeGood].special;
-    if (special?.type === 'build-cost-discount') tradeDiscount = special.percent;
-  }
-  const effectiveDiscount = Math.min(ECONOMY.maxInvestmentDiscount, governorDiscount + scrollDiscount + tradeDiscount);
+  const effectiveDiscount = Math.min(ECONOMY.maxInvestmentDiscount, governorDiscount + scrollDiscount);
   const cost = effectiveDiscount > 0 ? applyInvestmentDiscount(baseCost, effectiveDiscount) : baseCost;
 
   if (!spendCost(cost)) return false;

@@ -271,6 +271,32 @@ DeploymentPanel/ConsiliumTab sin barrer.
 - **ConsiliumTab**: `computeConsiliumSetup`/`computeSecondaryQuests` (regla
   first-seat-mission) bien reflejados; el hire de candidatos ya usaba el coste descontado.
 
+## Iteración 12 — 2026-06-12
+
+Foco: flujo interactivo de inversión en Provinciae + barrido runtime de las 6 pestañas.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 27 | **El coste de construcción mostrado omitía el descuento del bien comercial** (Mármol −15%, Madera −10%) que el store SÍ aplica al pagar: `InvestmentSlot` y el modal de detalle calculaban `gobernador+pergamino` pero no el trade. Una provincia con Madera mostraba 13g y cobraba 11g — y el gate de «asequible» divergía del cobro real (tercer caso de drift display-vs-spend tras Exercitus #24 y asesores #26) | plegué el trade discount dentro de `getInvestmentDiscount(traits, province)` (fuente única que ya usan store y UI) y quité la suma separada del store; UI correcta sin tocar (su cap 90 == `ECONOMY.maxInvestmentDiscount`) | province.ts, province-store.ts |
+
+### Validado en vivo
+
+- Barrido de las **6 pestañas** del Forum (Provinciae/Consilium/Exercitus/Doctrinae/
+  Decreta/Forum): **0 errores, 0 warnings** de consola.
+- Falsos positivos verificados del agente: tax sliders sincronizados con el tick,
+  gating de tiers (no se salta T2→T3), hire de gobernador coste=cobro, sin botones
+  mentirosos. Solo el #27 era real.
+
+### Patrón recurrente (3 iteraciones seguidas)
+
+Display-vs-spend del descuento: Exercitus (#24), asesores sentados (#26), inversión
+provincial (#27). En los tres la UI mostraba/gateaba el precio base mientras el store
+cobraba el descontado. **Lección**: cualquier coste en oro que se muestre en UI debe
+pasar por el MISMO helper que el store usa para cobrar — no recalcular el descuento
+en paralelo. Candidato a revisión preventiva si aparece un cuarto sitio.
+
 ### Validado en vivo esta iteración
 
 - Fix G1 (threat escala al enemigo decisivo): 6.360 = base × (1+3/20) × (1−2×0.07) ✓
