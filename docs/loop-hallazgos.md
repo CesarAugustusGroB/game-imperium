@@ -225,6 +225,27 @@ Foco: smoke-test de las pantallas de menú (Title/Options/Credits) en vivo.
 Validado en vivo: los 3 controles renderizan, el toggle de SFX es reactivo y
 escribe `imperium.sfxMuted` en localStorage. Credits ya funcionaba.
 
+## Iteración 10 — 2026-06-12
+
+Foco: pestaña Exercitus (reclutamiento/arsenal/compras) + coherencia profunda de los 4 docs.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 24 | **Los costes en oro de Exercitus se mostraban/gateaban SIN el descuento de tienda** que sí se aplica al pagar (`discountedGold`): el tooltip de reclutar decía «Needs N gold» con el precio base, el botón de mejorar armadura podía aparecer deshabilitado teniendo oro suficiente (gateaba contra el base), y los botones +2/+10 de suministros/munición igual. Inconsistencia entre lo mostrado y lo cobrado | exporté `getDiscountedGold(base)` y lo usé en el tooltip de reclutar, el gate+etiqueta de armadura, y los gates de los botones de suministros/munición | strategic-store.ts, ExercitusTab.tsx |
+| 25 | Doc: «los 30 pergaminos» (sistemas:758) contradecía «33 cartas/pergaminos» en las líneas 730/742 — el código tiene 33 decretos | typo → 33 | sistemas-del-juego.html |
+
+### Falsos positivos verificados (no re-reportar)
+
+- **Botón de curar con `recurso > 0` en vez de `>= healCost`**: NO es bug — el heal
+  es **parcial** y siempre cura ≥1 HP con cualquier cantidad (resolver:
+  `floor(spend×maxHp/1000)` para ciudadanos ≥1 con maxHp≥1000; mercenarios igual).
+  Habilitar con `>0` es correcto.
+- **Docs vs código**: tras el barrido completo de los 4 docs, todo lo demás coherente
+  — doctrinas 4 slots, suministros −2/turno, los 5 power-stats, GDD.md histórico,
+  iconos de stats ya en `iconos.html`, Options con controles reales. Solo el typo #25.
+
 ### Validado en vivo esta iteración
 
 - Fix G1 (threat escala al enemigo decisivo): 6.360 = base × (1+3/20) × (1−2×0.07) ✓

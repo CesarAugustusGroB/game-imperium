@@ -7,7 +7,7 @@ import {
   preparedArmy, preparedLegate, legateHiringPool,
   ensurePreparedArmy, recruitCohort, removeCohort, getRecruitCohortFailure,
   ensureLegatePool, hireLegate, dismissLegate,
-  buySupplies, upgradeArmor, buyAmmunition,
+  buySupplies, upgradeArmor, buyAmmunition, getDiscountedGold,
 } from '../../../../game/progression/strategic-store';
 import { nextArmorTier, armorUpgradeCost } from '../../../../game/progression/arsenal';
 import {
@@ -325,7 +325,8 @@ export function ExercitusTab() {
   const armorLabel = armorMaterial.charAt(0).toUpperCase() + armorMaterial.slice(1);
   const nextArmor = nextArmorTier(armorMaterial);
   const nextArmorLabel = nextArmor ? nextArmor.charAt(0).toUpperCase() + nextArmor.slice(1) : null;
-  const armorCost = armorUpgradeCost(armorMaterial);
+  const armorCostBase = armorUpgradeCost(armorMaterial);
+  const armorCost = armorCostBase != null ? getDiscountedGold(armorCostBase) : null;
   const canUpgradeArmor = nextArmor != null && armorCost != null && currentGold >= armorCost;
   const currentAmmo = army?.ammunition ?? 0;
   const ammoRatio = AMMO_MAX_CARRY > 0 ? currentAmmo / AMMO_MAX_CARRY : 0;
@@ -366,7 +367,7 @@ export function ExercitusTab() {
     const disabledCopy = recruitFailure === 'insufficient-iuniores'
       ? 'Insufficient iuniores. Gain more provinces or wait for a season tick.'
       : recruitFailure === 'insufficient-gold'
-        ? `Needs ${c.aurumCost} gold`
+        ? `Needs ${getDiscountedGold(c.aurumCost)} gold`
         : null;
 
     return (
@@ -628,8 +629,8 @@ export function ExercitusTab() {
               <span title="1 supply per cohort per node." style={{ fontFamily: 'var(--imp-font-display)', fontSize: 'var(--imp-text-xs)', textTransform: 'uppercase', letterSpacing: 'var(--imp-meta-letter)', color: 'var(--imp-text-mid)', whiteSpace: 'nowrap' }}>❦ Supp.</span>
               <MeterBar ratio={supplyRatio} tone="supply" />
               <span style={{ fontFamily: 'var(--imp-font-mono)', fontSize: 'var(--imp-text-xs)', color: 'var(--imp-text-mid)', whiteSpace: 'nowrap' }}>{currentSupplies}/{SUPPLY_MAX_CARRY}</span>
-              <MiniBuyButton label="+2" enabled={!atCap && currentGold >= Math.ceil(2 / SUPPLIES_PER_GOLD) && currentSupplies + 2 <= SUPPLY_MAX_CARRY} onClick={() => handleBuySupplies(2)} />
-              <MiniBuyButton label="+10" enabled={!atCap && currentGold >= Math.ceil(10 / SUPPLIES_PER_GOLD) && currentSupplies + 10 <= SUPPLY_MAX_CARRY} onClick={() => handleBuySupplies(10)} />
+              <MiniBuyButton label="+2" enabled={!atCap && currentGold >= getDiscountedGold(Math.ceil(2 / SUPPLIES_PER_GOLD)) && currentSupplies + 2 <= SUPPLY_MAX_CARRY} onClick={() => handleBuySupplies(2)} />
+              <MiniBuyButton label="+10" enabled={!atCap && currentGold >= getDiscountedGold(Math.ceil(10 / SUPPLIES_PER_GOLD)) && currentSupplies + 10 <= SUPPLY_MAX_CARRY} onClick={() => handleBuySupplies(10)} />
               <MiniBuyButton label={maxBuyable > 0 ? `Max +${maxBuyable}` : 'Max'} enabled={maxBuyable > 0} onClick={handleBuyMax} title={`1 gold = ${SUPPLIES_PER_GOLD} supplies · covers ≈ ${coversNodes} node${coversNodes === 1 ? '' : 's'}`} />
             </div>
 
@@ -638,7 +639,7 @@ export function ExercitusTab() {
               <span title="The harass budget for the decisive battle." style={{ fontFamily: 'var(--imp-font-display)', fontSize: 'var(--imp-text-xs)', textTransform: 'uppercase', letterSpacing: 'var(--imp-meta-letter)', color: 'var(--imp-text-mid)', whiteSpace: 'nowrap' }}>➶ Ammo</span>
               <MeterBar ratio={ammoRatio} tone="supply" />
               <span style={{ fontFamily: 'var(--imp-font-mono)', fontSize: 'var(--imp-text-xs)', color: 'var(--imp-text-mid)', whiteSpace: 'nowrap' }}>{currentAmmo}/{AMMO_MAX_CARRY}</span>
-              <MiniBuyButton label="+10" enabled={!ammoAtCap && currentGold >= Math.ceil(10 / AMMO_PER_GOLD) && currentAmmo + 10 <= AMMO_MAX_CARRY} onClick={() => handleBuyAmmo(10)} />
+              <MiniBuyButton label="+10" enabled={!ammoAtCap && currentGold >= getDiscountedGold(Math.ceil(10 / AMMO_PER_GOLD)) && currentAmmo + 10 <= AMMO_MAX_CARRY} onClick={() => handleBuyAmmo(10)} />
               <MiniBuyButton label={ammoBuyable > 0 ? `Max +${ammoBuyable}` : 'Max'} enabled={ammoBuyable > 0} onClick={handleBuyAmmoMax} title={`1 gold = ${AMMO_PER_GOLD} ammo`} />
             </div>
           </div>

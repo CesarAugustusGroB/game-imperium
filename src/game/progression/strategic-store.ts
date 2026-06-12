@@ -34,6 +34,11 @@ function discountedGold(base: number): number {
   return Math.max(1, Math.round(base * (1 - pct / 100)));
 }
 
+/** The gold a `base`-priced purchase actually costs after shop discounts — for UI cost labels and affordability gates (mirrors what the buy/recruit/upgrade actions charge). */
+export function getDiscountedGold(base: number): number {
+  return discountedGold(base);
+}
+
 // ── State signals ──
 // NOTE (plan S-B): the old per-commander "strategic ability" signals
 // (crusadeBattlesLeft, warCryActive, manipulateUsesLeft, goldenOpportunityPending,
