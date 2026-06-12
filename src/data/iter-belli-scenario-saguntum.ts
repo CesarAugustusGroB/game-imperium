@@ -20,8 +20,6 @@ export const SAGUNTUM: CampaignScenario = {
     doctrine: 'Maniobrera',
     baseSoldiers: B.ENEMY_BASE_SOLDIERS,
     minSoldiers: B.ENEMY_MIN_SOLDIERS,
-    morale: B.ENEMY_MORALE,
-    discipline: B.ENEMY_DISCIPLINE,
     archetypeKey: 'carthage',
   },
   narrative: {

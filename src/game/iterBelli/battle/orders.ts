@@ -71,8 +71,12 @@ export const TERRAIN_CENTER: Record<string, string> = {
 };
 
 export const ENEMY_ARCHETYPES: Record<string, EnemyArchetype> = {
-  carthage:  { name:'Carthaginian Host', formation:'battleLine', hp:10000, morale:10, disc:6,
-    stats:{charge:11,harass:9,push:13,siege:5,movement:11}, armorPct:ARMORS.iron, armorName:'Iron', ammo:26, fortPct:15, fortName:'Camp',
+  // Carthage is sim-tuned against the real player power curve (cohort stats sum
+  // 0–3 each → ~6-12 for a built roster; see tools/sim-battle-balance.ts):
+  // a prepared 4-cohort line army wins more often than not, a bare 2-cohort
+  // starter does not, a full 6-cohort roster dominates.
+  carthage:  { name:'Carthaginian Host', formation:'battleLine', hp:10000, morale:10, disc:5,
+    stats:{charge:8,harass:6,push:9,siege:3,movement:8}, armorPct:ARMORS.bronze, armorName:'Bronze', ammo:26, fortPct:10, fortName:'Camp',
     desc:'Hannibal’s combined-arms host — disciplined, mobile, well-supplied, dug in.' },
   gauls:     { name:'Gallic Warband', formation:'openOrder', hp:11000, morale:10, disc:3,
     stats:{charge:20,harass:4,push:8,siege:2,movement:9}, armorPct:ARMORS.copper, armorName:'Copper', ammo:14, fortPct:0,

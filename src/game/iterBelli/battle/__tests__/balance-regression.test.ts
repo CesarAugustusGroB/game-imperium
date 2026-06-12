@@ -71,9 +71,24 @@ describe('balance regression — structural invariants', () => {
     expect(rate).toBeGreaterThan(70);
   });
 
-  it('the enemy AI does not self-destruct (no allOut while shaken) — Carthage is not a free win', () => {
-    // Guards the shaken-lock fix: if the AI suicided with allOut again, this would spike toward 100%.
-    const rate = winRate({}, ENEMY_ARCHETYPES.carthage, 800);
-    expect(rate).toBeLessThan(50);
+  it('the enemy AI never orders allOut while shaken (direct invariant)', () => {
+    // Guards the shaken-lock fix directly instead of through a balance-coupled
+    // win rate (the old <50% assertion broke whenever carthage was retuned).
+    const rng = mulberry32(99);
+    for (let i = 0; i < 400; i++) {
+      const you = makeBattleArmy('you', {
+        hp: 5000 + (i % 7) * 1000, morale: (i % 16), discipline: (i % 11),
+        stats: { charge: 6, harass: 5, push: 12, siege: 0, movement: 4 },
+        armorPct: 5, armorName: 'Copper', ammo: 24, formation: FORMATIONS.battleLine,
+      });
+      const en = makeBattleArmy('enemy', ENEMY_ARCHETYPES.carthage);
+      en.morale = (i % 60) / 10; // sweep 0.0–5.9 — always below steady
+      const s = makeBattleState(you, en, CENTERS.hill);
+      s.control = ((i % 9) - 4) * 25;
+      s.round = i % 14;
+      void rng;
+      const order = enemyChoose(s);
+      if (en.morale < 6) expect(order, `morale ${en.morale}`).not.toBe('allOut');
+    }
   });
 });

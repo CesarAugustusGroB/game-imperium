@@ -46,14 +46,12 @@ export const CAMP_SUPPLY_COST = 4;
 export const CAMP_MORALE_GAIN = 0.5;
 
 // ── Final battle ──
-/** Enemy base soldiers before threat scaling / erosion. */
-export const ENEMY_BASE_SOLDIERS = 7000;
+/** Enemy base soldiers before threat scaling / erosion (sim-tuned: tools/sim-battle-balance.ts). */
+export const ENEMY_BASE_SOLDIERS = 5000;
 export const ENEMY_MIN_SOLDIERS = 2000;
 /** enemyMult = (1 + threat/THREAT_DIVISOR) * (1 - enemyWeaken*WEAKEN_PER_POINT) */
 export const ENEMY_THREAT_DIVISOR = 20;
 export const ENEMY_WEAKEN_PER_POINT = 0.07;
-export const ENEMY_MORALE = 8.0;
-export const ENEMY_DISCIPLINE = 6;
 export const FORTIFIED_TERRAIN_MULT = 1.15;
 export const BATTLE_MAX_ROUNDS = 15;
 

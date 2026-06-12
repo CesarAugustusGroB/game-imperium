@@ -66,8 +66,6 @@ export const GALLIA: CampaignScenario = {
     doctrine: 'Tribal',
     baseSoldiers: 9000,
     minSoldiers: 2500,
-    morale: 10,
-    discipline: 3,
     archetypeKey: 'gauls',
   },
   narrative: {

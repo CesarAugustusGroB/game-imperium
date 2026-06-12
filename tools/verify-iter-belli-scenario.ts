@@ -27,10 +27,9 @@ check('decisive card exists in CARD_DEFS', CARD_DEFS.some((c) => c.id === SAGUNT
 console.log('SAGUNTUM enemy');
 check('enemy name', SAGUNTUM.enemy.name === 'Aníbal Barca');
 check('enemy doctrine Maniobrera', SAGUNTUM.enemy.doctrine === 'Maniobrera');
-check('enemy baseSoldiers 7000', SAGUNTUM.enemy.baseSoldiers === 7000);
+check('enemy baseSoldiers 5000 (sim-tuned)', SAGUNTUM.enemy.baseSoldiers === 5000);
 check('enemy minSoldiers 2000', SAGUNTUM.enemy.minSoldiers === 2000);
-check('enemy morale 8', SAGUNTUM.enemy.morale === 8);
-check('enemy discipline 6', SAGUNTUM.enemy.discipline === 6);
+check('enemy archetype carthage', SAGUNTUM.enemy.archetypeKey === 'carthage');
 
 console.log('SAGUNTUM narrative');
 const n = SAGUNTUM.narrative;

@@ -642,14 +642,14 @@
       </div>
       <div class="card">
         <h3><span class="ic">♟</span>Arquetipos enemigos &amp; terreno</h3>
-        <p>El enemigo del escenario tiene un <code>archetypeKey</code>: <b>carthage</b> (Saguntum, combinado), <b>gauls</b> (Gallia, cargadores furiosos), e <b>iberians</b>/<b>garrison</b> listos para escenarios futuros. <b>Formaciones</b>: 4 comunes (battleLine/openOrder/shieldWall/<b>duplex</b> disc 4) + 3 únicas por trait de legado (triplex/testudo/cuneus). <b>Centro de batalla</b> por terreno: plain/hill/ford/camp/<b>forest</b> (−carga ambos) /<b>marsh</b>.</p>
+        <p>El enemigo del escenario tiene un <code>archetypeKey</code>: <b>carthage</b> (Saguntum, combinado), <b>gauls</b> (Gallia, cargadores furiosos), e <b>iberians</b>/<b>garrison</b> listos para escenarios futuros. <b>Formaciones</b>: 4 comunes (battleLine/openOrder/shieldWall/<b>duplex</b> disc 4) + 3 únicas por trait de legado (triplex/testudo/cuneus). <b>Centro de batalla</b> por terreno: plain/hill/ford/camp/<b>forest</b> (−carga ambos) /<b>marsh</b>. <b>Balance simulado</b> (<code>tools/sim-battle-balance.ts</code>, base 5000 + carthage afinado): el ejército inicial de 2 cohortes pierde siempre — hay que reclutar; 4 cohortes de línea ganan ~25% en frío y ~50-60% con buena campaña (erosión/amenaza); el roster completo de 6 domina.</p>
         <div class="pillwrap"><span class="pill">engine.ts</span><span class="pill">orders.ts</span><span class="pill">resolver.ts</span><span class="pill">enemy-ai.ts</span><span class="pill">controller.ts</span><span class="pill">decreta.ts</span></div>
       </div>
     </div>
 
     <div class="subtitle">Ciclo: campaign → battle → endgame</div>
     <div class="flow">
-      <div class="step"><div class="n">1</div><div class="body"><b>Embark</b><p>La <code>EmbarkCard</code> del Foro siembra soldados, oro, iuniores, munición, misiones y modificadores de doctrina.</p></div></div>
+      <div class="step"><div class="n">1</div><div class="body"><b>Embark</b><p>La <code>EmbarkCard</code> del Foro siembra soldados, oro, iuniores, munición, misiones y modificadores de doctrina. Con una campaña en vuelo (save restaurado), el botón pasa a <b>«Reanudar campaña»</b> y solo navega — nunca re-siembra.</p></div></div>
       <div class="step"><div class="n">2</div><div class="body"><b>Campaign</b><p>Juegas cartas turno a turno: gestionas suministros, moral, disciplina y amenaza mientras avanzas el itinerario.</p></div></div>
       <div class="step"><div class="n">3</div><div class="body"><b>Battle</b><p>Al llegar al objetivo, la carta decisiva dispara el choque de formaciones y órdenes contra el enemigo del escenario.</p></div></div>
       <div class="step"><div class="n">4</div><div class="body"><b>Endgame → Foro</b><p>La <code>EndgameCard</code> muestra el desenlace; los supervivientes vuelven a escalar a cohortes y el oro/iuniores regresa al hub.</p></div></div>

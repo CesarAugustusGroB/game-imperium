@@ -58,9 +58,7 @@ export interface ScenarioEnemy {
   doctrine: DoctrineName;
   baseSoldiers: number;
   minSoldiers: number;
-  morale: number;
-  discipline: number;
-  /** Key into ENEMY_ARCHETYPES for the decisive battle (drives the new battle engine). */
+  /** Key into ENEMY_ARCHETYPES for the decisive battle — morale/discipline/stats live there. */
   archetypeKey: string;
 }
 

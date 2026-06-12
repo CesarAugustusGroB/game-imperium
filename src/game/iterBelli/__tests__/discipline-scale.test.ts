@@ -12,8 +12,10 @@ describe('discipline constants are on the 0–10 engine scale', () => {
   it('archetype values are small additive bonuses (not absolute 1–5)', () => {
     expect(B.DISCIPLINE_BY_ARCHETYPE).toEqual({ Warlord: 0, Religious: 0, Merchant: 1, Diplomat: 2 });
   });
-  it('enemy discipline sits mid-high on the new scale', () => {
-    expect(B.ENEMY_DISCIPLINE).toBe(6);
+  it('enemy discipline lives on the archetype, mid-high on the engine scale', async () => {
+    const { ENEMY_ARCHETYPES } = await import('../battle/orders');
+    expect(ENEMY_ARCHETYPES.carthage.disc).toBeGreaterThanOrEqual(4);
+    expect(ENEMY_ARCHETYPES.carthage.disc).toBeLessThanOrEqual(6);
   });
   it('ROMAN covers 0..10', () => {
     expect(B.ROMAN).toHaveLength(11);

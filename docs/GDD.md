@@ -1,5 +1,12 @@
 # Imperium — Game Design Document
 
+> ⚠️ **HISTÓRICO (abril 2026)** — este documento describe el diseño de la era del hex Bellum
+> y los sistemas eliminados (faith/influence/momentum, node-map, abilities antiguas).
+> La fuente de verdad actual son los cuatro HTML de la raíz del repo:
+> `sistemas-del-juego.html`, `sistema-de-eventos.html`, `wireframes.html`, `iconos.html`.
+> Ejemplos de deriva: Veteran Stacks ya es «+5% por victoria decisiva, cap 5, se rompe al
+> perder» (no el decay por spokes descrito aquí).
+
 > Extracted from source, April 2026. Single source of truth for the design of the Map2D/Imperium grand strategy roguelike.
 
 ---

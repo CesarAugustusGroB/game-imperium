@@ -163,7 +163,7 @@ que solo el juego en vivo podía revelar.
 
 | # | Observación |
 |---|---|
-| B1 | **La batalla de Sagunto parece muy cuesta arriba**: 3.900 (2 cohortes default + leva +500) vs 6.360 (threat 3 ya escalando vía fix G1). Disc enemiga 6 vs 3, armor 20+fort 15 vs 5. Jugando decente (Mars +60%, hold-vs-charge con recoils de 446-509) acabé 844 vs 3.215. Puede ser intencional (hay que recrutar más cohortes antes de embarcar) — pero el flujo por defecto (2 cohortes) pierde claramente |
+| B1 | ✅ **RESUELTO (post-it.6, a petición del usuario)**: no era «cuesta arriba», era **matemáticamente imposible** — el simulador headless nuevo (`tools/sim-battle-balance.ts`, 400 batallas/config con el motor real) midió **0% de victorias incluso con el roster completo de 6 cohortes** (7.400 soldados, threat 0). Causa: carthage (11/9/13/5/11, disc 6, iron+fort 15) estaba afinado contra una curva de stats que el jugador no puede alcanzar (suma de cohortes 0-3 c/u). Fix sim-tuneado: base 7000→5000, carthage → 8/6/9/3/8, disc 5, bronze, fort 10. Curva resultante: 2 cohortes 0% (hay que reclutar — coherente), 4 de línea 25% en frío / 47-59% con campaña jugada, 6 completas 94-99%. De paso: `scenario.enemy.morale/discipline` y `ENEMY_MORALE/ENEMY_DISCIPLINE` eran números muertos (la batalla lee el arquetipo) — eliminados |
 | B2 | Las 2 quests rojas del Consilium comparten plantilla → dos cartas «Asalto al fuerte» idénticas en mesa a la vez (confuso, distinta ventana). Cosmético |
 | B3 | El modal del draft de doctrinas sigue sin verse renderizado en vivo (requiere victoria). Lógica cubierta por 9 tests; riesgo de render bajo |
 
