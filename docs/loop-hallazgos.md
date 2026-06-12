@@ -165,7 +165,37 @@ que solo el juego en vivo podía revelar.
 |---|---|
 | B1 | ✅ **RESUELTO (post-it.6, a petición del usuario)**: no era «cuesta arriba», era **matemáticamente imposible** — el simulador headless nuevo (`tools/sim-battle-balance.ts`, 400 batallas/config con el motor real) midió **0% de victorias incluso con el roster completo de 6 cohortes** (7.400 soldados, threat 0). Causa: carthage (11/9/13/5/11, disc 6, iron+fort 15) estaba afinado contra una curva de stats que el jugador no puede alcanzar (suma de cohortes 0-3 c/u). Fix sim-tuneado: base 7000→5000, carthage → 8/6/9/3/8, disc 5, bronze, fort 10. Curva resultante: 2 cohortes 0% (hay que reclutar — coherente), 4 de línea 25% en frío / 47-59% con campaña jugada, 6 completas 94-99%. De paso: `scenario.enemy.morale/discipline` y `ENEMY_MORALE/ENEMY_DISCIPLINE` eran números muertos (la batalla lee el arquetipo) — eliminados |
 | B2 | Las 2 quests rojas del Consilium comparten plantilla → dos cartas «Asalto al fuerte» idénticas en mesa a la vez (confuso, distinta ventana). Cosmético |
-| B3 | El modal del draft de doctrinas sigue sin verse renderizado en vivo (requiere victoria). Lógica cubierta por 9 tests; riesgo de render bajo |
+| B3 | ✅ **CERRADO (it. 7)** — ver iteración 7: victoria en vivo + modal del draft verificado de punta a punta |
+
+## Iteración 7 — 2026-06-12
+
+Foco: validar en vivo el retuning de Sagunto y cerrar B3 (modal del draft).
+**Primera victoria de la historia del juego jugada de punta a punta con Playwright.**
+
+### Validado en vivo (sin cambios de código salvo el header del sim)
+
+- **Run completo ganador con el ejército inicial + estrategia de erosión** (la que
+  el retuning quería habilitar): Boudicca, leva +500 (3.900), erosión 6 acumulada
+  (Furia gala ×2 ×2 doctrinas rojas, quest del fuerte, Despacho), llegada a Sagunto
+  día 10/12, Mars +60%, hold-the-line contra cargas → **✦ VICTORIA ✦ round 10 por
+  colapso de moral enemiga** (1.530 supervivientes vs 235). El enemigo entró con
+  2.996 (5000 × 1.175 amenaza × 0.58 erosión) — los tres multiplicadores correctos.
+- **Modal del draft de doctrinas EN VIVO** (B3): tras «Volver al Hub» apareció
+  «El Senado premia tu triunfo» con 3 ofertas válidas (Resilience/Concordia blancas
+  + Lex Militaris roja — elegibles, no poseídas, nivel I). Pick de Lex Militaris →
+  entra en Collection («1 available»), modal se cierra, 4 slots intactos.
+- **Cadena de victoria completa**: +200 oro de botín (242 final), provincia
+  conquistada (Provinciae 2), **Gallia desbloqueada** (toast «Triunfo en Alesia»),
+  season 0→2, supplies devueltos al hub con warning de restock. Consola limpia.
+- **Sim ampliado**: configs de erosión alta confirman la estrategia (starter+weaken 7
+  → 20%; 4 línea+weaken 5 → 100%) — la identidad de Boudicca (erosionar) funciona.
+
+### Observaciones nuevas
+
+| # | Observación |
+|---|---|
+| B4 | Economía temprana: oro inicial 2-8 vs cohorte más barata 20-40g — antes de la 1ª campaña no se puede reclutar. El camino real del oro es el botín de campaña (quest fuerte +35, caravana +50, victoria +200, misión +50). Coherente como roguelite («saquea → construye → domina»), pero la 1ª campaña es necesariamente a pelo. Si se quiere suavizar: subir startingResources o abaratar militia |
+| B5 | El stat `charge 0` del roster inicial hace que la orden Charge no haga nada y se muestre igual (botón activo, daño 0). UX: ¿deshabilitar órdenes cuyo stat sea 0? |
 
 ### Validado en vivo esta iteración
 

@@ -46,7 +46,7 @@ function simulate(roster: ReturnType<typeof makeRoster>, playerSoldiers: number,
   return { winPct: Math.round((wins / N) * 100), avgRounds: Math.round(rounds / N) };
 }
 
-console.log(`ENEMY_BASE_SOLDIERS=${B.ENEMY_BASE_SOLDIERS} · ENEMY_DISCIPLINE=${B.ENEMY_DISCIPLINE} · archetype carthage\n`);
+console.log(`ENEMY_BASE_SOLDIERS=${B.ENEMY_BASE_SOLDIERS} · archetype carthage (disc/stats live on the archetype)\n`);
 const ROSTERS: Record<string, string[]> = {
   'starter (2 hastati)': ['hastati', 'hastati'],
   'starter+2 line (h,h,principes,triarii)': ['hastati', 'hastati', 'principes', 'triarii'],
@@ -57,7 +57,7 @@ console.log('roster                                        player  threat weaken
 for (const [label, ids] of Object.entries(ROSTERS)) {
   const roster = makeRoster(ids);
   const soldiers = ids.length * 1000 + 1400; // cohort HP + typical embark bonuses
-  for (const [threat, weaken] of [[0, 0], [2, 2], [3, 2]] as const) {
+  for (const [threat, weaken] of [[0, 0], [2, 2], [3, 2], [2, 5], [3, 7]] as const) {
     const r = simulate(roster, soldiers, threat, weaken);
     console.log(`${label.padEnd(45)} ${String(soldiers).padEnd(7)} ${String(threat).padEnd(6)} ${String(weaken).padEnd(6)} | ${String(r.winPct).padStart(3)}%  ${r.avgRounds}`);
   }
