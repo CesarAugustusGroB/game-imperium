@@ -53,10 +53,16 @@ export function createBattleFx(canvas: HTMLCanvasElement): BattleFx {
     x: Math.random(), y: Math.random(), vx: rnd(-0.0006, 0.0006), vy: rnd(-0.0003, 0.0003), r: rnd(0.5, 2.2), a: rnd(0.05, 0.25),
   }));
 
+  // Logical (CSS-pixel) size; the backing store is scaled by DPR so the
+  // canvas stays sharp on hi-DPI screens. All drawing uses W/H coordinates.
+  let W = 320, H = 180, DPR = 1;
   function resize(): void {
     const r = canvas.getBoundingClientRect();
-    canvas.width = Math.max(320, Math.round(r.width));
-    canvas.height = Math.max(180, Math.round(r.height));
+    DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    W = Math.max(320, Math.round(r.width));
+    H = Math.max(180, Math.round(r.height));
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
   }
   function setState(s: BattleState): void { state = s; }
 
@@ -105,7 +111,7 @@ export function createBattleFx(canvas: HTMLCanvasElement): BattleFx {
 
   // ── Standards ──
   function drawStandard(side: Side): void {
-    const w = canvas.width, h = canvas.height, cy = h / 2; const roman = side === 'you';
+    const w = W, h = H, cy = h / 2; const roman = side === 'you';
     const x = squadX(side, w) + (roman ? -25 : 25);
     ctx.save(); ctx.translate(x, cy + 35); ctx.rotate(Math.sin(VT * 1.5) * 0.08);
     ctx.strokeStyle = '#5c4033'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -65); ctx.stroke();
@@ -144,7 +150,7 @@ export function createBattleFx(canvas: HTMLCanvasElement): BattleFx {
     ctx.beginPath(); ctx.moveTo(x, y + 1); ctx.lineTo(wx, y + 1 - (roman ? 0 : 6)); ctx.stroke();
   }
   function drawSquad(side: Side): void {
-    const w = canvas.width, h = canvas.height, cy = h / 2; const army = state![side]; const a = anim[side];
+    const w = W, h = H, cy = h / 2; const army = state![side]; const a = anim[side];
     const dir = side === 'you' ? 1 : -1; const base = squadX(side, w);
     const A = army.morale < 3 ? 2.8 : 1.2;
     const x = base + a.lunge * 1.5 * dir + a.recoil * -1.2 * dir;
@@ -209,7 +215,7 @@ export function createBattleFx(canvas: HTMLCanvasElement): BattleFx {
   function triggerVisualEffects(side: Side, key: string): void {
     if (!state) return;
     const o = ORDERS[key as keyof typeof ORDERS]; if (!o) return;
-    const w = canvas.width, cy = canvas.height / 2;
+    const w = W, cy = H / 2;
     const ax = squadX(side, w), dx = squadX(side === 'you' ? 'enemy' : 'you', w), mid = (ax + dx) / 2;
     if (o.sub === 'charge') { anim[side].lunge = 18; addParticles(mid, cy, 25, '#dfc282', 2.2); shake = Math.max(shake, 10); }
     else if (o.sub === 'harass') {
@@ -226,7 +232,7 @@ export function createBattleFx(canvas: HTMLCanvasElement): BattleFx {
   }
   function spawnDamageFloat(side: Side, amount: number): void {
     if (!state || amount <= 0) return;
-    const w = canvas.width, cy = canvas.height / 2;
+    const w = W, cy = H / 2;
     const x = side === 'you' ? battleLineX(w) - 130 : battleLineX(w) + 110;
     floats.push({ x, y: cy - 10, vy: -0.6, text: '-' + NF(amount), color: '#e74c3c', life: 60, max: 60 });
   }
@@ -234,8 +240,8 @@ export function createBattleFx(canvas: HTMLCanvasElement): BattleFx {
   // ── Loop (pipeline order per spec) ──
   function loop(): void {
     raf = requestAnimationFrame(loop);
-    const w = canvas.width, h = canvas.height; VT += 0.05;
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, w, h);
+    const w = W, h = H; VT += 0.05;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, w, h);
     if (!state) { ctx.fillStyle = '#07050a'; ctx.fillRect(0, 0, w, h); return; }
     ctx.save();
     if (shake > 0) { ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake); shake *= 0.9; if (shake < 0.3) shake = 0; }

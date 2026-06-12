@@ -57,3 +57,37 @@ Zonas barridas: capa de cartas/quests/misiones de Iter Belli, simulación provin
 - **Capa de cartas**: vocabulario CardEffects completo, sin no-ops; elegibilidad,
   expiry, gambles, commitments y firma correctos contra sistema-de-eventos.html.
 - **`startingResources` de comandantes**: llegan correctamente al run.
+
+## Iteración 3 — 2026-06-12
+
+Zonas barridas: UI profunda de batalla/campaña (BattleCanvas/battle-fx/deployment/
+DecretaBar/Itinerary), stores nunca auditados (events, npc-factions, governors,
+features), pasada transversal de exports muertos/TODOs/casts.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 9 | El canvas de batalla se veía borroso en pantallas hi-DPI: `resize()` usaba píxeles CSS sin escalar el backing store | dims lógicas W/H + backing store ×DPR (cap 2) + `setTransform(DPR,…)` en el frame loop | battle-fx.ts |
+| 10 | `Itinerary` renderizaba Fragments en un map sin `key` | `<Fragment key>` | Itinerary.tsx |
+
+### Dudosos — NO implementados
+
+| # | Hallazgo | Por qué no |
+|---|---|---|
+| D10 | **Sistema de eventos = stub muerto**: `src/game/events/event-store.ts` no tiene definiciones de eventos ni callers vivos (solo meta-save lo serializa). ¿Implementar eventos o borrar el stub + campos de save? | Decisión de diseño del usuario: es scaffolding deliberado o deuda |
+| D11 | **Facciones NPC decorativas**: `initNPCFactions()` crea 4 facciones que nada modifica ni muestra; `setFactionRelation`/`adjustFactionStrength` sin callers; signals derivados sin lectores. ¿Sistema de diplomacia futuro o borrar? | Misma decisión de diseño que D10 |
+| D12 | `hireGovernor()` no valida que `provinceId` exista (la UI lo garantiza). Arreglarlo limpio exige inyectar un validador por el ciclo de imports province-store ↔ governor-store | Plumbing > beneficio; sin impacto en juego normal |
+| D13 | `legateSeedMods` (adapter.ts:47-51) identifica la cohorte más fuerte por identidad de referencia de `c.stats` — frágil si algún día se clonan cohortes | Funciona hoy; refactor a índice si se toca el adapter |
+| D14 | battle-fx no cancela los setTimeout de proyectiles en `stop()` (fugas solo si el modal se desmonta a mitad de animación, ~1s) | Impacto mínimo, ciclo de vida corto |
+| D15 | 15 constantes de asesores exportadas sin importadores directos (solo arman `STARTER_ADVISORS` en el mismo archivo) | Churn cosmético; advisor-data tiene WIP de codex |
+
+### Falsos positivos verificados (iteración 3 — no re-reportar)
+
+- **BattleCanvas «stale closure» en el useEffect de ronda**: el closure se recrea
+  por render; cuando `round` cambia, lee las props frescas de ESE render. Diseño
+  correcto («fire once per new round»).
+- **`fxRef.current?.setState(state)` en el cuerpo del render**: push imperativo
+  deliberado al motor canvas en cada render. No es bug.
+- **Balance/config**: cero constantes muertas restantes; dependencias de package.json
+  todas vivas; sin TODOs/FIXMEs pendientes en src/.
