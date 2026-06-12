@@ -2,9 +2,14 @@ import { battleSession, issueOrder } from '../../../../game/iterBelli/battle/con
 import { ORDERS } from '../../../../game/iterBelli/battle/orders';
 import { moraleMult } from '../../../../game/iterBelli/battle/resolver';
 import type { OrderDef, OrderKey, BattleArmy } from '../../../../game/iterBelli/battle/types';
+import { GameIcon, type GameIconName } from '../../../components/GameIcon';
 
 const SUB_LABEL: Record<string, string> = {
   push: 'Línea', charge: 'Carga', harass: 'Proyectiles', moral: 'Moral', move: 'Maniobra', siege: 'Asedio',
+};
+const SUB_ICON: Record<string, GameIconName> = {
+  push: 'stat-push', charge: 'stat-charge', harass: 'stat-harass',
+  moral: 'res-morale', move: 'stat-movement', siege: 'stat-siege',
 };
 
 /** Build the info chips for one order, given the army that would execute it. */
@@ -58,7 +63,10 @@ export function OrderBar() {
             onClick={() => issueOrder(key)}
           >
             <div class="ib-bm-order-head">
-              <span class="ib-bm-order-name">{o.name}</span>
+              <span class="ib-bm-order-name">
+                <GameIcon name={SUB_ICON[o.sub] ?? 'stat-push'} size="micro" style={{ marginRight: 4 }} />
+                {o.name}
+              </span>
               <span class={`ib-bm-order-sub sub-${o.sub}`}>{SUB_LABEL[o.sub] ?? o.sub}</span>
             </div>
             <div class="ib-bm-order-desc">{o.desc}</div>

@@ -8,6 +8,7 @@ import { FACTION_COLORS } from '../../../../game/core/commander';
 import { selectedCommander } from '../../../../game/core/game-state';
 import { iterBelliState } from '../../../../game/iterBelli/iter-belli-state';
 import { playSfx } from '../../../sound/sfx';
+import { GameIcon } from '../../../components/GameIcon';
 
 /** One decretum may be cast per battle; scrolls without a battle effect stay home. */
 export function DecretaBar() {
@@ -59,7 +60,7 @@ export function DecretaBar() {
                     : d.description}
                 onClick={() => { if (castBattleDecretum(d.id)) playSfx('ui_equip'); }}
               >
-                <div class="ib-bm-scroll-name">📜 {d.name}</div>
+                <div class="ib-bm-scroll-name"><GameIcon name="nav-decreta" size="micro" style={{ marginRight: 4 }} /> {d.name}</div>
                 <div class="ib-bm-scroll-meta">{costLabel || 'free'} · {d.rarity}</div>
               </button>
             );

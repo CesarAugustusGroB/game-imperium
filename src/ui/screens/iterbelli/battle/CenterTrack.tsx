@@ -1,6 +1,7 @@
 import type { BattleState, OrderKey } from '../../../../game/iterBelli/battle/types';
 import { ORDERS } from '../../../../game/iterBelli/battle/orders';
 import { centerTier } from '../../../../game/iterBelli/battle/resolver';
+import { GameIcon } from '../../../components/GameIcon';
 
 /**
  * Center column of the battle arena: round counter, the two dice of the last
@@ -31,7 +32,7 @@ export function CenterTrack({ state, lastOrders }: {
       </div>
 
       <div class="ib-bm-centerbox" title={state.center.desc}>
-        <div class="ib-bm-center-name">⚑ {state.center.name}</div>
+        <div class="ib-bm-center-name"><GameIcon name="op-final-battle" size="micro" style={{ marginRight: 4 }} />{state.center.name}</div>
         <div class="ib-bm-center-desc">{state.center.desc}</div>
         <div class="ib-bm-track">
           <div class="ib-bm-track-zone you" />

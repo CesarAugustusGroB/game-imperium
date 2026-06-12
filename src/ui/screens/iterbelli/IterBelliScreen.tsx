@@ -169,7 +169,8 @@ if (typeof document !== 'undefined') {
   .ib-bm-flag { font-size: var(--imp-text-xs); padding: 1px 6px; border-radius: 8px; background: rgba(0,0,0,0.3); color: var(--imp-text-mid); border: 1px solid var(--imp-gold-faint); }
   .ib-bm-flag.danger { color: var(--imp-crimson); border-color: var(--imp-danger); }
   .ib-bm-stat-row { display: flex; justify-content: space-between; font-size: var(--imp-text-sm); color: var(--imp-text-mid); margin-bottom: 2px; }
-  .ib-bm-stat-row.stats { margin-top: auto; padding-top: 4px; border-top: 1px solid var(--imp-gold-faint); font-family: var(--imp-font-mono); font-size: 11px; justify-content: center; }
+  .ib-bm-stat-row.stats { margin-top: auto; padding-top: 4px; border-top: 1px solid var(--imp-gold-faint); font-family: var(--imp-font-mono); font-size: 11px; justify-content: center; gap: 10px; }
+  .ib-bm-pstat { display: inline-flex; align-items: center; gap: 3px; color: var(--imp-text-mid); }
   .ib-bm-bar { height: 6px; border-radius: 3px; background: rgba(0,0,0,0.4); overflow: hidden; }
   .ib-bm-bar-fill { height: 100%; background: var(--imp-gold); transition: width var(--duration-slow) var(--ease-default); }
   .ib-bm-bar-fill.morale { background: var(--imp-lapis); }

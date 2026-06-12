@@ -1,6 +1,15 @@
 import type { BattleArmy } from '../../../../game/iterBelli/battle/types';
+import { GameIcon } from '../../../components/GameIcon';
 
 function moraleLabel(m: number) { return m <= 0 ? 'Broken' : m < 3 ? 'Wavering' : m < 6 ? 'Shaken' : 'Steady'; }
+
+const POWER_STATS = [
+  { key: 'charge', icon: 'stat-charge', label: 'Carga' },
+  { key: 'harass', icon: 'stat-harass', label: 'Proyectiles' },
+  { key: 'push', icon: 'stat-push', label: 'Línea' },
+  { key: 'siege', icon: 'stat-siege', label: 'Asedio' },
+  { key: 'movement', icon: 'stat-movement', label: 'Maniobra' },
+] as const;
 
 export function ArmyStatus({ army }: { army: BattleArmy }) {
   const hpPct = Math.max(0, Math.min(100, (army.hp / army.maxHp) * 100));
@@ -15,7 +24,12 @@ export function ArmyStatus({ army }: { army: BattleArmy }) {
       <div class="ib-bm-bar"><div class="ib-bm-bar-fill morale" style={{ width: `${morPct}%` }} /></div>
       <div class="ib-bm-stat-row"><span>Ammunition</span><span>{army.ammo} / {army.maxAmmo}</span></div>
       <div class="ib-bm-stat-row stats">
-        <span title="Carga · Proyectiles · Línea · Asedio · Maniobra">⚔ {army.stats.charge} · ➶ {army.stats.harass} · 🛡 {army.stats.push} · 🏰 {army.stats.siege} · 🐎 {army.stats.movement}</span>
+        {POWER_STATS.map((s) => (
+          <span key={s.key} class="ib-bm-pstat" title={s.label}>
+            <GameIcon name={s.icon} size="micro" />
+            {army.stats[s.key]}
+          </span>
+        ))}
       </div>
     </div>
   );

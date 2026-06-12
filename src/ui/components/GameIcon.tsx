@@ -41,6 +41,12 @@ import catCrisis from '../../assets/ui/icons/cat-crisis.png';
 // ── Operation card quest / final battle ──
 import opQuest from '../../assets/ui/icons/op-quest.png';
 import opFinalBattle from '../../assets/ui/icons/op-final-battle.png';
+// ── Battle power stats ──
+import statCharge from '../../assets/ui/icons/stat-charge-generated.png';
+import statHarass from '../../assets/ui/icons/stat-harass-generated.png';
+import statPush from '../../assets/ui/icons/stat-push-generated.png';
+import statSiege from '../../assets/ui/icons/stat-siege-generated.png';
+import statMovement from '../../assets/ui/icons/stat-movement-generated.png';
 
 /** Single source of truth: icon name → bundled asset URL. */
 export const GAME_ICONS = {
@@ -77,6 +83,11 @@ export const GAME_ICONS = {
   'cat-crisis': catCrisis,
   'op-quest': opQuest,
   'op-final-battle': opFinalBattle,
+  'stat-charge': statCharge,
+  'stat-harass': statHarass,
+  'stat-push': statPush,
+  'stat-siege': statSiege,
+  'stat-movement': statMovement,
 } as const;
 
 export type GameIconName = keyof typeof GAME_ICONS;
