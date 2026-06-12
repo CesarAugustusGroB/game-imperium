@@ -38,7 +38,8 @@ For generated UI icons and small game assets, follow `docs/icon-art-direction.md
 - `npm run build` — production build
 - `npx tsc --noEmit` — type check
 - `node tools/gen-icon-gallery.mjs` — regenerate `iconos.html` icon catalog
-- `npx tsx tools/verify-*.ts` — standalone verification scripts for game systems (saves, doctrines, quests…)
+- `npm run verify` — run ALL tools/verify-*.ts system checks (use this, not cherry-picked scripts: they rot silently when unrun)
+- `npx tsx tools/verify-*.ts` — a single standalone verification script (saves, doctrines, quests…)
 
 ## Project Structure
 - `src/game/core/` — commander, game-state, meta-save, resources (gold/iuniores/season; faith/influence/momentum were removed entirely)

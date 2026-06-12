@@ -120,3 +120,28 @@ el audio, GoldDust, keyboard-nav y tokens están todos correctos).
 El verify script roto demostró que **los verify-\*.ts no corren en CI ni en cada
 commit** — se pudren en silencio. Considerar: correr TODOS los verify scripts en
 cada iteración del loop (no solo los «relevantes»), o un `npm run verify` agregado.
+
+## Iteración 5 — 2026-06-12
+
+Foco: ejecutar la lección de la it. 4 — correr los 16 verify scripts reveló que
+**3 estaban rotos** (nadie los corría). Reparados todos + agregador nuevo.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 15 | `npm run verify` no existía — los verify scripts solo corrían si alguien se acordaba | runner `tools/run-all-verify.ts` (corre los 16, falla con resumen) + script npm + CLAUDE.md actualizado | run-all-verify.ts, package.json, CLAUDE.md |
+| 16 | `verify-advisor-market.ts` crasheaba: importaba `advisorPool`/`hireAdvisorFromMarket` (API eliminada — el pool ya no existe, solo market+slots) | reescrito contra el API vivo (unseat→market, hire a slot vacío, refuse ocupado, fire con fórmula de venta) | verify-advisor-market.ts |
+| 17 | `verify-hub-replenishment.ts` fallaba: expectativas del balance viejo (triarii ya tiene 1000 HP, no ~1300) — **la fórmula vive bien**, el script estaba desactualizado; también pasaba `faith/influence/momentum` a initResources | expectativas recalculadas (350/500, hpRestored 340) y recursos muertos fuera | verify-hub-replenishment.ts |
+| 18 | `verify-advisor-effects.ts` fallaba: esperaba «first seat = mission only», pero el comportamiento vivo y coherente (código + EmbarkCard + descripción del advisor) es misión + pasiva | expectativa actualizada (Consul −1 threat sí cuenta) | verify-advisor-effects.ts |
+
+### Dudosos — NO implementados
+
+| # | Hallazgo | Por qué no |
+|---|---|---|
+| D19 | `fireAdvisor`/`sellDoctrine` comentan «adds gold directly», pero `addResource` aplica los modificadores de ingreso (loot-bonus/Trade) también a las VENTAS — vender con Raider sentado da ~15% extra. ¿Intencional? Probablemente no, pero es céntimos | Decisión de balance; tocaría addResource o los callers de venta |
+
+### Pendiente para la próxima iteración
+
+- **Deep-run de campaña con Playwright**: embark → cartas → batalla decisiva →
+  victoria → **modal del draft de doctrinas en vivo** (aún no visto renderizado).

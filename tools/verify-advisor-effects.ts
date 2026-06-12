@@ -28,11 +28,13 @@ const offenders = STARTER_ADVISORS.flatMap((a: Advisor) =>
     && deprecated.includes((t.passive as { resource: string }).resource)).map(() => a.id));
 check('no advisor uses a deprecated resource-per-spoke', offenders.length === 0);
 
-// computeConsiliumSetup: first seat = mission only; others sum.
+// computeConsiliumSetup: the first seat picks the mission AND keeps its passive
+// (the advisor card promises its passive regardless of seat — the embark
+// summary in EmbarkCard renders exactly this sum, so they stay coherent).
 const t = <T extends Advisor>(a: T, tier: 1 | 2 | 3): T => ({ ...a, currentTier: tier });
 const council = [t(ADVISOR_CONSUL, 1), t(ADVISOR_SIEGE_MASTER, 1), t(ADVISOR_ZEALOT, 1)];
 const setup = computeConsiliumSetup(council);
-check('first seat sets mission only (no threat from Consul)', setup.threat === 0 && setup.missionId !== null);
+check('first seat sets the mission and keeps its passive (Consul −1 threat)', setup.threat === 1 && setup.missionId !== null);
 check('Siege T1 contributes enemyWeaken 1', setup.enemyWeaken === 1);
 check('Zealot T1 contributes soldiers 250', setup.soldiers === 250);
 

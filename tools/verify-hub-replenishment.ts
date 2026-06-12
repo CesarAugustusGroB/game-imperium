@@ -32,12 +32,14 @@ const preview = previewHubReplenishment(
   700,
 );
 
+// Costs follow round(missingHp × 1000 / maxHp); both hastati and triarii sit
+// at 1000 max HP under the current cohort balance. Cheapest heals first.
 assert(preview.perCohort.length === 3, 'Hub preview should exclude mercenaries');
-assert(preview.perCohort[0].iunioresToFullHeal === 10, '99% HP cohort should cost exactly 10 iuniores');
-assert(preview.perCohort[1].iunioresToFullHeal === 500, '50% HP / 1000 max cohort should cost exactly 500 iuniores');
-assert(preview.perCohort[2].iunioresToFullHeal === 500, '50% HP / 2000 max cohort should cost exactly 500 iuniores');
+assert(preview.perCohort[0].iunioresToFullHeal === 10, '990/1000 HP cohort should cost exactly 10 iuniores');
+assert(preview.perCohort[1].iunioresToFullHeal === 350, '650/1000 HP cohort should cost exactly 350 iuniores');
+assert(preview.perCohort[2].iunioresToFullHeal === 500, '500/1000 HP cohort should cost exactly 500 iuniores');
 assert(preview.iunioresSpent === 700, 'Bulk preview should spend the entire available pool when demand exceeds it');
-assert(preview.perCohort[2].hpRestored === 247, 'Bulk preview should partially heal the next cheapest cohort when iuniores runs dry');
+assert(preview.perCohort[2].hpRestored === 340, 'Bulk preview should partially heal the last cohort when iuniores runs dry (700 − 10 − 350)');
 assert(preview.nextCohorts[3].currentHp === 250, 'Mercenary cohorts should remain unchanged in hub preview');
 
 preparedArmy.value = {
@@ -57,7 +59,7 @@ preparedArmy.value = {
   lastRoll: 0,
 };
 
-initResources({ gold: 0, faith: 0, influence: 0, momentum: 0, iuniores: 300 });
+initResources({ gold: 0, iuniores: 300 });
 
 const healedSingle = healCohortInRoster(2);
 assert(healedSingle !== null, 'Single-cohort heal should succeed for a damaged citizen cohort');
@@ -74,7 +76,7 @@ assert(healCohortInRoster(99) === null, 'Out-of-range index should return null')
 assert(healCohortInRoster(1) === null, 'Healing a mercenary by index should return null (gold-only path)');
 assert(iuniores.value === 0, 'Guarded heal calls must not touch the iuniores pool');
 
-initResources({ gold: 0, faith: 0, influence: 0, momentum: 0, iuniores: 500 });
+initResources({ gold: 0, iuniores: 500 });
 const hubSummary = replenishHubRoster();
 assert(hubSummary !== null, 'Bulk hub replenishment should return a summary when a roster exists');
 assert(iuniores.value === 0, 'Bulk hub replenishment should spend the funded iuniores');
