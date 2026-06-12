@@ -192,6 +192,17 @@ function refillPool(): void {
       S.pool.push(c);
     }
   }
+  // Pity rule: the march must always be possible. Permanent (expiry 99)
+  // non-movement cards can clog all pool slots, starving Movimiento draws
+  // for days while the campaign clock runs — if the refilled pool holds no
+  // Movimiento card, force one in as an extra slot.
+  if (!S.pool.some((c) => c.def.category === 'Movimiento')) {
+    const movers = eligibleCards().filter((c) => c.category === 'Movimiento');
+    if (movers.length > 0) {
+      const pick = movers[Math.floor(Math.random() * movers.length)];
+      S.pool.push({ instanceId: S.cardIdCounter++, def: pick, timer: pick.expiry });
+    }
+  }
 }
 
 function injectCrises(): void {

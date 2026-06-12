@@ -145,3 +145,32 @@ Foco: ejecutar la lección de la it. 4 — correr los 16 verify scripts reveló 
 
 - **Deep-run de campaña con Playwright**: embark → cartas → batalla decisiva →
   victoria → **modal del draft de doctrinas en vivo** (aún no visto renderizado).
+
+## Iteración 6 — 2026-06-12
+
+Foco: el deep-run de campaña con Playwright (jugada completa: 10 días de marcha,
+batalla decisiva, derrota, retirada fallida, vuelta al hub). Dos hallazgos gordos
+que solo el juego en vivo podía revelar.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 19 | **Sequía de Movimiento**: el refill (4 huecos, sin duplicados) puede llenarse de cartas permanentes sin ninguna de Movimiento — 5 robos seguidos sin poder avanzar con el reloj corriendo; la única salida era quemar días. Vivido en partida: día 6 aún en Frontera, misión de 8 días muerta | **Regla de piedad** en `refillPool`: si el pool rellenado no tiene Movimiento, se fuerza una elegible como hueco extra. Validada en vivo (Marcha cautelosa apareció al turno siguiente). Doc de eventos sincronizado | iter-belli-state.ts, sistema-de-eventos.html |
+| 20 | **Campaña restaurada inalcanzable**: al recargar con campaña en vuelo, el save la restaura pero ningún elemento de la UI consume `iterBelliActive` — el Forum mostraba «Embark», que re-sembraría una campaña nueva encima. Solo se podía volver navegando a mano a #iterbelli | EmbarkCard: con campaña activa el botón pasa a «Reanudar campaña» y solo navega (sin re-seed); el gate de council/cohorts no aplica al reanudar | EmbarkCard.tsx |
+
+### Observaciones de balance (NO tocadas — para decidir)
+
+| # | Observación |
+|---|---|
+| B1 | **La batalla de Sagunto parece muy cuesta arriba**: 3.900 (2 cohortes default + leva +500) vs 6.360 (threat 3 ya escalando vía fix G1). Disc enemiga 6 vs 3, armor 20+fort 15 vs 5. Jugando decente (Mars +60%, hold-vs-charge con recoils de 446-509) acabé 844 vs 3.215. Puede ser intencional (hay que recrutar más cohortes antes de embarcar) — pero el flujo por defecto (2 cohortes) pierde claramente |
+| B2 | Las 2 quests rojas del Consilium comparten plantilla → dos cartas «Asalto al fuerte» idénticas en mesa a la vez (confuso, distinta ventana). Cosmético |
+| B3 | El modal del draft de doctrinas sigue sin verse renderizado en vivo (requiere victoria). Lógica cubierta por 9 tests; riesgo de render bajo |
+
+### Validado en vivo esta iteración
+
+- Fix G1 (threat escala al enemigo decisivo): 6.360 = base × (1+3/20) × (1−2×0.07) ✓
+- Doctrinas rojas ×2 → doble línea «erosionado (+1)» en Furia gala (stack por slot, por diseño)
+- Marcha nocturna (gamble 60%), expiry de compromisos con penalización, quest fallida
+  (+2 amenaza), retirada fallida (check 5<11), rout por moral 0, derrota → EndgameCard
+  → hub sin draft (correcto), consola limpia de punta a punta

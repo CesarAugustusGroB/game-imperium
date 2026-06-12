@@ -4,7 +4,7 @@ import { councilSlots, plannedCampaignDuration, canEmbarkFromCouncil } from '../
 import { preparedArmy, preparedLegate } from '../../../../game/progression/strategic-store';
 import { getResource } from '../../../../game/core/resources';
 import { selectedCommander } from '../../../../game/core/game-state';
-import { startIterBelliCampaign, computeStartingDiscipline } from '../../../../game/iterBelli/iter-belli-state';
+import { startIterBelliCampaign, computeStartingDiscipline, iterBelliActive } from '../../../../game/iterBelli/iter-belli-state';
 import {
   getActiveScenario, getScenarioById, setActiveScenarioById,
   unlockedScenarios, SCENARIOS,
@@ -61,10 +61,13 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
   const doctrinePreview = [...new Set(doctrineModifiers.map((m) => m.label))].join(' | ');
 
   const campaignTitle = `Campaña — ${activeScenario.enemy.name}`;
+  // A restored save can hold a campaign in flight — the button must RESUME it,
+  // never re-seed a fresh one over it.
+  const campaignInFlight = iterBelliActive.value;
   // Council requirement + at least one cohort: an empty army would seed a
   // 0-soldier campaign that is instantly unwinnable.
   const hasCohorts = (army?.cohorts?.length ?? 0) > 0;
-  const canEmbark = canEmbarkFromCouncil() && hasCohorts;
+  const canEmbark = campaignInFlight || (canEmbarkFromCouncil() && hasCohorts);
 
   // Supply warning: warn if the Hub stock is below the campaign's upkeep budget.
   const suppliesHave = army?.supplies ?? SUPPLIES_STARTING_STOCK;
@@ -74,6 +77,10 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
   function handleEmbark() {
     if (!canEmbark) return;
     playSfx('ui_click');
+    if (campaignInFlight) {
+      navigateToIterBelli();
+      return;
+    }
     // Lock in the chosen scenario so the campaign + endgame read the right one.
     setActiveScenarioById(activeScenarioId);
     // Hybrid seed: soldiers from the prepared army's effective HP, gold from the run.
@@ -363,7 +370,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
           }}
         >
           {canEmbark && <span class="imp-embark-sheen" aria-hidden="true" />}
-          <span style={{ position: 'relative', zIndex: 1 }}>Embark</span>
+          <span style={{ position: 'relative', zIndex: 1 }}>{campaignInFlight ? 'Reanudar campaña' : 'Embark'}</span>
         </button>
       </div>
     </BentoCard>
