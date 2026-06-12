@@ -246,6 +246,31 @@ Foco: pestaña Exercitus (reclutamiento/arsenal/compras) + coherencia profunda d
   — doctrinas 4 slots, suministros −2/turno, los 5 power-stats, GDD.md histórico,
   iconos de stats ya en `iconos.html`, Options con controles reales. Solo el typo #25.
 
+## Iteración 11 — 2026-06-12
+
+Foco: **self-review adversarial** del código de batalla recién añadido (it. 7-8) +
+DeploymentPanel/ConsiliumTab sin barrer.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 26 | El hero del Consilium mostraba un badge de **coste en oro también para asesores ya sentados** (con el precio base sin descuento) — confunde: ya están contratados, no hay nada que pagar. Para candidatos sí debe verse el coste de contratación (descontado) | `cost = isSeated ? null : getDiscountedAdvisorCost(...)` + render condicional del badge. Verificado en vivo: el sentado (Centurion Varro) ya no muestra «60» | ConsiliumTab.tsx |
+
+### Self-review limpio (verificado contra engine/resolver — sin bugs)
+
+- **CenterTrack.tsx**: marcador `(100-control)/200×100` mapea +100→izq / −100→der
+  correcto; thresholds ±25 coinciden con `centerTier`; dado `6+tier` = `yFaces` del
+  engine; null-handling y chip de bonus (>0) correctos.
+- **OrderBar.tsx**: cada chip refleja el campo real de ORDERS; `stat×mult` = cómputo
+  del resolver; lock de charge-0 correcto; fórmula de prueba de movimiento = resolveMove.
+- **ArmyStatus.tsx**, **GameIcon.tsx** (5 iconos stat), **iter-belli-save.ts**
+  (re-inyección de carta decisiva con triple guarda) — todos limpios.
+- **DeploymentPanel**: formaciones filtradas por disciplina+traits correctas, las 3
+  únicas gated por `TRAIT_TO_FORMATION_TRAIT`, fallback a battleLine sin dead-end.
+- **ConsiliumTab**: `computeConsiliumSetup`/`computeSecondaryQuests` (regla
+  first-seat-mission) bien reflejados; el hire de candidatos ya usaba el coste descontado.
+
 ### Validado en vivo esta iteración
 
 - Fix G1 (threat escala al enemigo decisivo): 6.360 = base × (1+3/20) × (1−2×0.07) ✓

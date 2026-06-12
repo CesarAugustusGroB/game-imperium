@@ -327,7 +327,10 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
     ? SLOT_LABELS[slotIndex ?? 0] ?? 'Seated Advisor'
     : 'Political Candidate';
   const isSeated = source === 'seat';
-  const cost = isSeated ? advisor.cost : getDiscountedAdvisorCost(advisor);
+  // Candidates show the discounted hire cost; a seated advisor is already
+  // hired, so no cost badge (showing the base price misled players into
+  // thinking they owed it again).
+  const cost = isSeated ? null : getDiscountedAdvisorCost(advisor);
   const tier = advisor.currentTier;
 
   return (
@@ -403,16 +406,18 @@ function AdvisorHero({ selection, onDismiss }: AdvisorHeroProps) {
               }}>
                 {advisor.name}
               </h2>
-              <div style={{
-                flex: '0 0 auto', marginBottom: 'clamp(5px, 0.7vw, 11px)',
-                display: 'inline-flex', alignItems: 'center',
-                padding: '7px 13px', border: '1px solid var(--imp-gold-dim)', borderRadius: 3,
-                background: 'linear-gradient(180deg, rgba(26, 23, 38, 0.9), rgba(7, 5, 12, 0.92))',
-                boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.55)',
-                color: 'var(--imp-gold-hi)', fontFamily: 'var(--imp-font-mono)', fontSize: 17, fontWeight: 700,
-              }}>
-                <ResourceAmount type="gold" amount={cost} iconSize="panel" />
-              </div>
+              {cost !== null && (
+                <div style={{
+                  flex: '0 0 auto', marginBottom: 'clamp(5px, 0.7vw, 11px)',
+                  display: 'inline-flex', alignItems: 'center',
+                  padding: '7px 13px', border: '1px solid var(--imp-gold-dim)', borderRadius: 3,
+                  background: 'linear-gradient(180deg, rgba(26, 23, 38, 0.9), rgba(7, 5, 12, 0.92))',
+                  boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.55)',
+                  color: 'var(--imp-gold-hi)', fontFamily: 'var(--imp-font-mono)', fontSize: 17, fontWeight: 700,
+                }}>
+                  <ResourceAmount type="gold" amount={cost} iconSize="panel" />
+                </div>
+              )}
             </div>
 
             <p style={{
