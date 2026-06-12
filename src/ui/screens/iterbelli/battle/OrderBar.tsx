@@ -39,6 +39,8 @@ function lockReason(o: OrderDef, you: BattleArmy, ms: number): string | null {
   if (you.discipline < o.disc) return `Requiere disciplina ${o.disc} (tienes ${you.discipline})`;
   if (o.ammo && you.ammo < o.ammo) return `Munición insuficiente (${you.ammo}/${o.ammo})`;
   if (ms < 1 && (o.reckless || o.disc >= 6) && !(o.sMorale && o.sMorale > 0)) return 'La moral es demasiado baja para esta orden';
+  // A charge with charge 0 is strictly harmful: zero impact, full recoil.
+  if (o.sub === 'charge' && you.stats.charge === 0) return 'Sin tropas de choque (carga 0) — solo recibirías el contragolpe';
   return null;
 }
 

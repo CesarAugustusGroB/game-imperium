@@ -79,7 +79,7 @@ export const ENEMY_ARCHETYPES: Record<string, EnemyArchetype> = {
     stats:{charge:8,harass:6,push:9,siege:3,movement:8}, armorPct:ARMORS.bronze, armorName:'Bronze', ammo:26, fortPct:10, fortName:'Camp',
     desc:'Hannibal’s combined-arms host — disciplined, mobile, well-supplied, dug in.' },
   gauls:     { name:'Gallic Warband', formation:'openOrder', hp:11000, morale:10, disc:3,
-    stats:{charge:20,harass:4,push:8,siege:2,movement:9}, armorPct:ARMORS.copper, armorName:'Copper', ammo:14, fortPct:0,
+    stats:{charge:14,harass:4,push:6,siege:2,movement:9}, armorPct:ARMORS.copper, armorName:'Copper', ammo:14, fortPct:0,
     desc:'Furious chargers, no discipline, no armor.' },
   iberians:  { name:'Iberian Caetrati', formation:'openOrder', hp:10000, morale:10, disc:6,
     stats:{charge:14,harass:16,push:12,siege:3,movement:16}, armorPct:ARMORS.bronze, armorName:'Bronze', ammo:42, fortPct:0,

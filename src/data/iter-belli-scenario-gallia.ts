@@ -64,8 +64,11 @@ export const GALLIA: CampaignScenario = {
   enemy: {
     name: 'Vercingétorix',
     doctrine: 'Tribal',
-    baseSoldiers: 9000,
-    minSoldiers: 2500,
+    // Sim-tuned (tools/sim-battle-balance.ts): a veteran 6-cohort army should
+    // win more often than not; the gauls' identity stays "charge-bomb" — the
+    // counter is bracing their charges, not out-statting them.
+    baseSoldiers: 6500,
+    minSoldiers: 2200,
     archetypeKey: 'gauls',
   },
   narrative: {

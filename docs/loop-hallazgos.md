@@ -195,7 +195,22 @@ Foco: validar en vivo el retuning de Sagunto y cerrar B3 (modal del draft).
 | # | Observación |
 |---|---|
 | B4 | Economía temprana: oro inicial 2-8 vs cohorte más barata 20-40g — antes de la 1ª campaña no se puede reclutar. El camino real del oro es el botín de campaña (quest fuerte +35, caravana +50, victoria +200, misión +50). Coherente como roguelite («saquea → construye → domina»), pero la 1ª campaña es necesariamente a pelo. Si se quiere suavizar: subir startingResources o abaratar militia |
-| B5 | El stat `charge 0` del roster inicial hace que la orden Charge no haga nada y se muestre igual (botón activo, daño 0). UX: ¿deshabilitar órdenes cuyo stat sea 0? |
+| B5 | ✅ **CERRADO (it. 8)** — la orden Charge se bloquea con motivo claro cuando `charge = 0` (impacto 0 + recoil = estrictamente mala); desde el rediseño de la escena el chip rojo ya lo señalaba |
+
+## Iteración 8 — 2026-06-12 (última antes de pausar el loop)
+
+Foco: pasar **Gallia** por el simulador (nunca auditada) + cerrar B5.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 21 | **Gallia rota como lo estaba Sagunto**: gauls (charge 20, base 9.000) aniquilaban en 3-8 rounds — el roster completo VETERANO (disc 5, hierro) ganaba 2-7% sin erosión pesada | Sim-tuneado: base 9.000→6.500, min 2.500→2.200, gauls charge 20→14, push 8→6 (identidad charge-bomb intacta — el counter sigue siendo el brace). Curva resultante: full fresco 25/50/100%, full veterano 72/95/100%, 4-línea veterano 17/51/99% — segunda campaña más dura que la primera y que premia la progresión | iter-belli-scenario-gallia.ts, orders.ts, sim-battle-balance.ts |
+| 22 | B5: Charge clicable con `charge 0` (estrictamente dañina: impacto 0, recoil completo) | lock con motivo: «Sin tropas de choque (carga 0)» | OrderBar.tsx |
+
+El simulador ahora cubre ambos escenarios con perfiles fresh/veteran y queda como
+herramienta estándar para cualquier escenario futuro (iberians/garrison ya tienen
+arquetipo definido — pasar por el sim ANTES de cablearlos).
 
 ### Validado en vivo esta iteración
 

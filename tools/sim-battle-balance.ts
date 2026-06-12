@@ -29,15 +29,20 @@ function makeRoster(ids: string[]) {
   return ids.map((id) => createCohortInstance(getCohortById(id)!));
 }
 
-function simulate(roster: ReturnType<typeof makeRoster>, playerSoldiers: number, threat: number, weaken: number): { winPct: number; avgRounds: number } {
+interface SimEnemy { archetype: string; baseSoldiers: number; minSoldiers: number; }
+
+function simulate(
+  roster: ReturnType<typeof makeRoster>, playerSoldiers: number, threat: number, weaken: number,
+  enemyCfg: SimEnemy, playerCfg: { discipline?: number; armor?: 'copper' | 'bronze' | 'iron' } = {},
+): { winPct: number; avgRounds: number } {
   const N = 400;
   let wins = 0; let rounds = 0;
   for (let i = 0; i < N; i++) {
-    const snap = { soldiers: playerSoldiers, initialSoldiers: playerSoldiers, morale: 8, discipline: 3, ammunition: 24 };
-    const seed = buildPlayerSeed(snap, roster, null, FORMATIONS.battleLine, { material: 'copper' }, 24, false, 1);
+    const snap = { soldiers: playerSoldiers, initialSoldiers: playerSoldiers, morale: 8, discipline: playerCfg.discipline ?? 3, ammunition: 24 };
+    const seed = buildPlayerSeed(snap, roster, null, FORMATIONS.battleLine, { material: playerCfg.armor ?? 'copper' }, 24, false, 1);
     const enemyMult = (1 + threat / B.ENEMY_THREAT_DIVISOR) * (1 - weaken * B.ENEMY_WEAKEN_PER_POINT);
-    const enemySoldiers = Math.max(B.ENEMY_MIN_SOLDIERS, Math.round(B.ENEMY_BASE_SOLDIERS * enemyMult));
-    const enemy = buildEnemyArchetype('carthage', weaken, enemySoldiers);
+    const enemySoldiers = Math.max(enemyCfg.minSoldiers, Math.round(enemyCfg.baseSoldiers * enemyMult));
+    const enemy = buildEnemyArchetype(enemyCfg.archetype, weaken, enemySoldiers);
     const S = makeBattleState(makeBattleArmy('you', seed as never), makeBattleArmy('enemy', enemy as never), CENTERS.plain);
     while (!S.finished && S.round < 30) playRound(S, pickOrder(S), rng);
     if (S.victory === true) wins++;
@@ -46,19 +51,31 @@ function simulate(roster: ReturnType<typeof makeRoster>, playerSoldiers: number,
   return { winPct: Math.round((wins / N) * 100), avgRounds: Math.round(rounds / N) };
 }
 
-console.log(`ENEMY_BASE_SOLDIERS=${B.ENEMY_BASE_SOLDIERS} · archetype carthage (disc/stats live on the archetype)\n`);
 const ROSTERS: Record<string, string[]> = {
   'starter (2 hastati)': ['hastati', 'hastati'],
   'starter+2 line (h,h,principes,triarii)': ['hastati', 'hastati', 'principes', 'triarii'],
   'starter+2 mobile (h,h,velites,equites)': ['hastati', 'hastati', 'velites', 'equites'],
   'full (h,h,principes,triarii,velites,equites)': ['hastati', 'hastati', 'principes', 'triarii', 'velites', 'equites'],
 };
-console.log('roster                                        player  threat weaken | win%  rounds');
-for (const [label, ids] of Object.entries(ROSTERS)) {
-  const roster = makeRoster(ids);
-  const soldiers = ids.length * 1000 + 1400; // cohort HP + typical embark bonuses
-  for (const [threat, weaken] of [[0, 0], [2, 2], [3, 2], [2, 5], [3, 7]] as const) {
-    const r = simulate(roster, soldiers, threat, weaken);
-    console.log(`${label.padEnd(45)} ${String(soldiers).padEnd(7)} ${String(threat).padEnd(6)} ${String(weaken).padEnd(6)} | ${String(r.winPct).padStart(3)}%  ${r.avgRounds}`);
+
+const SCENARIO_ENEMIES: Record<string, SimEnemy & { playerCfg?: { discipline?: number; armor?: 'copper' | 'bronze' | 'iron' } }> = {
+  // Saguntum: first campaign, fresh player (disc 3, copper).
+  'SAGUNTUM (carthage)': { archetype: 'carthage', baseSoldiers: B.ENEMY_BASE_SOLDIERS, minSoldiers: B.ENEMY_MIN_SOLDIERS },
+  // Gallia: second campaign — the player arrives with first-victory loot
+  // (better armor, drilled discipline), so simulate that baseline too.
+  'GALLIA (gauls) · fresh': { archetype: 'gauls', baseSoldiers: 6500, minSoldiers: 2200 },
+  'GALLIA (gauls) · veteran (disc 5, iron)': { archetype: 'gauls', baseSoldiers: 6500, minSoldiers: 2200, playerCfg: { discipline: 5, armor: 'iron' } },
+};
+
+for (const [scenarioLabel, cfg] of Object.entries(SCENARIO_ENEMIES)) {
+  console.log(`\n═══ ${scenarioLabel} · base ${cfg.baseSoldiers} ═══`);
+  console.log('roster                                        player  threat weaken | win%  rounds');
+  for (const [label, ids] of Object.entries(ROSTERS)) {
+    const roster = makeRoster(ids);
+    const soldiers = ids.length * 1000 + 1400; // cohort HP + typical embark bonuses
+    for (const [threat, weaken] of [[0, 0], [2, 2], [2, 5]] as const) {
+      const r = simulate(roster, soldiers, threat, weaken, cfg, cfg.playerCfg ?? {});
+      console.log(`${label.padEnd(45)} ${String(soldiers).padEnd(7)} ${String(threat).padEnd(6)} ${String(weaken).padEnd(6)} | ${String(r.winPct).padStart(3)}%  ${r.avgRounds}`);
+    }
   }
 }
