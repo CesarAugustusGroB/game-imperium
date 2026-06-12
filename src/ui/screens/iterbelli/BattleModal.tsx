@@ -16,6 +16,7 @@ import { ENEMY_THREAT_DIVISOR, ENEMY_WEAKEN_PER_POINT } from '../../../game/iter
 import type { FormationKey } from '../../../game/iterBelli/battle/types';
 import { DeploymentPanel } from './battle/DeploymentPanel';
 import { ArmyStatus } from './battle/ArmyStatus';
+import { CenterTrack } from './battle/CenterTrack';
 import { OrderBar } from './battle/OrderBar';
 import { DecretaBar } from './battle/DecretaBar';
 import { BattleCanvas } from './battle/BattleCanvas';
@@ -77,7 +78,7 @@ export function BattleModal() {
             <BattleCanvas state={s.state} round={s.state.round} lastOrders={s.lastOrders} lastLosses={s.lastLosses} />
             <div class="ib-bm-arena">
               <ArmyStatus army={s.state.you} />
-              <div class="ib-bm-round"><div class="ib-bm-round-label">Round</div><div class="ib-bm-round-num">{s.state.round}</div></div>
+              <CenterTrack state={s.state} lastOrders={s.lastOrders} />
               <ArmyStatus army={s.state.enemy} />
             </div>
             {s.phase === 'fighting' ? (

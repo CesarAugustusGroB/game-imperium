@@ -583,6 +583,33 @@
       </div>
     </div></div>
     <div class="note"><b>Draft de victoria (vivo):</b> al ganar una campaña de Iter Belli, <code>returnToHub()</code> sortea hasta 3 doctrinas elegibles no poseídas; el Foro muestra este modal hasta que el jugador elige exactamente 1 (entra en colección a nivel I). El reparto inicial del run es solo el núcleo <code>starter</code> (2 por color). El draft pendiente persiste en el meta-save.</div>
+
+    <!-- Arena de batalla (rediseño vivo): dados + control del centro -->
+    <div class="screen" style="margin-top:14px"><div class="canvas" style="min-height:300px;display:flex;flex-direction:column;gap:10px">
+      <span class="lbl">Battle arena · ArmyStatus | CenterTrack | ArmyStatus</span>
+      <div class="row" style="gap:10px;align-items:stretch">
+        <div class="panel grow"><div class="ttl">Your legion</div><div class="sub">Battle Line · Disc 3 · Armor Copper 5%</div><div class="sub">Soldiers ▓▓▓▓░ · Morale ▓▓░░░ · Ammunition 24/24</div><div class="sub" style="border-top:1px dashed var(--ink-faint);margin-top:6px;padding-top:4px;text-align:center">⚔ 0 · ➶ 2 · 🛡 5 · 🏰 0 · 🐎 0</div></div>
+        <div class="panel" style="width:240px;text-align:center"><div class="ttl">Round N</div>
+          <div class="row" style="gap:8px;justify-content:center;margin:6px 0">
+            <div class="panel solid" style="padding:6px 10px"><div class="sub">YOU</div><div class="ttl" style="font-size:18px">4</div><div class="sub">d7 +1 · Advance</div></div>
+            <div class="panel solid" style="padding:6px 10px"><div class="sub">ENEMY</div><div class="ttl" style="font-size:18px">2</div><div class="sub">d6 · Charge</div></div>
+          </div>
+          <div class="sub">⚑ Open Plain — +25% charge to the holder</div>
+          <div style="height:8px;border:1px solid var(--ink-faint);border-radius:4px;position:relative;margin:4px 0"><div style="position:absolute;left:62%;top:-2px;bottom:-2px;width:4px;background:var(--ink)"></div></div>
+          <div class="row between"><span class="sub">You · d7</span><span class="sub">d6 · Enemy</span></div>
+          <div class="sub">◈ You hold the center</div>
+        </div>
+        <div class="panel grow"><div class="ttl">Carthaginian Host</div><div class="sub">Battle Line · Disc 5 · Armor Bronze 12% · Fort 10%</div><div class="sub">Soldiers ▓▓▓▓▓ · Morale ▓▓▓▓░ · Ammunition 26/26</div><div class="sub" style="border-top:1px dashed var(--ink-faint);margin-top:6px;padding-top:4px;text-align:center">⚔ 8 · ➶ 6 · 🛡 9 · 🏰 3 · 🐎 8</div></div>
+      </div>
+      <div class="panel"><div class="ttl">Order cards · tamaño uniforme + chips de info</div>
+        <div class="row wrapf" style="gap:8px;margin-top:4px">
+          <div class="panel solid" style="width:185px;min-height:90px"><div class="row between"><b style="font-size:11px">Advance</b><span class="sub">LÍNEA</span></div><div class="sub">Steady push…</div><div class="row wrapf" style="gap:3px;margin-top:6px"><span class="chip">push 5 ×0.55</span><span class="chip">disc 2</span></div></div>
+          <div class="panel solid" style="width:185px;min-height:90px"><div class="row between"><b style="font-size:11px">Skirmish</b><span class="sub">PROYECTILES</span></div><div class="sub">Safe ranged…</div><div class="row wrapf" style="gap:3px;margin-top:6px"><span class="chip">harass 2 ×0.85</span><span class="chip">−9 munición</span><span class="chip">−0.4 moral enem.</span><span class="chip">disc 2</span></div></div>
+          <div class="panel solid" style="width:185px;min-height:90px"><div class="row between"><b style="font-size:11px">Hold the Line</b><span class="sub">LÍNEA</span></div><div class="sub">Defensive brace…</div><div class="row wrapf" style="gap:3px;margin-top:6px"><span class="chip">push 5 ×0.3</span><span class="chip">defensa · −38% pánico</span><span class="chip">disc 2</span></div></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="note"><b>Arena de batalla (vivo, rediseño UX):</b> columna central <code>CenterTrack</code> con el round, los <b>dos dados del último round</b> (valor, tamaño de dado d6-d9 con bonus de centro, orden jugada; dorado=jugador, carmesí=enemigo) y la <b>barra de control del centro</b> (−100..+100, marcador animado, zonas de dominio a ±25, «You/Enemy hold the center · contested» y el dado que otorga a cada lado). Paneles de ejército simétricos con fila de power-stats (⚔➶🛡🏰🐎) comparable a simple vista. Cartas de orden en grid uniforme (minmax 190px, min-height común) con <b>chips</b>: stat×mult (rojo si el stat es 0), coste de munición, moral propia/enemiga, prueba de movimiento, defensa, disc requerida; al bloquearse muestran el motivo (🔒 disciplina/munición/moral).</div>
   </section>
 
   <!-- ============ DECRETA (overhaul propuesto) ============ -->

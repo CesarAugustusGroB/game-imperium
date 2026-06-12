@@ -13,7 +13,10 @@ export function ArmyStatus({ army }: { army: BattleArmy }) {
       <div class="ib-bm-bar"><div class="ib-bm-bar-fill" style={{ width: `${hpPct}%` }} /></div>
       <div class="ib-bm-stat-row"><span>Morale · {moraleLabel(army.morale)}</span><span>{army.morale.toFixed(1)} / 10</span></div>
       <div class="ib-bm-bar"><div class="ib-bm-bar-fill morale" style={{ width: `${morPct}%` }} /></div>
-      {army.side === 'you' && <div class="ib-bm-stat-row"><span>Ammunition</span><span>{army.ammo} / {army.maxAmmo}</span></div>}
+      <div class="ib-bm-stat-row"><span>Ammunition</span><span>{army.ammo} / {army.maxAmmo}</span></div>
+      <div class="ib-bm-stat-row stats">
+        <span title="Carga · Proyectiles · Línea · Asedio · Maniobra">⚔ {army.stats.charge} · ➶ {army.stats.harass} · 🛡 {army.stats.push} · 🏰 {army.stats.siege} · 🐎 {army.stats.movement}</span>
+      </div>
     </div>
   );
 }

@@ -132,10 +132,21 @@ export function restoreIterBelli(save: IterBelliSave, doctrineModifiers: Doctrin
     })
     .filter((c): c is CardInstance => c !== null);
 
+  // Battle sessions are not persisted. If the save was taken with the decisive
+  // battle open (assault card already consumed, campaign unfinished, army at
+  // the objective), the restored pool would be empty with Camp disabled — a
+  // softlock. Re-inject the decisive card so the assault can be relaunched.
+  let cardIdCounter = save.cardIdCounter;
+  const atObjective = scenario.locations[save.locationIdx]?.id === scenario.objectiveLocationId;
+  if (!save.finished && atObjective && !pool.some((c) => c.def.id === scenario.decisiveCardId)) {
+    const assault = CARD_DEFS.find((c) => c.id === scenario.decisiveCardId);
+    if (assault) pool.push({ instanceId: cardIdCounter++, def: assault, timer: 99 });
+  }
+
   const state: IterBelliState = {
     soldiers: save.soldiers, morale: save.morale, discipline: save.discipline, supplies: save.supplies,
     gold: save.gold, iuniores: save.iuniores, ammunition: save.ammunition, threat: save.threat, timeRemaining: save.timeRemaining,
-    turnNum: save.turnNum, locationIdx: save.locationIdx, cardIdCounter: save.cardIdCounter,
+    turnNum: save.turnNum, locationIdx: save.locationIdx, cardIdCounter,
     ambushDetected: save.ambushDetected, fortified: save.fortified, truceTurns: save.truceTurns,
     finished: save.finished, enemyWeaken: save.enemyWeaken, brokenCommitments: save.brokenCommitments,
     phase: save.phase, outcome: save.outcome, archetype: save.archetype,
