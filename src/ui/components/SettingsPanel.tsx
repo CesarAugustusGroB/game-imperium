@@ -1,6 +1,9 @@
 import type { JSX } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { OrnateFrame, OrnateHeader } from './OrnateFrame';
+import { sfxMuted, sfxVolume, persistAudioPrefs } from '../sound/sound';
+import { musicMuted, toggleMusicMute } from '../sound/music';
+import { playSfx } from '../sound/sfx';
 
 if (typeof document !== 'undefined' && !document.getElementById('settings-panel-styles')) {
   const el = document.createElement('style');
@@ -35,27 +38,66 @@ if (typeof document !== 'undefined' && !document.getElementById('settings-panel-
   document.head.appendChild(el);
 }
 
+const ROW_STYLE: JSX.CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
+  padding: '10px 14px', borderRadius: 8,
+  background: 'rgba(0,0,0,0.25)', border: '1px solid var(--color-border-subtle, rgba(212,168,67,0.2))',
+  fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary, #d8d2c4)',
+  cursor: 'pointer', width: '100%', textAlign: 'left', fontFamily: 'inherit',
+};
+
+function ToggleRow({ label, on, onToggle }: { label: string; on: boolean; onToggle: () => void }) {
+  return (
+    <button class="settings-toggle-row" style={ROW_STYLE} onClick={onToggle} role="switch" aria-checked={on}>
+      <span>{label}</span>
+      <span style={{
+        fontFamily: 'var(--imp-font-mono, monospace)', fontSize: 12, letterSpacing: '.08em',
+        color: on ? 'var(--color-gold-primary, #d4a843)' : 'var(--color-text-muted, #6f6757)',
+      }}>
+        {on ? 'ON' : 'OFF'}
+      </span>
+    </button>
+  );
+}
+
 export function SettingsPanel({ style }: { style?: JSX.CSSProperties }) {
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '14px',
+        gap: '10px',
         fontFamily: 'var(--font-family)',
         ...style,
       }}
     >
-      <p style={{
-        fontSize: 'var(--font-size-sm)',
-        color: 'var(--color-text-muted)',
-        lineHeight: 1.5,
-        margin: 0,
-        textAlign: 'center',
-        padding: '12px 0',
-      }}>
-        No options available.
-      </p>
+      <ToggleRow
+        label="Música"
+        on={!musicMuted.value}
+        onToggle={() => toggleMusicMute()}
+      />
+      <ToggleRow
+        label="Efectos de sonido"
+        on={!sfxMuted.value}
+        onToggle={() => { sfxMuted.value = !sfxMuted.value; persistAudioPrefs(); playSfx('ui_click'); }}
+      />
+      <div style={{ ...ROW_STYLE, cursor: 'default' }}>
+        <span>Volumen de efectos</span>
+        <input
+          type="range"
+          min={0.1}
+          max={1}
+          step={0.1}
+          value={sfxVolume.value}
+          aria-label="Volumen de efectos"
+          style={{ accentColor: 'var(--color-gold-primary, #d4a843)', width: 140 }}
+          onChange={(e) => {
+            sfxVolume.value = Number((e.target as HTMLInputElement).value);
+            persistAudioPrefs();
+            playSfx('ui_click');
+          }}
+        />
+      </div>
     </div>
   );
 }

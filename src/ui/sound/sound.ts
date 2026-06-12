@@ -9,5 +9,20 @@ export function getAudioContext(): AudioContext {
   return ctx;
 }
 
-export const sfxMuted = signal(false);
-export const sfxVolume = signal(0.7);
+function readStored(key: string): string | null {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+export const sfxMuted = signal(readStored('imperium.sfxMuted') === 'true');
+export const sfxVolume = signal((() => {
+  const v = Number(readStored('imperium.sfxVolume'));
+  return Number.isFinite(v) && v > 0 && v <= 1 ? v : 0.7;
+})());
+
+/** Persist the audio preferences (called by the Options panel on change). */
+export function persistAudioPrefs(): void {
+  try {
+    localStorage.setItem('imperium.sfxMuted', String(sfxMuted.value));
+    localStorage.setItem('imperium.sfxVolume', String(sfxVolume.value));
+  } catch { /* storage unavailable — session-only prefs */ }
+}

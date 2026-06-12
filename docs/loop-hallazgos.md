@@ -212,6 +212,19 @@ El simulador ahora cubre ambos escenarios con perfiles fresh/veteran y queda com
 herramienta estándar para cualquier escenario futuro (iberians/garrison ya tienen
 arquetipo definido — pasar por el sim ANTES de cablearlos).
 
+## Iteración 9 — 2026-06-12
+
+Foco: smoke-test de las pantallas de menú (Title/Options/Credits) en vivo.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 23 | **El modal de Options decía «No options available.»** — placeholder vacío pese a existir señales de audio (`musicMuted`/`sfxMuted`/`sfxVolume`) ya cableadas al motor de sonido pero sin UI que las tocara | `SettingsPanel` ahora expone 3 controles reales: toggle Música, toggle Efectos de sonido, slider de volumen; preferencias persistidas en localStorage (`persistAudioPrefs`) y rehidratadas al cargar | SettingsPanel.tsx, sound.ts |
+
+Validado en vivo: los 3 controles renderizan, el toggle de SFX es reactivo y
+escribe `imperium.sfxMuted` en localStorage. Credits ya funcionaba.
+
 ### Validado en vivo esta iteración
 
 - Fix G1 (threat escala al enemigo decisivo): 6.360 = base × (1+3/20) × (1−2×0.07) ✓
