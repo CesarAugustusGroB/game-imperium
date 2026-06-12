@@ -23,7 +23,7 @@ export function DoctrineDraftModal() {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 90,
+      position: 'fixed', inset: 0, zIndex: 300,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'rgba(10, 8, 16, 0.78)', backdropFilter: 'blur(3px)',
     }}>

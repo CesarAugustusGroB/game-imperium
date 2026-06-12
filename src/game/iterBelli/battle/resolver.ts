@@ -56,7 +56,9 @@ export function resolveOrder(
   }
 
   if (o.sub === 'harass') {
-    const dry = att.ammo <= 0;
+    // Dry also when the volley can't be fully paid — the UI locks this for the
+    // player, but the enemy AI can still order it with a near-empty quiver.
+    const dry = att.ammo <= 0 || att.ammo < (o.ammo ?? 0);
     att.ammo = Math.max(0, att.ammo - (o.ammo ?? 0));
     let dmg = mitigate(statVal * die * (o.mult ?? 0) * discBonus * ms * BAL.DMG_SCALE, def, o);
     if (dry) { dmg *= BAL.DRY_HARASS_MULT; eMoraleHit *= 0.3; }
@@ -119,7 +121,10 @@ function chargeAndMove(
     if (o.breakCenter && impact > recoil) S.control = clamp(S.control + (att.side === 'you' ? 1 : -1) * 32, -100, 100);
     const verdict = impact > recoil ? 'the charge lands' : (defBraced && !o.pierceBrace ? 'the defense halts it' : 'even exchange');
     log.push({ text:`${who} ${o.wedge ? 'drive the wedge' : 'charge'} → impact ${Math.round(impact)} / recoil ${Math.round(recoil)} — ${verdict}.`, kind: cls });
-    return { eMoraleHit: Math.max(0, eMoraleHit), log };
+    // A failed charge may return a negative hit: it offsets part of the
+    // defender's casualty-morale loss in applyMorale (which floors total
+    // loss at 0, so it can never become a morale gain).
+    return { eMoraleHit, log };
   }
 
   // move handled in Task 8

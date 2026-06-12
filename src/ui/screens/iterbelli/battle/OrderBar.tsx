@@ -1,8 +1,7 @@
 import { battleSession, issueOrder } from '../../../../game/iterBelli/battle/controller';
 import { ORDERS } from '../../../../game/iterBelli/battle/orders';
+import { moraleMult } from '../../../../game/iterBelli/battle/resolver';
 import type { OrderKey } from '../../../../game/iterBelli/battle/types';
-
-function moraleMult(m: number) { return m <= 0 ? 0 : m < 3 ? 0.6 : m < 6 ? 0.8 : 1; }
 
 export function OrderBar() {
   const s = battleSession.value;
