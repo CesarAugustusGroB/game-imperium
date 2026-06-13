@@ -2,7 +2,7 @@ import { signal } from '@preact/signals';
 import type { Advisor } from './advisor';
 import { getCurrentSpokeTemplate, getTierForXp, getCurrentPassive } from './advisor';
 import { getShopDiscount } from '../items/doctrine-store';
-import { addResource, spendResource } from '../core/resources';
+import { refundResource, spendResource } from '../core/resources';
 import type { ResourceType } from '../core/commander';
 import { addNotification } from '../../ui/notifications/notification-store';
 
@@ -137,8 +137,9 @@ export function fireAdvisor(advisorId: string): number {
   market.splice(index, 1);
   advisorMarket.value = market;
 
-  // Selling adds gold directly (no income-modifier tracking)
-  addResource('gold', goldGained);
+  // Face value (refundResource) — no income-modifier tracking, so firing returns
+  // exactly the shown gold and is not inflated by War Profiteer / loot-bonus.
+  refundResource('gold', goldGained);
 
   return goldGained;
 }

@@ -1196,4 +1196,28 @@ jugador mentiría. Misma clase de drift «display-vs-verdad» que el loop combat
 |---|---|---|---|
 | 79 | **`ARMOR_PCT` duplicado** (UI) vs `ARMORS` (batalla) — drift latente | ExercitusTab importa `ARMORS` y lo usa directamente; eliminada la constante local. Behavior-preserving (valores idénticos hoy) → la mitigación mostrada queda atada a la fuente de verdad de batalla | ExercitusTab.tsx |
 
-**Validación**: `tsc` limpio · 187 tests · 17/17 verify · build verde.
+**Validación it.42**: `tsc` limpio · 187 tests · 17/17 verify · build verde.
+
+## Iteración 43 — 2026-06-13
+
+**Fix de corrección real (D19, diferido en it.5)**: las ventas devolvían más que el precio mostrado.
+
+### Hallazgo
+
+`sellDecretum`, `sellDoctrine` y `fireAdvisor` usaban `addResource('gold', price)` para el ingreso
+de la venta. `addResource` aplica los modificadores de ingreso (War Profiteer +50% para Crassus,
+loot-bonus de un asesor Raider) → el jugador **recibía más que el precio mostrado**. Y el código
+contradecía su propia intención: doctrine-store comentaba «selling bypasses the 2x primary resource
+multiplier» (pasaba sin faction para evitar el 2x) y council-store comentaba «no income-modifier
+tracking» — pero `addResource` filtraba War Profiteer/loot-bonus igual. Existe `refundResource`
+(valor nominal, sin modificadores) construido justo para esto.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 80 | **Ventas/refunds inflados** por War Profiteer/loot-bonus (D19) — lo recibido ≠ lo mostrado, contra la intención del propio código | los 3 (`sellDecretum`/`sellDoctrine`/`fireAdvisor`) usan `refundResource` (valor nominal) en vez de `addResource`; comentarios corregidos. Lo recibido == lo mostrado para todos los comandantes | decretum-store.ts, doctrine-store.ts, council-store.ts |
+| 81 | Test: con War Profiteer activo, `refundResource` da valor nominal (vs `addResource` +50%), y `sellDoctrine`/`sellDecretum` pagan exactamente el precio mostrado | 190 tests verdes (+3) | sell-face-value.test.ts (nuevo) |
+
+**Validación**: `tsc` limpio · 190 tests · 17/17 verify · build verde. Tabla de auditoría
+sincronizada (sistemas-del-juego.html · Economía · ventas/refunds). **D19 cerrado.**

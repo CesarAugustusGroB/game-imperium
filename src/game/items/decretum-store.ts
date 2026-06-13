@@ -1,7 +1,7 @@
 import { signal } from '@preact/signals';
 import type { Decretum, DecretumEffect } from './decretum';
 import { isDecretumCastable, DECRETUM_SELL_PRICE } from './decretum';
-import { addResource } from '../core/resources';
+import { refundResource } from '../core/resources';
 import { selectedCommander } from '../core/game-state';
 import type { Faction } from '../core/commander';
 
@@ -45,7 +45,9 @@ export function sellDecretum(id: string): number {
   if (!scroll) return 0;
 
   const price = DECRETUM_SELL_PRICE[scroll.rarity];
-  addResource('gold', price);
+  // Face value (refundResource) — sale proceeds must equal the shown price, not be
+  // inflated by War Profiteer / loot-bonus income modifiers (addResource would leak them).
+  refundResource('gold', price);
   removeDecretum(id);
   return price;
 }

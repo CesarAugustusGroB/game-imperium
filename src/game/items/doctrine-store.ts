@@ -2,7 +2,7 @@ import { signal } from '@preact/signals';
 import type { Doctrine, DoctrineEffect } from './doctrine';
 import type { ResourceCost } from '../../types/index';
 import { isDoctrineEquippable, getCurrentEffects, getUpgradeCost, getDoctrineSellPrice } from './doctrine';
-import { addResource, spendResource, canAfford } from '../core/resources';
+import { refundResource, spendResource, canAfford } from '../core/resources';
 import { selectedCommander } from '../core/game-state';
 import { DOCTRINE_CATALOG } from '../../data/doctrine-data';
 import type { Faction, ResourceType } from '../core/commander';
@@ -145,8 +145,9 @@ export function sellDoctrine(doctrineId: string): number {
   const doctrine = collection[index];
   const price = getDoctrineSellPrice(doctrine);
 
-  // No faction passed — selling bypasses the 2x primary resource multiplier
-  addResource('gold', price);
+  // Face value — selling bypasses ALL income modifiers (the 2x faction multiplier
+  // AND War Profiteer / loot-bonus), so the player receives exactly the shown price.
+  refundResource('gold', price);
 
   collection.splice(index, 1);
   doctrineCollection.value = collection;
