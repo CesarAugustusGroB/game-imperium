@@ -1031,3 +1031,30 @@ recursos de vuelta al hub + recordCampaignLog + draft — acoplado a EndgameCard
 `startIterBelliCampaign` → `playCard`/`endTurn` (upkeep, refill, telemetría) → `applyBattleOutcome`
 → `finishCampaign`/endgame: **todo bajo test de integración headless**. El único tramo sin cubrir
 es la UI `EndgameCard.returnToHub` (D32, requiere extracción de la UI).
+
+## Iteración 37 — 2026-06-13
+
+**Decisión de no-refactor + cobertura segura.** Evalué D32 (extraer `returnToHub` para testearlo)
+y decidí **NO hacerlo unilateralmente**: al leer la función completa, entremezcla lógica de juego
+con concerns de UI (`addNotification`, `navigateTo`); extraerla limpio exige aceptar una violación
+de capas game→UI o plumbing de retorno — un refactor no trivial de **código crítico que funciona**
+(validado en vivo it.34) y que **no puedo re-validar end-to-end en vivo** (la limitación de it.34).
+Riesgo > valor para un cambio autónomo. Queda para OK del usuario.
+
+En su lugar, una adición de cobertura segura que avanza el espíritu de D32:
+
+### Implementado
+
+| # | Entrega | Detalle | Archivos |
+|---|---|---|---|
+| 74 | **`conquerProvince` cubierto** (sub-paso de victoria de `returnToHub`, sin tests) — 4 casos | añade provincia nombrada al run y la devuelve; **escala gains→income per-spoke** (÷duration, mín 1: gold 8/4=2, iuniores floored a 1); respeta override de terreno/trade-good; cada conquista añade una provincia distinta | conquer-province.test.ts (nuevo) |
+
+**Validación**: `tsc` limpio · **186 tests** (+4) · 17/17 verify · build verde. Test-only.
+
+### D32 — pendiente de decisión del usuario
+
+Extraer `EndgameCard.returnToHub` a una función testeable (`concludeCampaign()`) cerraría el último
+tramo del bucle (recursos de vuelta + recordCampaignLog + draft + conquista + XP). Es viable
+(mover ~100 líneas verbatim + el guard de idempotencia de it.22), pero toca el camino crítico de
+vuelta al hub y mezcla UI/lógica. **Recomendación**: hacerlo solo con confirmación, e idealmente
+poder validar un endgame en vivo después. Cobertura actual del sub-paso de conquista ya añadida.
