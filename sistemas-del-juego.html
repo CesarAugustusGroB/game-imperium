@@ -337,7 +337,7 @@
     <div class="subtitle">Recursos vivos del Foro</div>
     <div class="chips">
       <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#c79a2e,#9a7415)">⚜</div><div class="meta"><b>Aurum · Oro</b><span>Ingreso, upkeep, reclutamiento, cartas</span></div></div>
-      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#7c3aed,#532388)">🛡</div><div class="meta"><b>Iuniores</b><span>Reserva de reclutas · refuerzo de cohortes</span></div></div>
+      <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#7c3aed,#532388)">🛡</div><div class="meta"><b>Iuniores</b><span>Reserva de reclutas · 1000 por cohorte ciudadana · cura del roster en el hub</span></div></div>
       <div class="chip"><div class="sym" style="background:linear-gradient(135deg,#6d28d9,#9560f0)">❉</div><div class="meta"><b>Season</b><span>Estación / temporada (actual / máx)</span></div></div>
     </div>
 
@@ -410,8 +410,8 @@
         <h3><span class="ic">▦</span>Masthead &amp; Aerarium</h3>
         <p>Cabecera del Foro con el lectorado de tesorería (<code>StatChip</code> / <code>BentoCard</code>). Solo los recursos vivos:</p>
         <ul>
-          <li>Aurum (oro) ⚜ · con cap blando 2000 y delta</li>
-          <li>Iuniores 🛡 · cap blando 50</li>
+          <li>Aurum (oro) ⚜ · valor en crudo con delta animado (sin cap)</li>
+          <li>Iuniores 🛡 · valor en crudo, sin cap (arranca en 2000, +100 por punto de población y estación)</li>
           <li>Season ❉ · actual / <code>MAX_SEASONS</code></li>
         </ul>
       </div>
@@ -489,12 +489,12 @@
       <div class="card">
         <span class="tag">Supplies</span>
         <h3><span class="ic">▰</span>Suministros</h3>
-        <ul><li>Barra de progreso roja→oro</li><li>Compra rápida: +2, +10, Max</li><li><code>1⚜ = N suministros</code> · 1 por cohorte por nodo</li></ul>
+        <ul><li>Barra de progreso roja→oro</li><li>Compra rápida: +2, +10, Max</li><li><code>1⚜ = 2 suministros</code> · upkeep 2/turno (stock inicial 28, tope de carga 80)</li></ul>
       </div>
       <div class="card">
         <span class="tag">Recruit</span>
         <h3><span class="ic">＋</span>Reclutamiento</h3>
-        <ul><li>Catálogo de cohortes ciudadanas (ATK/DEF/HP/AGI)</li><li>Sección separada de contratos mercenarios</li><li>Mensajes de fallo por oro/iuniores insuficientes</li></ul>
+        <ul><li>Catálogo de cohortes ciudadanas: 1000 HP fijos + 5 power-stats (charge/harass/push/siege/movement, escala 0–3); coste <b>20–100⚜ + 1000🛡</b> según tipo</li><li>Sección separada de contratos mercenarios (solo ⚜, sin iuniores)</li><li>Mensajes de fallo por oro/iuniores insuficientes</li></ul>
       </div>
     </div>
 

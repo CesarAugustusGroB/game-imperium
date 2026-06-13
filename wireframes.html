@@ -398,7 +398,7 @@
   <!-- ============ EXERCITUS (rediseño propuesto) ============ -->
   <section class="screen-panel" id="exercitus">
     <div class="screen-head"><span class="id">tab: exercitus</span><h2>Exercitus Tab</h2><span class="file">ExercitusTab.tsx · PROPUESTA</span>
-      <p>Rediseño: franja de estado con <b>suministros en una sola línea</b> · cohortes como tarjetas limpias con rol en color, barra de HP + curar inline, stats ATK/DEF/HP/AGI y coste · legado compacto + reclutar a la derecha.</p></div>
+      <p>Rediseño: franja de estado con <b>suministros en una sola línea</b> · cohortes como tarjetas limpias con rol en color, barra de HP + curar inline, los 5 power-stats (charge/harass/push/siege/movement) y coste (⚜ + 🛡) · legado compacto + reclutar a la derecha.</p></div>
     <div class="screen"><div class="canvas" style="min-height:580px;display:flex;flex-direction:column;gap:12px">
       <div class="panel"><span class="lbl">Masthead</span><div class="ttl" style="font-size:15px">EXERCITUS</div></div>
 
@@ -421,26 +421,26 @@
               <div class="body">
                 <div><div class="ttl" style="margin:0;font-size:12px">Hastati</div><div class="sub">Citizen cohort</div></div>
                 <div><div class="hpbar"><i style="width:82%"></i></div><div class="sub" style="text-align:right;margin-top:3px">2,460 / 3,000</div></div>
-                <div class="statgrid"><span class="statpill">HP <b>100</b></span><span class="statpill">Charge <b>7</b></span><span class="statpill">Push <b>5</b></span><span class="statpill">Move <b>4</b></span></div>
-                <div class="foot"><div class="row between" style="align-items:center"><span class="sub">⚜120 · 🛡3</span><span class="btn ghost">–</span></div></div>
+                <div class="statgrid"><span class="statpill">HP <b>1000</b></span><span class="statpill">Push <b>3</b></span><span class="statpill">Harass <b>1</b></span><span class="statpill">Charge <b>0</b></span></div>
+                <div class="foot"><div class="row between" style="align-items:center"><span class="sub">⚜40 · 🛡1000</span><span class="btn ghost">–</span></div></div>
               </div>
             </div>
             <div class="panel solid vcard gua">
               <div class="art">[ unit art ]<span class="role gua">Guard</span><span class="chip">×1</span></div>
               <div class="body">
-                <div><div class="ttl" style="margin:0;font-size:12px">Triarii</div><div class="sub">Citizen cohort</div></div>
-                <div><div class="hpbar warn"><i style="width:46%"></i></div><div class="sub" style="text-align:right;margin-top:3px">⚕ 550 / 1,200</div></div>
-                <div class="statgrid"><span class="statpill">HP <b>120</b></span><span class="statpill">Push <b>9</b></span><span class="statpill">Siege <b>6</b></span><span class="statpill">Move <b>2</b></span></div>
-                <div class="foot"><div class="sub" style="margin-bottom:5px">⚜150 · 🛡4</div><div class="row between" style="align-items:center"><span class="btn">Heal 🛡2</span><span class="btn ghost">–</span></div></div>
+                <div><div class="ttl" style="margin:0;font-size:12px">Equites</div><div class="sub">Citizen cohort</div></div>
+                <div><div class="hpbar warn"><i style="width:55%"></i></div><div class="sub" style="text-align:right;margin-top:3px">⚕ 550 / 1,000</div></div>
+                <div class="statgrid"><span class="statpill">HP <b>1000</b></span><span class="statpill">Charge <b>3</b></span><span class="statpill">Move <b>2</b></span><span class="statpill">Push <b>0</b></span></div>
+                <div class="foot"><div class="sub" style="margin-bottom:5px">⚜90 · 🛡1000</div><div class="row between" style="align-items:center"><span class="btn">Heal 🛡450</span><span class="btn ghost">–</span></div></div>
               </div>
             </div>
-            <div class="panel solid vcard res">
-              <div class="art">[ unit art ]<span class="role res">Reserve</span><span class="chip">×2</span></div>
+            <div class="panel solid vcard van">
+              <div class="art">[ unit art ]<span class="role van">Vanguard</span><span class="chip">×2</span></div>
               <div class="body">
-                <div><div class="ttl" style="margin:0;font-size:12px">Mercennarii</div><div class="sub">Mercenary</div></div>
-                <div><div class="hpbar"><i style="width:100%"></i></div><div class="sub" style="text-align:right;margin-top:3px">1,600 / 1,600</div></div>
-                <div class="statgrid"><span class="statpill">HP <b>80</b></span><span class="statpill">Harass <b>9</b></span><span class="statpill">Move <b>6</b></span><span class="statpill">Charge <b>4</b></span></div>
-                <div class="foot"><div class="row between" style="align-items:center"><span class="sub">⚜200 · gold heal</span><span class="btn ghost">–</span></div></div>
+                <div><div class="ttl" style="margin:0;font-size:12px">Cretan Archer</div><div class="sub">Mercenary</div></div>
+                <div><div class="hpbar"><i style="width:100%"></i></div><div class="sub" style="text-align:right;margin-top:3px">2,000 / 2,000</div></div>
+                <div class="statgrid"><span class="statpill">HP <b>1000</b></span><span class="statpill">Harass <b>3</b></span><span class="statpill">Siege <b>1</b></span><span class="statpill">Move <b>1</b></span></div>
+                <div class="foot"><div class="row between" style="align-items:center"><span class="sub">⚜70 · gold heal</span><span class="btn ghost">–</span></div></div>
               </div>
             </div>
           </div>
@@ -452,20 +452,20 @@
           <div class="panel row center" style="gap:11px"><div class="img circle" style="width:54px;height:54px;flex:0 0 auto"></div><div class="grow"><div class="ttl" style="margin:0;font-size:12px">Legate Name</div><div class="row wrapf" style="gap:5px;margin-top:5px"><span class="tag">Cavalry Master</span><span class="tag">trait</span></div></div><span class="btn danger">✕</span></div>
           <div class="panel grow"><div class="row between"><div class="ttl">Recruit</div><span class="chip">⚜ X · 🛡 Y</span></div>
             <div class="row" style="gap:10px;margin-top:8px">
-              <div class="panel solid vcard mini res">
-                <div class="art">[ art ]<span class="role res">Reserve</span></div>
+              <div class="panel solid vcard mini van">
+                <div class="art">[ art ]<span class="role van">Vanguard</span></div>
                 <div class="body">
                   <div class="ttl" style="margin:0;font-size:11px">Principes</div>
-                  <div class="statgrid"><span class="statpill">HP<b>120</b></span><span class="statpill">Push<b>8</b></span><span class="statpill">Chg<b>6</b></span><span class="statpill">Sge<b>3</b></span></div>
-                  <div class="foot"><div class="sub" style="text-align:center;margin-bottom:5px">⚜150 · 🛡4</div><span class="btn" style="display:block;text-align:center">Recruit</span></div>
+                  <div class="statgrid"><span class="statpill">HP<b>1000</b></span><span class="statpill">Push<b>3</b></span><span class="statpill">Chg<b>1</b></span><span class="statpill">Hrs<b>1</b></span></div>
+                  <div class="foot"><div class="sub" style="text-align:center;margin-bottom:5px">⚜80 · 🛡1000</div><span class="btn" style="display:block;text-align:center">Recruit</span></div>
                 </div>
               </div>
               <div class="panel solid vcard mini van">
                 <div class="art">[ art ]<span class="role van">Vanguard</span></div>
                 <div class="body">
-                  <div class="ttl" style="margin:0;font-size:11px">Auxilia <span class="sub">merc.</span></div>
-                  <div class="statgrid"><span class="statpill">HP<b>80</b></span><span class="statpill">Hrs<b>9</b></span><span class="statpill">Move<b>6</b></span><span class="statpill">Chg<b>4</b></span></div>
-                  <div class="foot"><div class="sub" style="text-align:center;margin-bottom:5px">⚜200</div><span class="btn" style="display:block;text-align:center">Hire</span></div>
+                  <div class="ttl" style="margin:0;font-size:11px">Gallic Warband <span class="sub">merc.</span></div>
+                  <div class="statgrid"><span class="statpill">HP<b>1000</b></span><span class="statpill">Chg<b>2</b></span><span class="statpill">Push<b>1</b></span><span class="statpill">—</span></div>
+                  <div class="foot"><div class="sub" style="text-align:center;margin-bottom:5px">⚜45</div><span class="btn" style="display:block;text-align:center">Hire</span></div>
                 </div>
               </div>
             </div>
