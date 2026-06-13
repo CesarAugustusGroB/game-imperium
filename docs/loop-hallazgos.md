@@ -594,3 +594,30 @@ regenera `iconos.html` (los PNG fuente en disco no cambian; el catálogo escanea
 | # | Observación | Por qué no ahora |
 |---|---|---|
 | D28b | **Code-splitting**: chunk JS único 590KB (>500KB). `import()` por pantalla o `codeSplitting` de rolldown. Auditar RAF/listeners | Riesgo de romper el arranque; necesita validar carga de cada ruta en vivo — propia iteración |
+
+## Iteración 22 — 2026-06-13
+
+**Modo barrido** (backlog codeable agotado): auditoría de los sistemas añadidos en las últimas
+vueltas (ally-store, telemetría, EndgameCard) buscando bugs frescos.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 56 | **`returnToHub` (EndgameCard) NO es idempotente y el botón «Volver al Hub» no tenía guard**: las líneas iniciales son incondicionales — `gold.value = s.gold`, `iuniores.value = s.iuniores`, `globalSeason += s.spokeDuration`, income provincial ×spokeDuration, income de aliados, conquista, draft, telemetría. Termina en `resetIterBelli()` (deja `outcome=null`, `gold=fallbackGold`). Un segundo disparo (doble-clic rápido antes de que el botón se desmonte) leería el estado RESETEADO y **pisaría el oro/iuniores del hub con los valores fallback** + avanzaría la temporada de más | `if (!outcome) return;` al inicio de `returnToHub` → idempotente. La primera llamada legítima siempre tiene outcome (el EndgameCard solo renderiza con `outcome`); tras el reset es null → no-op. `concludeBattleSession` (el otro botón one-shot) ya estaba guardado (`if (!s || !OPTS) return;`) | EndgameCard.tsx |
+
+**Validación**: `tsc` · 172 tests · 17/17 verify · build verde. El guard es seguro por
+construcción (la primera invocación siempre tiene outcome; la única llamada con outcome null es
+una re-invocación tras el reset). No validado con doble-clic en vivo: llegar al endgame exige una
+campaña entera (~15 pasos), desproporcionado para un guard de una línea cuya lógica es trivial.
+
+### Falsos positivos verificados (no re-reportar)
+
+- **Income de aliados vía `addResource`** (kingdom→gold, tribe→iuniores): `addResource` aplica
+  War Profiteer (+50% solo a gold) e income-modifiers de doctrina. **NO es bug** — el tributo de
+  aliados es income recurrente y «War Profiteer = +50% oro de todas las fuentes» encaja; los
+  modifiers de income aplican legítimamente. Coherente con el modelo económico.
+- **`concludeBattleSession`**: ya idempotente (`!s || !OPTS`).
+- **Diluición de supervivientes por aliados de Augustus**: el HP de aliados se suma a `soldiers`
+  Y a `initialSoldiers` por igual, así que el ratio de attrition se preserva razonablemente; los
+  aliados «absorben» parte del daño — comportamiento aceptable/intencional, no bug.

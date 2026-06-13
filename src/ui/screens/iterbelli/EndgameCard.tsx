@@ -32,6 +32,14 @@ import { ResourceAmount } from '../../components/ResourceIcon';
 function returnToHub(): void {
   const s = iterBelliState.value;
   const outcome = s.outcome;
+  // Idempotency guard: this function is NOT idempotent — it overwrites hub
+  // gold/iuniores from the campaign snapshot, advances the season, collects
+  // income and conquers a province. It ends by calling resetIterBelli() (which
+  // nulls the outcome), so a second invocation (e.g. a fast double-click before
+  // the button unmounts) would re-run those side effects against the reset
+  // snapshot and clobber the player's resources. A null outcome only ever means
+  // "already returned" — bail.
+  if (!outcome) return;
 
   // Consilium mission: on victory, a met condition grants a gold bonus.
   const mission = getMissionById(s.missionId);
