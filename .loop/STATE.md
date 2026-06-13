@@ -46,6 +46,8 @@ Dead code limpio, mentiras corregidas (D19 incl.), perf de imágenes hecho.
 - **D32** — extraer `returnToHub` de la UI: toca el camino crítico de vuelta al hub.
 
 ## Log (más reciente primero)
+- it.47 — formato `.loop/STATE.md` adoptado como estándar; cron de prueba creado.
+  Heartbeat: `npm run verify` 17/17 verde. Loop **idle** a la espera de decisiones.
 - it.46 — routing verificado sano + comentario `#battle` corregido.
 - it.45 — tick de provincia/rebelión verificado sano (no-issue).
 - it.44 — D13 fijado (cohorte por índice), D14 verificado seguro.
