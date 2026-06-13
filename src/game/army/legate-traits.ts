@@ -27,13 +27,13 @@ export const LEGATE_TRAITS: readonly LegateTrait[] = [
   {
     id: 'aggressive',
     name: 'Aggressive',
-    description: "Battle begins with lieutenant order set to 'Attack'.",
+    description: 'Unlocks the Cuneus (Wedge) shock formation in battle (requires discipline 5).',
     effect: { type: 'lieutenant-preset', order: 'attack' },
   },
   {
     id: 'cautious',
     name: 'Cautious',
-    description: "Battle begins with lieutenant order set to 'Defend'.",
+    description: 'Unlocks the Testudo defensive formation in battle (requires discipline 5).',
     effect: { type: 'lieutenant-preset', order: 'defend' },
   },
   {

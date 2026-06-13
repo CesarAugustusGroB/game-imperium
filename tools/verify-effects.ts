@@ -1,8 +1,8 @@
 /**
  * verify-effects.ts — the effect-contract guard (plan S-D, FASE 1 blindaje).
  *
- * Effect-bearing unions (DoctrineEffect, DecretumEffect, and the province
- * TradeGoodSpecial / FeatureSpecial / GovernorTrait) are consumed by switches with permissive
+ * Effect-bearing unions (DoctrineEffect, DecretumEffect, the province
+ * TradeGoodSpecial / FeatureSpecial / GovernorTrait, and LegateEffect) are consumed by switches with permissive
  * `default` branches (decretum-hub `default: return null`, battle/decreta
  * `default: return false`, the special checks just `if (… === 'x')`). That means
  * adding a NEW member to a union compiles fine and silently becomes INERT — the
@@ -26,6 +26,7 @@ import { STARTER_DECRETUM } from '../src/data/decretum-data';
 import { TRADE_GOOD_DATA } from '../src/data/trade-goods';
 import { ALL_FEATURES } from '../src/data/province-features';
 import { ALL_GOVERNORS } from '../src/data/governor-data';
+import { LEGATE_TRAITS } from '../src/game/army/legate-traits';
 import {
   getShopDiscount, getUpkeepReduction, equippedDoctrines,
 } from '../src/game/items/doctrine-store';
@@ -46,7 +47,12 @@ function check(label: string, cond: boolean, detail = ''): void {
 // Parse the union member literals from the type source (single source of truth).
 // ──────────────────────────────────────────────────────────────────────────
 function readUnionTypes(relFile: string, alias: string): string[] {
-  const text = readFileSync(join(repoRoot, relFile), 'utf8');
+  // Strip block/line comments first — a `;`, `{`, `}` or `type: '…'` inside a
+  // JSDoc comment between union members would otherwise fool the brace scanner
+  // and the type-literal regex.
+  const text = readFileSync(join(repoRoot, relFile), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/[^\n]*/g, '');
   const start = text.indexOf(`export type ${alias} =`);
   if (start === -1) throw new Error(`union ${alias} not found in ${relFile}`);
   // The alias ends at the first ';' that sits at brace-depth 0 — inner ';'
@@ -185,6 +191,17 @@ const GOVERNOR_APPLICATION: Record<string, AppEntry> = {
 };
 const governorTraitTypes = ALL_GOVERNORS.flatMap((g) => g.tiers.flatMap((t) => t.traits)).map((tr) => tr.type);
 checkUnion('GovernorTrait', 'src/game/province/governor.ts', 'GovernorTrait', GOVERNOR_APPLICATION, governorTraitTypes);
+
+// ── Legate trait effects (applied in legateSeedMods / adapter.ts) ──
+const ADAPTER = 'src/game/iterBelli/battle/adapter.ts';
+const LEGATE_APPLICATION: Record<string, AppEntry> = {
+  'stat-bonus':       { files: [ADAPTER], note: 'legateSeedMods → per-role stat / hp scaling' },
+  'random-rally':     { files: [ADAPTER], note: 'legateSeedMods → strongest-cohort buff' },
+  'morale-bonus':     { files: [ADAPTER], note: 'legateSeedMods → pre-battle morale' },
+  'lieutenant-preset':{ latent: true, note: 'inert — no lieutenant-order system (deprecated node-map); formation gating is keyed by trait id, not this effect' },
+};
+const legateEffectTypes = LEGATE_TRAITS.map((t) => t.effect.type);
+checkUnion('LegateEffect', 'src/game/army/legate.ts', 'LegateEffect', LEGATE_APPLICATION, legateEffectTypes);
 
 // ──────────────────────────────────────────────────────────────────────────
 // Economic invariants — refund ≤ paid, discounts clamped, never free.

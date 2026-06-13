@@ -18,7 +18,14 @@ export type LegateEffect =
       stat: keyof UnitStats;
       multiplier: number;
     }
-  /** Preset the player's initial lieutenant order at battle start. */
+  /**
+   * INERT in the current battle (no lieutenant-order system — that was part of
+   * the deprecated node-map battle). The `order` value is never read. The
+   * aggressive/cautious traits carrying this effect do their real work —
+   * unlocking the Cuneus/Testudo formation — via TRAIT_TO_FORMATION_TRAIT (keyed
+   * by trait id), not this effect. Kept as the placeholder effect for those
+   * formation-only traits; marked `latent` in tools/verify-effects.ts.
+   */
   | {
       type: 'lieutenant-preset';
       order: LieutenantOrder;

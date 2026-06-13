@@ -867,3 +867,29 @@ FeatureSpecial, GovernorTrait. **Pendientes (no tabuladas / bespoke)**: efectos 
 aplicados) y `bonus.type` de **sinergias** de edificio (province.ts: unrest/gold/iuniores). Ambos
 están vivos hoy; tabularlos en verify-effects es posible pero de valor marginal (switches locales
 pequeños, tsc-exhaustivos de facto). Anotado, no urgente.
+
+## Iteración 31 — 2026-06-13
+
+**Honestidad + blindaje**: auditados los efectos de trait de **legado** (`LegateEffect`) — el
+mini-switch de `legateSeedMods` NO es tsc-exhaustivo (`if (t.effect.type === …)`), así que un
+tipo no manejado queda inerte en silencio.
+
+### Hallazgo: descripciones mentirosas de `aggressive`/`cautious` (sistema deprecado)
+
+Los traits de legado `aggressive` y `cautious` decían **«Battle begins with lieutenant order set
+to 'Attack'/'Defend'»** — pero NO hay sistema de órdenes de lugarteniente en la batalla actual
+(era del battle node-map deprecado). Su efecto `lieutenant-preset` es **inerte** (nadie lee el
+`order`). Su efecto REAL: desbloquean las formaciones únicas **Cuneus** (aggressive→Shock) y
+**Testudo** (cautious→Engineer) vía `TRAIT_TO_FORMATION_TRAIT` (por ID de trait, no por el efecto).
+El doc de sistemas (línea 750) YA lo describía bien — solo las descripciones in-game mentían.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 66 | **Descripciones mentirosas** (prometían órdenes de lugarteniente inexistentes) | Reescritas a lo real: «Unlocks the Cuneus/Testudo … formation (requires discipline 5)» | legate-traits.ts |
+| 67 | **Comentario engañoso del tipo `lieutenant-preset`** («Preset the player's initial lieutenant order») | Reescrito: documenta que es INERTE (sin sistema de órdenes; el gating real es por ID de trait) | legate.ts |
+| 68 | **Blindaje**: `LegateEffect` añadido a verify-effects (6ª unión) — stat-bonus/random-rally/morale-bonus aplicados en adapter.ts; `lieutenant-preset` latente documentado | + **endurecido el parser de uniones**: ahora quita comentarios antes de escanear (mi propio JSDoc con un `;` truncaba la unión — fragilidad latente que afectaba a cualquier unión con `;`/`{}`/`type:` en comentarios) | verify-effects.ts |
+
+**Validación**: verify-effects exit 0 (**6 uniones**) · `tsc` limpio · 175 tests · 17/17 verify ·
+build verde. Sin sync de doc (sistemas-del-juego.html:750 ya era correcto).
