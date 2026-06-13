@@ -621,3 +621,38 @@ campaña entera (~15 pasos), desproporcionado para un guard de una línea cuya l
 - **Diluición de supervivientes por aliados de Augustus**: el HP de aliados se suma a `soldiers`
   Y a `initialSoldiers` por igual, así que el ratio de attrition se preserva razonablemente; los
   aliados «absorben» parte del daño — comportamiento aceptable/intencional, no bug.
+
+## Iteración 23 — 2026-06-13
+
+**Modo barrido**: rastreo del contrato de **descripción** de efectos de decretos (verify-effects
+solo cubre los sitios de *aplicación*, no los de *render/describe*) tras añadir `gain-ally` (it.15).
+
+### Hallazgo
+
+`DecretumRenderer.tsx::effectSummary` tiene un switch sobre `e.type` con `default: '—'` que NO
+cubre `threat-reduction`, `supplies-gain` ni `gain-ally` → esas cartas (Pax Empta, suministros,
+las dos Foedus) renderizarían un guion en vez de su efecto. **PERO** `DecretumRenderer` (export
+`DecretumCard`) y su gemelo `DoctrineRenderer` (export `DoctrineSlot`) son **código muerto**: cero
+referencias a sus exports en todo `src/` (verificado por nombre de export, no de fichero),
+commits viejos pre-loop, no en la lista de WIP de codex. La UI viva (DecretaTab/DoctrinaeTab)
+renderiza sus propias cartas y describe los efectos vía `describeHubEffect` (actualizado en it.15
+para gain-ally) + la `description` autorada → **correcta, sin el bug**.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 57 | **Dos renderers de carta muertos** (`DecretumRenderer`/`DoctrineRenderer`), uno con un switch de efectos no-exhaustivo latente (3 tipos → «—»). Superados por las pestañas vivas DecretaTab/DoctrinaeTab que renderizan sus propias cartas | eliminados ambos ficheros — cero referencias, `tsc` limpio confirma cero rotura. Elimina superficie de mantenimiento + el bug latente de una sola vez | DecretumRenderer.tsx, DoctrineRenderer.tsx (borrados) |
+
+**Validación**: `tsc` limpio tras el borrado (prueba de que nada los importaba) · 172 tests ·
+17/17 verify · build verde. Reversible vía git si S-H los quisiera (improbable: S-H extendería
+las pestañas vivas, no estos standalone).
+
+### Falsos positivos verificados (no re-reportar)
+
+- **DecretaTab (colección viva)**: describe los efectos con `describeHubEffect` + `d.description`
+  → las cartas nuevas (gain-ally) se ven bien. No tiene el bug del switch.
+- **DecretaBar (batalla)**: filtra por `hasBattleEffect` (línea 19) → los pergaminos hub-only
+  (gain-ally/threat-reduction/supplies-gain) no se muestran en batalla. Correcto.
+- **`isCastableAtHub` para gain-ally**: no es campaign-only, castable en el hub, `addAlly` aplicado
+  vía `applyHubEffect`. Cableado correcto (ya cubierto por verify-effects en it.13/15).
