@@ -1,9 +1,9 @@
 /**
  * verify-effects.ts — the effect-contract guard (plan S-D, FASE 1 blindaje).
  *
- * All 7 tabulated effect-bearing unions (DoctrineEffect, DecretumEffect, and the
- * province TradeGoodSpecial / FeatureSpecial / GovernorTrait / SynergyBonus, plus
- * LegateEffect) are consumed by switches with permissive
+ * All 8 tabulated effect-bearing unions (DoctrineEffect, DecretumEffect, the
+ * province TradeGoodSpecial / FeatureSpecial / GovernorTrait / SynergyBonus,
+ * LegateEffect, and AdvisorPassive) are consumed by switches with permissive
  * `default` branches (decretum-hub `default: return null`, battle/decreta
  * `default: return false`, the special checks just `if (… === 'x')`). That means
  * adding a NEW member to a union compiles fine and silently becomes INERT — the
@@ -28,6 +28,7 @@ import { TRADE_GOOD_DATA } from '../src/data/trade-goods';
 import { ALL_FEATURES } from '../src/data/province-features';
 import { ALL_GOVERNORS } from '../src/data/governor-data';
 import { LEGATE_TRAITS } from '../src/game/army/legate-traits';
+import { STARTER_ADVISORS } from '../src/data/advisor-data';
 import {
   getShopDiscount, getUpkeepReduction, equippedDoctrines,
 } from '../src/game/items/doctrine-store';
@@ -215,6 +216,26 @@ const SYNERGY_APPLICATION: Record<string, AppEntry> = {
 };
 const synergyBonusTypes = SYNERGY_DATA.map((s) => s.bonus.type);
 checkUnion('SynergyBonus', 'src/game/province/province.ts', 'SynergyBonus', SYNERGY_APPLICATION, synergyBonusTypes);
+
+// ── Advisor passives — the passiveModifier switch has a permissive `default`,
+//    so a new type would silently become inert (the exact gap this guards). ──
+const CONSILIUM = 'src/data/iter-belli-consilium.ts';   // passiveModifier → campaign seed deltas
+const COUNCIL = 'src/game/council/council-store.ts';    // live hub aggregation (shop-discount)
+const ADVISOR_APPLICATION: Record<string, AppEntry> = {
+  'resource-per-spoke':  { files: [CONSILIUM], note: 'passiveModifier → seed gold' },
+  'upkeep-reduction':    { files: [CONSILIUM], note: 'passiveModifier → seed supplies' },
+  'shop-discount':       { files: [COUNCIL], note: 'seated shop-discount → hub discount (passiveModifier default by design)' },
+  'extra-event-choices': { files: [CONSILIUM], note: 'passiveModifier → seed gold (no event system)' },
+  'heal-between-nodes':  { files: [CONSILIUM], note: 'passiveModifier → seed morale' },
+  'threat-reduction':    { files: [CONSILIUM], note: 'passiveModifier → seed threat' },
+  'loot-bonus':          { files: [CONSILIUM], note: 'passiveModifier → seed gold (+ council-store loot bonus)' },
+  'enemy-weaken':        { files: [CONSILIUM], note: 'passiveModifier → seed enemyWeaken' },
+  'campaign-time':       { files: [CONSILIUM], note: 'passiveModifier → seed extraDays' },
+  'morale-bonus':        { files: [CONSILIUM], note: 'passiveModifier → seed morale' },
+  'soldiers-bonus':      { files: [CONSILIUM], note: 'passiveModifier → seed soldiers' },
+};
+const advisorPassiveTypes = STARTER_ADVISORS.flatMap((a) => a.tiers.map((t) => t.passive.type));
+checkUnion('AdvisorPassive', 'src/game/council/advisor.ts', 'AdvisorPassive', ADVISOR_APPLICATION, advisorPassiveTypes);
 
 // ──────────────────────────────────────────────────────────────────────────
 // Economic invariants — refund ≤ paid, discounts clamped, never free.

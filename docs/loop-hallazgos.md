@@ -1058,3 +1058,33 @@ tramo del bucle (recursos de vuelta + recordCampaignLog + draft + conquista + XP
 (mover ~100 líneas verbatim + el guard de idempotencia de it.22), pero toca el camino crítico de
 vuelta al hub y mezcla UI/lógica. **Recomendación**: hacerlo solo con confirmación, e idealmente
 poder validar un endgame en vivo después. Cobertura actual del sub-paso de conquista ya añadida.
+
+## Iteración 38 — 2026-06-13
+
+**Blindaje (corrige una omisión de it.32)**: `AdvisorPassive` — la **8ª** unión de efectos
+tabulada, que omití al declarar "cobertura completa" en it.32.
+
+### Hallazgo
+
+`AdvisorPassive` (11 tipos) se mapea a deltas del seed en `passiveModifier` (iter-belli-consilium),
+con `shop-discount`/`loot-bonus` agregados aparte en council-store. Crucialmente, `passiveModifier`
+tiene un **`default: return z` permisivo** → un tipo de pasiva nuevo quedaría **silenciosamente
+inerte** (no aportaría deltas), justo la clase que verify-effects guarda. Los 11 están manejados
+hoy, pero sin guard. Además it.32 declaró "no quedan uniones tabuladas" por error — `AdvisorPassive`
+sí lo era.
+
+### Implementado
+
+| # | Entrega | Detalle | Archivos |
+|---|---|---|---|
+| 75 | **`verify-effects.ts` cubre ahora 8 uniones** (+ `AdvisorPassive`): 10 tipos registrados como aplicados en passiveModifier (`case 'X'`), `shop-discount` en council-store (`=== 'shop-discount'`, es el default de passiveModifier por diseño). Data de `STARTER_ADVISORS` verificada | un tipo de pasiva de asesor futuro sin aplicación falla `npm run verify` | tools/verify-effects.ts |
+
+**Validación**: verify-effects exit 0 (**8 uniones**) · `tsc` limpio · 186 tests · 17/17 verify ·
+build verde.
+
+### Cobertura de efectos (corregida y completa)
+
+8 uniones tabuladas guardadas: DoctrineEffect, DecretumEffect, TradeGoodSpecial, FeatureSpecial,
+GovernorTrait, SynergyBonus, LegateEffect, **AdvisorPassive**. Esta es la última unión
+`type`-discriminada con switch del juego — ahora sí completa. Un barrido de `switch.*type|=== '`
+en src/game no revela más uniones de efecto-tipo sin guardar.
