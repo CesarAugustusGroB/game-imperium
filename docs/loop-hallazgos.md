@@ -1256,3 +1256,29 @@ Tras it.43 (D19) y it.44 (D13 fijado, D14 verificado): los dudosos técnicos cod
 **resueltos o verificados-seguros**. Lo que queda son decisiones de diseño del usuario
 (D10/D11/D29), refactors que requieren su OK (D28b code-splitting, D32 returnToHub), o no-issues
 documentados. **El barrido autónomo de hallazgos técnicos ha llegado a su fin natural.**
+
+## Iteración 45 — 2026-06-13
+
+**Sweep de verificación (no-issue)**: auditado el **tick de provincia** — income / unrest /
+rebelión / devastación en `collectProvinceIncome` (+`applyRebellion`), un sistema crítico y
+complejo que no había revisado a fondo.
+
+### Verificado sano (sin bug)
+
+- **Income/expenses**: agregados vía los helpers compartidos `getProvinceIncome`/`getProvinceExpenses`
+  (mismos que el ledger del UI → no pueden divergir, sin drift display-vs-tick). Aqueduct T3 +10%,
+  waive-upkeep suspende el drain, shortfall añade unrest solo a provincias con upkeep. Coherente.
+- **Unrest**: `calculateUnrestDelta` + penalización de shortfall, clampado 0–100. Bien.
+- **Rebelión** (`applyRebellion`): escalada coherente — 1ª (n=0): destruye 1-2 edificios, −1 pop;
+  2ª (n=1): destruye 2, −2 pop; 3ª (n=2): **Ruined** (todos los edificios, pop 1, wealth 0,
+  timers devastación/rubble); n≥3: sin efecto. **Crucial: resetea `unrest: 40` tras cada rebelión**
+  → no se re-dispara cada tick (da margen). Auto-despide al gobernador en Ruined. Sin bug.
+
+**Conclusión**: el tick de provincia es sólido. **Sin cambio de código.**
+
+### Estado del loop (it.44–45)
+
+Dos vueltas seguidas confirmando salud sin hallazgos de fix (it.44 cerró D13/D14; it.45 verifica el
+tick de provincia). Coherente con el fin natural del barrido técnico declarado en it.44. El valor
+por vuelta es ahora una confirmación de auditoría; el trabajo de fix genuino está bloqueado en las
+decisiones de diseño del usuario (D10/D11/D29) y los refactors que requieren su OK (D28b/D32).
