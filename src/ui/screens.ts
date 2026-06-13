@@ -53,7 +53,8 @@ export function navigateToIterBelli(): void {
   navigateTo('iterbelli');
 }
 
-// Read initial screen from URL hash (e.g., #battle, #forum, #provinces).
+// Read initial screen from URL hash (e.g., #forum, #iterbelli, #provinces).
+// (#battle is not a routable screen — the decisive battle is a modal within #iterbelli.)
 // Legacy hashes like `#provinces` also resolve correctly: resolveScreen
 // will rewrite them to `forum` and stamp the matching Forum tab so a
 // bookmark from before S22 still lands the user in the right place.

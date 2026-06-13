@@ -1282,3 +1282,30 @@ Dos vueltas seguidas confirmando salud sin hallazgos de fix (it.44 cerró D13/D1
 tick de provincia). Coherente con el fin natural del barrido técnico declarado en it.44. El valor
 por vuelta es ahora una confirmación de auditoría; el trabajo de fix genuino está bloqueado en las
 decisiones de diseño del usuario (D10/D11/D29) y los refactors que requieren su OK (D28b/D32).
+
+## Iteración 46 — 2026-06-13
+
+**Sweep del routing de pantallas** (`screens.ts` / `resolveScreen`). Verificado sano; corregido un
+ejemplo de comentario engañoso.
+
+### Verificado sano
+
+`LEGACY_TAB_MAP` remapea correctamente los nombres legacy a las pestañas del Foro (hub→overview,
+council→consilium, provinces→provinciae, doctrine→doctrinae, army-recruitment/legate-hiring→exercitus).
+`getInitialScreen`/hashchange validan contra `VALID_SCREENS` y redirigen a title las pantallas
+run-dependientes sin comandante. `resolveScreen` normaliza el hash a `#forum` + tab. Coherente, sin bug.
+
+### Implementado (fix trivial)
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 83 | Comentario engañoso: ponía `#battle` como ejemplo de hash inicial, pero `battle` NO es una pantalla rutable (es un modal dentro de `#iterbelli`) | ejemplo corregido a `#forum/#iterbelli/#provinces` + nota de que `#battle` no es rutable | screens.ts |
+
+**Validación**: `tsc` limpio · 190 tests · 17/17 verify. (Comentario; sin efecto runtime.)
+
+### Nota de proceso (it.44–46)
+
+Tres vueltas seguidas de confirmación-de-salud con, a lo sumo, fixes triviales de comentario. Esto
+es la evidencia clara de que **el barrido técnico autónomo está agotado**: las áreas se auditan
+sanas y los hallazgos son cosméticos. Reitero la recomendación de **pausar el cron** y decidir los
+ítems de diseño bloqueantes (D10/D11/D29) — ahí está el único trabajo de valor real que queda.
