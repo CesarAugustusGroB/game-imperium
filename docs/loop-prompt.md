@@ -78,21 +78,20 @@ Explorator==Spy). Pago por temporada en EndgameCard (tribu→iuniores, reino→o
 Augustus «Web of Alliances» ya REAL: allyCount contingentes aliados (HP+stats) en la batalla.
 Contador visible en TreasuryPanel. Persistido en meta-save. tsc + 157 tests + 17/17 verify.
 
-### [~] S-I · Onboarding y legibilidad  (PARCIAL — continuar)  ← EMPEZAR AQUÍ
+### [x] S-I · Onboarding y legibilidad  ✅ HECHO (it. 16-17, 2026-06-13)
 - [x] **Tooltips de fórmula en batalla** (it. 16): chip «≈N daño» en push/harass/siege,
-  calculado por `expectedOrderDamage` (resolver) al dado medio, **pinado contra el resolver
-  real** por `damage-estimate.test.ts` (no puede mentir). Charge/move excluidos (dependen del
-  enemigo oculto / check). 
-- [x] **Desglose del income** en provincias: YA EXISTÍA (componente `IncomeLedger` en
-  ProvinciaeTab — tax/edificios/subsistencia/trade − gastos). No requería trabajo.
-- [ ] **Tutorial contextual** (el icono nav-tutorial ya existe): primera visita a cada pestaña →
-  2–3 tooltips guiados; primera campaña → explicación de upkeep/amenaza/plazo.
-- [ ] Estados vacíos consistentes (revisar Consilium/Doctrinae).
-- **DoD restante:** tutorial de primera visita + estados vacíos. (La legibilidad de fórmulas
-  ya está cubierta: batalla = chip de daño; income = ledger.)
+  `expectedOrderDamage` pinado contra el resolver por `damage-estimate.test.ts`.
+- [x] **Desglose del income** en provincias: YA EXISTÍA (`IncomeLedger` en ProvinciaeTab).
+- [x] **Tutorial contextual** (it. 17): `TutorialOverlay.tsx` — modal de primera ejecución de
+  3 pasos (bienvenida → las 6 pestañas del Foro → Iter Belli con upkeep/amenaza/plazo). Revivió
+  el flag `tutorialDismissed` + el botón «Show Tutorial» del Sidebar, que estaban **muertos**
+  (el overlay de Bellum se borró al deprecarlo). Montaje condicional en ForumShell (resetea al
+  paso 0 al reabrir). Validado en vivo con Playwright punta a punta.
+- [x] **Estados vacíos**: revisados — Consilium (`EmptyHero`/«Empty seat»/market vacío) y
+  Doctrinae (`collection.length===0`/socket vacío) YA los tenían. Sin trabajo.
 - **Nota (D26)**: 3 cómputos paralelos de income en ProvinciaeTab (`getNetGoldIncome` :1301,
   tooltip de inversión :1746, `IncomeLedger` :2370) — riesgo de drift display-vs-spend.
-  Candidato a consolidar en un helper único (fuera del alcance de S-I; refactor).
+  Candidato a consolidar en un helper único (refactor, vuelta de blindaje).
 
 ### [ ] S-H · Consistencia visual final
 - Llevar **Consilium** al lenguaje de cartas (coordinar con WIP de codex en advisor-data).

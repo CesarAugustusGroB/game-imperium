@@ -8,6 +8,8 @@ import { ExercitusTab } from './tabs/ExercitusTab';
 import { DoctrinaeTab } from './tabs/DoctrinaeTab';
 import { DecretaTab } from './tabs/DecretaTab';
 import { DoctrineDraftModal } from './DoctrineDraftModal';
+import { TutorialOverlay } from './TutorialOverlay';
+import { tutorialDismissed } from '../../../game/core/meta-save';
 
 const TAB_COMPONENTS: Record<ForumTab, () => preact.JSX.Element> = {
   overview:   OverviewTab,
@@ -47,6 +49,9 @@ export function ForumShell() {
         <Tab />
       </div>
       <DoctrineDraftModal />
+      {/* Conditional MOUNT (not an internal early-return) so the overlay's step
+          state resets to 0 each time it's reopened via the Sidebar re-trigger. */}
+      {!tutorialDismissed.value && <TutorialOverlay />}
     </div>
   );
 }

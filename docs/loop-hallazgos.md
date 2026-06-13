@@ -430,3 +430,37 @@ ledger ya existente). `tsc` · 163 tests · 17/17 verify verdes.
 | — | **Tutorial contextual** (primera visita a cada pestaña → 2-3 tooltips; primera campaña → upkeep/amenaza/plazo). El icono nav-tutorial ya existe | Requiere estado de «primera vez» persistido — pieza más grande, propia iteración |
 | — | **Estados vacíos** consistentes en Consilium/Doctrinae | Pieza pequeña y segura |
 | D26 | **3 cómputos paralelos de income** en ProvinciaeTab (`getNetGoldIncome` :1301, tooltip de inversión :1746, `IncomeLedger` :2370) — mismo patrón display-vs-spend que el loop ya cazó 3 veces. Candidato a consolidar en un helper único | Refactor; fuera del alcance de S-I, anotado para una vuelta de blindaje |
+
+## Iteración 17 — 2026-06-13
+
+Foco: **cerrar S-I** — la pieza de **tutorial contextual**. (Tooltips de fórmula = it.16;
+desglose de income = ya existía; estados vacíos = ya existían en Consilium/Doctrinae.)
+
+### Hallazgo: la UI de tutorial estaba MUERTA
+
+El flag `tutorialDismissed` (persistido en meta-save) y el botón «Show Tutorial» del Sidebar
+existían, pero **no había overlay** — se borró al deprecar Bellum (S34-03 era el tutorial de
+Bellum). Consecuencia: el flag arrancaba en `false` y **nada lo ponía en `true`** (sin overlay
+que lo descartara), así que el botón re-trigger (gated en `=== true`) **nunca aparecía**. Toda
+la cadena estaba huérfana.
+
+### Implementados
+
+| # | Hallazgo / entrega | Detalle | Archivos |
+|---|---|---|---|
+| 44 | **`TutorialOverlay.tsx`** — tutorial de primera ejecución para el main loop actual: 3 pasos (bienvenida/el bucle → las 6 pestañas del Foro con icono+descripción → Iter Belli: upkeep/amenaza/plazo). Dots de paso, Atrás/Siguiente/Comenzar/Saltar | revive el flag + botón existentes; «Comenzar»/«Saltar» → `setTutorialDismissed(true)` (persiste); el botón del Sidebar lo reabre | TutorialOverlay.tsx (nuevo) |
+| 45 | **Montaje condicional en ForumShell** (`{!tutorialDismissed.value && <TutorialOverlay/>}`) en vez de early-return interno | bug de UX que cacé en vivo: devolver `null` NO desmonta en Preact → el `useState(step)` persistía y al reabrir mostraba el último paso. Con montaje condicional el estado resetea al paso 0 | ForumShell.tsx |
+
+**Validación en vivo (Playwright, punta a punta)**: primera carga del Foro → overlay en paso 0;
+avance por los 3 pasos; «Saltar»/«Comenzar» persiste `tutorialDismissed=true` (leído de
+localStorage `imperium-meta-save`); recarga → overlay oculto + botón «Show Tutorial» visible;
+re-trigger → reabre en el paso 0; **0 errores de consola**.
+
+**DoD S-I cumplido (completo)**: legibilidad de fórmulas + tutorial de primera ejecución +
+estados vacíos. `tsc` · 163 tests · 17/17 verify · validado en vivo. wireframes.html sincronizado.
+
+### Nota de proceso
+
+Sin unit test para el overlay (componente presentacional puro); la validación correcta aquí es
+el smoke-test en vivo, que además cazó el bug del estado de paso no-reseteado — un test unitario
+no lo habría pillado. Patrón: para UI con estado de montaje, validar en runtime.
