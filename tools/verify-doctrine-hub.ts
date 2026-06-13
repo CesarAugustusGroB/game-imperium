@@ -45,14 +45,13 @@ check('embark morale sum (2)', b.morale === 2);
 equippedDoctrines.value = [null, null, null, null];
 
 // --- data uses only the live Hub vocabulary ---
-const LIVE_TYPES = new Set(['income-modifier', 'upkeep-reduction', 'resource-per-spoke', 'shop-discount', 'embark-bonus']);
+// (the full effect-contract check now lives in verify-effects.ts; this stays as
+// a quick Hub-vocabulary smoke test. 'resource-per-spoke' was removed from the
+// DoctrineEffect union, so it is no longer a live type.)
+const LIVE_TYPES = new Set(['income-modifier', 'upkeep-reduction', 'shop-discount', 'embark-bonus']);
 const DEAD = DOCTRINE_CATALOG.flatMap((d) => d.levels.flatMap((l) => l.effects))
   .filter((e) => !LIVE_TYPES.has(e.type));
 check('no doctrine uses a dead/battle effect type', DEAD.length === 0);
-check('resource-per-spoke only grants live resources (gold/iuniores)',
-  DOCTRINE_CATALOG.flatMap((d) => d.levels.flatMap((l) => l.effects))
-    .filter((e): e is Extract<DoctrineEffect, { type: 'resource-per-spoke' }> => e.type === 'resource-per-spoke')
-    .every((e) => e.resource === 'gold' || e.resource === 'iuniores'));
 
 // --- shop-discount reduces buySupplies gold cost ---
 preparedArmy.value = { supplies: 0, cohorts: [], size: 0 } as unknown as ArmyData;

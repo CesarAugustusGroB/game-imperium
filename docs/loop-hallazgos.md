@@ -304,3 +304,27 @@ en paralelo. Candidato a revisión preventiva si aparece un cuarto sitio.
 - Marcha nocturna (gamble 60%), expiry de compromisos con penalización, quest fallida
   (+2 amenaza), retirada fallida (check 5<11), rout por moral 0, derrota → EndgameCard
   → hub sin draft (correcto), consola limpia de punta a punta
+
+## Iteración 13 — 2026-06-13
+
+Primera vuelta del loop reanudado (`docs/loop-prompt.md`). Foco: **S-D · Blindaje del
+contrato de efectos** — único hueco de la FASE 1 del plan de consolidación.
+
+### Implementados
+
+| # | Hallazgo / entrega | Detalle | Archivos |
+|---|---|---|---|
+| 28 | **`verify-effects.ts` — guarda del contrato de efectos**. Ambas uniones (`DoctrineEffect`/`DecretumEffect`) se consumen con `default` permisivos (hub `return null`, batalla `return false`), así que añadir un miembro **compila pero queda inerte en silencio** — el agujero exacto del «texto promete / código no aplica» | El script parsea los literales de miembro **del type-source** (escáner de profundidad de llaves, no del `;` interno) y FALLA si: un tipo declarado no tiene sitio de aplicación registrado · el sitio ya no lo maneja (`case 'x'`/`=== 'x'`) · hay una entrada de registro obsoleta · los datos (DOCTRINE_CATALOG/STARTER_DECRETUM) usan un tipo fuera de la unión. 4 doctrina + 14 decreta cubiertos | tools/verify-effects.ts (nuevo) |
+| 29 | **Invariantes económicos** (mismo script) | `applyInvestmentDiscount` refund ≤ pagado y ≥1 por recurso (nunca gratis, ni al 90% ni a `maxInvestmentDiscount`); `getShopDiscount`/`getUpkeepReduction` ≤75 al apilar; `getDiscountedGold` ∈ [1, base]; `getInvestmentDiscount([])`=0; `ECONOMY.maxInvestmentDiscount` ∈ (0,100) | tools/verify-effects.ts |
+| 30 | **Check muerto en `verify-doctrine-hub.ts`**: filtraba el dato contra `resource-per-spoke`, miembro de la unión `DoctrineEffect` **ya eliminado**. El `Extract<…, {type:'resource-per-spoke'}>` resolvía a `never`, así que `.every()` sobre el array filtrado (vacío) pasaba en vacío — un check que no verificaba nada | quitado el check vacío y `resource-per-spoke` de `LIVE_TYPES` | tools/verify-doctrine-hub.ts |
+
+**DoD S-D cumplido**: `tsc` limpio · **17/17** verify (el runner hace glob de `verify-*.ts`,
+recoge el nuevo solo) · **148** unit tests verdes. Añadir un miembro a cualquiera de las dos
+uniones sin cablear su aplicación ahora rompe `npm run verify`.
+
+### Dudosos / fuera de alcance — NO implementados
+
+| # | Hallazgo | Por qué no |
+|---|---|---|
+| D20 | Traits de legado / features únicas de provincia / governors NO usan una unión de efecto-tipo tabulada (son mods bespoke en `adapter.ts` / `province.ts`). El verificador de contrato no les aplica tal cual | El plan los listaba, pero su «contrato» no es un switch tipo→efecto; tabularlos es un refactor mayor sin bug actual. Anotado como extensión futura |
+| D21 | Pendiente transversal: sincronizar la tabla de auditoría de `sistemas-del-juego.html` con que el contrato ahora tiene guarda automática | Doc, no código; siguiente vuelta o cuando se toque ese doc |

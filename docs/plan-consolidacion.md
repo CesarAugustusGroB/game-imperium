@@ -45,10 +45,14 @@ El módulo de batalla no importaba decreta: ~10 de 30 pergaminos eran inlanzable
 - [x] Tests: `sc-honesty.test.ts` (6); 108 total verdes. `verify-province-resources` pasa.
 - **DoD cumplido**: cero filas `muerto` en la tabla de auditoría (las features especiales latentes no se muestran → no mienten).
 
-### S-D · Blindaje
-- [ ] **`tools/verify-effects.ts`**: recorre doctrinas/decreta/traits/features/governors y FALLA si un tipo de efecto declarado no tiene sitio de aplicación registrado (mapa explícito tipo→módulo). Se añade al ritual de verificación.
-- [ ] Unit tests para los invariantes económicos: refund ≤ pagado, caps de income/descuentos, clamps de campaña.
-- [ ] Actualizar `sistemas-del-juego.html` (tabla de auditoría) y wireframes en el mismo PR de cada item.
+### S-D · Blindaje — ✅ HECHO (2026-06-13)
+- [x] **`tools/verify-effects.ts`**: parsea los literales de miembro de las uniones `DoctrineEffect`/`DecretumEffect` directamente del type-source y FALLA si un tipo declarado no tiene sitio de aplicación registrado (mapa explícito tipo→módulo), si el sitio registrado ya no lo maneja (`case 'x'`/`=== 'x'`), si hay una entrada de registro obsoleta (miembro eliminado), o si los datos usan un tipo fuera de la unión. Cubre el agujero real: ambas uniones se consumen con `default` permisivos (hub `return null`, batalla `return false`), así que añadir un miembro compila pero queda **inerte en silencio** — ahora el verificador lo caza. Recogido automáticamente por `npm run verify` (el runner hace glob de `verify-*.ts`).
+- [x] **Invariantes económicos** (en el mismo script): `applyInvestmentDiscount` refund ≤ pagado y ≥1 por recurso (nunca gratis, incluso al 90%/maxInvestmentDiscount); `getShopDiscount`/`getUpkeepReduction` clampados a ≤75 al apilar; `getDiscountedGold` en `[1, base]`; `getInvestmentDiscount([])` = 0; `ECONOMY.maxInvestmentDiscount` en (0,100).
+- [x] De paso: limpiado el check muerto de `verify-doctrine-hub.ts` que filtraba contra `resource-per-spoke` (miembro de unión ya eliminado; el `Extract<…>` resolvía a `never` y el check pasaba en vacío).
+- **DoD cumplido**: `tsc` limpio · 17/17 verify · 148 unit tests verdes. Añadir un miembro a cualquiera de las dos uniones sin cablear su aplicación ahora hace fallar `npm run verify`.
+- **Nota:** traits de legado / features únicas / governors NO usan una unión de efecto-tipo tabulada (son mods bespoke en el adapter / province); su contrato no aplica al patrón de este verificador. Queda como extensión futura si se tabulan.
+
+> **Pendiente menor (no bloquea S-D):** actualizar `sistemas-del-juego.html` (tabla de auditoría) y wireframes en el mismo cambio de cada item — convención transversal del plan.
 
 ---
 
