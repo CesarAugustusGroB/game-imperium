@@ -1088,3 +1088,25 @@ build verde.
 GovernorTrait, SynergyBonus, LegateEffect, **AdvisorPassive**. Esta es la última unión
 `type`-discriminada con switch del juego — ahora sí completa. Un barrido de `switch.*type|=== '`
 en src/game no revela más uniones de efecto-tipo sin guardar.
+
+## Iteración 39 — 2026-06-13
+
+**Regresión guard de un invariante crítico sin test**: la **regla de piedad de `refillPool`**
+(it.6) — garantiza que siempre haya una carta de Movimiento en el pool, evitando el softlock de
+«sequía de movimiento» (un bug real vivido en partida en it.6).
+
+### Hallazgo
+
+`refillPool` (iter-belli-state, interno) fuerza una carta de Movimiento si el pool refillado no
+tiene ninguna (líneas 199-204). Es el fix anti-softlock de it.6 y **no tenía test** — un refactor
+que lo rompiera reintroduciría el softlock en silencio. El invariante: tras cada refill (al sembrar
+y en cada `endTurn`), el pool contiene un Movimiento si el escenario tiene movers elegibles (Saguntum
+los tiene).
+
+### Implementado
+
+| # | Entrega | Detalle | Archivos |
+|---|---|---|---|
+| 76 | **Regla de piedad guardada** en campaign-flow.test: tras sembrar y a lo largo de 6 turnos jugados, el pool siempre contiene una carta `Movimiento` (a través del `refillPool` real) | si el pool se queda sin movers (clog de permanentes), el test falla — el softlock de it.6 no puede volver en silencio | campaign-flow.test.ts |
+
+**Validación**: `tsc` limpio · **187 tests** (+1) · 17/17 verify · build verde. Test-only.

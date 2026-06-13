@@ -68,6 +68,19 @@ describe('Iter Belli campaign flow (headless integration)', () => {
     expect(Number.isFinite(s.supplies)).toBe(true);
     expect(s.turnNum).toBe(played);
   });
+
+  it('pity rule keeps a Movimiento card available every turn (anti-softlock, loop-6)', () => {
+    startIterBelliCampaign({ ...SEED });
+    const hasMover = () => iterBelliState.value.pool.some((c) => c.def.category === 'Movimiento');
+    expect(hasMover()).toBe(true);                 // present right after seeding's refill
+    for (let i = 0; i < 6; i++) {
+      if (iterBelliState.value.finished) break;
+      const card = firstPlayable();
+      if (!card) break;
+      playCard(card.instanceId);
+      expect(hasMover()).toBe(true);               // refillPool re-forces one each turn
+    }
+  });
 });
 
 describe('Iter Belli battle → campaign bridge (applyBattleOutcome)', () => {
