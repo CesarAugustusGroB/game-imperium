@@ -4,6 +4,7 @@ import { OrnateFrame, OrnateHeader } from './OrnateFrame';
 import { sfxMuted, sfxVolume, persistAudioPrefs } from '../sound/sound';
 import { musicMuted, toggleMusicMute } from '../sound/music';
 import { playSfx } from '../sound/sfx';
+import { metaSave, exportCampaignLogsJson } from '../../game/core/meta-save';
 
 if (typeof document !== 'undefined' && !document.getElementById('settings-panel-styles')) {
   const el = document.createElement('style');
@@ -60,7 +61,22 @@ function ToggleRow({ label, on, onToggle }: { label: string; on: boolean; onTogg
   );
 }
 
+function downloadTelemetry(): void {
+  const json = exportCampaignLogsJson();
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `imperium-telemetry-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  playSfx('ui_click');
+}
+
 export function SettingsPanel({ style }: { style?: JSX.CSSProperties }) {
+  const logCount = metaSave.value.campaignLogs.length;
   return (
     <div
       style={{
@@ -98,6 +114,21 @@ export function SettingsPanel({ style }: { style?: JSX.CSSProperties }) {
           }}
         />
       </div>
+      <button
+        class="settings-toggle-row"
+        style={{ ...ROW_STYLE, opacity: logCount === 0 ? 0.5 : 1, cursor: logCount === 0 ? 'not-allowed' : 'pointer' }}
+        disabled={logCount === 0}
+        onClick={downloadTelemetry}
+        title="Descarga el registro local de campañas (JSON) para análisis de balance"
+      >
+        <span>Descargar telemetría de campañas</span>
+        <span style={{
+          fontFamily: 'var(--imp-font-mono, monospace)', fontSize: 12, letterSpacing: '.08em',
+          color: logCount === 0 ? 'var(--color-text-muted, #6f6757)' : 'var(--color-gold-primary, #d4a843)',
+        }}>
+          {logCount === 0 ? '— vacío' : `${logCount} ↓`}
+        </span>
+      </button>
     </div>
   );
 }

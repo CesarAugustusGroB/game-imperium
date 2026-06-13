@@ -101,12 +101,16 @@ Contador visible en TreasuryPanel. Persistido en meta-save. tsc + 157 tests + 17
   faltantes (cast de decretum, upgrade de doctrina, abrir modal).
 - **DoD:** toda pantalla del loop usa el lenguaje de cartas y coincide con su wireframe.
 
-### [ ] S-J · Telemetría de playtest + balance  (FASE 4)
-- Log local de runs (JSON): duración, recursos finales, causa de derrota, cartas jugadas,
-  órdenes usadas. Sin backend — descarga manual.
-- 10+ runs guiadas por las tensiones de la auditoría. Ajustar números SOLO con datos.
+### [~] S-J · Telemetría de playtest + balance  (FASE 4 — infra HECHA, playtest = humano)
+- [x] **Log local de campañas (JSON)** (it. 18): `run-telemetry.ts` (cards/orders tally) +
+  `CampaignLogEntry` en meta-save (`recordCampaignLog`, cap 100) registrado al cierre de cada
+  campaña (EndgameCard): outcome, causa, temporada, días, oro/iuniores finales, supervivientes,
+  cartas jugadas, órdenes usadas. **Export JSON** por botón en el modal de Opciones. Sin backend.
+- [ ] **10+ runs de playtest + ajustes de balance con datos**: tarea **manual/humana** — el loop
+  no puede jugar 10 partidas significativas. La infra ya captura los datos; pendiente jugar y
+  descargar el JSON. Regla: tocar números SOLO con datos (la auditoría dice que son coherentes).
 
-### [ ] S-K · Robustez de saves + release-readiness  (FASE 4)
+### [ ] S-K · Robustez de saves + release-readiness  (FASE 4)  ← EMPEZAR AQUÍ
 - Test de migración de saves (fixtures en `tools/fixtures/`).
 - Pasada de perf (bundle, imágenes vía vite-imagetools, RAF/listeners).
 - `npm run build` + smoke test del build de producción en el ritual de cada vuelta.

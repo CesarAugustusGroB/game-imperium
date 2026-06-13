@@ -7,6 +7,7 @@ import { decretumHand, removeDecretum } from '../../items/decretum-store';
 import { isDecretumCastable } from '../../items/decretum';
 import { selectedCommander } from '../../core/game-state';
 import { spendCampaignCost } from '../iter-belli-state';
+import { tallyOrderUsed } from '../../progression/run-telemetry';
 
 export interface ConcludeResult { victory: boolean; survivors: number; finalMorale: number; }
 export interface BeginOpts {
@@ -77,6 +78,7 @@ export function castBattleDecretum(id: string): boolean {
 
 export function issueOrder(order: OrderKey): void {
   const s = battleSession.value; if (!s || s.phase !== 'fighting') return;
+  tallyOrderUsed(order); // telemetry (plan S-J)
   const yHp = s.state.you.hp, eHp = s.state.enemy.hp;
   const { log: lines, enemyOrder } = playRound(s.state, order, RNG);
   const phase = s.state.finished ? 'resolved' : 'fighting';

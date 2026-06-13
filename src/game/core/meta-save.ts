@@ -72,6 +72,31 @@ export interface RunRecord {
   score: number;
 }
 
+/** Per-campaign telemetry entry (plan S-J). Local-only; exported as JSON for balance analysis. */
+export interface CampaignLogEntry {
+  /** ISO timestamp of campaign completion. */
+  date: string;
+  commanderId: string;
+  commanderName: string;
+  scenarioId: string;
+  outcome: 'victory' | 'defeat';
+  /** Human-readable end cause (victory title or defeat reason). */
+  cause: string;
+  /** Global season clock at campaign end. */
+  seasonsAtEnd: number;
+  /** Campaign days elapsed (turnNum). */
+  daysUsed: number;
+  /** Final run resources after the campaign settled back to the hub. */
+  finalGold: number;
+  finalIuniores: number;
+  /** Surviving soldiers at campaign end. */
+  survivors: number;
+  /** Cards resolved during the campaign. */
+  cardsPlayed: number;
+  /** Battle orders issued, keyed by order id (e.g. 'siege', 'charge'). */
+  ordersUsed: Record<string, number>;
+}
+
 type SavedResources = Omit<Resources, 'iuniores'> & { iuniores?: number };
 
 export interface ActiveRunSave {
@@ -121,6 +146,8 @@ export interface MetaSave {
   version: 3;
   /** Completed run history (most recent first). */
   runs: RunRecord[];
+  /** Per-campaign telemetry log (most recent first), capped. Plan S-J. */
+  campaignLogs: CampaignLogEntry[];
   /** Total runs started (includes incomplete). */
   totalRunsStarted: number;
   /** Total victories. */
@@ -149,6 +176,7 @@ function createDefaultSave(): MetaSave {
   return {
     version: 3,
     runs: [],
+    campaignLogs: [],
     totalRunsStarted: 0,
     victories: 0,
     highScore: 0,
@@ -345,6 +373,7 @@ function migrateMetaSave(rawSave: unknown): MetaSave {
   return {
     version: 3,
     runs: Array.isArray(parsed.runs) ? parsed.runs as RunRecord[] : [],
+    campaignLogs: Array.isArray(parsed.campaignLogs) ? parsed.campaignLogs as CampaignLogEntry[] : [],
     totalRunsStarted: typeof parsed.totalRunsStarted === 'number' ? parsed.totalRunsStarted : 0,
     victories: typeof parsed.victories === 'number' ? parsed.victories : 0,
     highScore: typeof parsed.highScore === 'number' ? parsed.highScore : 0,
@@ -592,6 +621,21 @@ export function recordRunStart(): void {
     totalRunsStarted: metaSave.value.totalRunsStarted + 1,
   };
   persist();
+}
+
+/** Max campaign-telemetry entries kept locally (most recent first). */
+const CAMPAIGN_LOG_CAP = 100;
+
+/** Append a campaign telemetry entry (plan S-J). Caps the log and persists. */
+export function recordCampaignLog(entry: CampaignLogEntry): void {
+  const next = [entry, ...metaSave.value.campaignLogs].slice(0, CAMPAIGN_LOG_CAP);
+  metaSave.value = { ...metaSave.value, campaignLogs: next };
+  persist();
+}
+
+/** All campaign telemetry as a pretty JSON string, for manual download/analysis. */
+export function exportCampaignLogsJson(): string {
+  return JSON.stringify(metaSave.value.campaignLogs, null, 2);
 }
 
 /** Compute score from run stats. */

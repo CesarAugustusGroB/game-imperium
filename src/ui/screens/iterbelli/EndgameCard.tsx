@@ -2,7 +2,9 @@
 import { playSfx } from '../../sound/sfx';
 import { navigateTo } from '../../screens';
 import { gold, iuniores } from '../../../game/core/resources';
-import { completedSpokes, battlesWon, globalSeason, MAX_SEASONS, spokesSinceLastBattle } from '../../../game/core/game-state';
+import { completedSpokes, battlesWon, globalSeason, MAX_SEASONS, spokesSinceLastBattle, selectedCommander } from '../../../game/core/game-state';
+import { recordCampaignLog } from '../../../game/core/meta-save';
+import { snapshotCampaignTelemetry } from '../../../game/progression/run-telemetry';
 import { preparedArmy } from '../../../game/progression/strategic-store';
 import { computeArmySize } from '../../../game/army/cohort';
 import { iterBelliState, resetIterBelli } from '../../../game/iterBelli/iter-belli-state';
@@ -43,6 +45,27 @@ function returnToHub(): void {
   for (let i = 0; i < s.spokeDuration; i++) collectProvinceIncome();
   // Forged allies pledge their season tribute (tribes → iuniores, kingdoms → gold).
   for (let i = 0; i < s.spokeDuration; i++) collectAllyIncome();
+
+  // Telemetry (plan S-J): log this campaign's outcome + tallies for balance analysis.
+  const cmd = selectedCommander.value;
+  if (outcome && cmd) {
+    const tel = snapshotCampaignTelemetry();
+    recordCampaignLog({
+      date: new Date().toISOString(),
+      commanderId: cmd.id,
+      commanderName: cmd.name,
+      scenarioId: getActiveScenario().id,
+      outcome: outcome.victory ? 'victory' : 'defeat',
+      cause: outcome.text,
+      seasonsAtEnd: globalSeason.value,
+      daysUsed: outcome.turnNum,
+      finalGold: gold.value,
+      finalIuniores: iuniores.value,
+      survivors: outcome.soldiers,
+      cardsPlayed: tel.cardsPlayed,
+      ordersUsed: tel.ordersUsed,
+    });
+  }
 
   if (outcome?.victory) {
     completedSpokes.value++;

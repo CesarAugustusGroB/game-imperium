@@ -14,6 +14,7 @@ import { signal } from '@preact/signals';
 import { CARD_DEFS } from '../../data/iter-belli-cards';
 import { makeQuestCard } from '../../data/iter-belli-quests';
 import { getActiveScenario, resetActiveScenario } from './iter-belli-scenario';
+import { tallyCardPlayed, resetCampaignTelemetry } from '../progression/run-telemetry';
 import * as B from './iter-belli-balance';
 import type {
   Archetype, CardContext, CardCost, CardEffects, CardInstance, DoctrineCampaignModifier,
@@ -277,6 +278,7 @@ export function playCard(instanceId: number): void {
   const card = S.pool.find((c) => c.instanceId === instanceId);
   if (!card || isCrisisDef(card.def)) return;
   const def = card.def;
+  tallyCardPlayed(); // telemetry (plan S-J)
 
   // Effective cost = base cost + doctrine cost deltas (discounts), clamped ≥ 0.
   const cost: CardCost = { ...(def.cost ?? {}) };
@@ -556,6 +558,7 @@ export interface CampaignSeed {
 export function startIterBelliCampaign(seed: CampaignSeed): void {
   S = freshState();
   logLines = [];
+  resetCampaignTelemetry(); // telemetry (plan S-J) — fresh tallies per campaign
   resetActiveScenario();
   const soldiers = seed.soldiers > 0 ? Math.floor(seed.soldiers) : B.START.fallbackSoldiers;
   S.soldiers = soldiers;

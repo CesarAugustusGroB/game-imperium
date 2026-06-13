@@ -464,3 +464,40 @@ estados vacíos. `tsc` · 163 tests · 17/17 verify · validado en vivo. wirefra
 Sin unit test para el overlay (componente presentacional puro); la validación correcta aquí es
 el smoke-test en vivo, que además cazó el bug del estado de paso no-reseteado — un test unitario
 no lo habría pillado. Patrón: para UI con estado de montaje, validar en runtime.
+
+## Iteración 18 — 2026-06-13
+
+Foco: **S-J · Telemetría de playtest** (la parte codeable; las 10+ runs son playtest humano).
+
+### Hallazgo: el sistema de historial de runs estaba SIN CABLEAR
+
+`RunRecord`, `runs[]`, `computeScore`, `getBestRun`, `victories`, `highScore`, `commanderWins`
+existían en meta-save pero **nada los poblaba** — `recordRunStart` incrementa el contador de
+inicio, pero **ninguna función registraba la finalización**. Otro sistema huérfano (como el
+tutorial en it.17). En vez de revivir el RunRecord whole-run (semántica de «fin de run» difusa),
+añadí telemetría **por-campaña** (límite bien definido: la fase `endgame`), que además sirve
+mejor a las preguntas de balance de la auditoría (¿se usa siege? ¿el plazo fuerza decisiones?).
+
+### Implementados
+
+| # | Hallazgo / entrega | Detalle | Archivos |
+|---|---|---|---|
+| 46 | **`run-telemetry.ts`** — acumula cartas jugadas (conteo) y órdenes usadas (por clave de orden) por campaña; reset/snapshot | módulo-leaf sin señales (se lee una vez al cierre) | run-telemetry.ts (nuevo) |
+| 47 | **Hooks de acumulación**: `tallyOrderUsed(order)` en `issueOrder` (controller), `tallyCardPlayed()` en `playCard` (state), `resetCampaignTelemetry()` en `startIterBelliCampaign` | 3 puntos, mínimos | controller.ts, iter-belli-state.ts |
+| 48 | **`CampaignLogEntry` + `campaignLogs[]`** en meta-save (tipo, default, migración back-compat, `recordCampaignLog` cap 100, `exportCampaignLogsJson`) | registrado al cierre en `EndgameCard.returnToHub` con outcome/causa (`S.outcome.text`)/temporada/días/oro+iuniores finales/supervivientes/tallies | meta-save.ts, EndgameCard.tsx |
+| 49 | **Export JSON** por botón en el modal de Opciones (`SettingsPanel`): descarga `imperium-telemetry-YYYY-MM-DD.json`; deshabilitado y «— vacío» sin logs | Blob + anchor download | SettingsPanel.tsx |
+| 50 | Tests: tally/snapshot/reset + recordCampaignLog (orden most-recent-first, cap 100) + export JSON válido | 168 unit tests verdes (+5) | run-telemetry.test.ts (nuevo) |
+
+**Validado en vivo**: botón «Descargar telemetría de campañas» renderiza en Opciones, muestra
+«— vacío» y está deshabilitado sin logs; 0 errores de consola; HMR limpio. El path completo
+campaña→log está cubierto por el `recordCampaignLog` testeado + el cableado de EndgameCard
+validado por `tsc` (no jugué una campaña entera punta a punta — eso es el playtest humano de S-J).
+
+**DoD S-J (infra) cumplido**: `tsc` · 168 tests · 17/17 verify. Sincronizado `sistemas-del-juego.html`
+(fila de auditoría). El **playtest de 10+ runs + ajustes con datos queda como tarea humana**.
+
+### Dudoso
+
+| # | Observación | Por qué no |
+|---|---|---|
+| D27 | `cardsPlayed` es un conteo agregado, no por categoría/carta. Para análisis fino convendría tally por `def.id` o categoría, pero crece y «cartas jugadas» (conteo) cumple el DoD | Ampliable si el playtest lo pide |
