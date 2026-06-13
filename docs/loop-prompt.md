@@ -117,10 +117,12 @@ Contador visible en TreasuryPanel. Persistido en meta-save. tsc + 157 tests + 17
   activeRun viejo rellenado, nunca lanza.
 - [x] **`npm run build` smoke** (it. 19): build de producción verde (✓ ~3s, JS 590KB/150KB gzip).
   **Añadido al ritual del loop** (correr `npm run build` cada vuelta además de tsc+verify).
-- [ ] **Pasada de perf** (PENDIENTE, refactor grande): el build avisa chunk >500KB (sin
-  code-splitting) y hay PNGs enormes servidos sin optimizar (roman_background 3.5MB,
-  campaign-briefing 2.3MB, consilium_hero 2MB — ¿en `public/` en vez de `src/assets/` con
-  vite-imagetools?). Auditar RAF/listeners. Ver D28.
+- [~] **Pasada de perf** (PARCIAL): 
+  - [x] **Fondos optimizados** (it. 20): `campaign-briefing-background` (2.2MB→132KB) y
+    `consilium_hero_bg` (2.0MB→81KB) pasados a WebP vía vite-imagetools (`?w=1920&quality=82&format=webp`).
+    `roman_background` ya estaba optimizado (`as=picture`). −~4MB en el bundle de producción.
+  - [ ] Pendiente: **code-splitting** (chunk JS 590KB >500KB) y los **muchos iconos UI PNG**
+    (~280–400KB c/u, decenas). Auditar RAF/listeners. Ver D28.
 
 ---
 

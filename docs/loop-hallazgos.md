@@ -525,4 +525,37 @@ sin duplicarlos ni depender de tipos de node.
 
 | # | Observación | Por qué no ahora |
 |---|---|---|
-| D28 | **Perf**: el build avisa chunk JS >500KB (sin code-splitting) y hay PNGs sin optimizar servidos tal cual: `roman_background` 3.5MB, `campaign-briefing-background` 2.3MB, `consilium_hero_bg` 2MB. Probablemente importados sin `vite-imagetools` (o en `public/`). Mover a `src/assets/` con `?format=avif;webp` + code-splitting por ruta recortaría MB. Auditar también RAF/listeners | Refactor amplio con riesgo de regresión visual; merece su propia iteración dedicada con validación en vivo de cada pantalla afectada |
+| D28 | **Perf**: el build avisa chunk JS >500KB (sin code-splitting) y hay PNGs sin optimizar servidos tal cual: `roman_background` 3.5MB, `campaign-briefing-background` 2.3MB, `consilium_hero_bg` 2MB. Probablemente importados sin `vite-imagetools` (o en `public/`). Mover a `src/assets/` con `?format=avif;webp` + code-splitting por ruta recortaría MB. Auditar también RAF/listeners | **PARCIALMENTE RESUELTO (it. 20)** — ver abajo. Quedan code-splitting + iconos UI |
+
+## Iteración 20 — 2026-06-13
+
+Foco: rebanada acotada de **D28 (perf)** — optimización de los fondos PNG gigantes. (El backlog
+S-A…S-K está completo salvo perf; esta es la pieza de menor riesgo y mayor MB-por-cambio.)
+
+### Hallazgo
+
+Tres fondos pesados en el build: `roman_background` (ya optimizado, `as=picture` AVIF/WebP — las
+dos entradas PNG del build son solo fallbacks de ancho), pero **`campaign-briefing-background`
+(2.2MB) y `consilium_hero_bg` (2.0MB) se importaban como PNG crudo sin imagetools** y se servían
+enteros. Ambos se usan como `url(${import})` en CSS background → el cambio de import es transparente.
+
+### Implementados
+
+| # | Hallazgo / entrega | Detalle | Archivos |
+|---|---|---|---|
+| 53 | **Fondos a WebP vía vite-imagetools**: `?w=1920&quality=82&format=webp` en ambos imports | build: `consilium_hero_bg` 2.0MB→**81KB**, `campaign-briefing` 2.2MB→**132KB** (−94/96%). −~4MB en assets de producción | EmbarkCard.tsx, ConsiliumTab.tsx |
+| 54 | **Shim de tipos** para el import URL-de-WebP (`declare module '*&format=webp'` → string), ya que el shim previo solo cubría `&as=picture` | la query debe TERMINAR en `&format=webp` para casar el glob | types/imagetools.d.ts |
+
+**Validado en vivo (Playwright)**: tras iniciar un run, el fondo del EmbarkCard (Foro) y el hero
+de Consilium **cargan correctamente** (1448×1086 y 1672px, `ok:true`), 0 errores de consola, sin
+regresión visual. Nota: en **dev** vite-imagetools sirve el PNG original (por velocidad); el
+**build de producción ya emite el WebP** (confirmado: el PNG de 2.2MB desapareció del bundle).
+
+**DoD**: `tsc` · 172 tests · 17/17 verify · **build verde** (fondos WebP en el bundle).
+
+### Pendiente de D28 (refactor mayor, próximas vueltas)
+
+| # | Observación | Por qué no ahora |
+|---|---|---|
+| D28b | **Code-splitting**: chunk JS único de 590KB (>500KB). `import()` dinámico por pantalla (Battle/Forum/Title) o `codeSplitting` de rolldown | Riesgo de romper el arranque; necesita validar carga de cada ruta |
+| D28c | **Iconos UI PNG**: decenas de ~280–400KB c/u (nav-*, cat-*, res-*, delta-*…). Pasarlos por imagetools o regenerarlos comprimidos recortaría varios MB, pero son muchos ficheros y sensibles a calidad visual (estilo medallón) | Lote grande; validar el catálogo `iconos.html` tras comprimir |

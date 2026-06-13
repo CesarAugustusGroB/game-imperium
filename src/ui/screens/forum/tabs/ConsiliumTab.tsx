@@ -28,7 +28,7 @@ import {
   TraitChip,
   TraitGlyph,
 } from '../components/consilium';
-import consiliumHeroBg from '../../../../assets/backgrounds/consilium_hero_bg.png';
+import consiliumHeroBg from '../../../../assets/backgrounds/consilium_hero_bg.png?w=1920&quality=82&format=webp';
 import consiliumMedallion from '../../../../assets/ui/consilium-medallion.png';
 
 /** Static slot-position labels - flavor, not state. */

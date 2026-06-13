@@ -20,7 +20,7 @@ import { BentoCard } from '../../../components/BentoCard';
 import { GameIcon } from '../../../components/GameIcon';
 import { getPriorityStyle, priorityClass } from '../../../components/card-priority';
 import { ResourceAmount } from '../../../components/ResourceIcon';
-import campaignBriefingBackground from '../../../../assets/ui/campaign/campaign-briefing-background.png';
+import campaignBriefingBackground from '../../../../assets/ui/campaign/campaign-briefing-background.png?w=1920&quality=82&format=webp';
 import missionParchmentScroll from '../../../../assets/ui/campaign/mission-parchment-scroll.png';
 
 interface EmbarkCardProps {
