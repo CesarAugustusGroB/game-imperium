@@ -656,3 +656,37 @@ las pestañas vivas, no estos standalone).
   (gain-ally/threat-reduction/supplies-gain) no se muestran en batalla. Correcto.
 - **`isCastableAtHub` para gain-ally**: no es campaign-only, castable en el hub, `addAlly` aplicado
   vía `applyHubEffect`. Cableado correcto (ya cubierto por verify-effects en it.13/15).
+
+## Iteración 24 — 2026-06-13
+
+**Modo barrido**: seguimiento del sistema de historial de runs (notado parcialmente en it.18) +
+smoke en vivo del flujo de campaña tras los cambios de telemetría/meta-save de it.13-23.
+
+### Smoke en vivo (sin regresión)
+
+Title → Warlord → Foro → **Embark** → campaña (#iterbelli, «Marcha de guerra en Hispania»,
+misión «Asalto — vence en 8 días») → jugar carta **Acampar**: **0 errores de consola**. El flujo
+de campaña sigue sano tras los hooks de telemetría añadidos a `playCard`/`issueOrder` (it.18).
+
+### Hallazgo (ítem de DECISIÓN, no fix — clase D10/D11)
+
+**El sistema de historial de runs está DOBLEMENTE muerto**: `RunRecord`, `runs[]`, `victories`,
+`highScore`, `commanderWins`, `computeScore`, `getBestRun`, `hasCommanderWon` — **nada los puebla**
+(ninguna función registra la finalización de un run; `recordRunStart` solo incrementa
+`totalRunsStarted`, también sin lectores) **Y nada los consume** (cero referencias vivas a
+`getBestRun`/`hasCommanderWon`/`victories`/`highScore`/`commanderWins`/`runs` en `src/`).
+
+| # | Decisión pendiente | Por qué NO lo toco en el loop |
+|---|---|---|
+| D29 | **¿Implementar una pantalla de récords/estadísticas o recortar el scaffolding de run-records?** Es infraestructura del **save** (`MetaSave.runs/victories/highScore/commanderWins` + migración v1/v2/v3). Plausiblemente scaffolding para un futuro Title con «High Score / mejor run / comandantes ganados». Recortarlo toca el schema del save y la migración (riesgo) y podría tirar trabajo intencional; implementarlo exige decidir la semántica de «fin de run» (difusa: ¿temporada máxima? ¿victoria final? ¿abandono?) | Save schema + decisión de diseño del usuario, igual que D10 (eventos) / D11 (facciones). El loop no recorta save-infra ni inventa semántica de fin-de-run sin spec |
+
+**Recomendación al usuario**: si se quiere una pantalla de récords, hay que (a) decidir qué cuenta
+como «run completado», (b) cablear un `recordRunComplete(outcome)` en ese punto, (c) consumir
+`getBestRun`/stats en el Title o un modal. Si no, recortar los 4 campos del save + helpers. La
+telemetría por-campaña (S-J, it.18) ya cubre el análisis de balance, que era el uso prioritario.
+
+### Dudoso menor (no implementado)
+
+| # | Observación | Por qué no |
+|---|---|---|
+| D30 | **Telemetría infracontada en campañas recargadas**: `resetCampaignTelemetry` solo corre en `startIterBelliCampaign`, no en `restoreIterBelli`. Un reload a mitad de campaña deja los contadores (módulo) en 0, así que el `CampaignLogEntry` final pierde las cartas/órdenes pre-reload | Edge case (la mayoría de campañas no se recargan a mitad); persistir los contadores en el save es scope-creep para beneficio marginal. Anotado por si el playtest lo necesita |
