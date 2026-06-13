@@ -1,6 +1,11 @@
 # Prompt loopeable — Consolidación de Imperium
 
-> **Uso:** este archivo es el prompt de una iteración del loop de consolidación.
+> ⚠️ **MIGRADO (it.47):** el estado vivo del loop ahora vive en **`.loop/STATE.md`**
+> (formato estándar: estado en fichero + prompt mínimo «lee STATE.md y continúa»).
+> Este archivo queda como referencia histórica del backlog/reglas; no lo uses como
+> prompt del cron. El cron re-inyecta un prompt corto que apunta a `.loop/STATE.md`.
+
+> **Uso (legacy):** este archivo era el prompt de una iteración del loop de consolidación.
 > Lánzalo con `/loop docs/loop-prompt.md` (o pega su contenido como prompt y deja
 > que se repita). Cada vuelta avanza UN item del backlog, lo verifica y lo commitea.
 > Es la continuación natural del loop `loop-1 … loop-12` registrado en
