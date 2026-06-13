@@ -1147,3 +1147,27 @@ on arrival: días 6.1 (96.2% ≤8d bonus) · suministros 9.8/28 · moral 5.8/15 
 (solo el tool). S-J: la infra de telemetría (it.18/33) + estos dos sims cubren el análisis de
 balance que era la parte codeable; jugar runs reales y descargar el JSON queda como tarea humana
 opcional.
+
+## Iteración 41 — 2026-06-13
+
+**Sweep + honestidad (comentario obsoleto)**: auditado el sistema de moral de ejército. Verificado
+sano salvo una mentira de documentación.
+
+### Hallazgo
+
+`src/game/army/morale.ts` y `legatusContributor` **no existen** (eliminados con los sistemas de
+batalla deprecados). Pero el comentario del efecto `morale-bonus` en `legate.ts:41-46` afirmaba
+que se consume «por el `legatusContributor` en `src/game/army/morale.ts`, NOT by the in-battle
+effect pipeline — the in-battle handler is a no-op». **Doblemente falso**: (1) el fichero/función
+no existen; (2) `morale-bonus` SÍ se aplica — `legateSeedMods` (adapter.ts:41) suma `amount / 10`
+a la moral del PlayerSeed (escala legacy 0–100 → 0–15 del motor). El comentario también citaba un
+`BASE_MORALE (100)` que no existe como constante (solo vivía en ese comentario).
+
+### Implementado
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 78 | **Comentario obsoleto** de `morale-bonus`: referencia un sistema borrado y niega su aplicación real | reescrito a la verdad: aplicado por `legateSeedMods`/adapter (÷10 a la moral del seed); nota de que el path `morale.ts`/`legatusContributor` se eliminó. Última referencia a `BASE_MORALE` retirada | legate.ts |
+
+**Validación**: `tsc` limpio · 187 tests · 17/17 verify · build verde. Cero referencias vivas a
+`morale.ts`/`legatusContributor` restantes (solo la nota histórica corregida).

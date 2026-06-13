@@ -39,10 +39,11 @@ export type LegateEffect =
       multiplier: number;
     }
   /**
-   * Additive shift to the attached army's pre-battle morale (S24). Consumed
-   * by the `legatusContributor` in `src/game/army/morale.ts`, NOT by the
-   * in-battle effect pipeline — the in-battle handler is a no-op.
-   * `amount` is a signed integer delta from `BASE_MORALE` (100).
+   * Additive shift to the attached army's pre-battle morale. Applied by
+   * `legateSeedMods` in `iterBelli/battle/adapter.ts`: it adds `amount / 10` to
+   * the PlayerSeed morale, converting the legacy 0–100 `amount` onto the 0–15
+   * engine morale scale. (The old `morale.ts` / `legatusContributor` path was
+   * removed with the deprecated battle systems.)
    */
   | {
       type: 'morale-bonus';
