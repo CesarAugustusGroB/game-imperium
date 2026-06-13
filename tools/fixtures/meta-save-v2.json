@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "runs": [
+    {
+      "date": "2026-01-01T00:00:00.000Z",
+      "commanderId": "augustus",
+      "commanderName": "Augustus",
+      "outcome": "victory",
+      "battlesWon": 2,
+      "seasons": 8,
+      "provinces": 1,
+      "score": 1900
+    }
+  ],
+  "totalRunsStarted": 5,
+  "victories": 2,
+  "highScore": 1900,
+  "commanderWins": ["augustus"],
+  "activeRun": {
+    "commanderId": "augustus",
+    "resources": { "gold": 12 },
+    "completedSpokes": 1,
+    "threatLevel": 2,
+    "globalSeason": 4,
+    "battlesWon": 1,
+    "provinces": []
+  }
+}

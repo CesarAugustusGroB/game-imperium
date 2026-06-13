@@ -1,0 +1,27 @@
+{
+  "version": 3,
+  "runs": [],
+  "campaignLogs": [
+    {
+      "date": "2026-06-13T00:00:00.000Z",
+      "commanderId": "crassus",
+      "commanderName": "Marcus Crassus",
+      "scenarioId": "saguntum",
+      "outcome": "defeat",
+      "cause": "El ejercito ha desertado en masa. La moral colapso.",
+      "seasonsAtEnd": 2,
+      "daysUsed": 10,
+      "finalGold": 5,
+      "finalIuniores": 0,
+      "survivors": 0,
+      "cardsPlayed": 4,
+      "ordersUsed": { "siege": 2, "charge": 1 }
+    }
+  ],
+  "totalRunsStarted": 1,
+  "victories": 0,
+  "highScore": 0,
+  "commanderWins": [],
+  "activeRun": null,
+  "tutorialDismissed": true
+}

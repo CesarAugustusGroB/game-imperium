@@ -34,8 +34,8 @@ sistemas/UI. Salud de partida: `tsc` limpio, 16/16 verify scripts, ~130 tests ve
 5. **Costes en oro = un solo helper.** Cualquier coste mostrado en UI debe pasar por el
    MISMO helper que el store usa para cobrar (lección del drift display-vs-spend, 3 casos).
 6. **Verificar en verde.** Antes de commitear: `npx tsc --noEmit` limpio **y**
-   `npm run verify` 16/16 (o más, si añadiste scripts). Si añades un sistema con números,
-   añade su `tools/verify-*.ts` y/o unit test.
+   `npm run verify` (todos los scripts) **y** `npm run build` (smoke del build de producción,
+   plan S-K). Si añades un sistema con números, añade su `tools/verify-*.ts` y/o unit test.
 7. **Docs en el mismo cambio.** Si cambias una pantalla, edita su wireframe en
    `wireframes.html`. Si cambias un sistema, sincroniza `sistemas-del-juego.html` /
    `sistema-de-eventos.html`. Si añades iconos, re-corre `node tools/gen-icon-gallery.mjs`.
@@ -110,10 +110,17 @@ Contador visible en TreasuryPanel. Persistido en meta-save. tsc + 157 tests + 17
   no puede jugar 10 partidas significativas. La infra ya captura los datos; pendiente jugar y
   descargar el JSON. Regla: tocar números SOLO con datos (la auditoría dice que son coherentes).
 
-### [ ] S-K · Robustez de saves + release-readiness  (FASE 4)  ← EMPEZAR AQUÍ
-- Test de migración de saves (fixtures en `tools/fixtures/`).
-- Pasada de perf (bundle, imágenes vía vite-imagetools, RAF/listeners).
-- `npm run build` + smoke test del build de producción en el ritual de cada vuelta.
+### [~] S-K · Robustez de saves + release-readiness  (FASE 4 — saves+build HECHO, perf pendiente)
+- [x] **Test de migración de saves** (it. 19): fixtures reales en `tools/fixtures/` (v1/v2/v3)
+  cargados con `?raw`; `meta-save-migration.test.ts` cubre v1/v2/v3 + entrada basura → siempre
+  un save v3 válido, campos nuevos (campaignLogs/forgedAllies/tutorialDismissed) defaulteados,
+  activeRun viejo rellenado, nunca lanza.
+- [x] **`npm run build` smoke** (it. 19): build de producción verde (✓ ~3s, JS 590KB/150KB gzip).
+  **Añadido al ritual del loop** (correr `npm run build` cada vuelta además de tsc+verify).
+- [ ] **Pasada de perf** (PENDIENTE, refactor grande): el build avisa chunk >500KB (sin
+  code-splitting) y hay PNGs enormes servidos sin optimizar (roman_background 3.5MB,
+  campaign-briefing 2.3MB, consilium_hero 2MB — ¿en `public/` en vez de `src/assets/` con
+  vite-imagetools?). Auditar RAF/listeners. Ver D28.
 
 ---
 

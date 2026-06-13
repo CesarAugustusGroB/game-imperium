@@ -501,3 +501,28 @@ validado por `tsc` (no jugué una campaña entera punta a punta — eso es el pl
 | # | Observación | Por qué no |
 |---|---|---|
 | D27 | `cardsPlayed` es un conteo agregado, no por categoría/carta. Para análisis fino convendría tally por `def.id` o categoría, pero crece y «cartas jugadas» (conteo) cumple el DoD | Ampliable si el playtest lo pide |
+
+## Iteración 19 — 2026-06-13
+
+Foco: **S-K · Robustez de saves + release-readiness** — partes codeables (test de migración +
+smoke del build). La pasada de perf queda anotada (refactor grande).
+
+### Implementados
+
+| # | Hallazgo / entrega | Detalle | Archivos |
+|---|---|---|---|
+| 51 | **Test de migración de saves** con fixtures reales en `tools/fixtures/` (el plan los pedía ahí): v1 (mínimo), v2 (con activeRun viejo), v3 (completo con campos nuevos). Cargados con **`?raw`** de Vite (string crudo = lo que `parseMetaSave` consume) — sin tipos de node, sin drift fichero↔test | cubre: v1/v2 defaultean los campos nuevos (campaignLogs/forgedAllies/tutorialDismissed), activeRun viejo se rellena (forgedAllies [], iuniores seedeado, equippedDoctrines [null×4]), v3 round-trip sin pérdida, y **entrada basura/null → save v3 limpio, nunca lanza** | meta-save-migration.test.ts (nuevo), tools/fixtures/meta-save-v{1,2,3-full}.json (nuevos) |
+| 52 | **Smoke del build de producción**: `npm run build` verde (✓ ~3s, JS 590KB/150KB gzip, CSS 11KB). **Añadido al ritual del loop** (regla 6 del prompt: tsc + verify + build) | release-readiness | docs/loop-prompt.md |
+
+**Decisión técnica** (`?raw` vs fs): el test vive en `src/` y se type-checkea con el tsconfig de
+la app (`types: ["vite/client"]`, sin node), así que `node:fs` rompía `tsc`. Los imports `?raw`
+de Vite leen el fichero real como string (tipado por vite/client) — lee los fixtures canónicos
+sin duplicarlos ni depender de tipos de node.
+
+**DoD S-K (saves+build) cumplido**: `tsc` · 172 tests (+4) · 17/17 verify · **build verde**.
+
+### Dudoso / pendiente (refactor grande, fuera de alcance de una vuelta)
+
+| # | Observación | Por qué no ahora |
+|---|---|---|
+| D28 | **Perf**: el build avisa chunk JS >500KB (sin code-splitting) y hay PNGs sin optimizar servidos tal cual: `roman_background` 3.5MB, `campaign-briefing-background` 2.3MB, `consilium_hero_bg` 2MB. Probablemente importados sin `vite-imagetools` (o en `public/`). Mover a `src/assets/` con `?format=avif;webp` + code-splitting por ruta recortaría MB. Auditar también RAF/listeners | Refactor amplio con riesgo de regresión visual; merece su propia iteración dedicada con validación en vivo de cada pantalla afectada |
