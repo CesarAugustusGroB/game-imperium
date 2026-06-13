@@ -1110,3 +1110,40 @@ los tiene).
 | 76 | **Regla de piedad guardada** en campaign-flow.test: tras sembrar y a lo largo de 6 turnos jugados, el pool siempre contiene una carta `Movimiento` (a través del `refillPool` real) | si el pool se queda sin movers (clog de permanentes), el test falla — el softlock de it.6 no puede volver en silencio | campaign-flow.test.ts |
 
 **Validación**: `tsc` limpio · **187 tests** (+1) · 17/17 verify · build verde. Test-only.
+
+## Iteración 40 — 2026-06-13
+
+**Herramienta de balance para S-J** (automatiza parte del playtest humano): `tools/sim-campaign.ts`
+— Monte-Carlo headless de la **fase de marcha** (el trek de cartas frontera→Sagunto), complementa
+el `sim-battle-balance.ts` (que cubre la batalla decisiva). Usa la misma máquina de estado headless
+que el test de integración de campaña (it.35/36/39).
+
+### Implementado
+
+| # | Entrega | Detalle | Archivos |
+|---|---|---|---|
+| 77 | **`sim-campaign.ts`** — corre N campañas (default 500) con estrategia *advance-first* y reporta tasa de llegada al objetivo, días usados, suministros/moral/amenaza al llegar, % con bonus de misión (≤8d) | tool standalone (no en la suite verify, como sim-battle) | tools/sim-campaign.ts (nuevo) |
+
+### Datos de balance (500 runs, ejército inicial, estrategia directa)
+
+```
+reached objective : 99.4%      ran out of days : 0.0%      collapsed en route : 0.6%
+on arrival: días 6.1 (96.2% ≤8d bonus) · suministros 9.8/28 · moral 5.8/15 · amenaza 3.0/10
+```
+
+**Insight S-J**: respondiendo a las preguntas de la auditoría —
+- *¿el plazo de 12 días fuerza decisiones?* **No, para marcha directa**: 0% se queda sin días, 96%
+  llega con el bonus ≤8d. El plazo solo presiona si el jugador se demora (juega no-movimiento) —
+  que es justo lo que la estrategia de erosión de Boudicca quiere (acumular enemyWeaken).
+- *¿el colchón de suministros es frustrante?* **No en marcha directa**: termina ~9.8 de 28, nunca
+  hambre. El colchón es cómodo (quizá generoso) si avanzas; la tensión real está en demorarse para
+  erosionar al enemigo, que consume suministros.
+- **Conclusión**: la fase de marcha es indulgente; la dificultad y las decisiones interesantes
+  viven en la **batalla decisiva** (sim-battle) y en el trade-off erosión-vs-suministros. Tocar
+  números de marcha NO está justificado por estos datos (coherente con la auditoría: «números
+  coherentes, no tocar por sensación»).
+
+**Validación**: `tsc` limpio · 187 tests · 17/17 verify · build verde. Sin cambios en `src/`
+(solo el tool). S-J: la infra de telemetría (it.18/33) + estos dos sims cubren el análisis de
+balance que era la parte codeable; jugar runs reales y descargar el JSON queda como tarea humana
+opcional.
