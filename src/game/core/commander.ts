@@ -1,14 +1,6 @@
 export type Faction = 'gold' | 'red' | 'blue' | 'purple' | 'white';
 export type ResourceType = 'gold' | 'iuniores';
 
-export interface CommanderAbility {
-  name: string;
-  description: string;
-  type: 'strategic' | 'tactical';
-  cost: { resource: ResourceType; amount: number } | null; // null = free
-  cooldown?: 'once-per-battle' | 'unlimited';
-}
-
 export interface Commander {
   id: string;
   name: string;
@@ -17,8 +9,6 @@ export interface Commander {
   portrait: string;
   quote: string;
   passive: { name: string; description: string };
-  strategicAbility: CommanderAbility;
-  tacticalAbility: CommanderAbility;
   startingResources: Record<ResourceType, number>;
   archetype: 'Religious' | 'Warlord' | 'Diplomat' | 'Merchant';
   archetypeDescription: string;

@@ -755,3 +755,28 @@ Tres mecanismos huérfanos seguidos eliminados: renderers muertos (it.23), `truc
 de batalla deprecados). El save acumula campos siempre-default; cada uno es behavior-preserving de
 quitar. **Candidato futuro**: un `verify-save-fields.ts` que marque campos del save que nunca se
 leen para lógica (solo se serializan) — cazaría esta clase automáticamente.
+
+## Iteración 27 — 2026-06-13
+
+**Modo barrido** (sigue el patrón de residuos de rediseño): barrido de los campos del tipo
+`Commander`. Vivos (consumidos por CommanderSelectScreen): `strategicAbilities` (plural),
+`uniqueUnits`, `victoryPaths`, `playstyleFocus`, `archetypeDescription`, `passive`. Muertos:
+
+### Hallazgo: `strategicAbility`/`tacticalAbility` (singular) son datos muertos
+
+El tipo `Commander` tenía DOS modelos de habilidad: el **singular** `strategicAbility`/
+`tacticalAbility` (tipo `CommanderAbility`, con `cost`/`cooldown` — el modelo de gameplay
+ORIGINAL) y el **plural** `strategicAbilities` (display: name/description/stars). Tras S-B
+(habilidades → cartas firma con su propio cost/cooldown), el singular quedó **sin un solo lector
+en `src/`/`tools/`** — solo se definía (8 bloques en los 4 comandantes) y se declaraba en el tipo.
+El display usa el plural. Duplicado confuso (¿cuál es «la» habilidad?).
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 60 | **Campos `strategicAbility`/`tacticalAbility` muertos** (+ la interfaz `CommanderAbility`, huérfana al quitarlos) | Eliminados los 2 campos del tipo, los 8 bloques de datos (4 comandantes × 2) y la interfaz `CommanderAbility`. Behavior-preserving (cero lecturas). El display sigue usando `strategicAbilities` plural | commander.ts, commanders.ts |
+
+**Validación**: `tsc` limpio · 172 tests · 17/17 verify · build verde · cero referencias restantes ·
+ningún doc HTML los mencionaba (sin sync). Cuarto residuo de rediseño eliminado seguido
+(renderers it.23, truce it.25, spokesSinceLastBattle it.26, abilities singulares it.27).
