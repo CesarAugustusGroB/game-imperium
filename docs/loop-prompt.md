@@ -63,16 +63,13 @@ el registro está obsoleto / los datos usan un tipo fuera de la unión. + invari
 (refund ≤ pagado, clamps de descuento). Recogido por `npm run verify` (17/17). De paso limpiado
 el check muerto `resource-per-spoke` de verify-doctrine-hub.ts. tsc + 148 tests verdes.
 
-### [ ] S-M · Passive «Deus Vult» de Innocent  (efecto CONFIRMADO)  ← EMPEZAR AQUÍ
-Hoy `description: 'Effect to be defined.'` — placeholder sin código.
-- **Efecto aprobado:** +moral pre-batalla cuando el ejército lleva ≥1 doctrina roja/religiosa
-  equipada, **escalando con el número de doctrinas rojas equipadas**, con un cap razonable.
-- Cablear como los bonos de trait de legado en `buildPlayerSeed` (mismo patrón que S-B).
-  Reescribir la `description` a lo que hace de verdad.
-- **DoD:** elegir a Innocent cambia mediblemente la moral inicial según las doctrinas rojas;
-  test que lo cubra; texto honesto.
+### [x] S-M · Passive «Deus Vult» de Innocent  ✅ HECHO (it. 14, 2026-06-13)
++1 moral pre-batalla por doctrina de fe (gold) equipada, cap +3. Color-lock: Innocent (gold)
+no puede equipar rojas, así que escala con su escuela de fe. Cableado vía nuevo param
+`passiveMoraleBonus` de `buildPlayerSeed` + helper `getEquippedColorCount`; `description`
+reescrita. tsc + 151 tests + 17/17 verify verdes.
 
-### [ ] S-L · Diplomacia sencilla (aliados)  (decisión del usuario)
+### [ ] S-L · Diplomacia sencilla (aliados)  (decisión del usuario)  ← EMPEZAR AQUÍ
 Sobre el sistema de facciones existente (`initNPCFactions`, hoy decorativo).
 - Contador `allyCount` **visible en el hub**. Cada alianza es **tribu** (otorga soldados /
   iuniores) o **reino** (otorga oro por temporada).

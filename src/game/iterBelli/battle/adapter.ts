@@ -127,6 +127,8 @@ export function buildPlayerSeed(
   fortified = false,
   /** Extra multiplier on the attack stats (commander passives, e.g. Veteran Stacks). */
   statMult = 1,
+  /** Additive pre-battle morale from a commander passive (e.g. Deus Vult), on the 0–15 scale. */
+  passiveMoraleBonus = 0,
 ): PlayerSeed {
   const frac = strengthFrac(snap.soldiers, snap.initialSoldiers);
   const mods = legateSeedMods(roster, legate);
@@ -135,7 +137,7 @@ export function buildPlayerSeed(
   const clampMorale = (m: number) => Math.max(0, Math.min(15, m));
   return {
     hp: Math.max(1, Math.round(snap.soldiers * mods.hpMult)),
-    morale: clampMorale(snap.morale + mods.moraleBonus),
+    morale: clampMorale(snap.morale + mods.moraleBonus + passiveMoraleBonus),
     discipline: clampEngineDiscipline(snap.discipline),
     stats: {
       charge: Math.round(raw.charge * frac * statMult),

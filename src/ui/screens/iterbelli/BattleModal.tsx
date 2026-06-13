@@ -5,6 +5,7 @@ import { iterBelliState, applyBattleOutcome } from '../../../game/iterBelli/iter
 import { veteranStacks } from '../../../game/core/game-state';
 import { getActiveScenario } from '../../../game/iterBelli/iter-belli-scenario';
 import { preparedArmy, preparedLegate } from '../../../game/progression/strategic-store';
+import { getEquippedColorCount } from '../../../game/items/doctrine-store';
 import {
   battleSession, beginBattleSession, concludeBattleSession,
 } from '../../../game/iterBelli/battle/controller';
@@ -37,7 +38,15 @@ export function BattleModal() {
     const fortified = cs.fortified === true;
     // Veteran Stacks (Warlord passive): +5% attack power per stacked victory (cap 5).
     const statMult = cs.archetype === 'Warlord' ? 1 + 0.05 * veteranStacks.value : 1;
-    const seed0 = buildPlayerSeed(snap, roster, legate, undefined, armor, undefined, fortified, statMult);
+    // Deus Vult (Religious passive): +1 pre-battle morale per equipped faith (gold)
+    // doctrine, capped at +3. Innocent fields gold doctrines — color-lock blocks red —
+    // so this rewards stacking the faith school.
+    const DEUS_VULT_PER_DOCTRINE = 1;
+    const DEUS_VULT_CAP = 3;
+    const passiveMorale = cs.archetype === 'Religious'
+      ? Math.min(DEUS_VULT_CAP, DEUS_VULT_PER_DOCTRINE * getEquippedColorCount('gold'))
+      : 0;
+    const seed0 = buildPlayerSeed(snap, roster, legate, undefined, armor, undefined, fortified, statMult, passiveMorale);
     const options = availableFormations(legate, seed0.discipline);
     const formationOptions: FormationKey[] = options.length ? options : ['battleLine'];
     // enemyMult = (1 + threat/THREAT_DIVISOR) * (1 - enemyWeaken*WEAKEN_PER_POINT) — see iter-belli-balance.
@@ -46,7 +55,7 @@ export function BattleModal() {
     const enemyKey = scenario.enemy.archetypeKey;
     const enemy = buildEnemyArchetype(enemyKey, cs.enemyWeaken, enemySoldiers);
     beginBattleSession({
-      playerSeedFor: (f) => buildPlayerSeed(snap, roster, legate, FORMATIONS[f], armor, undefined, fortified, statMult),
+      playerSeedFor: (f) => buildPlayerSeed(snap, roster, legate, FORMATIONS[f], armor, undefined, fortified, statMult, passiveMorale),
       formationOptions,
       enemy,
       center: CENTERS[terrainToCenterKey(cs.spokeTerrain)],

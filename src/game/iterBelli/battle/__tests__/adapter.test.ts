@@ -95,6 +95,14 @@ describe('adapter army builders', () => {
     );
     expect(seed.ammo).toBe(21);
   });
+  it('passive morale bonus (Deus Vult) adds to pre-battle morale, clamped to 15', () => {
+    const base = buildPlayerSeed({ soldiers: 100, initialSoldiers: 100, morale: 7, discipline: 3 } as any, roster, null);
+    expect(base.morale).toBe(7);
+    const blessed = buildPlayerSeed({ soldiers: 100, initialSoldiers: 100, morale: 7, discipline: 3 } as any, roster, null, undefined, null, undefined, false, 1, 3);
+    expect(blessed.morale).toBe(10);          // 7 + 3
+    const capped = buildPlayerSeed({ soldiers: 100, initialSoldiers: 100, morale: 14, discipline: 3 } as any, roster, null, undefined, null, undefined, false, 1, 5);
+    expect(capped.morale).toBe(15);           // 14 + 5 → clamped to 15
+  });
   it('enemy archetype scales mass stats by enemyWeaken', () => {
     const e = buildEnemyArchetype('carthage', 0, 10000); // no weaken
     expect(e.stats.charge).toBe(ENEMY_ARCHETYPES.carthage.stats.charge);

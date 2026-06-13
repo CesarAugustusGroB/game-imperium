@@ -58,7 +58,7 @@ export const COMMANDERS: Commander[] = [
     quote: 'I am patient. God rewards the faithful.',
     passive: {
       name: 'Deus Vult',
-      description: 'Effect to be defined.',
+      description: '+1 pre-battle morale per equipped faith (gold) doctrine, up to +3. Faith fortifies the legion.',
     },
     strategicAbility: {
       name: 'Call Crusade',
@@ -78,7 +78,7 @@ export const COMMANDERS: Commander[] = [
     archetypeDescription: 'Faith guides my people. Through devotion and righteousness, we will build the greatest civilization the world has ever known.',
     startingBonuses: [
       'Starts with 3 gold and the Faith & Miracles doctrines',
-      'Deus Vult ability unlocked',
+      'Deus Vult: faith doctrines grant pre-battle morale (up to +3)',
     ],
     playstyleFocus: ['Culture', 'Unity'],
     strategicAbilities: [

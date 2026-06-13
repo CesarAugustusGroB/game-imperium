@@ -328,3 +328,34 @@ uniones sin cablear su aplicación ahora rompe `npm run verify`.
 |---|---|---|
 | D20 | Traits de legado / features únicas de provincia / governors NO usan una unión de efecto-tipo tabulada (son mods bespoke en `adapter.ts` / `province.ts`). El verificador de contrato no les aplica tal cual | El plan los listaba, pero su «contrato» no es un switch tipo→efecto; tabularlos es un refactor mayor sin bug actual. Anotado como extensión futura |
 | D21 | Pendiente transversal: sincronizar la tabla de auditoría de `sistemas-del-juego.html` con que el contrato ahora tiene guarda automática | Doc, no código; siguiente vuelta o cuando se toque ese doc |
+
+## Iteración 14 — 2026-06-13
+
+Foco: **S-M · Passive «Deus Vult» de Innocent** — efecto real (decisión de diseño del
+usuario: «diseñar un efecto real»). Era `description: 'Effect to be defined.'`, placeholder
+sin código detrás.
+
+### Decisión de diseño clave (resuelta en la implementación)
+
+El efecto aprobado se redactó como «doctrinas rojas/religiosas», pero **Innocent es facción
+`gold`** y el color-lock le impide equipar doctrinas **rojas** (un comandante equipa su color
++ blanco). Si Deus Vult escalara con rojas, **nunca dispararía** para Innocent. La única
+lectura coherente: escala con sus doctrinas de **fe = gold** (Faith/Miracles/Pantheon…), que
+es exactamente su escuela. Implementado así.
+
+### Implementados
+
+| # | Hallazgo / entrega | Detalle | Archivos |
+|---|---|---|---|
+| 31 | **Deus Vult vivo**: +1 moral pre-batalla por doctrina de fe (gold) equipada, cap +3 | Helper testeable `getEquippedColorCount(color)` en doctrine-store; nuevo param `passiveMoraleBonus` en `buildPlayerSeed` (sumado dentro del `clampMorale` 0–15, mismo patrón que el `statMult` de Veteran Stacks); cálculo en `BattleModal` gated por `archetype === 'Religious'`, pasado a ambos call sites (seed0 + playerSeedFor). `description` y bullet de starting-bonus reescritos a lo real | doctrine-store.ts, adapter.ts, BattleModal.tsx, commanders.ts |
+| 32 | Tests: moral con `passiveMoraleBonus` (suma + clamp a 15) en adapter.test; `getEquippedColorCount` (cuenta por color, ignora nulls, 0 sin equipar) en equipped-color.test (nuevo) | 151 unit tests verdes (+3) | adapter.test.ts, equipped-color.test.ts (nuevo) |
+
+**DoD S-M cumplido**: `tsc` limpio · 17/17 verify · 151 unit tests · elegir a Innocent cambia
+mediblemente la moral inicial según las doctrinas de fe equipadas; texto honesto. Marcado
+hecho en `estado-desarrollo.html` (tag ③) y `docs/loop-prompt.md`.
+
+### Observación (no implementada)
+
+| # | Observación | Por qué no |
+|---|---|---|
+| D22 | El passive solo aplica en la batalla decisiva de Iter Belli (donde se construye el `PlayerSeed`). No hay otra batalla en el loop vivo, así que la cobertura es total hoy; si se añaden escaramuzas con seed propio, recablear ahí también | Sin batalla extra hoy; nota para escenarios futuros |

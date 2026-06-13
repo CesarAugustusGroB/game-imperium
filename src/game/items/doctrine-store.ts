@@ -5,7 +5,7 @@ import { isDoctrineEquippable, getCurrentEffects, getUpgradeCost, getDoctrineSel
 import { addResource, spendResource, canAfford } from '../core/resources';
 import { selectedCommander } from '../core/game-state';
 import { DOCTRINE_CATALOG } from '../../data/doctrine-data';
-import type { ResourceType } from '../core/commander';
+import type { Faction, ResourceType } from '../core/commander';
 
 // ── Doctrine slot signals ──
 
@@ -254,6 +254,12 @@ export function getUpkeepReduction(): number {
     .filter((e): e is Extract<DoctrineEffect, { type: 'upkeep-reduction' }> => e.type === 'upkeep-reduction')
     .reduce((s, e) => s + e.percent, 0);
   return Math.max(0, Math.min(75, sum));
+}
+
+/** Count equipped (non-null) doctrines of a given faction color. Used by the
+ *  Religious passive Deus Vult (counts the commander's faith/gold school). */
+export function getEquippedColorCount(color: Faction): number {
+  return equippedDoctrines.value.filter((d): d is Doctrine => d !== null && d.color === color).length;
 }
 
 /** Aggregate embark-army bonus (per stat) from equipped doctrines. */
