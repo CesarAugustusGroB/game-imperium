@@ -1,8 +1,9 @@
 /**
  * verify-effects.ts — the effect-contract guard (plan S-D, FASE 1 blindaje).
  *
- * Effect-bearing unions (DoctrineEffect, DecretumEffect, the province
- * TradeGoodSpecial / FeatureSpecial / GovernorTrait, and LegateEffect) are consumed by switches with permissive
+ * All 7 tabulated effect-bearing unions (DoctrineEffect, DecretumEffect, and the
+ * province TradeGoodSpecial / FeatureSpecial / GovernorTrait / SynergyBonus, plus
+ * LegateEffect) are consumed by switches with permissive
  * `default` branches (decretum-hub `default: return null`, battle/decreta
  * `default: return false`, the special checks just `if (… === 'x')`). That means
  * adding a NEW member to a union compiles fine and silently becomes INERT — the
@@ -31,7 +32,7 @@ import {
   getShopDiscount, getUpkeepReduction, equippedDoctrines,
 } from '../src/game/items/doctrine-store';
 import type { Doctrine, DoctrineEffect } from '../src/game/items/doctrine';
-import { applyInvestmentDiscount, getInvestmentDiscount } from '../src/game/province/province';
+import { applyInvestmentDiscount, getInvestmentDiscount, SYNERGY_DATA } from '../src/game/province/province';
 import { getDiscountedGold } from '../src/game/progression/strategic-store';
 import { ECONOMY } from '../src/config/game-config';
 
@@ -202,6 +203,18 @@ const LEGATE_APPLICATION: Record<string, AppEntry> = {
 };
 const legateEffectTypes = LEGATE_TRAITS.map((t) => t.effect.type);
 checkUnion('LegateEffect', 'src/game/army/legate.ts', 'LegateEffect', LEGATE_APPLICATION, legateEffectTypes);
+
+// ── Building-synergy bonuses (applied across province income/unrest/food/PWG/recruit) ──
+const STORE = 'src/game/province/province-store.ts';
+const SYNERGY_APPLICATION: Record<string, AppEntry> = {
+  'pwg':                { files: [PROVINCE], note: 'PWG/wealth growth' },
+  'food':               { files: [PROVINCE], note: 'calculateFoodProduction' },
+  'gold':               { files: [PROVINCE], note: 'building gold income' },
+  'unrest':             { files: [PROVINCE], note: 'getUnrestModifier' },
+  'unit-cost-discount': { files: [STORE], note: 'cohort recruit gold discount' },
+};
+const synergyBonusTypes = SYNERGY_DATA.map((s) => s.bonus.type);
+checkUnion('SynergyBonus', 'src/game/province/province.ts', 'SynergyBonus', SYNERGY_APPLICATION, synergyBonusTypes);
 
 // ──────────────────────────────────────────────────────────────────────────
 // Economic invariants — refund ≤ paid, discounts clamped, never free.

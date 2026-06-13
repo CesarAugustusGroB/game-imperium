@@ -893,3 +893,32 @@ El doc de sistemas (línea 750) YA lo describía bien — solo las descripciones
 
 **Validación**: verify-effects exit 0 (**6 uniones**) · `tsc` limpio · 175 tests · 17/17 verify ·
 build verde. Sin sync de doc (sistemas-del-juego.html:750 ya era correcto).
+
+## Iteración 32 — 2026-06-13
+
+**Blindaje (cierre)**: la última unión de efectos del juego, `SynergyBonus` (bonus de sinergias
+de edificio).
+
+### Verificado en sync (no-issue)
+
+`SynergyBonus` tiene 5 tipos (`pwg`, `food`, `gold`, `unrest`, `unit-cost-discount`), **todos
+usados en `SYNERGY_DATA` y todos aplicados**: gold/unrest/pwg/food en province.ts, unit-cost-discount
+en province-store.ts (descuento de reclutar cohortes). Contrato limpio, **cero bonus mentirosos**.
+
+### Implementado
+
+| # | Entrega | Detalle | Archivos |
+|---|---|---|---|
+| 69 | **`verify-effects.ts` cubre ahora 7 uniones** (+ `SynergyBonus`): los 5 bonus registrados como aplicados (province.ts + province-store.ts), data de `SYNERGY_DATA` verificada | **completa la cobertura**: las 7 uniones de efecto-tipo tabuladas del juego están guardadas | tools/verify-effects.ts |
+
+**Validación**: verify-effects exit 0 (**7 uniones**) · `tsc` limpio · 175 tests · 17/17 verify ·
+build verde.
+
+### Cierre del arco de blindaje de efectos (it.13, 29–32)
+
+`verify-effects.ts` guarda ahora **las 7 uniones de efecto-tipo del juego**: DoctrineEffect,
+DecretumEffect, TradeGoodSpecial, FeatureSpecial, GovernorTrait, LegateEffect, SynergyBonus.
+**No quedan más uniones tabuladas que añadir** — los efectos restantes (advisor passives, etc.)
+no usan una unión `type`-discriminada que el verificador pueda parsear; son lógica bespoke. El
+contrato «texto promete / código aplica» está cerrado para todo efecto tabulado: añadir un tipo
+sin aplicarlo (o marcarlo latente) falla `npm run verify`.
