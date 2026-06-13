@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   tallyCardPlayed, tallyOrderUsed, resetCampaignTelemetry, snapshotCampaignTelemetry,
+  restoreCampaignTelemetry,
 } from '../run-telemetry';
 import { metaSave, recordCampaignLog, exportCampaignLogsJson, type CampaignLogEntry } from '../../core/meta-save';
 
@@ -30,6 +31,16 @@ describe('run-telemetry tallies (plan S-J)', () => {
     resetCampaignTelemetry();
     expect(snap.ordersUsed).toEqual({ push: 1 });        // snapshot unaffected by later reset
     expect(snapshotCampaignTelemetry().ordersUsed).toEqual({});
+  });
+
+  it('restore rehydrates tallies from a snapshot, and ignores undefined (D30 reload)', () => {
+    tallyCardPlayed(); tallyOrderUsed('siege');
+    const saved = snapshotCampaignTelemetry();
+    resetCampaignTelemetry();                              // simulate page reload (module state lost)
+    restoreCampaignTelemetry(saved);                      // restore from the campaign save
+    expect(snapshotCampaignTelemetry()).toEqual(saved);
+    restoreCampaignTelemetry(undefined);                  // pre-D30 save with no telemetry → cleared
+    expect(snapshotCampaignTelemetry()).toEqual({ cardsPlayed: 0, ordersUsed: {} });
   });
 });
 

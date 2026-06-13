@@ -34,3 +34,15 @@ export function resetCampaignTelemetry(): void {
 export function snapshotCampaignTelemetry(): { cardsPlayed: number; ordersUsed: Record<string, number> } {
   return { cardsPlayed, ordersUsed: { ...ordersUsed } };
 }
+
+/**
+ * Rehydrate the tallies from a saved snapshot (mid-campaign reload). Without this
+ * the module state resets to 0 on page reload and a restored campaign would
+ * undercount its pre-reload cards/orders in the final CampaignLogEntry (D30).
+ */
+export function restoreCampaignTelemetry(snap: { cardsPlayed: number; ordersUsed: Record<string, number> } | undefined): void {
+  resetCampaignTelemetry();
+  if (!snap) return;
+  cardsPlayed = snap.cardsPlayed ?? 0;
+  for (const [k, v] of Object.entries(snap.ordersUsed ?? {})) ordersUsed[k] = v;
+}

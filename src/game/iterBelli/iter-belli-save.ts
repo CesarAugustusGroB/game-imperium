@@ -19,6 +19,7 @@ import { SAGUNTUM } from '../../data/iter-belli-scenario-saguntum';
 import { CARD_DEFS } from '../../data/iter-belli-cards';
 import { makeQuestCard } from '../../data/iter-belli-quests';
 import { START } from './iter-belli-balance';
+import { snapshotCampaignTelemetry, restoreCampaignTelemetry } from '../progression/run-telemetry';
 import type {
   AnyCardDef, CampaignScenario, CardInstance, DoctrineCampaignModifier,
   IterBelliState, LogLine, SecondaryQuest,
@@ -49,6 +50,8 @@ export type IterBelliSave = Omit<IterBelliState, 'pool' | 'doctrineModifiers'> &
   schemaVersion?: number;
   pool: SavedCardInstance[];
   log: LogLine[];
+  /** Per-campaign telemetry tallies (plan S-J / D30). Optional for back-compat. */
+  telemetry?: { cardsPlayed: number; ordersUsed: Record<string, number> };
 };
 
 /**
@@ -73,6 +76,7 @@ export function serializeIterBelli(): IterBelliSave | null {
     missionId: s.missionId, quests: s.quests,
     pool: s.pool.map((c) => ({ instanceId: c.instanceId, defId: c.def.id, timer: c.timer })),
     log: iterBelliLog.value.slice(),
+    telemetry: snapshotCampaignTelemetry(),
   };
 }
 
@@ -155,4 +159,7 @@ export function restoreIterBelli(save: IterBelliSave, doctrineModifiers: Doctrin
     pool, doctrineModifiers,
   };
   loadIterBelliState(state, save.log.slice());
+  // Rehydrate per-campaign telemetry so a mid-campaign reload doesn't undercount
+  // the final CampaignLogEntry (D30). Absent on pre-D30 saves → resets to 0.
+  restoreCampaignTelemetry(save.telemetry);
 }

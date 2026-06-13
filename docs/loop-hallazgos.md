@@ -922,3 +922,27 @@ DecretumEffect, TradeGoodSpecial, FeatureSpecial, GovernorTrait, LegateEffect, S
 no usan una unión `type`-discriminada que el verificador pueda parsear; son lógica bespoke. El
 contrato «texto promete / código aplica» está cerrado para todo efecto tabulado: añadir un tipo
 sin aplicarlo (o marcarlo latente) falla `npm run verify`.
+
+## Iteración 33 — 2026-06-13
+
+**Fix de calidad de datos**: D30 (anotado it.25) — la telemetría de campaña se infracontaba en
+recargas a mitad. Relevante para que el playtest de S-J (tarea humana pendiente) produzca datos
+fiables.
+
+### Hallazgo (D30)
+
+`run-telemetry.ts` guarda `cardsPlayed`/`ordersUsed` como estado de **módulo**, reseteado solo en
+`startIterBelliCampaign`. En una **recarga a mitad de campaña**, el estado de módulo vuelve a 0
+(JS fresco) pero `restoreIterBelli` restaura la campaña → el `CampaignLogEntry` final perdía todas
+las cartas/órdenes jugadas antes del reload. Infracontaba justo las runs que un playtester recarga.
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 70 | **Telemetría infracontada en recargas** (D30) | `restoreCampaignTelemetry(snap)` en run-telemetry; la telemetría se **serializa en el save de campaña** (`IterBelliSave.telemetry`, opcional para back-compat) y se **rehidrata en `restoreIterBelli`**. Saves pre-D30 sin el campo → resetea a 0 | run-telemetry.ts, iter-belli-save.ts |
+| 71 | Test: round-trip de `restoreCampaignTelemetry` (rehidrata del snapshot; `undefined` → limpio) | 176 tests verdes (+1) | run-telemetry.test.ts |
+
+**Validación**: `tsc` limpio · 176 tests · **17/17 verify (incl. verify-iter-belli-save** → save
+round-trip íntegro con el campo nuevo) · build verde. Doc de telemetría sincronizado
+(sistemas-del-juego.html).
