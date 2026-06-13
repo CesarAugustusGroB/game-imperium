@@ -780,3 +780,39 @@ El display usa el plural. Duplicado confuso (¿cuál es «la» habilidad?).
 **Validación**: `tsc` limpio · 172 tests · 17/17 verify · build verde · cero referencias restantes ·
 ningún doc HTML los mencionaba (sin sync). Cuarto residuo de rediseño eliminado seguido
 (renderers it.23, truce it.25, spokesSinceLastBattle it.26, abilities singulares it.27).
+
+## Iteración 28 — 2026-06-13
+
+**Modo barrido** (variando del dead-code a contrato-de-efectos): auditoría de los `special` de
+**trade goods** y **features** — el hueco D20 (verify-effects cubre doctrinas/decreta, no estos).
+
+### Hallazgo: `enables-building` era una MENTIRA VISIBLE (y se podía cumplir)
+
+`TradeGoodSpecial` tiene 4 tipos, **todos descritos al jugador** (switch en ProvinciaeTab). Pero:
+`unrest-reduction` y `build-cost-discount` se aplican; **`enables-building` NO** — el trade good
+**Hierro** declara `enables-building: 'forge'` y la UI muestra «Enables Forge», pero
+`getAvailableBuildings` solo miraba UNIVERSAL + terreno, ignorando el special → la promesa no se
+cumplía (las provincias con Hierro no podían construir la Forge salvo en Hills). `pop-cap-bonus`
+también se describía («+N max population») pero no lo usa ningún trade good Y no existe sistema de
+cap de población (los slots salen de población vía SETTLEMENT.tiers; «food is the natural ceiling»).
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 61 | **`enables-building` no aplicado** (Hierro → Forge prometido pero no cumplido) | `getAvailableBuildings` ahora añade el edificio del special `enables-building` aunque el terreno no lo permita (con guarda anti-duplicado). El gate único es `buildInvestment` → `getAvailableBuildings(p).includes(type)`, así que con esto la Forge se construye de verdad en provincias con Hierro | province.ts |
+| 62 | **`pop-cap-bonus` muerto** (sin data, sin sistema de cap, pero con caso de descripción que mentiría si se usara) | eliminado el miembro de la unión `TradeGoodSpecial` + su caso de switch + comentario stale | trade-goods.ts, ProvinciaeTab.tsx |
+| 63 | Test: `enables-building.test.ts` (Hierro desbloquea Forge en terreno que no lo permite; sin duplicado en Hills; trade good no-enabler no añade nada) | 175 tests verdes (+3) | enables-building.test.ts (nuevo) |
+
+**Validación**: `tsc` · 175 tests · 17/17 verify · build verde. Sync de la tabla de auditoría en
+`sistemas-del-juego.html` (fila trade-goods · enables-building).
+
+### Falsos positivos / dudosos
+
+- **Feature specials `extra-event-choice`/`cavalry-bonus`/`unit-discount`**: usados en data
+  (Oráculo de Delfos, etc.) pero NO aplicados Y **NO mostrados en UI** → datos latentes inertes,
+  no mienten al jugador (el doc ya lo dice, línea 756). `extra-event-choice` necesitaría el
+  sistema de eventos muerto (D10). Quedan como están (no son mentira visible). (D31)
+- **D20 reabierto**: verify-effects sigue sin cubrir trade-good/feature specials. Extenderlo
+  (parsear `TradeGoodSpecial`/`FeatureSpecial` y exigir sitio de aplicación) cazaría esta clase —
+  candidato de blindaje futuro.

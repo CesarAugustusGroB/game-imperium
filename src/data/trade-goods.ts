@@ -24,7 +24,6 @@ export type TradeGoodType =
  * null = no special effect.
  */
 export type TradeGoodSpecial =
-  | { type: 'pop-cap-bonus'; amount: number }
   | { type: 'build-cost-discount'; percent: number }
   | { type: 'unrest-reduction'; amount: number }
   | { type: 'enables-building'; building: TerrainBuildingType }
@@ -43,7 +42,7 @@ export interface TradeGoodData {
   flatIuniores: number;
   /** Flat Positive Wealth Generation (PWG) bonus per season. */
   wealthGrowthBonus: number;
-  /** Optional special effect (pop cap, build discount, unrest, building enabler, cavalry). */
+  /** Optional special effect (build-cost discount, unrest reduction, building enabler). */
   special: TradeGoodSpecial;
   /** Terrain types in which this good can be found. */
   validTerrains: TerrainType[];

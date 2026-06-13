@@ -1947,7 +1947,6 @@ function IdentityStrip({ province }: { province: Province }) {
       const s = tradeGood.special;
       if (!s) return null;
       switch (s.type) {
-        case 'pop-cap-bonus':       return `+${s.amount} max population`;
         case 'build-cost-discount': return `-${s.percent}% building costs`;
         case 'unrest-reduction':    return `-${s.amount} unrest/season`;
         case 'enables-building':    return `Enables ${formatSlug(s.building)}`;

@@ -724,6 +724,17 @@ export function getAvailableBuildings(province: Province): InvestmentType[] {
       universals.push(slug as InvestmentType);
     }
   }
+  // Trade-good `enables-building` special unlocks a building the terrain wouldn't
+  // normally allow (e.g. Iron enables the Forge). Honesty pass: the special's UI
+  // label ("Enables …") promised this but nothing applied it.
+  if (province.tradeGood) {
+    const special = TRADE_GOOD_DATA[province.tradeGood].special;
+    if (special?.type === 'enables-building'
+        && investmentSlugs.includes(special.building)
+        && !universals.includes(special.building as InvestmentType)) {
+      universals.push(special.building as InvestmentType);
+    }
+  }
   return universals;
 }
 
