@@ -1221,3 +1221,38 @@ tracking» — pero `addResource` filtraba War Profiteer/loot-bonus igual. Exist
 
 **Validación**: `tsc` limpio · 190 tests · 17/17 verify · build verde. Tabla de auditoría
 sincronizada (sistemas-del-juego.html · Economía · ventas/refunds). **D19 cerrado.**
+
+## Iteración 44 — 2026-06-13
+
+**Cierre de dudosos diferidos**: revisados D13 y D14 (los últimos potencialmente-reales). D13 era
+una fragilidad real (fijada); D14 es inofensivo (verificado).
+
+### D13 — fijado: identificación de cohorte por índice, no por referencia
+
+`legateSeedMods` (adapter.ts) elegía la cohorte más fuerte por **identidad de referencia**
+(`c.stats === strongestKey`), lo que exigía casts feos `as unknown as PowerStats` y era frágil
+(footgun si dos cohortes comparten el objeto stats, o si el roster se clona entre los dos loops).
+Cambiado a **índice** (`i === strongestIdx`): behavior-idéntico (adapter.test 22 verdes confirman
+que el rally sigue apuntando a la más fuerte), elimina la fragilidad Y los casts.
+
+### D14 — verificado: no es bug
+
+`battle-fx` no cancela los `setTimeout` de proyectiles en `stop()`, PERO el callback (línea 223)
+está **guardado por `if (state)`** y solo hace push a un array local (no renderizado tras `stop()`,
+GC'd al morir el closure). No puede lanzar; «fuga» autoconsumible de ~1s. it.3 acertó («impacto
+mínimo»). No se toca.
+
+### Implementado
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 82 | **D13: fragilidad de identidad de referencia** en la selección de cohorte fuerte | índice en vez de referencia; casts `as unknown as PowerStats` eliminados; behavior-idéntico | adapter.ts |
+
+**Validación**: `tsc` limpio · 190 tests (adapter.test 22 verdes) · 17/17 verify · build verde.
+
+### Estado de los dudosos diferidos
+
+Tras it.43 (D19) y it.44 (D13 fijado, D14 verificado): los dudosos técnicos codeables están
+**resueltos o verificados-seguros**. Lo que queda son decisiones de diseño del usuario
+(D10/D11/D29), refactors que requieren su OK (D28b code-splitting, D32 returnToHub), o no-issues
+documentados. **El barrido autónomo de hallazgos técnicos ha llegado a su fin natural.**

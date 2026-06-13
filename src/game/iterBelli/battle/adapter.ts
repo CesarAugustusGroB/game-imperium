@@ -33,8 +33,6 @@ export function legateSeedMods(roster: readonly Cohort[], legate: Legate | null)
 
   // Rallying targets the single strongest cohort (deterministic — no RNG in seeding).
   let rallyMult = 0;
-  let strongestKey: PowerStats | null = null;
-  let strongestSum = -1;
   for (const t of traits) {
     if (!t) continue;
     if (t.effect.type === 'random-rally') rallyMult = t.effect.multiplier;
@@ -42,13 +40,17 @@ export function legateSeedMods(roster: readonly Cohort[], legate: Legate | null)
     if (t.effect.type === 'stat-bonus' && t.effect.stat === 'hp') hpMult *= 1 + t.effect.multiplier;
   }
 
-  for (const c of roster) {
+  // Identify the strongest cohort by INDEX (not reference identity) — robust to
+  // shared/cloned stats objects, and drops the `as unknown as PowerStats` casts.
+  let strongestIdx = -1;
+  let strongestSum = -1;
+  roster.forEach((c, i) => {
     const sum = c.stats.charge + c.stats.harass + c.stats.push + c.stats.siege + c.stats.movement;
-    if (sum > strongestSum) { strongestSum = sum; strongestKey = c.stats as unknown as PowerStats; }
-  }
+    if (sum > strongestSum) { strongestSum = sum; strongestIdx = i; }
+  });
 
-  for (const c of roster) {
-    const isStrongest = rallyMult > 0 && (c.stats as unknown as PowerStats) === strongestKey;
+  roster.forEach((c, i) => {
+    const isStrongest = rallyMult > 0 && i === strongestIdx;
     for (const key of BATTLE_STAT_KEYS) {
       let v = c.stats[key];
       for (const t of traits) {
@@ -60,7 +62,7 @@ export function legateSeedMods(roster: readonly Cohort[], legate: Legate | null)
       if (isStrongest) v *= 1 + rallyMult;
       stats[key] += v;
     }
-  }
+  });
   return { stats, hpMult, moraleBonus };
 }
 
