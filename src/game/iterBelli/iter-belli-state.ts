@@ -41,7 +41,6 @@ function freshState(): IterBelliState {
     cardIdCounter: 0,
     ambushDetected: false,
     fortified: false,
-    truceTurns: 0,
     finished: false,
     enemyWeaken: 0,
     brokenCommitments: 0,
@@ -386,14 +385,9 @@ function endTurn(timeCost: number): void {
     logEvent(`⚠ Deserciones por moral baja: −${losses} soldados`, 'crisis');
   }
 
-  // Truce countdown.
-  if (S.truceTurns > 0) S.truceTurns--;
-
   // Passive threat from the current location.
-  if (S.truceTurns === 0) {
-    const dt = currentLocation().threatPerTurn || 0;
-    if (dt !== 0) applyChange('threat', dt);
-  }
+  const dt = currentLocation().threatPerTurn || 0;
+  if (dt !== 0) applyChange('threat', dt);
 
   // Card timers + expiry handling.
   S.pool.forEach((c) => { if (c.def.category !== 'Crisis' && c.timer < 99) c.timer -= timeCost; });
@@ -425,7 +419,7 @@ function endTurn(timeCost: number): void {
   S.pool = S.pool.filter((c) => c.timer > 0 || c.def.category === 'Crisis' || c.timer === 99);
 
   // Threat-driven partial combats.
-  if (S.threat >= B.SKIRMISH_THREAT_THRESHOLD && S.truceTurns === 0 && currentLocation().type === 'enemigo') {
+  if (S.threat >= B.SKIRMISH_THREAT_THRESHOLD && currentLocation().type === 'enemigo') {
     if (Math.random() < B.SKIRMISH_CHANCE) handleSkirmish();
   }
   if (currentLocation().id === 'bosques' && S.threat >= B.AMBUSH_THREAT_THRESHOLD && Math.random() < B.AMBUSH_CHANCE) {

@@ -690,3 +690,35 @@ telemetría por-campaña (S-J, it.18) ya cubre el análisis de balance, que era 
 | # | Observación | Por qué no |
 |---|---|---|
 | D30 | **Telemetría infracontada en campañas recargadas**: `resetCampaignTelemetry` solo corre en `startIterBelliCampaign`, no en `restoreIterBelli`. Un reload a mitad de campaña deja los contadores (módulo) en 0, así que el `CampaignLogEntry` final pierde las cartas/órdenes pre-reload | Edge case (la mayoría de campañas no se recargan a mitad); persistir los contadores en el save es scope-creep para beneficio marginal. Anotado por si el playtest lo necesita |
+
+## Iteración 25 — 2026-06-13
+
+**Modo barrido**: auditoría doc-vs-código del **sistema de eventos pasivos** de Iter Belli
+(sistema-de-eventos.html, el deep-dive «por qué bajó la moral»).
+
+### Verificado en sync (no-issue)
+
+Cruce de TODOS los números del doc contra `iter-belli-balance.ts`: upkeep −2/día, hambre
+(−1 moral, −2% desertores), motín (<3, 30%, −5%), escaramuza (≥7, 50%, −0.5), emboscada
+(≥5, 30%, −1.5, 6%), acampar (+0.5). **Todos coinciden.** Condiciones también: escaramuza requiere
+territorio enemigo, emboscada requiere bosques — el código las enforce. Conteo de cartas: 38 = 38.
+
+### Hallazgo: `truceTurns` es un mecanismo MUERTO (y el doc lo describía como vivo)
+
+`truceTurns` (campo de estado + serialización en el save + decremento + 2 guards) existía, pero
+**ningún sitio en `src/` lo asigna a un valor positivo** — ninguna carta/evento otorga tregua.
+Resultado: el decremento nunca corre, y los guards `S.truceTurns === 0` eran **siempre true**
+(no-ops). El doc lo describía como un paso vivo de la secuencia de turno («cuenta atrás de tregua»)
+y de la amenaza pasiva («en tregua = 0; si no, cada turno») → texto-mentira (mecanismo que no
+puede dispararse).
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 58 | **Mecanismo de tregua muerto** (`truceTurns` nunca otorgado) + doc que lo describía como vivo | Eliminado el campo, el decremento, los 2 guards (`=== 0` siempre true → desenvueltos) y la serialización save/restore. **Preservador de comportamiento** (truce siempre 0 → los guards ya estaban en estado «sin tregua»). Doc corregido: la amenaza pasiva aplica «cada turno», sin paso de tregua | iter-belli-state.ts, iter-belli-types.ts, iter-belli-save.ts, sistema-de-eventos.html |
+
+**Validación**: `tsc` limpio · 172 tests · **17/17 verify (incl. verify-iter-belli-save** → save
+round-trip íntegro tras quitar el campo) · build verde. Cero referencias a `truce` restantes.
+Reversible vía git si se quisiera implementar una carta «negociar tregua» (re-añadir el campo +
+un setter es trivial — pero entonces SÍ debe dispararse y documentarse de verdad).

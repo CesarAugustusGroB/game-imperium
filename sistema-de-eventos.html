@@ -139,7 +139,7 @@
       <div class="step"><b>Pasivas de doctrina</b> <span class="muted">(<code>onTurn</code>) — p. ej. una doctrina de fe puede regenerar moral. Se aplican antes del hambre para poder amortiguar una crisis.</span></div>
       <div class="step danger"><b>Hambre</b> <span class="muted">— si suministros ≤ 0: <span class="neg">moral −1</span> y −2% de soldados (desertores).</span></div>
       <div class="step danger"><b>Motín</b> <span class="muted">— si moral &lt; 3: <span class="num">30%</span> de probabilidad de −5% soldados (no quita moral, pero la moral baja lo provoca).</span></div>
-      <div class="step">Cuenta atrás de tregua, y luego <b>amenaza pasiva del lugar</b> (<code>threatPerTurn</code>: la llanura +1, los bosques +1.5, Tarraco −0.5…).</div>
+      <div class="step"><b>Amenaza pasiva del lugar</b> (<code>threatPerTurn</code>: la llanura +1, los bosques +1.5, Tarraco −0.5…).</div>
       <div class="step">Temporizadores de cartas: <b>−tiempo</b> a cada carta del mazo; las que llegan a 0 <b>caducan</b> (los compromisos aplican su penalización).</div>
       <div class="step danger"><b>Escaramuza</b> <span class="muted">— si amenaza ≥ 7 y estás en territorio enemigo: <span class="num">50%</span> → <span class="neg">moral −0.5</span> + soldados.</span></div>
       <div class="step danger"><b>Emboscada</b> <span class="muted">— en los bosques con amenaza ≥ 5: <span class="num">30%</span> → <span class="neg">moral −1.5</span> + 6% de bajas (se previene con «Detectar emboscada»).</span></div>
@@ -274,7 +274,7 @@
         </tr>
         <tr>
           <td class="name">Amenaza del lugar</td>
-          <td>En tregua = 0; si no, cada turno.</td>
+          <td>Cada turno.</td>
           <td class="mono">100%</td>
           <td class="mono">±amenaza según <a class="anchor-note" href="#mapa">lugar</a></td>
         </tr>

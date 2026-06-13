@@ -278,7 +278,6 @@ export interface IterBelliState {
   // Flags
   ambushDetected: boolean;
   fortified: boolean;
-  truceTurns: number;
   finished: boolean;
   enemyWeaken: number;
   brokenCommitments: number;
