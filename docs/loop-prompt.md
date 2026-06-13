@@ -121,8 +121,11 @@ Contador visible en TreasuryPanel. Persistido en meta-save. tsc + 157 tests + 17
   - [x] **Fondos optimizados** (it. 20): `campaign-briefing-background` (2.2MB→132KB) y
     `consilium_hero_bg` (2.0MB→81KB) pasados a WebP vía vite-imagetools (`?w=1920&quality=82&format=webp`).
     `roman_background` ya estaba optimizado (`as=picture`). −~4MB en el bundle de producción.
-  - [ ] Pendiente: **code-splitting** (chunk JS 590KB >500KB) y los **muchos iconos UI PNG**
-    (~280–400KB c/u, decenas). Auditar RAF/listeners. Ver D28.
+  - [x] **Iconos UI a WebP** (it. 21): `defaultDirectives` en `vite.config.ts` transcodea todos
+    los PNG de `assets/ui/icons` y `assets/ui/resources` a WebP por defecto (format-only, sin
+    resize → resolución intacta, iconos grandes `size={300}` sin pérdida). −75–86% por icono
+    (nav-* 324KB→44KB, delta-* 310KB→50KB…). Un solo cambio de config, sin tocar imports.
+  - [ ] Pendiente: **code-splitting** (chunk JS 590KB >500KB). Auditar RAF/listeners. Ver D28b.
 
 ---
 

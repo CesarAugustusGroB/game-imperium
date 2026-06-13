@@ -558,4 +558,39 @@ regresión visual. Nota: en **dev** vite-imagetools sirve el PNG original (por v
 | # | Observación | Por qué no ahora |
 |---|---|---|
 | D28b | **Code-splitting**: chunk JS único de 590KB (>500KB). `import()` dinámico por pantalla (Battle/Forum/Title) o `codeSplitting` de rolldown | Riesgo de romper el arranque; necesita validar carga de cada ruta |
-| D28c | **Iconos UI PNG**: decenas de ~280–400KB c/u (nav-*, cat-*, res-*, delta-*…). Pasarlos por imagetools o regenerarlos comprimidos recortaría varios MB, pero son muchos ficheros y sensibles a calidad visual (estilo medallón) | Lote grande; validar el catálogo `iconos.html` tras comprimir |
+| D28c | ✅ **RESUELTO (it. 21)** — ver abajo: `defaultDirectives` en vite.config transcodea todos los iconos a WebP de una vez |
+
+## Iteración 21 — 2026-06-13
+
+Foco: **D28c (perf)** — los muchos iconos UI PNG pesados (~280–400KB c/u, decenas).
+
+### Solución de un solo cambio (sin editar 60+ imports)
+
+En vez de añadir `?format=webp` a cada import de icono, configuré **`defaultDirectives`** en
+`vite-imagetools` (`vite.config.ts`): todo import bajo `assets/ui/icons/` o `assets/ui/resources/`
+recibe `format=webp&quality=85` por defecto. Los imports con directivas explícitas (fondos
+`as=picture`/`?format=webp`) las sobrescriben; rutas no-icono no reciben nada. Los imports siguen
+siendo `'...png'` planos → **tipos intactos** (vite/client `*.png` → string), sin shim.
+
+**Format-only (sin resize) a propósito**: `GameIcon` acepta tamaños numéricos hasta `size={300}`,
+así que un cap de ancho habría emborronado los iconos grandes. Sin resize, la resolución se
+preserva (verificado en vivo: `naturalWidth` 768px) y aun así WebP recorta el peso.
+
+### Implementados
+
+| # | Hallazgo / entrega | Detalle | Archivos |
+|---|---|---|---|
+| 55 | **Todos los iconos UI → WebP por config**: `defaultDirectives` scoped a icons/ + resources/ | build: nav-exercitus 324KB→44KB, delta-down 310KB→50KB, nav-next 305KB→50KB, stat-charge→76KB… **−75–86% por icono** (decenas de iconos + 17 recursos) | vite.config.ts |
+
+**Validado en vivo (Playwright)**: tras iniciar un run, el Foro renderiza **31 imágenes, 0 rotas**;
+los iconos se sirven vía `/@imagetools/<hash>` a 768px natural (resolución intacta); el retrato
+(`/asset/` público) correctamente sin transformar; 0 errores de consola.
+
+**DoD**: `tsc` · 172 tests · 17/17 verify · **build verde** (iconos WebP en el bundle). No se
+regenera `iconos.html` (los PNG fuente en disco no cambian; el catálogo escanea la fuente).
+
+### Pendiente de D28 (último resto)
+
+| # | Observación | Por qué no ahora |
+|---|---|---|
+| D28b | **Code-splitting**: chunk JS único 590KB (>500KB). `import()` por pantalla o `codeSplitting` de rolldown. Auditar RAF/listeners | Riesgo de romper el arranque; necesita validar carga de cada ruta en vivo — propia iteración |
