@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imperium — Estado del Desarrollo · Jun 2026</title>
+<style>
+  :root{
+    --ink:#241a12; --ink-soft:#5b4a38; --parch:#f5ecd9; --parch-2:#efe3c9;
+    --gold:#b8893a; --gold-deep:#8a5a1e; --purple:#6d3b67; --teal:#2f6f6b;
+    --green:#3f7a3f; --red:#a13b32; --blue:#3a5d8a; --line:#d8c7a3;
+    --shadow:0 2px 10px rgba(60,40,15,.12);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:linear-gradient(160deg,#efe3c9,#e7d8b6 60%,#dcc99f);
+    color:var(--ink); font-family:"EB Garamond","Georgia",serif; line-height:1.6;
+    padding:0 0 80px;
+  }
+  .wrap{max-width:980px; margin:0 auto; padding:0 24px}
+  header.hero{
+    text-align:center; padding:54px 24px 38px; position:relative;
+    background:radial-gradient(ellipse at top,rgba(184,137,58,.16),transparent 70%);
+  }
+  .eyebrow{letter-spacing:.42em; text-transform:uppercase; font-size:12px;
+    color:var(--gold-deep); font-family:"Inter Tight",sans-serif; font-weight:600}
+  h1{font-family:"Cinzel","Georgia",serif; font-weight:700; font-size:44px;
+    margin:.18em 0 .1em; color:var(--ink); letter-spacing:.02em}
+  .sub{font-size:18px; color:var(--ink-soft); font-style:italic}
+  .meta-row{margin-top:18px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
+  .chip{font-family:"JetBrains Mono",monospace; font-size:12px; background:var(--parch);
+    border:1px solid var(--line); border-radius:999px; padding:5px 13px; color:var(--ink-soft)}
+  .chip b{color:var(--gold-deep)}
+  .rule{height:2px; max-width:120px; margin:26px auto 0;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+
+  section{margin-top:46px}
+  h2{font-family:"Cinzel",serif; font-size:25px; color:var(--gold-deep);
+    border-bottom:2px solid var(--line); padding-bottom:8px; margin-bottom:6px;
+    display:flex; align-items:center; gap:12px}
+  h2 .num{font-family:"JetBrains Mono",monospace; font-size:15px; color:#fff;
+    background:var(--gold-deep); width:30px; height:30px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center; flex:0 0 auto}
+  h3{font-family:"Cinzel",serif; font-size:18px; margin:24px 0 8px; color:var(--ink)}
+  p{margin:.5em 0}
+  .lead{font-size:18px}
+
+  .grid{display:grid; gap:16px}
+  .grid.c2{grid-template-columns:1fr 1fr}
+  .grid.c3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:720px){.grid.c2,.grid.c3{grid-template-columns:1fr}}
+
+  .card{background:var(--parch); border:1px solid var(--line); border-radius:12px;
+    padding:18px 20px; box-shadow:var(--shadow)}
+  .card.accent-green{border-left:5px solid var(--green)}
+  .card.accent-gold{border-left:5px solid var(--gold)}
+  .card.accent-red{border-left:5px solid var(--red)}
+  .card.accent-blue{border-left:5px solid var(--blue)}
+  .card.accent-purple{border-left:5px solid var(--purple)}
+  .card h4{margin:0 0 6px; font-family:"Cinzel",serif; font-size:16px}
+  .card .big{font-size:30px; font-family:"Cinzel",serif; font-weight:700; line-height:1}
+  .card small{color:var(--ink-soft); font-size:13px}
+
+  .status-bar{display:flex; gap:14px; flex-wrap:wrap; margin-top:14px}
+  .pill{display:inline-flex; align-items:center; gap:8px; font-family:"Inter Tight",sans-serif;
+    font-size:14px; font-weight:600; padding:8px 16px; border-radius:8px; background:#fff;
+    border:1px solid var(--line)}
+  .dot{width:9px; height:9px; border-radius:50%; background:var(--green); box-shadow:0 0 0 3px rgba(63,122,63,.18)}
+
+  table{width:100%; border-collapse:collapse; margin-top:10px; font-size:15px;
+    background:var(--parch); border-radius:10px; overflow:hidden; box-shadow:var(--shadow)}
+  th{background:var(--gold-deep); color:#fdf6e6; text-align:left; padding:10px 14px;
+    font-family:"Inter Tight",sans-serif; font-weight:600; font-size:13px; letter-spacing:.03em}
+  td{padding:9px 14px; border-top:1px solid var(--line); vertical-align:top}
+  tr:nth-child(even) td{background:rgba(255,255,255,.35)}
+  td code{font-family:"JetBrains Mono",monospace; font-size:12px; background:rgba(138,90,30,.1);
+    padding:1px 5px; border-radius:4px; color:var(--gold-deep)}
+
+  .tag{display:inline-block; font-family:"Inter Tight",sans-serif; font-size:11px; font-weight:700;
+    letter-spacing:.04em; text-transform:uppercase; padding:2px 9px; border-radius:5px; white-space:nowrap}
+  .t-done{background:rgba(63,122,63,.15); color:var(--green)}
+  .t-pend{background:rgba(184,137,58,.18); color:var(--gold-deep)}
+  .t-open{background:rgba(161,59,50,.13); color:var(--red)}
+
+  .timeline{list-style:none; padding:0; margin:14px 0 0}
+  .timeline li{position:relative; padding:0 0 18px 30px; border-left:2px solid var(--line)}
+  .timeline li:last-child{border-left-color:transparent}
+  .timeline li::before{content:""; position:absolute; left:-7px; top:4px; width:12px; height:12px;
+    border-radius:50%; background:var(--gold); border:2px solid var(--parch-2)}
+  .timeline b{font-family:"Cinzel",serif}
+  .timeline .it{font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--gold-deep)}
+
+  .reco{background:linear-gradient(135deg,#fbf4e2,#f1e4c6); border:1px solid var(--gold);
+    border-radius:14px; padding:22px 24px; box-shadow:var(--shadow); position:relative}
+  .reco .rank{position:absolute; top:-14px; left:20px; background:var(--gold-deep); color:#fff;
+    font-family:"Cinzel",serif; font-size:13px; font-weight:700; padding:5px 14px; border-radius:8px}
+  .reco h4{margin:8px 0 6px; font-family:"Cinzel",serif; font-size:19px; color:var(--ink)}
+  .reco .why{font-size:14px; color:var(--ink-soft)}
+  .reco .effort{font-family:"Inter Tight",sans-serif; font-size:12px; font-weight:600; color:var(--gold-deep);
+    margin-top:8px; display:inline-block; border-top:1px dashed var(--line); padding-top:8px}
+
+  footer{text-align:center; margin-top:54px; color:var(--ink-soft); font-size:13px; font-style:italic}
+  .laurel{font-size:22px; opacity:.6}
+  a.anchor{color:var(--gold-deep); text-decoration:none; border-bottom:1px dotted}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">Grand Strategy · Imperium</div>
+  <h1>Estado del Desarrollo</h1>
+  <div class="sub">Dónde estamos, qué hicimos al final, y hacia dónde conviene ir</div>
+  <div class="meta-row">
+    <span class="chip">Rama&nbsp; <b>feat/auto-mejoras</b></span>
+    <span class="chip">Fecha&nbsp; <b>13 jun 2026</b></span>
+    <span class="chip">HEAD&nbsp; <b>d5e5cac</b></span>
+    <span class="chip">Servidor&nbsp; <b>:5173 ✓</b></span>
+  </div>
+  <div class="rule"></div>
+</header>
+
+<div class="wrap">
+
+  <!-- ====== RESUMEN ====== -->
+  <section>
+    <h2><span class="num">I</span> Resumen ejecutivo</h2>
+    <p class="lead">
+      El juego tiene su <b>main loop completo y jugable de punta a punta</b>:
+      Título → Selección de Comandante → <b>Foro Imperial</b> (hub de 6 pestañas) →
+      <b>Iter Belli</b> (campaña de cartas + batalla de dados). Hay <b>dos escenarios</b>
+      jugables con identidad de comandante real (Saguntum y Gallia), ambos balanceados con
+      un simulador headless. La primera victoria de punta a punta ya se jugó y validó en vivo.
+    </p>
+
+    <div class="status-bar">
+      <span class="pill"><span class="dot"></span> tsc --noEmit · limpio</span>
+      <span class="pill"><span class="dot"></span> 16/16 verify scripts</span>
+      <span class="pill"><span class="dot"></span> ~130 unit tests verdes</span>
+      <span class="pill"><span class="dot"></span> 0 errores de consola (6 pestañas)</span>
+    </div>
+
+    <div class="grid c3" style="margin-top:18px">
+      <div class="card accent-green"><div class="big">2</div><small>escenarios de campaña jugables, balanceados por simulador (Saguntum · Gallia)</small></div>
+      <div class="card accent-gold"><div class="big">12</div><small>iteraciones del bucle de auto-mejora completadas (loop-1 → loop-12)</small></div>
+      <div class="card accent-blue"><div class="big">6/6</div><small>pestañas del Foro funcionando, sin texto-mentira tras la auditoría</small></div>
+    </div>
+  </section>
+
+  <!-- ====== LO ÚLTIMO ====== -->
+  <section>
+    <h2><span class="num">II</span> Lo último que hicimos</h2>
+    <p>
+      La rama actual <code>feat/auto-mejoras</code> ejecutó un <b>bucle de auto-mejora de 12 iteraciones</b>
+      (registrado en <code>docs/loop-hallazgos.md</code>): cada vuelta barre una zona del código o juega
+      el juego en vivo con Playwright, implementa los hallazgos de ≥75% de confianza y anota los dudosos
+      sin tocarlos. Los hitos:
+    </p>
+
+    <ul class="timeline">
+      <li><span class="it">loop 1–3</span> · <b>Tres barridos estáticos</b> — z-index del draft, duplicación de <code>moraleMult</code>, harass «en seco», canvas hi-DPI, keys de listas, textos de traits corregidos a la escala de moral viva.</li>
+      <li><span class="it">loop 4–5</span> · <b>Reparación de la suite de verificación</b> — los <code>verify-*.ts</code> se pudrían sin correr; se creó <code>npm run verify</code> (16 scripts) y se reparó la regresión del draft de doctrinas (loadouts que apuntaban a doctrinas ya no-starter).</li>
+      <li><span class="it">loop 6–8</span> · <b>Balance con simulador headless</b> — Saguntum y Gallia eran <i>matemáticamente imposibles</i>; <code>tools/sim-battle-balance.ts</code> (400 batallas/config) reafinó ambos a curvas justas que premian la progresión. Regla de piedad contra la sequía de movimiento. Charge-0 bloqueada con motivo.</li>
+      <li><span class="it">loop 7</span> · <b>Primera victoria de la historia del juego</b> jugada de punta a punta con Playwright — y el modal del draft de doctrinas verificado en vivo.</li>
+      <li><span class="it">loop 9</span> · <b>Controles de audio reales</b> en el modal de Opciones (música/SFX/volumen, persistidos en localStorage) — antes decía «No options available».</li>
+      <li><span class="it">loop 10–12</span> · <b>Patrón recurrente cazado 3 veces</b>: el coste en oro mostrado en UI no incluía el descuento que el store sí cobraba — corregido en Exercitus, asesores sentados e inversión provincial. Lección: toda UI de coste debe pasar por el <i>mismo</i> helper que cobra.</li>
+    </ul>
+
+    <p style="margin-top:14px"><b>El último commit</b> (<code>d5e5cac</code>) cerró el tercer caso de ese drift: la etiqueta del coste de inversión ahora incluye el descuento del bien comercial (Mármol −15%, Madera −10%).</p>
+  </section>
+
+  <!-- ====== PLAN DE CONSOLIDACIÓN ====== -->
+  <section>
+    <h2><span class="num">III</span> El plan de consolidación: dónde encaja todo</h2>
+    <p>
+      El roadmap vive en <code>docs/plan-consolidacion.md</code>. Su objetivo: <b>que todo lo que el juego
+      promete en pantalla sea real</b>. Estado por fase:
+    </p>
+
+    <table>
+      <thead><tr><th>Sprint</th><th>Qué cubre</th><th style="width:130px">Estado</th></tr></thead>
+      <tbody>
+        <tr><td><b>S-A</b></td><td>Decreta lanzables en la batalla decisiva (~10 de 30 eran inlanzables)</td><td><span class="tag t-done">Hecho</span></td></tr>
+        <tr><td><b>S-B</b></td><td>Legados y comandantes con peso real (bonos de traits, cartas firma, pasiva Veteran Stacks)</td><td><span class="tag t-done">Hecho</span></td></tr>
+        <tr><td><b>S-C</b></td><td>Pasada de honestidad — cero texto-mentira en edificios/doctrinas</td><td><span class="tag t-done">Hecho</span></td></tr>
+        <tr><td><b>S-D</b></td><td><code>verify-effects.ts</code> + tests de invariantes económicos + sync de docs</td><td><span class="tag t-pend">Pendiente</span></td></tr>
+        <tr><td><b>S-E</b></td><td>Sinergias y edificios que faltaban (Forge / Sacred Grove / Mine)</td><td><span class="tag t-done">Hecho</span></td></tr>
+        <tr><td><b>S-F</b></td><td>Segundo escenario de campaña (Gallia) con progresión de desbloqueo</td><td><span class="tag t-done">Hecho</span></td></tr>
+        <tr><td><b>S-G</b></td><td>Variedad táctica de batalla (Acies Duplex + centros bosque/pantano)</td><td><span class="tag t-done">Hecho</span></td></tr>
+        <tr><td><b>S-H</b></td><td>Consistencia visual final (Consilium a lenguaje de cartas, arte PNG de edificios)</td><td><span class="tag t-pend">Pendiente</span></td></tr>
+        <tr><td><b>S-I</b></td><td>Onboarding y legibilidad (tutorial contextual, tooltips de fórmulas)</td><td><span class="tag t-pend">Pendiente</span></td></tr>
+        <tr><td><b>S-J</b></td><td>Telemetría de playtest + balance basado en datos (10+ runs)</td><td><span class="tag t-pend">Pendiente</span></td></tr>
+        <tr><td><b>S-K</b></td><td>Robustez de saves + release-readiness (migración, perf, build en CI)</td><td><span class="tag t-pend">Pendiente</span></td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px; font-size:15px; color:var(--ink-soft)">
+      <b>FASE 1 (contrato de efectos) y FASE 2 (profundidad del bucle) están esencialmente cerradas</b>
+      salvo el blindaje S-D. Lo que queda es <b>FASE 3 (pulido)</b> y <b>FASE 4 (balance y cierre)</b>.
+    </p>
+  </section>
+
+  <!-- ====== DECISIONES TOMADAS ====== -->
+  <section>
+    <h2><span class="num">IV</span> Decisiones de diseño — resueltas ✓</h2>
+    <p>El bucle dejó anotados varios «dudosos» que <b>no eran bugs</b> sino decisiones de diseño.
+      Resueltas el 13 jun 2026:</p>
+    <div class="grid c2">
+
+      <div class="card accent-green">
+        <h4>① Sistema de eventos <span class="tag t-pend" style="vertical-align:middle">Scaffolding</span></h4>
+        <small><b>Decisión: dejar como andamiaje.</b> No se borra ni se implementa ahora.
+          <code>event-store.ts</code> y sus campos de save quedan intactos como base para eventos
+          estratégicos futuros. <i>Acción: ninguna — no se toca.</i> (D10)</small>
+      </div>
+
+      <div class="card accent-blue">
+        <h4>② Facciones NPC <span class="tag t-open" style="vertical-align:middle">Implementar</span></h4>
+        <small><b>Decisión: diplomacia sencilla vía decretos/doctrinas</b> (versión simple por ahora).
+          Un contador visible de <b>cuántos aliados tienes</b>. Dos tipos de aliado:
+          <b>tribus → dan soldados</b>, <b>reinos → dan oro</b>. Se ganan/activan mediante
+          decretos o doctrinas. Esto da sentido real al passive de Augustus («cada alianza = +1 unidad»). (D11)</small>
+      </div>
+
+      <div class="card accent-blue">
+        <h4>③ Passive «Deus Vult» <span class="tag t-open" style="vertical-align:middle">Implementar</span></h4>
+        <small><b>Decisión: diseñar un efecto real</b> para Innocent (hoy es
+          <code>'Effect to be defined.'</code>). <b>Efecto confirmado ✓</b>: <b>+moral pre-batalla
+          escalando con el nº de doctrinas rojas/religiosas equipadas</b> (con cap). Se cablea como los
+          bonos de trait de legado en <code>buildPlayerSeed</code>. (D16)</small>
+      </div>
+
+      <div class="card accent-green">
+        <h4>④ Economía temprana <span class="tag t-done" style="vertical-align:middle">Sin cambios</span></h4>
+        <small><b>Decisión: dejar como está.</b> La 1ª campaña «a pelo» (oro 2–8 &lt; cohorte 20–40g)
+          es coherente con la fantasía roguelite «saquea → construye → domina» y ya está balanceada.
+          <i>Acción: ninguna.</i> (B4)</small>
+      </div>
+
+    </div>
+
+    <h3 style="margin-top:26px">Plan de acción derivado</h3>
+    <p style="font-size:15px; color:var(--ink-soft); margin-top:2px">Las dos decisiones de «implementar» se convierten en sprints concretos:</p>
+
+    <div class="card accent-blue" style="margin-top:12px">
+      <h4>🤝 S-L · Diplomacia sencilla (aliados)</h4>
+      <small style="font-size:15px; line-height:1.7; display:block">
+        Sobre el sistema de facciones existente: <code>allyCount</code> visible en el hub; cada alianza es
+        <b>tribu</b> (otorga soldados / iuniores en campaña) o <b>reino</b> (otorga oro por temporada).
+        Las alianzas se adquieren/activan vía <b>decretos o doctrinas</b> (sin pantalla de diplomacia nueva —
+        se reusa el lenguaje de cartas que ya existe). Cierra el cabo suelto del passive de Augustus,
+        que pasa a leer <code>allyCount</code> real. Empezar simple; ampliable después.
+      </small>
+    </div>
+
+    <div class="card accent-blue" style="margin-top:14px">
+      <h4>⛪ S-M · Passive «Deus Vult» de Innocent <span class="tag t-done" style="vertical-align:middle">Confirmado</span></h4>
+      <small style="font-size:15px; line-height:1.7; display:block">
+        <b>Efecto aprobado</b> (Innocent = arquetipo religioso): «Deus Vult» = <b>+moral pre-batalla
+        cuando el ejército lleva al menos 1 doctrina roja/religiosa equipada, escalando con el número de
+        doctrinas rojas equipadas</b> (con un cap razonable). Temático, medible, y se cablea como los bonos
+        de trait de legado en <code>buildPlayerSeed</code>. Listo para implementar.
+      </small>
+    </div>
+  </section>
+
+  <!-- ====== RECOMENDACIONES ====== -->
+  <section>
+    <h2><span class="num">V</span> Mis recomendaciones</h2>
+    <p class="lead">El contenido y los sistemas están sólidos. El mayor retorno ahora está en
+      <b>blindar lo hecho</b> y <b>hacer el juego legible para un jugador nuevo</b>, no en añadir más sistemas.</p>
+
+    <div class="grid" style="gap:22px; margin-top:26px">
+
+      <div class="reco">
+        <span class="rank">Prioridad 1</span>
+        <h4>S-D · Blindaje del contrato de efectos</h4>
+        <p class="why">Es el único hueco de la FASE 1 y el patrón de bugs más recurrente del bucle.
+          Escribir <code>tools/verify-effects.ts</code> que <b>falle si un tipo de efecto declarado no tiene
+          sitio de aplicación registrado</b>, más tests de invariantes económicos (refund ≤ pagado, caps de
+          descuento). El drift «display-vs-spend» apareció 3 veces seguidas: un verificador lo mata para siempre.</p>
+        <span class="effort">Esfuerzo: medio · Impacto: alto · Cierra FASE 1 al 100%</span>
+      </div>
+
+      <div class="reco">
+        <span class="rank">Prioridad 2</span>
+        <h4>S-L + S-M · Ejecutar las decisiones de diseño ya tomadas ✓</h4>
+        <p class="why"><b>Decisiones resueltas</b> (sección IV). Quedan dos implementaciones concretas:
+          <b>S-L · Diplomacia sencilla</b> (aliados tribu→soldados / reino→oro vía decretos-doctrinas, contador
+          visible, arregla el passive de Augustus) y <b>S-M · Passive «Deus Vult»</b> de Innocent
+          (efecto ya confirmado). Eventos = scaffolding (no se toca); economía = sin cambios.
+          Ambos sprints están listos para entrar en el loop de trabajo.</p>
+        <span class="effort">Esfuerzo: medio (S-L) + bajo (S-M) · Impacto: contenido + cierra 2 promesas rotas</span>
+      </div>
+
+      <div class="reco">
+        <span class="rank">Prioridad 3</span>
+        <h4>S-I · Onboarding y legibilidad</h4>
+        <p class="why">El icono de tutorial ya existe pero está vacío. Un jugador nuevo hoy no entiende
+          por qué baja la moral, qué hace el upkeep, ni cómo se calcula el daño. Tooltips de fórmula en la
+          batalla (stat × dado × mult) y en provincias (desglose de income), más 2–3 tooltips guiados en la
+          primera visita a cada pestaña. <b>Convierte un juego «correcto» en uno «jugable por otra persona».</b></p>
+        <span class="effort">Esfuerzo: medio · Impacto: alto para playtest externo</span>
+      </div>
+
+      <div class="reco">
+        <span class="rank">Prioridad 4</span>
+        <h4>S-H · Cerrar la consistencia visual</h4>
+        <p class="why">Llevar Consilium al lenguaje de cartas (coordinar con el WIP de codex en advisor-data),
+          generar los PNG hi-res de edificios que faltan (solo existen basilica/castrum/pantheon) y emblemas por
+          doctrina/decretum. Dirección de arte: <b>color variado, no all-gold</b> (<code>docs/icon-art-direction.md</code>).
+          Pulido que se puede solapar con lo anterior.</p>
+        <span class="effort">Esfuerzo: medio-alto (arte) · Impacto: percepción de calidad</span>
+      </div>
+
+    </div>
+
+    <div class="card accent-gold" style="margin-top:26px">
+      <h4>📌 Mi sugerencia concreta para la próxima sesión</h4>
+      <small style="font-size:15px; line-height:1.7; display:block">
+        Las 4 decisiones de diseño <b>ya están tomadas</b> y el efecto de <b>Deus Vult está confirmado</b>
+        (sección IV). El backlog completo (S-D, S-L, S-M, S-I, S-H, S-J, S-K) está encapsulado en el
+        <b>prompt loopeable</b> <code>docs/loop-prompt.md</code> — cada iteración toma el siguiente item,
+        lo implementa con ≥75% de confianza, corre <code>tsc</code> + <code>npm&nbsp;run&nbsp;verify</code>,
+        documenta en <code>docs/loop-hallazgos.md</code> y commitea. Orden recomendado de entrada:
+        <b>S-D → S-M → S-L → S-I → S-H</b>.
+      </small>
+    </div>
+  </section>
+
+  <footer>
+    <div class="laurel">⚜ — ⚜ — ⚜</div>
+    Generado el 13 jun 2026 · rama feat/auto-mejoras · HEAD d5e5cac · servidor de dev activo en localhost:5173<br>
+    Fuentes: docs/loop-hallazgos.md · docs/plan-consolidacion.md · git log · tsc + npm run verify
+  </footer>
+
+</div>
+</body>
+</html>
