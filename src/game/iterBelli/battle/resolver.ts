@@ -30,6 +30,56 @@ export function moraleMult(m: number): number {
   return Math.min(1.5, 1.0 + Math.max(0, m - 10) * 0.1);
 }
 
+/**
+ * Average die for a side at the current center control. Faces = 6 + tier and the
+ * roll is uniform 1..faces, so E[die] = (1 + faces) / 2. (Reveal "advantage" —
+ * roll twice, take the max — is a transient buff and is not folded in here.)
+ */
+export function expectedDie(S: BattleState, side: Side): number {
+  const faces = 6 + centerTier(S.control, side);
+  return (1 + faces) / 2;
+}
+
+/**
+ * Damage an attacking order WOULD deal at a given die, WITHOUT mutating state —
+ * a read-only mirror of `resolveOrder`'s damage math for the unconditional
+ * direct-damage orders (push / harass / siege). Returns 0 for everything else
+ * (pure-morale orders, and charge/move whose damage depends on the hidden enemy
+ * order or a movement check). Kept byte-for-byte aligned with the resolver and
+ * pinned by `damage-estimate.test.ts`, so the OrderBar tooltip can never lie.
+ */
+export function orderDamageAtDie(S: BattleState, att: BattleArmy, def: BattleArmy, o: OrderDef, die: number): number {
+  if (!o.stat || !o.mult) return 0;
+  const statVal = att.stats[o.stat];
+  const discBonus = 1 + att.discipline * BAL.DISC_DMG;
+  const ms = moraleMult(att.morale);
+  const attHasCenter = controllerOf(S) === att.side;
+  const centerDmgBonus = (attHasCenter && S.center.dmg) ? S.center.dmg : 0;
+
+  if (o.sub === 'harass') {
+    const dry = att.ammo <= 0 || att.ammo < (o.ammo ?? 0);
+    let dmg = mitigate(statVal * die * o.mult * discBonus * ms * BAL.DMG_SCALE, def, o);
+    if (dry) dmg *= BAL.DRY_HARASS_MULT;
+    if (def.formation.antiMissile) dmg *= 0.12;
+    return dmg;
+  }
+  if (o.sub === 'siege') {
+    let dmg = statVal * die * o.mult * discBonus * ms * (1 + centerDmgBonus) * BAL.DMG_SCALE;
+    dmg *= (def.guardMult ?? 1);
+    dmg *= (def.dmgTakenMult ?? 1);
+    return dmg;
+  }
+  if (o.sub === 'push') {
+    return mitigate(statVal * die * o.mult * discBonus * ms * (1 + centerDmgBonus) * BAL.DMG_SCALE, def, o);
+  }
+  return 0; // charge (enemy-brace dependent) and move (movement-check gated) — not a flat estimate
+}
+
+/** Expected direct damage of an order at the current center, or 0 if not estimable (see orderDamageAtDie). */
+export function expectedOrderDamage(S: BattleState, att: BattleArmy, def: BattleArmy, o: OrderDef): number {
+  return orderDamageAtDie(S, att, def, o, expectedDie(S, att.side));
+}
+
 export interface OrderResult { eMoraleHit: number; log: RoundLogLine[]; }
 
 export function resolveOrder(

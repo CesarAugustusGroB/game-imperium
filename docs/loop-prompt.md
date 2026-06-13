@@ -78,13 +78,21 @@ Explorator==Spy). Pago por temporada en EndgameCard (tribu→iuniores, reino→o
 Augustus «Web of Alliances» ya REAL: allyCount contingentes aliados (HP+stats) en la batalla.
 Contador visible en TreasuryPanel. Persistido en meta-save. tsc + 157 tests + 17/17 verify.
 
-### [ ] S-I · Onboarding y legibilidad  ← EMPEZAR AQUÍ
-- **Tutorial contextual** (el icono nav-tutorial ya existe): primera visita a cada pestaña →
+### [~] S-I · Onboarding y legibilidad  (PARCIAL — continuar)  ← EMPEZAR AQUÍ
+- [x] **Tooltips de fórmula en batalla** (it. 16): chip «≈N daño» en push/harass/siege,
+  calculado por `expectedOrderDamage` (resolver) al dado medio, **pinado contra el resolver
+  real** por `damage-estimate.test.ts` (no puede mentir). Charge/move excluidos (dependen del
+  enemigo oculto / check). 
+- [x] **Desglose del income** en provincias: YA EXISTÍA (componente `IncomeLedger` en
+  ProvinciaeTab — tax/edificios/subsistencia/trade − gastos). No requería trabajo.
+- [ ] **Tutorial contextual** (el icono nav-tutorial ya existe): primera visita a cada pestaña →
   2–3 tooltips guiados; primera campaña → explicación de upkeep/amenaza/plazo.
-- **Tooltips de fórmula:** en batalla, desglose del daño esperado por orden
-  (stat × dado × mult); en provincias, desglose del income.
-- Estados vacíos consistentes (revisar Consilium/Doctrinae).
-- **DoD:** un jugador nuevo entiende por qué baja la moral y de dónde sale el income.
+- [ ] Estados vacíos consistentes (revisar Consilium/Doctrinae).
+- **DoD restante:** tutorial de primera visita + estados vacíos. (La legibilidad de fórmulas
+  ya está cubierta: batalla = chip de daño; income = ledger.)
+- **Nota (D26)**: 3 cómputos paralelos de income en ProvinciaeTab (`getNetGoldIncome` :1301,
+  tooltip de inversión :1746, `IncomeLedger` :2370) — riesgo de drift display-vs-spend.
+  Candidato a consolidar en un helper único (fuera del alcance de S-I; refactor).
 
 ### [ ] S-H · Consistencia visual final
 - Llevar **Consilium** al lenguaje de cartas (coordinar con WIP de codex en advisor-data).

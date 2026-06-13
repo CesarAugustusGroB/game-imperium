@@ -1,7 +1,7 @@
 import { battleSession, issueOrder } from '../../../../game/iterBelli/battle/controller';
 import { ORDERS } from '../../../../game/iterBelli/battle/orders';
-import { moraleMult } from '../../../../game/iterBelli/battle/resolver';
-import type { OrderDef, OrderKey, BattleArmy } from '../../../../game/iterBelli/battle/types';
+import { moraleMult, expectedOrderDamage } from '../../../../game/iterBelli/battle/resolver';
+import type { OrderDef, OrderKey, BattleArmy, BattleState } from '../../../../game/iterBelli/battle/types';
 import { GameIcon, type GameIconName } from '../../../components/GameIcon';
 
 const SUB_LABEL: Record<string, string> = {
@@ -13,11 +13,15 @@ const SUB_ICON: Record<string, GameIconName> = {
 };
 
 /** Build the info chips for one order, given the army that would execute it. */
-function orderChips(o: OrderDef, you: BattleArmy): { text: string; tone?: 'good' | 'bad' | 'warn' }[] {
+function orderChips(o: OrderDef, you: BattleArmy, S: BattleState): { text: string; tone?: 'good' | 'bad' | 'warn' }[] {
   const chips: { text: string; tone?: 'good' | 'bad' | 'warn' }[] = [];
   if (o.stat && o.mult) {
     const statVal = you.stats[o.stat];
     chips.push({ text: `${o.stat} ${statVal} ×${o.mult}`, tone: statVal === 0 ? 'bad' : undefined });
+    // Expected direct damage at the average die (push/harass/siege only — see
+    // expectedOrderDamage; charge/move are enemy- or check-dependent so they get no number).
+    const dmg = expectedOrderDamage(S, you, S.enemy, o);
+    if (dmg > 0) chips.push({ text: `≈${Math.round(dmg)} daño`, tone: 'good' });
   }
   if (o.check) chips.push({ text: `prueba: dado + mov ${you.stats.movement} ≥ ${o.check}` });
   if (o.ammo) chips.push({ text: `−${o.ammo} munición`, tone: you.ammo < o.ammo ? 'bad' : 'warn' });
@@ -55,7 +59,7 @@ export function OrderBar() {
       {keys.map((key) => {
         const o = ORDERS[key];
         const reason = lockReason(o, you, ms);
-        const chips = orderChips(o, you);
+        const chips = orderChips(o, you, s.state);
         return (
           <button
             key={key}

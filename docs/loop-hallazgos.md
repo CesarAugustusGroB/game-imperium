@@ -396,3 +396,37 @@ temporada; Augustus ya no miente (passive cableado); `tsc` · 157 tests · 17/17
 | D23 | El pago de aliados solo se cobra al cerrar una campaña (loop de `collectProvinceIncome` en EndgameCard). Si en el futuro el hub gana un tick de temporada fuera de campaña, enganchar `collectAllyIncome` ahí también | Hoy la única fuente de avance de temporada es el cierre de campaña; cobertura total |
 | D24 | Adquisición solo vía 2 decretos azules (Augustus-color). Otros comandantes pueden castear los blancos pero estos son azules → solo Augustus/blancos los lanzan. Ampliar con cartas blancas o doctrina de alianzas si se quiere democratizar | «Empezar simple» — el sistema está, ampliar es trivial |
 | D25 | `allianceCount`/`allies`/`enemies` (game-state, derivados de npc-faction-store) siguen vivos como flavor narrativo paralelo al nuevo `allyCount`. Dos nociones de «alianza» coexisten | Refactor de unificación > beneficio; documentado para no confundir |
+
+## Iteración 16 — 2026-06-13
+
+Foco: **S-I · Onboarding y legibilidad** (parcial) — rebanada de **tooltips de fórmula en
+batalla**. El desglose del income en provincias YA EXISTÍA (`IncomeLedger`), así que esa parte
+del DoD estaba cubierta.
+
+### Decisión de alcance / honestidad
+
+S-I pide «desglose del daño esperado por orden (stat × dado × mult)». Un número de daño esperado
+que NO coincida exacto con el resolver sería un **nuevo texto-mentira**. Por eso: (a) solo se
+estima para las órdenes de daño **incondicional** push/harass/siege — charge depende de si el
+enemigo aguanta (orden oculta) y move de un check de dado, así que no llevan número; (b) el
+estimador es un **espejo read-only del resolver** y un test lo **pina contra el daño real** que
+`resolveOrder` aplica al mismo dado → no puede divergir.
+
+### Implementados
+
+| # | Hallazgo / entrega | Detalle | Archivos |
+|---|---|---|---|
+| 41 | **Daño esperado por orden** en la barra de batalla: chip «≈N daño» en push/harass/siege | `orderDamageAtDie`/`expectedOrderDamage`/`expectedDie` en resolver.ts (espejo exacto de la fórmula: stat × dado × mult × discBonus × moraleMult × (1+centro) × DMG_SCALE, luego mitigate/guard según la orden). Dado medio = (1+(6+tier))/2. Surfaceado en OrderBar como chip verde | resolver.ts, OrderBar.tsx |
+| 42 | **Test de consistencia** (clave anti-mentira): para un dado fijo, el estimador == daño real que `resolveOrder` quita al defensor (push con/ sin armadura+fortín, harass, siege que perfora); charge y órdenes de moral → 0 | 163 unit tests verdes (+6) | damage-estimate.test.ts (nuevo) |
+| 43 | Doc: chip de daño esperado añadido al wireframe de la arena de batalla | wireframes.html sincronizado | wireframes.html |
+
+**Entregado del DoD S-I**: legibilidad de fórmulas (batalla = chip de daño honesto; income =
+ledger ya existente). `tsc` · 163 tests · 17/17 verify verdes.
+
+### Pendiente de S-I (próximas vueltas)
+
+| # | Pendiente | Nota |
+|---|---|---|
+| — | **Tutorial contextual** (primera visita a cada pestaña → 2-3 tooltips; primera campaña → upkeep/amenaza/plazo). El icono nav-tutorial ya existe | Requiere estado de «primera vez» persistido — pieza más grande, propia iteración |
+| — | **Estados vacíos** consistentes en Consilium/Doctrinae | Pieza pequeña y segura |
+| D26 | **3 cómputos paralelos de income** en ProvinciaeTab (`getNetGoldIncome` :1301, tooltip de inversión :1746, `IncomeLedger` :2370) — mismo patrón display-vs-spend que el loop ya cazó 3 veces. Candidato a consolidar en un helper único | Refactor; fuera del alcance de S-I, anotado para una vuelta de blindaje |
