@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { startIterBelliCampaign, playCard, iterBelliState } from '../iter-belli-state';
+import { startIterBelliCampaign, playCard, applyBattleOutcome, iterBelliState } from '../iter-belli-state';
 import { isCrisisDef } from '../iter-belli-types';
 import { resetCampaignTelemetry, snapshotCampaignTelemetry } from '../../progression/run-telemetry';
 
@@ -67,5 +67,43 @@ describe('Iter Belli campaign flow (headless integration)', () => {
     expect(s.morale).toBeLessThanOrEqual(15);
     expect(Number.isFinite(s.supplies)).toBe(true);
     expect(s.turnNum).toBe(played);
+  });
+});
+
+describe('Iter Belli battle → campaign bridge (applyBattleOutcome)', () => {
+  it('victory ends the campaign in endgame, writes survivors, awards the gold bonus', () => {
+    startIterBelliCampaign({ ...SEED });
+    const goldBefore = iterBelliState.value.gold;
+
+    applyBattleOutcome(true, 1500, 10);
+
+    const s = iterBelliState.value;
+    expect(s.finished).toBe(true);
+    expect(s.phase).toBe('endgame');
+    expect(s.outcome?.victory).toBe(true);
+    expect(s.soldiers).toBe(1500);
+    expect(s.outcome?.soldiers).toBe(1500);
+    expect(s.gold).toBeGreaterThan(goldBefore);   // VICTORY_GOLD_BONUS applied
+  });
+
+  it('defeat ends the campaign in endgame with a non-victory outcome', () => {
+    startIterBelliCampaign({ ...SEED });
+
+    applyBattleOutcome(false, 200, 0);
+
+    const s = iterBelliState.value;
+    expect(s.finished).toBe(true);
+    expect(s.phase).toBe('endgame');
+    expect(s.outcome?.victory).toBe(false);
+    expect(s.soldiers).toBe(200);
+  });
+
+  it('clamps survivors and morale into valid ranges', () => {
+    startIterBelliCampaign({ ...SEED });
+    applyBattleOutcome(true, -50, 99);   // negative survivors, over-cap morale
+    const s = iterBelliState.value;
+    expect(s.soldiers).toBe(0);          // floored at 0
+    expect(s.morale).toBeLessThanOrEqual(15);
+    expect(s.morale).toBeGreaterThanOrEqual(0);
   });
 });

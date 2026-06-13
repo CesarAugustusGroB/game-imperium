@@ -1006,3 +1006,28 @@ El path que queda sin cubrir en vivo/headless es la **batalla decisiva + endgame
 (acoplados a la UI: BattleModal construye el seed y EndgameCard llama a recordCampaignLog). Sus
 piezas están unit-testeadas (it.18/22/33 + el sim de batalla de it.6/8). Un test de integración
 de ese tramo exigiría extraer la lógica de returnToHub de la UI — refactor, no urgente (D32).
+
+## Iteración 36 — 2026-06-13
+
+**Cobertura nueva (continuación de it.35)**: extiende el test de integración de campaña al
+**puente batalla → campaña** (`applyBattleOutcome` → `finishCampaign` → endgame), el siguiente
+tramo del bucle que estaba sin test.
+
+### Implementado
+
+| # | Entrega | Detalle | Archivos |
+|---|---|---|---|
+| 73 | **`applyBattleOutcome` cubierto** en campaign-flow.test (3 casos nuevos) | (a) **victoria** → finished/endgame, `outcome.victory` true, soldados = supervivientes, bonus de oro aplicado; (b) **derrota** → endgame, `outcome.victory` false, soldados = supervivientes; (c) **clamps** → supervivientes negativos → 0, moral >15 → clampada a [0,15] | campaign-flow.test.ts |
+
+**Por qué importa**: cierra el puente lógico batalla→campaña (cómo el resultado de la batalla
+decisiva termina la campaña y escribe el outcome). Junto a it.35 (bucle de cartas), la **máquina
+de estado de campaña está ahora cubierta end-to-end** salvo el `returnToHub` de la UI (D32:
+recursos de vuelta al hub + recordCampaignLog + draft — acoplado a EndgameCard).
+
+**Validación**: `tsc` limpio · **182 tests** (+3) · 17/17 verify · build verde. Test-only.
+
+### Cobertura de campaña tras it.35–36
+
+`startIterBelliCampaign` → `playCard`/`endTurn` (upkeep, refill, telemetría) → `applyBattleOutcome`
+→ `finishCampaign`/endgame: **todo bajo test de integración headless**. El único tramo sin cubrir
+es la UI `EndgameCard.returnToHub` (D32, requiere extracción de la UI).
