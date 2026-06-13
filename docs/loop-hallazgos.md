@@ -975,3 +975,34 @@ en vivo haría falta un helper de test que exponga `playCard`/avance, o conducir
 
 Integración sana: el bucle principal (menú → hub → embark → campaña → jugar cartas) corre sin
 errores tras los cambios de it.13–33. Sin cambio de código.
+
+## Iteración 35 — 2026-06-13
+
+**Cobertura nueva** (cierra el hueco de it.34): test de integración **headless** del flujo de
+campaña — el path que Playwright no pudo conducir (cartas = OperationCard divs).
+
+### Hallazgo
+
+Ningún test conducía `startIterBelliCampaign`/`playCard` — el **bucle central de campaña** (sembrar
+→ jugar carta → endTurn → upkeep → refill → telemetría) estaba **sin cobertura**. Los tests de
+iter-belli existentes son unitarios estrechos (munición, decreta, disciplina, save, escenarios).
+
+### Implementado
+
+| # | Entrega | Detalle | Archivos |
+|---|---|---|---|
+| 72 | **`campaign-flow.test.ts`** — integración headless del bucle de campaña contra la máquina de estado real | 3 casos: (a) seed → pool poblado, turnNum 0, fase campaign; (b) jugar carta no-crisis → telemetría `cardsPlayed`=1, `turnNum`+1, `timeRemaining` baja, carta consumida del pool; (c) conducir 5 turnos sin crash → soldados ≥0, moral ∈[0,15], suministros finitos, tally == cartas jugadas | campaign-flow.test.ts (nuevo) |
+
+**Por qué importa**: ejercita end-to-end `playCard → endTurn` (con el hook de telemetría de it.18 y
+el upkeep pasivo) de forma fiable y permanente — donde el smoke de Playwright (it.34) solo pudo
+jugar UNA carta. Una regresión en el bucle de campaña ahora falla `npx vitest`.
+
+**Validación**: `tsc` limpio · **179 tests** (+3) · 17/17 verify · build verde. Sin cambio de
+lógica (solo test) → sin sync de docs de referencia.
+
+### Nota de cierre
+
+El path que queda sin cubrir en vivo/headless es la **batalla decisiva + endgame + returnToHub**
+(acoplados a la UI: BattleModal construye el seed y EndgameCard llama a recordCampaignLog). Sus
+piezas están unit-testeadas (it.18/22/33 + el sim de batalla de it.6/8). Un test de integración
+de ese tramo exigiría extraer la lógica de returnToHub de la UI — refactor, no urgente (D32).
