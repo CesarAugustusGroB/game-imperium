@@ -2,7 +2,7 @@
  * verify-effects.ts — the effect-contract guard (plan S-D, FASE 1 blindaje).
  *
  * Effect-bearing unions (DoctrineEffect, DecretumEffect, and the province
- * TradeGoodSpecial / FeatureSpecial) are consumed by switches with permissive
+ * TradeGoodSpecial / FeatureSpecial / GovernorTrait) are consumed by switches with permissive
  * `default` branches (decretum-hub `default: return null`, battle/decreta
  * `default: return false`, the special checks just `if (… === 'x')`). That means
  * adding a NEW member to a union compiles fine and silently becomes INERT — the
@@ -25,6 +25,7 @@ import { DOCTRINE_CATALOG } from '../src/data/doctrine-data';
 import { STARTER_DECRETUM } from '../src/data/decretum-data';
 import { TRADE_GOOD_DATA } from '../src/data/trade-goods';
 import { ALL_FEATURES } from '../src/data/province-features';
+import { ALL_GOVERNORS } from '../src/data/governor-data';
 import {
   getShopDiscount, getUpkeepReduction, equippedDoctrines,
 } from '../src/game/items/doctrine-store';
@@ -172,6 +173,18 @@ const featureSpecialTypes = ALL_FEATURES.map((f) => f.special?.type).filter(Bool
 
 checkUnion('TradeGoodSpecial', 'src/data/trade-goods.ts', 'TradeGoodSpecial', TRADE_GOOD_APPLICATION, tradeGoodSpecialTypes);
 checkUnion('FeatureSpecial', 'src/data/province-features.ts', 'FeatureSpecial', FEATURE_APPLICATION, featureSpecialTypes);
+
+// ── Governor traits (all applied in province income/unrest/expense/food logic) ──
+const GOVERNOR_APPLICATION: Record<string, AppEntry> = {
+  'income-bonus':        { files: [PROVINCE], note: 'province income (calculateProvinceIncome)' },
+  'expense-reduction':   { files: [PROVINCE], note: 'getProvinceExpenses' },
+  'unrest-reduction':    { files: [PROVINCE], note: 'getUnrestModifier (flat)' },
+  'population-growth':    { files: [PROVINCE], note: 'calculateFoodProduction' },
+  'investment-discount': { files: [PROVINCE], note: 'getInvestmentDiscount' },
+  'garrison-strength':   { files: [PROVINCE], note: 'getUnrestModifier (multiplies Castrum unrest cut)' },
+};
+const governorTraitTypes = ALL_GOVERNORS.flatMap((g) => g.tiers.flatMap((t) => t.traits)).map((tr) => tr.type);
+checkUnion('GovernorTrait', 'src/game/province/governor.ts', 'GovernorTrait', GOVERNOR_APPLICATION, governorTraitTypes);
 
 // ──────────────────────────────────────────────────────────────────────────
 // Economic invariants — refund ≤ paid, discounts clamped, never free.

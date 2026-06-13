@@ -836,3 +836,34 @@ mientras sigue exigiendo una decisión explícita (aplicar o marcar latente) par
 
 **Validación**: `verify-effects` exit 0 (4 uniones) · `tsc` limpio · 175 tests · 17/17 verify ·
 build verde. Plan S-D actualizado (ampliación documentada).
+
+## Iteración 30 — 2026-06-13
+
+**Blindaje + verificación** (último sistema de "efectos especiales" de D20 sin cubrir): los
+**traits de gobernador**.
+
+### Verificado en sync (no-issue)
+
+Los 6 tipos de `GovernorTrait` (`income-bonus`, `expense-reduction`, `unrest-reduction`,
+`population-growth`, `investment-discount`, `garrison-strength`) están **todos aplicados** en
+province.ts (income / gastos / unrest / comida / descuento de inversión / multiplicador de unrest
+del Castrum). Contrato limpio, **cero traits mentirosos**. `garrison-strength` se aplica de verdad
+(×1.15/1.25/1.35 a la reducción de unrest del Castrum, no solo se filtra).
+
+### Implementado (blindaje preventivo)
+
+| # | Entrega | Detalle | Archivos |
+|---|---|---|---|
+| 65 | **`verify-effects.ts` cubre ahora 5 uniones** (+ `GovernorTrait`): los 6 traits registrados como aplicados en province.ts, data de `ALL_GOVERNORS` verificada usando solo tipos declarados | completa la cobertura del contrato de efectos de provincia (doctrinas + decreta + trade-good + feature + governor). Un trait de gobernador futuro sin sitio de aplicación fallaría `npm run verify` | tools/verify-effects.ts |
+
+**Validación**: `verify-effects` exit 0 (5 uniones) · `tsc` limpio · 175 tests · 17/17 verify ·
+build verde.
+
+### Nota de cobertura
+
+Uniones de efectos cubiertas por verify-effects: DoctrineEffect, DecretumEffect, TradeGoodSpecial,
+FeatureSpecial, GovernorTrait. **Pendientes (no tabuladas / bespoke)**: efectos de trait de
+**legado** (adapter.ts: random-rally/morale-bonus/stat-bonus — un mini-switch local, todos
+aplicados) y `bonus.type` de **sinergias** de edificio (province.ts: unrest/gold/iuniores). Ambos
+están vivos hoy; tabularlos en verify-effects es posible pero de valor marginal (switches locales
+pequeños, tsc-exhaustivos de facto). Anotado, no urgente.
