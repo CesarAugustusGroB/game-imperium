@@ -6,6 +6,8 @@ import { veteranStacks } from '../../../game/core/game-state';
 import { getActiveScenario } from '../../../game/iterBelli/iter-belli-scenario';
 import { preparedArmy, preparedLegate } from '../../../game/progression/strategic-store';
 import { getEquippedColorCount } from '../../../game/items/doctrine-store';
+import { allyCount } from '../../../game/progression/ally-store';
+import { pickAllyCohort } from '../../../game/army/cohort-data';
 import {
   battleSession, beginBattleSession, concludeBattleSession,
 } from '../../../game/iterBelli/battle/controller';
@@ -30,10 +32,18 @@ export function BattleModal() {
     if (started.current || battleSession.value) return;
     started.current = true;
     const cs = iterBelliState.value;
-    const roster = preparedArmy.value?.cohorts ?? [];
+    const baseRoster = preparedArmy.value?.cohorts ?? [];
     const legate = preparedLegate.value;
     const scenario = getActiveScenario();
-    const snap = { soldiers: cs.soldiers, initialSoldiers: cs.initialSoldiers, morale: cs.morale, discipline: cs.discipline, ammunition: cs.ammunition };
+    // Web of Alliances (Diplomat passive): each forged ally fields one allied
+    // contingent — HP + combat stats — alongside the legion. ALLY_UNIT_HP mirrors
+    // the 500-soldier levy ratio used by spawn effects.
+    const ALLY_UNIT_HP = 500;
+    const allyUnits = cs.archetype === 'Diplomat' ? allyCount.value : 0;
+    const alliedCohorts = Array.from({ length: allyUnits }, () => pickAllyCohort()).filter(Boolean) as NonNullable<ReturnType<typeof pickAllyCohort>>[];
+    const roster = [...baseRoster, ...alliedCohorts];
+    const allyHp = alliedCohorts.length * ALLY_UNIT_HP;
+    const snap = { soldiers: cs.soldiers + allyHp, initialSoldiers: cs.initialSoldiers + allyHp, morale: cs.morale, discipline: cs.discipline, ammunition: cs.ammunition };
     const armor = { material: preparedArmy.value?.armorMaterial ?? 'copper' } as const;
     const fortified = cs.fortified === true;
     // Veteran Stacks (Warlord passive): +5% attack power per stacked victory (cap 5).

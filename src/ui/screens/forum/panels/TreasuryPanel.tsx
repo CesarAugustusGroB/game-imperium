@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { gold, iuniores } from '../../../../game/core/resources';
 import { globalSeason, MAX_SEASONS } from '../../../../game/core/game-state';
+import { allyCount } from '../../../../game/progression/ally-store';
 import { BentoCard } from '../../../components/BentoCard';
 import { GameIcon } from '../../../components/GameIcon';
 import { type CardPriority } from '../../../components/card-priority';
@@ -8,6 +9,7 @@ import { SectionHeader } from '../components/SectionHeader';
 import goldStackIcon from '../../../../assets/ui/resources/gold-stack-icon.png';
 import iunioresIcon from '../../../../assets/ui/resources/iuniores-icon-color.png';
 import seasonIcon from '../../../../assets/ui/resources/season-icon-color.png';
+import alliesIcon from '../../../../assets/ui/icons/cat-diplomacia.png';
 
 interface TreasuryPanelProps {
   accent?: string;
@@ -39,6 +41,7 @@ export function TreasuryPanel({ accent = '#d4a843', index = 0 }: TreasuryPanelPr
           iconSrc={seasonIcon}
           display={`${globalSeason.value}/${MAX_SEASONS}`}
         />
+        <Meter label="Allies" value={allyCount.value} cap={6} color="#6fa8c7" iconSrc={alliesIcon} />
       </div>
     </BentoCard>
   );

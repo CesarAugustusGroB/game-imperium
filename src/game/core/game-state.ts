@@ -14,6 +14,7 @@ import { initGovernorStore, resetGovernorStore } from '../province/governor-stor
 import { initProvinceMapStore, resetProvinceMapStore } from '../province/province-map-store';
 import { resetEventStore } from '../events/event-store';
 import { initNPCFactions, resetNPCFactions, friendlyCount, hostileIds, friendlyIds, registerFactionSyncCallback } from '../progression/npc-faction-store';
+import { resetAllies } from '../progression/ally-store';
 import { resetStrategicStore, ensurePreparedArmy, preparedArmy, setExtraShopDiscountFn, setRecruitDiscountFn } from '../progression/strategic-store';
 import { getCohortById } from '../army/cohort-data';
 import { computeArmySize, createCohortInstance } from '../army/cohort';
@@ -122,6 +123,7 @@ function initializeRunScaffold(commander: Commander): void {
   // NPC factions — derive alliance/enemy state
   initNPCFactions();
   syncFactionSignals();
+  resetAllies();
 
   veteranStacks.value = 0;
 
@@ -247,6 +249,7 @@ export function resetRun(): void {
   resetStrategicStore();
   resetFeaturePool();
   resetNPCFactions();
+  resetAllies();
   resetIterBelli();
   resetUnlockedScenarios();
 

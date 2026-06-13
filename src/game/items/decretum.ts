@@ -24,7 +24,9 @@ export type DecretumEffect =
   /** Lower the active Iter Belli campaign's threat by `amount` (clamped 0–10 by the engine). Campaign-only. */
   | { type: 'threat-reduction'; amount: number }
   /** Grant `amount` supplies to the active Iter Belli campaign immediately. Campaign-only. */
-  | { type: 'supplies-gain'; amount: number };
+  | { type: 'supplies-gain'; amount: number }
+  /** Forge a lasting alliance (plan S-L): a tribe (pledges iuniores/season) or a kingdom (pledges gold/season). Hub-applied. */
+  | { type: 'gain-ally'; allyKind: 'tribe' | 'kingdom' };
 
 // ── Decretum definition ──
 

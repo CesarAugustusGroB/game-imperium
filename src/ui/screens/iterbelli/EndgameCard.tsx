@@ -10,6 +10,7 @@ import { getActiveScenario, unlockNextScenario, getScenarioById } from '../../..
 import { addNotification } from '../../notifications/notification-store';
 import { START } from '../../../game/iterBelli/iter-belli-balance';
 import { conquerProvince, provinces, collectProvinceIncome } from '../../../game/province/province-store';
+import { collectAllyIncome } from '../../../game/progression/ally-store';
 import { councilSlots, grantAdvisorXp } from '../../../game/council/council-store';
 import { pickConquestName, PROVINCE_REWARD } from '../../../data/iter-belli-conquest';
 import { getMissionById } from '../../../data/iter-belli-consilium';
@@ -40,6 +41,8 @@ function returnToHub(): void {
   globalSeason.value = Math.min(MAX_SEASONS, globalSeason.value + s.spokeDuration);
   // Provinces accrue income/ticks for each season spent on campaign.
   for (let i = 0; i < s.spokeDuration; i++) collectProvinceIncome();
+  // Forged allies pledge their season tribute (tribes → iuniores, kingdoms → gold).
+  for (let i = 0; i < s.spokeDuration; i++) collectAllyIncome();
 
   if (outcome?.victory) {
     completedSpokes.value++;

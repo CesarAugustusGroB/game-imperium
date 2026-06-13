@@ -105,7 +105,7 @@ export const COMMANDERS: Commander[] = [
     quote: 'Why fight when others can fight for you?',
     passive: {
       name: 'Web of Alliances',
-      description: 'Each alliance = +1 allied unit in battle.',
+      description: 'Each forged alliance (via treaty decreta) fields one free allied contingent in the decisive battle.',
     },
     strategicAbility: {
       name: 'Manipulate',

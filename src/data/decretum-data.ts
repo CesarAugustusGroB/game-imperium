@@ -192,9 +192,9 @@ export const DECRETUM_FOEDUS: Decretum = {
   id: 'decretum_foedus',
   name: 'Foedus Amicitiae',
   color: 'blue',
-  description: 'A treaty of friendship earns goodwill. Gain 2 Gold immediately.',
-  effect: { type: 'resource-gain', resource: 'gold', amount: 2 },
-  rarity: 'common',
+  description: 'Seal a treaty with a foreign kingdom. Forge a lasting alliance — the kingdom pledges gold every season.',
+  effect: { type: 'gain-ally', allyKind: 'kingdom' },
+  rarity: 'rare',
 };
 
 export const DECRETUM_LEGATUS: Decretum = {
@@ -208,13 +208,13 @@ export const DECRETUM_LEGATUS: Decretum = {
   extraEffects: [{ type: 'convert-enemy-next-battle', count: 1 }],
 };
 
-export const DECRETUM_EXPLORATOR: Decretum = {
+export const DECRETUM_FOEDUS_GENTIUM: Decretum = {
   id: 'decretum_explorator',
-  name: 'Vox Exploratoris',
+  name: 'Foedus Gentium',
   color: 'blue',
-  description: 'Scouts return with vital intelligence — the enemy\'s intent is revealed for the rest of the battle.',
-  effect: { type: 'reveal', target: 'enemies', count: 99 },
-  rarity: 'common',
+  description: 'Court the warrior tribes of the frontier. Forge a lasting alliance — the tribe pledges fresh warriors (iuniores) every season.',
+  effect: { type: 'gain-ally', allyKind: 'tribe' },
+  rarity: 'rare',
 };
 
 export const DECRETUM_PAX: Decretum = {
@@ -336,7 +336,7 @@ export const STARTER_DECRETUM: Decretum[] = [
   DECRETUM_TERROR,
   // Blue
   DECRETUM_TRIBUNE, DECRETUM_SENATE, DECRETUM_SPY,
-  DECRETUM_FOEDUS, DECRETUM_LEGATUS, DECRETUM_EXPLORATOR,
+  DECRETUM_FOEDUS, DECRETUM_LEGATUS, DECRETUM_FOEDUS_GENTIUM,
   DECRETUM_PAX,
   // Gold
   DECRETUM_AUGUR, DECRETUM_HEALING, DECRETUM_ORACLE,

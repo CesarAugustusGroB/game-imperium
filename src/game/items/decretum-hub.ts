@@ -15,6 +15,7 @@ import type { Decretum } from './decretum';
 import { isDecretumCastable } from './decretum';
 import { decretumHand, removeDecretum } from './decretum-store';
 import { iterBelliActive, applyCampaignDecretumEffect } from '../iterBelli/iter-belli-state';
+import { addAlly, type AllyKind } from '../progression/ally-store';
 
 /** Iuniores granted per spawned unit when a `spawn` decretum is cast at the Hub. Tunable. */
 export const RECRUIT_IUNIORES_PER_UNIT = 250;
@@ -26,7 +27,8 @@ export type HubDecretumEffect =
   | { kind: 'recruit'; iuniores: number }                              // instant
   | { kind: 'waive-upkeep'; seasons: number }                          // continuous
   | { kind: 'campaign-threat'; amount: number }                        // instant — campaign-only (amount = points reduced)
-  | { kind: 'campaign-supplies'; amount: number };                     // instant — campaign-only
+  | { kind: 'campaign-supplies'; amount: number }                      // instant — campaign-only
+  | { kind: 'gain-ally'; allyKind: AllyKind };                         // instant — forge a lasting alliance
 
 /** A continuous Hub effect currently active, with seasons remaining. */
 export interface ActiveDecretumEffect {
@@ -60,6 +62,8 @@ export function toHubEffect(d: Decretum): HubDecretumEffect | null {
       return { kind: 'campaign-threat', amount: e.amount };
     case 'supplies-gain':
       return { kind: 'campaign-supplies', amount: e.amount };
+    case 'gain-ally':
+      return { kind: 'gain-ally', allyKind: e.allyKind };
     default:
       // Exhaustiveness intentionally open: any unmapped effect type (battle-only
       // or deprecated-resource) is inert at the Hub by design ("set chico vivo").
@@ -109,6 +113,10 @@ export function describeHubEffect(effect: HubDecretumEffect): string {
       return `Amenaza de campaña −${effect.amount} (requiere campaña activa)`;
     case 'campaign-supplies':
       return `+${effect.amount} suministros de campaña (requiere campaña activa)`;
+    case 'gain-ally':
+      return effect.allyKind === 'tribe'
+        ? 'Forja una alianza tribal (+iuniores por temporada)'
+        : 'Forja una alianza con un reino (+oro por temporada)';
   }
 }
 
@@ -176,6 +184,9 @@ function applyHubEffect(effect: HubDecretumEffect, scroll: Decretum): void {
       break;
     case 'campaign-supplies':
       applyCampaignDecretumEffect('supplies', effect.amount, `${scroll.name}: +${effect.amount} suministros.`);
+      break;
+    case 'gain-ally':
+      addAlly(effect.allyKind);
       break;
   }
 }

@@ -92,6 +92,7 @@ const DECRETUM_APPLICATION: Record<string, { files: string[]; note: string }> = 
   'investment-discount':      { files: [HUB], note: 'hub applyExtraEffects → next-build discount' },
   'threat-reduction':         { files: [HUB], note: 'hub campaign-threat bribe' },
   'supplies-gain':            { files: [HUB], note: 'hub campaign-supplies grant' },
+  'gain-ally':                { files: [HUB], note: 'hub forge alliance → addAlly (plan S-L)' },
 };
 
 // ──────────────────────────────────────────────────────────────────────────

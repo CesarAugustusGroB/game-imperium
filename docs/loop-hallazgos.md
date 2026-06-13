@@ -359,3 +359,40 @@ hecho en `estado-desarrollo.html` (tag ③) y `docs/loop-prompt.md`.
 | # | Observación | Por qué no |
 |---|---|---|
 | D22 | El passive solo aplica en la batalla decisiva de Iter Belli (donde se construye el `PlayerSeed`). No hay otra batalla en el loop vivo, así que la cobertura es total hoy; si se añaden escaramuzas con seed propio, recablear ahí también | Sin batalla extra hoy; nota para escenarios futuros |
+
+## Iteración 15 — 2026-06-13
+
+Foco: **S-L · Diplomacia sencilla (aliados)** — decisión de diseño del usuario: implementar
+diplomacia simple vía decretos/doctrinas; tribus→soldados, reinos→oro; contador visible;
+arreglar el passive muerto de Augustus.
+
+### Decisión de arquitectura
+
+El sistema `npc-faction-store` existente (4 facciones fijas con relación hostil/neutral/amiga)
+es **narrativo y estático** — no encaja con «ganar aliados tribu/reino por carta con pago por
+temporada». En vez de sobrecargarlo, creé un **store dedicado y claramente separado**
+(`ally-store.ts`) y repunté a Augustus ahí. El npc-faction-store queda intacto (flavor).
+
+### Implementados
+
+| # | Hallazgo / entrega | Detalle | Archivos |
+|---|---|---|---|
+| 33 | **Ally-store**: modelo tribu/reino, `allyCount`, `addAlly`, `collectAllyIncome` (tribu→+2 iuniores, reino→+2 oro/temporada), reset | store dedicado + computed + nombres temáticos por tipo | ally-store.ts (nuevo) |
+| 34 | **Adquisición vía carta** (lenguaje de cartas, sin pantalla nueva): nuevo efecto de decretum `gain-ally` (allyKind), **registrado en verify-effects** (el guard de S-D lo exigió — validación end-to-end del contrato) y cableado en decretum-hub (toHubEffect/applyHubEffect/describe). Repurpose de 2 cartas azules: **Foedus Amicitiae**→reino, **Vox Exploratoris→Foedus Gentium**→tribu | el repurpose de Explorator mata de paso un **duplicado exacto** (Explorator==Spy, ambos reveal-99) sin perder funcionalidad; conteo 33 intacto | decretum.ts, decretum-hub.ts, decretum-data.ts, verify-effects.ts |
+| 35 | **Pago por temporada** enganchado en el cierre de campaña (mismo loop que el income provincial, ×spokeDuration) | tribu→iuniores, reino→oro | EndgameCard.tsx |
+| 36 | **Augustus «Web of Alliances» ya REAL** (era texto-mentira: el passive no estaba cableado): cada alianza forjada aporta un contingente aliado (HP `+500/u` + stats del `ALLY_COHORT_POOL`) al `PlayerSeed`, gated por `archetype === 'Diplomat'`. Reusa `pickAllyCohort`, scaffolding que estaba muerto | descripción del passive reescrita a lo real | BattleModal.tsx, commanders.ts |
+| 37 | **Visibilidad**: medidor «Allies» en el TreasuryPanel del Foro (4º hueco del grid 2×2, icono cat-diplomacia) | siempre visible en el hub | TreasuryPanel.tsx |
+| 38 | **Persistencia**: `forgedAllies` en meta-save (snapshot/restore/normalize, opcional para back-compat) + reset en startNewRun/resetRun | una alianza forjada sobrevive a recargas | meta-save.ts, game-state.ts |
+| 39 | Tests: ally-store (6: vacío, addAlly por tipo, ids únicos, income tribu/reino, reset) | 157 unit tests verdes (+6) | ally-store.test.ts (nuevo) |
+| 40 | Doc: nota de diplomacia/aliados en `sistemas-del-juego.html` | sistema live documentado | sistemas-del-juego.html |
+
+**DoD S-L cumplido**: se gana/ve aliados; tribus→iuniores y reinos→oro tienen efecto real cada
+temporada; Augustus ya no miente (passive cableado); `tsc` · 157 tests · 17/17 verify verdes.
+
+### Dudosos / deferidos
+
+| # | Observación | Por qué no |
+|---|---|---|
+| D23 | El pago de aliados solo se cobra al cerrar una campaña (loop de `collectProvinceIncome` en EndgameCard). Si en el futuro el hub gana un tick de temporada fuera de campaña, enganchar `collectAllyIncome` ahí también | Hoy la única fuente de avance de temporada es el cierre de campaña; cobertura total |
+| D24 | Adquisición solo vía 2 decretos azules (Augustus-color). Otros comandantes pueden castear los blancos pero estos son azules → solo Augustus/blancos los lanzan. Ampliar con cartas blancas o doctrina de alianzas si se quiere democratizar | «Empezar simple» — el sistema está, ampliar es trivial |
+| D25 | `allianceCount`/`allies`/`enemies` (game-state, derivados de npc-faction-store) siguen vivos como flavor narrativo paralelo al nuevo `allyCount`. Dos nociones de «alianza» coexisten | Refactor de unificación > beneficio; documentado para no confundir |

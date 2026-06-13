@@ -69,18 +69,16 @@ no puede equipar rojas, así que escala con su escuela de fe. Cableado vía nuev
 `passiveMoraleBonus` de `buildPlayerSeed` + helper `getEquippedColorCount`; `description`
 reescrita. tsc + 151 tests + 17/17 verify verdes.
 
-### [ ] S-L · Diplomacia sencilla (aliados)  (decisión del usuario)  ← EMPEZAR AQUÍ
-Sobre el sistema de facciones existente (`initNPCFactions`, hoy decorativo).
-- Contador `allyCount` **visible en el hub**. Cada alianza es **tribu** (otorga soldados /
-  iuniores) o **reino** (otorga oro por temporada).
-- Las alianzas se adquieren/activan **vía decretos o doctrinas** — reusar el lenguaje de
-  cartas existente, SIN pantalla de diplomacia nueva. Empezar simple, ampliable después.
-- Arreglar el passive de Augustus («cada alianza = +1 unidad aliada») para que lea
-  `allyCount` real (hoy depende del sistema muerto).
-- **DoD:** se puede ganar/ver aliados; tribus→soldados y reinos→oro tienen efecto real;
-  Augustus ya no miente; test + sync de `sistemas-del-juego.html`.
+### [x] S-L · Diplomacia sencilla (aliados)  ✅ HECHO (it. 15, 2026-06-13)
+Nuevo `ally-store.ts` (forgedAllies, allyCount, addAlly, collectAllyIncome, reset) — store
+dedicado, separado del narrativo npc-faction-store. Adquisición vía nuevo efecto de decretum
+`gain-ally` (registrado en verify-effects, cableado en decretum-hub); repurpose de 2 cartas
+azules: Foedus Amicitiae→reino, Foedus Gentium→tribu (esta última mata el duplicado exacto
+Explorator==Spy). Pago por temporada en EndgameCard (tribu→iuniores, reino→oro). Passive de
+Augustus «Web of Alliances» ya REAL: allyCount contingentes aliados (HP+stats) en la batalla.
+Contador visible en TreasuryPanel. Persistido en meta-save. tsc + 157 tests + 17/17 verify.
 
-### [ ] S-I · Onboarding y legibilidad
+### [ ] S-I · Onboarding y legibilidad  ← EMPEZAR AQUÍ
 - **Tutorial contextual** (el icono nav-tutorial ya existe): primera visita a cada pestaña →
   2–3 tooltips guiados; primera campaña → explicación de upkeep/amenaza/plazo.
 - **Tooltips de fórmula:** en batalla, desglose del daño esperado por orden

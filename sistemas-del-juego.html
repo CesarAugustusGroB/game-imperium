@@ -345,6 +345,10 @@
       <b>Modificadores de ingreso.</b> &nbsp;Al sumar oro, <i>War Profiteer</i> (+50%) y las doctrinas (aditivo) elevan el ingreso hasta un tope del <b>75%</b> (<code>addResource</code> en <code>resources.ts</code>).
     </div>
 
+    <div class="note" style="margin-top:0">
+      <b>Diplomacia sencilla — aliados (plan S-L).</b> &nbsp;Se forjan alianzas duraderas lanzando decretos de tratado (<i>Foedus Amicitiae</i> → reino, <i>Foedus Gentium</i> → tribu; efecto <code>gain-ally</code>). Cada temporada: las <b>tribus</b> aportan iuniores y los <b>reinos</b> aportan oro (<code>collectAllyIncome</code> en <code>ally-store.ts</code>, recogido en el cierre de campaña). El contador de aliados es visible en el Aerarium del Foro. La pasiva de Augustus <b>Web of Alliances</b> ya es real: cada alianza forjada aporta un contingente aliado (HP + stats) en la batalla decisiva.
+    </div>
+
     <div class="subtitle">Facciones &amp; arquetipos del Princeps</div>
     <div class="note" style="margin-top:0">Las 5 facciones de color siguen vivas como <b>identidad del comandante</b>: tematizan la UI y, vía <code>isColorMatch</code>, deciden qué doctrinas/decretos puede equipar (color igual, o ítem blanco universal, o comandante blanco = todo).</div>
     <div class="fac-row">

@@ -14,6 +14,7 @@ import { doctrineCollection, equippedDoctrines, pendingDoctrineDraft } from '../
 import { consequenceFlags, seenEventsThisSpoke } from '../events/event-store';
 import type { NPCFaction } from '../progression/npc-faction-store';
 import { npcFactions } from '../progression/npc-faction-store';
+import { forgedAllies, setForgedAllies, type ForgedAlly } from '../progression/ally-store';
 import {
   legateHiringPool,
   nextInvestmentDiscount,
@@ -97,6 +98,8 @@ export interface ActiveRunSave {
   consequenceFlags: string[];
   seenEventsThisSpoke: string[];
   npcFactions: NPCFaction[];
+  /** Forged alliances (plan S-L). Optional for backwards compat. */
+  forgedAllies?: ForgedAlly[];
   nextInvestmentDiscount: number;
   preparedArmy: ArmyData | null;
   preparedLegate: Legate | null;
@@ -317,6 +320,7 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     consequenceFlags: Array.isArray(run.consequenceFlags) ? run.consequenceFlags : [],
     seenEventsThisSpoke: Array.isArray(run.seenEventsThisSpoke) ? run.seenEventsThisSpoke : [],
     npcFactions: Array.isArray(run.npcFactions) ? run.npcFactions : [],
+    forgedAllies: Array.isArray(run.forgedAllies) ? run.forgedAllies : [],
     nextInvestmentDiscount: typeof run.nextInvestmentDiscount === 'number' ? run.nextInvestmentDiscount : 0,
     preparedArmy: preparedArmySnapshot,
     preparedLegate: run.preparedLegate ?? null,
@@ -407,6 +411,7 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     consequenceFlags: Array.from(consequenceFlags.value),
     seenEventsThisSpoke: Array.from(seenEventsThisSpoke.value),
     npcFactions: npcFactions.value,
+    forgedAllies: forgedAllies.value,
     nextInvestmentDiscount: nextInvestmentDiscount.value,
     preparedArmy: normalizeArmySnapshot(preparedArmy.value),
     preparedLegate: preparedLegate.value,
@@ -534,6 +539,7 @@ export async function restoreActiveRun(): Promise<boolean> {
     consequenceFlags.value = new Set(snapshot.consequenceFlags);
     seenEventsThisSpoke.value = new Set(snapshot.seenEventsThisSpoke);
     npcFactions.value = snapshot.npcFactions;
+    setForgedAllies(snapshot.forgedAllies ?? []);
     syncFactionSignals();
     allianceCount.value = snapshot.npcFactions.filter(f => f.relation === 'friendly').length;
     enemies.value = snapshot.npcFactions.filter(f => f.relation === 'hostile').map(f => f.id);
