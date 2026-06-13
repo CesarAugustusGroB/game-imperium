@@ -10,6 +10,7 @@ import {
   buySupplies, upgradeArmor, buyAmmunition, getDiscountedGold,
 } from '../../../../game/progression/strategic-store';
 import { nextArmorTier, armorUpgradeCost } from '../../../../game/progression/arsenal';
+import { ARMORS } from '../../../../game/iterBelli/battle/balance';
 import {
   previewHubReplenishment,
   replenishHubRoster,
@@ -321,7 +322,6 @@ export function ExercitusTab() {
 
   // ── Arsenal (armor tier + ammunition) ──
   const armorMaterial = army?.armorMaterial ?? 'copper';
-  const ARMOR_PCT: Record<string, number> = { copper: 5, bronze: 12, iron: 20, steel: 30 };
   const armorLabel = armorMaterial.charAt(0).toUpperCase() + armorMaterial.slice(1);
   const nextArmor = nextArmorTier(armorMaterial);
   const nextArmorLabel = nextArmor ? nextArmor.charAt(0).toUpperCase() + nextArmor.slice(1) : null;
@@ -832,7 +832,7 @@ export function ExercitusTab() {
                 title="Armor"
                 accent={accent}
                 right={<span style={{ fontFamily: 'var(--imp-font-mono)', fontSize: 'var(--imp-text-sm)', color: 'var(--imp-text-mid)' }}>
-                  {ARMOR_PCT[armorMaterial]}% mitig.
+                  {ARMORS[armorMaterial]}% mitig.
                 </span>}
               />
               <div style={{
@@ -853,8 +853,8 @@ export function ExercitusTab() {
                     fontSize: 'var(--imp-text-sm)', color: 'var(--imp-text-mid)',
                     fontFamily: 'var(--imp-font-serif)', fontStyle: 'italic', marginTop: 2,
                   }}>
-                    {ARMOR_PCT[armorMaterial]}% damage mitigation
-                    {nextArmorLabel ? ` · next: ${nextArmorLabel} (${ARMOR_PCT[nextArmor!]}%)` : ' · max tier'}
+                    {ARMORS[armorMaterial]}% damage mitigation
+                    {nextArmorLabel ? ` · next: ${nextArmorLabel} (${ARMORS[nextArmor!]}%)` : ' · max tier'}
                   </div>
                 </div>
                 <button

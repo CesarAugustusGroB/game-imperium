@@ -1171,3 +1171,29 @@ a la moral del PlayerSeed (escala legacy 0–100 → 0–15 del motor). El comen
 
 **Validación**: `tsc` limpio · 187 tests · 17/17 verify · build verde. Cero referencias vivas a
 `morale.ts`/`legatusContributor` restantes (solo la nota histórica corregida).
+
+## Iteración 42 — 2026-06-13
+
+**Sweep + DRY (drift latente display-vs-verdad)**: auditado el sistema de **arsenal/armadura**.
+Verificado consistente; eliminada una duplicación que era un riesgo de mentira futura.
+
+### Verificado en sync (no-issue)
+
+- `ARMOR_LADDER` (copper/bronze/iron/steel) ↔ `ARMORS` mitigación (5/12/20/30): cubre los 4 tiers.
+- **Coste de mejora de armadura**: `upgradeArmor` **cobra** `discountedGold(base)` y el UI **muestra**
+  `getDiscountedGold(base)` — el MISMO helper → display == spend. Sin drift (it.24 ya lo cerró).
+
+### Hallazgo: `ARMOR_PCT` duplicaba `ARMORS`
+
+`ExercitusTab` redefinía localmente `ARMOR_PCT = { copper:5, bronze:12, iron:20, steel:30 }`,
+idéntico a `ARMORS` (battle/balance) — pero **dos definiciones que pueden divergir**: un cambio
+en `ARMORS` (los % reales de batalla) NO actualizaría el display → la mitigación mostrada al
+jugador mentiría. Misma clase de drift «display-vs-verdad» que el loop combate.
+
+### Implementado
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 79 | **`ARMOR_PCT` duplicado** (UI) vs `ARMORS` (batalla) — drift latente | ExercitusTab importa `ARMORS` y lo usa directamente; eliminada la constante local. Behavior-preserving (valores idénticos hoy) → la mitigación mostrada queda atada a la fuente de verdad de batalla | ExercitusTab.tsx |
+
+**Validación**: `tsc` limpio · 187 tests · 17/17 verify · build verde.
