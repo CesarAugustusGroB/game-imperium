@@ -2,7 +2,7 @@
 import { playSfx } from '../../sound/sfx';
 import { navigateTo } from '../../screens';
 import { gold, iuniores } from '../../../game/core/resources';
-import { completedSpokes, battlesWon, globalSeason, MAX_SEASONS, spokesSinceLastBattle, selectedCommander } from '../../../game/core/game-state';
+import { completedSpokes, battlesWon, globalSeason, MAX_SEASONS, selectedCommander } from '../../../game/core/game-state';
 import { recordCampaignLog } from '../../../game/core/meta-save';
 import { snapshotCampaignTelemetry } from '../../../game/progression/run-telemetry';
 import { preparedArmy } from '../../../game/progression/strategic-store';
@@ -78,7 +78,6 @@ function returnToHub(): void {
   if (outcome?.victory) {
     completedSpokes.value++;
     battlesWon.value++;             // the decisive battle was won
-    spokesSinceLastBattle.value = 0;
 
     // Conquer a province: terrain from the spoke theme, random unused name, fixed income.
     const taken = new Set(provinces.value.map((p) => p.name));

@@ -722,3 +722,36 @@ puede dispararse).
 round-trip íntegro tras quitar el campo) · build verde. Cero referencias a `truce` restantes.
 Reversible vía git si se quisiera implementar una carta «negociar tregua» (re-añadir el campo +
 un setter es trivial — pero entonces SÍ debe dispararse y documentarse de verdad).
+
+## Iteración 26 — 2026-06-13
+
+**Modo barrido** (continuación del patrón it.25): barrido de campos de estado por si otro está
+muerto como `truceTurns`. Verificados vivos: `fortified`, `ambushDetected`, `enemyWeaken`,
+`brokenCommitments` (todos escritos Y leídos). Uno muerto encontrado:
+
+### Hallazgo: `spokesSinceLastBattle` es un contador SIEMPRE-0 (residuo del Veteran Stacks original)
+
+`spokesSinceLastBattle` (signal en game-state + serializado en `ActiveRunSave`) **nunca se
+incrementa**: todas sus escrituras son `= 0` (reset en startNewRun/resetRun/EndgameCard-victoria),
+y su valor **solo se serializa, nunca se lee para ninguna lógica/display**. Es residuo del diseño
+ORIGINAL de Veteran Stacks («pierdes stacks tras 3 spokes sin batalla»), que it.2 ya redISEÑÓ a
+«+5% por victoria, se rompe al perder» — la descripción se corrigió entonces (commanders.ts +
+docs), pero el contador muerto + su serialización quedaron. Mismo patrón que `truceTurns` (it.25).
+
+### Implementados
+
+| # | Hallazgo | Fix | Archivos |
+|---|---|---|---|
+| 59 | **Contador `spokesSinceLastBattle` muerto** (siempre 0, nunca leído) | Eliminado el signal, sus 3 resets, y su serialización completa en meta-save (import, campo de `ActiveRunSave`, migración, snapshot, restore). **Preservador de comportamiento** (siempre 0). Saves viejos: el campo extra se ignora en restore | game-state.ts, meta-save.ts, EndgameCard.tsx |
+
+**Validación**: `tsc` limpio · 172 tests (incl. `meta-save-migration.test`) · 17/17 verify · build
+verde · cero referencias restantes. Docs ya correctos (it.2 dejó la descripción de Veteran Stacks
+en la versión redISEÑADA, sin mencionar este contador) → sin sync de docs.
+
+### Nota de patrón (3 iteraciones)
+
+Tres mecanismos huérfanos seguidos eliminados: renderers muertos (it.23), `truceTurns` (it.25),
+`spokesSinceLastBattle` (it.26). Son residuos de rediseños previos (S-B Veteran Stacks, sistemas
+de batalla deprecados). El save acumula campos siempre-default; cada uno es behavior-preserving de
+quitar. **Candidato futuro**: un `verify-save-fields.ts` que marque campos del save que nunca se
+leen para lógica (solo se serializan) — cazaría esta clase automáticamente.

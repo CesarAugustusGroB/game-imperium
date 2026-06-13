@@ -31,7 +31,6 @@ export const selectedCommander = signal<Commander | null>(null);
 // ── Run progress ──
 export const completedSpokes = signal(0);
 export const threatLevel = signal(0);
-export const spokesSinceLastBattle = signal(0);
 
 // ── Season Clock ──
 
@@ -116,7 +115,6 @@ function initializeRunScaffold(commander: Commander): void {
 
   completedSpokes.value = 0;
   threatLevel.value = 0;
-  spokesSinceLastBattle.value = 0;
   globalSeason.value = 0;
   battlesWon.value = 0;
 
@@ -255,7 +253,6 @@ export function resetRun(): void {
 
   completedSpokes.value = 0;
   threatLevel.value = 0;
-  spokesSinceLastBattle.value = 0;
   globalSeason.value = 0;
 
   allianceCount.value = 0;

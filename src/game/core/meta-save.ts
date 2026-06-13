@@ -36,7 +36,6 @@ import {
   enemies,
   globalSeason,
   selectedCommander,
-  spokesSinceLastBattle,
   startNewRun,
   syncFactionSignals,
   threatLevel,
@@ -107,7 +106,6 @@ export interface ActiveRunSave {
   unlockedScenarios?: string[];
   completedSpokes: number;
   threatLevel: number;
-  spokesSinceLastBattle: number;
   globalSeason: number;
   veteranStacks: number;
   battlesWon: number;
@@ -332,7 +330,6 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     unlockedScenarios: Array.isArray(run.unlockedScenarios) ? run.unlockedScenarios.filter((s): s is string => typeof s === 'string') : undefined,
     completedSpokes: typeof run.completedSpokes === 'number' ? run.completedSpokes : 0,
     threatLevel: typeof run.threatLevel === 'number' ? run.threatLevel : 0,
-    spokesSinceLastBattle: typeof run.spokesSinceLastBattle === 'number' ? run.spokesSinceLastBattle : 0,
     globalSeason: typeof run.globalSeason === 'number' ? run.globalSeason : 0,
     veteranStacks: typeof run.veteranStacks === 'number' ? run.veteranStacks : 0,
     battlesWon: typeof run.battlesWon === 'number' ? run.battlesWon : 0,
@@ -424,7 +421,6 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     unlockedScenarios: unlockedScenarios.value,
     completedSpokes: completedSpokes.value,
     threatLevel: threatLevel.value,
-    spokesSinceLastBattle: spokesSinceLastBattle.value,
     globalSeason: globalSeason.value,
     veteranStacks: veteranStacks.value,
     battlesWon: battlesWon.value,
@@ -549,7 +545,6 @@ export async function restoreActiveRun(): Promise<boolean> {
     setUnlockedScenarios(snapshot.unlockedScenarios ?? []);
     completedSpokes.value = snapshot.completedSpokes;
     threatLevel.value = snapshot.threatLevel;
-    spokesSinceLastBattle.value = snapshot.spokesSinceLastBattle;
     globalSeason.value = snapshot.globalSeason;
     veteranStacks.value = snapshot.veteranStacks;
     battlesWon.value = snapshot.battlesWon;
