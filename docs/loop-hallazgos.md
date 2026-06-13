@@ -946,3 +946,32 @@ las cartas/órdenes jugadas antes del reload. Infracontaba justo las runs que un
 **Validación**: `tsc` limpio · 176 tests · **17/17 verify (incl. verify-iter-belli-save** → save
 round-trip íntegro con el campo nuevo) · build verde. Doc de telemetría sincronizado
 (sistemas-del-juego.html).
+
+## Iteración 34 — 2026-06-13
+
+**Smoke de integración en vivo** (Playwright): tras ~20 iteraciones de cambios sin una validación
+end-to-end conjunta, jugar el flujo real para confirmar que todo integra. (El backlog codeable de
+hallazgos está agotado; esto es verificación, no cambio.)
+
+### Validado en vivo (sin regresión)
+
+Save limpiado → **Title → Boudicca → Foro → Embark → Campaña** (#iterbelli, «Marcha de guerra en
+Hispania», misión «Asalto en 8 días», 3400 soldados, track Frontera→Tarraco→Llanura→Bosques→Sagunto)
+→ **jugar carta Acampar**: suministros 28 → **24** (−4, exacto al coste de la carta). El flujo
+`playCard` (con el hook de telemetría `tallyCardPlayed` de it.18) y el render de la campaña
+funcionan. **0 errores de consola** en toda la cadena.
+
+### Limitación honesta
+
+No se llegó al endgame por Playwright: las cartas del pool son `OperationCard` (divs con cursor
+custom oculto), difíciles de dirigir de forma fiable por scraping del DOM. El path
+**endgame → recordCampaignLog → returnToHub (guard) → telemetría persistida** queda cubierto por
+unit tests (it.18 grabación, it.22 guard idempotente, it.33 round-trip de telemetría) y lógica
+demostrablemente correcta — no re-validado en vivo aquí. Nota de proceso: para validar el endgame
+en vivo haría falta un helper de test que exponga `playCard`/avance, o conducir la batalla decisiva
+(muchos pasos frágiles).
+
+### Resultado
+
+Integración sana: el bucle principal (menú → hub → embark → campaña → jugar cartas) corre sin
+errores tras los cambios de it.13–33. Sin cambio de código.
