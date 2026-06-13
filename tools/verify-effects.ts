@@ -1,15 +1,18 @@
 /**
  * verify-effects.ts — the effect-contract guard (plan S-D, FASE 1 blindaje).
  *
- * Both effect unions (DoctrineEffect, DecretumEffect) are consumed by switches
- * with permissive `default` branches (decretum-hub `default: return null`,
- * battle/decreta `default: return false`). That means adding a NEW member to a
- * union compiles fine and silently becomes INERT — the exact "texto promete /
- * código no aplica" gap the consolidation plan is closing.
+ * Effect-bearing unions (DoctrineEffect, DecretumEffect, and the province
+ * TradeGoodSpecial / FeatureSpecial) are consumed by switches with permissive
+ * `default` branches (decretum-hub `default: return null`, battle/decreta
+ * `default: return false`, the special checks just `if (… === 'x')`). That means
+ * adding a NEW member to a union compiles fine and silently becomes INERT — the
+ * exact "texto promete / código no aplica" gap the consolidation plan is closing
+ * (e.g. the `enables-building` lie fixed in it.28).
  *
  * This script parses the union member literals straight from the type-source
- * and FAILS if any declared effect type has no registered application site, or
- * if a registered site no longer handles its type, or if the game data uses a
+ * and FAILS if any declared type is neither registered with an application site
+ * nor explicitly marked `{ latent: true }`, if a registered site no longer
+ * handles its type, if a registry entry is stale, or if the game data uses a
  * type outside the union. It also checks the economic clamp/refund invariants.
  *
  * Run: npx tsx tools/verify-effects.ts   (also runs under `npm run verify`)
@@ -20,6 +23,8 @@ import { fileURLToPath } from 'node:url';
 
 import { DOCTRINE_CATALOG } from '../src/data/doctrine-data';
 import { STARTER_DECRETUM } from '../src/data/decretum-data';
+import { TRADE_GOOD_DATA } from '../src/data/trade-goods';
+import { ALL_FEATURES } from '../src/data/province-features';
 import {
   getShopDiscount, getUpkeepReduction, equippedDoctrines,
 } from '../src/game/items/doctrine-store';
@@ -67,8 +72,14 @@ function fileHandles(relFile: string, type: string): boolean {
 
 // ── Registries: every effect type → the module(s) that actually apply it ──
 // Adding a union member without adding it here makes this script FAIL.
+//
+// An entry is either APPLIED (`files` = the module(s) that handle it) or LATENT
+// (`latent: true` = intentionally inert data with no live consumer, documented
+// with a reason). A new type that is neither applied nor explicitly marked latent
+// fails the guard — catching silent "texto promete / código no aplica" gaps.
+type AppEntry = { files: string[]; note: string } | { latent: true; note: string };
 
-const DOCTRINE_APPLICATION: Record<string, { files: string[]; note: string }> = {
+const DOCTRINE_APPLICATION: Record<string, AppEntry> = {
   'shop-discount':    { files: ['src/game/items/doctrine-store.ts'], note: 'getShopDiscount → discountedGold' },
   'income-modifier':  { files: ['src/game/items/doctrine-store.ts'], note: 'getIncomeModifier → province income' },
   'upkeep-reduction': { files: ['src/game/items/doctrine-store.ts'], note: 'getUpkeepReduction → province expenses' },
@@ -77,7 +88,7 @@ const DOCTRINE_APPLICATION: Record<string, { files: string[]; note: string }> = 
 
 const BATTLE = 'src/game/iterBelli/battle/decreta.ts';
 const HUB = 'src/game/items/decretum-hub.ts';
-const DECRETUM_APPLICATION: Record<string, { files: string[]; note: string }> = {
+const DECRETUM_APPLICATION: Record<string, AppEntry> = {
   'heal':                     { files: [BATTLE, HUB], note: 'battle heal + hub heal-army' },
   'damage':                   { files: [BATTLE], note: 'battle direct damage (+area splash)' },
   'buff':                     { files: [BATTLE], note: 'battle stat buff' },
@@ -102,22 +113,24 @@ function checkUnion(
   label: string,
   typeFile: string,
   alias: string,
-  registry: Record<string, { files: string[]; note: string }>,
+  registry: Record<string, AppEntry>,
   dataTypes: string[],
 ): void {
   const union = readUnionTypes(typeFile, alias);
   console.log(`\n${label} — ${union.length} declared effect types`);
 
-  // 1. Every declared type has a registered application site.
+  // 1. Every declared type is registered (applied OR explicitly latent).
   for (const t of union) {
     const entry = registry[t];
-    check(`'${t}' has a registered application site`, !!entry,
-      `add '${t}' to the application registry in verify-effects.ts and wire it`);
-    // 2. The registered site actually still handles it.
-    if (entry) {
+    check(`'${t}' is registered (applied or latent)`, !!entry,
+      `add '${t}' to the registry in verify-effects.ts — wire it (files) or mark it { latent: true }`);
+    // 2. Applied entries: the registered site must still handle the type.
+    if (entry && 'files' in entry) {
       const handled = entry.files.some((f) => fileHandles(f, t));
       check(`'${t}' is handled in ${entry.files.map((f) => f.split('/').pop()).join(' | ')}`,
         handled, `no \`case '${t}'\`/\`=== '${t}'\` found — ${entry.note}`);
+    } else if (entry) {
+      console.log(`  · '${t}' is latent (not applied): ${entry.note}`);
     }
   }
 
@@ -139,6 +152,26 @@ const decretumDataTypes = STARTER_DECRETUM.flatMap((d) => [d.effect, ...(d.extra
 
 checkUnion('DoctrineEffect', 'src/game/items/doctrine.ts', 'DoctrineEffect', DOCTRINE_APPLICATION, doctrineDataTypes);
 checkUnion('DecretumEffect', 'src/game/items/decretum.ts', 'DecretumEffect', DECRETUM_APPLICATION, decretumDataTypes);
+
+// ── Province specials: trade-good and unique-feature `special` unions (plan D20) ──
+const PROVINCE = 'src/game/province/province.ts';
+const TRADE_GOOD_APPLICATION: Record<string, AppEntry> = {
+  'build-cost-discount': { files: [PROVINCE], note: 'getInvestmentDiscount → build cost' },
+  'unrest-reduction':    { files: [PROVINCE], note: 'getUnrestModifier → unrest' },
+  'enables-building':    { files: [PROVINCE], note: 'getAvailableBuildings → unlocks the building (it.28)' },
+};
+const FEATURE_APPLICATION: Record<string, AppEntry> = {
+  'famine-immunity':    { files: [PROVINCE], note: 'famine timer kept at 0' },
+  'extra-event-choice': { latent: true, note: 'inert — needs the (dead) event system D10; not shown in UI' },
+  'cavalry-bonus':      { latent: true, note: 'inert — no cavalry system; not shown in UI' },
+  'unit-discount':      { latent: true, note: 'inert — no feature-driven recruit discount; not shown in UI' },
+};
+
+const tradeGoodSpecialTypes = Object.values(TRADE_GOOD_DATA).map((g) => g.special?.type).filter(Boolean) as string[];
+const featureSpecialTypes = ALL_FEATURES.map((f) => f.special?.type).filter(Boolean) as string[];
+
+checkUnion('TradeGoodSpecial', 'src/data/trade-goods.ts', 'TradeGoodSpecial', TRADE_GOOD_APPLICATION, tradeGoodSpecialTypes);
+checkUnion('FeatureSpecial', 'src/data/province-features.ts', 'FeatureSpecial', FEATURE_APPLICATION, featureSpecialTypes);
 
 // ──────────────────────────────────────────────────────────────────────────
 // Economic invariants — refund ≤ paid, discounts clamped, never free.

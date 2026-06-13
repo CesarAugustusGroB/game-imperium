@@ -815,4 +815,24 @@ cap de población (los slots salen de población vía SETTLEMENT.tiers; «food i
   sistema de eventos muerto (D10). Quedan como están (no son mentira visible). (D31)
 - **D20 reabierto**: verify-effects sigue sin cubrir trade-good/feature specials. Extenderlo
   (parsear `TradeGoodSpecial`/`FeatureSpecial` y exigir sitio de aplicación) cazaría esta clase —
-  candidato de blindaje futuro.
+  candidato de blindaje futuro. → **RESUELTO it.29.**
+
+## Iteración 29 — 2026-06-13
+
+**Blindaje** (ejecutando el candidato D20 de it.28): extender `verify-effects.ts` para cubrir
+las uniones `special` de provincia, de modo que la clase del bug `enables-building` se cace
+automáticamente y para siempre.
+
+### Implementado
+
+| # | Entrega | Detalle | Archivos |
+|---|---|---|---|
+| 64 | **`verify-effects.ts` ahora cubre 4 uniones** (antes 2): + `TradeGoodSpecial` + `FeatureSpecial`. Nuevo concepto de entrada **`AppEntry` = aplicado (`files`) \| latente (`{latent:true}`)**: un tipo descrito pero no aplicado falla el guard SALVO que se marque latente con motivo documentado | TradeGoodSpecial: build-cost-discount/unrest-reduction/enables-building → todos aplicados (province.ts). FeatureSpecial: famine-immunity aplicado; extra-event-choice/cavalry-bonus/unit-discount → **latentes documentados** (inertes, no mostrados, esperan sistemas futuros). Mismo motor que doctrina/decreta: parseo de literales del type-source + check de `case/===` en el sitio + anti-stale + data-solo-tipos-declarados | tools/verify-effects.ts |
+
+**Por qué importa**: el guard ahora habría cazado `enables-building` (it.28) en el commit que lo
+introdujo — un trade-good special descrito pero sin sitio de aplicación habría fallado
+`npm run verify`. La anotación `latent` evita falsos positivos en los inertes-por-diseño (D31)
+mientras sigue exigiendo una decisión explícita (aplicar o marcar latente) para cada tipo nuevo.
+
+**Validación**: `verify-effects` exit 0 (4 uniones) · `tsc` limpio · 175 tests · 17/17 verify ·
+build verde. Plan S-D actualizado (ampliación documentada).
