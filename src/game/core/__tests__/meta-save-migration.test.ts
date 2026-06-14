@@ -12,9 +12,6 @@ describe('meta-save migration from older formats (plan S-K)', () => {
     expect(m.version).toBe(3);
     expect(m.totalRunsStarted).toBe(3);
     expect(m.victories).toBe(1);
-    expect(m.highScore).toBe(1500);
-    expect(m.commanderWins).toEqual(['boudicca']);
-    expect(m.runs).toEqual([]);
     expect(m.campaignLogs).toEqual([]);      // new field defaulted
     expect(m.tutorialDismissed).toBe(false); // new field defaulted
     expect(m.activeRun).toBeNull();
@@ -23,8 +20,6 @@ describe('meta-save migration from older formats (plan S-K)', () => {
   it('v2 with an old activeRun fills the new run fields with safe defaults', () => {
     const m = parseMetaSave(v2Raw);
     expect(m.version).toBe(3);
-    expect(m.runs).toHaveLength(1);
-    expect(m.runs[0].commanderName).toBe('Augustus');
     expect(m.campaignLogs).toEqual([]);      // defaulted
     const run = m.activeRun!;
     expect(run).not.toBeNull();
@@ -51,7 +46,6 @@ describe('meta-save migration from older formats (plan S-K)', () => {
     for (const bad of ['not json at all', '{', '', 'null', '[]', '42']) {
       const m = parseMetaSave(bad);
       expect(m.version).toBe(3);
-      expect(m.runs).toEqual([]);
       expect(m.campaignLogs).toEqual([]);
       expect(m.activeRun).toBeNull();
     }

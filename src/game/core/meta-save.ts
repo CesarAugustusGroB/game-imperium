@@ -56,25 +56,6 @@ import { computeDoctrineModifiers } from '../../data/iter-belli-doctrines';
 
 // —— Types ——
 
-export interface RunRecord {
-  /** ISO timestamp of run completion. */
-  date: string;
-  /** Commander ID used. */
-  commanderId: string;
-  /** Commander display name. */
-  commanderName: string;
-  /** 'victory' or 'defeat'. */
-  outcome: 'victory' | 'defeat';
-  /** Total battles won this run. */
-  battlesWon: number;
-  /** Total seasons elapsed. */
-  seasons: number;
-  /** Provinces conquered. */
-  provinces: number;
-  /** Computed score. */
-  score: number;
-}
-
 /** Per-campaign telemetry entry (plan S-J). Local-only; exported as JSON for balance analysis. */
 export interface CampaignLogEntry {
   /** ISO timestamp of campaign completion. */
@@ -150,18 +131,12 @@ export interface ActiveRunSave {
 export interface MetaSave {
   /** Version for migration support. */
   version: 3;
-  /** Completed run history (most recent first). */
-  runs: RunRecord[];
   /** Per-campaign telemetry log (most recent first), capped. Plan S-J. */
   campaignLogs: CampaignLogEntry[];
   /** Total runs started (includes incomplete). */
   totalRunsStarted: number;
   /** Total victories. */
   victories: number;
-  /** Best score ever achieved. */
-  highScore: number;
-  /** Commander IDs that have won at least once. */
-  commanderWins: string[];
   /** Current in-progress run snapshot for Continue. */
   activeRun: ActiveRunSave | null;
   /** S34-03: whether the first-run Bellum tutorial overlay has been dismissed.
@@ -181,12 +156,9 @@ const ADVISOR_TEMPLATE_BY_ID = new Map(STARTER_ADVISORS.map(advisor => [advisor.
 function createDefaultSave(): MetaSave {
   return {
     version: 3,
-    runs: [],
     campaignLogs: [],
     totalRunsStarted: 0,
     victories: 0,
-    highScore: 0,
-    commanderWins: [],
     activeRun: null,
     tutorialDismissed: false,
   };
@@ -380,12 +352,9 @@ function migrateMetaSave(rawSave: unknown): MetaSave {
 
   return {
     version: 3,
-    runs: Array.isArray(parsed.runs) ? parsed.runs as RunRecord[] : [],
     campaignLogs: Array.isArray(parsed.campaignLogs) ? parsed.campaignLogs as CampaignLogEntry[] : [],
     totalRunsStarted: typeof parsed.totalRunsStarted === 'number' ? parsed.totalRunsStarted : 0,
     victories: typeof parsed.victories === 'number' ? parsed.victories : 0,
-    highScore: typeof parsed.highScore === 'number' ? parsed.highScore : 0,
-    commanderWins: Array.isArray(parsed.commanderWins) ? parsed.commanderWins as string[] : [],
     activeRun: migrateActiveRun(parsed.activeRun),
     // S34-03: default to false on v1/v2 upgrades so existing players see the
     // tutorial once; preserve the stored value for v3 round-trips.
@@ -648,33 +617,6 @@ export function recordCampaignLog(entry: CampaignLogEntry): void {
 /** All campaign telemetry as a pretty JSON string, for manual download/analysis. */
 export function exportCampaignLogsJson(): string {
   return JSON.stringify(metaSave.value.campaignLogs, null, 2);
-}
-
-/** Compute score from run stats. */
-export function computeScore(
-  outcome: 'victory' | 'defeat',
-  battlesWon: number,
-  seasons: number,
-  provinces: number,
-): number {
-  const basePoints = outcome === 'victory' ? 1000 : 0;
-  const battlePoints = battlesWon * 75;
-  const provincePoints = provinces * 200;
-  // Bonus for finishing faster (fewer seasons used) — doubled in S9-06
-  const speedBonus = outcome === 'victory' ? Math.max(0, (24 - seasons) * 100) : 0;
-  return basePoints + battlePoints + provincePoints + speedBonus;
-}
-
-/** Get the best run record, or null if no runs. */
-export function getBestRun(): RunRecord | null {
-  const runs = metaSave.value.runs;
-  if (runs.length === 0) return null;
-  return runs.reduce((best, r) => r.score > best.score ? r : best);
-}
-
-/** Check if a commander has won before. */
-export function hasCommanderWon(commanderId: string): boolean {
-  return metaSave.value.commanderWins.includes(commanderId);
 }
 
 // —— S34-03: Tutorial dismissed flag ——
