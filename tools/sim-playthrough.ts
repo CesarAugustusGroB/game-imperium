@@ -15,7 +15,7 @@ import {
   startIterBelliCampaign, playCard, camp, iterBelliState, resetIterBelli,
 } from '../src/game/iterBelli/iter-belli-state';
 import { getActiveScenario, setActiveScenarioById } from '../src/game/iterBelli/iter-belli-scenario';
-import { buildPlayerSeed, buildEnemyArchetype } from '../src/game/iterBelli/battle/adapter';
+import { buildPlayerSeed, buildEnemyArchetype, terrainToCenterKey } from '../src/game/iterBelli/battle/adapter';
 import { makeBattleArmy, makeBattleState, playRound } from '../src/game/iterBelli/battle/engine';
 import { FORMATIONS, CENTERS } from '../src/game/iterBelli/battle/orders';
 import { getCohortById } from '../src/game/army/cohort-data';
@@ -72,20 +72,36 @@ function pickCard(strategy: Strategy): number | 'camp' | null {
   return any ? any.instanceId : (s.supplies > B.CAMP_SUPPLY_COST ? 'camp' : null);
 }
 
+// Player power tiers = a COMPOSITE of the things a hub player upgrades together
+// (roster size → attack stats + HP, armor material, and embark discipline). These
+// are NOT pure single-axis tests; they model under-prepared / standard / fully-
+// prepared loadouts. Discipline uses realistic embark values: a Warlord seeds
+// disc 2 (DISCIPLINE_BY_ARCHETYPE.Warlord=0 + START.discipline=2); a disciplined
+// legate adds at most +2 (clamped) → ~4 is the practical embark ceiling. (Battle
+// also omits legate stat/morale/HP bonuses and doctrines/decreta — so these win
+// rates are CONSERVATIVE: a real legate-led, doctrine-equipped army does better.)
 interface Roster { label: string; ids: string[]; soldiers: number; discipline: number; armor: 'copper' | 'bronze' | 'iron'; }
 const ROSTERS: Roster[] = [
-  { label: 'starter (2 cohorts, disc 4, copper)', ids: ['hastati', 'hastati'], soldiers: 3400, discipline: 4, armor: 'copper' },
-  { label: 'mid (4 cohorts, disc 6, bronze)', ids: ['hastati', 'hastati', 'principes', 'triarii'], soldiers: 5400, discipline: 6, armor: 'bronze' },
-  { label: 'full (6 cohorts, disc 8, iron)', ids: ['hastati', 'hastati', 'principes', 'triarii', 'velites', 'equites'], soldiers: 7400, discipline: 8, armor: 'iron' },
+  { label: 'under-prepared (2 coh · disc2 · copper)', ids: ['hastati', 'hastati'], soldiers: 3400, discipline: 2, armor: 'copper' },
+  { label: 'standard       (4 coh · disc3 · bronze)', ids: ['hastati', 'hastati', 'principes', 'triarii'], soldiers: 5400, discipline: 3, armor: 'bronze' },
+  { label: 'fully-prepared (6 coh · disc4 · iron)  ', ids: ['hastati', 'hastati', 'principes', 'triarii', 'velites', 'equites'], soldiers: 7400, discipline: 4, armor: 'iron' },
 ];
+
+const SCENARIO_TERRAIN: Record<string, string> = { saguntum: 'plains', gallia: 'forest' };
 
 interface Outcome { reachedBattle: boolean; campaignWin: boolean; weaken: number; threatEnd: number; moraleArrival: number; survivors: number; }
 
-function runOne(r: Roster, strategy: Strategy): Outcome {
+function runOne(r: Roster, strategy: Strategy, scenId: string): Outcome {
+  const terrain = SCENARIO_TERRAIN[scenId] ?? 'plains';
   startIterBelliCampaign({
     soldiers: r.soldiers, gold: 40, iuniores: 2000, discipline: r.discipline,
-    archetype: 'Warlord', spokeTerrain: 'plains', spokeDuration: 8,
+    archetype: 'Warlord', spokeTerrain: terrain, spokeDuration: 8,
   });
+  // GAME BUG WORKAROUND: startIterBelliCampaign() calls resetActiveScenario(),
+  // which clobbers the scenario the caller (EmbarkCard) just set back to SAGUNTUM.
+  // Re-set it AFTER start so the march/battle actually read the chosen scenario —
+  // this is what the game *intends*. (See report: Gallia never loads in-game today.)
+  setActiveScenarioById(scenId);
   const scen = getActiveScenario();
   const objId = scen.objectiveLocationId;
   const atObjective = () => scen.locations[iterBelliState.value.locationIdx]?.id === objId;
@@ -117,7 +133,8 @@ function runOne(r: Roster, strategy: Strategy): Outcome {
   const enemyMult = (1 + cs.threat / B.ENEMY_THREAT_DIVISOR) * (1 - cs.enemyWeaken * B.ENEMY_WEAKEN_PER_POINT);
   const enemySoldiers = Math.max(scen.enemy.minSoldiers, Math.round(scen.enemy.baseSoldiers * enemyMult));
   const enemy = buildEnemyArchetype(scen.enemy.archetypeKey, cs.enemyWeaken, enemySoldiers);
-  const S = makeBattleState(makeBattleArmy('you', seed as never), makeBattleArmy('enemy', enemy as never), CENTERS.plain);
+  const center = CENTERS[terrainToCenterKey(cs.spokeTerrain)] ?? CENTERS.plain;
+  const S = makeBattleState(makeBattleArmy('you', seed as never), makeBattleArmy('enemy', enemy as never), center);
   while (!S.finished && S.round < 30) playRound(S, pickOrder(S), rng);
 
   return {
@@ -130,13 +147,12 @@ const pct = (n: number, d: number) => `${((n / d) * 100).toFixed(1)}%`;
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
 for (const scenId of ['saguntum', 'gallia']) {
-  setActiveScenarioById(scenId);
   for (const strategy of ['rush', 'balanced'] as const) {
-    console.log(`\n████ ${scenId.toUpperCase()} · ${strategy.toUpperCase()} · ${RUNS} runs/roster ████`);
-    console.log('roster                                  | reach batt | win|reach | OVERALL win | weaken thr morale');
+    console.log(`\n████ ${scenId.toUpperCase()} · ${strategy.toUpperCase()} · ${RUNS} runs/tier ████`);
+    console.log('player tier                             | reach batt | win|reach | OVERALL win | weaken thr morale');
     for (const r of ROSTERS) {
       const out: Outcome[] = [];
-      for (let i = 0; i < RUNS; i++) { out.push(runOne(r, strategy)); resetIterBelli(); }
+      for (let i = 0; i < RUNS; i++) { out.push(runOne(r, strategy, scenId)); resetIterBelli(); }
       const reached = out.filter((o) => o.reachedBattle);
       const wins = out.filter((o) => o.campaignWin).length;
       const winGivenReach = reached.length ? pct(wins, reached.length) : '—';
