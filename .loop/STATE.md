@@ -75,6 +75,16 @@ neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
 6. ⏳ **Leva de refuerzos / curva disciplina-moral** — palancas tardías.
 
 ## Log (más reciente primero)
+- it.6 — **HEARTBEAT + IDLE — el loop alcanzó su límite medible.** Sims estables/verdes
+  (sim-playthrough sin cambios; sim-battle Numancia confirma el muro: full disc4 weaken0 = 8%,
+  weaken5 = 100%; campaign reach 99.9%; 17/17 verify). Palancas hechas: P1 (Numancia), P2 (oro),
+  P3-soldados (escaleras geom.), P4-potencia (weaken 0.10). Las que quedan **comparten un único
+  bloqueo**: el sim NO equipa el kit real (doctrinas/decretos/legado), así que P3-resto (moral/oro/
+  decretos de batalla) y P4-acumulación son seguros-por-construcción pero invisibles al sim → no
+  balanceables a ciegas. P5 (acantilado) vetada por el usuario (muro intencional). **DECISIÓN ÚNICA
+  PARA SEGUIR**: invertir en fidelidad del sim — que EQUIPE doctrinas/decretos reales (recalibra el
+  baseline; es tooling, no un tweak de constante → fuera del scope de "una palanca", por eso no se
+  auto-ejecuta). Sin eso, el loop solo puede dar heartbeats.
 - it.5 — **Palanca 3 (parcial): escaleras de doctrina de soldados geométricas.** SWORD tier III
   600→800, IRON tier III 1200→1600 (ambas ahora ×2 por paso, antes lineal +200/+400). Hundreds-safe
   (≤2000), monótono, verify de doctrinas verde. Con el coste ya ×3/×6, maximizar una doctrina roja
