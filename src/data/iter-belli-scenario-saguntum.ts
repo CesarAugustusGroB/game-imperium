@@ -32,4 +32,5 @@ export const SAGUNTUM: CampaignScenario = {
   },
   conquestNames: CONQUEST_NAMES,
   provinceTerrain: 'plains',
+  victoryGold: 200, // ladder base (= flat VICTORY_GOLD_BONUS); Gallia doubles it
 };

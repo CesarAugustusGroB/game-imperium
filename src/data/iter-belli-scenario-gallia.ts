@@ -81,4 +81,5 @@ export const GALLIA: CampaignScenario = {
   },
   conquestNames: CONQUEST_NAMES_GALLIA,
   provinceTerrain: 'forest',
+  victoryGold: 400, // geometric step ×2 over Saguntum — funds the steeper upgrade curve
 };

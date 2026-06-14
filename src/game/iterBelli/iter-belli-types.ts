@@ -86,6 +86,13 @@ export interface CampaignScenario {
   conquestNames: string[];
   /** Terrain stamped on the province conquered on victory (was spoke.theme). */
   provinceTerrain: TerrainType;
+  /**
+   * Gold awarded on decisive victory. Scales GEOMETRICALLY along the scenario
+   * ladder (Saguntum 200 → Gallia 400 → …) so later campaigns fund the geometric
+   * doctrine/decretum upgrade costs — progression compounds. Omitted → falls back
+   * to the flat VICTORY_GOLD_BONUS.
+   */
+  victoryGold?: number;
 }
 
 // ── Cards ─────────────────────────────────────────────────────────────────

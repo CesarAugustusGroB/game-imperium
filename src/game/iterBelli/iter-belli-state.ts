@@ -506,7 +506,7 @@ export function applyBattleOutcome(victory: boolean, survivors: number, finalMor
   S.morale = clamp(finalMorale, B.MORALE_MIN, B.MORALE_MAX);
   const { narrative } = getActiveScenario();
   if (victory) {
-    applyChange('gold', B.VICTORY_GOLD_BONUS);
+    applyChange('gold', getActiveScenario().victoryGold ?? B.VICTORY_GOLD_BONUS);
     logEvent(narrative.battleWonLog(S.soldiers), 'battle');
     finishCampaign(true, narrative.victoryText);
   } else {
