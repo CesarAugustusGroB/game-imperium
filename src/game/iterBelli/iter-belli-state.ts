@@ -13,7 +13,7 @@
 import { signal } from '@preact/signals';
 import { CARD_DEFS } from '../../data/iter-belli-cards';
 import { makeQuestCard } from '../../data/iter-belli-quests';
-import { getActiveScenario, resetActiveScenario } from './iter-belli-scenario';
+import { getActiveScenario, resetActiveScenario, setActiveScenarioById } from './iter-belli-scenario';
 import { tallyCardPlayed, resetCampaignTelemetry } from '../progression/run-telemetry';
 import * as B from './iter-belli-balance';
 import type {
@@ -538,6 +538,14 @@ export interface CampaignSeed {
   archetype: Archetype | null;
   spokeTerrain: string;
   spokeDuration: number;
+  /**
+   * Scenario to play (e.g. 'saguntum' | 'gallia'). The engine reads the active
+   * scenario for its locations/enemy/narrative, so a campaign MUST pin its own —
+   * relying on the caller having set the module singleton beforehand is fragile
+   * (a fresh-state reset would otherwise silently fall back to the first scenario).
+   * Omitted → defaults to the first scenario (Saguntum), preserving test behaviour.
+   */
+  scenarioId?: string;
   /** Supplies carried from the Hub army stock; omitted → keeps the START default. */
   supplies?: number;
   /** Override starting ammunition; omitted → START.ammunition. */
@@ -563,7 +571,11 @@ export function startIterBelliCampaign(seed: CampaignSeed): void {
   S = freshState();
   logLines = [];
   resetCampaignTelemetry(); // telemetry (plan S-J) — fresh tallies per campaign
-  resetActiveScenario();
+  // Pin the scenario the campaign will actually play. Passing it through the seed
+  // (rather than relying on the caller having set the singleton first) fixes the
+  // bug where this reset clobbered EmbarkCard's choice, stranding every campaign
+  // on Saguntum. Omitted → first scenario, matching the prior default.
+  if (seed.scenarioId) setActiveScenarioById(seed.scenarioId); else resetActiveScenario();
   const soldiers = seed.soldiers > 0 ? Math.floor(seed.soldiers) : B.START.fallbackSoldiers;
   S.soldiers = soldiers;
   S.initialSoldiers = soldiers;

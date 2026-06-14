@@ -102,6 +102,7 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
       iuniores: getResource('iuniores'),
       discipline: discipline + embark.discipline,
       archetype, spokeTerrain, spokeDuration,
+      scenarioId: activeScenarioId,
       supplies: supplies + embark.supplies,
       ammunition: army?.ammunition,
       missionId: consilium.missionId ?? undefined,

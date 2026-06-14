@@ -14,7 +14,7 @@
 import {
   startIterBelliCampaign, playCard, camp, iterBelliState, resetIterBelli,
 } from '../src/game/iterBelli/iter-belli-state';
-import { getActiveScenario, setActiveScenarioById } from '../src/game/iterBelli/iter-belli-scenario';
+import { getActiveScenario } from '../src/game/iterBelli/iter-belli-scenario';
 import { buildPlayerSeed, buildEnemyArchetype, terrainToCenterKey } from '../src/game/iterBelli/battle/adapter';
 import { makeBattleArmy, makeBattleState, playRound } from '../src/game/iterBelli/battle/engine';
 import { FORMATIONS, CENTERS } from '../src/game/iterBelli/battle/orders';
@@ -93,15 +93,11 @@ interface Outcome { reachedBattle: boolean; campaignWin: boolean; weaken: number
 
 function runOne(r: Roster, strategy: Strategy, scenId: string): Outcome {
   const terrain = SCENARIO_TERRAIN[scenId] ?? 'plains';
+  // Pin the scenario via the seed (the real fixed path — EmbarkCard does the same).
   startIterBelliCampaign({
     soldiers: r.soldiers, gold: 40, iuniores: 2000, discipline: r.discipline,
-    archetype: 'Warlord', spokeTerrain: terrain, spokeDuration: 8,
+    archetype: 'Warlord', spokeTerrain: terrain, spokeDuration: 8, scenarioId: scenId,
   });
-  // GAME BUG WORKAROUND: startIterBelliCampaign() calls resetActiveScenario(),
-  // which clobbers the scenario the caller (EmbarkCard) just set back to SAGUNTUM.
-  // Re-set it AFTER start so the march/battle actually read the chosen scenario —
-  // this is what the game *intends*. (See report: Gallia never loads in-game today.)
-  setActiveScenarioById(scenId);
   const scen = getActiveScenario();
   const objId = scen.objectiveLocationId;
   const atObjective = () => scen.locations[iterBelliState.value.locationIdx]?.id === objId;

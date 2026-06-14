@@ -5,6 +5,7 @@ import {
   unlockScenario, unlockNextScenario, setUnlockedScenarios, resetUnlockedScenarios,
 } from '../iter-belli-scenario';
 import { CARD_DEFS } from '../../../data/iter-belli-cards';
+import { startIterBelliCampaign, resetIterBelli } from '../iter-belli-state';
 
 beforeEach(() => { resetUnlockedScenarios(); resetActiveScenario(); });
 
@@ -67,5 +68,28 @@ describe('S-F: unlock progression', () => {
     expect(unlockedScenarios.value).toEqual(['saguntum', 'gallia']);
     setUnlockedScenarios([]);
     expect(unlockedScenarios.value).toEqual(['saguntum']);
+  });
+});
+
+describe('S-F: starting a campaign pins its scenario (regression)', () => {
+  const SEED = {
+    soldiers: 4000, gold: 40, iuniores: 0, discipline: 3,
+    archetype: 'Warlord' as const, spokeTerrain: 'forest', spokeDuration: 8,
+  };
+
+  it('seed.scenarioId survives startIterBelliCampaign (Gallia no longer reverts to Saguntum)', () => {
+    setActiveScenarioById('gallia');
+    startIterBelliCampaign({ ...SEED, scenarioId: 'gallia' });
+    // Before the fix, startIterBelliCampaign called resetActiveScenario() and the
+    // engine would read Saguntum for the whole campaign.
+    expect(getActiveScenario().id).toBe('gallia');
+    resetIterBelli();
+  });
+
+  it('omitting scenarioId defaults to the first scenario (Saguntum) — preserves prior behaviour', () => {
+    setActiveScenarioById('gallia');
+    startIterBelliCampaign({ ...SEED });
+    expect(getActiveScenario().id).toBe('saguntum');
+    resetIterBelli();
   });
 });
