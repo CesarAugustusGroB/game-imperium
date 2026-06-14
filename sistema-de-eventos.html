@@ -318,7 +318,7 @@
       <div class="card"><h4>Efectos inmediatos</h4><p>Reusan el vocabulario de cartas (<code>CardEffects</code>): soldados, moral, suministros, oro de campaña… Los deltas de <b>soldados van en centenas</b>.</p></div>
       <div class="card"><h4>Consecuencia diferida (<code>HubConsequence</code>)</h4><p>Se encola y se aplica al volver al Foro: <code>province-unrest</code> (clamp 0–100), <code>advisor-xp</code> (con signo, sin degradar tier), <code>resource</code> (oro/iuniores a <b>valor nominal</b>, sin inflar). 9ª unión blindada en <code>verify-effects</code>.</p></div>
     </div>
-    <p>Las opciones marcadas <b>premium</b> (centinela del Oráculo) solo aparecen si la run tiene una provincia con el feature <code>extra-event-choice</code>. El catálogo v1 trae <b>7 eventos</b> (4 de provincia, 3 de advisor) en <code>src/data/campaign-events.ts</code>; los ids de consecuencia usan el centinela <code>SOURCE_REF</code>, que el controller reescribe al conflicto que disparó.</p>
+    <p>Las opciones marcadas <b>premium</b> solo aparecen si la run <b>desbloquea</b> la opción extra: una provincia con el feature <code>extra-event-choice</code> <b>o</b> un advisor sentado con el passive <code>extra-event-choices</code> (Legate Aemilia). Lo decide <code>runUnlocksPremiumChoices()</code>. El catálogo v1 trae <b>7 eventos</b> (4 de provincia, 3 de advisor) en <code>src/data/campaign-events.ts</code>; los ids de consecuencia usan el centinela <code>SOURCE_REF</code>, que el controller reescribe al conflicto que disparó.</p>
   </section>
 
   <!-- ───────────────────────── MAPA ───────────────────────── -->

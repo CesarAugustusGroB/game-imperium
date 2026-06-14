@@ -16,6 +16,9 @@ import {
 } from './event-store';
 import { CAMPAIGN_EVENTS } from '../../data/campaign-events';
 import { SOURCE_REF } from './campaign-events-types';
+import { getCurrentPassive } from '../council/advisor';
+import type { Advisor } from '../council/advisor';
+import type { Province } from '../province/province';
 import type { CampaignConflict, CampaignEvent, EventChoice, HubConsequence } from './campaign-events-types';
 
 export interface FiredCampaignEvent {
@@ -54,6 +57,19 @@ export function selectCampaignEvent(
     if (eligible.length) return { event: eligible[pick(eligible.length) % eligible.length], conflict };
   }
   return null;
+}
+
+/**
+ * Whether the run unlocks the premium event choice (D10): via the
+ * `extra-event-choice` province feature OR a seated advisor whose current passive
+ * is `extra-event-choices`. Pure, so the modal's gating is unit-testable.
+ */
+export function runUnlocksPremiumChoices(
+  provinces: readonly Province[],
+  seatedAdvisors: readonly Advisor[],
+): boolean {
+  return provinces.some((p) => p.uniqueFeature?.special?.type === 'extra-event-choice')
+    || seatedAdvisors.some((a) => getCurrentPassive(a).type === 'extra-event-choices');
 }
 
 /** Rewrite SOURCE_REF ids to the firing conflict's sourceId. */

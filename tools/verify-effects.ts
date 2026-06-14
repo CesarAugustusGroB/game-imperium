@@ -227,7 +227,7 @@ const ADVISOR_APPLICATION: Record<string, AppEntry> = {
   'resource-per-spoke':  { files: [CONSILIUM], note: 'passiveModifier → seed gold' },
   'upkeep-reduction':    { files: [CONSILIUM], note: 'passiveModifier → seed supplies' },
   'shop-discount':       { files: [COUNCIL], note: 'seated shop-discount → hub discount (passiveModifier default by design)' },
-  'extra-event-choices': { files: [CONSILIUM], note: 'passiveModifier → seed gold (no event system)' },
+  'extra-event-choices': { files: ['src/game/events/campaign-events-controller.ts'], note: 'runUnlocksPremiumChoices → unlocks the premium campaign-event choice (D10)' },
   'heal-between-nodes':  { files: [CONSILIUM], note: 'passiveModifier → seed morale' },
   'threat-reduction':    { files: [CONSILIUM], note: 'passiveModifier → seed threat' },
   'loot-bonus':          { files: [CONSILIUM], note: 'passiveModifier → seed gold (+ council-store loot bonus)' },

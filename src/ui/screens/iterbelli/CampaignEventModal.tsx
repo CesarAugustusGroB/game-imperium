@@ -1,6 +1,8 @@
 import { playSfx } from '../../sound/sfx';
 import { provinces } from '../../../game/province/province-store';
-import { pendingCampaignEvent, resolveCampaignEventChoice } from '../../../game/events/campaign-events-controller';
+import { councilSlots } from '../../../game/council/council-store';
+import type { Advisor } from '../../../game/council/advisor';
+import { pendingCampaignEvent, resolveCampaignEventChoice, runUnlocksPremiumChoices } from '../../../game/events/campaign-events-controller';
 import type { EventChoice, HubConsequence } from '../../../game/events/campaign-events-types';
 import type { CardEffects } from '../../../game/iterBelli/iter-belli-types';
 
@@ -76,8 +78,12 @@ export function CampaignEventModal() {
   const { event, conflict } = fired;
   const fill = (t: string) => t.replaceAll('{source}', conflict.sourceName);
 
-  // Premium choices appear only when the run holds an `extra-event-choice` feature.
-  const hasExtraChoice = provinces.value.some((p) => p.uniqueFeature?.special?.type === 'extra-event-choice');
+  // Premium choices appear only when the run unlocks them — via an `extra-event-choice`
+  // province feature or a seated advisor's `extra-event-choices` passive (D10).
+  const hasExtraChoice = runUnlocksPremiumChoices(
+    provinces.value,
+    councilSlots.value.filter((a): a is Advisor => a != null),
+  );
   const choices = event.choices.filter((c) => !c.premium || hasExtraChoice);
 
   const eyebrow = event.sourceType === 'province'

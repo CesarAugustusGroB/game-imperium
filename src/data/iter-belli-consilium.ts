@@ -78,8 +78,6 @@ type SeedDeltas = Pick<ConsiliumSetup, 'supplies' | 'gold' | 'threat' | 'morale'
 /** Total supply-upkeep budget of a campaign — the basis for upkeep-reduction bonuses. */
 const UPKEEP_BUDGET = SUPPLY_UPKEEP_PER_TURN * START.timeRemaining;
 
-/** Gold granted per extra-event-choice (advisor passive has no event system to widen). */
-const EVENT_CHOICE_GOLD = 5;
 
 /** Map one advisor passive to its starting-stat deltas (all zero if unmapped). */
 export function passiveModifier(passive: AdvisorPassive): SeedDeltas {
@@ -96,8 +94,8 @@ export function passiveModifier(passive: AdvisorPassive): SeedDeltas {
     case 'resource-per-spoke':
       // Deprecated resources (faith/influence/momentum) fold into gold.
       return { ...z, gold: passive.amount };
-    case 'extra-event-choices':
-      return { ...z, gold: passive.count * EVENT_CHOICE_GOLD };
+    // 'extra-event-choices' grants no campaign SEED — its effect (unlocking the
+    // premium event choice) is realized in CampaignEventModal (D10). Falls to default.
     case 'enemy-weaken':
       return { ...z, enemyWeaken: passive.amount };
     case 'campaign-time':

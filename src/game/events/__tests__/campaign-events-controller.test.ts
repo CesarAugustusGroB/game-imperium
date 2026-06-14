@@ -2,7 +2,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   selectCampaignEvent, resolveConsequences, maybeFireCampaignEvent,
   resolveCampaignEventChoice, pendingCampaignEvent, EVENT_FIRE_WINDOW,
+  runUnlocksPremiumChoices,
 } from '../campaign-events-controller';
+import type { Advisor } from '../../council/advisor';
+import type { Province } from '../../province/province';
 import {
   campaignConflicts, consequenceFlags, seenEventsThisSpoke,
   campaignEventFiredThisSpoke, pendingHubConsequences, resetEventStore,
@@ -44,6 +47,26 @@ describe('selectCampaignEvent', () => {
     const out = selectCampaignEvent(
       [conflict('advisor', 'cato', 95), conflict('province', 'h', 40)], new Set(), new Set(), CATALOG);
     expect(out?.event.sourceType).toBe('advisor'); // first conflict wins when it has an eligible event
+  });
+});
+
+describe('runUnlocksPremiumChoices', () => {
+  const provWithFeature = { uniqueFeature: { special: { type: 'extra-event-choice' } } } as unknown as Province;
+  const plainProv = { uniqueFeature: null } as unknown as Province;
+  const advWith = { currentTier: 1, tiers: [{ passive: { type: 'extra-event-choices', count: 1 } }] } as unknown as Advisor;
+  const advWithout = { currentTier: 1, tiers: [{ passive: { type: 'soldiers-bonus', amount: 250 } }] } as unknown as Advisor;
+
+  it('is false with no feature and no qualifying advisor', () => {
+    expect(runUnlocksPremiumChoices([plainProv], [advWithout])).toBe(false);
+    expect(runUnlocksPremiumChoices([], [])).toBe(false);
+  });
+
+  it('unlocks via the province feature', () => {
+    expect(runUnlocksPremiumChoices([provWithFeature], [])).toBe(true);
+  });
+
+  it('unlocks via a seated advisor with the extra-event-choices passive', () => {
+    expect(runUnlocksPremiumChoices([plainProv], [advWith])).toBe(true);
   });
 });
 

@@ -74,14 +74,17 @@ export const ADVISOR_RAIDER: Advisor = {
 export const ADVISOR_DIPLOMAT: Advisor = {
   id: 'advisor_diplomat', name: 'Legate Aemilia', color: 'blue', currentTier: 1, xp: 0,
   ...advisorMeta(['Diplomat', 'Negotiator'], 1, 'advisor_diplomat.png'),
+    // The passive UNLOCKS the premium choice in campaign events (D10). count is
+    // latent for now (catalog events carry at most one premium choice), so all
+    // tiers share the unlock; tiers still differ in spoke length / identity.
   tiers: [
-    { description: '+5 gold at embark.',
+    { description: 'Desbloquea la opción premium en los eventos de campaña.',
       passive: { type: 'extra-event-choices', count: 1 },
       spokeTemplate: { durationRange: [2, 4], posture: 'defending' } },
-    { description: '+10 gold at embark.',
+    { description: 'Desbloquea la opción premium en los eventos de campaña.',
       passive: { type: 'extra-event-choices', count: 2 },
       spokeTemplate: { durationRange: [2, 4], posture: 'defending' } },
-    { description: '+15 gold at embark.',
+    { description: 'Desbloquea la opción premium en los eventos de campaña.',
       passive: { type: 'extra-event-choices', count: 3 },
       spokeTemplate: { durationRange: [3, 4], posture: 'defending' } },
   ],
