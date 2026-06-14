@@ -117,6 +117,7 @@
   <a href="#efectos">Efectos</a>
   <a href="#pasivos">Eventos pasivos ⚠</a>
   <a href="#crisis">Crisis</a>
+  <a href="#campana">Eventos de campaña ◆</a>
   <a href="#mapa">Itinerario</a>
   <a href="#quests">Quests & doctrinas</a>
   <a href="#fin">Fin de campaña</a>
@@ -305,6 +306,19 @@
       <div class="card"><h4 style="color:var(--crimson)">✖ Hambre en filas</h4><p>Aparece con <b>suministros ≤ 0</b>. Mientras siga, cada turno hay hambre (moral −1 + desertores).</p></div>
       <div class="card"><h4 style="color:var(--crimson)">✖ Riesgo de motín</h4><p>Aparece con <b>moral &lt; 3</b>. Señala el 30%/turno de deserciones por motín.</p></div>
     </div>
+  </section>
+
+  <!-- ───────────────────── EVENTOS DE CAMPAÑA ───────────────────── -->
+  <section id="campana">
+    <h2>Eventos de campaña: el puente Hub ↔ marcha (D10)</h2>
+    <p class="lead">Distintos de las cartas y de las crisis: son <b>interludios narrativos</b> que dramatizan un <b>conflicto del Hub</b> (una provincia revuelta o un Consilium dividido) durante la marcha. <b>Como mucho uno por campaña</b>, a mitad del itinerario, y de forma probabilística. La elección del jugador <b>escribe de vuelta en el Hub</b> al volver al Foro.</p>
+    <div class="grid g2">
+      <div class="card"><h4>Origen del conflicto</h4><p>Al embarcar se sella un <b>snapshot</b> del Hub: provincias con <b>unrest ≥ 40</b> y un <b>consejo dividido</b> (≥2 colores sentados, encabezado por el de mayor tier). Ordenado por severidad.</p></div>
+      <div class="card"><h4>Disparo</h4><p>Ventana a mitad de marcha (<b>progreso 0.35–0.8</b>), probabilidad <b>50%</b>, tope <b>≤1/campaña</b>. Respeta flags <code>requiresFlag</code>/<code>blockedByFlag</code> y los eventos ya vistos.</p></div>
+      <div class="card"><h4>Efectos inmediatos</h4><p>Reusan el vocabulario de cartas (<code>CardEffects</code>): soldados, moral, suministros, oro de campaña… Los deltas de <b>soldados van en centenas</b>.</p></div>
+      <div class="card"><h4>Consecuencia diferida (<code>HubConsequence</code>)</h4><p>Se encola y se aplica al volver al Foro: <code>province-unrest</code> (clamp 0–100), <code>advisor-xp</code> (con signo, sin degradar tier), <code>resource</code> (oro/iuniores a <b>valor nominal</b>, sin inflar). 9ª unión blindada en <code>verify-effects</code>.</p></div>
+    </div>
+    <p>Las opciones marcadas <b>premium</b> (centinela del Oráculo) solo aparecen si la run tiene una provincia con el feature <code>extra-event-choice</code>. El catálogo v1 trae <b>7 eventos</b> (4 de provincia, 3 de advisor) en <code>src/data/campaign-events.ts</code>; los ids de consecuencia usan el centinela <code>SOURCE_REF</code>, que el controller reescribe al conflicto que disparó.</p>
   </section>
 
   <!-- ───────────────────────── MAPA ───────────────────────── -->

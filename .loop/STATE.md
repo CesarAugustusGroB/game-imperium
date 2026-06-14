@@ -77,9 +77,13 @@ Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea so
    tier) / recursos a valor nominal (`refundResource`/`spendResource`, cf. D19).
    Enganchado en `returnToHub`. **9ª unión `HubConsequence` deslatentizada** (sitio
    real en verify-effects). 3 tests. **Bucle Hub→campaña→Hub CERRADO.**
-7. **Tests + docs** — integración headless embark→evento→retorno; sincronizar
-   `sistema-de-eventos.html` y `sistemas-del-juego.html` (AHORA el sistema es
-   jugable end-to-end → toca actualizar los docs).
+7. ✅ **Tests + docs** (it.54) — test integración headful embark→fire→resolve→retorno
+   (2 tests, valida SOURCE_REF + tope ≤1). Docs sincronizados: nueva sección
+   "Eventos de campaña" en `sistema-de-eventos.html` + nota en `sistemas-del-juego.html`.
+
+**★ ÉPICA D10 COMPLETA** (it.48–54). Sistema de eventos de campaña vivo end-to-end:
+detección → snapshot → disparo a mitad de marcha → modal → write-back al hub. 9ª
+unión blindada. 213 tests. Siguiente foco del backlog: tareas BAL y REV.
 
 ### Tareas acompañantes (intercalar; pueden ir antes/durante D10)
 - **BAL** — normalizar TODO delta de soldados/iuniores (cartas, leva, eventos,
@@ -94,6 +98,10 @@ Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea so
   (code-splitting) — aprobados; abordar DESPUÉS de cerrar la épica D10.
 
 ## Log (más reciente primero)
+- it.54 — **D10 paso 7 hecho → ÉPICA D10 COMPLETA**: test integración end-to-end
+  (embark→fire→resolve→retorno, valida SOURCE_REF + tope) + docs HTML sincronizados.
+  213 tests (+2) · 17/17 verify · build verde. Próximo: tarea BAL (normalizar deltas
+  soldados/iuniores) o REV (auditar las 8 uniones de bonos).
 - it.53 — **D10 paso 6 hecho**: `applyCampaignEventOutcomes` drena la cola al hub
   (unrest/xp/recursos a valor nominal) en `returnToHub`; 9ª unión deslatentizada.
   **Bucle Hub→campaña→Hub cerrado.** 211 tests (+3) · 17/17 verify · build verde.
