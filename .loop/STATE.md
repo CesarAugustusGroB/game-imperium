@@ -40,9 +40,12 @@ Confirma `npm run verify` en verde, anótalo en el Log como heartbeat, y reporta
 que el loop está **idle a la espera de decisiones del usuario** (ver Backlog
 bloqueado). **No fabriques cambios.**
 
-## Status (2026-06-14)
-Consolidación técnica COMPLETA (base estable: `tsc` limpio · 190 tests · 17/17 verify ·
-build verde · 8 uniones blindadas). Arranca la **fase de contenido D10** sobre esa base.
+## Status (2026-06-14, it.59)
+Fase de contenido COMPLETA: **épica D10** (eventos de campaña, 9ª unión blindada) +
+**BAL** + **REV** + **D29** (Anales) + **D32** (extraer returnFromCampaign) + **D28b**
+(code-splitting). `tsc` limpio · **218 tests** · 17/17 verify · build en 4 chunks sin aviso.
+El backlog codeable autónomo está **AGOTADO** → el loop pasa a **idle**; lo que queda son
+decisiones del usuario (ver abajo).
 
 ## Backlog
 
@@ -108,8 +111,11 @@ unión blindada. 213 tests. Siguiente foco del backlog: tareas BAL y REV.
   de lógica, testeable; devuelve el escenario desbloqueado para que la UI navegue/
   notifique → sin import de UI). EndgameCard ahora delega. Red de tests del camino
   crítico (victoria+derrota, 2 tests) escrita y verde. Comportamiento preservado.
-- **D28b** — CODE-SPLITTING del bundle (~590KB) por rutas/pantallas, validando cada
-  transición del main loop.
+- ✅ **D28b** (it.59) — CODE-SPLITTING vía `manualChunks` en vite.config: el monolito
+  de 606KB → 4 chunks (vendor 2.5KB · index 73KB · forum 235KB · battle 298KB), mayor
+  <500KB → aviso eliminado. Cero cambio de runtime (imports estáticos, orden preservado;
+  deps cross-chunk unidireccionales UI→core). Carga diferida real (dynamic import +
+  Suspense) = follow-up (necesita validación visual, bloqueada por dev server).
 
 ### Dirección confirmada (sin trabajo inmediato)
 - **D11** — facciones NPC se CONSERVAN como base para diplomacia futura.
@@ -117,6 +123,10 @@ unión blindada. 213 tests. Siguiente foco del backlog: tareas BAL y REV.
   `extra-event-choices` advisor a D10: requieren decisión del usuario.
 
 ## Log (más reciente primero)
+- it.59 — **D28b hecho → backlog codeable AGOTADO**: `manualChunks` parte el bundle
+  606KB → 4 chunks (mayor 298KB), aviso eliminado, cero cambio de runtime. 218 tests ·
+  17/17 verify. El loop pasa a **idle**: solo quedan decisiones del usuario (D11, R1/R2,
+  recortar RunRecord muerto, carga diferida real). Próximas vueltas: heartbeat de verify.
 - it.58 — **D32 hecho**: extraído `returnFromCampaign()` a `return-to-hub.ts` (lógica
   testeable; UI conserva navegación/notificación). EndgameCard delega + imports podados.
   Red de tests del camino crítico (2, victoria+derrota). 218 tests · 17/17 verify ·

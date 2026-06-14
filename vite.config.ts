@@ -23,5 +23,22 @@ export default defineConfig({
   build: {
     target: 'es2022',
     assetsInlineLimit: 0,
+    rollupOptions: {
+      output: {
+        // D28b — split the single ~600 kB app chunk into named chunks by subsystem.
+        // Static imports stay eager (load order is preserved by the import graph, so
+        // runtime behaviour is unchanged), but the bundle is broken up so the stable
+        // vendor/data code caches independently of churn-heavy UI, and the
+        // >500 kB single-chunk warning clears. Lazy deferral (dynamic import) is a
+        // documented follow-up that needs live route validation.
+        manualChunks(id: string): string | undefined {
+          if (id.includes('node_modules')) return 'vendor';
+          if (id.includes('/game/iterBelli/battle/') || id.includes('/ui/screens/iterbelli/')) return 'battle';
+          if (id.includes('/ui/screens/forum/')) return 'forum';
+          if (id.includes('/src/data/')) return 'data';
+          return undefined;
+        },
+      },
+    },
   },
 });
