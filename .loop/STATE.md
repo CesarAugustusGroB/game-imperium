@@ -91,16 +91,31 @@ unión blindada. 213 tests. Siguiente foco del backlog: tareas BAL y REV.
   800, advisor soldiers-bonus 250/450/700, eventos 200–500). Sin cambios (sin churn).
   Blindado con `soldier-iuniores-scale.test.ts`. Los `iuniores:2..12` de doctrinas/
   decretos son costes de mejora (sub-economía aparte), FUERA de la regla. Ver hallazgos.
-- **REV** — review de las 8 uniones de bonos: por cada miembro, confirmar magnitud
-  coherente y que el sitio aplica lo prometido (caza "texto promete / no aplica").
-  Hallazgos → `docs/loop-hallazgos.md`; fixes solo con ≥75% confianza.
+- ✅ **REV** (it.56) — auditadas las 8 uniones (semántica + magnitud). Todo
+  coherente y fiel; sin "texto promete / no aplica" de cara al jugador. Sin fix
+  ≥75% (los hallazgos son decisiones de balance/diseño). Documentado en hallazgos:
+  **R1** (iuniores de items negligible vs pool de millares) y **R2** (misnomers
+  `heal-between-nodes`/`extra-event-choices`; oportunidad: cablear el 2º a D10).
+
+### Codeable y listo (D10+BAL+REV cerrados → toca esto)
+- **D29** — PANTALLA DE RÉCORDS: UI que muestre el historial de runs sobre los datos
+  ya guardados en el meta-save (`RunRecord`/`runs[]`/`computeScore`/`getBestRun`).
+  Primero cablear un `recordRunComplete(outcome)` en el cierre de campaña.
+- **D32** — EXTRAER `returnToHub` de EndgameCard a la capa de lógica, con tests del
+  camino crítico de vuelta al hub ANTES de tocar. (Ojo: ahora también drena eventos D10.)
+- **D28b** — CODE-SPLITTING del bundle (~590KB) por rutas/pantallas, validando cada
+  transición del main loop.
 
 ### Dirección confirmada (sin trabajo inmediato)
 - **D11** — facciones NPC se CONSERVAN como base para diplomacia futura.
-- **D29** (pantalla de récords), **D32** (extraer returnToHub), **D28b**
-  (code-splitting) — aprobados; abordar DESPUÉS de cerrar la épica D10.
+- **R1/R2** (ver hallazgos it.56) — balance de iuniores en items + cablear
+  `extra-event-choices` advisor a D10: requieren decisión del usuario.
 
 ## Log (más reciente primero)
+- it.56 — **REV cerrada**: auditadas las 8 uniones de bonos (semántica + magnitud);
+  coherentes y fieles, sin mentira de cara al jugador. 2 hallazgos de balance/diseño
+  (R1 iuniores de items, R2 misnomers advisor) documentados, sin autofix. Read-only;
+  17/17 verify verde. Próximo codeable: **D29** (pantalla de récords).
 - it.55 — **BAL cerrada**: auditados todos los flujos soldados/iuniores de campaña →
   YA en centenas, sin cambios. Blindado con `soldier-iuniores-scale.test.ts` (3 tests).
   Costes de mejora doctrina/decreto quedan fuera de la regla (sub-economía). 216 tests ·

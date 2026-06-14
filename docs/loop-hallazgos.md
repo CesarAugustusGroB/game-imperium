@@ -1336,3 +1336,43 @@ en [100, 2000]. Los eventos ya tienen su guard en `campaign-events.test.ts`. Los
 todos en centenas a fecha de esta auditoría.
 
 **Validación**: `tsc` limpio · 216 tests · 17/17 verify · build verde. BAL cerrada.
+
+## Iteración 56 — 2026-06-14 — Tarea REV (auditoría semántica de las 8 uniones de bonos)
+
+`verify-effects` ya garantiza **estructuralmente** que cada miembro tiene sitio de
+aplicación y que el sitio maneja su tipo. REV es la capa **semántica**: ¿la magnitud
+es coherente y el sitio aplica lo que el texto promete? Veredicto por unión:
+
+| Unión | Magnitudes | Sitio fiel | Notas |
+|---|---|---|---|
+| **DoctrineEffect** | embark soldiers 200–1200, gold 5–15, morale 1–3, percents 10–30 | ✓ | soldados ≤1200 (dentro de centenas). Coherente. |
+| **DecretumEffect** | spawn count 1–3, damage 1500, heal 0.2–0.3, resource-gain gold 3–10, **iuniores 3** | ✓ aplica | ⚠ ver hallazgo R1 (iuniores 3 negligible). |
+| **TradeGoodSpecial** | build-cost-discount 10–15%, unrest-reduction 5 | ✓ | Coherente. |
+| **FeatureSpecial** | unit-discount %, extra-event-choice (cableado en D10) | ✓ | `extra-event-choice` ahora vivo (modal premium). |
+| **GovernorTrait** | percents 5–35, population-growth 1–2 | ✓ | Coherente. |
+| **SynergyBonus** | (multiplicadores de edificio) | ✓ | Sin outliers. |
+| **LegateEffect** | stat-bonus ×0.15–0.25, morale-bonus 15/25 (escala batalla), random-rally ×0.25 | ✓ | `lieutenant-preset` latente (conocido). morale 15/25 es escala de batalla 0–100, no campaña. |
+| **AdvisorPassive** | soldiers-bonus 250/450/700, morale 1–3, gold 2–15 | ✓ | descripciones HONESTAS; ver R2 (misnomers internos). |
+
+### Hallazgos (decisiones de balance/diseño — NO autofix, requieren OK del usuario)
+
+**R1 — `resource-gain` iuniores negligible.** Un decreto otorga `iuniores: 3` al pool del
+hub, que es de **millares** (arranca 2000). +3 iuniores es prácticamente nada. Misma clase
+que los costes de mejora de doctrina (it.55/BAL): la **sub-economía de items** opera a escala
+pequeña, desfasada del pool de iuniores. El gold sí es coherente (provincias producen ~5–30/
+estación). Decisión: ¿subir las concesiones de iuniores de items a centenas, o bajar el pool?
+Requiere al usuario — NO tocado.
+
+**R2 — Misnomers internos en `AdvisorPassive`.** `heal-between-nodes` aplica `morale=round(amount/100)`
+(→ +1/2/3) y `extra-event-choices` aplica `gold=count*5` (→ +5/10/15). Las **descripciones que ve
+el jugador son honestas** ("+N morale", "+N gold") — NO hay mentira de cara al jugador, solo el
+**nombre del tipo** es legacy. **Oportunidad D10**: ahora que el sistema de eventos existe,
+`extra-event-choices` podría cablearse para conceder de verdad opciones premium en el modal
+(como hace el feature `extra-event-choice`), en vez de oro. Eso cambiaría el efecto del advisor
+(quita oro, añade mecánica) + su descripción → es un cambio de **diseño/balance**, no un fix de
+auditoría. Documentado como recomendación; NO implementado.
+
+**Resto**: coherente y fiel. Sin "texto promete / código no aplica" de cara al jugador.
+
+**Validación**: auditoría read-only (sin cambios de código). `tsc`/216 tests/17 verify siguen
+verdes (sin tocar). REV cerrada como confirmación + documentación.
