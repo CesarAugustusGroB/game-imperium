@@ -11,7 +11,11 @@ import type { ActiveDecretumEffect } from '../items/decretum-hub';
 import { activeDecretumEffects } from '../items/decretum-hub';
 import type { Doctrine } from '../items/doctrine';
 import { doctrineCollection, equippedDoctrines, pendingDoctrineDraft } from '../items/doctrine-store';
-import { consequenceFlags, seenEventsThisSpoke } from '../events/event-store';
+import {
+  consequenceFlags, seenEventsThisSpoke, campaignConflicts,
+  campaignEventFiredThisSpoke, pendingHubConsequences,
+} from '../events/event-store';
+import type { CampaignConflict, HubConsequence } from '../events/campaign-events-types';
 import type { NPCFaction } from '../progression/npc-faction-store';
 import { npcFactions } from '../progression/npc-faction-store';
 import { forgedAllies, setForgedAllies, type ForgedAlly } from '../progression/ally-store';
@@ -120,6 +124,10 @@ export interface ActiveRunSave {
   tierUpNotices: string[];
   consequenceFlags: string[];
   seenEventsThisSpoke: string[];
+  /** Campaign-event state (D10). Optional for backwards compat with pre-D10 saves. */
+  campaignConflicts?: CampaignConflict[];
+  campaignEventFired?: boolean;
+  pendingHubConsequences?: HubConsequence[];
   npcFactions: NPCFaction[];
   /** Forged alliances (plan S-L). Optional for backwards compat. */
   forgedAllies?: ForgedAlly[];
@@ -344,6 +352,9 @@ function migrateActiveRun(rawRun: unknown): ActiveRunSave | null {
     tierUpNotices: Array.isArray(run.tierUpNotices) ? run.tierUpNotices : [],
     consequenceFlags: Array.isArray(run.consequenceFlags) ? run.consequenceFlags : [],
     seenEventsThisSpoke: Array.isArray(run.seenEventsThisSpoke) ? run.seenEventsThisSpoke : [],
+    campaignConflicts: Array.isArray(run.campaignConflicts) ? run.campaignConflicts : [],
+    campaignEventFired: run.campaignEventFired === true,
+    pendingHubConsequences: Array.isArray(run.pendingHubConsequences) ? run.pendingHubConsequences : [],
     npcFactions: Array.isArray(run.npcFactions) ? run.npcFactions : [],
     forgedAllies: Array.isArray(run.forgedAllies) ? run.forgedAllies : [],
     nextInvestmentDiscount: typeof run.nextInvestmentDiscount === 'number' ? run.nextInvestmentDiscount : 0,
@@ -435,6 +446,9 @@ function buildActiveRunSnapshot(): ActiveRunSave | null {
     tierUpNotices: tierUpNotices.value,
     consequenceFlags: Array.from(consequenceFlags.value),
     seenEventsThisSpoke: Array.from(seenEventsThisSpoke.value),
+    campaignConflicts: campaignConflicts.value,
+    campaignEventFired: campaignEventFiredThisSpoke.value,
+    pendingHubConsequences: pendingHubConsequences.value,
     npcFactions: npcFactions.value,
     forgedAllies: forgedAllies.value,
     nextInvestmentDiscount: nextInvestmentDiscount.value,
@@ -562,6 +576,9 @@ export async function restoreActiveRun(): Promise<boolean> {
 
     consequenceFlags.value = new Set(snapshot.consequenceFlags);
     seenEventsThisSpoke.value = new Set(snapshot.seenEventsThisSpoke);
+    campaignConflicts.value = snapshot.campaignConflicts ?? [];
+    campaignEventFiredThisSpoke.value = snapshot.campaignEventFired === true;
+    pendingHubConsequences.value = snapshot.pendingHubConsequences ?? [];
     npcFactions.value = snapshot.npcFactions;
     setForgedAllies(snapshot.forgedAllies ?? []);
     syncFactionSignals();

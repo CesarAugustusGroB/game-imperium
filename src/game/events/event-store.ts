@@ -1,5 +1,5 @@
 import { signal } from '@preact/signals';
-import type { CampaignConflict } from './campaign-events-types';
+import type { CampaignConflict, HubConsequence } from './campaign-events-types';
 
 // ── Consequence tracking ──
 
@@ -21,6 +21,16 @@ export const seenEventsThisSpoke = signal<Set<string>>(new Set());
  */
 export const campaignConflicts = signal<CampaignConflict[]>([]);
 
+/** True once the single per-campaign event has fired (the ≤1/campaign cap). */
+export const campaignEventFiredThisSpoke = signal<boolean>(false);
+
+/**
+ * Hub write-backs queued by event choices this campaign, applied on return to
+ * the Forum by applyCampaignEventOutcomes (D10 step 6). Source ids are already
+ * resolved (no SOURCE_REF) by the time they land here.
+ */
+export const pendingHubConsequences = signal<HubConsequence[]>([]);
+
 // ── Actions ──
 
 /** Set a consequence flag (idempotent). */
@@ -34,9 +44,26 @@ export function hasConsequenceFlag(flag: string): boolean {
   return consequenceFlags.value.has(flag);
 }
 
-/** Seal the embark-time conflict snapshot (replaces any prior list). */
+/**
+ * Seal the embark-time conflict snapshot AND reset per-campaign event state — this
+ * is the start-of-campaign hook, called once from EmbarkCard. Clears the seen set,
+ * the fired guard, and any (stale, abandoned-run) pending write-backs.
+ */
 export function sealCampaignConflicts(conflicts: CampaignConflict[]): void {
   campaignConflicts.value = conflicts.slice();
+  seenEventsThisSpoke.value = new Set();
+  campaignEventFiredThisSpoke.value = false;
+  pendingHubConsequences.value = [];
+}
+
+/** Mark the single per-campaign event as having fired (enforces the ≤1 cap). */
+export function setCampaignEventFired(): void {
+  campaignEventFiredThisSpoke.value = true;
+}
+
+/** Queue resolved hub write-backs for application on return to the Forum. */
+export function enqueueHubConsequences(consequences: HubConsequence[]): void {
+  if (consequences.length) pendingHubConsequences.value = [...pendingHubConsequences.value, ...consequences];
 }
 
 /** Mark an event as seen this spoke. */
@@ -61,4 +88,6 @@ export function resetEventStore(): void {
   consequenceFlags.value = new Set();
   seenEventsThisSpoke.value = new Set();
   campaignConflicts.value = [];
+  campaignEventFiredThisSpoke.value = false;
+  pendingHubConsequences.value = [];
 }

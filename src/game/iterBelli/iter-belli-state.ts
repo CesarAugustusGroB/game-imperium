@@ -355,6 +355,16 @@ export function camp(): void {
   endTurn(1);
 }
 
+/**
+ * Apply a CardEffects bag to the live campaign and publish — the immediate
+ * effects of a campaign-event choice (D10). Does NOT advance the turn or touch
+ * the card pool; it is a pure stat write-through (soldiers/morale/supplies/gold…).
+ */
+export function applyCampaignEventEffects(eff: CardEffects): void {
+  applyEffects(eff);
+  commit();
+}
+
 // ── Turn resolution ──────────────────────────────────────────────────────────
 
 function endTurn(timeCost: number): void {
