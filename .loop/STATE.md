@@ -48,9 +48,10 @@ build verde · 8 uniones blindadas). Arranca la **fase de contenido D10** sobre 
 
 ### Épica activa: D10 — sistema de eventos de campaña (orden recomendado)
 Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea solo.
-1. **Tipos + unión `HubConsequence`** — define `CampaignConflict`, `CampaignEvent`,
-   `EventChoice`, `HubConsequence`. Regístrala como 9ª unión en `verify-effects.ts`
-   con su sitio de aplicación. (Test: verify-effects sigue verde y exige la 9ª.)
+1. ✅ **Tipos + unión `HubConsequence`** (it.48) — `campaign-events-types.ts` con
+   `CampaignConflict`/`CampaignEvent`/`EventChoice`/`HubConsequence`; 9ª unión
+   registrada en `verify-effects.ts` (latente hasta paso 6). Nota de diseño: no hay
+   campo `loyalty` en Advisor → la consecuencia de personaje se modela sobre `xp`.
 2. **Detección de conflictos** — `detectCampaignConflicts(snapshot)` puro sobre
    advisors + provincias. Sella el snapshot en el estado de campaña al embarcar.
 3. **Catálogo** — `src/data/campaign-events.ts`: 6–8 eventos (mezcla provincia +
@@ -77,6 +78,9 @@ Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea so
   (code-splitting) — aprobados; abordar DESPUÉS de cerrar la épica D10.
 
 ## Log (más reciente primero)
+- it.48b — **D10 paso 1 hecho**: `campaign-events-types.ts` (4 tipos) + 9ª unión
+  `HubConsequence` registrada (latente) en `verify-effects.ts`. tsc limpio · 17/17
+  verify · build verde. Próximo: paso 2 (`detectCampaignConflicts` + snapshot al embarque).
 - it.48 — **giro de misión**: el usuario decidió las 5 decisiones bloqueadas y
   aprobó el diseño de D10. Loop reorientado de auditoría → fase de contenido.
   Spec escrito (`specs/2026-06-14-campaign-events-design.md`), backlog D10+BAL+REV

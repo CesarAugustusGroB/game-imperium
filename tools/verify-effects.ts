@@ -1,9 +1,10 @@
 /**
  * verify-effects.ts — the effect-contract guard (plan S-D, FASE 1 blindaje).
  *
- * All 8 tabulated effect-bearing unions (DoctrineEffect, DecretumEffect, the
+ * All 9 tabulated effect-bearing unions (DoctrineEffect, DecretumEffect, the
  * province TradeGoodSpecial / FeatureSpecial / GovernorTrait / SynergyBonus,
- * LegateEffect, and AdvisorPassive) are consumed by switches with permissive
+ * LegateEffect, AdvisorPassive, and the campaign-event HubConsequence) are
+ * consumed by switches with permissive
  * `default` branches (decretum-hub `default: return null`, battle/decreta
  * `default: return false`, the special checks just `if (… === 'x')`). That means
  * adding a NEW member to a union compiles fine and silently becomes INERT — the
@@ -236,6 +237,17 @@ const ADVISOR_APPLICATION: Record<string, AppEntry> = {
 };
 const advisorPassiveTypes = STARTER_ADVISORS.flatMap((a) => a.tiers.map((t) => t.passive.type));
 checkUnion('AdvisorPassive', 'src/game/council/advisor.ts', 'AdvisorPassive', ADVISOR_APPLICATION, advisorPassiveTypes);
+
+// ── Campaign-event hub write-back (the 9th union; plan D10, 2026-06-14) ──
+// Latent until applyCampaignEventOutcomes (D10 step 6) wires the live site; the
+// catalog (campaign-events.ts, step 3) is what will populate hubConsequenceDataTypes.
+const HUB_CONSEQUENCE_APPLICATION: Record<string, AppEntry> = {
+  'province-unrest': { latent: true, note: 'inert until applyCampaignEventOutcomes lands (D10 step 6) → province.unrest' },
+  'advisor-xp':      { latent: true, note: 'inert until applyCampaignEventOutcomes lands (D10 step 6) → advisor.xp' },
+  'resource':        { latent: true, note: 'inert until applyCampaignEventOutcomes lands (D10 step 6) → hub gold/iuniores' },
+};
+const hubConsequenceDataTypes: string[] = []; // catalog arrives in D10 step 3
+checkUnion('HubConsequence', 'src/game/events/campaign-events-types.ts', 'HubConsequence', HUB_CONSEQUENCE_APPLICATION, hubConsequenceDataTypes);
 
 // ──────────────────────────────────────────────────────────────────────────
 // Economic invariants — refund ≤ paid, discounts clamped, never free.
