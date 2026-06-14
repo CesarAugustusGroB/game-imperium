@@ -20,7 +20,7 @@ import { makeBattleArmy, makeBattleState, playRound } from '../src/game/iterBell
 import { FORMATIONS, CENTERS } from '../src/game/iterBelli/battle/orders';
 import { getCohortById } from '../src/game/army/cohort-data';
 import { createCohortInstance } from '../src/game/army/cohort';
-import { DOCTRINE_SWORD, DOCTRINE_IRON, DOCTRINE_BLOOD } from '../src/data/doctrine-data';
+import { DOCTRINE_SWORD, DOCTRINE_IRON, DOCTRINE_BLOOD, DOCTRINE_DISCIPLINA_FERREA } from '../src/data/doctrine-data';
 import type { Doctrine } from '../src/game/items/doctrine';
 import * as B from '../src/game/iterBelli/iter-belli-balance';
 import type { BattleState, OrderKey, Rng } from '../src/game/iterBelli/battle/types';
@@ -103,8 +103,11 @@ const ROSTERS: Roster[] = [
   { label: 'under-prepared (2 coh · disc2 · copper)     ', ids: ['hastati', 'hastati'], soldiers: 3400, discipline: 2, armor: 'copper' },
   { label: 'standard       (4 coh · disc3 · bronze)     ', ids: ['hastati', 'hastati', 'principes', 'triarii'], soldiers: 5400, discipline: 3, armor: 'bronze' },
   { label: 'fully-prepared (6 coh · disc4 · iron)       ', ids: ['hastati', 'hastati', 'principes', 'triarii', 'velites', 'equites'], soldiers: 7400, discipline: 4, armor: 'iron' },
-  { label: 'veteran        (6 coh · disc6 · iron · maxRed)', ids: ['hastati', 'hastati', 'principes', 'triarii', 'velites', 'equites'], soldiers: 7400, discipline: 6, armor: 'iron', statMult: 1.25,
-    doctrines: [{ d: DOCTRINE_SWORD, level: 3 }, { d: DOCTRINE_IRON, level: 3 }, { d: DOCTRINE_BLOOD, level: 3 }] },
+  // Base discipline 4 = Warlord (START 2) + disciplined legate (+2); the 4th slot
+  // (Disciplina Ferrea III, now +4) carries the rest, so the discipline doctrine is
+  // modelled from real data rather than baked into the base.
+  { label: 'veteran        (6 coh · disc4+kit · iron · maxRed)', ids: ['hastati', 'hastati', 'principes', 'triarii', 'velites', 'equites'], soldiers: 7400, discipline: 4, armor: 'iron', statMult: 1.25,
+    doctrines: [{ d: DOCTRINE_SWORD, level: 3 }, { d: DOCTRINE_IRON, level: 3 }, { d: DOCTRINE_BLOOD, level: 3 }, { d: DOCTRINE_DISCIPLINA_FERREA, level: 3 }] },
 ];
 
 const SCENARIO_TERRAIN: Record<string, string> = { saguntum: 'plains', gallia: 'forest', numantia: 'hills' };

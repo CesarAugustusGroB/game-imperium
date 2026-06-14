@@ -73,8 +73,8 @@ export const NUMANTIA: CampaignScenario = {
     // very high raw stats make each soldier hit far harder than Gaul/Carthage,
     // so the step over Gallia is in ARCHETYPE power, not headcount — a smaller
     // but elite host (historically Numantia held 20 years with few defenders).
-    baseSoldiers: 5200,
-    minSoldiers: 2000,
+    baseSoldiers: 5900,
+    minSoldiers: 2200,
     archetypeKey: 'iberians',
   },
   narrative: {

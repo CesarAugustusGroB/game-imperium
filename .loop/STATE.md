@@ -59,11 +59,10 @@ neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
 2. ✅ **Recompensa de victoria geométrica** (it.1) — `victoryGold` por escenario
    (Saguntum 200 → Gallia 400, ×2), leído en `applyBattleOutcome`. Funda los costes
    geométricos sin tocar la batalla.
-3. 🟢 **Poder de doctrina/decreto compuesto** — DESBLOQUEADA para medir (it.7): el sim ahora
-   EQUIPA doctrinas reales (tier veterano = Sword+Iron+Blood III, suma `embark-bonus` como
-   `getEmbarkBonus`). Las escaleras de soldados ya son geométricas (it.5). PENDIENTE medible:
-   doctrinas de moral/disciplina (geometrizar como las de soldados); y los decretos de BATALLA
-   (siguen sin modelar — el sim no castea decretos en combate → siguiente mejora de fidelidad).
+3. 🟢 **Poder de doctrina/decreto compuesto** — EN CURSO. Geométricas y modeladas: soldados
+   (SWORD/IRON, it.5) y disciplina (DISCIPLINA_FERREA +3→+4, it.8). El sim equipa el kit real del
+   veterano (Sword+Iron+Blood+Disciplina III). PENDIENTE: moral (se lava en la marcha → bajo valor,
+   skip) y los decretos de BATALLA (el sim no los castea en combate → próxima mejora de fidelidad).
 4. 🟡 **Convertir la erosión-trampa en palanca exponencial** — PARCIAL (it.2):
    `ENEMY_WEAKEN_PER_POINT` 0.07→0.10 (cada punto rinde +43%). Demostrado exponencial en
    sim-battle-balance (weaken 2: 53%→92% Sag, 54%→80% Gallia). PENDIENTE el otro 50%: la
@@ -75,6 +74,17 @@ neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
 6. ⏳ **Leva de refuerzos / curva disciplina-moral** — palancas tardías.
 
 ## Log (más reciente primero)
+- it.8 — **Palanca 3: doctrina de disciplina geométrica + modelada.** DISCIPLINA_FERREA tier III
+  +3→**+4** (escalera +1/+2/+4, ×2 último paso; coste ya iuniores 300/600/1200). Fidelidad: el sim
+  separa la base del veterano (disc hardcodeada 6 → 4 = Warlord+legado) y equipa la doctrina real en
+  el 4.º slot → disc 8 desde datos reales, no bundle. El kit real (disc 8) supera el proxy anterior y
+  rebasó banda en Numancia (rush 58.7%→71.5%), así que **recalibrado Numancia baseSoldiers 5200→5900**
+  → veterano rush **50.0%** (en banda), monótono (0/0/0.1/50). Disciplina no es delta de soldados/
+  iuniores (cap 10, safe). tsc · 17/17 verify · build · sin docs (wireframe muestra tier I, sin cambio).
+  Escalera fully aún más exponencial: 88.6→53.7→0.1.
+  | tier (rush) | Saguntum | Gallia | Numancia |
+  | fully-prep. | 88.6% | 53.7% | 0.1% |
+  | veterano    | 99.9% | 99.9% | 50.0% |
 - it.7 — **FIDELIDAD DEL SIM: equipa doctrinas reales (desbloquea P3).** El tier `veteran` deja
   el proxy `statMult 1.4 / passiveMorale 2` y pasa a EQUIPAR doctrinas reales: Sword III +800,
   Iron III +1600, Blood III +3 moral, sumadas al seed como `getEmbarkBonus` (4 slots, nivel actual).

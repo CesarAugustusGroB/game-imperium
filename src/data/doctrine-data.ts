@@ -243,7 +243,7 @@ export const DOCTRINE_DISCIPLINA_FERREA: Doctrine = {
   levels: [
     { description: '+1 discipline on campaign start.', effects: [{ type: 'embark-bonus', stat: 'discipline', amount: 1 }], upgradeCost: { iuniores: 300 } },
     { description: '+2 discipline on campaign start.', effects: [{ type: 'embark-bonus', stat: 'discipline', amount: 2 }], upgradeCost: { iuniores: 600 } },
-    { description: '+3 discipline on campaign start.', effects: [{ type: 'embark-bonus', stat: 'discipline', amount: 3 }], upgradeCost: { iuniores: 1200 } },
+    { description: '+4 discipline on campaign start.', effects: [{ type: 'embark-bonus', stat: 'discipline', amount: 4 }], upgradeCost: { iuniores: 1200 } },
   ],
 };
 
