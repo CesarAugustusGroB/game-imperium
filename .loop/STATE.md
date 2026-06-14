@@ -76,6 +76,13 @@ erosiona; no es trampa para juego hábil (la acumulación la limita la escasez d
 6. ⏳ **Leva de refuerzos / curva disciplina-moral** — palancas tardías.
 
 ## Log (más reciente primero)
+- it.10 — **CIERRE: misión cumplida, cron parado.** Heartbeat final verde (campaign reach 99.8%,
+  17/17 verify). Escalera exponencial limpia y validada bajo medición fiel — fully-prep: Sag 88% →
+  Gallia 55% → Numancia 0.1% (caída acelerando); veterano 100%/99%/50% (en banda en su escenario).
+  Backlog exponencial AGOTADO: P1✅ P2✅ P3✅(soldados+disciplina) P4✅. Restos = marginales (moral
+  se lava) o no-exponenciales (decretos = tácticos, QA). Cron 4221193a CANCELADO para no quemar
+  tokens en heartbeats sin progreso. Reabrir el loop solo si se añade un eje nuevo (p.ej. modelar
+  decretos de batalla para QA, reabrir acantilado, economía de provincias).
 - it.9 — **FIDELIDAD DEL SIM: estrategia balanced que BUSCA weaken (resuelve P4).** La balanced
   jugaba cartas de categoría-erosión al azar (mayoría sin weaken) → malgastaba días → reach ~65%
   (la "trampa"). Nuevo `grantsWeaken()` evalúa los efectos reales de la carta; la balanced ahora
