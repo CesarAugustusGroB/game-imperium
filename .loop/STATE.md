@@ -57,9 +57,10 @@ Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea so
    colores). Snapshot sellado en `event-store.campaignConflicts` al embarcar
    (EmbarkCard). 4 tests. PEND: persistir el snapshot en meta-save (al paso 4,
    cuando el controller lo consuma).
-3. **Catálogo** — `src/data/campaign-events.ts`: 6–8 eventos (mezcla provincia +
-   advisor), 2–3 opciones c/u, deltas de soldados/iuniores en CENTENAS. Opción
-   `premium` para `extra-event-choice`.
+3. ✅ **Catálogo** (it.50) — `src/data/campaign-events.ts`: 7 eventos (4 provincia
+   + 3 advisor), 2–3 opciones, soldados/iuniores en centenas, 2 `premium`, 1 cadena
+   por flag (`backed_rival` bloquea `advisor_divided_council`). Centinela `SOURCE_REF`
+   (catálogo↔controller). `verify-effects` valida los tipos del catálogo. 6 tests.
 4. **Controller** — selección/disparo a mitad de marcha, tope ≤1/campaña,
    probabilístico, respeta flags require/block y `seenEventsThisSpoke`.
 5. **Modal** — `CampaignEventModal.tsx` con el lenguaje visual de las cartas.
@@ -81,6 +82,10 @@ Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea so
   (code-splitting) — aprobados; abordar DESPUÉS de cerrar la épica D10.
 
 ## Log (más reciente primero)
+- it.50 — **D10 paso 3 hecho**: catálogo `campaign-events.ts` (7 eventos, centinela
+  `SOURCE_REF`, cadena por flag, deltas soldados/iuniores en centenas). verify-effects
+  ahora valida el catálogo. 200 tests (+6) · 17/17 verify · build verde. Próximo:
+  paso 4 (controller: selección/disparo a mitad de marcha + persistir snapshot en meta-save).
 - it.49 — **D10 paso 2 hecho**: `detectCampaignConflicts` puro (provincia unrest≥40 +
   consejo dividido) → snapshot sellado en `event-store.campaignConflicts` al embarcar.
   194 tests (+4) · 17/17 verify · build verde. Próximo: paso 3 (catálogo `campaign-events.ts`).

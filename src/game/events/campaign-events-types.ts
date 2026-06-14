@@ -30,6 +30,14 @@ export type HubConsequence =
   | { type: 'advisor-xp'; advisorId: string; delta: number }
   | { type: 'resource'; resource: 'gold' | 'iuniores'; delta: number };
 
+/**
+ * Sentinel id used by a catalog consequence to mean "the province/advisor that
+ * triggered this event". The controller (D10 step 4) rewrites it to the firing
+ * conflict's `sourceId` before enqueueing. Catalog events are generic, so they
+ * cannot name a concrete province/advisor id at authoring time.
+ */
+export const SOURCE_REF = '@source';
+
 // ── Conflict snapshot (sealed at embark, read-only thereafter) ──
 
 export type ConflictSource = 'province' | 'advisor';

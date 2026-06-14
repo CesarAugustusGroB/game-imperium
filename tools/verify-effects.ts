@@ -30,6 +30,7 @@ import { ALL_FEATURES } from '../src/data/province-features';
 import { ALL_GOVERNORS } from '../src/data/governor-data';
 import { LEGATE_TRAITS } from '../src/game/army/legate-traits';
 import { STARTER_ADVISORS } from '../src/data/advisor-data';
+import { CAMPAIGN_EVENTS } from '../src/data/campaign-events';
 import {
   getShopDiscount, getUpkeepReduction, equippedDoctrines,
 } from '../src/game/items/doctrine-store';
@@ -246,7 +247,10 @@ const HUB_CONSEQUENCE_APPLICATION: Record<string, AppEntry> = {
   'advisor-xp':      { latent: true, note: 'inert until applyCampaignEventOutcomes lands (D10 step 6) → advisor.xp' },
   'resource':        { latent: true, note: 'inert until applyCampaignEventOutcomes lands (D10 step 6) → hub gold/iuniores' },
 };
-const hubConsequenceDataTypes: string[] = []; // catalog arrives in D10 step 3
+const hubConsequenceDataTypes = CAMPAIGN_EVENTS
+  .flatMap((e) => e.choices)
+  .flatMap((c) => c.consequence ?? [])
+  .map((h) => h.type);
 checkUnion('HubConsequence', 'src/game/events/campaign-events-types.ts', 'HubConsequence', HUB_CONSEQUENCE_APPLICATION, hubConsequenceDataTypes);
 
 // ──────────────────────────────────────────────────────────────────────────
