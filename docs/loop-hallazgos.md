@@ -1376,3 +1376,19 @@ auditoría. Documentado como recomendación; NO implementado.
 
 **Validación**: auditoría read-only (sin cambios de código). `tsc`/216 tests/17 verify siguen
 verdes (sin tocar). REV cerrada como confirmación + documentación.
+
+## Iteración 60 — 2026-06-14 — Rebalanceo: costes de mejora de doctrinas (iuniores)
+
+Decisión del usuario sobre el carve-out de BAL (it.55) / clase de R1: los costes de
+mejora de doctrinas en **iuniores** eran 2–12 contra un pool de millares
+(`IUNIORES.startingSeed = 2000`, +100/pop·estación, +500/leva) → ~0.1–0.6% del pool,
+efectivamente gratis. Los costes en **oro** (2–16) se dejan: el pool de oro es pequeño
+y ahí esa escala es razonable.
+
+**Fix**: ×100 a los 27 `iuniores` de `upgradeCost` en `doctrine-data.ts` → ahora
+200–1200 (centenas, dentro del techo ~2000). Ej. doctrina de soldados: 300/600/1200.
+Un tier III (~1200) supera una leva → inversión meta real. `tsc`/218 tests/17 verify verdes.
+
+**Pendiente relacionado (NO tocado, fuera del alcance pedido)**: los costes de
+`decretum-data.ts` en iuniores y el grant `resource-gain` iuniores:3 (R1) siguen a
+escala pequeña — decisión separada del usuario si se quieren alinear también.
