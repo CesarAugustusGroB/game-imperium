@@ -85,9 +85,12 @@ Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea so
 detección → snapshot → disparo a mitad de marcha → modal → write-back al hub. 9ª
 unión blindada. 213 tests. Siguiente foco del backlog: tareas BAL y REV.
 
-### Tareas acompañantes (intercalar; pueden ir antes/durante D10)
-- **BAL** — normalizar TODO delta de soldados/iuniores (cartas, leva, eventos,
-  efectos) a escala de centenas (techo ~1000–2000). Test que afirme el rango.
+### Tareas acompañantes
+- ✅ **BAL** (it.55) — auditado: TODOS los flujos de campaña de soldados/iuniores
+  YA están en centenas (leva 500, mercenarios 600, cartas −400/−300/−200/800, quest
+  800, advisor soldiers-bonus 250/450/700, eventos 200–500). Sin cambios (sin churn).
+  Blindado con `soldier-iuniores-scale.test.ts`. Los `iuniores:2..12` de doctrinas/
+  decretos son costes de mejora (sub-economía aparte), FUERA de la regla. Ver hallazgos.
 - **REV** — review de las 8 uniones de bonos: por cada miembro, confirmar magnitud
   coherente y que el sitio aplica lo prometido (caza "texto promete / no aplica").
   Hallazgos → `docs/loop-hallazgos.md`; fixes solo con ≥75% confianza.
@@ -98,6 +101,10 @@ unión blindada. 213 tests. Siguiente foco del backlog: tareas BAL y REV.
   (code-splitting) — aprobados; abordar DESPUÉS de cerrar la épica D10.
 
 ## Log (más reciente primero)
+- it.55 — **BAL cerrada**: auditados todos los flujos soldados/iuniores de campaña →
+  YA en centenas, sin cambios. Blindado con `soldier-iuniores-scale.test.ts` (3 tests).
+  Costes de mejora doctrina/decreto quedan fuera de la regla (sub-economía). 216 tests ·
+  17/17 verify · build verde. Próximo: tarea REV (auditar las 8 uniones de bonos).
 - it.54 — **D10 paso 7 hecho → ÉPICA D10 COMPLETA**: test integración end-to-end
   (embark→fire→resolve→retorno, valida SOURCE_REF + tope) + docs HTML sincronizados.
   213 tests (+2) · 17/17 verify · build verde. Próximo: tarea BAL (normalizar deltas

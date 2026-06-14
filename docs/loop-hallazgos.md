@@ -1309,3 +1309,30 @@ Tres vueltas seguidas de confirmación-de-salud con, a lo sumo, fixes triviales 
 es la evidencia clara de que **el barrido técnico autónomo está agotado**: las áreas se auditan
 sanas y los hallazgos son cosméticos. Reitero la recomendación de **pausar el cron** y decidir los
 ítems de diseño bloqueantes (D10/D11/D29) — ahí está el único trabajo de valor real que queda.
+
+## Iteración 55 — 2026-06-14 — Tarea BAL (escala soldados/iuniores)
+
+**Auditoría de la regla dura del usuario**: todo delta de soldados/iuniores de campaña
+debe ir en **centenas** (techo ~1000–2000). Resultado: **el juego YA cumple**; ningún
+valor a cambiar (sin churn). Inventario de flujos de campaña:
+
+| Fuente | Valores | ¿Centenas? |
+|---|---|---|
+| Leva (`LEVY_IUNIORES_COST/SOLDIERS`) | 500 / 500 | ✓ |
+| Mercenarios (`SIGNATURE.mercenariosSoldiers`) | 600 | ✓ |
+| Cartas (iter-belli-cards) | −400, −300, −200, 800 | ✓ |
+| Quest (iter-belli-quests) | 800 | ✓ |
+| Advisor `soldiers-bonus` | 250 / 450 / 700 | ✓ |
+| Eventos de campaña (D10) | 200 / 300 / 400 · iuniores 500 | ✓ |
+
+**Fuera de la regla (a propósito)**: los `iuniores: 2..12` de doctrine-data/decretum-data
+son **costes de mejora de items** (sub-economía del hub, escala pequeña deliberada), NO
+flujos de campaña. Forzarlos a centenas sería un rebalanceo destructivo — **no tocar**.
+
+**Blindaje**: `src/game/iterBelli/__tests__/soldier-iuniores-scale.test.ts` afirma que
+las fuentes accesibles estáticamente (leva, mercenarios, advisor soldiers-bonus) están
+en [100, 2000]. Los eventos ya tienen su guard en `campaign-events.test.ts`. Los literales
+`soldiers` dentro de closures de cartas no son alcanzables estáticamente; revisados a mano,
+todos en centenas a fecha de esta auditoría.
+
+**Validación**: `tsc` limpio · 216 tests · 17/17 verify · build verde. BAL cerrada.
