@@ -27,7 +27,7 @@ export const DECRETUM_MARS: Decretum = {
   description: 'Invoke the god of war. All units deal +60% damage this battle.',
   effect: { type: 'buff', stat: 'atk', multiplier: 0.6, duration: 'battle' },
   rarity: 'legendary',
-  castCost: { iuniores: 2 },
+  castCost: { iuniores: 200 },
 };
 
 // ── Blue (Diplomatic) — 3 scrolls ──
@@ -145,7 +145,7 @@ export const DECRETUM_RIOT: Decretum = {
   description: 'Unleash chaos on the battlefield. Deal 1500 area damage — beware friendly fire.',
   effect: { type: 'damage', amount: 1500, target: 'area' },
   rarity: 'legendary',
-  castCost: { iuniores: 1 },
+  castCost: { iuniores: 100 },
 };
 
 // ── Red (Military) — 3 additional scrolls ──
@@ -251,8 +251,8 @@ export const DECRETUM_PIETAS: Decretum = {
   id: 'decretum_pietas',
   name: 'Vow of Pietas',
   color: 'gold',
-  description: 'Sacred devotion swells the ranks. Gain 3 Iuniores immediately.',
-  effect: { type: 'resource-gain', resource: 'iuniores', amount: 3 },
+  description: 'Sacred devotion swells the ranks. Gain 300 Iuniores immediately.',
+  effect: { type: 'resource-gain', resource: 'iuniores', amount: 300 },
   rarity: 'common',
 };
 
