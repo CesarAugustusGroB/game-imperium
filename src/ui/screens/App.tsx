@@ -9,6 +9,7 @@ import { CustomCursor } from '../components/CustomCursor';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TitleScreen } from './TitleScreen';
 import { CommanderSelectScreen } from './CommanderSelectScreen';
+import { RecordsScreen } from './RecordsScreen';
 import { ForumShell } from './forum';
 import { IterBelliScreen } from './iterbelli/IterBelliScreen';
 import { loadMetaSave, startActiveRunPersistence, restoreActiveRun, metaSave } from '../../game/core/meta-save';
@@ -61,7 +62,7 @@ if (bootResuming.value) {
  * Screens that should not render the global ResourceBar. The Forum shell
  * provides its own resource chips in the Masthead, so `forum` is bare too.
  */
-const BARE_SCREENS: ReadonlySet<ScreenName> = new Set(['title', 'commander-select', 'forum', 'iterbelli']);
+const BARE_SCREENS: ReadonlySet<ScreenName> = new Set(['title', 'commander-select', 'forum', 'iterbelli', 'records']);
 
 /** Map of screen id → component. Order matches navigation flow. */
 const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> = {
@@ -70,6 +71,7 @@ const SCREEN_COMPONENTS: Partial<Record<ScreenName, () => preact.JSX.Element>> =
   'forum': ForumShell,
   'hub': ForumShell,
   'iterbelli': IterBelliScreen,
+  'records': RecordsScreen,
 };
 
 function UnknownScreen({ screen }: { screen: ScreenName }) {

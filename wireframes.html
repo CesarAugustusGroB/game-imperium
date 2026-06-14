@@ -164,6 +164,7 @@
   <button class="tab" data-t="decreta">Decreta</button>
   <button class="tab" data-t="iterbelli">Iter Belli</button>
   <button class="tab" data-t="battle">Batalla</button>
+  <button class="tab" data-t="records">Anales</button>
 </div></nav>
 
 <main class="wrap">
@@ -764,6 +765,24 @@
       <div class="region" style="border-color:var(--vio-400)"><span class="lbl" style="background:#241038;color:var(--vio-200)">Order selection · según formación</span><div class="row wrapf" style="gap:7px"><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Advance</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Hold the Line</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Charge</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Skirmish</span><span class="chip" style="background:rgba(124,58,237,.2);color:var(--vio-100);border-color:var(--vio-500)">Rally</span><span class="chip" style="background:rgba(124,58,237,.08);color:#8a7a9a;border-color:#5a4a7a">Retreat</span></div></div>
     </div></div>
     <div class="note"><b>EndgameCard:</b> al resolver — marca victoria/derrota · resumen de supervivientes · botones <span class="tag" style="margin-left:4px">Return to Forum</span> / <span class="tag">New Run</span>.</div>
+  </section>
+
+  <!-- ============ RECORDS / ANALES ============ -->
+  <section class="screen-panel" id="records">
+    <div class="screen-head"><span class="id">#records</span><h2>Anales de Campaña</h2><span class="file">RecordsScreen.tsx</span>
+      <p>Pantalla meta (sin run): historial de campañas sobre <code>metaSave.campaignLogs</code>. Se alcanza desde el footer del Title (botón «Anales»).</p></div>
+    <div class="screen"><div class="canvas" style="min-height:520px;display:flex;flex-direction:column;gap:12px">
+      <div class="col center" style="gap:4px"><div class="tag">Annales Imperii</div><div style="font-family:var(--display);font-weight:800;font-size:26px;color:var(--vio-900);letter-spacing:.08em">ANALES DE CAMPAÑA</div></div>
+      <div class="region"><span class="lbl">Stats agregados</span><div class="row" style="gap:10px"><span class="chip">Campañas</span><span class="chip">Victorias</span><span class="chip">Tasa de éxito %</span><span class="chip">Victoria más rápida (días)</span></div></div>
+      <div class="region" style="flex:1"><span class="lbl">Lista de campañas (más reciente primero)</span>
+        <div class="col" style="gap:6px">
+          <div class="panel" style="padding:9px 12px;display:grid;grid-template-columns:88px 1fr auto;gap:12px;border-left:3px solid var(--vio-500)"><span class="tag">Victoria</span><span class="lbl">Comandante · escenario · causa</span><span class="lbl" style="text-align:right">N superv · N días</span></div>
+          <div class="panel" style="padding:9px 12px;display:grid;grid-template-columns:88px 1fr auto;gap:12px;border-left:3px solid #8f2d20"><span class="tag">Derrota</span><span class="lbl">Comandante · escenario · causa</span><span class="lbl" style="text-align:right">N superv · N días</span></div>
+        </div>
+      </div>
+      <div class="col center"><div class="btn ghost">◄ Volver al título</div></div>
+    </div></div>
+    <div class="note"><b>Datos:</b> lee <code>campaignLogs</code> (ya poblado por <code>recordCampaignLog</code> en returnToHub). El sistema antiguo <code>RunRecord</code>/<code>runs[]</code>/<code>computeScore</code>/<code>getBestRun</code> sigue muerto — candidato a recortar (decisión del usuario).</div>
   </section>
 
 </main>

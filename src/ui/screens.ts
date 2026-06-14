@@ -14,9 +14,10 @@ export type ScreenName =
   | 'council'
   | 'provinces'
   | 'army-recruitment'
-  | 'legate-hiring';
+  | 'legate-hiring'
+  | 'records';
 
-const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'forum', 'hub', 'iterbelli', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring'];
+const VALID_SCREENS: ScreenName[] = ['title', 'commander-select', 'forum', 'hub', 'iterbelli', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring', 'records'];
 const REQUIRES_RUN: ScreenName[] = ['forum', 'hub', 'iterbelli', 'doctrine', 'council', 'provinces', 'army-recruitment', 'legate-hiring'];
 
 /**

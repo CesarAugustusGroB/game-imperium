@@ -97,10 +97,13 @@ unión blindada. 213 tests. Siguiente foco del backlog: tareas BAL y REV.
   **R1** (iuniores de items negligible vs pool de millares) y **R2** (misnomers
   `heal-between-nodes`/`extra-event-choices`; oportunidad: cablear el 2º a D10).
 
-### Codeable y listo (D10+BAL+REV cerrados → toca esto)
-- **D29** — PANTALLA DE RÉCORDS: UI que muestre el historial de runs sobre los datos
-  ya guardados en el meta-save (`RunRecord`/`runs[]`/`computeScore`/`getBestRun`).
-  Primero cablear un `recordRunComplete(outcome)` en el cierre de campaña.
+### Codeable y listo
+- ✅ **D29** (it.57) — PANTALLA DE RÉCORDS: `RecordsScreen.tsx` (Anales de Campaña)
+  sobre `metaSave.campaignLogs` (YA vivo vía `recordCampaignLog`; NO hizo falta
+  recorder nuevo). Stats agregados + lista. Ruta `#records` (no REQUIRES_RUN),
+  botón «Anales» en footer del Title. Docs: wireframes.html. NOTA: el sistema viejo
+  `RunRecord`/`runs[]`/`computeScore`/`getBestRun` sigue MUERTO (duplicado) →
+  candidato a recortar (decisión del usuario).
 - **D32** — EXTRAER `returnToHub` de EndgameCard a la capa de lógica, con tests del
   camino crítico de vuelta al hub ANTES de tocar. (Ojo: ahora también drena eventos D10.)
 - **D28b** — CODE-SPLITTING del bundle (~590KB) por rutas/pantallas, validando cada
@@ -112,6 +115,10 @@ unión blindada. 213 tests. Siguiente foco del backlog: tareas BAL y REV.
   `extra-event-choices` advisor a D10: requieren decisión del usuario.
 
 ## Log (más reciente primero)
+- it.57 — **D29 hecho**: `RecordsScreen` (Anales) sobre `campaignLogs` (ya vivo, sin
+  recorder nuevo); ruta `#records` + botón en Title; wireframe añadido. tsc/216 tests/
+  17 verify/build verde. Screenshot Playwright inconcluyente (dev server sirviendo otro
+  worktree). Próximo: D32 (extraer returnToHub) o D28b (code-splitting).
 - it.56 — **REV cerrada**: auditadas las 8 uniones de bonos (semántica + magnitud);
   coherentes y fieles, sin mentira de cara al jugador. 2 hallazgos de balance/diseño
   (R1 iuniores de items, R2 misnomers advisor) documentados, sin autofix. Read-only;

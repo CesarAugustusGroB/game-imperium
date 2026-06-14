@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { Settings, Landmark, X } from 'lucide-preact';
+import { Settings, Landmark, ScrollText, X } from 'lucide-preact';
 import { navigateTo } from '../screens';
 import { GoldDust } from '../components/GoldDust';
 import { OptionsModal } from '../components/SettingsPanel';
@@ -691,6 +691,11 @@ export function TitleScreen() {
             <button type="button" class="title-screen__footer-button" onClick={() => setCreditsOpen(true)}>
               <Landmark aria-hidden="true" />
               <span>Credits</span>
+            </button>
+            <span class="title-screen__footer-separator" aria-hidden="true" />
+            <button type="button" class="title-screen__footer-button" onClick={() => navigateTo('records')}>
+              <ScrollText aria-hidden="true" />
+              <span>Anales</span>
             </button>
           </div>
         </footer>
