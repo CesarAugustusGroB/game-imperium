@@ -1,4 +1,5 @@
 import { signal } from '@preact/signals';
+import type { CampaignConflict } from './campaign-events-types';
 
 // ── Consequence tracking ──
 
@@ -12,6 +13,14 @@ export const consequenceFlags = signal<Set<string>>(new Set());
 /** Events seen during the current spoke (for deduplication). */
 export const seenEventsThisSpoke = signal<Set<string>>(new Set());
 
+/**
+ * Hub conflicts sealed at embark (provinces + seated advisors), eligible to
+ * surface as ONE campaign event this spoke. Read-only until the next embark
+ * reseals it. Not yet persisted in meta-save — wired when the controller (D10
+ * step 4) starts consuming it.
+ */
+export const campaignConflicts = signal<CampaignConflict[]>([]);
+
 // ── Actions ──
 
 /** Set a consequence flag (idempotent). */
@@ -23,6 +32,11 @@ export function setConsequenceFlag(flag: string): void {
 /** Check if a consequence flag is set. */
 export function hasConsequenceFlag(flag: string): boolean {
   return consequenceFlags.value.has(flag);
+}
+
+/** Seal the embark-time conflict snapshot (replaces any prior list). */
+export function sealCampaignConflicts(conflicts: CampaignConflict[]): void {
+  campaignConflicts.value = conflicts.slice();
 }
 
 /** Mark an event as seen this spoke. */
@@ -46,4 +60,5 @@ export function resetSpokeEvents(): void {
 export function resetEventStore(): void {
   consequenceFlags.value = new Set();
   seenEventsThisSpoke.value = new Set();
+  campaignConflicts.value = [];
 }

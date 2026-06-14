@@ -52,8 +52,11 @@ Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea so
    `CampaignConflict`/`CampaignEvent`/`EventChoice`/`HubConsequence`; 9ª unión
    registrada en `verify-effects.ts` (latente hasta paso 6). Nota de diseño: no hay
    campo `loyalty` en Advisor → la consecuencia de personaje se modela sobre `xp`.
-2. **Detección de conflictos** — `detectCampaignConflicts(snapshot)` puro sobre
-   advisors + provincias. Sella el snapshot en el estado de campaña al embarcar.
+2. ✅ **Detección de conflictos** (it.49) — `campaign-conflicts.ts` puro
+   (`detectCampaignConflicts`: provincias con unrest ≥40 + consejo dividido ≥2
+   colores). Snapshot sellado en `event-store.campaignConflicts` al embarcar
+   (EmbarkCard). 4 tests. PEND: persistir el snapshot en meta-save (al paso 4,
+   cuando el controller lo consuma).
 3. **Catálogo** — `src/data/campaign-events.ts`: 6–8 eventos (mezcla provincia +
    advisor), 2–3 opciones c/u, deltas de soldados/iuniores en CENTENAS. Opción
    `premium` para `extra-event-choice`.
@@ -78,6 +81,9 @@ Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea so
   (code-splitting) — aprobados; abordar DESPUÉS de cerrar la épica D10.
 
 ## Log (más reciente primero)
+- it.49 — **D10 paso 2 hecho**: `detectCampaignConflicts` puro (provincia unrest≥40 +
+  consejo dividido) → snapshot sellado en `event-store.campaignConflicts` al embarcar.
+  194 tests (+4) · 17/17 verify · build verde. Próximo: paso 3 (catálogo `campaign-events.ts`).
 - it.48b — **D10 paso 1 hecho**: `campaign-events-types.ts` (4 tipos) + 9ª unión
   `HubConsequence` registrada (latente) en `verify-effects.ts`. tsc limpio · 17/17
   verify · build verde. Próximo: paso 2 (`detectCampaignConflicts` + snapshot al embarque).

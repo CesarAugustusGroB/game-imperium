@@ -1,6 +1,10 @@
 import { signal } from '@preact/signals';
 import { useMemo } from 'preact/hooks';
 import { councilSlots, plannedCampaignDuration, canEmbarkFromCouncil } from '../../../../game/council/council-store';
+import type { Advisor } from '../../../../game/council/advisor';
+import { provinces } from '../../../../game/province/province-store';
+import { detectCampaignConflicts } from '../../../../game/events/campaign-conflicts';
+import { sealCampaignConflicts } from '../../../../game/events/event-store';
 import { preparedArmy, preparedLegate } from '../../../../game/progression/strategic-store';
 import { getResource } from '../../../../game/core/resources';
 import { selectedCommander } from '../../../../game/core/game-state';
@@ -108,6 +112,11 @@ export function EmbarkCard({ accent = '#d4a843', index = 0 }: EmbarkCardProps) {
       quests: secondaryQuests,
       doctrineModifiers,
     });
+    // Seal the embark-time hub conflicts so a campaign event can surface mid-march (D10).
+    sealCampaignConflicts(detectCampaignConflicts(
+      provinces.value,
+      councilSlots.value.filter((a): a is Advisor => a != null),
+    ));
     navigateToIterBelli();
   }
 
