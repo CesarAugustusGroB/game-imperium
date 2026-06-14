@@ -65,6 +65,9 @@ const SCENARIO_ENEMIES: Record<string, SimEnemy & { playerCfg?: { discipline?: n
   // (better armor, drilled discipline), so simulate that baseline too.
   'GALLIA (gauls) · fresh': { archetype: 'gauls', baseSoldiers: 6500, minSoldiers: 2200 },
   'GALLIA (gauls) · veteran (disc 5, iron)': { archetype: 'gauls', baseSoldiers: 6500, minSoldiers: 2200, playerCfg: { discipline: 5, armor: 'iron' } },
+  // Numantia: third campaign — elite iberians (smaller host, highest raw stats).
+  // Only a geared veteran (disc 6, iron) is the appropriate tier; fresh loses.
+  'NUMANTIA (iberians) · veteran (disc 6, iron)': { archetype: 'iberians', baseSoldiers: 5200, minSoldiers: 2000, playerCfg: { discipline: 6, armor: 'iron' } },
 };
 
 for (const [scenarioLabel, cfg] of Object.entries(SCENARIO_ENEMIES)) {

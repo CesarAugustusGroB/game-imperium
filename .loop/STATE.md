@@ -50,12 +50,12 @@ Problemas conocidos: acantilado casi binario (13%→87%); erosión en marcha es 
 neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
 
 ## Backlog de palancas (ordenado; una por iteración)
-1. ⚠️ **Escalado enemigo geométrico entre escenarios** — `baseSoldiers` por escenario.
-   Hoy 5000→6500 (×1.3). BLOQUEADO PARCIAL (it.1): subir Gallia choca con su intención
-   de diseño ("un veterano de 6 cohortes gana >50%": fully Gallia ya está justo en 52–55%
-   rush). Subir el enemigo lo hunde bajo banda → viola barrera 3. Solo viable cuando exista
-   un 3.er escenario (poner el peldaño geométrico ahí) o si antes se sube el poder del
-   jugador veterano. Reabrir tras palancas 3/5.
+1. ✅ **Escalado enemigo geométrico entre escenarios** (it.4) — DESBLOQUEADA con el 3.er
+   escenario NUMANTIA (arquetipo `iberians`, caetrati elite). Escalera: Sag carthage 5000 →
+   Gallia gauls 6500 → Numancia iberians 5200 (menos efectivos pero stats elite = peldaño de
+   dificultad geométrico, no de headcount). victoryGold 200→400→800. El tier apropiado sube
+   por escenario (standard→fully→veterano), cada uno ~50%. Decisión del usuario: perder y
+   farmear antes de ganar es la progresión prevista (suelo de accesibilidad relajado).
 2. ✅ **Recompensa de victoria geométrica** (it.1) — `victoryGold` por escenario
    (Saguntum 200 → Gallia 400, ×2), leído en `applyBattleOutcome`. Funda los costes
    geométricos sin tocar la batalla.
@@ -73,6 +73,20 @@ neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
 6. ⏳ **Leva de refuerzos / curva disciplina-moral** — palancas tardías.
 
 ## Log (más reciente primero)
+- it.4 — **Palanca 1 DESBLOQUEADA: 3.er escenario NUMANTIA** (decisión del usuario). Nuevo
+  `iter-belli-scenario-numantia.ts` (arquetipo `iberians`, objetivo Numancia, terreno hills,
+  carta decisiva `asalto_numancia`, victoryGold 800). Registrado en SCENARIOS; Gallia→Numancia
+  se desbloquea por la lógica genérica index+1. **Mejora de fidelidad del sim** (decisión usuario
+  pto.1): nuevo tier `veteran` (statMult 1.4 + disc6 + moral+2 ≈ kit de doctrinas/legado) para
+  medir escenarios tardíos. Calibrado baseSoldiers 7000→5200 (iberians elite): veterano Numancia
+  rush **56%** (en banda 40-65), monótono (under/std/fully ~0% → grind para ganar, filosofía del
+  usuario). Escalera geométrica demostrada (tier fully fijo: Sag 90%→Gallia 53%→Numancia 0.5%).
+  Barreras: deltas soldados/iuniores sin tocar, monotonía ✓, banda ✓ (apropiado/escenario ~50%),
+  accesibilidad relajada por diseño. tsc · 224 tests (+1 numancia, test unlock actualizado) ·
+  17/17 verify · build · docs sincronizados (sistemas/eventos/wireframes: 2→3 escenarios).
+  | tier (rush) | Saguntum | Gallia | Numancia |
+  | fully-prep. | 90% | 53% | 0.5% |
+  | veteran     | 100% | 99% | 56% |
 - it.3 — **HEARTBEAT + IDLE** (ninguna palanca pasa todas las barreras con ≥75% confianza).
   Sims estables (sim-playthrough 1000, sin cambios desde it.2): Sag rush std 12.8% / fully 88.3%;
   Sag balanced std 28.7% / fully 62.3%; Gallia balanced fully 50.2%. Campaign reach 100%.

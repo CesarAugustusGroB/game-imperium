@@ -10,9 +10,10 @@ import { signal } from '@preact/signals';
 import type { CampaignScenario } from './iter-belli-types';
 import { SAGUNTUM } from '../../data/iter-belli-scenario-saguntum';
 import { GALLIA } from '../../data/iter-belli-scenario-gallia';
+import { NUMANTIA } from '../../data/iter-belli-scenario-numantia';
 
 /** Ordered campaign progression — index N+1 unlocks when index N is won. */
-export const SCENARIOS: readonly CampaignScenario[] = [SAGUNTUM, GALLIA];
+export const SCENARIOS: readonly CampaignScenario[] = [SAGUNTUM, GALLIA, NUMANTIA];
 
 export function getScenarioById(id: string): CampaignScenario | undefined {
   return SCENARIOS.find((s) => s.id === id);

@@ -577,7 +577,7 @@
     <div class="panel-head">
       <div class="num">VIII</div>
       <h2>Iter Belli</h2>
-      <p>La campaña de <b>cartas</b> (no de hexágonos): una "marcha de guerra" por un itinerario hasta el choque decisivo. Dos escenarios encadenados: <b>SAGUNTUM</b> (vs Aníbal, arquetipo <i>carthage</i>) y, al vencerlo, <b>GALLIA</b> (Alesia vs Vercingétorix, arquetipo <i>gauls</i> — cargadores furiosos sin disciplina). El selector de campaña aparece en EmbarkCard cuando hay más de uno desbloqueado.</p>
+      <p>La campaña de <b>cartas</b> (no de hexágonos): una "marcha de guerra" por un itinerario hasta el choque decisivo. Tres escenarios encadenados en escalera geométrica: <b>SAGUNTUM</b> (vs Aníbal, arquetipo <i>carthage</i>), al vencerlo <b>GALLIA</b> (Alesia vs Vercingétorix, arquetipo <i>gauls</i> — cargadores furiosos sin disciplina) y, al vencerla, <b>NUMANTIA</b> (vs Retógenes, arquetipo <i>iberians</i> — caetrati celtíberos elite, menos efectivos pero con los stats más altos). La dificultad apropiada sube de tier por escenario (perder y farmear recursos antes de poder ganar es la progresión prevista). El selector de campaña aparece en EmbarkCard cuando hay más de uno desbloqueado.</p>
     </div>
 
     <div class="note">
@@ -650,7 +650,7 @@
       </div>
       <div class="card">
         <h3><span class="ic">♟</span>Arquetipos enemigos &amp; terreno</h3>
-        <p>El enemigo del escenario tiene un <code>archetypeKey</code>: <b>carthage</b> (Saguntum, combinado), <b>gauls</b> (Gallia, cargadores furiosos), e <b>iberians</b>/<b>garrison</b> listos para escenarios futuros. <b>Formaciones</b>: 4 comunes (battleLine/openOrder/shieldWall/<b>duplex</b> disc 4) + 3 únicas por trait de legado (triplex/testudo/cuneus). <b>Centro de batalla</b> por terreno: plain/hill/ford/camp/<b>forest</b> (−carga ambos) /<b>marsh</b>. <b>Balance simulado</b> (<code>tools/sim-battle-balance.ts</code>, base 5000 + carthage afinado): el ejército inicial de 2 cohortes pierde siempre — hay que reclutar; 4 cohortes de línea ganan ~25% en frío y ~50-60% con buena campaña (erosión/amenaza); el roster completo de 6 domina.</p>
+        <p>El enemigo del escenario tiene un <code>archetypeKey</code>: <b>carthage</b> (Saguntum, combinado), <b>gauls</b> (Gallia, cargadores furiosos), <b>iberians</b> (Numantia, caetrati elite de stats altos) y <b>garrison</b> (muro fortificado, listo para escenarios futuros). <b>Formaciones</b>: 4 comunes (battleLine/openOrder/shieldWall/<b>duplex</b> disc 4) + 3 únicas por trait de legado (triplex/testudo/cuneus). <b>Centro de batalla</b> por terreno: plain/hill/ford/camp/<b>forest</b> (−carga ambos) /<b>marsh</b>. <b>Balance simulado</b> (<code>tools/sim-battle-balance.ts</code>, base 5000 + carthage afinado): el ejército inicial de 2 cohortes pierde siempre — hay que reclutar; 4 cohortes de línea ganan ~25% en frío y ~50-60% con buena campaña (erosión/amenaza); el roster completo de 6 domina.</p>
         <div class="pillwrap"><span class="pill">engine.ts</span><span class="pill">orders.ts</span><span class="pill">resolver.ts</span><span class="pill">enemy-ai.ts</span><span class="pill">controller.ts</span><span class="pill">decreta.ts</span></div>
       </div>
     </div>
@@ -720,7 +720,7 @@
         <ul>
           <li><code>iter-belli-balance.ts</code> — umbrales <code>ALERT</code> (soldados, moral, suministros, amenaza, plazo)</li>
           <li><code>ROMAN[]</code> — disciplina en números romanos</li>
-          <li><code>iter-belli-scenario.ts</code> — registro <b>SCENARIOS</b> (SAGUNTUM → GALLIA) + desbloqueo persistido</li>
+          <li><code>iter-belli-scenario.ts</code> — registro <b>SCENARIOS</b> (SAGUNTUM → GALLIA → NUMANTIA) + desbloqueo persistido</li>
         </ul>
       </div>
     </div>

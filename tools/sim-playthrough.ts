@@ -80,14 +80,20 @@ function pickCard(strategy: Strategy): number | 'camp' | null {
 // legate adds at most +2 (clamped) → ~4 is the practical embark ceiling. (Battle
 // also omits legate stat/morale/HP bonuses and doctrines/decreta — so these win
 // rates are CONSERVATIVE: a real legate-led, doctrine-equipped army does better.)
-interface Roster { label: string; ids: string[]; soldiers: number; discipline: number; armor: 'copper' | 'bronze' | 'iron'; }
+// `statMult`/`passiveMorale` approximate the kit a geared player brings that this
+// sim does not model literally (legate stat traits, equipped doctrines, commander
+// passives). The `veteran` tier ≈ a player who has won 1–2 campaigns and stacked
+// doctrines/loot — the *appropriate* tier for the later scenarios. The 3 lighter
+// tiers are early-game loadouts that are MEANT to lose the hard scenarios and grind.
+interface Roster { label: string; ids: string[]; soldiers: number; discipline: number; armor: 'copper' | 'bronze' | 'iron'; statMult?: number; passiveMorale?: number; }
 const ROSTERS: Roster[] = [
-  { label: 'under-prepared (2 coh · disc2 · copper)', ids: ['hastati', 'hastati'], soldiers: 3400, discipline: 2, armor: 'copper' },
-  { label: 'standard       (4 coh · disc3 · bronze)', ids: ['hastati', 'hastati', 'principes', 'triarii'], soldiers: 5400, discipline: 3, armor: 'bronze' },
-  { label: 'fully-prepared (6 coh · disc4 · iron)  ', ids: ['hastati', 'hastati', 'principes', 'triarii', 'velites', 'equites'], soldiers: 7400, discipline: 4, armor: 'iron' },
+  { label: 'under-prepared (2 coh · disc2 · copper)     ', ids: ['hastati', 'hastati'], soldiers: 3400, discipline: 2, armor: 'copper' },
+  { label: 'standard       (4 coh · disc3 · bronze)     ', ids: ['hastati', 'hastati', 'principes', 'triarii'], soldiers: 5400, discipline: 3, armor: 'bronze' },
+  { label: 'fully-prepared (6 coh · disc4 · iron)       ', ids: ['hastati', 'hastati', 'principes', 'triarii', 'velites', 'equites'], soldiers: 7400, discipline: 4, armor: 'iron' },
+  { label: 'veteran        (6 coh · disc6 · iron · +kit)', ids: ['hastati', 'hastati', 'principes', 'triarii', 'velites', 'equites'], soldiers: 8400, discipline: 6, armor: 'iron', statMult: 1.4, passiveMorale: 2 },
 ];
 
-const SCENARIO_TERRAIN: Record<string, string> = { saguntum: 'plains', gallia: 'forest' };
+const SCENARIO_TERRAIN: Record<string, string> = { saguntum: 'plains', gallia: 'forest', numantia: 'hills' };
 
 interface Outcome { reachedBattle: boolean; campaignWin: boolean; weaken: number; threatEnd: number; moraleArrival: number; survivors: number; }
 
@@ -125,7 +131,7 @@ function runOne(r: Roster, strategy: Strategy, scenId: string): Outcome {
   const cs = iterBelliState.value;
   const roster = r.ids.map((id) => createCohortInstance(getCohortById(id)!));
   const snap = { soldiers: cs.soldiers, initialSoldiers: cs.initialSoldiers, morale: cs.morale, discipline: cs.discipline, ammunition: cs.ammunition };
-  const seed = buildPlayerSeed(snap, roster, null, FORMATIONS.battleLine, { material: r.armor }, undefined, cs.fortified, 1);
+  const seed = buildPlayerSeed(snap, roster, null, FORMATIONS.battleLine, { material: r.armor }, undefined, cs.fortified, r.statMult ?? 1, r.passiveMorale ?? 0);
   const enemyMult = (1 + cs.threat / B.ENEMY_THREAT_DIVISOR) * (1 - cs.enemyWeaken * B.ENEMY_WEAKEN_PER_POINT);
   const enemySoldiers = Math.max(scen.enemy.minSoldiers, Math.round(scen.enemy.baseSoldiers * enemyMult));
   const enemy = buildEnemyArchetype(scen.enemy.archetypeKey, cs.enemyWeaken, enemySoldiers);
@@ -142,7 +148,7 @@ function runOne(r: Roster, strategy: Strategy, scenId: string): Outcome {
 const pct = (n: number, d: number) => `${((n / d) * 100).toFixed(1)}%`;
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 
-for (const scenId of ['saguntum', 'gallia']) {
+for (const scenId of ['saguntum', 'gallia', 'numantia']) {
   for (const strategy of ['rush', 'balanced'] as const) {
     console.log(`\n████ ${scenId.toUpperCase()} · ${strategy.toUpperCase()} · ${RUNS} runs/tier ████`);
     console.log('player tier                             | reach batt | win|reach | OVERALL win | weaken thr morale');

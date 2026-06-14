@@ -353,6 +353,17 @@ export const CARD_DEFS: OperationCard[] = [
     locations: ['alesia'],
     weight: 99,
   },
+  {
+    id: 'asalto_numancia',
+    name: 'Asalto a Numancia',
+    category: 'Operaciones',
+    desc: 'Lanzar el asalto final contra la fortaleza celtíbera. Veinte años de guerra se deciden hoy.',
+    cost: { time: 0 },
+    effects: () => ({ triggerFinalBattle: true }),
+    expiry: 99,
+    locations: ['numancia'],
+    weight: 99,
+  },
 
   // ── COMPROMISOS — penalización si expiran sin atender ──────────────────────────
   {

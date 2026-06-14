@@ -10,8 +10,8 @@ import { startIterBelliCampaign, resetIterBelli } from '../iter-belli-state';
 beforeEach(() => { resetUnlockedScenarios(); resetActiveScenario(); });
 
 describe('S-F: scenario registry', () => {
-  it('has Saguntum first and Gallia second', () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(['saguntum', 'gallia']);
+  it('has Saguntum, Gallia, Numantia in order', () => {
+    expect(SCENARIOS.map((s) => s.id)).toEqual(['saguntum', 'gallia', 'numantia']);
   });
 
   it('Gallia uses the gauls archetype and Alesia objective', () => {
@@ -30,6 +30,15 @@ describe('S-F: scenario registry', () => {
     }
   });
 
+  it('Numantia uses the iberians archetype, Numancia objective, geometric victory gold', () => {
+    const n = getScenarioById('numantia')!;
+    expect(n.enemy.archetypeKey).toBe('iberians');
+    expect(n.objectiveLocationId).toBe('numancia');
+    expect(n.decisiveCardId).toBe('asalto_numancia');
+    expect(n.provinceTerrain).toBe('hills');
+    expect(n.victoryGold).toBe(800); // 200 → 400 → 800 geometric ladder
+  });
+
   it('Gallia reuses the generic location ids so existing cards stay eligible', () => {
     const g = getScenarioById('gallia')!;
     const ids = new Set(g.locations.map((l) => l.id));
@@ -45,15 +54,18 @@ describe('S-F: unlock progression', () => {
     expect(isScenarioUnlocked('gallia')).toBe(false);
   });
 
-  it('winning Saguntum unlocks Gallia', () => {
+  it('winning Saguntum unlocks Gallia, winning Gallia unlocks Numantia', () => {
     expect(unlockNextScenario('saguntum')).toBe('gallia');
     expect(isScenarioUnlocked('gallia')).toBe(true);
+    expect(unlockNextScenario('gallia')).toBe('numantia');
+    expect(isScenarioUnlocked('numantia')).toBe(true);
   });
 
   it('unlockNextScenario is a no-op past the last scenario or when already unlocked', () => {
     unlockScenario('gallia');
-    expect(unlockNextScenario('gallia')).toBeNull();   // no scenario after gallia
     expect(unlockNextScenario('saguntum')).toBeNull(); // gallia already unlocked
+    unlockScenario('numantia');
+    expect(unlockNextScenario('numantia')).toBeNull(); // no scenario after numantia
   });
 
   it('setActiveScenarioById switches the engine-read scenario', () => {
