@@ -9,6 +9,8 @@ import { OperationCard } from './OperationCard';
 import { CampaignLog } from './CampaignLog';
 import { BattleModal } from './BattleModal';
 import { EndgameCard } from './EndgameCard';
+import { CampaignEventModal } from './CampaignEventModal';
+import { pendingCampaignEvent, maybeFireCampaignEvent } from '../../../game/events/campaign-events-controller';
 import { ResourceAmount } from '../../components/ResourceIcon';
 
 // ── CSS injection (idempotent; refreshes content on HMR re-execution) ──
@@ -335,7 +337,7 @@ export function IterBelliScreen() {
                 key={card.instanceId}
                 card={card}
                 state={s}
-                onPlay={(id) => { playSfx('ui_equip'); playCard(id); }}
+                onPlay={(id) => { playSfx('ui_equip'); playCard(id); maybeFireCampaignEvent(); }}
               />
             ))}
             {Array.from({ length: placeholders }, (_, i) => <div key={`ph-${i}`} class="ib-card-ph" />)}
@@ -345,7 +347,7 @@ export function IterBelliScreen() {
             <button
               class="ib-camp-btn"
               disabled={!inCampaign}
-              onClick={() => { playSfx('ui_click'); camp(); }}
+              onClick={() => { playSfx('ui_click'); camp(); maybeFireCampaignEvent(); }}
             >
               {CAMP_LABEL}
             </button>
@@ -357,6 +359,7 @@ export function IterBelliScreen() {
 
       {s.phase === 'battle' && <BattleModal />}
       {s.phase === 'endgame' && <EndgameCard />}
+      {pendingCampaignEvent.value && <CampaignEventModal />}
     </div>
   );
 }

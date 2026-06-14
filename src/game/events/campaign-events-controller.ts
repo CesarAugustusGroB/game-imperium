@@ -89,6 +89,7 @@ export function maybeFireCampaignEvent(opts: {
 } = {}): FiredCampaignEvent | null {
   const rng = opts.rng ?? Math.random;
   if (campaignEventFiredThisSpoke.value || pendingCampaignEvent.value) return null;
+  if (iterBelliState.value.phase !== 'campaign') return null; // never mid-battle/endgame
   const p = opts.progress ?? marchProgress();
   if (p < EVENT_FIRE_WINDOW.min || p > EVENT_FIRE_WINDOW.max) return null;
   if (rng() >= EVENT_FIRE_CHANCE) return null;

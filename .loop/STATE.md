@@ -66,10 +66,14 @@ Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea so
    `maybeFireCampaignEvent` (ventana 0.35–0.8, P=0.5, tope ≤1, seams rng/pick/progress),
    `resolveCampaignEventChoice`. Cola `pendingHubConsequences` + guard en event-store.
    Snapshot+cola+guard PERSISTIDOS en meta-save (cierra el PEND del paso 2). 8 tests.
-5. **Modal** — `CampaignEventModal.tsx` con el lenguaje visual de las cartas. Engancha
-   `maybeFireCampaignEvent()` tras cada turno en IterBelliScreen + render del pending.
-6. **Aplicación diferida** — `applyCampaignEventOutcomes()` en el retorno-al-hub;
-   persistir la cola pendiente en iter-belli-save/meta-save.
+5. ✅ **Modal** (it.52) — `CampaignEventModal.tsx` (overlay+card tokens, acento por
+   fuente, chips de efectos, `{source}` sustituido, gating premium por
+   `extra-event-choice`). Trigger `maybeFireCampaignEvent()` enganchado tras
+   playCard/camp + guard de fase. Render del pending en IterBelliScreen. NOTA: no se
+   forzó screenshot (evento probabilístico sin hook de dev); reutiliza CSS probado.
+6. **Aplicación diferida** — `applyCampaignEventOutcomes()` en el retorno-al-hub:
+   drenar `pendingHubConsequences` → province.unrest / advisor.xp (grantAdvisorXp) /
+   recursos. CIERRA el bucle (hoy la cola se llena pero nada la aplica al hub).
 7. **Tests + docs** — integración headless embark→evento→retorno; sincronizar
    `sistema-de-eventos.html` y `sistemas-del-juego.html`.
 
@@ -86,6 +90,10 @@ Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea so
   (code-splitting) — aprobados; abordar DESPUÉS de cerrar la épica D10.
 
 ## Log (más reciente primero)
+- it.52 — **D10 paso 5 hecho**: `CampaignEventModal` (tokens overlay/card, chips de
+  efectos, gating premium) + trigger enganchado tras playCard/camp con guard de fase.
+  208 tests · 17/17 verify · build verde. El evento ya aflora; falta drenarlo al hub
+  (paso 6). Próximo: paso 6 (`applyCampaignEventOutcomes` en retorno-al-hub).
 - it.51 — **D10 paso 4 hecho**: controller (select/resolve/fire/resolveChoice) +
   cola `pendingHubConsequences` + guard ≤1; snapshot+cola+guard persistidos en
   meta-save (cierra PEND paso 2). Trigger se engancha en la pantalla en el paso 5.
