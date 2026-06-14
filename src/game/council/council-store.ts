@@ -208,6 +208,35 @@ export function grantAdvisorXp(advisorId: string, amount: number): boolean {
   return tieredUp;
 }
 
+/**
+ * Apply a SIGNED xp delta to an advisor (campaign-event consequence, D10).
+ * Positive routes through grantAdvisorXp (auto tier-up + promotion toast); negative
+ * reduces xp toward 0 WITHOUT stripping an already-earned tier (rank is earned,
+ * not lost — losing favour only slows the next promotion). Returns true if applied.
+ */
+export function adjustAdvisorXp(advisorId: string, delta: number): boolean {
+  if (delta > 0) return grantAdvisorXp(advisorId, delta);
+  if (delta === 0) return false;
+  const slots = councilSlots.value.slice() as (Advisor | null)[];
+  for (let i = 0; i < slots.length; i++) {
+    const a = slots[i];
+    if (a && a.id === advisorId) {
+      slots[i] = { ...a, xp: Math.max(0, a.xp + delta) };
+      councilSlots.value = slots;
+      return true;
+    }
+  }
+  const market = advisorMarket.value.slice();
+  for (let i = 0; i < market.length; i++) {
+    if (market[i].id === advisorId) {
+      market[i] = { ...market[i], xp: Math.max(0, market[i].xp + delta) };
+      advisorMarket.value = market;
+      return true;
+    }
+  }
+  return false;
+}
+
 // ── Advisor passive aggregators ──
 
 /** Sum of shop-discount percents from all seated advisors. */

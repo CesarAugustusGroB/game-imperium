@@ -195,6 +195,19 @@ export function buildInvestment(provinceId: string, type: InvestmentType): boole
 }
 
 /**
+ * Adjust a province's unrest by a signed delta, clamped to [0, 100] (same bounds
+ * as the season tick). Used by the campaign-event hub write-back (D10).
+ */
+export function adjustProvinceUnrest(provinceId: string, delta: number): boolean {
+  const idx = provinces.value.findIndex(p => p.id === provinceId);
+  if (idx === -1) return false;
+  const arr = [...provinces.value];
+  arr[idx] = { ...arr[idx], unrest: Math.max(0, Math.min(100, arr[idx].unrest + delta)) };
+  provinces.value = arr;
+  return true;
+}
+
+/**
  * Update the tax levels for a province. Changes take effect on the next season tick.
  */
 export function setProvinceTax(provinceId: string, lowerTax: TaxLevel, upperTax: TaxLevel): boolean {

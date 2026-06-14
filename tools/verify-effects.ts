@@ -240,12 +240,12 @@ const advisorPassiveTypes = STARTER_ADVISORS.flatMap((a) => a.tiers.map((t) => t
 checkUnion('AdvisorPassive', 'src/game/council/advisor.ts', 'AdvisorPassive', ADVISOR_APPLICATION, advisorPassiveTypes);
 
 // ── Campaign-event hub write-back (the 9th union; plan D10, 2026-06-14) ──
-// Latent until applyCampaignEventOutcomes (D10 step 6) wires the live site; the
-// catalog (campaign-events.ts, step 3) is what will populate hubConsequenceDataTypes.
+// Applied on return to the Forum by applyCampaignEventOutcomes (D10 step 6).
+const APPLY_OUTCOMES = 'src/game/events/apply-outcomes.ts';
 const HUB_CONSEQUENCE_APPLICATION: Record<string, AppEntry> = {
-  'province-unrest': { latent: true, note: 'inert until applyCampaignEventOutcomes lands (D10 step 6) → province.unrest' },
-  'advisor-xp':      { latent: true, note: 'inert until applyCampaignEventOutcomes lands (D10 step 6) → advisor.xp' },
-  'resource':        { latent: true, note: 'inert until applyCampaignEventOutcomes lands (D10 step 6) → hub gold/iuniores' },
+  'province-unrest': { files: [APPLY_OUTCOMES], note: 'applyCampaignEventOutcomes → adjustProvinceUnrest' },
+  'advisor-xp':      { files: [APPLY_OUTCOMES], note: 'applyCampaignEventOutcomes → adjustAdvisorXp' },
+  'resource':        { files: [APPLY_OUTCOMES], note: 'applyCampaignEventOutcomes → refund/spendResource (face value)' },
 };
 const hubConsequenceDataTypes = CAMPAIGN_EVENTS
   .flatMap((e) => e.choices)

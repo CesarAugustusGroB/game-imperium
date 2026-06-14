@@ -12,6 +12,7 @@ import { getActiveScenario, unlockNextScenario, getScenarioById } from '../../..
 import { addNotification } from '../../notifications/notification-store';
 import { START } from '../../../game/iterBelli/iter-belli-balance';
 import { conquerProvince, provinces, collectProvinceIncome } from '../../../game/province/province-store';
+import { applyCampaignEventOutcomes } from '../../../game/events/apply-outcomes';
 import { collectAllyIncome } from '../../../game/progression/ally-store';
 import { councilSlots, grantAdvisorXp } from '../../../game/council/council-store';
 import { pickConquestName, PROVINCE_REWARD } from '../../../data/iter-belli-conquest';
@@ -132,6 +133,9 @@ function returnToHub(): void {
   const xpPerAdvisor = 1 + (outcome?.victory ? 1 : 0);
   const seatedIds = councilSlots.value.flatMap((a) => (a ? [a.id] : []));
   for (const id of seatedIds) grantAdvisorXp(id, xpPerAdvisor);
+
+  // Drain any campaign-event choices queued this march into the hub (D10).
+  applyCampaignEventOutcomes();
 
   resetIterBelli();
   navigateTo('hub');

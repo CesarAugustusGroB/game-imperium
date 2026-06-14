@@ -71,11 +71,15 @@ Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea so
    `extra-event-choice`). Trigger `maybeFireCampaignEvent()` enganchado tras
    playCard/camp + guard de fase. Render del pending en IterBelliScreen. NOTA: no se
    forzó screenshot (evento probabilístico sin hook de dev); reutiliza CSS probado.
-6. **Aplicación diferida** — `applyCampaignEventOutcomes()` en el retorno-al-hub:
-   drenar `pendingHubConsequences` → province.unrest / advisor.xp (grantAdvisorXp) /
-   recursos. CIERRA el bucle (hoy la cola se llena pero nada la aplica al hub).
+6. ✅ **Aplicación diferida** (it.53) — `apply-outcomes.ts`:
+   `applyCampaignEventOutcomes()` drena `pendingHubConsequences` →
+   `adjustProvinceUnrest` (clamp 0–100) / `adjustAdvisorXp` (signo, sin degradar
+   tier) / recursos a valor nominal (`refundResource`/`spendResource`, cf. D19).
+   Enganchado en `returnToHub`. **9ª unión `HubConsequence` deslatentizada** (sitio
+   real en verify-effects). 3 tests. **Bucle Hub→campaña→Hub CERRADO.**
 7. **Tests + docs** — integración headless embark→evento→retorno; sincronizar
-   `sistema-de-eventos.html` y `sistemas-del-juego.html`.
+   `sistema-de-eventos.html` y `sistemas-del-juego.html` (AHORA el sistema es
+   jugable end-to-end → toca actualizar los docs).
 
 ### Tareas acompañantes (intercalar; pueden ir antes/durante D10)
 - **BAL** — normalizar TODO delta de soldados/iuniores (cartas, leva, eventos,
@@ -90,6 +94,10 @@ Construir por pasos; cada paso deja `tsc`+verify+build en verde y se commitea so
   (code-splitting) — aprobados; abordar DESPUÉS de cerrar la épica D10.
 
 ## Log (más reciente primero)
+- it.53 — **D10 paso 6 hecho**: `applyCampaignEventOutcomes` drena la cola al hub
+  (unrest/xp/recursos a valor nominal) en `returnToHub`; 9ª unión deslatentizada.
+  **Bucle Hub→campaña→Hub cerrado.** 211 tests (+3) · 17/17 verify · build verde.
+  Próximo: paso 7 (test integración embark→evento→retorno + sync docs HTML).
 - it.52 — **D10 paso 5 hecho**: `CampaignEventModal` (tokens overlay/card, chips de
   efectos, gating premium) + trigger enganchado tras playCard/camp con guard de fase.
   208 tests · 17/17 verify · build verde. El evento ya aflora; falta drenarlo al hub
