@@ -62,16 +62,30 @@ neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
 3. ⏳ **Poder de doctrina/decreto compuesto** — costes ya ×3/×6 por tier; escalar los
    EFECTOS para que el tier III >2× tier I (inversión que compone en batalla). Vigilar
    centenas en deltas de soldados/iuniores.
-4. ⏳ **Convertir la erosión-trampa en palanca exponencial** — `ENEMY_WEAKEN_PER_POINT`
-   o coste/potencia de las cartas de weaken: que invertir tiempo de marcha en erosionar
-   dé ventaja compuesta sin ser obligatorio. Validar: reach balanced ≥ ~80% y su winrate
-   supera claramente al rush al mismo tier.
+4. 🟡 **Convertir la erosión-trampa en palanca exponencial** — PARCIAL (it.2):
+   `ENEMY_WEAKEN_PER_POINT` 0.07→0.10 (cada punto rinde +43%). Demostrado exponencial en
+   sim-battle-balance (weaken 2: 53%→92% Sag, 54%→80% Gallia). PENDIENTE el otro 50%: la
+   ACUMULACIÓN sigue baja (avg 0.7 en marcha) porque erosionar cuesta días/reach — fix real
+   = más weaken por carta o cartas de weaken más baratas (multi-carta, churny → futura iter).
 5. ⏳ **Suavizar el acantilado de preparación** — contrapeso anti-ruptura: ensanchar la
    banda donde el tier estándar vive ~45–55% para que la táctica importe (evitar el
    13%→87% binario).
 6. ⏳ **Leva de refuerzos / curva disciplina-moral** — palancas tardías.
 
 ## Log (más reciente primero)
+- it.2 — **Palanca 4 (parcial): erosión más potente.** `ENEMY_WEAKEN_PER_POINT` 0.07→0.10.
+  Exponencial DEMOSTRADO en sim-battle-balance (recompensa por punto crece fuerte): weaken 2
+  Sag starter+2line 53%→**92%**, full Gallia 54%→**80%**. En sim-playthrough (avg weaken 0.7)
+  el efecto realista es modesto y seguro: balanced estándar +3-4pp ambos escenarios; tier
+  apropiado en banda (Sag fully balanced 60→61%, Gallia 48→49%); monotonía intacta; deltas
+  soldados/iuniores sin tocar. Coste de oportunidad (reach balanced ~60%) lo mantiene como
+  apuesta, no autovictoria. Descartadas esta iter: palanca 3 (exponencial pero el sim no
+  equipa doctrinas → no medible) y palanca 5 (medible pero anti-exponencial). tsc · 17/17
+  verify · build · docs sincronizados (sistema-de-eventos −10%, sistemas-del-juego ×0,10).
+  PENDIENTE el 50% restante de la palanca 4: acumulación de weaken (multi-carta).
+  | tier (sim-playthrough 1000) | Sag rush a→d | Sag bal a→d | Gallia bal a→d |
+  | estándar | 11→12% | 26→30% | 11→15% |
+  | bien prep. | 86→88% | 60→61% | 48→49% |
 - it.1 — **Palanca 2 hecha: recompensa de victoria geométrica.** `victoryGold` por
   escenario (Saguntum 200 → Gallia 400, ×2) en `applyBattleOutcome`; el meta-loop ahora
   compone (ganar campañas tardías financia los costes de mejora ×3/×6). Elegida sobre la

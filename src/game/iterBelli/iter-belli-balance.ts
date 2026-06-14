@@ -51,7 +51,14 @@ export const ENEMY_BASE_SOLDIERS = 5000;
 export const ENEMY_MIN_SOLDIERS = 2000;
 /** enemyMult = (1 + threat/THREAT_DIVISOR) * (1 - enemyWeaken*WEAKEN_PER_POINT) */
 export const ENEMY_THREAT_DIVISOR = 20;
-export const ENEMY_WEAKEN_PER_POINT = 0.07;
+/**
+ * Erosion potency: each accumulated enemyWeaken point shrinks the final enemy's
+ * stats AND soldier count by this fraction (floored at 0.2 strength). Raised
+ * 0.07→0.10 (balancer it.2) so the march-time a player invests in eroding the
+ * enemy pays a compounding battle dividend — nudging erosion from "trap" toward
+ * a real investment lever without making it mandatory.
+ */
+export const ENEMY_WEAKEN_PER_POINT = 0.10;
 export const FORTIFIED_TERRAIN_MULT = 1.15;
 export const BATTLE_MAX_ROUNDS = 15;
 
