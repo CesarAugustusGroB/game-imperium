@@ -20,6 +20,8 @@ import { makeBattleArmy, makeBattleState, playRound } from '../src/game/iterBell
 import { FORMATIONS, CENTERS } from '../src/game/iterBelli/battle/orders';
 import { getCohortById } from '../src/game/army/cohort-data';
 import { createCohortInstance } from '../src/game/army/cohort';
+import { DOCTRINE_SWORD, DOCTRINE_IRON, DOCTRINE_BLOOD } from '../src/data/doctrine-data';
+import type { Doctrine } from '../src/game/items/doctrine';
 import * as B from '../src/game/iterBelli/iter-belli-balance';
 import type { BattleState, OrderKey, Rng } from '../src/game/iterBelli/battle/types';
 
@@ -72,25 +74,37 @@ function pickCard(strategy: Strategy): number | 'camp' | null {
   return any ? any.instanceId : (s.supplies > B.CAMP_SUPPLY_COST ? 'camp' : null);
 }
 
-// Player power tiers = a COMPOSITE of the things a hub player upgrades together
-// (roster size → attack stats + HP, armor material, and embark discipline). These
-// are NOT pure single-axis tests; they model under-prepared / standard / fully-
-// prepared loadouts. Discipline uses realistic embark values: a Warlord seeds
-// disc 2 (DISCIPLINE_BY_ARCHETYPE.Warlord=0 + START.discipline=2); a disciplined
-// legate adds at most +2 (clamped) → ~4 is the practical embark ceiling. (Battle
-// also omits legate stat/morale/HP bonuses and doctrines/decreta — so these win
-// rates are CONSERVATIVE: a real legate-led, doctrine-equipped army does better.)
-// `statMult`/`passiveMorale` approximate the kit a geared player brings that this
-// sim does not model literally (legate stat traits, equipped doctrines, commander
-// passives). The `veteran` tier ≈ a player who has won 1–2 campaigns and stacked
-// doctrines/loot — the *appropriate* tier for the later scenarios. The 3 lighter
-// tiers are early-game loadouts that are MEANT to lose the hard scenarios and grind.
-interface Roster { label: string; ids: string[]; soldiers: number; discipline: number; armor: 'copper' | 'bronze' | 'iron'; statMult?: number; passiveMorale?: number; }
+// ── Real equipped-doctrine kit (replaces the old statMult/passiveMorale proxy) ──
+// The sim now equips REAL doctrines and sums their embark-bonus effects exactly
+// like getEmbarkBonus() (4 slots; current-level effects). `statMult` stays as the
+// commander's battle passive (Warlord Veteran Stacks ≈ ×1.25 at 5 stacks) — that
+// is a real mechanic, not a doctrine. The veteran tier carries a maxed red kit.
+interface EquippedDoctrine { d: Doctrine; level: number; }
+function embarkKit(equipped: EquippedDoctrine[] = []): { soldiers: number; morale: number; discipline: number } {
+  const out = { soldiers: 0, morale: 0, discipline: 0 };
+  for (const { d, level } of equipped) {
+    for (const e of d.levels[level - 1].effects) {
+      if (e.type === 'embark-bonus' && (e.stat === 'soldiers' || e.stat === 'morale' || e.stat === 'discipline')) {
+        out[e.stat] += e.amount;
+      }
+    }
+  }
+  return out;
+}
+
+// Player power tiers = a COMPOSITE of what a hub player upgrades together (roster
+// size → attack stats + HP, armor, embark discipline, and now EQUIPPED DOCTRINES).
+// The 3 lighter tiers are early-game loadouts MEANT to lose the hard scenarios and
+// grind. The `veteran` tier ≈ a player who has won 1–2 campaigns and maxed a red
+// doctrine school (Sword+Iron+Blood at tier III) + drilled discipline + the Warlord
+// battle passive — the *appropriate* tier for the later scenarios.
+interface Roster { label: string; ids: string[]; soldiers: number; discipline: number; armor: 'copper' | 'bronze' | 'iron'; statMult?: number; doctrines?: EquippedDoctrine[]; }
 const ROSTERS: Roster[] = [
   { label: 'under-prepared (2 coh · disc2 · copper)     ', ids: ['hastati', 'hastati'], soldiers: 3400, discipline: 2, armor: 'copper' },
   { label: 'standard       (4 coh · disc3 · bronze)     ', ids: ['hastati', 'hastati', 'principes', 'triarii'], soldiers: 5400, discipline: 3, armor: 'bronze' },
   { label: 'fully-prepared (6 coh · disc4 · iron)       ', ids: ['hastati', 'hastati', 'principes', 'triarii', 'velites', 'equites'], soldiers: 7400, discipline: 4, armor: 'iron' },
-  { label: 'veteran        (6 coh · disc6 · iron · +kit)', ids: ['hastati', 'hastati', 'principes', 'triarii', 'velites', 'equites'], soldiers: 8400, discipline: 6, armor: 'iron', statMult: 1.4, passiveMorale: 2 },
+  { label: 'veteran        (6 coh · disc6 · iron · maxRed)', ids: ['hastati', 'hastati', 'principes', 'triarii', 'velites', 'equites'], soldiers: 7400, discipline: 6, armor: 'iron', statMult: 1.25,
+    doctrines: [{ d: DOCTRINE_SWORD, level: 3 }, { d: DOCTRINE_IRON, level: 3 }, { d: DOCTRINE_BLOOD, level: 3 }] },
 ];
 
 const SCENARIO_TERRAIN: Record<string, string> = { saguntum: 'plains', gallia: 'forest', numantia: 'hills' };
@@ -99,10 +113,15 @@ interface Outcome { reachedBattle: boolean; campaignWin: boolean; weaken: number
 
 function runOne(r: Roster, strategy: Strategy, scenId: string): Outcome {
   const terrain = SCENARIO_TERRAIN[scenId] ?? 'plains';
+  // Equipped-doctrine embark bonuses, applied to the seed exactly like EmbarkCard
+  // (getEmbarkBonus → soldiers/morale/discipline added at campaign start).
+  const kit = embarkKit(r.doctrines);
   // Pin the scenario via the seed (the real fixed path — EmbarkCard does the same).
   startIterBelliCampaign({
-    soldiers: r.soldiers, gold: 40, iuniores: 2000, discipline: r.discipline,
+    soldiers: r.soldiers + kit.soldiers, gold: 40, iuniores: 2000,
+    discipline: r.discipline + kit.discipline,
     archetype: 'Warlord', spokeTerrain: terrain, spokeDuration: 8, scenarioId: scenId,
+    startMorale: B.START.morale + kit.morale,
   });
   const scen = getActiveScenario();
   const objId = scen.objectiveLocationId;
@@ -131,7 +150,7 @@ function runOne(r: Roster, strategy: Strategy, scenId: string): Outcome {
   const cs = iterBelliState.value;
   const roster = r.ids.map((id) => createCohortInstance(getCohortById(id)!));
   const snap = { soldiers: cs.soldiers, initialSoldiers: cs.initialSoldiers, morale: cs.morale, discipline: cs.discipline, ammunition: cs.ammunition };
-  const seed = buildPlayerSeed(snap, roster, null, FORMATIONS.battleLine, { material: r.armor }, undefined, cs.fortified, r.statMult ?? 1, r.passiveMorale ?? 0);
+  const seed = buildPlayerSeed(snap, roster, null, FORMATIONS.battleLine, { material: r.armor }, undefined, cs.fortified, r.statMult ?? 1);
   const enemyMult = (1 + cs.threat / B.ENEMY_THREAT_DIVISOR) * (1 - cs.enemyWeaken * B.ENEMY_WEAKEN_PER_POINT);
   const enemySoldiers = Math.max(scen.enemy.minSoldiers, Math.round(scen.enemy.baseSoldiers * enemyMult));
   const enemy = buildEnemyArchetype(scen.enemy.archetypeKey, cs.enemyWeaken, enemySoldiers);

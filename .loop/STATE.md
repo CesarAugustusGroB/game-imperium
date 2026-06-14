@@ -59,11 +59,11 @@ neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
 2. ✅ **Recompensa de victoria geométrica** (it.1) — `victoryGold` por escenario
    (Saguntum 200 → Gallia 400, ×2), leído en `applyBattleOutcome`. Funda los costes
    geométricos sin tocar la batalla.
-3. 🟡 **Poder de doctrina/decreto compuesto** — PARCIAL (it.5): escaleras de soldados
-   geométricas (SWORD 200/400/600→**800**, IRON 400/800/1200→**1600**, ×2 cada paso). Con
-   coste ya ×3/×6, invertir hasta tier III compone más poder por iuniores. PENDIENTE: el resto
-   de doctrinas (moral/oro/suministros) y los decretos de batalla; y MEDIRLO de verdad requiere
-   que el sim EQUIPE doctrinas reales (hoy el tier `veteran` las aproxima con statMult).
+3. 🟢 **Poder de doctrina/decreto compuesto** — DESBLOQUEADA para medir (it.7): el sim ahora
+   EQUIPA doctrinas reales (tier veterano = Sword+Iron+Blood III, suma `embark-bonus` como
+   `getEmbarkBonus`). Las escaleras de soldados ya son geométricas (it.5). PENDIENTE medible:
+   doctrinas de moral/disciplina (geometrizar como las de soldados); y los decretos de BATALLA
+   (siguen sin modelar — el sim no castea decretos en combate → siguiente mejora de fidelidad).
 4. 🟡 **Convertir la erosión-trampa en palanca exponencial** — PARCIAL (it.2):
    `ENEMY_WEAKEN_PER_POINT` 0.07→0.10 (cada punto rinde +43%). Demostrado exponencial en
    sim-battle-balance (weaken 2: 53%→92% Sag, 54%→80% Gallia). PENDIENTE el otro 50%: la
@@ -75,6 +75,18 @@ neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
 6. ⏳ **Leva de refuerzos / curva disciplina-moral** — palancas tardías.
 
 ## Log (más reciente primero)
+- it.7 — **FIDELIDAD DEL SIM: equipa doctrinas reales (desbloquea P3).** El tier `veteran` deja
+  el proxy `statMult 1.4 / passiveMorale 2` y pasa a EQUIPAR doctrinas reales: Sword III +800,
+  Iron III +1600, Blood III +3 moral, sumadas al seed como `getEmbarkBonus` (4 slots, nivel actual).
+  statMult 1.25 = pasiva real del Warlord (Veteran Stacks). Solo cambia `tools/sim-playthrough.ts`
+  (JUEGO INTACTO). Resultado: los tiers ligeros idénticos al baseline (sin doctrinas → kit 0, sin
+  regresión); el veterano con kit real queda mejor modelado y **Numancia AGUANTA la calibración**
+  (veterano rush 54.6%→58.7%, sigue en banda 40-65, sin re-tunear). Monotonía ✓, escalera ✓
+  (fully 88→54→0.7; veterano 99→99→59). tsc · 17/17 verify · build. Ahora las palancas de doctrina
+  de embarque son MEDIBLES. PENDIENTE fidelidad: castear decretos de batalla en el sim.
+  | tier (rush) | Saguntum | Gallia | Numancia |
+  | fully-prep. | 88.6% | 53.7% | 0.7% |
+  | veterano    | 99.8% | 99.3% | 58.7% |
 - it.6 — **HEARTBEAT + IDLE — el loop alcanzó su límite medible.** Sims estables/verdes
   (sim-playthrough sin cambios; sim-battle Numancia confirma el muro: full disc4 weaken0 = 8%,
   weaken5 = 100%; campaign reach 99.9%; 17/17 verify). Palancas hechas: P1 (Numancia), P2 (oro),
