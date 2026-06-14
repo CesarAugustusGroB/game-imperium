@@ -104,8 +104,10 @@ unión blindada. 213 tests. Siguiente foco del backlog: tareas BAL y REV.
   botón «Anales» en footer del Title. Docs: wireframes.html. NOTA: el sistema viejo
   `RunRecord`/`runs[]`/`computeScore`/`getBestRun` sigue MUERTO (duplicado) →
   candidato a recortar (decisión del usuario).
-- **D32** — EXTRAER `returnToHub` de EndgameCard a la capa de lógica, con tests del
-  camino crítico de vuelta al hub ANTES de tocar. (Ojo: ahora también drena eventos D10.)
+- ✅ **D32** (it.58) — EXTRAÍDO: `returnFromCampaign()` en `return-to-hub.ts` (capa
+  de lógica, testeable; devuelve el escenario desbloqueado para que la UI navegue/
+  notifique → sin import de UI). EndgameCard ahora delega. Red de tests del camino
+  crítico (victoria+derrota, 2 tests) escrita y verde. Comportamiento preservado.
 - **D28b** — CODE-SPLITTING del bundle (~590KB) por rutas/pantallas, validando cada
   transición del main loop.
 
@@ -115,6 +117,10 @@ unión blindada. 213 tests. Siguiente foco del backlog: tareas BAL y REV.
   `extra-event-choices` advisor a D10: requieren decisión del usuario.
 
 ## Log (más reciente primero)
+- it.58 — **D32 hecho**: extraído `returnFromCampaign()` a `return-to-hub.ts` (lógica
+  testeable; UI conserva navegación/notificación). EndgameCard delega + imports podados.
+  Red de tests del camino crítico (2, victoria+derrota). 218 tests · 17/17 verify ·
+  build verde. Comportamiento preservado. Próximo: D28b (code-splitting).
 - it.57 — **D29 hecho**: `RecordsScreen` (Anales) sobre `campaignLogs` (ya vivo, sin
   recorder nuevo); ruta `#records` + botón en Title; wireframe añadido. tsc/216 tests/
   17 verify/build verde. Screenshot Playwright inconcluyente (dev server sirviendo otro

@@ -1,143 +1,33 @@
 ﻿import { OrnateFrame } from '../../components/OrnateFrame';
 import { playSfx } from '../../sound/sfx';
 import { navigateTo } from '../../screens';
-import { gold, iuniores } from '../../../game/core/resources';
-import { completedSpokes, battlesWon, globalSeason, MAX_SEASONS, selectedCommander } from '../../../game/core/game-state';
-import { recordCampaignLog } from '../../../game/core/meta-save';
-import { snapshotCampaignTelemetry } from '../../../game/progression/run-telemetry';
-import { preparedArmy } from '../../../game/progression/strategic-store';
-import { computeArmySize } from '../../../game/army/cohort';
-import { iterBelliState, resetIterBelli } from '../../../game/iterBelli/iter-belli-state';
-import { getActiveScenario, unlockNextScenario, getScenarioById } from '../../../game/iterBelli/iter-belli-scenario';
+import { iterBelliState } from '../../../game/iterBelli/iter-belli-state';
+import { getScenarioById } from '../../../game/iterBelli/iter-belli-scenario';
+import { returnFromCampaign } from '../../../game/iterBelli/return-to-hub';
 import { addNotification } from '../../notifications/notification-store';
 import { START } from '../../../game/iterBelli/iter-belli-balance';
-import { conquerProvince, provinces, collectProvinceIncome } from '../../../game/province/province-store';
-import { applyCampaignEventOutcomes } from '../../../game/events/apply-outcomes';
-import { collectAllyIncome } from '../../../game/progression/ally-store';
-import { councilSlots, grantAdvisorXp } from '../../../game/council/council-store';
-import { pickConquestName, PROVINCE_REWARD } from '../../../data/iter-belli-conquest';
 import { getMissionById } from '../../../data/iter-belli-consilium';
-import { rollDoctrineDraft } from '../../../game/items/doctrine-store';
-import type { TerrainType } from '../../../data/terrain-data';
-import type { ResourceType } from '../../../game/core/commander';
-import { SUPPLY_MAX_CARRY } from '../../../config/game-config';
 import { ResourceAmount } from '../../components/ResourceIcon';
 
 /**
- * Apply the campaign result back to the run, then return to the Hub:
- *  • campaign gold (incl. victory bonus) flows back to run gold,
- *  • victory bumps completedSpokes,
- *  • surviving soldiers scale each cohort's HP (dead cohorts drop out),
- *  • leftover campaign supplies flow back to the Hub army (capped at the carry cap).
+ * Settle the finished campaign back into the run and return to the Hub. The game
+ * side effects live in returnFromCampaign() (game/iterBelli/return-to-hub.ts) so
+ * they can be unit-tested; the UI keeps only navigation + the unlock notification.
  */
 function returnToHub(): void {
-  const s = iterBelliState.value;
-  const outcome = s.outcome;
-  // Idempotency guard: this function is NOT idempotent — it overwrites hub
-  // gold/iuniores from the campaign snapshot, advances the season, collects
-  // income and conquers a province. It ends by calling resetIterBelli() (which
-  // nulls the outcome), so a second invocation (e.g. a fast double-click before
-  // the button unmounts) would re-run those side effects against the reset
-  // snapshot and clobber the player's resources. A null outcome only ever means
-  // "already returned" — bail.
-  if (!outcome) return;
+  const result = returnFromCampaign();
+  if (result.alreadyReturned) return; // double-click guard: nothing left to settle
 
-  // Consilium mission: on victory, a met condition grants a gold bonus.
-  const mission = getMissionById(s.missionId);
-  const missionAccomplished = !!(outcome?.victory && mission && mission.condition(s));
-  gold.value = s.gold + (mission && missionAccomplished ? mission.bonusGold : 0);
-  iuniores.value = s.iuniores;
-
-  // Season clock advances regardless of outcome — campaign time elapsed.
-  globalSeason.value = Math.min(MAX_SEASONS, globalSeason.value + s.spokeDuration);
-  // Provinces accrue income/ticks for each season spent on campaign.
-  for (let i = 0; i < s.spokeDuration; i++) collectProvinceIncome();
-  // Forged allies pledge their season tribute (tribes → iuniores, kingdoms → gold).
-  for (let i = 0; i < s.spokeDuration; i++) collectAllyIncome();
-
-  // Telemetry (plan S-J): log this campaign's outcome + tallies for balance analysis.
-  const cmd = selectedCommander.value;
-  if (outcome && cmd) {
-    const tel = snapshotCampaignTelemetry();
-    recordCampaignLog({
-      date: new Date().toISOString(),
-      commanderId: cmd.id,
-      commanderName: cmd.name,
-      scenarioId: getActiveScenario().id,
-      outcome: outcome.victory ? 'victory' : 'defeat',
-      cause: outcome.text,
-      seasonsAtEnd: globalSeason.value,
-      daysUsed: outcome.turnNum,
-      finalGold: gold.value,
-      finalIuniores: iuniores.value,
-      survivors: outcome.soldiers,
-      cardsPlayed: tel.cardsPlayed,
-      ordersUsed: tel.ordersUsed,
+  if (result.unlockedScenarioId) {
+    const next = getScenarioById(result.unlockedScenarioId);
+    addNotification({
+      kind: 'pinned',
+      icon: '⚑',
+      title: 'Nueva campaña disponible',
+      message: `Has desbloqueado: ${next?.narrative.victoryTitle ?? result.unlockedScenarioId}. Elígela en el Foro al embarcar.`,
     });
   }
 
-  if (outcome?.victory) {
-    completedSpokes.value++;
-    battlesWon.value++;             // the decisive battle was won
-
-    // Conquer a province: terrain from the spoke theme, random unused name, fixed income.
-    const taken = new Set(provinces.value.map((p) => p.name));
-    const name = pickConquestName(taken, getActiveScenario().conquestNames);
-    conquerProvince(name, PROVINCE_REWARD as Record<ResourceType, number>, 1, {
-      terrain: s.spokeTerrain as TerrainType,
-    });
-
-    // The Senate rewards the triumph: a doctrine draft awaits at the Forum.
-    rollDoctrineDraft();
-
-    // Winning a campaign unlocks the next one in the progression.
-    const unlockedId = unlockNextScenario(getActiveScenario().id);
-    if (unlockedId) {
-      const next = getScenarioById(unlockedId);
-      addNotification({
-        kind: 'pinned',
-        icon: '⚑',
-        title: 'Nueva campaña disponible',
-        message: `Has desbloqueado: ${next?.narrative.victoryTitle ?? unlockedId}. Elígela en el Foro al embarcar.`,
-      });
-    }
-  }
-
-  const army = preparedArmy.value;
-  if (army) {
-    // Surviving soldiers scale each cohort's HP (dead cohorts drop out).
-    // When initialSoldiers is 0 (degenerate launch), cohorts pass through unmodified.
-    let cohorts = army.cohorts;
-    if (s.initialSoldiers > 0) {
-      const ratio = Math.max(0, Math.min(1, s.soldiers / s.initialSoldiers));
-      cohorts = army.cohorts
-        .map((c) => {
-          const cur = c.currentHp ?? c.stats.hp;
-          const scaled = Math.round(cur * ratio);
-          return { ...c, currentHp: scaled, outOfAction: scaled <= 0 };
-        })
-        .filter((c) => (c.currentHp ?? 0) > 0);
-    }
-    // Unified supplies: leftover campaign supplies flow back, capped at the Hub carry cap.
-    preparedArmy.value = {
-      ...army,
-      cohorts,
-      size: computeArmySize(cohorts),
-      supplies: Math.max(0, Math.min(SUPPLY_MAX_CARRY, s.supplies)),
-    };
-  }
-
-  // Seated advisors earn XP for serving the campaign: +1 for completing it,
-  // +1 more on victory. grantAdvisorXp auto-tiers-up and fires the promotion
-  // toast; the new tier persists with the council in the next autosave.
-  const xpPerAdvisor = 1 + (outcome?.victory ? 1 : 0);
-  const seatedIds = councilSlots.value.flatMap((a) => (a ? [a.id] : []));
-  for (const id of seatedIds) grantAdvisorXp(id, xpPerAdvisor);
-
-  // Drain any campaign-event choices queued this march into the hub (D10).
-  applyCampaignEventOutcomes();
-
-  resetIterBelli();
   navigateTo('hub');
 }
 
