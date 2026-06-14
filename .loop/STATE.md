@@ -73,6 +73,18 @@ neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
 6. ⏳ **Leva de refuerzos / curva disciplina-moral** — palancas tardías.
 
 ## Log (más reciente primero)
+- it.3 — **HEARTBEAT + IDLE** (ninguna palanca pasa todas las barreras con ≥75% confianza).
+  Sims estables (sim-playthrough 1000, sin cambios desde it.2): Sag rush std 12.8% / fully 88.3%;
+  Sag balanced std 28.7% / fully 62.3%; Gallia balanced fully 50.2%. Campaign reach 100%.
+  Por qué idle: **P3** (doctrina/decreto) exponencial pero el sim no equipa doctrinas → no medible.
+  **P4-acumulación**: la carta de erosión pura (409) es `compromiso` → la estrategia balanced del
+  sim la excluye; las que sí juega (151/457) mezclan efectos y se eligen semi-al-azar → señal
+  turbia; y fully balanced ya en 62% (pegado al techo 65%) → overshoot. Baja confianza.
+  **P1** bloqueada por diseño (necesita 3.er escenario). **P5** medible pero anti-exponencial.
+  DECISIONES PARA DESBLOQUEAR (usuario): (a) mejorar la fidelidad del sim — estrategia balanced
+  que BUSQUE cartas de weaken + equipar doctrinas — para medir P3/P4; (b) ¿es "estándar" el tier
+  apropiado de Saguntum (entonces P5 sube accesibilidad, aceptando aplanar el acantilado) o es
+  "infrainvertido" (mantener el muro)?; (c) añadir 3.er escenario para P1.
 - it.2 — **Palanca 4 (parcial): erosión más potente.** `ENEMY_WEAKEN_PER_POINT` 0.07→0.10.
   Exponencial DEMOSTRADO en sim-battle-balance (recompensa por punto crece fuerte): weaken 2
   Sag starter+2line 53%→**92%**, full Gallia 54%→**80%**. En sim-playthrough (avg weaken 0.7)
