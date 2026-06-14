@@ -59,9 +59,11 @@ neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
 2. ✅ **Recompensa de victoria geométrica** (it.1) — `victoryGold` por escenario
    (Saguntum 200 → Gallia 400, ×2), leído en `applyBattleOutcome`. Funda los costes
    geométricos sin tocar la batalla.
-3. ⏳ **Poder de doctrina/decreto compuesto** — costes ya ×3/×6 por tier; escalar los
-   EFECTOS para que el tier III >2× tier I (inversión que compone en batalla). Vigilar
-   centenas en deltas de soldados/iuniores.
+3. 🟡 **Poder de doctrina/decreto compuesto** — PARCIAL (it.5): escaleras de soldados
+   geométricas (SWORD 200/400/600→**800**, IRON 400/800/1200→**1600**, ×2 cada paso). Con
+   coste ya ×3/×6, invertir hasta tier III compone más poder por iuniores. PENDIENTE: el resto
+   de doctrinas (moral/oro/suministros) y los decretos de batalla; y MEDIRLO de verdad requiere
+   que el sim EQUIPE doctrinas reales (hoy el tier `veteran` las aproxima con statMult).
 4. 🟡 **Convertir la erosión-trampa en palanca exponencial** — PARCIAL (it.2):
    `ENEMY_WEAKEN_PER_POINT` 0.07→0.10 (cada punto rinde +43%). Demostrado exponencial en
    sim-battle-balance (weaken 2: 53%→92% Sag, 54%→80% Gallia). PENDIENTE el otro 50%: la
@@ -73,6 +75,15 @@ neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
 6. ⏳ **Leva de refuerzos / curva disciplina-moral** — palancas tardías.
 
 ## Log (más reciente primero)
+- it.5 — **Palanca 3 (parcial): escaleras de doctrina de soldados geométricas.** SWORD tier III
+  600→800, IRON tier III 1200→1600 (ambas ahora ×2 por paso, antes lineal +200/+400). Hundreds-safe
+  (≤2000), monótono, verify de doctrinas verde. Con el coste ya ×3/×6, maximizar una doctrina roja
+  ahora compone más soldados de embarque por iuniores invertido (meta-economía exponencial). El sim
+  no equipa doctrinas → re-medida IDÉNTICA al baseline (prueba de no-regresión a los tiers calibrados),
+  igual estatus que la palanca 2 (oro). Descartada P5 (acantilado) por decisión del usuario (muro
+  intencional). tsc · 17/17 verify · build · sin cambios de docs (los docs describen doctrinas en
+  genérico; el "+600 soldados" de los docs es una carta, no la doctrina).
+  PENDIENTE para medir doctrinas de verdad: que el sim EQUIPE doctrinas reales (lo que pediste).
 - it.4 — **Palanca 1 DESBLOQUEADA: 3.er escenario NUMANTIA** (decisión del usuario). Nuevo
   `iter-belli-scenario-numantia.ts` (arquetipo `iberians`, objetivo Numancia, terreno hills,
   carta decisiva `asalto_numancia`, victoryGold 800). Registrado en SCENARIOS; Gallia→Numancia

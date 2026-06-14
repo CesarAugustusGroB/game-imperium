@@ -7,7 +7,7 @@ export const DOCTRINE_SWORD: Doctrine = {
   levels: [
     { description: '+200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 200 }], upgradeCost: { iuniores: 300 } },
     { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { iuniores: 600 } },
-    { description: '+600 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 600 }], upgradeCost: { iuniores: 1200 } },
+    { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { iuniores: 1200 } },
   ],
 };
 
@@ -16,7 +16,7 @@ export const DOCTRINE_IRON: Doctrine = {
   levels: [
     { description: '+400 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 400 }], upgradeCost: { iuniores: 400 } },
     { description: '+800 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 800 }], upgradeCost: { iuniores: 800 } },
-    { description: '+1200 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1200 }], upgradeCost: { iuniores: 1200 } },
+    { description: '+1600 soldiers on campaign start.', effects: [{ type: 'embark-bonus', stat: 'soldiers', amount: 1600 }], upgradeCost: { iuniores: 1200 } },
   ],
 };
 
