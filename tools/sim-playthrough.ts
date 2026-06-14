@@ -47,6 +47,19 @@ function stopsToGo(): number {
   return Math.max(0, (scen.locations.length - 1) - s.locationIdx);
 }
 
+// Does playing this card actually grant enemyWeaken? Evaluates the card's real
+// effects against the live state (gamble cards report their success branch). This
+// lets the balanced strategy TARGET erosion instead of playing category-matching
+// cards at random — the earlier proxy that capped avg weaken at ~0.7.
+function grantsWeaken(card: (typeof iterBelliState.value.pool)[number]): boolean {
+  const s = iterBelliState.value;
+  const loc = getActiveScenario().locations[s.locationIdx];
+  try {
+    const eff = card.def.effects({ state: s, loc, archetype: s.archetype });
+    return (eff.enemyWeaken ?? 0) > 0;
+  } catch { return false; }
+}
+
 // rush: always march (matches sim-campaign's advance-first, ~99% reach).
 // balanced: march, but spend a *spare* day eroding the enemy or resupplying when
 // the deadline comfortably allows it (days left > stops left + buffer).
@@ -61,10 +74,9 @@ function pickCard(strategy: Strategy): number | 'camp' | null {
       const log = pool.find((c) => c.def.category === 'Logística');
       if (log) return log.instanceId;
     }
-    if (daySlack > 0 && s.supplies > 6) {
-      const eroder = pool.find((c) => /Coerción|Inteligencia|Postura|Diplomacia/.test(c.def.category)
-        && c.def.cardType !== 'compromiso');
-      if (eroder && s.enemyWeaken < 6) return eroder.instanceId;
+    if (daySlack > 0 && s.supplies > 6 && s.enemyWeaken < 6) {
+      const eroder = pool.find((c) => c.def.cardType !== 'compromiso' && grantsWeaken(c));
+      if (eroder) return eroder.instanceId;
     }
   }
 

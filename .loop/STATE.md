@@ -46,8 +46,10 @@ Re-corre los sims, anótalo como heartbeat en el Log, reporta **idle**. No fabri
 | estándar        |  13%     |   3%   |
 | bien preparado  |  87%     |  54%   |
 
-Problemas conocidos: acantilado casi binario (13%→87%); erosión en marcha es trampa
-neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
+Problemas conocidos: acantilado casi binario (13%→87%) — pero el muro es intencional
+(perder y farmear, decisión del usuario it.4). NOTA it.9: la "trampa de erosión" era un
+ARTEFACTO del bot — con estrategia que busca weaken de verdad, reach vuelve a ~99% y se
+erosiona; no es trampa para juego hábil (la acumulación la limita la escasez de cartas = diseño).
 
 ## Backlog de palancas (ordenado; una por iteración)
 1. ✅ **Escalado enemigo geométrico entre escenarios** (it.4) — DESBLOQUEADA con el 3.er
@@ -63,17 +65,28 @@ neta (reach 99%→65% por solo +0.7 weaken); 0% para infrapreparado es un muro.
    (SWORD/IRON, it.5) y disciplina (DISCIPLINA_FERREA +3→+4, it.8). El sim equipa el kit real del
    veterano (Sword+Iron+Blood+Disciplina III). PENDIENTE: moral (se lava en la marcha → bajo valor,
    skip) y los decretos de BATALLA (el sim no los castea en combate → próxima mejora de fidelidad).
-4. 🟡 **Convertir la erosión-trampa en palanca exponencial** — PARCIAL (it.2):
-   `ENEMY_WEAKEN_PER_POINT` 0.07→0.10 (cada punto rinde +43%). Demostrado exponencial en
-   sim-battle-balance (weaken 2: 53%→92% Sag, 54%→80% Gallia). PENDIENTE el otro 50%: la
-   ACUMULACIÓN sigue baja (avg 0.7 en marcha) porque erosionar cuesta días/reach — fix real
-   = más weaken por carta o cartas de weaken más baratas (multi-carta, churny → futura iter).
+4. ✅ **Erosión como palanca** — RESUELTA. Potencia ×1.43 (it.2, weaken 0.07→0.10). La
+   "acumulación-trampa" resultó ser un ARTEFACTO de medición (it.9): con la estrategia balanced
+   buscando cartas que conceden weaken de verdad, reach sube de ~65% a ~99% Y se erosiona (no era
+   trampa, era el bot malgastando turnos). El avg weaken ~1.0 lo limita la escasez de cartas de
+   weaken en el mazo = decisión de diseño, no bug. Erosión funciona para juego hábil; sin cambio de juego.
 5. ⏳ **Suavizar el acantilado de preparación** — contrapeso anti-ruptura: ensanchar la
    banda donde el tier estándar vive ~45–55% para que la táctica importe (evitar el
    13%→87% binario).
 6. ⏳ **Leva de refuerzos / curva disciplina-moral** — palancas tardías.
 
 ## Log (más reciente primero)
+- it.9 — **FIDELIDAD DEL SIM: estrategia balanced que BUSCA weaken (resuelve P4).** La balanced
+  jugaba cartas de categoría-erosión al azar (mayoría sin weaken) → malgastaba días → reach ~65%
+  (la "trampa"). Nuevo `grantsWeaken()` evalúa los efectos reales de la carta; la balanced ahora
+  TARGETea weaken. Resultado: **reach ~65%→~99%** y se sigue erosionando (avg weaken 0.7→1.0,
+  limitado por escasez de cartas = diseño). La "trampa de erosión" era artefacto del bot, NO un
+  fallo del juego → P4 cerrada sin tocar el juego. Medición corregida (balanced más fuerte y
+  realista): banda intacta en tiers apropiados (Gallia fully 63%, Numancia veterano 57%), monotonía
+  ✓. Solo cambia `tools/sim-playthrough.ts`. tsc · 17/17 verify · build.
+  | tier balanced overall | Saguntum a→d | Gallia a→d | Numancia a→d |
+  | fully-prep. | 61→86% | 51→63% | 1→3% |
+  | veterano    | 65→99% | 64→99% | 43→57% |
 - it.8 — **Palanca 3: doctrina de disciplina geométrica + modelada.** DISCIPLINA_FERREA tier III
   +3→**+4** (escalera +1/+2/+4, ×2 último paso; coste ya iuniores 300/600/1200). Fidelidad: el sim
   separa la base del veterano (disc hardcodeada 6 → 4 = Warlord+legado) y equipa la doctrina real en
