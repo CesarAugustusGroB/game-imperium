@@ -46,7 +46,7 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - [DONE] PV4 · Documentada la creación de oro (4 capas) en `sistemas-del-juego.html`, sección Provinciae (card nueva "Creación de oro"): impuesto floor(wealth×tax) → flats → Aqueduct ×1.1 → War Profiteer/doctrinas (cap 75%) → gastos; + nota de wealthTiers display-only. (Topic 6) — CIERRA FASE 2.
 
 ### Fase 3 — Utilidades acotadas
-- [READY] ME1 · Merge units: función pura `consolidateCohorts` (mismo-tipo, lossless-con-remanente) + test de invariante de `computeArmySize`. (Topic 4)
+- [DONE] ME1 · Merge units: función pura `consolidateCohorts(roster, cohortId)` en cohort.ts (mismo-tipo, lossless-con-remanente) + `canConsolidate` (gating) + `totalCurrentHp` (helper). 8 tests vitest verdes. MATIZ: el invariante NO es `computeArmySize` (suma maxHp×nº cohortes → BAJA al fusionar, intencional); el invariante lossless es `totalCurrentHp` (suma currentHp). El test verifica ambos. (Topic 4)
 - [READY] ME2 · Botón "Fusionar" en la fila agrupada de `ExercitusTab` con `ConfirmDialog`, gating ≥2 instancias mismo-tipo y alguna dañada/OoA. (Topic 4)
 - [READY] MO1 · Primitiva `<Modal>` + escala de z-index en design-tokens (APROBADO dentro del loop). MULTI-PASO: trocear en commits pequeños — (a) escala de z-index + componente Modal base sobre ConfirmDialog; (b..) migrar un modal por commit (DoctrineDraftModal → SettingsPanel → CampaignEventModal → battle → TutorialOverlay). Cada commit verde e independiente. (Topic 1)
 
@@ -71,3 +71,4 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - PV2 DONE — wealth reetiquetado como stock/base imponible ("Wealth growth (tax base)" + cue en tooltip), 💰→wealthIcon, /s→/season en toda la UI de wealth. Reporte (Topic 5) sincronizado. tsc+verify(18/18)+build verde.
 - PV3 DONE — icono de wealth = bolsa de dinero (Codex vía skill generar-asset). Silueta de saco distinta del montón de monedas del oro → cierra la diferenciación visual wealth/oro de Topic 5. 768×768 RGBA, QA visual OK, mismo nombre de fichero. build verde. Reporte (Topics 5,9) sincronizado.
 - PV4 DONE — doc de creación de oro (4 capas) en sistemas-del-juego.html (Provinciae). Reporte (Topic 6) sincronizado. tsc+verify(18/18) verde. ✅ FASE 2 (Provinciae) COMPLETA.
+- ME1 DONE — consolidateCohorts + canConsolidate + totalCurrentHp en cohort.ts (lógica pura de merge). 8 tests vitest. Corregido el invariante del plan: es currentHp (lossless), no computeArmySize (maxHp×count, baja a propósito). Reporte (Topic 4) sincronizado. tsc+verify(18/18)+build+tests verde.

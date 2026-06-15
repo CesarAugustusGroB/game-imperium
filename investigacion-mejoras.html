@@ -416,7 +416,9 @@
             iuniores), pero limpias el roster y recuperas unidades desplegables. <em>Sin</em> coste de iuniores; el coste
             es el slot/posible pérdida de la cobertura de suministro.</li>
           <li><b>Gating:</b> habilitar solo con ≥2 instancias del mismo <code>id</code> y al menos una dañada/OoA.</li>
-          <li><b>Verify:</b> test de que <code>computeArmySize</code> es invariante antes/después del merge (conservación).</li>
+          <li><b>Verify:</b> test de conservación. <b style="color:var(--ok)">★ Implementado en ME1</b> con un matiz:
+            el invariante NO es <code>computeArmySize</code> (suma maxHp × nº cohortes → BAJA al fusionar, que es el
+            objetivo: liberar slots), sino <code>totalCurrentHp</code> (suma de currentHp). 8 tests verdes.</li>
         </ol>
         <p><em>Dejar B (fusión-promoción) para más tarde:</em> es atractivo pero es un sistema de progresión completo,
         no una utilidad de roster — merece su propio spec y pasa por balance.</p>

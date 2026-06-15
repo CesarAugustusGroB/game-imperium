@@ -173,3 +173,72 @@ export function normalizeCohortRoster(cohorts: readonly Cohort[]): Cohort[] {
     return next;
   });
 }
+
+// ── Merge / consolidate (FT-MERGE) ──
+
+/** Total CURRENT hp across a roster — the quantity merge conserves (≠ computeArmySize,
+ *  which sums MAX hp × cohort count and so legitimately drops when cohorts merge). */
+export function totalCurrentHp(cohorts: readonly Cohort[]): number {
+  return cohorts.reduce((sum, c) => sum + (c.currentHp ?? c.stats.hp), 0);
+}
+
+/** Same-type instances in a roster, by catalog id. */
+function cohortsOfType(roster: readonly Cohort[], cohortId: string): Cohort[] {
+  return roster.filter((c) => c.id === cohortId);
+}
+
+/**
+ * Whether merging the `cohortId` group would actually free a roster slot — i.e.
+ * there are ≥2 instances and their combined current HP repacks into fewer full
+ * cohorts than the current count (so at least one is damaged). Drives the
+ * "Merge" button's enabled state.
+ */
+export function canConsolidate(roster: readonly Cohort[], cohortId: string): boolean {
+  const group = cohortsOfType(roster, cohortId);
+  if (group.length < 2) return false;
+  const maxHp = group[0].stats.hp;
+  const packed = Math.max(1, Math.ceil(totalCurrentHp(group) / maxHp));
+  return packed < group.length;
+}
+
+/**
+ * Consolidate all roster instances sharing `cohortId` into the fewest cohorts
+ * that conserve the group's total CURRENT HP ("lossless, with remainder"):
+ * damaged same-type cohorts are repacked into full cohorts (maxHp each) plus at
+ * most one partial holding the remainder; the now-empty slots are dropped. This
+ * frees roster slots and can revive out-of-action fragments into a deployable
+ * cohort WITHOUT spending iuniores — the cost is the surrendered slot(s), not HP.
+ *
+ * `totalCurrentHp` is invariant across the call (no HP is created or destroyed);
+ * `computeArmySize` (max capacity) intentionally shrinks. Non-group cohorts are
+ * returned untouched, and the survivors take the position of the group's first
+ * instance so overall order is preserved. Pure — returns a new roster.
+ */
+export function consolidateCohorts(roster: readonly Cohort[], cohortId: string): Cohort[] {
+  const group = cohortsOfType(roster, cohortId);
+  if (group.length < 2) return roster.slice();
+
+  const maxHp = group[0].stats.hp;
+  let remaining = totalCurrentHp(group);
+  const outCount = Math.max(1, Math.ceil(remaining / maxHp));
+
+  // Reuse the first `outCount` stable instance identities; fill full, then remainder.
+  const survivors: Cohort[] = [];
+  for (let i = 0; i < outCount; i++) {
+    const hp = Math.min(maxHp, remaining);
+    remaining -= hp;
+    survivors.push(applyCohortHealthState(group[i], hp, false));
+  }
+
+  // Replace the group's instances with the survivors at the first group position.
+  const result: Cohort[] = [];
+  let emitted = false;
+  for (const c of roster) {
+    if (c.id === cohortId) {
+      if (!emitted) { result.push(...survivors); emitted = true; }
+    } else {
+      result.push(c);
+    }
+  }
+  return result;
+}
