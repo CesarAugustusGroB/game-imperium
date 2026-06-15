@@ -40,6 +40,11 @@ export interface BattleFx {
 
 export function createBattleFx(canvas: HTMLCanvasElement): BattleFx {
   const ctx = canvas.getContext('2d')!;
+  // Accessibility: honour the OS "reduce motion" setting. Read live (the user can
+  // toggle it mid-run) so screen-shake, burst particles and ambient drift are
+  // suppressed for motion-sensitive players — mirroring GoldDust's gate.
+  const reduceMotionMQ = typeof matchMedia !== 'undefined' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const reduceMotion = (): boolean => reduceMotionMQ?.matches === true;
   let state: BattleState | null = null;
   let raf = 0;
   let VT = 0;
@@ -102,8 +107,9 @@ export function createBattleFx(canvas: HTMLCanvasElement): BattleFx {
   }
   function drawAmbient(w: number, h: number): void {
     const windK = centerKeyOf(state!) === 'plain' ? 2 : 1;
+    const drift = !reduceMotion();
     for (const m of ambient) {
-      m.x += m.vx * windK; m.y += m.vy;
+      if (drift) { m.x += m.vx * windK; m.y += m.vy; }
       if (m.x > 1) m.x = 0; if (m.x < 0) m.x = 1; if (m.y > 1) m.y = 0; if (m.y < 0) m.y = 1;
       ctx.fillStyle = `rgba(200,190,160,${m.a})`; ctx.beginPath(); ctx.arc(m.x * w, m.y * h, m.r, 0, 7); ctx.fill();
     }
@@ -162,6 +168,7 @@ export function createBattleFx(canvas: HTMLCanvasElement): BattleFx {
 
   // ── Projectiles / particles / floats ──
   function addParticles(x: number, y: number, n: number, color: string, spread: number, life?: number): void {
+    if (reduceMotion()) return; // suppress decorative burst particles under reduce-motion
     for (let i = 0; i < n; i++) particles.push({ x, y, vx: rnd(-spread, spread), vy: rnd(-spread, spread), r: rnd(1, 3), color, life: life || rnd(20, 40), max: life || 40 });
   }
   function drawPinned(): void {
@@ -217,11 +224,11 @@ export function createBattleFx(canvas: HTMLCanvasElement): BattleFx {
     const o = ORDERS[key as keyof typeof ORDERS]; if (!o) return;
     const w = W, cy = H / 2;
     const ax = squadX(side, w), dx = squadX(side === 'you' ? 'enemy' : 'you', w), mid = (ax + dx) / 2;
-    if (o.sub === 'charge') { anim[side].lunge = 18; addParticles(mid, cy, 25, '#dfc282', 2.2); shake = Math.max(shake, 10); }
+    if (o.sub === 'charge') { anim[side].lunge = 18; addParticles(mid, cy, 25, '#dfc282', 2.2); if (!reduceMotion()) shake = Math.max(shake, 10); }
     else if (o.sub === 'harass') {
       const fire = key === 'fireMissiles'; const n = fire ? 7 : 6;
       for (let j = 0; j < n; j++) setTimeout(() => { if (state) projectiles.push({ x0: ax, y0: cy, x1: dx, y1: cy + rnd(-40, 40), t: 0, step: 0.03, H: 50, fire, color: fire ? '#f39c12' : '#ffffff' }); }, j * 50);
-    } else if (o.sub === 'siege') { projectiles.push({ x0: ax, y0: cy, x1: dx, y1: cy + rnd(-30, 30), t: 0, step: 0.015, H: 100, rock: true, color: '#bdc3c7' }); shake = Math.max(shake, 14); }
+    } else if (o.sub === 'siege') { projectiles.push({ x0: ax, y0: cy, x1: dx, y1: cy + rnd(-30, 30), t: 0, step: 0.015, H: 100, rock: true, color: '#bdc3c7' }); if (!reduceMotion()) shake = Math.max(shake, 14); }
     else if (o.sub === 'moral') {
       const heal = !o.eMorale; const col = heal ? '#f1c40f' : '#9b59b6';
       for (let j = 0; j < 15; j++) particles.push({ x: (heal ? ax : dx) + rnd(-14, 14), y: cy + rnd(-10, 10), vx: rnd(-0.2, 0.2), vy: rnd(-1.2, -0.5), r: rnd(1.5, 3), color: col, life: rnd(30, 55), max: 55 });

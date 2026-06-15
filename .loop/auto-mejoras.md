@@ -30,7 +30,7 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 ## Backlog (en orden de ejecución)
 
 ### Fase 1 — Quick wins (bajo riesgo, alta confianza)
-- [READY] QW1 · A11y batalla: gate `prefers-reduced-motion` en `battle-fx.ts` (shake/partículas). (Topic 3)
+- [DONE] QW1 · A11y batalla: gate `prefers-reduced-motion` en `battle-fx.ts` (shake/partículas). (Topic 3)
 - [READY] QW2 · `DoctrineDraftModal`: cerrar con Esc + click en backdrop + `aria-modal`. (Topic 1)
 - [READY] QW3 · `SettingsPanel` z-index: subir de 20 a una capa coherente (sobre overlays/sidebar). (Topic 1)
 - [READY] QW4 · Iconos POWER_STATS: sustituir glyphs emoji (🐎🪨🛡🏹👣) por `GameIcon` stat-* en el StatGrid de Exercitus (los iconos YA existen). (Topic 9)
@@ -59,4 +59,4 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - [READY] BG3 · Unificación de tokens `--imp-*` + reconciliación de fondo (APROBADO dentro del loop). MULTI-PASO de bajo churn por commit — (a) aliasar `--color-*` legacy a sus equivalentes `--imp-*` en design-tokens.css (sin tocar componentes); (b) reconciliar el hue de fondo a un solo "ink"; (c..) migrar referencias por fichero/dominio, un commit acotado cada vez. (Topic 8)
 
 ## Log
-- (vacío — el primer disparo empieza por QW1)
+- QW1 DONE — battle-fx respeta prefers-reduced-motion: helper reduceMotion() (live), shake gateado en carga/asedio, addParticles no-op, deriva ambiental congelada. tsc+verify(17/17)+build verde.
