@@ -141,8 +141,10 @@
         <em>detrás</em> de casi cualquier otro overlay. No hay tokens de capa en <code>design-tokens.css</code>.</div>
       <div class="finding"><b>Cierre inconsistente.</b> <code>DoctrineDraftModal</code>
         (<span class="path">DoctrineDraftModal.tsx:26</span>) no cierra con <kbd>Esc</kbd> ni con click en el
-        backdrop: el único <code>onClick</code> es el de elegir doctrina (<span class="path">:57</span>). El jugador
-        queda "atrapado" salvo que complete la acción.</div>
+        backdrop: el único <code>onClick</code> es el de elegir doctrina (<span class="path">:57</span>).
+        <em>Matiz (verificado al implementar):</em> es elección <b>obligatoria por diseño</b> ("blocks the Forum until a
+        choice is made") — la no-dismissabilidad es intencional, no un bug. Sí faltaba <code>aria-modal</code>
+        (ya añadido). Que sea <em>saltable</em> es una decisión de diseño abierta, no una corrección.</div>
       <div class="finding"><b>Sin bloqueo de scroll de fondo.</b> Ningún modal pone <code>overflow:hidden</code>
         en <code>&lt;body&gt;</code>. Con un modal abierto, la rueda del ratón hace scroll de la pantalla de detrás.</div>
       <div class="finding"><b>Sin foco gestionado (a11y).</b> No hay <em>focus trap</em>, ni autofocus, ni restitución

@@ -22,11 +22,16 @@ export function DoctrineDraftModal() {
   };
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 300,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'rgba(10, 8, 16, 0.78)', backdropFilter: 'blur(3px)',
-    }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="doctrine-draft-title"
+      style={{
+        position: 'fixed', inset: 0, zIndex: 300,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(10, 8, 16, 0.78)', backdropFilter: 'blur(3px)',
+      }}
+    >
       <OrnateFrame width="min(760px, 94vw)" padding="hero" style={{ textAlign: 'center' }}>
         <div style={{
           fontFamily: 'var(--imp-font-display)', fontSize: 'var(--imp-text-xs)',
@@ -34,7 +39,7 @@ export function DoctrineDraftModal() {
         }}>
           Senatus Populusque Romanus
         </div>
-        <h2 style={{
+        <h2 id="doctrine-draft-title" style={{
           fontFamily: 'var(--imp-font-display)', color: 'var(--imp-gold-hi)',
           margin: '6px 0 4px', fontSize: 'var(--imp-text-xl)', letterSpacing: 1,
         }}>
