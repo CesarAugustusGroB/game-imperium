@@ -452,10 +452,10 @@
       <div class="finding"><b>Mismo lenguaje visual de "monedas".</b> Wealth usa <code>wealth-icon.png</code> + 💰; oro usa
         <code>gold-stack-icon.png</code> + 🪙. Ambos son imaginería de dinero/monedas → el jugador no distingue un
         <em>stock</em> (riqueza provincial) de una <em>moneda</em> (oro imperial). (Liga con Topic 9.)</div>
-      <div class="finding"><b>"Wealth Growth" se etiqueta como si fuera ingreso de oro.</b> Edificios como Port/Market/Mine
-        muestran a la vez <code>+X Gold/season</code> y <code>+X Wealth Growth/season</code>
-        (<span class="path">province.ts:191,160,333</span>). Misma forma "+N/season" para un <b>flujo</b> (oro) y para el
-        <b>crecimiento de un stock</b> (wealth). Indistinguibles a simple vista.</div>
+      <div class="finding ok"><b>"Wealth Growth" mal etiquetado — MEJORADO (PV2).</b> Antes "Wealth Growth +N/season" se
+        confundía con ingreso de oro. Reetiquetado a <b>"Wealth growth (tax base)"</b> en las 3 filas (terreno/trade/feature),
+        con un cue en el tooltip de wealth ("A stock you tax each season — not spendable gold"). También se unificó
+        <code>/s</code>→<code>/season</code> y el emoji 💰→icono de wealth. Queda el icono propio no-moneda (PV3).</div>
       <div class="finding"><b>La cadena causal wealth→impuesto→oro es invisible.</b> <code>taxRevenue = floor(wealth × tax)</code>
         no se muestra como línea derivada; el jugador ve "Wealth 64" y "+11 oro" sin el puente entre ambos.</div>
       <div class="finding info"><b>Vocabulario interno filtrado.</b> PWG/NWG, "wealth tier", "wealth pool" aparecen en

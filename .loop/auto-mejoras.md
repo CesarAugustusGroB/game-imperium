@@ -41,7 +41,7 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 
 ### Fase 2 — Pasada Provinciae (5+6, claridad económica)
 - [DONE] PV1 · Desglose causal de ingreso. Descubierto: el `IncomeLedger` YA mostraba Tax (wealth×rate) + edificios + subsistencia + trade + gobernador + gastos + NET. Faltaban las 2 capas IMPERIALES (Topic 6): añadido bloque "Empire modifiers" con Aqueduct T3 ×1.1 y War Profiteer/doctrinas ×mult + "≈ Actual net". Nuevo getter puro `getIncomeBonus()` en resources.ts (expone el multiplicador antes module-private). El net por-provincia (fuente compartida con getNetGoldIncome) NO se alteró. (Topic 6)
-- [READY] PV2 · Reetiquetar "Wealth Growth" como crecimiento de base imponible (stock), no ingreso de oro; marcar wealth como stock en su chip/hero. (Topic 5)
+- [DONE] PV2 · "Wealth Growth" → "Wealth growth (tax base)" en las 3 filas (terreno/trade/feature). Cue de stock en el tooltip de WealthDisplay ("A stock you tax each season — not spendable gold"). De paso: 💰 emoji → wealthIcon (PV3 reemplaza el arte) y `/s` → `/season` en todas las líneas de wealth (esta rama no tenía el fix antiguo de la otra rama). (Topic 5)
 - [READY] PV3 · Generar un icono de wealth = BOLSA DE DINERO / saco (decisión del usuario), visualmente distinto del montón de monedas del oro (gold-stack). Seguir docs/icon-art-direction.md; guardar en src/assets/ui/resources/, cablear en lugar del wealth-icon actual, re-generar iconos.html. (Topics 5,9)
 - [READY] PV4 · Documentar la creación de oro (4 capas) en `sistemas-del-juego.html`. (Topic 6)
 
@@ -68,3 +68,4 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - QW6 DONE — tools/verify-portraits.ts añadido (auto-descubierto). Aserta 24 retratos (commanders/advisors/governors) contra public/; todos resuelven. npm run verify ahora 18/18. Reporte (Topic 2) sincronizado. tsc+verify+build verde.
 - QW7 DONE — comandante "Pope Innocent"→"Pope Leo" (display only; id 'innocent' intacto). Docs de estado actual sincronizados; históricos no tocados. tsc+verify(18/18)+build verde. ✅ FASE 1 (quick wins) COMPLETA.
 - PV1 DONE — IncomeLedger ya tenía el desglose base; añadido bloque "Empire modifiers" (Aqueduct ×1.1, War Profiteer/doctrinas ×mult, ≈ Actual net) + getter puro getIncomeBonus() en resources.ts. Surfacea las 2 capas imperiales antes invisibles. Reporte (Topic 6) sincronizado. tsc+verify(18/18)+build verde.
+- PV2 DONE — wealth reetiquetado como stock/base imponible ("Wealth growth (tax base)" + cue en tooltip), 💰→wealthIcon, /s→/season en toda la UI de wealth. Reporte (Topic 5) sincronizado. tsc+verify(18/18)+build verde.

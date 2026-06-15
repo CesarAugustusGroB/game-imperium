@@ -1366,7 +1366,7 @@ function ProvinceRow({ province, selected }: { province: Province; selected: boo
         {terrainIcon} {province.terrain}{tradeIcon ? ` · ${tradeIcon} ${province.tradeGood}` : ''}
       </div>
       <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)' }}>
-        Wealth: {province.wealth} ({netWealthChange >= 0 ? '+' : ''}{netWealthChange.toFixed(1)}/s)
+        Wealth (tax base): {province.wealth} ({netWealthChange >= 0 ? '+' : ''}{netWealthChange.toFixed(1)}/season)
       </div>
       <div style={{ fontSize: 'var(--font-size-xs)', color: unrestColor }}>
         Unrest: {province.unrest}/100
@@ -1760,6 +1760,9 @@ function WealthDisplay({ province }: { province: Province }) {
       <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)' }}>
         Provincial Wealth
       </div>
+      <div style={{ fontSize: 'var(--imp-text-xs)', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+        A stock you tax each season — not spendable gold.
+      </div>
       <div style={{ fontSize: 'var(--imp-text-sm)', color: 'var(--color-text-secondary)' }}>
         Tax revenue: {Math.round(province.wealth)} x {formatTaxRate(taxRate)} ={' '}
         <strong style={{ color: 'var(--color-gold-primary)' }}>+{taxRevenue}g</strong>
@@ -1793,7 +1796,7 @@ function WealthDisplay({ province }: { province: Province }) {
             <div class="province-metric-row">
               <span class="province-metric-label">Seasonal</span>
               <span class="province-metric-row-value" style={{ color: trendColor }}>
-                {netChange >= 0 ? '+' : ''}{netChange.toFixed(1)}/s {trendArrow}
+                {netChange >= 0 ? '+' : ''}{netChange.toFixed(1)}/season {trendArrow}
               </span>
             </div>
             <div class="province-metric-row">
@@ -1858,7 +1861,7 @@ function IdentityStrip({ province }: { province: Province }) {
   interface ModRow { icon: ComponentChildren; label: string; value: string; positive: boolean }
   const modRows: ModRow[] = [];
   if (mods.growthModifier !== 0) modRows.push({ icon: <InlineImageIcon src={populationIcon} size="micro" />, label: 'Pop Growth',    value: `${mods.growthModifier > 0 ? '+' : ''}${mods.growthModifier}/s`, positive: mods.growthModifier > 0 });
-  if (mods.pwgModifier    !== 0) modRows.push({ icon: '💰', label: 'Wealth Growth',  value: `${mods.pwgModifier > 0 ? '+' : ''}${mods.pwgModifier}/s`,    positive: mods.pwgModifier > 0 });
+  if (mods.pwgModifier    !== 0) modRows.push({ icon: <InlineImageIcon src={wealthIcon} size="micro" />, label: 'Wealth growth (tax base)',  value: `${mods.pwgModifier > 0 ? '+' : ''}${mods.pwgModifier}/season`,    positive: mods.pwgModifier > 0 });
   if (mods.garrisonBonus  !== 0) modRows.push({ icon: '🛡', label: 'Garrison',      value: `+${mods.garrisonBonus}`,                                        positive: true });
 
   const terrainTooltip = (
@@ -1941,7 +1944,7 @@ function IdentityStrip({ province }: { province: Province }) {
     if (tradeGood.flatGold          > 0) rows.push({ icon: '🪙', label: 'Gold',         value: `+${tradeGood.flatGold}g/s` });
     if (tradeGood.flatGrowth        > 0) rows.push({ icon: <InlineImageIcon src={populationIcon} size="micro" />, label: 'Pop Growth',   value: `+${tradeGood.flatGrowth}/s` });
     if (tradeGood.flatIuniores      > 0) rows.push({ icon: '⚔️', label: 'Iuniores',     value: `+${tradeGood.flatIuniores}/s` });
-    if (tradeGood.wealthGrowthBonus > 0) rows.push({ icon: '💰', label: 'Wealth Growth',value: `+${tradeGood.wealthGrowthBonus}/s` });
+    if (tradeGood.wealthGrowthBonus > 0) rows.push({ icon: <InlineImageIcon src={wealthIcon} size="micro" />, label: 'Wealth growth (tax base)',value: `+${tradeGood.wealthGrowthBonus}/season` });
 
     const specialLine = (() => {
       const s = tradeGood.special;
@@ -2067,7 +2070,7 @@ function IdentityStrip({ province }: { province: Province }) {
             if (f.unrestPerSeason) rows.push(`${f.unrestPerSeason} Unrest/season`);
             if (f.beautinessBonus) rows.push(`+${f.beautinessBonus}% Beautiness`);
             if (f.buildCostDiscount) rows.push(`-${f.buildCostDiscount}% Build Cost`);
-            if (f.wealthGrowthBonus) rows.push(`+${f.wealthGrowthBonus} Wealth Growth`);
+            if (f.wealthGrowthBonus) rows.push(`+${f.wealthGrowthBonus} Wealth growth (tax base)`);
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div style={{ fontWeight: 700, color: 'var(--color-gold-primary)' }}>{f.name}</div>
