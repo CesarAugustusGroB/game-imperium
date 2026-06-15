@@ -1,11 +1,14 @@
 import type { ComponentChildren } from 'preact';
+import { useSignal } from '@preact/signals';
 import { COHORT_CATALOG } from '../../../../game/army/cohort-data';
 import type { Cohort } from '../../../../game/army/cohort';
+import { canConsolidate, consolidateCohorts } from '../../../../game/army/cohort';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { gold, iuniores } from '../../../../game/core/resources';
 import type { ResourceType } from '../../../../game/core/commander';
 import {
   preparedArmy, preparedLegate, legateHiringPool,
-  ensurePreparedArmy, recruitCohort, removeCohort, getRecruitCohortFailure,
+  ensurePreparedArmy, recruitCohort, removeCohort, mergeCohorts, getRecruitCohortFailure,
   ensureLegatePool, hireLegate, dismissLegate,
   buySupplies, upgradeArmor, buyAmmunition, getDiscountedGold,
 } from '../../../../game/progression/strategic-store';
@@ -258,6 +261,8 @@ interface CohortGroup {
 export function ExercitusTab() {
   ensurePreparedArmy();
   ensureLegatePool();
+  // Pending "merge cohorts" confirmation — holds the cohort id awaiting confirm.
+  const mergeConfirmId = useSignal<string | null>(null);
 
   const currentGold = gold.value;
   const currentIuniores = iuniores.value;
@@ -335,6 +340,7 @@ export function ExercitusTab() {
 
   function handleRecruit(id: string) { if (recruitCohort(id).ok) playSfx('ui_equip'); }
   function handleRemove(id: string)  { removeCohort(id); playSfx('ui_sell'); }
+  function handleMerge(id: string)   { mergeCohorts(id); playSfx('ui_equip'); }
   function handleHire(id: string)    { if (hireLegate(id, LEGATE_HIRE_COST)) playSfx('ui_equip'); }
   function handleDismiss()           { dismissLegate(); playSfx('ui_sell'); }
   function handleHealOne(idx: number, mercenary: boolean) {
@@ -562,6 +568,21 @@ export function ExercitusTab() {
                   Heal <ResourceAmount type={healResource} amount={g.healCost} iconSize="inline" />
                 </button>
               ) : <span />}
+              {canConsolidate(cohorts, g.id) && (
+                <button
+                  onClick={() => { mergeConfirmId.value = g.id; }}
+                  title={`Merge damaged ${g.name} cohorts into fewer full ones (conserves total HP, frees slots; no cost)`}
+                  style={{
+                    width: 26, height: 26, padding: 0,
+                    background: 'transparent', border: '1px solid rgba(212, 168, 67, 0.5)',
+                    borderRadius: 2, color: 'var(--imp-gold-hi)', fontSize: 14, lineHeight: 1,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', fontFamily: 'var(--imp-font-body)', flexShrink: 0,
+                  }}
+                >
+                  ⛬
+                </button>
+              )}
               <button
                 onClick={() => handleRemove(g.id)}
                 title={`Disband one ${g.name}`}
@@ -590,6 +611,26 @@ export function ExercitusTab() {
   return (
     <>
       <Masthead title="Exercitus" subtitle={subtitle} accent={accent} />
+
+      {(() => {
+        const id = mergeConfirmId.value;
+        if (!id) return null;
+        const name = cohorts.find((c) => c.id === id)?.name ?? id;
+        const before = cohorts.filter((c) => c.id === id).length;
+        const after = consolidateCohorts(cohorts, id).filter((c) => c.id === id).length;
+        const freed = before - after;
+        return (
+          <ConfirmDialog
+            open
+            title="Fusionar cohortes"
+            body={`Consolidar ${before} ${name} en ${after} cohorte${after === 1 ? '' : 's'}. Conserva el HP total y libera ${freed} ranura${freed === 1 ? '' : 's'} del roster. No cuesta oro ni iuniores.`}
+            confirmLabel="Fusionar"
+            cancelLabel="Cancelar"
+            onConfirm={() => { handleMerge(id); mergeConfirmId.value = null; }}
+            onCancel={() => { mergeConfirmId.value = null; }}
+          />
+        );
+      })()}
 
       <div style={{
         flex: 1, minHeight: 0, overflow: 'auto',

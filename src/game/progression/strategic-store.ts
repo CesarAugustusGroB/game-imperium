@@ -5,7 +5,7 @@ import type { ArmyData } from '../../types/index';
 import type { Cohort } from '../army/cohort';
 import type { Legate } from '../army/legate';
 import { getCohortById } from '../army/cohort-data';
-import { computeArmySize, createCohortInstance } from '../army/cohort';
+import { computeArmySize, createCohortInstance, consolidateCohorts } from '../army/cohort';
 import { rollHiringPool, rollLegateCandidate } from '../army/legate-pool';
 import { SUPPLIES_PER_GOLD, SUPPLIES_STARTING_STOCK, SUPPLY_MAX_CARRY, IUNIORES } from '../../config/game-config';
 import { AMMO_STARTING_STOCK, AMMO_MAX_CARRY, AMMO_PER_GOLD } from '../../config/game-config';
@@ -225,6 +225,19 @@ export function removeCohort(cohortId: string): void {
   const [removed] = cohorts.splice(removeIdx, 1);
   refundResource('gold', discountedGold(removed.aurumCost));
   if (!removed.mercenary) refundResource('iuniores', IUNIORES.recruitCost);
+  preparedArmy.value = { ...army, cohorts, size: computeArmySize(cohorts) };
+}
+
+/**
+ * Merge (consolidate) all same-type cohorts of `cohortId` into the fewest
+ * cohorts that conserve their total current HP — repacking damaged fragments
+ * into full cohorts plus at most one partial, freeing roster slots. No gold or
+ * iuniores changes hands (it's a reshuffle, not a heal); `size` is recomputed.
+ */
+export function mergeCohorts(cohortId: string): void {
+  const army = preparedArmy.value;
+  if (!army) return;
+  const cohorts = consolidateCohorts(army.cohorts, cohortId);
   preparedArmy.value = { ...army, cohorts, size: computeArmySize(cohorts) };
 }
 

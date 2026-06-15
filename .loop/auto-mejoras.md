@@ -47,7 +47,7 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 
 ### Fase 3 — Utilidades acotadas
 - [DONE] ME1 · Merge units: función pura `consolidateCohorts(roster, cohortId)` en cohort.ts (mismo-tipo, lossless-con-remanente) + `canConsolidate` (gating) + `totalCurrentHp` (helper). 8 tests vitest verdes. MATIZ: el invariante NO es `computeArmySize` (suma maxHp×nº cohortes → BAJA al fusionar, intencional); el invariante lossless es `totalCurrentHp` (suma currentHp). El test verifica ambos. (Topic 4)
-- [READY] ME2 · Botón "Fusionar" en la fila agrupada de `ExercitusTab` con `ConfirmDialog`, gating ≥2 instancias mismo-tipo y alguna dañada/OoA. (Topic 4)
+- [DONE] ME2 · Botón "Fusionar" (⛬) en la fila agrupada de ExercitusTab, gateado con `canConsolidate` (≥2 instancias que liberan ranura). Abre `ConfirmDialog` con preview (N→M cohortes, ranuras liberadas, "no cuesta oro ni iuniores") → llama a `mergeCohorts` (nueva acción en strategic-store que espeja el patrón de removeCohort: escribe roster + recomputa size). (Topic 4) — CIERRA FASE 3.
 - [READY] MO1 · Primitiva `<Modal>` + escala de z-index en design-tokens (APROBADO dentro del loop). MULTI-PASO: trocear en commits pequeños — (a) escala de z-index + componente Modal base sobre ConfirmDialog; (b..) migrar un modal por commit (DoctrineDraftModal → SettingsPanel → CampaignEventModal → battle → TutorialOverlay). Cada commit verde e independiente. (Topic 1)
 
 ### Fase 4 — Dificultad
@@ -72,3 +72,4 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - PV3 DONE — icono de wealth = bolsa de dinero (Codex vía skill generar-asset). Silueta de saco distinta del montón de monedas del oro → cierra la diferenciación visual wealth/oro de Topic 5. 768×768 RGBA, QA visual OK, mismo nombre de fichero. build verde. Reporte (Topics 5,9) sincronizado.
 - PV4 DONE — doc de creación de oro (4 capas) en sistemas-del-juego.html (Provinciae). Reporte (Topic 6) sincronizado. tsc+verify(18/18) verde. ✅ FASE 2 (Provinciae) COMPLETA.
 - ME1 DONE — consolidateCohorts + canConsolidate + totalCurrentHp en cohort.ts (lógica pura de merge). 8 tests vitest. Corregido el invariante del plan: es currentHp (lossless), no computeArmySize (maxHp×count, baja a propósito). Reporte (Topic 4) sincronizado. tsc+verify(18/18)+build+tests verde.
+- ME2 DONE — UI de merge: botón ⛬ Fusionar en la card agrupada de Exercitus + ConfirmDialog con preview + acción mergeCohorts en strategic-store. tsc+14 tests army+verify(18/18)+build verde. Reporte (Topic 4) sincronizado. ✅ FASE 3 (Merge units) COMPLETA.

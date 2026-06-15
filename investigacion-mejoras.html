@@ -392,9 +392,10 @@
       <h3>Caminos posibles</h3>
       <table>
         <tr><th>Opción</th><th>Semántica</th><th>Coste / Riesgo</th></tr>
-        <tr><td><b>A. Consolidación mismo-tipo</b> (MVP)</td>
+        <tr style="background:rgba(90,138,74,0.10)"><td><b>A. Consolidación mismo-tipo</b> (MVP) <b style="color:var(--ok)">★ IMPLEMENTADO (ME1+ME2)</b></td>
             <td>Fundir ≥2 cohortes del mismo <code>id</code>: volcar <code>currentHp</code> de las más dañadas en la más
-              llena, topar a maxHp, descartar las vaciadas. Libera slots y revive OoA sin iuniores.</td>
+              llena, topar a maxHp, descartar las vaciadas. Libera slots y revive OoA sin iuniores. <em>Hecho:</em>
+              <code>consolidateCohorts</code> (lossless, 8 tests) + botón ⛬ con ConfirmDialog en Exercitus.</td>
             <td>Bajo-Medio · Bajo-Medio</td></tr>
         <tr><td>B. Fusión-promoción (gacha)</td>
             <td>N comunes → 1 de rareza superior. La escala de rareza ya existe (common→…→secret-rare). Cambia balance y
