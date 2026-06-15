@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
 import { Corners } from './motifs/Corners';
+import { Modal } from './Modal';
 
 // Inject animation styles once (same guard pattern as CampaignEventModal.tsx).
 if (typeof document !== 'undefined' && !document.getElementById('confirm-dialog-styles')) {
@@ -119,16 +120,7 @@ export function ConfirmDialog({
     if (open) setDontAskAgain(false);
   }, [open]);
 
-  // Esc key cancels.
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, onCancel]);
-
+  // Backdrop, Escape-to-cancel, scroll-lock and focus are handled by <Modal>.
   if (!open) return null;
 
   const confirmClass = destructive
@@ -136,25 +128,9 @@ export function ConfirmDialog({
     : 'confirm-dialog-btn-confirm';
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        background: 'rgba(8, 6, 14, 0.78)',
-        backdropFilter: 'blur(2px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-      }}
-      onClick={onCancel}
-    >
+    <Modal open onClose={onCancel} labelledBy="confirm-dialog-title" zIndex="var(--imp-z-confirm)">
       <div
         class="confirm-dialog-card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
         aria-describedby="confirm-dialog-body"
         style={{
           maxWidth: 420,
@@ -166,7 +142,6 @@ export function ConfirmDialog({
           position: 'relative',
           boxShadow: '0 16px 48px rgba(0, 0, 0, 0.7)',
         }}
-        onClick={(e: MouseEvent) => e.stopPropagation()}
       >
         <Corners color="rgba(212, 168, 67, 0.55)" size={12} inset={3} thickness={1} />
 
@@ -224,6 +199,6 @@ export function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

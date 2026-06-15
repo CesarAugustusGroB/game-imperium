@@ -71,6 +71,14 @@
   /* === Blur === */
   --blur-panel: 12px;
 
+  /* === Layering (z-index scale) ===
+     One ladder for every stacking overlay so modals stop picking ad-hoc numbers.
+     overlay < modal < confirm < tooltip. (Migration in progress — MO1.) */
+  --imp-z-overlay: 150;    /* notifications, ambient overlays */
+  --imp-z-modal:   700;    /* standard modals: draft, battle, tutorial, settings shell */
+  --imp-z-confirm: 9900;   /* confirmation dialogs — above any modal */
+  --imp-z-tooltip: 10000;  /* tooltips — topmost interactive layer */
+
   /* Panel slot heights */
   --slot-height-council: 160px;
   --slot-height-spoke-preview: 72px;
