@@ -347,7 +347,7 @@ export const INVESTMENT_DATA: Record<InvestmentType, InvestmentData> = {
 export type SynergyBonus =
   | { type: 'pwg'; amount: number }                  // +X Wealth Growth per season
   | { type: 'food'; amount: number }                 // +X Food production per season (S20)
-  | { type: 'gold'; amount: number }                 // +X gold (× wealth tier × tax, as building income)
+  | { type: 'gold'; amount: number }                 // +X flat gold/season, bucketed as building income (NOT scaled by wealth or tax)
   | { type: 'unrest'; amount: number }               // −X Unrest per season (amount is the reduction)
   | { type: 'unit-cost-discount'; percent: number }; // −X% cohort recruit gold cost
 

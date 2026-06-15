@@ -459,10 +459,10 @@
         no se muestra como línea derivada; el jugador ve "Wealth 64" y "+11 oro" sin el puente entre ambos.</div>
       <div class="finding info"><b>Vocabulario interno filtrado.</b> PWG/NWG, "wealth tier", "wealth pool" aparecen en
         descripciones. Jerga de diseño que no comunica al jugador.</div>
-      <div class="finding warn"><b>Comentario desactualizado.</b> El <code>SynergyBonus 'gold'</code> dice
-        "(× wealth tier × tax, as building income)" (<span class="path">province.ts:350</span>) pero el código real suma
-        <code>buildingGold</code> <b>plano</b> (<span class="path">:409</span>); solo la base imponible escala con wealth.
-        Drift doc↔código.</div>
+      <div class="finding ok"><b>Comentario desactualizado — CORREGIDO (QW5).</b> El <code>SynergyBonus 'gold'</code>
+        decía "(× wealth tier × tax, as building income)" (<span class="path">province.ts:350</span>) pero el código suma
+        <code>buildingGold</code> <b>plano</b>; solo la base imponible escala con wealth. Comentario corregido a "flat gold,
+        bucketed as building income (NOT scaled by wealth or tax)".</div>
 
       <h3>Caminos posibles</h3>
       <table>
@@ -532,10 +532,10 @@
       <div class="finding warn"><b><code>floor()</code> mata la economía temprana.</b> wealth 10 × 3% = 0.3 →
         <code>floor</code> = <b>0</b> oro. Las provincias nuevas viven solo de +1 subsistencia + edificios planos; el
         impuesto "no hace nada" hasta que la wealth sube. Puede leerse como bug. (Liga con Topic 10.)</div>
-      <div class="finding info"><b>"Wealth tier" NO multiplica oro.</b> <code>SETTLEMENT.wealthTiers</code>
-        (<span class="path">game-config.ts:170</span>) son solo etiquetas/colores de mapa (Destitute→Wealthy), pero
-        comentarios como "× wealth tier × tax" (<span class="path">province.ts:350</span>) implican un multiplicador
-        inexistente. Drift que confunde.</div>
+      <div class="finding ok"><b>"Wealth tier" NO multiplica oro — DOCUMENTADO (QW5).</b> <code>SETTLEMENT.wealthTiers</code>
+        (<span class="path">game-config.ts:170</span>) son solo etiquetas/colores de mapa (Destitute→Wealthy). Se añadió
+        un comentario explícito "DISPLAY ONLY — NOT a gold/income multiplier" y se corrigieron los comentarios que
+        implicaban un multiplicador inexistente.</div>
       <div class="finding info"><b>Interacción sutil Profiteer×Aqueduct.</b> War Profiteer se aplica en
         <code>addResource</code> tras agregar y tras el +10% del Aqueduct → compone sobre el total imperial; el cap +75%
         es el guardarraíl. Vale la pena documentarlo.</div>

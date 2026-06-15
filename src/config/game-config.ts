@@ -166,7 +166,11 @@ export const SETTLEMENT = {
     { maxPop: 10, label: 'Major City',  slots: 5 },
     { maxPop: Infinity, label: 'Metropolis', slots: 6 },
   ],
-  /** Wealth tier thresholds for map dot coloring. */
+  /**
+   * Wealth tier thresholds — DISPLAY ONLY (map-dot label + colour). These do
+   * NOT multiply gold or any income; provincial gold scales via wealth × taxRate
+   * (see getProvinceIncome), not via these tiers.
+   */
   wealthTiers: [
     { maxWealth:  20, label: 'Destitute',  color: '#c24a3a' },
     { maxWealth:  50, label: 'Poor',       color: '#d4a843' },

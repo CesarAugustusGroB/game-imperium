@@ -34,7 +34,7 @@ export type TradeGoodSpecial =
 export interface TradeGoodData {
   id: TradeGoodType;
   name: string;
-  /** Flat gold income per season (not multiplied by wealth tier or tax). */
+  /** Flat gold income per season (NOT scaled by tax; there is no wealth-tier income multiplier). */
   flatGold: number;
   /** Flat population growth contribution per season. */
   flatGrowth: number;
