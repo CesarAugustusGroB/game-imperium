@@ -19,6 +19,19 @@ export function setIncomeModifierFn(fn: ((type: ResourceType) => number) | null)
   incomeModifierFn = fn;
 }
 
+/**
+ * The effective additive income bonus applied to a resource by addResource —
+ * War Profiteer (+0.5 on gold) plus any doctrine income modifier, capped at
+ * +0.75 (same formula as addResource). Read-only; exposed so UI ledgers can
+ * surface this otherwise-invisible empire-wide multiplier. e.g. 0.5 = +50%.
+ */
+export function getIncomeBonus(type: ResourceType): number {
+  let bonus = 0;
+  if (type === 'gold' && warProfilerActive) bonus += 0.5;
+  if (incomeModifierFn) bonus += incomeModifierFn(type);
+  return Math.min(bonus, 0.75);
+}
+
 export interface Resources {
   gold: number;
   iuniores: number;

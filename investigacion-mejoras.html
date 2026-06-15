@@ -524,8 +524,11 @@
       subsistencia 1 = 19 → ×1.1 (Aqueduct) → ×1.5 (Crassus) ≈ <b>31 oro/temporada</b>.</p>
 
       <h3>Hallazgos</h3>
-      <div class="finding"><b>Toda la composición es invisible.</b> El jugador ve un "+N oro/temporada" final; no hay
-        desglose de las 4 capas. Es exactamente el "no se entiende de dónde sale el oro".</div>
+      <div class="finding ok"><b>Composición invisible — MEJORADO (PV1).</b> El <code>IncomeLedger</code> ya desglosaba
+        Tax (wealth×rate) + edificios + subsistencia + trade + gobernador + gastos + NET. Faltaban las 2 capas
+        <em>imperiales</em>: añadido un bloque "Empire modifiers" que muestra <b>Aqueduct T3 ×1.1</b> y
+        <b>War Profiteer/doctrinas ×mult</b> + un "≈ Actual net", con un getter puro <code>getIncomeBonus()</code>. Ahora
+        las 4 capas son visibles.</div>
       <div class="finding"><b>El dominio de la base imponible no es obvio.</b> El mayor multiplicador de oro a largo plazo
         es <em>crecer wealth × subir impuesto</em>, pero los edificios anuncian "+X Gold/season" planos que parecen
         comparables. Un Market T3 da +6 oro plano <b>y</b> +5 wealth-growth (que compone vía impuesto) — la vía de

@@ -19,7 +19,7 @@ import {
 } from '../../../../game/province/province';
 import type { TaxLevel } from '../../../../types/index';
 import { FACTION_COLORS, RESOURCE_INFO, type ResourceType } from '../../../../game/core/commander';
-import { getResource } from '../../../../game/core/resources';
+import { getResource, getIncomeBonus } from '../../../../game/core/resources';
 import { getHireCost, type GovernorTrait } from '../../../../game/province/governor';
 import {
   governorPool, governorAssignments,
@@ -2557,6 +2557,32 @@ function IncomeLedger({ province, accent = '#d4a843', index = 0 }: { province: P
               <ResourceAmount type="gold" amount={net} sign={net >= 0 ? '+' : ''} iconSize="micro" /> /season
             </span>
           </div>
+
+          {/* Empire-wide gold multipliers (applied at the season tick, not per
+              province) — surfaced so the actual treasury gain doesn't look like
+              a mismatch. Aqueduct T3 ×1.1 on all income; War Profiteer / doctrine
+              income bonus on gold (capped +75%). */}
+          {(() => {
+            const aqueductMult = hasAqueductIncomeBonus() ? 1.1 : 1;
+            const goldBonus = getIncomeBonus('gold'); // e.g. 0.5 = +50%
+            if (aqueductMult === 1 && goldBonus === 0) return null;
+            const actualGold = Math.floor(goldTotal * aqueductMult * (1 + goldBonus));
+            const actualNet = actualGold - totalExpenses;
+            return (
+              <div style={{ marginTop: 4, paddingTop: 4, borderTop: '1px dashed var(--color-border-subtle)' }}>
+                <div style={{ fontSize: '8px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: 3 }}>
+                  Empire modifiers
+                </div>
+                {aqueductMult > 1 && (
+                  <LedgerRow label="Aqueduct T3 (all income)" badge="gov" value="×1.1" positive />
+                )}
+                {goldBonus > 0 && (
+                  <LedgerRow label="War Profiteer / doctrines (gold)" badge="gov" value={`×${(1 + goldBonus).toFixed(2)}`} positive />
+                )}
+                <LedgerRow label="≈ Actual net (empire)" value={`${actualNet >= 0 ? '+' : ''}${actualNet}g`} positive={actualNet >= 0} negative={actualNet < 0} bold />
+              </div>
+            );
+          })()}
         </div>
       )}
     </BentoCard>
