@@ -157,7 +157,12 @@ export function OptionsModal({ open, onClose }: {
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 20,
+        // Global options modal: must sit above every gameplay overlay
+        // (NotificationFeed 150, Provinciae 200, draft 300, tutorial 400,
+        // battle 600) yet below ConfirmDialog / MusicToggle (9999) so a
+        // confirm launched from here still appears on top. (Was 20 — hidden
+        // behind those overlays.) Will fold into the z-index token scale (MO1).
+        zIndex: 9000,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

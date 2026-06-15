@@ -127,7 +127,7 @@
         <tr><th>Modal</th><th>z-index</th><th>Escape</th><th>Click-fuera cierra</th><th>aria-modal</th></tr>
         <tr><td><code>ConfirmDialog.tsx</code> <em>(el mejor)</em></td><td>9999</td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
         <tr><td><code>Panel.tsx</code> (genérico)</td><td>200</td><td>Sí</td><td>—</td><td>Sí</td></tr>
-        <tr><td><code>SettingsPanel.tsx</code></td><td><b style="color:var(--bad)">20</b></td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
+        <tr><td><code>SettingsPanel.tsx</code></td><td><s>20</s> <b style="color:var(--ok)">9000</b> ✓</td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
         <tr><td><code>DoctrineDraftModal.tsx</code></td><td>300</td><td><b style="color:var(--bad)">No</b></td><td><b style="color:var(--bad)">No</b></td><td><b style="color:var(--bad)">No</b></td></tr>
         <tr><td><code>CampaignEventModal.tsx</code></td><td>(CSS)</td><td>?</td><td>?</td><td>Sí</td></tr>
         <tr><td>Battle modal (<code>IterBelliScreen.tsx</code> <code>.ib-bm</code>)</td><td>600</td><td>?</td><td>?</td><td>?</td></tr>
@@ -137,8 +137,9 @@
 
       <h3>Hallazgos</h3>
       <div class="finding"><b>z-index sin escala.</b> Valores ad-hoc: 20, 150, 200, 300, 400, 600, 9999.
-        <code>SettingsPanel</code> a <b>z-20</b> (<span class="path">SettingsPanel.tsx:160</span>) puede quedar
-        <em>detrás</em> de casi cualquier otro overlay. No hay tokens de capa en <code>design-tokens.css</code>.</div>
+        <code>SettingsPanel</code> estaba a <b>z-20</b> (<span class="path">SettingsPanel.tsx:160</span>) —
+        <s>detrás de casi cualquier otro overlay</s> <b style="color:var(--ok)">corregido a 9000 (QW3)</b>. Aún no hay
+        tokens de capa en <code>design-tokens.css</code> (pendiente MO1).</div>
       <div class="finding"><b>Cierre inconsistente.</b> <code>DoctrineDraftModal</code>
         (<span class="path">DoctrineDraftModal.tsx:26</span>) no cierra con <kbd>Esc</kbd> ni con click en el
         backdrop: el único <code>onClick</code> es el de elegir doctrina (<span class="path">:57</span>).

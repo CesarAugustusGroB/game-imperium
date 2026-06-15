@@ -33,7 +33,7 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - [DONE] QW1 · A11y batalla: gate `prefers-reduced-motion` en `battle-fx.ts` (shake/partículas). (Topic 3)
 - [DONE] QW2 · `DoctrineDraftModal`: añadido `role="dialog"` + `aria-modal` + `aria-labelledby` (accesibilidad). NOTA: el cierre con Esc/backdrop NO se añadió — el modal es elección OBLIGATORIA por diseño ("blocks the Forum until a choice is made"); cerrarlo permitiría saltarse la recompensa de victoria. Ver QW2b. (Topic 1)
 - [BLOCKED: ¿El victory draft de doctrina debe poder saltarse/cerrarse (Esc/backdrop), o se mantiene como elección obligatoria? El código lo trata como forzado.] QW2b · Cierre dismissible del DoctrineDraftModal. (Topic 1)
-- [READY] QW3 · `SettingsPanel` z-index: subir de 20 a una capa coherente (sobre overlays/sidebar). (Topic 1)
+- [DONE] QW3 · `SettingsPanel` z-index 20 → 9000 (sobre overlays de gameplay ≤600, bajo ConfirmDialog/MusicToggle 9999). Comentario documenta el orden; se formalizará con la escala de tokens (MO1). (Topic 1)
 - [READY] QW4 · Iconos POWER_STATS: sustituir glyphs emoji (🐎🪨🛡🏹👣) por `GameIcon` stat-* en el StatGrid de Exercitus (los iconos YA existen). (Topic 9)
 - [READY] QW5 · Higiene docs/comentarios: quitar "× wealth tier" de `SynergyBonus` (province.ts) y aclarar que `wealthTiers` son display-only. (Topics 5,6)
 - [READY] QW6 · `tools/verify-portraits.ts`: asertar que toda ruta de retrato (commanders/advisors/governors) resuelve a un fichero existente; añadir a `npm run verify`. (Topic 2)
@@ -62,3 +62,4 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 ## Log
 - QW1 DONE — battle-fx respeta prefers-reduced-motion: helper reduceMotion() (live), shake gateado en carga/asedio, addParticles no-op, deriva ambiental congelada. tsc+verify(17/17)+build verde.
 - QW2 DONE — DoctrineDraftModal con role/aria-modal/aria-labelledby. Descubierto: es elección obligatoria por diseño, así que el cierre dismissible se separó a QW2b (BLOCKED, necesita decisión). Reporte (Topic 1) sincronizado. tsc+verify(17/17)+build verde.
+- QW3 DONE — SettingsPanel z-index 20→9000 (estaba por debajo de todos los overlays). Reporte (Topic 1) sincronizado. tsc+verify(17/17)+build verde.
