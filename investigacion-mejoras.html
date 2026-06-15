@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Imperium — Investigación de mejoras</title>
+<style>
+  :root{
+    --bg:#0d0a14; --bg2:#15110b; --panel:rgba(22,16,10,0.92); --panel2:rgba(30,24,16,0.7);
+    --gold:#d4a843; --gold-hi:#f0d080; --gold-faint:rgba(212,168,67,0.28);
+    --text-hi:#ece3d2; --text-mid:#b8ad97; --text-lo:#7d745f;
+    --ok:#5a8a4a; --warn:#c9a227; --bad:#c24a3a; --info:#5a7fb0; --purple:#a07fd0;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:radial-gradient(1200px 700px at 50% -10%,#1a1410,#0d0a14 60%);
+    color:var(--text-mid);font-family:'EB Garamond','Cormorant',Georgia,serif;
+    line-height:1.55;padding:0 0 120px;
+  }
+  header.masthead{
+    text-align:center;padding:42px 20px 28px;border-bottom:1px solid var(--gold-faint);
+    background:linear-gradient(180deg,rgba(212,168,67,0.06),transparent);
+  }
+  header.masthead h1{
+    margin:0;font-family:'Cinzel',serif;font-size:30px;letter-spacing:6px;text-transform:uppercase;
+    color:var(--gold);font-weight:600;
+  }
+  header.masthead .sub{margin-top:8px;color:var(--text-lo);font-size:13px;letter-spacing:2px;font-family:var(--mono)}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px}
+
+  /* progress index */
+  .toc{margin:28px auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+  .toc a{
+    display:flex;align-items:center;gap:9px;text-decoration:none;padding:8px 11px;border-radius:3px;
+    border:1px solid var(--gold-faint);background:var(--panel2);color:var(--text-mid);font-size:13px;
+    transition:border-color .15s,background .15s;
+  }
+  .toc a:hover{border-color:var(--gold);background:rgba(212,168,67,0.08)}
+  .toc .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;background:var(--text-lo)}
+  .toc a[data-done="1"] .dot{background:var(--ok);box-shadow:0 0 6px rgba(90,138,74,0.7)}
+  .toc .n{font-family:var(--mono);font-size:11px;color:var(--text-lo)}
+
+  /* sections */
+  section.topic{
+    margin:22px 0;border:1px solid var(--gold-faint);border-radius:4px;background:var(--panel);
+    box-shadow:0 14px 40px rgba(0,0,0,0.45);overflow:hidden;
+  }
+  section.topic > h2{
+    margin:0;padding:16px 20px;font-family:'Cinzel',serif;font-size:17px;letter-spacing:2px;
+    color:var(--gold-hi);background:linear-gradient(180deg,rgba(212,168,67,0.10),transparent);
+    border-bottom:1px solid var(--gold-faint);display:flex;align-items:center;gap:12px;cursor:pointer;
+  }
+  section.topic > h2 .num{font-family:var(--mono);font-size:12px;color:var(--gold);opacity:.7}
+  section.topic > h2 .spacer{flex:1}
+  .body{padding:18px 22px 24px}
+
+  /* badges */
+  .badges{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+  .badge{font-family:var(--mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;
+    padding:2px 8px;border-radius:10px;border:1px solid currentColor}
+  .b-effort{color:var(--info)} .b-impact{color:var(--gold)} .b-risk{color:var(--warn)}
+  .b-state{color:var(--ok)}
+  .b-bad{color:var(--bad)}
+
+  h3{font-family:'Cinzel',serif;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--text-hi);margin:18px 0 8px;border-bottom:1px dashed var(--gold-faint);padding-bottom:5px}
+  h3:first-child{margin-top:0}
+  ul{margin:8px 0;padding-left:20px} li{margin:4px 0}
+  code,.path{font-family:var(--mono);font-size:12px;color:var(--gold-hi);background:rgba(0,0,0,0.35);
+    padding:1px 5px;border-radius:3px;border:1px solid var(--gold-faint)}
+  .finding{border-left:3px solid var(--bad);padding:2px 0 2px 12px;margin:9px 0}
+  .finding.warn{border-color:var(--warn)} .finding.info{border-color:var(--info)} .finding.ok{border-color:var(--ok)}
+  .finding b{color:var(--text-hi)}
+  .reco{margin-top:16px;padding:14px 16px;border:1px solid var(--gold);border-radius:4px;
+    background:rgba(212,168,67,0.07)}
+  .reco h3{border:0;margin-top:0;color:var(--gold-hi)}
+  .reco ol{margin:6px 0;padding-left:22px}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+  th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--gold-faint)}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--text-lo)}
+  .pending{opacity:.5;font-style:italic}
+  footer{max-width:960px;margin:40px auto 0;padding:18px 20px;border-top:1px solid var(--gold-faint);
+    color:var(--text-lo);font-size:12px;font-family:var(--mono);text-align:center}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <h1>Imperium · Investigación de mejoras</h1>
+  <div class="sub">Reporte acumulativo — un topic cada 15 min · solo investigación, sin tocar código de juego</div>
+</header>
+
+<div class="wrap">
+  <!-- TOC: data-done="1" cuando la sección esté investigada -->
+  <nav class="toc" id="toc">
+    <a href="#t1"  data-done="1"><span class="dot"></span><span class="n">01</span> Arreglar los modals</a>
+    <a href="#t2"  data-done="1"><span class="dot"></span><span class="n">02</span> Comandantes / portraits</a>
+    <a href="#t3"  data-done="1"><span class="dot"></span><span class="n">03</span> Pantalla de batalla</a>
+    <a href="#t4"  data-done="1"><span class="dot"></span><span class="n">04</span> Merge units</a>
+    <a href="#t5"  data-done="1"><span class="dot"></span><span class="n">05</span> Wealth vs Oro (Provincia)</a>
+    <a href="#t6"  data-done="1"><span class="dot"></span><span class="n">06</span> Creación de oro (Provincia)</a>
+    <a href="#t7"  data-done="1"><span class="dot"></span><span class="n">07</span> Añadir esclavos</a>
+    <a href="#t8"  data-done="1"><span class="dot"></span><span class="n">08</span> Mejorar belleza</a>
+    <a href="#t9"  data-done="1"><span class="dot"></span><span class="n">09</span> Iconografía y tooltips</a>
+    <a href="#t10" data-done="1"><span class="dot"></span><span class="n">10</span> Subir dificultad</a>
+    <a href="#synthesis" data-done="1" style="border-color:var(--gold);background:rgba(212,168,67,0.10)"><span class="dot"></span><span class="n">★</span> Síntesis &amp; Roadmap</a>
+  </nav>
+
+  <!-- ============================ TOPIC 1 ============================ -->
+  <section class="topic" id="t1" data-topic="1" data-status="done">
+    <h2 onclick="this.parentElement.querySelector('.body').classList.toggle('hidden')">
+      <span class="num">01</span> Arreglar los modals <span class="spacer"></span>
+      <span class="badge b-state">Investigado</span>
+    </h2>
+    <div class="body">
+      <div class="badges">
+        <span class="badge b-effort">Esfuerzo: Medio</span>
+        <span class="badge b-impact">Impacto: Alto</span>
+        <span class="badge b-risk">Riesgo: Bajo-Medio</span>
+        <span class="badge b-bad">8+ modales sin primitiva común</span>
+      </div>
+
+      <h3>Estado actual</h3>
+      <p>No existe un componente <code>Modal</code> compartido. Cada modal/diálogo del juego
+      reimplementa a mano su <em>backdrop</em>, centrado, <code>z-index</code> y cierre. Inventario detectado:</p>
+      <table>
+        <tr><th>Modal</th><th>z-index</th><th>Escape</th><th>Click-fuera cierra</th><th>aria-modal</th></tr>
+        <tr><td><code>ConfirmDialog.tsx</code> <em>(el mejor)</em></td><td>9999</td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
+        <tr><td><code>Panel.tsx</code> (genérico)</td><td>200</td><td>Sí</td><td>—</td><td>Sí</td></tr>
+        <tr><td><code>SettingsPanel.tsx</code></td><td><b style="color:var(--bad)">20</b></td><td>Sí</td><td>Sí</td><td>Sí</td></tr>
+        <tr><td><code>DoctrineDraftModal.tsx</code></td><td>300</td><td><b style="color:var(--bad)">No</b></td><td><b style="color:var(--bad)">No</b></td><td><b style="color:var(--bad)">No</b></td></tr>
+        <tr><td><code>CampaignEventModal.tsx</code></td><td>(CSS)</td><td>?</td><td>?</td><td>Sí</td></tr>
+        <tr><td>Battle modal (<code>IterBelliScreen.tsx</code> <code>.ib-bm</code>)</td><td>600</td><td>?</td><td>?</td><td>?</td></tr>
+        <tr><td><code>TutorialOverlay.tsx</code></td><td>400</td><td>?</td><td>stopProp</td><td>No</td></tr>
+        <tr><td><code>NotificationFeed.tsx</code></td><td>150</td><td>n/a</td><td>n/a</td><td>n/a</td></tr>
+      </table>
+
+      <h3>Hallazgos</h3>
+      <div class="finding"><b>z-index sin escala.</b> Valores ad-hoc: 20, 150, 200, 300, 400, 600, 9999.
+        <code>SettingsPanel</code> a <b>z-20</b> (<span class="path">SettingsPanel.tsx:160</span>) puede quedar
+        <em>detrás</em> de casi cualquier otro overlay. No hay tokens de capa en <code>design-tokens.css</code>.</div>
+      <div class="finding"><b>Cierre inconsistente.</b> <code>DoctrineDraftModal</code>
+        (<span class="path">DoctrineDraftModal.tsx:26</span>) no cierra con <kbd>Esc</kbd> ni con click en el
+        backdrop: el único <code>onClick</code> es el de elegir doctrina (<span class="path">:57</span>). El jugador
+        queda "atrapado" salvo que complete la acción.</div>
+      <div class="finding"><b>Sin bloqueo de scroll de fondo.</b> Ningún modal pone <code>overflow:hidden</code>
+        en <code>&lt;body&gt;</code>. Con un modal abierto, la rueda del ratón hace scroll de la pantalla de detrás.</div>
+      <div class="finding"><b>Sin foco gestionado (a11y).</b> No hay <em>focus trap</em>, ni autofocus, ni restitución
+        de foco al cerrar en NINGÚN modal (0/8). <kbd>Tab</kbd> se escapa al fondo; lectores de pantalla se pierden.</div>
+      <div class="finding warn"><b>aria-modal disperso.</b> Presente en ConfirmDialog/Panel/SettingsPanel/CampaignEventModal;
+        ausente en DoctrineDraftModal y TutorialOverlay.</div>
+      <div class="finding info"><b>Estilos duplicados.</b> Patrón repetido de inyectar un <code>&lt;style&gt;</code> con guard
+        (<span class="path">ConfirmDialog.tsx:6</span>, <span class="path">CampaignEventModal.tsx</span>) en cada modal.</div>
+
+      <h3>Caminos posibles</h3>
+      <table>
+        <tr><th>Opción</th><th>Qué implica</th><th>Coste / Riesgo</th></tr>
+        <tr><td><b>A. Primitiva <code>&lt;Modal&gt;</code></b></td>
+            <td>Un componente que encapsula backdrop + centrado + token z-index + Esc + click-fuera + focus-trap + scroll-lock + ARIA. Migrar los 6-8 modales encima.</td>
+            <td>Medio · Bajo-Medio (migración incremental)</td></tr>
+        <tr><td>B. Parche mínimo</td>
+            <td>Solo arreglar lo roto: Esc/click-fuera en DoctrineDraftModal y subir su/los z-index a una escala.</td>
+            <td>Bajo · Bajo (pero no resuelve la raíz; volverá a divergir)</td></tr>
+        <tr><td>C. Librería externa</td>
+            <td>Adoptar un headless (p.ej. focus-trap + dialog). Añade dependencia; el proyecto evita libs de UI pesadas.</td>
+            <td>Medio · va contra la política "CSS a mano" del repo</td></tr>
+      </table>
+
+      <div class="reco">
+        <h3>★ Recomendación</h3>
+        <p><b>Opción A — extraer <code>src/ui/components/Modal.tsx</code></b>, usando <code>ConfirmDialog.tsx</code>
+        como plantilla (ya es el más completo).</p>
+        <ol>
+          <li>Añadir escala de capas a <span class="path">design-tokens.css</span>:
+            <code>--imp-z-overlay:150</code>, <code>--imp-z-modal:600</code>, <code>--imp-z-toast:800</code>,
+            <code>--imp-z-confirm:9999</code>. Sustituir los números mágicos.</li>
+          <li><code>&lt;Modal&gt;</code> aporta: fixed+inset backdrop, Esc-cierra, click-fuera (opt-out por prop
+            <code>dismissable</code>), <em>focus-trap</em> + autofocus + restitución, <code>overflow:hidden</code> en body
+            mientras abierto, <code>role="dialog" aria-modal aria-labelledby</code>.</li>
+          <li>Migrar primero <code>ConfirmDialog</code> (refactor sobre la misma base), luego
+            <code>DoctrineDraftModal</code> (el más roto), <code>SettingsPanel</code>, <code>CampaignEventModal</code>,
+            battle modal y <code>TutorialOverlay</code>. Una migración por PR para acotar regresiones visuales.</li>
+        </ol>
+        <p><b>Quick win independiente:</b> arreglar ya el cierre de <code>DoctrineDraftModal</code> y subir
+        <code>SettingsPanel</code> de z-20 a la escala — 2 cambios de bajo riesgo que eliminan los peores síntomas
+        mientras se construye la primitiva.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== Topics 2-10: pendientes; el loop los irá rellenando ====== -->
+  <!-- ============================ TOPIC 2 ============================ -->
+  <section class="topic" id="t2" data-topic="2" data-status="done">
+    <h2 onclick="this.parentElement.querySelector('.body').classList.toggle('hidden')">
+      <span class="num">02</span> Arreglar los comandantes / portraits <span class="spacer"></span>
+      <span class="badge b-state">Investigado</span>
+    </h2>
+    <div class="body">
+      <div class="badges">
+        <span class="badge b-effort">Esfuerzo: Bajo-Medio</span>
+        <span class="badge b-impact">Impacto: Medio</span>
+        <span class="badge b-risk">Riesgo: Bajo</span>
+        <span class="badge b-bad">Retrato equivocado + assets huérfanos</span>
+      </div>
+
+      <h3>Estado actual</h3>
+      <p>Hay <b>4 comandantes</b> en <span class="path">src/data/commanders.ts</span> (Boudicca, Pope Innocent,
+      Augustus, Marcus Crassus). Cada uno define <code>portrait</code> como ruta-string literal a
+      <span class="path">/asset/characters/</span>. El componente compartido es
+      <span class="path">src/ui/components/Portrait.tsx</span> (placeholder con ⚔ en error, badge de tier, name-plate),
+      pero la pantalla de selección <span class="path">CommanderSelectScreen.tsx</span> NO usa <code>Portrait</code>:
+      monta su propio <code>&lt;img&gt;</code>.</p>
+
+      <h3>Hallazgos</h3>
+      <div class="finding"><b>Retrato equivocado para "Pope Innocent".</b>
+        <span class="path">commanders.ts:44</span> apunta a <code>char_pope_leo.png</code>, pero existe
+        <code>char_pope_innocent.png</code> sin usar en la misma carpeta. O es un nombre incorrecto (debería ser
+        <em>Pope Leo</em>) o la ruta está mal. Inconsistencia nombre↔imagen que conviene confirmar.</div>
+      <div class="finding warn"><b>Assets de retrato huérfanos / duplicados.</b> En
+        <span class="path">public/asset/characters/</span> conviven versiones sin usar:
+        <code>char_boudicca.png</code> (se usa <code>_v2</code>), <code>char_caesar_augustus.png</code> + <code>_v2</code>
+        (se usa <code>_v3</code>), <code>char_marcus_crassus.png</code> + <code>_v2.jpeg</code> +
+        <code>char_marcus_crassusbrigth.png</code> (se usa <code>_v3</code>), <code>char_pope_innocent.png</code>,
+        <code>char_tiberius.png</code>. Bloat del repo y confusión sobre cuál es "la buena".</div>
+      <div class="finding info"><b>Dos raíces de retrato paralelas.</b>
+        <span class="path">/asset/characters/</span> (comandantes) y <span class="path">/asset/councilors/</span>
+        (asesores, vía <code>ADVISOR_PORTRAIT_PATH</code> en <span class="path">advisor-data.ts:3</span>) duplican
+        boudicca/augustus/crassus/innocent/tiberius. Sin convención clara de cuál usa cada sistema.</div>
+      <div class="finding"><b>Encuadre de cara hardcodeado y divergente.</b> El campo
+        <code>portraitPosition</code> (data, 'center top') solo lo aplica el select screen
+        (<span class="path">CommanderSelectScreen.tsx:948</span>). El resto hardcodea <code>objectPosition</code>
+        a ojo en 6+ sitios con valores distintos: <code>center 20%</code> (Portrait.tsx:176),
+        <code>center 25%</code> (Sidebar), <code>center 14%</code> / <code>center 20%</code> (ConsiliumTab),
+        <code>center 18%</code> (ConsiliumPanel, AdvisorMarketCard). <b><code>Portrait.tsx</code> ni siquiera
+        acepta prop de posición</b>, así que ignora <code>portraitPosition</code>: caras descuadradas según pantalla.</div>
+      <div class="finding warn"><b>Sin validación de existencia para comandantes.</b> Los gobernadores tienen
+        <span class="path">governor-portraits.test.ts</span>, pero las rutas de <code>COMMANDERS[].portrait</code> son
+        literales sin verificación → drift como el de pope_leo pasa desapercibido.</div>
+
+      <h3>Caminos posibles</h3>
+      <table>
+        <tr><th>Sub-problema</th><th>Camino</th><th>Coste / Riesgo</th></tr>
+        <tr><td>Retrato Pope</td><td>Confirmar con usuario: ¿renombrar a "Pope Leo" o corregir ruta a <code>char_pope_innocent.png</code>?</td><td>Trivial · Bajo</td></tr>
+        <tr><td>Encuadre</td><td>Añadir prop <code>objectPosition</code> a <code>Portrait.tsx</code> y leer un campo de framing por-retrato (extender el patrón <code>portraitPosition</code> a todos los datos de personaje).</td><td>Bajo-Medio · Bajo</td></tr>
+        <tr><td>Assets huérfanos</td><td>Tras confirmar las "buenas", borrar versiones muertas; consolidar a una sola por personaje.</td><td>Bajo · Medio (no romper refs)</td></tr>
+        <tr><td>Validación</td><td><code>tools/verify-portraits.ts</code>: asertar que toda ruta de retrato (commanders, advisors, governors) resuelve a un fichero existente.</td><td>Bajo · Bajo</td></tr>
+      </table>
+
+      <div class="reco">
+        <h3>★ Recomendación</h3>
+        <ol>
+          <li><b>Quick win:</b> resolver el retrato de "Pope Innocent" (decisión del usuario: nombre vs ruta).</li>
+          <li><b>Raíz del encuadre:</b> dar a <code>Portrait.tsx</code> una prop <code>objectPosition</code> con default,
+            y hacer que TODOS los call-sites pasen el framing desde los datos del personaje en lugar de números mágicos.
+            Unifica caras entre select/sidebar/consilium.</li>
+          <li><b>Higiene:</b> un <code>verify-portraits.ts</code> en <code>npm run verify</code> que falle si una ruta no
+            existe — convierte el bug de pope_leo en un error de CI, no algo visual que se cuela.</li>
+          <li><b>Limpieza (último, con confirmación):</b> podar los <code>_v1/_v2/brigth</code> huérfanos y decidir una
+            única convención de carpeta (characters vs councilors).</li>
+        </ol>
+        <p><em>Nota:</em> el sistema base (placeholder de error, tiers, name-plate) es sólido — el trabajo es de
+        <b>consistencia de datos y encuadre</b>, no de reescribir el componente.</p>
+      </div>
+    </div>
+  </section>
+  <!-- ============================ TOPIC 3 ============================ -->
+  <section class="topic" id="t3" data-topic="3" data-status="done">
+    <h2 onclick="this.parentElement.querySelector('.body').classList.toggle('hidden')">
+      <span class="num">03</span> Mejorar la pantalla de batalla <span class="spacer"></span>
+      <span class="badge b-state">Investigado</span>
+    </h2>
+    <div class="body">
+      <div class="badges">
+        <span class="badge b-effort">Esfuerzo: Medio-Alto</span>
+        <span class="badge b-impact">Impacto: Alto</span>
+        <span class="badge b-risk">Riesgo: Medio</span>
+        <span class="badge b-state">Base sólida ya existe</span>
+      </div>
+
+      <h3>Estado actual</h3>
+      <p>La batalla decisiva es un <b>tug-of-war de dados por postura</b> sobre <code>control</code> (−100..100),
+      con formaciones, órdenes, moral/disciplina/munición y "centros" de terreno. Arquitectura
+      (<span class="path">src/ui/screens/iterbelli/BattleModal.tsx</span>):</p>
+      <ul>
+        <li><b>Capa visual:</b> <span class="path">battle/battle-fx.ts</span> (266 líneas) — render procedural Canvas 2D:
+          terreno, escuadras, estandartes, proyectiles, partículas, screen-shake, bajas flotantes, motas ambientales.
+          Solo-presentación, nunca muta estado. Portado de un prototipo validado.</li>
+        <li><b>Capa DOM:</b> <code>ArmyStatus</code> (paneles tú/enemigo con barras), <code>CenterTrack</code> (dados),
+          <code>OrderBar</code> (botones de orden con chips ricos), <code>DecretaBar</code> (habilidades), log con scroll.</li>
+      </ul>
+      <p>Es de lo más pulido del juego. El trabajo es <b>elevarlo</b>, no rehacerlo.</p>
+
+      <h3>Hallazgos</h3>
+      <div class="finding warn"><b>Encajonado en un modal de 960px.</b> La batalla "decisiva" (clímax de la campaña)
+        vive dentro de <code>OrnateFrame width="min(960px,96vw)"</code> con <code>overflow:auto, maxHeight:94vh</code>
+        (<span class="path">BattleModal.tsx:92</span>). Es una caja con scroll, no una escena inmersiva a pantalla completa.</div>
+      <div class="finding warn"><b>Amontonamiento vertical.</b> En un único scroll caben: canvas + 2 paneles de ejército +
+        dados + botones de orden (hasta ~7 chips c/u) + barra de decreta + log. Mucha densidad; el canvas, que debería
+        ser protagonista, compite por el espacio.</div>
+      <div class="finding"><b>Escuadras abstractas — sprites de soldado sin usar.</b> <code>battle-fx</code> dibuja
+        rectángulos/estandartes procedurales; no hay <code>drawImage</code> ni referencia a
+        <span class="path">public/asset/soldiers/</span> (roman_legionary, gallic_gaesatae, punic, spartan…). Hay un
+        roster de arte de unidades rico totalmente desaprovechado: las tropas no reflejan composición ni facción.</div>
+      <div class="finding"><b>Screen-shake sin <code>prefers-reduced-motion</code>.</b> El shake (hasta 14px,
+        <span class="path">battle-fx.ts:224,247</span>) y las partículas corren para todos. <code>GoldDust</code> sí
+        respeta reduced-motion; <code>battle-fx</code> no → problema de accesibilidad / mareo.</div>
+      <div class="finding info"><b>OrderBar muy denso para novatos.</b> Cada orden muestra hasta ~7 chips de micro-texto
+        (stat×mult, ≈daño, munición, moral, disc, pierce, temeraria…). Potente y honesto, pero abrumador; sin jerarquía
+        visual entre "ofensiva" y "coste/riesgo" (<span class="path">OrderBar.tsx:16-39</span>).</div>
+      <div class="finding info"><b>Cierre poco cinematográfico.</b> Tras vencer/perder solo hay un botón
+        <code>Continue</code> (<span class="path">BattleModal.tsx:109-112</span>). Existen
+        <code>victory_banner.png</code>, <code>defeat_label.png</code>, <code>post_battle_victory_background.png</code>
+        sin usar en el modal.</div>
+      <div class="finding info"><b>Deployment mínimo.</b> <span class="path">DeploymentPanel.tsx</span> (29 líneas):
+        elección de formación con poca previsualización de su efecto.</div>
+
+      <h3>Caminos posibles</h3>
+      <table>
+        <tr><th>Mejora</th><th>Qué implica</th><th>Coste / Riesgo</th></tr>
+        <tr><td>A11y reduced-motion</td><td>Gate de shake/partículas en <code>battle-fx</code> (espejo de GoldDust).</td><td>Bajo · Bajo</td></tr>
+        <tr><td>Identidad de unidades</td><td>Dibujar banderines/sprites desde el roster real (color de facción) con el arte existente.</td><td>Medio · Medio</td></tr>
+        <tr><td>Clímax a pantalla completa</td><td>Promover la batalla fuera del modal de 960px a una escena más amplia; banners + fondo post-batalla en el desenlace.</td><td>Medio-Alto · Medio (regresión de layout)</td></tr>
+        <tr><td>Legibilidad de órdenes</td><td>Jerarquía visual (ofensiva vs coste), chips con icono, pista "recomendada".</td><td>Bajo-Medio · Bajo</td></tr>
+        <tr><td>Reflujo de layout</td><td>Log colapsable o en columna lateral en pantallas anchas → más aire para canvas+arena.</td><td>Bajo-Medio · Bajo</td></tr>
+      </table>
+
+      <div class="reco">
+        <h3>★ Recomendación</h3>
+        <ol>
+          <li><b>Quick win a11y:</b> respetar <code>prefers-reduced-motion</code> en <code>battle-fx</code> — barato y elimina un problema real.</li>
+          <li><b>Mayor retorno de inmersión:</b> dar identidad a las unidades dibujando el arte de soldado existente
+            (banderín por cohorte/facción). Convierte las escuadras abstractas en "tu legión".</li>
+          <li><b>Clímax:</b> sacar la batalla del modal de 960px a una vista más a pantalla completa y rematar
+            victoria/derrota con los banners + fondo post-batalla ya disponibles. Hazlo tras 1-2, para no mezclar
+            regresión de layout con el resto.</li>
+          <li><b>Pulido de UX:</b> jerarquizar OrderBar y hacer el log colapsable. Bajo riesgo, alta percepción.</li>
+        </ol>
+        <p><em>Dependencia:</em> coordina con el Topic 8 (Belleza) — el clímax a pantalla completa y el arte de unidades
+        son también trabajo de "belleza"; conviene planificarlos juntos.</p>
+      </div>
+    </div>
+  </section>
+  <!-- ============================ TOPIC 4 ============================ -->
+  <section class="topic" id="t4" data-topic="4" data-status="done">
+    <h2 onclick="this.parentElement.querySelector('.body').classList.toggle('hidden')">
+      <span class="num">04</span> Añadir funcionalidad merge units <span class="spacer"></span>
+      <span class="badge b-state">Investigado</span>
+    </h2>
+    <div class="body">
+      <div class="badges">
+        <span class="badge b-effort">Esfuerzo: Bajo-Medio</span>
+        <span class="badge b-impact">Impacto: Medio</span>
+        <span class="badge b-risk">Riesgo: Bajo-Medio (balance)</span>
+        <span class="badge b-state">El modelo ya lo soporta</span>
+      </div>
+
+      <h3>Estado actual</h3>
+      <p>No existe ningún "merge" de unidades hoy (los matches de <code>merge/combine/stack</code> son incidentales).
+      Pero el modelo de cohortes lo facilita mucho:</p>
+      <ul>
+        <li><b>Cohorte = entrada atómica del roster</b> (<span class="path">src/game/army/cohort.ts</span>) con
+          <code>instanceId</code> estable, <code>id</code> de tipo, <code>currentHp</code> y <code>outOfAction</code>.</li>
+        <li><b>HP plano y aditivo:</b> <code>UNIT_HP = 1000</code> por cohorte; tamaño de ejército = suma de HP
+          (<span class="path">unit-types.ts:68</span>, <code>computeArmySize</code>). Una cohorte = 1000 HP.</li>
+        <li><b>Exercitus YA agrupa</b> cohortes del mismo <code>id</code> ("same id folded", con HP agregado y un
+          objetivo de curación por grupo — <span class="path">ExercitusTab.tsx:238</span>). Visualmente ya se ven como
+          una fila con recuento.</li>
+        <li><b>Acciones existentes:</b> <code>recruitCohort</code>, <code>removeCohort</code>,
+          <code>healCohortInRoster</code> (iuniores; mercenarios pagan oro), <code>replenishHubRoster</code>
+          (<span class="path">army-replenishment.ts</span>). Falta merge.</li>
+      </ul>
+
+      <h3>Hallazgos / oportunidades</h3>
+      <div class="finding ok"><b>Encaje perfecto con la UI agrupada.</b> Un botón "Fusionar" cabe en la fila de grupo
+        cuando hay ≥2 instancias del mismo tipo y alguna está dañada / <code>outOfAction</code>. La infraestructura de
+        <code>instanceId</code> + <code>cohortInstanceKey</code> permite quitar una instancia y volcar su HP en otra.</div>
+      <div class="finding warn"><b>El merge compite con el sink de iuniores.</b> Hoy curar gasta iuniores
+        (1000 iuniores cura cualquier cohorte). Un merge "gratis" sería una vía de curación alternativa que socava ese
+        sink económico → riesgo de balance. La regla de conservación de HP es la decisión de diseño central.</div>
+      <div class="finding info"><b>Caso de uso fuerte: revivir <code>outOfAction</code>.</b> En vez de pagar iuniores,
+        fundir dos cohortes mismas-tipo malheridas en una desplegable, sacrificando un slot de roster.</div>
+      <div class="finding"><b>Riesgo de overflow de HP.</b> Dos cohortes al 80% (800+800=1600) topadas a 1000 perderían
+        600 HP. Hace falta una regla explícita: lossless-con-remanente (deja una segunda al 60%) vs lossy-consolidante
+        (sacrificas el exceso por menos slots).</div>
+      <div class="finding ok"><b>Riesgo de save bajo.</b> El merge solo reduce instancias y ajusta <code>currentHp</code>;
+        la forma del roster no cambia → sin migración compleja.</div>
+
+      <h3>Caminos posibles</h3>
+      <table>
+        <tr><th>Opción</th><th>Semántica</th><th>Coste / Riesgo</th></tr>
+        <tr><td><b>A. Consolidación mismo-tipo</b> (MVP)</td>
+            <td>Fundir ≥2 cohortes del mismo <code>id</code>: volcar <code>currentHp</code> de las más dañadas en la más
+              llena, topar a maxHp, descartar las vaciadas. Libera slots y revive OoA sin iuniores.</td>
+            <td>Bajo-Medio · Bajo-Medio</td></tr>
+        <tr><td>B. Fusión-promoción (gacha)</td>
+            <td>N comunes → 1 de rareza superior. La escala de rareza ya existe (common→…→secret-rare). Cambia balance y
+              economía de recluta.</td>
+            <td>Alto · Alto</td></tr>
+        <tr><td>C. Merge en batalla</td>
+            <td>Combinar escuadras a mitad de combate. Toca el engine táctico.</td>
+            <td>Alto · Alto (fuera de alcance)</td></tr>
+      </table>
+
+      <div class="reco">
+        <h3>★ Recomendación</h3>
+        <p><b>Opción A — consolidación mismo-tipo</b>, como función pura nueva en
+        <span class="path">army-replenishment.ts</span> (o <code>cohort.ts</code>) + botón "Fusionar" en la fila
+        agrupada de <code>ExercitusTab</code> con <code>ConfirmDialog</code>.</p>
+        <ol>
+          <li><b>Regla de conservación (clave):</b> recomiendo <b>lossless-con-remanente</b> — el HP total se conserva,
+            solo se reempaqueta en menos cohortes llenas + a lo sumo una parcial. No regalas HP (no rompe el sink de
+            iuniores), pero limpias el roster y recuperas unidades desplegables. <em>Sin</em> coste de iuniores; el coste
+            es el slot/posible pérdida de la cobertura de suministro.</li>
+          <li><b>Gating:</b> habilitar solo con ≥2 instancias del mismo <code>id</code> y al menos una dañada/OoA.</li>
+          <li><b>Verify:</b> test de que <code>computeArmySize</code> es invariante antes/después del merge (conservación).</li>
+        </ol>
+        <p><em>Dejar B (fusión-promoción) para más tarde:</em> es atractivo pero es un sistema de progresión completo,
+        no una utilidad de roster — merece su propio spec y pasa por balance.</p>
+      </div>
+    </div>
+  </section>
+  <!-- ============================ TOPIC 5 ============================ -->
+  <section class="topic" id="t5" data-topic="5" data-status="done">
+    <h2 onclick="this.parentElement.querySelector('.body').classList.toggle('hidden')">
+      <span class="num">05</span> Diferenciar wealth vs oro en Provincial <span class="spacer"></span>
+      <span class="badge b-state">Investigado</span>
+    </h2>
+    <div class="body">
+      <div class="badges">
+        <span class="badge b-effort">Esfuerzo: Bajo-Medio</span>
+        <span class="badge b-impact">Impacto: Medio-Alto</span>
+        <span class="badge b-risk">Riesgo: Bajo</span>
+        <span class="badge b-bad">Confusión conceptual, no de cálculo</span>
+      </div>
+
+      <h3>El modelo (que es correcto, pero opaco)</h3>
+      <p>Son dos cosas <b>genuinamente distintas</b>, bien modeladas en
+      <span class="path">src/game/province/province.ts</span>:</p>
+      <table>
+        <tr><th></th><th>Wealth (riqueza)</th><th>Oro (Aurum)</th></tr>
+        <tr><td><b>Qué es</b></td><td><em>Stock</em> por provincia (0–100+). Base imponible / prosperidad.</td><td><em>Flujo / moneda</em> imperial global. Lo que gastas.</td></tr>
+        <tr><td><b>Dónde vive</b></td><td><code>province.wealth</code></td><td>Recurso global <code>gold</code></td></tr>
+        <tr><td><b>Cómo cambia</b></td><td>PWG − NWG − devastación/temporada (<code>calculateNetWealthChange</code>, <span class="path">:682</span>)</td><td>Ingreso de provincia/temporada → tesoro</td></tr>
+        <tr><td><b>Relación</b></td><td colspan="2">El oro de impuestos = <code>floor(wealth × taxRate)</code> (<span class="path">province.ts:401</span>). <b>Gravas la wealth para obtener oro.</b> Subir impuestos da más oro pero frena el crecimiento de wealth (NWG) y sube unrest.</td></tr>
+      </table>
+
+      <h3>Hallazgos (por qué se confunden)</h3>
+      <div class="finding"><b>Mismo lenguaje visual de "monedas".</b> Wealth usa <code>wealth-icon.png</code> + 💰; oro usa
+        <code>gold-stack-icon.png</code> + 🪙. Ambos son imaginería de dinero/monedas → el jugador no distingue un
+        <em>stock</em> (riqueza provincial) de una <em>moneda</em> (oro imperial). (Liga con Topic 9.)</div>
+      <div class="finding"><b>"Wealth Growth" se etiqueta como si fuera ingreso de oro.</b> Edificios como Port/Market/Mine
+        muestran a la vez <code>+X Gold/season</code> y <code>+X Wealth Growth/season</code>
+        (<span class="path">province.ts:191,160,333</span>). Misma forma "+N/season" para un <b>flujo</b> (oro) y para el
+        <b>crecimiento de un stock</b> (wealth). Indistinguibles a simple vista.</div>
+      <div class="finding"><b>La cadena causal wealth→impuesto→oro es invisible.</b> <code>taxRevenue = floor(wealth × tax)</code>
+        no se muestra como línea derivada; el jugador ve "Wealth 64" y "+11 oro" sin el puente entre ambos.</div>
+      <div class="finding info"><b>Vocabulario interno filtrado.</b> PWG/NWG, "wealth tier", "wealth pool" aparecen en
+        descripciones. Jerga de diseño que no comunica al jugador.</div>
+      <div class="finding warn"><b>Comentario desactualizado.</b> El <code>SynergyBonus 'gold'</code> dice
+        "(× wealth tier × tax, as building income)" (<span class="path">province.ts:350</span>) pero el código real suma
+        <code>buildingGold</code> <b>plano</b> (<span class="path">:409</span>); solo la base imponible escala con wealth.
+        Drift doc↔código.</div>
+
+      <h3>Caminos posibles</h3>
+      <table>
+        <tr><th>Eje</th><th>Acción</th><th>Coste / Riesgo</th></tr>
+        <tr><td>Visual</td><td>Dar a wealth un icono <b>no-moneda</b> (cofre/lingotes/finca/"prosperidad") distinto del oro-moneda. Color propio.</td><td>Bajo · Bajo (arte)</td></tr>
+        <tr><td>Etiquetado</td><td>Distinguir flujo vs stock: oro = <code>+N oro/temporada</code>; wealth = <code>+N riqueza/temporada (base imponible)</code> o renombrar a "Prosperidad".</td><td>Bajo · Bajo</td></tr>
+        <tr><td>Causalidad</td><td>Mostrar la línea derivada explícita: "Riqueza 64 × Impuesto 18% → +11 oro/temporada".</td><td>Bajo-Medio · Bajo</td></tr>
+        <tr><td>Glosario</td><td>Tooltip de una línea: Oro = tesoro imperial que gastas · Riqueza = prosperidad provincial que gravas.</td><td>Trivial · Bajo</td></tr>
+      </table>
+
+      <div class="reco">
+        <h3>★ Recomendación</h3>
+        <p>El cálculo es correcto; el problema es 100% de <b>comunicación</b>. Por orden:</p>
+        <ol>
+          <li><b>Romper el empate visual</b> (quick win, junto a Topic 9): wealth con icono y color que NO sean de moneda.
+            Es el 80% de la confusión.</li>
+          <li><b>Reetiquetar</b> "Wealth Growth" para que lea como "crece la base imponible", no como ingreso de oro; y
+            marcar wealth como <em>stock</em> en su chip/hero.</li>
+          <li><b>Surfacear la cadena causal</b> wealth × tax → oro como línea derivada en el panel de provincia: enseña el
+            modelo jugando, sin manual.</li>
+          <li><b>Higiene:</b> corregir el comentario "× wealth tier" en <code>SynergyBonus</code>.</li>
+        </ol>
+        <p><em>Dependencias:</em> Topic 9 (iconografía) provee el icono nuevo; Topic 6 (creación de oro) comparte el panel
+        donde mostrar la cadena causal — conviene hacerlos en la misma pasada de Provinciae.</p>
+      </div>
+    </div>
+  </section>
+  <!-- ============================ TOPIC 6 ============================ -->
+  <section class="topic" id="t6" data-topic="6" data-status="done">
+    <h2 onclick="this.parentElement.querySelector('.body').classList.toggle('hidden')">
+      <span class="num">06</span> Entender la creación de oro en Provincial <span class="spacer"></span>
+      <span class="badge b-state">Investigado</span>
+    </h2>
+    <div class="body">
+      <div class="badges">
+        <span class="badge b-effort">Esfuerzo: Bajo-Medio</span>
+        <span class="badge b-impact">Impacto: Medio-Alto</span>
+        <span class="badge b-risk">Riesgo: Bajo</span>
+        <span class="badge b-state">Pipeline sólido pero invisible</span>
+      </div>
+
+      <h3>La tubería completa (4 capas)</h3>
+      <p>Por provincia, <code>getProvinceIncome</code> (<span class="path">province.ts:397</span>) suma:</p>
+      <table>
+        <tr><th>#</th><th>Fuente</th><th>Fórmula</th><th>¿Escala?</th></tr>
+        <tr><td>1</td><td><b>Impuesto</b> (motor principal)</td><td><code>floor(wealth × taxRate)</code>; taxRate 3%–25% según niveles lower+upper (<span class="path">game-config.ts:79</span>)</td><td>Sí — con wealth</td></tr>
+        <tr><td>2</td><td>Oro de edificios</td><td>Suma plana de <code>incomeBonus.gold</code> (Basilica/Market/Port/Mine…)</td><td>No (plano)</td></tr>
+        <tr><td>3</td><td>Subsistencia</td><td><code>+1</code> fijo por provincia</td><td>No</td></tr>
+        <tr><td>4</td><td>Sinergia / trade good / feature</td><td>Resource Commerce +1, Salt +2, feature flat…</td><td>No</td></tr>
+      </table>
+      <p>Luego el tick imperial <code>collectProvinceIncome</code> (<span class="path">province-store.ts:272</span>):</p>
+      <table>
+        <tr><th>5</th><td><b>Aqueduct T3</b> empire-wide</td><td>×1.1 a TODO el ingreso si alguna provincia lo tiene (<span class="path">:292</span>)</td></tr>
+        <tr><th>6</th><td><b>War Profiteer / doctrinas</b></td><td>En <code>addResource</code> (<span class="path">resources.ts:51</span>): +50% oro (Crassus) + modif. doctrina, <b>cap +75%</b></td></tr>
+        <tr><th>7</th><td>Gastos</td><td>Upkeep edificios + salario gobernador se drenan después; déficit → +10 unrest/provincia</td></tr>
+      </table>
+      <p><em>Ejemplo:</em> wealth 64 @ Normal (12%) → impuesto <code>floor(64×0.12)=7</code> + edificios 9 + trade 2 +
+      subsistencia 1 = 19 → ×1.1 (Aqueduct) → ×1.5 (Crassus) ≈ <b>31 oro/temporada</b>.</p>
+
+      <h3>Hallazgos</h3>
+      <div class="finding"><b>Toda la composición es invisible.</b> El jugador ve un "+N oro/temporada" final; no hay
+        desglose de las 4 capas. Es exactamente el "no se entiende de dónde sale el oro".</div>
+      <div class="finding"><b>El dominio de la base imponible no es obvio.</b> El mayor multiplicador de oro a largo plazo
+        es <em>crecer wealth × subir impuesto</em>, pero los edificios anuncian "+X Gold/season" planos que parecen
+        comparables. Un Market T3 da +6 oro plano <b>y</b> +5 wealth-growth (que compone vía impuesto) — la vía de
+        compounding es la fuerte pero no se comunica así. (Liga con Topic 5.)</div>
+      <div class="finding warn"><b><code>floor()</code> mata la economía temprana.</b> wealth 10 × 3% = 0.3 →
+        <code>floor</code> = <b>0</b> oro. Las provincias nuevas viven solo de +1 subsistencia + edificios planos; el
+        impuesto "no hace nada" hasta que la wealth sube. Puede leerse como bug. (Liga con Topic 10.)</div>
+      <div class="finding info"><b>"Wealth tier" NO multiplica oro.</b> <code>SETTLEMENT.wealthTiers</code>
+        (<span class="path">game-config.ts:170</span>) son solo etiquetas/colores de mapa (Destitute→Wealthy), pero
+        comentarios como "× wealth tier × tax" (<span class="path">province.ts:350</span>) implican un multiplicador
+        inexistente. Drift que confunde.</div>
+      <div class="finding info"><b>Interacción sutil Profiteer×Aqueduct.</b> War Profiteer se aplica en
+        <code>addResource</code> tras agregar y tras el +10% del Aqueduct → compone sobre el total imperial; el cap +75%
+        es el guardarraíl. Vale la pena documentarlo.</div>
+
+      <h3>Caminos posibles</h3>
+      <table>
+        <tr><th>Acción</th><th>Qué implica</th><th>Coste / Riesgo</th></tr>
+        <tr><td><b>Desglose de ingreso en panel</b></td><td>Ledger pequeño: "Impuesto (w64×12%) +7 · Edificios +9 · Trade +2 · Subsist. +1 · Aqueduct +10% · Profiteer +50% = +31".</td><td>Bajo-Medio · Bajo</td></tr>
+        <tr><td>Documentar en doc de referencia</td><td>Sección de "creación de oro" en <code>sistemas-del-juego.html</code> (hoy no existe explicación autoritativa).</td><td>Bajo · Bajo</td></tr>
+        <tr><td>Higiene de naming</td><td>Quitar "× wealth tier" del comentario; aclarar que wealthTiers son display-only.</td><td>Trivial · Bajo</td></tr>
+        <tr><td>Revisar floor() temprano</td><td>Posible <code>round</code> o mínimo para que el impuesto no sea 0 — pero es balance (Topic 10).</td><td>Bajo · Medio (balance)</td></tr>
+      </table>
+
+      <div class="reco">
+        <h3>★ Recomendación</h3>
+        <ol>
+          <li><b>Surfacear el desglose</b> en el panel de provincia (y/o Treasury). Es la respuesta directa a "entender la
+            creación de oro": enseña las 4 capas con números reales. Mayor retorno de claridad.</li>
+          <li><b>Documentar la tubería</b> en <code>sistemas-del-juego.html</code> (lo exige CLAUDE.md: doc viva).</li>
+          <li><b>Limpiar el naming</b> "wealth tier"/comentarios que implican multiplicadores inexistentes — reduce la
+            confusión de raíz.</li>
+          <li>Dejar el ajuste de <code>floor()</code> temprano para el pase de dificultad/balance (Topic 10), no tocarlo aquí.</li>
+        </ol>
+        <p><em>Dependencia fuerte con Topic 5:</em> comparten el panel de Provinciae y el modelo wealth↔oro. Hacer 5+6
+        juntos: una sola pasada que reetiqueta, da icono propio a wealth y añade el desglose causal.</p>
+      </div>
+    </div>
+  </section>
+  <!-- ============================ TOPIC 7 ============================ -->
+  <section class="topic" id="t7" data-topic="7" data-status="done">
+    <h2 onclick="this.parentElement.querySelector('.body').classList.toggle('hidden')">
+      <span class="num">07</span> Añadir esclavos <span class="spacer"></span>
+      <span class="badge b-state">Investigado (diseño)</span>
+    </h2>
+    <div class="body">
+      <div class="badges">
+        <span class="badge b-effort">Esfuerzo: Medio</span>
+        <span class="badge b-impact">Impacto: Medio-Alto</span>
+        <span class="badge b-risk">Riesgo: Medio (scope + balance + tono)</span>
+        <span class="badge b-bad">Sistema nuevo — requiere spec</span>
+      </div>
+
+      <h3>Estado actual / puntos de integración</h3>
+      <p>No existe nada de esclavos hoy (0 referencias). El terreno donde encajaría:</p>
+      <ul>
+        <li><b>Recursos:</b> <code>ResourceType = 'gold' | 'iuniores'</code> — solo 2, con signals en un
+          <code>resourceSignals</code> ordenado (<span class="path">resources.ts:31</span>). <b>Contexto importante:</b>
+          los recursos se <em>podaron a propósito</em> (faith/influence/momentum fueron eliminados; los comentarios de
+          <code>iter-belli-conquest.ts:51</code> hablan de "deprecated resources omitted"). Añadir un 3.º va contra esa
+          simplificación deliberada → debe ganarse su sitio con profundidad real, no ser ruido.</li>
+        <li><b>Conquista:</b> <code>PROVINCE_REWARD = { gold: 5, iuniores: 2 }</code> por spoke
+          (<span class="path">iter-belli-conquest.ts:56</span>). El momento natural de <em>capturar</em> esclavos:
+          victoria decisiva / conquista de provincia, escalado por tamaño del enemigo.</li>
+        <li><b>Provincia:</b> población con clases lower/upper (iconos <code>lower-class-icon</code>/<code>upper-class-icon</code>
+          ya existen) gravadas vía wealth; unrest + rebelión modelados. Un esclavo encaja como mano de obra que produce
+          pero <b>sube unrest</b> (revuelta servil — históricamente exacto).</li>
+        <li><b>Tema:</b> Roma + esclavos es de manual del género (conquista→cautivos→trabajo/venta). Encaje temático altísimo.</li>
+      </ul>
+
+      <h3>Caminos posibles</h3>
+      <table>
+        <tr><th>Opción</th><th>Diseño</th><th>Coste / Riesgo</th></tr>
+        <tr><td><b>A. Botín convertible</b> (MVP)</td>
+            <td>Capturas N esclavos al vencer/conquistar. Pool (contador global o atributo de provincia, <b>no</b>
+              ResourceType completo). Decisión: <b>vender</b> por oro (sinergia con Crassus) <b>o asignar</b> a una
+              provincia → +wealth-growth / +food / build más rápido, a cambio de +unrest.</td>
+            <td>Medio · Medio</td></tr>
+        <tr><td>B. 3.º ResourceType global</td>
+            <td>Recurso completo con ingreso/gasto/icono/save. Toca <code>ResourceType</code>, <code>Resources</code>,
+              <code>resourceSignals</code>, <code>RESOURCE_INFO</code>, <code>ResourceIcon</code>, meta-save + migración,
+              y cada iteración de recursos.</td>
+            <td>Alto · Alto (va contra la poda a 2 recursos)</td></tr>
+        <tr><td>C. Tercera clase de población</td>
+            <td>Esclavos viven en la provincia como clase bajo la lower: producen labor (food/wealth), no pagan impuesto,
+              suben unrest y piden guarnición; pueden detonar una <b>revuelta servil</b>. Integra con el modelo de clases
+              + unrest + rebelión.</td>
+            <td>Alto · Alto (toca a fondo la economía de provincia)</td></tr>
+      </table>
+
+      <h3>Hallazgos / riesgos</h3>
+      <div class="finding warn"><b>Ripple de save al añadir ResourceType (opción B).</b> meta-save serializa
+        <code>gold</code>/<code>iuniores</code> explícitamente (<span class="path">meta-save.ts:397,579</span>); un 3.º
+        exige versión + migración y tocar todas las barras de recursos.</div>
+      <div class="finding"><b>Riesgo de balance económico.</b> Un grifo "vender esclavos → oro" puede socavar la economía
+        wealth/impuesto (Topics 5/6) o trivializar el oro. "Asignar a labor" sin contrapeso = producción gratis: necesita
+        el coste de unrest / revuelta para tener tensión.</div>
+      <div class="finding info"><b>Tono.</b> Mecánica de esclavitud en juego romano: histórica y estándar del género, pero
+        conviene un encuadre sobrio (botín de guerra, no caricatura). Consideración de diseño, no bloqueante.</div>
+      <div class="finding ok"><b>Sinergias narrativas listas.</b> Crassus (oro), unrest/rebelión (revuelta), conquista
+        (captura) ya existen — el sistema se enchufa a ganchos presentes en vez de inventarlos.</div>
+
+      <div class="reco">
+        <h3>★ Recomendación</h3>
+        <p><b>Opción A — botín convertible</b> como MVP, <u>sin</u> promover a ResourceType global todavía.</p>
+        <ol>
+          <li>Capturar esclavos en la victoria decisiva (escala con bajas enemigas), mostrados en el desenlace de batalla
+            (liga con Topic 3) y como spoil de conquista (<code>iter-belli-conquest.ts</code>).</li>
+          <li>Una <b>decisión clara</b>: vender (oro inmediato, vía Crassus/War Profiteer) vs asignar a provincia
+            (+labor sostenida) con un <b>contrapeso de unrest</b> y probabilidad de revuelta servil.</li>
+          <li>Empezar como contador simple (global o por provincia), <b>no</b> tocar <code>ResourceType</code> ni save
+            hasta validar que la decisión es divertida. Escalar a B/C luego si lo merece.</li>
+          <li><b>Este SÍ necesita un spec propio</b> (brainstorming → design doc) antes de codear: es un sistema, no una
+            utilidad. Define captura, economía de venta, fórmula de labor y la mecánica de revuelta.</li>
+        </ol>
+        <p><em>Dependencias:</em> Topic 6 (la venta es un grifo de oro — cuidar balance), Topic 10 (la revuelta servil es
+        una palanca de dificultad), Topic 5 (labor esclava como palanca de wealth-growth).</p>
+      </div>
+    </div>
+  </section>
+  <!-- ============================ TOPIC 8 ============================ -->
+  <section class="topic" id="t8" data-topic="8" data-status="done">
+    <h2 onclick="this.parentElement.querySelector('.body').classList.toggle('hidden')">
+      <span class="num">08</span> Mejorar belleza <span class="spacer"></span>
+      <span class="badge b-state">Investigado</span>
+    </h2>
+    <div class="body">
+      <div class="badges">
+        <span class="badge b-effort">Esfuerzo: Medio (programa, no tarea)</span>
+        <span class="badge b-impact">Impacto: Alto</span>
+        <span class="badge b-risk">Riesgo: Bajo-Medio</span>
+        <span class="badge b-state">Base rica, falta cohesión</span>
+      </div>
+
+      <h3>Estado actual</h3>
+      <p>La base estética es <b>buena</b>: motifs SVG (<code>Laurel</code>, <code>LaurelWreath</code>, <code>Corners</code>,
+      <code>MosaicBand</code>, texturas), partículas <code>GoldDust</code>, marcos <code>OrnateFrame</code>, fuentes
+      Cinzel/Cormorant/EB Garamond, y una paleta IMP refinada (mármol, porphyry, verdigris, lapis, crimson). El problema
+      no es falta de arte sino <b>cohesión y pulido</b>.</p>
+
+      <h3>Hallazgos</h3>
+      <div class="finding"><b>Dos sistemas de tokens en paralelo.</b> <span class="path">design-tokens.css</span> define el
+        set legacy <code>--color-*</code> Y el nuevo <code>--imp-*</code> (Forum), con valores <b>duplicados</b>
+        (<code>--color-gold-primary</code> = <code>--imp-gold-hi</code> = <code>#f0d080</code>). 26 ficheros los mezclan
+        (206 refs a oro). Sin una sola fuente de verdad de color → derivas sutiles de tono entre pantallas.</div>
+      <div class="finding warn"><b>Costura de fondo entre pantallas.</b> El legacy <code>--color-bg-primary</code> es
+        violáceo (<code>rgba(20,18,36)</code>) mientras el Forum usa <code>--imp-ink</code> casi-negro
+        (<code>#0d0b14</code>). Title/CommanderSelect/Battle (legacy) no comparten el "ink" del Forum → no se siente un
+        solo mundo.</div>
+      <div class="finding"><b>29 inyecciones de <code>&lt;style&gt;</code> en 16 ficheros.</b> Cada componente inyecta sus
+        keyframes/clases con el patrón <code>getElementById('x-styles')</code> + <code>createElement</code>
+        (ConfirmDialog, Portrait, CampaignEventModal…). Sin librería de animación compartida → duplicación y deriva.</div>
+      <div class="finding"><b>Estilos inline masivos.</b> ProvinciaeTab (49 refs), ConsiliumTab (25), IterBelliScreen (62)
+        tienen objetos de estilo JSX enormes. El inline domina sobre clases CSS → spacing/sizing inconsistente, difícil de
+        tematizar. <code>class-variance-authority</code> es dependencia <em>ya instalada</em> pero infrautilizada.</div>
+      <div class="finding info"><b>Sesgo a oro pese a la dirección de arte.</b> La paleta tiene buenos tokens NO-oro
+        (porphyry, verdigris, lapis, crimson, mármol) pero el uso se inclina fuerte a oro (206 refs). La dirección de arte
+        del repo pide <em>color variado y con gusto, el oro no es canon obligatorio</em> — hay margen para desplegar los
+        tokens de color existentes.</div>
+      <div class="finding info"><b>Deuda visual heredada de otros topics.</b> Mezcla emoji/imagen en iconos (Topic 9),
+        z-index/estilo duplicado de modales (Topic 1), encuadre de retrato ad-hoc (Topic 2), batalla encajonada + sin
+        reduced-motion (Topic 3). Todo esto ES "belleza".</div>
+
+      <h3>Caminos posibles</h3>
+      <table>
+        <tr><th>Acción</th><th>Qué implica</th><th>Coste / Riesgo</th></tr>
+        <tr><td><b>Unificar tokens</b></td><td>Elegir <code>--imp-*</code> como canónico (más rico/nuevo), aliasar/migrar <code>--color-*</code>, reconciliar el hue de fondo para un solo "ink" en todas las pantallas.</td><td>Medio · Bajo-Medio (regresiones de tono)</td></tr>
+        <tr><td>Desplegar color</td><td>Usar porphyry/verdigris/lapis/crimson semánticamente en vez de oro por defecto (alinea con la dirección de arte).</td><td>Bajo · Bajo</td></tr>
+        <tr><td>Consolidar animaciones</td><td>Mover los 29 <code>&lt;style&gt;</code> inyectados a globals.css / un módulo compartido; dedupe de keyframes.</td><td>Medio · Bajo</td></tr>
+        <tr><td>Reducir inline-sprawl</td><td>Extraer objetos de estilo repetidos (chips, panels, stat rows) a clases / variantes CVA.</td><td>Medio · Bajo</td></tr>
+      </table>
+
+      <div class="reco">
+        <h3>★ Recomendación</h3>
+        <p>"Belleza" es un <b>programa</b>, no una tarea — partir en un quick win de paleta + consolidación continua:</p>
+        <ol>
+          <li><b>Pase de cohesión de paleta (mayor leverage):</b> unificar a <code>--imp-*</code> y reconciliar el hue de
+            fondo. Un solo set de color coherente en TODAS las pantallas — es el cambio que más eleva la percepción global.</li>
+          <li><b>Desplegar el color que ya existe</b> (porphyry/verdigris/lapis) por dominio (rojo militar, azul diplomacia,
+            verde provincia…) en vez de oro universal. Bajo coste, alto pulido, y cumple la dirección de arte.</li>
+          <li><b>Consolidar CSS:</b> animaciones a un módulo común; empezar a extraer los patrones inline más repetidos a
+            clases/CVA. Reduce deriva futura.</li>
+          <li><b>Recoger la deuda de otros topics</b> en la misma campaña (modales, iconos, batalla, retratos) — todos
+            suman a la sensación de pulido.</li>
+        </ol>
+        <p><em>Dependencias:</em> es el "topic paraguas". Coordina con 1 (modales), 2 (retratos), 3 (batalla), 9
+        (iconos). Hacer primero la unificación de tokens facilita todo lo demás.</p>
+      </div>
+    </div>
+  </section>
+  <!-- ============================ TOPIC 9 ============================ -->
+  <section class="topic" id="t9" data-topic="9" data-status="done">
+    <h2 onclick="this.parentElement.querySelector('.body').classList.toggle('hidden')">
+      <span class="num">09</span> Consistencia en iconografía y tooltips <span class="spacer"></span>
+      <span class="badge b-state">Investigado</span>
+    </h2>
+    <div class="body">
+      <div class="badges">
+        <span class="badge b-effort">Esfuerzo: Bajo (quick wins) → Medio (convergencia)</span>
+        <span class="badge b-impact">Impacto: Medio-Alto</span>
+        <span class="badge b-risk">Riesgo: Bajo</span>
+        <span class="badge b-bad">3 sistemas de icono · 3 de tooltip</span>
+      </div>
+
+      <h3>Iconografía — estado actual</h3>
+      <p>Conviven <b>tres</b> sistemas: <code>GameIcon</code> (medallones PNG, ~40 iconos, canónico),
+      <code>ResourceIcon</code>/<code>InlineImageIcon</code> (recursos PNG), y <b>emoji crudo</b>
+      (~86 ocurrencias en 15 ficheros).</p>
+      <div class="finding"><b>Placeholders emoji obsoletos con icono real ya existente.</b>
+        <code>POWER_STATS.glyph</code> = 🐎🪨🛡🏹👣 con el comentario "emoji placeholders until the real icons are wired
+        into GameIcon" (<span class="path">unit-types.ts:59</span>). Pero <b>GameIcon YA tiene</b>
+        <code>stat-charge/harass/push/siege/movement</code>. La OrderBar de batalla los usa como medallón
+        (<span class="path">OrderBar.tsx:10</span>), pero el StatGrid de Exercitus sigue con emoji → <b>las mismas 5
+        stats se ven como medallón en batalla y como emoji en el ejército</b>.</div>
+      <div class="finding"><b>RESOURCE_INFO con emoji teniendo PNG.</b> <code>commander.ts:50</code>: gold 💰, iuniores 🛡️.
+        Hay <code>gold-stack</code>/<code>iuniores-color</code> reales (ResourceIcon los mapea); el emoji solo aparece donde
+        algún sitio lee <code>.icon</code> directo en vez de usar <code>&lt;ResourceIcon&gt;</code>.</div>
+      <div class="finding info"><b>Doble glifo para "soldados".</b> <code>CampaignResourceBar</code> define la fila con
+        <code>glyph:'⚔'</code> Y <code>icon:'res-soldiers'</code> a la vez — y ⚔ ya etiquetaba Iuniores en otro sitio
+        (corregido al inicio de esta sesión: tooltip de bien comercial 🪙/⚔️/💰 → iconos reales).</div>
+      <div class="finding ok"><b>Emoji legítimo (flavor).</b> <code>TERRAIN_ICONS</code>/<code>TRADE_GOOD_ICONS</code>
+        (🌾⚙️🍷…) no tienen asset equivalente — aceptable dejarlos como flavor.</div>
+
+      <h3>Tooltips — estado actual</h3>
+      <div class="finding"><b>Tres mecanismos en paralelo.</b>
+        <ul style="margin:4px 0">
+          <li><b>(1)</b> <code>Tooltip.tsx</code> — componente rico con floating-ui: delay, placement, flip/shift,
+            reduced-motion, Escape, <code>role="tooltip"</code>, variantes simple/rich. Bien hecho.</li>
+          <li><b>(2)</b> <code>title=</code> nativo — <b>~152 ocurrencias en 32 ficheros</b> (ProvinciaeTab 50,
+            ExercitusTab 23). Sin estilo, delay del SO (~1.5s), sin táctil, sin contenido formateado.</li>
+          <li><b>(3)</b> Tooltips bespoke hechos a mano en <code>ProvinciaeTab</code> (terreno/bien comercial — vistos en
+            Topic 1) que no usan <code>Tooltip.tsx</code>.</li>
+        </ul>
+        El mismo juego ofrece 3 experiencias de hover distintas.</div>
+      <div class="finding info"><b>Tooltip.tsx usa tokens legacy</b> (<code>--color-marble-dark</code>,
+        <code>--color-gold-secondary</code>) → liga con la unificación de tokens del Topic 8.</div>
+
+      <h3>Caminos posibles</h3>
+      <table>
+        <tr><th>Acción</th><th>Qué implica</th><th>Coste / Riesgo</th></tr>
+        <tr><td><b>Retirar placeholders emoji con icono real</b></td><td>POWER_STATS → GameIcon stat-*; RESOURCE_INFO → ResourceIcon. Los assets YA existen.</td><td>Bajo · Bajo</td></tr>
+        <tr><td>Converger tooltips en Tooltip.tsx</td><td>Migrar <code>title=</code> de alta visibilidad (chips/botones interactivos) al componente; dejar title nativo solo para etiquetas a11y triviales.</td><td>Medio · Bajo</td></tr>
+        <tr><td>Plegar los bespoke en variant='rich'</td><td>Un solo camino de tooltip rico para terreno/bien/etc.</td><td>Bajo-Medio · Bajo</td></tr>
+        <tr><td>Verify de iconos</td><td>Script que marque emoji-como-icono donde exista un GameIcon/ResourceIcon equivalente.</td><td>Bajo · Bajo</td></tr>
+      </table>
+
+      <div class="reco">
+        <h3>★ Recomendación</h3>
+        <ol>
+          <li><b>Quick win de altísimo retorno:</b> reemplazar los glyphs emoji de <code>POWER_STATS</code> por sus
+            <code>GameIcon</code> stat-* (los iconos ya existen). Elimina la incoherencia más visible (stats medallón vs
+            emoji entre batalla y ejército). Igual con <code>RESOURCE_INFO</code> → ResourceIcon.</li>
+          <li><b>Estandarizar tooltips:</b> declarar <code>Tooltip.tsx</code> como el único mecanismo rico y migrar los
+            <code>title=</code> de mayor visibilidad; plegar los bespoke de ProvinciaeTab a <code>variant='rich'</code>.
+            Priorizar por visibilidad, no migrar los 152 de golpe.</li>
+          <li><b>Verify de iconos</b> en <code>npm run verify</code> para que el emoji-como-icono no vuelva a colarse.</li>
+          <li>Unificar el styling de Tooltip con los tokens del Topic 8.</li>
+        </ol>
+        <p><em>Dependencias:</em> sub-conjunto natural del Topic 8 (Belleza). El icono no-moneda para wealth (Topics 5/6)
+        sale de aquí. La corrección de tooltip 🪙/⚔️/💰 de esta sesión es el primer paso ya hecho.</p>
+      </div>
+    </div>
+  </section>
+  <!-- ============================ TOPIC 10 ============================ -->
+  <section class="topic" id="t10" data-topic="10" data-status="done">
+    <h2 onclick="this.parentElement.querySelector('.body').classList.toggle('hidden')">
+      <span class="num">10</span> Subir dificultad <span class="spacer"></span>
+      <span class="badge b-state">Investigado</span>
+    </h2>
+    <div class="body">
+      <div class="badges">
+        <span class="badge b-effort">Esfuerzo: Bajo-Medio (multiplicador) → Medio (IA)</span>
+        <span class="badge b-impact">Impacto: Alto</span>
+        <span class="badge b-risk">Riesgo: Medio (no romper el balance sim-tuned)</span>
+        <span class="badge b-bad">Sin ajuste global de dificultad</span>
+      </div>
+
+      <h3>Palancas de dificultad existentes</h3>
+      <ul>
+        <li><b>Escalado de enemigos (final):</b> <code>baseSoldiers</code> por escenario en escalera geométrica
+          (Saguntum 5000 → Gallia 6500 → Numantia 5900-pero-élite), <code>enemyMult = (1+threat/20)(1−weaken×0.10)</code>,
+          piso 2000–2200 (<span class="path">iter-belli-balance.ts:48</span>). Sim-tuned para una banda de victoria 40–65%.</li>
+        <li><b>Arquetipos enemigos</b> (<span class="path">orders.ts:73</span>) — la palanca de poder real: iberos
+          (stats 14/16/12/3/16) pegan mucho más que galos (carga 14, resto bajo). El salto Gallia→Numantia es de
+          <em>arquetipo</em>, no de headcount.</li>
+        <li><b>Atrición de marcha:</b> upkeep 2/turno, hambre/motín/escaramuza/emboscada con umbrales y % de deserción
+          (<span class="path">iter-belli-balance.ts:25-42</span>). Erosiona el ejército antes de la batalla.</li>
+        <li><b>Threat</b> sube <code>enemyMult</code> y dispara escaramuza/emboscada (umbral 7/5).</li>
+        <li><b>victoryGold</b> dobla 200→400→800 (financia la curva de mejora).</li>
+      </ul>
+
+      <h3>Hallazgos</h3>
+      <div class="finding"><b>No hay ajuste global de dificultad.</b> No existe selector Fácil/Normal/Difícil; la dificultad
+        está hardcodeada en constantes de escenario. Un multiplicador global sería el knob más limpio para "subir
+        dificultad" y dar elección al jugador.</div>
+      <div class="finding"><b>IA enemiga explotable.</b> <code>enemyChoose</code> (<span class="path">enemy-ai.ts:5</span>)
+        es una lista de prioridad fija, <b>sin aleatoriedad ni lookahead</b>. Un jugador que la aprende gana de forma
+        fiable. Dificultad alta = IA menos predecible (elección ponderada/aleatoria, contra-juego a la última orden del
+        jugador).</div>
+      <div class="finding warn"><b>La economía tardía perdona.</b> Cuando wealth/impuesto compone (Topics 5/6) y
+        victoryGold dobla, el late-game inunda de oro; el cuello de botella temprano del <code>floor()</code> (Topic 6) se
+        invierte en superávit. Hay margen para presión económica (upkeep más duro, sinks, unrest).</div>
+      <div class="finding info"><b>Solo 3 escenarios.</b> La escalera termina en Numantia; no hay tiers más difíciles ni
+        modo sin fin más allá.</div>
+      <div class="finding info"><b>Restricción dura del proyecto:</b> los deltas de soldados/iuniores SIEMPRE en centenas
+        (techo ~1000–2000). Cualquier palanca de headcount debe respetarlo, y no tirar por la borda el trabajo del
+        balancer (banda 40–65%).</div>
+
+      <h3>Caminos posibles</h3>
+      <table>
+        <tr><th>Palanca</th><th>Qué implica</th><th>Coste / Riesgo</th></tr>
+        <tr><td><b>Multiplicador global de dificultad</b></td><td>Capa ×factor en los chokes existentes (soldados enemigos, mult de stats, % atrición, victoryGold). Normal = ×1 (intacto); Difícil sube enemigo/atrición en centenas.</td><td>Bajo-Medio · Medio (gate tras selector)</td></tr>
+        <tr><td>IA más lista</td><td>Des-explotar la lista fija: elección ponderada + algo de aleatoriedad + contra-juego a la orden previa del jugador.</td><td>Medio · Medio</td></tr>
+        <tr><td>Presión económica</td><td>Upkeep escalado, sinks de oro, o unrest/revuelta (liga con Topic 7) en dificultad alta.</td><td>Bajo-Medio · Medio (balance)</td></tr>
+        <tr><td>Más tiers</td><td>4.º escenario / modo sin fin con escalera continuada.</td><td>Medio-Alto · Bajo</td></tr>
+      </table>
+
+      <div class="reco">
+        <h3>★ Recomendación</h3>
+        <ol>
+          <li><b>Multiplicador global de dificultad (lo primero):</b> una capa ×factor sobre los chokes YA existentes,
+            con Normal = ×1 para no tocar el baseline sim-tuned. Difícil añade enemigo/atrición <b>en centenas</b>
+            (respeta la restricción) y reduce victoryGold. Es la forma más limpia y reversible de "subir dificultad" sin
+            re-balancear desde cero. <b>Validar con</b> <code>tools/sim-playthrough.ts</code> que cada nivel cae en su
+            banda objetivo.</li>
+          <li><b>IA menos explotable</b> como segunda fase: el mayor salto de dificultad <em>percibida</em> viene de un
+            enemigo que no puedas leer, no de más soldados. Mantener la IA actual como "Normal".</li>
+          <li><b>Presión económica</b> coordinada con Topics 6/7: arreglar el <code>floor()</code> temprano pero endurecer
+            el sostenimiento tardío para que la curva no se aplane.</li>
+        </ol>
+        <p><em>Dependencias:</em> Topic 6 (economía), Topic 7 (revuelta como presión), Topic 3 (la batalla es donde se
+        siente la IA). Cualquier cambio pasa por <code>sim-playthrough.ts</code> antes de commitear.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ SÍNTESIS FINAL ============================ -->
+  <section class="topic" id="synthesis" data-topic="synthesis" data-status="done" style="border-color:var(--gold)">
+    <h2 onclick="this.parentElement.querySelector('.body').classList.toggle('hidden')" style="background:linear-gradient(180deg,rgba(212,168,67,0.18),transparent)">
+      <span class="num">★</span> Síntesis &amp; Roadmap priorizado <span class="spacer"></span>
+      <span class="badge b-state">10/10 completo</span>
+    </h2>
+    <div class="body">
+      <p>Los 10 topics investigados. Patrón dominante: <b>el juego tiene una base técnica fuerte</b> (economía de
+      provincia profunda, batalla rica, sistema de cohortes limpio, paleta y motifs de calidad) — la mayoría del trabajo
+      es de <b>cohesión, comunicación y pulido</b>, no de construir sistemas desde cero. Dos excepciones que SÍ son
+      sistemas nuevos: <b>esclavos</b> (Topic 7) y <b>merge units</b> (Topic 4).</p>
+
+      <h3>Quick wins (bajo coste, alto retorno — hacer ya)</h3>
+      <ul>
+        <li><b>A11y batalla:</b> gate de <code>prefers-reduced-motion</code> en <code>battle-fx</code> (Topic 3).</li>
+        <li><b>Iconos correctos:</b> POWER_STATS emoji → GameIcon stat-* (ya existen); cierre de DoctrineDraftModal con
+          Esc/click-fuera; z-index de SettingsPanel (Topics 9, 1).</li>
+        <li><b>Pope Innocent</b> retrato correcto + <code>verify-portraits.ts</code> (Topic 2).</li>
+        <li><b>Higiene de docs/comentarios:</b> "× wealth tier" y wealthTiers display-only (Topics 5, 6).</li>
+      </ul>
+
+      <h3>Proyectos medianos (una pasada enfocada cada uno)</h3>
+      <ul>
+        <li><b>Pasada Provinciae (Topics 5 + 6 juntos):</b> icono no-moneda para wealth, reetiquetar stock vs flujo,
+          desglose causal wealth×tax→oro, documentar en <code>sistemas-del-juego.html</code>.</li>
+        <li><b>Primitiva <code>&lt;Modal&gt;</code> (Topic 1):</b> base = ConfirmDialog; escala de z-index; focus-trap +
+          scroll-lock; migración incremental.</li>
+        <li><b>Merge units (Topic 4):</b> consolidación mismo-tipo lossless-con-remanente + botón en Exercitus.</li>
+        <li><b>Multiplicador de dificultad (Topic 10):</b> capa ×factor con selector; validar en sim.</li>
+      </ul>
+
+      <h3>Proyectos grandes (requieren spec propio)</h3>
+      <ul>
+        <li><b>Esclavos (Topic 7):</b> botín convertible — brainstorming → design doc antes de codear.</li>
+        <li><b>Clímax de batalla (Topic 3):</b> sacar de modal a pantalla completa + arte de unidades + banners.</li>
+        <li><b>Programa de belleza (Topic 8):</b> unificar tokens a <code>--imp-*</code>, reconciliar fondo, consolidar
+          CSS — el "paraguas" que toca a 1/2/3/9.</li>
+      </ul>
+
+      <h3>Orden sugerido (por dependencias)</h3>
+      <ol>
+        <li><b>Unificación de tokens</b> (Topic 8) — desbloquea coherencia visual para todo lo demás.</li>
+        <li><b>Quick wins</b> de iconos/a11y/modales rotos (Topics 9, 1, 3, 2) — baratos, ya.</li>
+        <li><b>Pasada Provinciae</b> (5+6) — claridad económica.</li>
+        <li><b>Primitiva Modal</b> (1) y <b>Merge</b> (4) — utilidades acotadas.</li>
+        <li><b>Dificultad</b> (10) — una vez la economía (6) está clara.</li>
+        <li><b>Clímax de batalla</b> (3) + <b>Esclavos</b> (7) — los grandes, con spec.</li>
+      </ol>
+
+      <p style="margin-top:14px;color:var(--text-lo);font-style:italic">Cada recomendación detallada está en su sección.
+      Esfuerzos y riesgos son estimaciones de investigación, no compromisos — confírmalos antes de planificar.</p>
+    </div>
+  </section>
+</div>
+
+<footer>
+  Generado por el loop de investigación · 10/10 topics investigados · síntesis y roadmap final incluidos · COMPLETO
+</footer>
+</body>
+</html>
