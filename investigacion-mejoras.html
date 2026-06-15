@@ -207,18 +207,18 @@
       </div>
 
       <h3>Estado actual</h3>
-      <p>Hay <b>4 comandantes</b> en <span class="path">src/data/commanders.ts</span> (Boudicca, Pope Innocent,
-      Augustus, Marcus Crassus). Cada uno define <code>portrait</code> como ruta-string literal a
+      <p>Hay <b>4 comandantes</b> en <span class="path">src/data/commanders.ts</span> (Boudicca, Pope Leo
+      <em>(renombrado de "Pope Innocent", QW7)</em>, Augustus, Marcus Crassus). Cada uno define <code>portrait</code> como ruta-string literal a
       <span class="path">/asset/characters/</span>. El componente compartido es
       <span class="path">src/ui/components/Portrait.tsx</span> (placeholder con ⚔ en error, badge de tier, name-plate),
       pero la pantalla de selección <span class="path">CommanderSelectScreen.tsx</span> NO usa <code>Portrait</code>:
       monta su propio <code>&lt;img&gt;</code>.</p>
 
       <h3>Hallazgos</h3>
-      <div class="finding"><b>Retrato equivocado para "Pope Innocent".</b>
-        <span class="path">commanders.ts:44</span> apunta a <code>char_pope_leo.png</code>, pero existe
-        <code>char_pope_innocent.png</code> sin usar en la misma carpeta. O es un nombre incorrecto (debería ser
-        <em>Pope Leo</em>) o la ruta está mal. Inconsistencia nombre↔imagen que conviene confirmar.</div>
+      <div class="finding ok"><b>Retrato ↔ nombre — RESUELTO (QW7).</b> El comandante apuntaba a
+        <code>char_pope_leo.png</code> pero se llamaba "Pope Innocent". Decisión del usuario: <b>renombrar</b> el display
+        a <b>"Pope Leo"</b> (cuadra con el retrato). El <code>id: 'innocent'</code> se mantiene como clave estable de
+        saves. El asset huérfano <code>char_pope_innocent.png</code> queda para la limpieza de assets.</div>
       <div class="finding warn"><b>Assets de retrato huérfanos / duplicados.</b> En
         <span class="path">public/asset/characters/</span> conviven versiones sin usar:
         <code>char_boudicca.png</code> (se usa <code>_v2</code>), <code>char_caesar_augustus.png</code> + <code>_v2</code>
@@ -879,7 +879,7 @@
         <li><b>A11y batalla:</b> gate de <code>prefers-reduced-motion</code> en <code>battle-fx</code> (Topic 3).</li>
         <li><b>Iconos correctos:</b> POWER_STATS emoji → GameIcon stat-* (ya existen); cierre de DoctrineDraftModal con
           Esc/click-fuera; z-index de SettingsPanel (Topics 9, 1).</li>
-        <li><b>Pope Innocent</b> retrato correcto + <code>verify-portraits.ts</code> (Topic 2).</li>
+        <li><b>Pope Leo</b> (renombrado de "Pope Innocent") + <code>verify-portraits.ts</code> (Topic 2).</li>
         <li><b>Higiene de docs/comentarios:</b> "× wealth tier" y wealthTiers display-only (Topics 5, 6).</li>
       </ul>
 

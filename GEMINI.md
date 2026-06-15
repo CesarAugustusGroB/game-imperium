@@ -6,7 +6,7 @@ A high-performance WebGL2 grand strategy map renderer (EU4/CK3 style) coupled wi
 
 - **Map Engine:** Custom WebGL2 renderer with 5-layer compositing (terrain, IDs, height, normals, borders). Uses offscreen FBO readbacks for pixel-perfect province interaction.
 - **Battle System:** Semi-real-time hex-based tactical combat. Units act on individual cooldowns with automated AI and player-triggered abilities (Decretums).
-- **Game Logic:** Roguelike "run" structure with multiple commanders (Augustus, Boudicca, Innocent, Crassus), resource management, and escalating "Doom" (Seasons) mechanics.
+- **Game Logic:** Roguelike "run" structure with multiple commanders (Augustus, Boudicca, Leo, Crassus), resource management, and escalating "Doom" (Seasons) mechanics.
 - **State Management:** Powered by `@preact/signals` for reactive UI and decoupled game state.
 
 ## Tech Stack

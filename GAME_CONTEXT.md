@@ -12,7 +12,7 @@
 - **Tactical layer** — semi-real-time hex-based combat with cooldown-driven AI and player-triggered abilities (Decretums)
 - **Roguelike meta** — seasonal "spokes" of battle/rest/event nodes, escalating **Doom** threat, permadeath of cohorts, Final Invasion at season 24
 
-Players pick one of four commanders (**Augustus**, **Boudicca**, **Innocent**, **Crassus**), each with distinct faction flavor, and push through procedurally-generated runs until they either beat the Final Invasion or lose.
+Players pick one of four commanders (**Augustus**, **Boudicca**, **Leo**, **Crassus**), each with distinct faction flavor, and push through procedurally-generated runs until they either beat the Final Invasion or lose.
 
 Theme is medieval/classical European with Roman-imperium framing (see `Roman_Imperium_Game_Systems.pptx` in the repo root).
 
@@ -200,7 +200,7 @@ Map2D/
 │   │   └── map/
 │   │
 │   ├── data/                        # static definitions
-│   │   ├── commanders.ts            # Augustus, Boudicca, Innocent, Crassus
+│   │   ├── commanders.ts            # Augustus, Boudicca, Leo (id 'innocent'), Crassus
 │   │   ├── cohort-data.ts, enemy-cohort-data.ts
 │   │   ├── doctrine-data.ts, decretum-data.ts
 │   │   ├── advisor-data.ts

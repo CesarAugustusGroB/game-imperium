@@ -38,7 +38,7 @@ export const COMMANDERS: Commander[] = [
   },
   {
     id: 'innocent',
-    name: 'Pope Innocent',
+    name: 'Pope Leo',
     faction: 'gold',
     culture: 'Roman / Papal',
     portrait: '/asset/characters/char_pope_leo.png',

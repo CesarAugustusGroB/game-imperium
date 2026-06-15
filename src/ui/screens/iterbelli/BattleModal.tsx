@@ -49,7 +49,7 @@ export function BattleModal() {
     // Veteran Stacks (Warlord passive): +5% attack power per stacked victory (cap 5).
     const statMult = cs.archetype === 'Warlord' ? 1 + 0.05 * veteranStacks.value : 1;
     // Deus Vult (Religious passive): +1 pre-battle morale per equipped faith (gold)
-    // doctrine, capped at +3. Innocent fields gold doctrines — color-lock blocks red —
+    // doctrine, capped at +3. Leo (the pope) fields gold doctrines — color-lock blocks red —
     // so this rewards stacking the faith school.
     const DEUS_VULT_PER_DOCTRINE = 1;
     const DEUS_VULT_CAP = 3;
