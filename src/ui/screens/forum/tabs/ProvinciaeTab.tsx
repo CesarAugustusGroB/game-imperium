@@ -40,6 +40,8 @@ import { getPriorityStyle, priorityClass, type CardPriority } from '../../../com
 import { Masthead } from '../Masthead';
 import { CostInline, InlineImageIcon, ResourceAmount } from '../../../components/ResourceIcon';
 import foodIcon from '../../../../assets/ui/resources/food-icon.png';
+import goldStackIcon from '../../../../assets/ui/resources/gold-stack-icon.png';
+import iunioresIcon from '../../../../assets/ui/resources/iuniores-icon-color.png';
 import populationIcon from '../../../../assets/ui/resources/population-icon.png';
 import unrestIcon from '../../../../assets/ui/resources/unrest-icon.png';
 import wealthIcon from '../../../../assets/ui/resources/wealth-icon.png';
@@ -1858,7 +1860,7 @@ function IdentityStrip({ province }: { province: Province }) {
   interface ModRow { icon: ComponentChildren; label: string; value: string; positive: boolean }
   const modRows: ModRow[] = [];
   if (mods.growthModifier !== 0) modRows.push({ icon: <InlineImageIcon src={populationIcon} size="micro" />, label: 'Pop Growth',    value: `${mods.growthModifier > 0 ? '+' : ''}${mods.growthModifier}/season`, positive: mods.growthModifier > 0 });
-  if (mods.pwgModifier    !== 0) modRows.push({ icon: '💰', label: 'Wealth Growth',  value: `${mods.pwgModifier > 0 ? '+' : ''}${mods.pwgModifier}/season`,    positive: mods.pwgModifier > 0 });
+  if (mods.pwgModifier    !== 0) modRows.push({ icon: <InlineImageIcon src={wealthIcon} size="micro" />, label: 'Wealth Growth',  value: `${mods.pwgModifier > 0 ? '+' : ''}${mods.pwgModifier}/season`,    positive: mods.pwgModifier > 0 });
   if (mods.garrisonBonus  !== 0) modRows.push({ icon: '🛡', label: 'Garrison',      value: `+${mods.garrisonBonus}`,                                        positive: true });
 
   const terrainTooltip = (
@@ -1938,10 +1940,10 @@ function IdentityStrip({ province }: { province: Province }) {
   const tradeGoodTooltip = tradeGood ? (() => {
     interface TGRow { icon: ComponentChildren; label: string; value: string }
     const rows: TGRow[] = [];
-    if (tradeGood.flatGold          > 0) rows.push({ icon: '🪙', label: 'Gold',         value: `+${tradeGood.flatGold}g/season` });
+    if (tradeGood.flatGold          > 0) rows.push({ icon: <InlineImageIcon src={goldStackIcon} size="micro" />, label: 'Gold',         value: `+${tradeGood.flatGold}g/season` });
     if (tradeGood.flatGrowth        > 0) rows.push({ icon: <InlineImageIcon src={populationIcon} size="micro" />, label: 'Pop Growth',   value: `+${tradeGood.flatGrowth}/season` });
-    if (tradeGood.flatIuniores      > 0) rows.push({ icon: '⚔️', label: 'Iuniores',     value: `+${tradeGood.flatIuniores}/season` });
-    if (tradeGood.wealthGrowthBonus > 0) rows.push({ icon: '💰', label: 'Wealth Growth',value: `+${tradeGood.wealthGrowthBonus}/season` });
+    if (tradeGood.flatIuniores      > 0) rows.push({ icon: <InlineImageIcon src={iunioresIcon} size="micro" />, label: 'Iuniores',     value: `+${tradeGood.flatIuniores}/season` });
+    if (tradeGood.wealthGrowthBonus > 0) rows.push({ icon: <InlineImageIcon src={wealthIcon} size="micro" />, label: 'Wealth Growth',value: `+${tradeGood.wealthGrowthBonus}/season` });
 
     const specialLine = (() => {
       const s = tradeGood.special;
