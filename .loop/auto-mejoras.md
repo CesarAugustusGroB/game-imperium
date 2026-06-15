@@ -36,7 +36,7 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - [DONE] QW3 · `SettingsPanel` z-index 20 → 9000 (sobre overlays de gameplay ≤600, bajo ConfirmDialog/MusicToggle 9999). Comentario documenta el orden; se formalizará con la escala de tokens (MO1). (Topic 1)
 - [DONE] QW4 · Iconos POWER_STATS. Descubierto: la UI YA usa iconos de imagen en AMBOS sitios (ExercitusTab vía STAT_ICON_SRC, ArmyStatus vía GameIcon); el campo `glyph` emoji en unit-types.ts estaba MUERTO y su comentario era falso. Eliminado el campo muerto + corregido el comentario. No se mostraba ningún emoji al usuario. (Topic 9)
 - [DONE] QW5 · Higiene de comentarios: corregido el comentario falso "× wealth tier × tax" en `SynergyBonus` gold (province.ts:350) → es gold plano de edificio; aclarado `flatGold` en trade-goods.ts; documentado `wealthTiers` como DISPLAY-ONLY (no multiplica oro) en game-config.ts. (Topics 5,6)
-- [READY] QW6 · `tools/verify-portraits.ts`: asertar que toda ruta de retrato (commanders/advisors/governors) resuelve a un fichero existente; añadir a `npm run verify`. (Topic 2)
+- [DONE] QW6 · `tools/verify-portraits.ts`: aserta que toda ruta de retrato (commanders/advisors/governors) resuelve a un fichero bajo public/. Auto-descubierto por run-all-verify.ts → ahora 18/18. Auditó 24 retratos, todos OK. (Topic 2)
 - [READY] QW7 · Renombrar el comandante "Pope Innocent" → "Pope Leo" (decisión del usuario: el nombre cuadra con el retrato char_pope_leo.png). Solo el display name; mantener id 'innocent' para no romper saves. Revisar quote/passive si mencionan el nombre. (Topic 2)
 
 ### Fase 2 — Pasada Provinciae (5+6, claridad económica)
@@ -65,3 +65,4 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - QW3 DONE — SettingsPanel z-index 20→9000 (estaba por debajo de todos los overlays). Reporte (Topic 1) sincronizado. tsc+verify(17/17)+build verde.
 - QW4 DONE — POWER_STATS: la UI ya usaba iconos de imagen en ambos sitios; el campo glyph emoji era dead code con comentario falso. Eliminado + comentario corregido. Reporte (Topic 9) sincronizado. tsc+verify(17/17)+build verde.
 - QW5 DONE — higiene de 3 comentarios sobre "wealth tier" (province.ts SynergyBonus, trade-goods.ts flatGold, game-config.ts wealthTiers). Aclaran que NO hay multiplicador de oro por wealth-tier. Reporte (Topics 5,6) sincronizado. tsc+verify(17/17)+build verde.
+- QW6 DONE — tools/verify-portraits.ts añadido (auto-descubierto). Aserta 24 retratos (commanders/advisors/governors) contra public/; todos resuelven. npm run verify ahora 18/18. Reporte (Topic 2) sincronizado. tsc+verify+build verde.

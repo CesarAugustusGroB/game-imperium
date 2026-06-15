@@ -236,9 +236,10 @@
         <code>center 25%</code> (Sidebar), <code>center 14%</code> / <code>center 20%</code> (ConsiliumTab),
         <code>center 18%</code> (ConsiliumPanel, AdvisorMarketCard). <b><code>Portrait.tsx</code> ni siquiera
         acepta prop de posición</b>, así que ignora <code>portraitPosition</code>: caras descuadradas según pantalla.</div>
-      <div class="finding warn"><b>Sin validación de existencia para comandantes.</b> Los gobernadores tienen
-        <span class="path">governor-portraits.test.ts</span>, pero las rutas de <code>COMMANDERS[].portrait</code> son
-        literales sin verificación → drift como el de pope_leo pasa desapercibido.</div>
+      <div class="finding ok"><b>Sin validación de existencia para comandantes — RESUELTO (QW6).</b> Antes las rutas
+        de <code>COMMANDERS[].portrait</code> eran literales sin verificación. Añadido
+        <span class="path">tools/verify-portraits.ts</span> (en <code>npm run verify</code>, 18/18) que aserta los 24
+        retratos de commanders/advisors/governors contra <code>public/</code> → cualquier drift futuro falla en CI.</div>
 
       <h3>Caminos posibles</h3>
       <table>
