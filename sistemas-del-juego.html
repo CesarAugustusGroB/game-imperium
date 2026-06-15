@@ -538,6 +538,21 @@
     </div>
 
     <div class="card">
+      <h3><span class="ic">⚜</span>Creación de oro (4 capas)</h3>
+      <p>El oro de cada provincia por temporada se compone en 4 capas. La <b>riqueza (wealth)</b> es un <i>stock / base imponible</i> por provincia (no es oro gastable); el oro es la <i>moneda</i> que extraes al gravarla.</p>
+      <ol>
+        <li><b>Impuesto</b> (motor principal, escala con wealth): <code>floor(wealth × taxRate)</code>. <code>taxRate</code> = 3%–25% según los niveles combinados lower+upper.</li>
+        <li><b>Flats</b> (no escalan): oro plano de edificios + sinergias + <code>+1</code> subsistencia + trade-good <code>flatGold</code> + unique feature.</li>
+        <li><b>Aqueduct T3</b> (imperial): <code>×1.1</code> a TODO el ingreso si alguna provincia lo tiene.</li>
+        <li><b>War Profiteer / doctrinas</b> (imperial, en <code>addResource</code>): +50% oro (Crassus) + modificador de doctrina, con <b>tope +75%</b>.</li>
+      </ol>
+      <p>Después se drenan los <b>gastos</b> (upkeep de edificios + salario de gobernador); si el imperio no cubre todo, cada provincia con déficit gana <code>+10</code> descontento.</p>
+      <div class="note">
+        <b>Nota.</b> &nbsp;Los <code>wealthTiers</code> (Destitute→Wealthy) son <b>solo etiqueta/color de mapa</b>, NO multiplican oro. El panel de provincia muestra este desglose en el <i>Income Ledger</i> (con un bloque "Empire modifiers" para las capas 3–4). Fuentes: <code>getProvinceIncome</code> (province.ts), <code>collectProvinceIncome</code> (province-store.ts), <code>addResource</code> / <code>getIncomeBonus</code> (resources.ts).
+      </div>
+    </div>
+
+    <div class="card">
       <h3><span class="ic">⚙</span>Capa de sistema</h3>
       <div class="pillwrap">
         <span class="pill">province.ts</span><span class="pill">province-store.ts</span>
