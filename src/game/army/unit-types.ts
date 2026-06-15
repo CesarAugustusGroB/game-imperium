@@ -52,16 +52,17 @@ export interface UnitStats {
 export type PowerStat = keyof Omit<UnitStats, 'hp'>;
 
 /**
- * Display metadata for the five power stats — the single place the UI reads to
- * render them. Glyphs are emoji placeholders until the real icons (cavalry,
- * sling, scutum, crossbow, feet) are wired into GameIcon.
+ * Display metadata (key + label) for the five power stats. The icons are the
+ * real medallion art, rendered by keying on `key`: GameIcon `stat-*`
+ * (ArmyStatus, OrderBar) and `STAT_ICON_SRC` (ExercitusTab StatGrid). The old
+ * emoji `glyph` placeholders were removed once those icons were wired in.
  */
-export const POWER_STATS: readonly { key: PowerStat; label: string; glyph: string }[] = [
-  { key: 'charge',   label: 'Carga',      glyph: '🐎' },
-  { key: 'harass',   label: 'Acoso',      glyph: '🪨' },
-  { key: 'push',     label: 'Empuje',     glyph: '🛡' },
-  { key: 'siege',    label: 'Asedio',     glyph: '🏹' },
-  { key: 'movement', label: 'Movimiento', glyph: '👣' },
+export const POWER_STATS: readonly { key: PowerStat; label: string }[] = [
+  { key: 'charge',   label: 'Carga' },
+  { key: 'harass',   label: 'Acoso' },
+  { key: 'push',     label: 'Empuje' },
+  { key: 'siege',    label: 'Asedio' },
+  { key: 'movement', label: 'Movimiento' },
 ];
 
 /** Flat HP every unit has under the power-stat model. */

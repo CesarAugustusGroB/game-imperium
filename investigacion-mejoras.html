@@ -733,12 +733,12 @@
       <p>Conviven <b>tres</b> sistemas: <code>GameIcon</code> (medallones PNG, ~40 iconos, canónico),
       <code>ResourceIcon</code>/<code>InlineImageIcon</code> (recursos PNG), y <b>emoji crudo</b>
       (~86 ocurrencias en 15 ficheros).</p>
-      <div class="finding"><b>Placeholders emoji obsoletos con icono real ya existente.</b>
-        <code>POWER_STATS.glyph</code> = 🐎🪨🛡🏹👣 con el comentario "emoji placeholders until the real icons are wired
-        into GameIcon" (<span class="path">unit-types.ts:59</span>). Pero <b>GameIcon YA tiene</b>
-        <code>stat-charge/harass/push/siege/movement</code>. La OrderBar de batalla los usa como medallón
-        (<span class="path">OrderBar.tsx:10</span>), pero el StatGrid de Exercitus sigue con emoji → <b>las mismas 5
-        stats se ven como medallón en batalla y como emoji en el ejército</b>.</div>
+      <div class="finding ok"><b>Placeholders emoji obsoletos — RESUELTO (QW4).</b> Al implementar se verificó que la
+        UI ya renderizaba las 5 power-stats con iconos de imagen en AMBOS sitios: <code>ExercitusTab</code> StatGrid vía
+        <code>STAT_ICON_SRC</code> y <code>ArmyStatus</code>/OrderBar de batalla vía <code>GameIcon stat-*</code>. El campo
+        <code>POWER_STATS.glyph</code> (🐎🪨🛡🏹👣) era <b>dead code</b> con un comentario falso ("emoji placeholders
+        until wired into GameIcon"); ningún componente lo leía. Eliminado el campo + corregido el comentario
+        (<span class="path">unit-types.ts:59</span>). No se mostraba emoji al usuario.</div>
       <div class="finding"><b>RESOURCE_INFO con emoji teniendo PNG.</b> <code>commander.ts:50</code>: gold 💰, iuniores 🛡️.
         Hay <code>gold-stack</code>/<code>iuniores-color</code> reales (ResourceIcon los mapea); el emoji solo aparece donde
         algún sitio lee <code>.icon</code> directo en vez de usar <code>&lt;ResourceIcon&gt;</code>.</div>
