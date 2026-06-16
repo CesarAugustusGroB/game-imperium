@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { setTutorialDismissed } from '../../../game/core/meta-save';
 import { GameIcon, type GameIconName } from '../../components/GameIcon';
+import { Modal } from '../../components/Modal';
 
 /**
  * First-run contextual tutorial for the current main loop (Forum hub + Iter
@@ -113,18 +114,8 @@ export function TutorialOverlay() {
   const finish = () => setTutorialDismissed(true);
 
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 400,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(8, 6, 12, 0.72)', backdropFilter: 'blur(2px)',
-        animation: 'imp-tut-fade 200ms ease',
-      }}
-      onClick={finish}
-    >
-      <style>{`@keyframes imp-tut-fade { from { opacity: 0 } to { opacity: 1 } }`}</style>
+    <Modal open onClose={finish} labelledBy="tutorial-title" backdrop="rgba(8, 6, 12, 0.72)">
       <div
-        onClick={(e) => e.stopPropagation()}
         style={{
           width: 'min(560px, 94vw)', maxHeight: '90vh', overflow: 'auto',
           background: 'linear-gradient(180deg, rgba(24, 21, 36, 0.98) 0%, rgba(15, 13, 22, 0.99) 100%)',
@@ -135,7 +126,7 @@ export function TutorialOverlay() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
           <GameIcon name="nav-tutorial" size="row" />
-          <h2 style={{
+          <h2 id="tutorial-title" style={{
             margin: 0, fontFamily: 'var(--imp-font-display)', fontSize: 20,
             color: 'var(--imp-text-hi)', letterSpacing: '0.03em',
           }}>{cur.title}</h2>
@@ -169,7 +160,7 @@ export function TutorialOverlay() {
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
