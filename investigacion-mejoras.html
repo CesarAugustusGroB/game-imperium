@@ -832,9 +832,10 @@
       </ul>
 
       <h3>Hallazgos</h3>
-      <div class="finding"><b>No hay ajuste global de dificultad.</b> No existe selector Fácil/Normal/Difícil; la dificultad
-        está hardcodeada en constantes de escenario. Un multiplicador global sería el knob más limpio para "subir
-        dificultad" y dar elección al jugador.</div>
+      <div class="finding ok"><b>No había ajuste global de dificultad — AÑADIDO (DF1a).</b> Nuevo módulo
+        <code>difficulty.ts</code> (Relajada/Normal/Dura, persistido) + selector en Ajustes + escalado del nº de soldados
+        enemigos en la batalla decisiva (×0.85/×1.0/×1.2; Normal = baseline intacto). Validado con
+        <code>sim-battle-balance.ts</code>. Pendiente extender a stats/atrición/victoryGold (DF1b).</div>
       <div class="finding"><b>IA enemiga explotable.</b> <code>enemyChoose</code> (<span class="path">enemy-ai.ts:5</span>)
         es una lista de prioridad fija, <b>sin aleatoriedad ni lookahead</b>. Un jugador que la aprende gana de forma
         fiable. Dificultad alta = IA menos predecible (elección ponderada/aleatoria, contra-juego a la última orden del

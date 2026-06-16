@@ -56,7 +56,8 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - [DONE] MO1f · `EndgameCard.tsx` migrado a `<Modal dismissable={false}>` (resultado forzado) + retirada la clase `.ib-overlay` de IterBelliScreen (ya sin usuarios). (Topic 1) — ✅ MO1 (primitiva Modal) COMPLETA: 6 modales unificados.
 
 ### Fase 4 — Dificultad
-- [READY] DF1 · Multiplicador global de dificultad: capa ×factor sobre soldados enemigos / mult de stats / % atrición / victoryGold, con Normal = ×1. Selector. Validar con `tools/sim-playthrough.ts` que cada nivel cae en su banda. Deltas en centenas. (Topic 10)
+- [DONE] DF1a · Multiplicador global de dificultad — slice 1: módulo `src/game/core/difficulty.ts` (Relajada/Normal/Dura, persistido en localStorage como las prefs de audio) + escalado del nº de soldados enemigos en BattleModal (Relajada ×0.85, Normal ×1.0, Dura ×1.2; deltas ±~750–1300, en centenas; el piso minSoldiers sigue) + selector en SettingsPanel. Normal = baseline sim-tuneado INTACTO. Validado con sim-battle-balance.ts (monótono y acotado); NOTA: `sim-playthrough.ts` del plan no existe en esta rama. (Topic 10)
+- [READY] DF1b · Extender el multiplicador de dificultad a stats enemigos / % de atrición de marcha / victoryGold (mismos factores por nivel; Normal=×1). (Topic 10)
 - [READY] DF2 · IA enemiga menos explotable: añadir aleatoriedad ponderada + contra-juego a la última orden del jugador en `enemy-ai.ts`, gateado por dificultad (Normal = comportamiento actual). (Topic 10)
 
 ### Fase 5 — Grandes (requieren SPEC antes de codear) — quedan BLOCKED por diseño
@@ -87,3 +88,4 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - MO1e DONE — BattleModal migrado a Modal (dismissable={false}, flujo de batalla forzado). .ib-overlay aún lo usa EndgameCard → MO1f. tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
 - MO1f DONE — EndgameCard migrado a Modal + clase .ib-overlay retirada. ✅ MO1 COMPLETA (6 modales: ConfirmDialog, SettingsPanel, DoctrineDraft, Tutorial, BattleModal, EndgameCard). tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
 - BG3a DONE — 5 tokens --color-* aliasados a --imp-* idénticos (cambio visual cero). Reconciliación de fondo = BG3b (BLOCKED, decisión estética). tsc+verify(18/18)+build verde. Reporte (Topic 8) sincronizado.
+- DF1a DONE — multiplicador global de dificultad (slice 1): módulo difficulty.ts + selector en Settings + escalado de soldados enemigos (Normal=×1 intacto). Sim-checkeado (sim-playthrough.ts no existe; usado sim-battle-balance.ts). Extensión a stats/atrición/victoryGold = DF1b. tsc+verify(18/18)+build verde. Reporte (Topic 10) sincronizado.

@@ -5,6 +5,7 @@ import { sfxMuted, sfxVolume, persistAudioPrefs } from '../sound/sound';
 import { musicMuted, toggleMusicMute } from '../sound/music';
 import { playSfx } from '../sound/sfx';
 import { metaSave, exportCampaignLogsJson } from '../../game/core/meta-save';
+import { difficulty, setDifficulty, DIFFICULTY_ORDER, DIFFICULTY_LABELS, DIFFICULTY_BLURB } from '../../game/core/difficulty';
 
 if (typeof document !== 'undefined' && !document.getElementById('settings-panel-styles')) {
   const el = document.createElement('style');
@@ -113,6 +114,37 @@ export function SettingsPanel({ style }: { style?: JSX.CSSProperties }) {
             playSfx('ui_click');
           }}
         />
+      </div>
+      <div style={{ ...ROW_STYLE, cursor: 'default', flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
+          <span>Dificultad</span>
+          <div style={{ display: 'inline-flex', gap: 4 }} role="radiogroup" aria-label="Dificultad">
+            {DIFFICULTY_ORDER.map((d) => {
+              const active = difficulty.value === d;
+              return (
+                <button
+                  key={d}
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => { setDifficulty(d); playSfx('ui_click'); }}
+                  style={{
+                    padding: '4px 11px', borderRadius: 4, cursor: 'pointer',
+                    fontFamily: 'var(--imp-font-display, inherit)', fontSize: 11,
+                    letterSpacing: '.05em', textTransform: 'uppercase',
+                    background: active ? 'rgba(212,168,67,0.18)' : 'transparent',
+                    border: `1px solid ${active ? 'var(--color-gold-primary)' : 'var(--color-border-subtle, rgba(212,168,67,0.2))'}`,
+                    color: active ? 'var(--color-gold-primary)' : 'var(--color-text-muted, #6f6757)',
+                  }}
+                >
+                  {DIFFICULTY_LABELS[d]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <span style={{ fontSize: 11, color: 'var(--color-text-muted, #6f6757)', fontStyle: 'italic' }}>
+          {DIFFICULTY_BLURB[difficulty.value]}
+        </span>
       </div>
       <button
         class="settings-toggle-row"

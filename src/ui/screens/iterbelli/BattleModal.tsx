@@ -4,6 +4,7 @@ import { OrnateFrame } from '../../components/OrnateFrame';
 import { playSfx } from '../../sound/sfx';
 import { iterBelliState, applyBattleOutcome } from '../../../game/iterBelli/iter-belli-state';
 import { veteranStacks } from '../../../game/core/game-state';
+import { enemySoldierMult } from '../../../game/core/difficulty';
 import { getActiveScenario } from '../../../game/iterBelli/iter-belli-scenario';
 import { preparedArmy, preparedLegate } from '../../../game/progression/strategic-store';
 import { getEquippedColorCount } from '../../../game/items/doctrine-store';
@@ -61,8 +62,10 @@ export function BattleModal() {
     const options = availableFormations(legate, seed0.discipline);
     const formationOptions: FormationKey[] = options.length ? options : ['battleLine'];
     // enemyMult = (1 + threat/THREAT_DIVISOR) * (1 - enemyWeaken*WEAKEN_PER_POINT) — see iter-belli-balance.
+    // Global difficulty scales the enemy host on top (Normal = ×1, so the
+    // sim-tuned baseline is unchanged); the minSoldiers floor still applies.
     const enemyMult = (1 + cs.threat / ENEMY_THREAT_DIVISOR) * (1 - cs.enemyWeaken * ENEMY_WEAKEN_PER_POINT);
-    const enemySoldiers = Math.max(scenario.enemy.minSoldiers, Math.round(scenario.enemy.baseSoldiers * enemyMult));
+    const enemySoldiers = Math.max(scenario.enemy.minSoldiers, Math.round(scenario.enemy.baseSoldiers * enemyMult * enemySoldierMult()));
     const enemyKey = scenario.enemy.archetypeKey;
     const enemy = buildEnemyArchetype(enemyKey, cs.enemyWeaken, enemySoldiers);
     beginBattleSession({
