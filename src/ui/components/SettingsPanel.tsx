@@ -1,5 +1,5 @@
 import type { JSX } from 'preact';
-import { useEffect } from 'preact/hooks';
+import { Modal } from './Modal';
 import { OrnateFrame, OrnateHeader } from './OrnateFrame';
 import { sfxMuted, sfxVolume, persistAudioPrefs } from '../sound/sound';
 import { musicMuted, toggleMusicMute } from '../sound/music';
@@ -137,46 +137,16 @@ export function OptionsModal({ open, onClose }: {
   open: boolean;
   onClose: () => void;
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
+  // Backdrop, Escape, scroll-lock and focus are handled by <Modal>. It sits on
+  // the standard modal layer (--imp-z-modal) — above every gameplay overlay yet
+  // below the confirm layer, so a ConfirmDialog launched from here is on top.
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Options"
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        // Global options modal: must sit above every gameplay overlay
-        // (NotificationFeed 150, Provinciae 200, draft 300, tutorial 400,
-        // battle 600) yet below ConfirmDialog / MusicToggle (9999) so a
-        // confirm launched from here still appears on top. (Was 20 — hidden
-        // behind those overlays.) Will fold into the z-index token scale (MO1).
-        zIndex: 9000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        background: 'rgba(8, 6, 14, 0.72)',
-        backdropFilter: 'blur(3px)',
-      }}
-    >
+    <Modal open={open} onClose={onClose} label="Options" backdrop="rgba(8, 6, 14, 0.72)">
       <OrnateFrame
         width="min(520px, 94vw)"
         padding="compact"
         className="options-modal-card"
         style={{ maxHeight: 'min(760px, 92vh)', overflowY: 'auto' }}
-        onClick={(e: MouseEvent) => e.stopPropagation()}
       >
         <OrnateHeader
           eyebrow="Main Menu"
@@ -186,6 +156,6 @@ export function OptionsModal({ open, onClose }: {
         />
         <SettingsPanel />
       </OrnateFrame>
-    </div>
+    </Modal>
   );
 }
