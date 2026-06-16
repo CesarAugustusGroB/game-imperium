@@ -57,7 +57,8 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 
 ### Fase 4 — Dificultad
 - [DONE] DF1a · Multiplicador global de dificultad — slice 1: módulo `src/game/core/difficulty.ts` (Relajada/Normal/Dura, persistido en localStorage como las prefs de audio) + escalado del nº de soldados enemigos en BattleModal (Relajada ×0.85, Normal ×1.0, Dura ×1.2; deltas ±~750–1300, en centenas; el piso minSoldiers sigue) + selector en SettingsPanel. Normal = baseline sim-tuneado INTACTO. Validado con sim-battle-balance.ts (monótono y acotado); NOTA: `sim-playthrough.ts` del plan no existe en esta rama. (Topic 10)
-- [READY] DF1b · Extender el multiplicador de dificultad a stats enemigos / % de atrición de marcha / victoryGold (mismos factores por nivel; Normal=×1). (Topic 10)
+- [DONE] DF1b · Escalado de `victoryGold` por dificultad (Relajada ×0.85 / Normal ×1.0 / Dura ×1.2; risk/reward, más recompensa en Dura). Palanca económica desacoplada del combate, no sujeta a la regla de centenas (es oro). (Topic 10)
+- [BLOCKED: escalar stats enemigos y/o atrición ×1.2 COMPONE con el ×1.2 de soldados (DF1a) → riesgo de pasarse de banda. El sim disponible (sim-battle-balance.ts) no parametriza stat-mult. Necesita decisión de magnitud combinada o tuneo de sim. ¿Cuánto más dura debe ser "Dura" al apilar palancas?] DF1c · Stats enemigos + % de atrición por dificultad. (Topic 10)
 - [READY] DF2 · IA enemiga menos explotable: añadir aleatoriedad ponderada + contra-juego a la última orden del jugador en `enemy-ai.ts`, gateado por dificultad (Normal = comportamiento actual). (Topic 10)
 
 ### Fase 5 — Grandes (requieren SPEC antes de codear) — quedan BLOCKED por diseño
@@ -89,3 +90,4 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - MO1f DONE — EndgameCard migrado a Modal + clase .ib-overlay retirada. ✅ MO1 COMPLETA (6 modales: ConfirmDialog, SettingsPanel, DoctrineDraft, Tutorial, BattleModal, EndgameCard). tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
 - BG3a DONE — 5 tokens --color-* aliasados a --imp-* idénticos (cambio visual cero). Reconciliación de fondo = BG3b (BLOCKED, decisión estética). tsc+verify(18/18)+build verde. Reporte (Topic 8) sincronizado.
 - DF1a DONE — multiplicador global de dificultad (slice 1): módulo difficulty.ts + selector en Settings + escalado de soldados enemigos (Normal=×1 intacto). Sim-checkeado (sim-playthrough.ts no existe; usado sim-battle-balance.ts). Extensión a stats/atrición/victoryGold = DF1b. tsc+verify(18/18)+build verde. Reporte (Topic 10) sincronizado.
+- DF1b DONE — victoryGold escalado por dificultad (Dura ×1.2 recompensa). stats/atrición quedan en DF1c (BLOCKED: componen con soldados, necesitan tuneo). tsc+verify(18/18)+build verde. Reporte (Topic 10) sincronizado.

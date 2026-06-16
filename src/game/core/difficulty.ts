@@ -33,6 +33,17 @@ export const DIFFICULTY_ENEMY_SOLDIER_MULT: Record<Difficulty, number> = {
   dura: 1.2,
 };
 
+/**
+ * Victory-gold reward multiplier, by difficulty (same factors). Risk/reward:
+ * the harder fight on `dura` pays a bigger purse; `relajada` pays less. This is
+ * campaign gold (not soldiers/iuniores) so the hundreds rule does not apply.
+ */
+export const DIFFICULTY_VICTORY_GOLD_MULT: Record<Difficulty, number> = {
+  relajada: 0.85,
+  normal: 1.0,
+  dura: 1.2,
+};
+
 function readStored(): Difficulty {
   try {
     const v = localStorage.getItem('imperium.difficulty');
@@ -52,4 +63,9 @@ export function setDifficulty(d: Difficulty): void {
 /** Enemy soldier multiplier for the current difficulty (1.0 on Normal). */
 export function enemySoldierMult(): number {
   return DIFFICULTY_ENEMY_SOLDIER_MULT[difficulty.value];
+}
+
+/** Victory-gold reward multiplier for the current difficulty (1.0 on Normal). */
+export function victoryGoldMult(): number {
+  return DIFFICULTY_VICTORY_GOLD_MULT[difficulty.value];
 }

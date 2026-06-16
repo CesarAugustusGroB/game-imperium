@@ -15,6 +15,7 @@ import { CARD_DEFS } from '../../data/iter-belli-cards';
 import { makeQuestCard } from '../../data/iter-belli-quests';
 import { getActiveScenario, resetActiveScenario } from './iter-belli-scenario';
 import { tallyCardPlayed, resetCampaignTelemetry } from '../progression/run-telemetry';
+import { victoryGoldMult } from '../core/difficulty';
 import * as B from './iter-belli-balance';
 import type {
   Archetype, CardContext, CardCost, CardEffects, CardInstance, DoctrineCampaignModifier,
@@ -496,7 +497,8 @@ export function applyBattleOutcome(victory: boolean, survivors: number, finalMor
   S.morale = clamp(finalMorale, B.MORALE_MIN, B.MORALE_MAX);
   const { narrative } = getActiveScenario();
   if (victory) {
-    applyChange('gold', B.VICTORY_GOLD_BONUS);
+    // Difficulty scales the purse (Normal = ×1): a harder fight pays more.
+    applyChange('gold', Math.round(B.VICTORY_GOLD_BONUS * victoryGoldMult()));
     logEvent(narrative.battleWonLog(S.soldiers), 'battle');
     finishCampaign(true, narrative.victoryText);
   } else {
