@@ -1,4 +1,5 @@
-﻿import { OrnateFrame } from '../../components/OrnateFrame';
+﻿import { Modal } from '../../components/Modal';
+import { OrnateFrame } from '../../components/OrnateFrame';
 import { playSfx } from '../../sound/sfx';
 import { navigateTo } from '../../screens';
 import { gold, iuniores } from '../../../game/core/resources';
@@ -146,7 +147,9 @@ export function EndgameCard() {
   const missionMet = !!(victory && mission && mission.condition(s));
 
   return (
-    <div class="ib-overlay">
+    // Forced result screen (review outcome, then "Volver al Hub") — no Escape /
+    // backdrop dismiss. Inherits scroll-lock, focus-trap and dialog ARIA.
+    <Modal open onClose={() => {}} dismissable={false} label="Resultado de campaña" backdrop="rgba(0,0,0,0.62)">
       <OrnateFrame width="min(620px, 94vw)" padding="hero" style={{ textAlign: 'center' }}>
         <div class={`ib-end-mark ${victory ? 'victory' : 'defeat'}`}>
           {victory ? '✦ VICTORIA ✦' : '✖ DERROTA ✖'}
@@ -184,6 +187,6 @@ export function EndgameCard() {
           Volver al Hub
         </button>
       </OrnateFrame>
-    </div>
+    </Modal>
   );
 }

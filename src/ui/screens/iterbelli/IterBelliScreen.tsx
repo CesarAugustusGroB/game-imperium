@@ -152,11 +152,7 @@ if (typeof document !== 'undefined') {
   .ib-log-line.battle { color: var(--imp-crimson); font-weight: 600; }
   .ib-log-line.crisis { color: var(--imp-crimson); font-weight: 600; padding-left: 8px; border-left: 3px solid var(--imp-crimson); }
 
-  /* ── Overlay (battle / endgame) ── */
-  .ib-overlay {
-    position: fixed; inset: 0; z-index: 600; display: flex; align-items: center; justify-content: center;
-    background: rgba(0,0,0,0.62); backdrop-filter: blur(4px); padding: 16px;
-  }
+  /* (.ib-overlay retired — BattleModal & EndgameCard now use the shared <Modal>.) */
   .ib-section-title { font-family: var(--imp-font-display); font-size: var(--imp-text-lg); letter-spacing: var(--imp-title-letter); text-transform: uppercase; color: var(--imp-gold-hi); margin-bottom: 8px; }
 
   /* ── Battle modal ── */
