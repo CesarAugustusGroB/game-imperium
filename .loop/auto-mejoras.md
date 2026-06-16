@@ -62,7 +62,9 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 ### Fase 5 — Grandes (requieren SPEC antes de codear) — quedan BLOCKED por diseño
 - [BLOCKED: necesita design doc] BG1 · Esclavos (botín convertible MVP). (Topic 7)
 - [BLOCKED: necesita decisión de alcance] BG2 · Clímax de batalla a pantalla completa + arte de unidades + banners. (Topic 3)
-- [READY] BG3 · Unificación de tokens `--imp-*` + reconciliación de fondo (APROBADO dentro del loop). MULTI-PASO de bajo churn por commit — (a) aliasar `--color-*` legacy a sus equivalentes `--imp-*` en design-tokens.css (sin tocar componentes); (b) reconciliar el hue de fondo a un solo "ink"; (c..) migrar referencias por fichero/dominio, un commit acotado cada vez. (Topic 8)
+- [DONE] BG3a · Aliasados los 5 tokens `--color-*` pixel-idénticos a su `--imp-*` (gold-primary→imp-gold-hi, gold-secondary→imp-gold, danger→imp-danger, warning→imp-gold, bronze→imp-bronze). Cambio visual cero; `--imp-*` ya es la fuente de esos colores. Los de texto/borde/fondo difieren en valor → reconciliación deliberada aparte. (Topic 8)
+- [BLOCKED: ¿reconciliar el hue de fondo legacy (--color-bg-* violáceo, rgba(20,18,36)) al ink casi-negro del Forum (--imp-ink #0d0b14)? Es un cambio VISIBLE en Title/CommanderSelect/Battle — decisión estética del usuario.] BG3b · Reconciliación del hue de fondo (la "costura" de Topic 8). (Topic 8)
+- [OPCIONAL/diferido] BG3c · Migrar las ~206 refs `var(--color-*)`→`var(--imp-*)` por fichero. Sin beneficio visual (ya aliasado), alto churn → solo si se quiere retirar el set legacy. (Topic 8)
 
 ## Log
 - QW1 DONE — battle-fx respeta prefers-reduced-motion: helper reduceMotion() (live), shake gateado en carga/asedio, addParticles no-op, deriva ambiental congelada. tsc+verify(17/17)+build verde.
@@ -84,3 +86,4 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - MO1d DONE — TutorialOverlay migrado a Modal (saltable: click-fuera + Esc). CampaignEventModal del plan no existe en develop. Battle modal queda como MO1e. tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
 - MO1e DONE — BattleModal migrado a Modal (dismissable={false}, flujo de batalla forzado). .ib-overlay aún lo usa EndgameCard → MO1f. tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
 - MO1f DONE — EndgameCard migrado a Modal + clase .ib-overlay retirada. ✅ MO1 COMPLETA (6 modales: ConfirmDialog, SettingsPanel, DoctrineDraft, Tutorial, BattleModal, EndgameCard). tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
+- BG3a DONE — 5 tokens --color-* aliasados a --imp-* idénticos (cambio visual cero). Reconciliación de fondo = BG3b (BLOCKED, decisión estética). tsc+verify(18/18)+build verde. Reporte (Topic 8) sincronizado.

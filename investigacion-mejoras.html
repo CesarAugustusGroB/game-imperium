@@ -680,10 +680,11 @@
       no es falta de arte sino <b>cohesión y pulido</b>.</p>
 
       <h3>Hallazgos</h3>
-      <div class="finding"><b>Dos sistemas de tokens en paralelo.</b> <span class="path">design-tokens.css</span> define el
-        set legacy <code>--color-*</code> Y el nuevo <code>--imp-*</code> (Forum), con valores <b>duplicados</b>
-        (<code>--color-gold-primary</code> = <code>--imp-gold-hi</code> = <code>#f0d080</code>). 26 ficheros los mezclan
-        (206 refs a oro). Sin una sola fuente de verdad de color → derivas sutiles de tono entre pantallas.</div>
+      <div class="finding info"><b>Dos sistemas de tokens en paralelo — EN CURSO (BG3a).</b> <span class="path">design-tokens.css</span>
+        definía el set legacy <code>--color-*</code> Y el nuevo <code>--imp-*</code> con valores duplicados. <b>Hecho:</b> los 5
+        tokens pixel-idénticos (<code>gold-primary/secondary, danger, warning, bronze</code>) ahora <em>aliasan</em> a su
+        <code>--imp-*</code> → <code>--imp-*</code> es la fuente, cambio visual cero. Pendiente (decisión estética): reconciliar
+        el hue de fondo legacy vs Forum (BG3b). La migración masiva de refs es opcional (sin beneficio visual).</div>
       <div class="finding warn"><b>Costura de fondo entre pantallas.</b> El legacy <code>--color-bg-primary</code> es
         violáceo (<code>rgba(20,18,36)</code>) mientras el Forum usa <code>--imp-ink</code> casi-negro
         (<code>#0d0b14</code>). Title/CommanderSelect/Battle (legacy) no comparten el "ink" del Forum → no se siente un

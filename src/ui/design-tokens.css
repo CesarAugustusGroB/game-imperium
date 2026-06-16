@@ -1,7 +1,11 @@
 :root {
-  /* === Colors === */
-  --color-gold-primary:    #f0d080;
-  --color-gold-secondary:  #d4a843;
+  /* === Colors ===
+     Legacy --color-* aliased to the canonical --imp-* where the value is
+     pixel-identical (BG3a — zero visual change, --imp-* becomes the source of
+     truth). Tokens with a slightly different value (text/border/bg) are left
+     until the deliberate value-reconciliation pass. */
+  --color-gold-primary:    var(--imp-gold-hi);   /* #f0d080 */
+  --color-gold-secondary:  var(--imp-gold);      /* #d4a843 */
   --color-gold-dim:        rgba(180, 160, 100, 0.5);
   --color-bg-primary:      rgba(20, 18, 36, 0.95);
   --color-bg-secondary:    rgba(30, 28, 48, 0.90);
@@ -12,10 +16,10 @@
   --color-text-primary:    rgba(240, 208, 128, 0.9);
   --color-text-secondary:  rgba(200, 190, 160, 0.7);
   --color-text-muted:      rgba(180, 170, 150, 0.58);
-  --color-danger:          #c24a3a;
+  --color-danger:          var(--imp-danger);    /* #c24a3a */
   --color-success:         #5a8a4a;
-  --color-warning:         #d4a843;
-  --color-bronze:          #8a6a2a;
+  --color-warning:         var(--imp-gold);       /* #d4a843 */
+  --color-bronze:          var(--imp-bronze);     /* #8a6a2a */
   --color-marble-dark:     rgba(28, 24, 40, 0.96);
 
   /* === Typography === */
