@@ -1,4 +1,5 @@
 import { useSignal } from '@preact/signals';
+import { Modal } from '../../components/Modal';
 import { OrnateFrame } from '../../components/OrnateFrame';
 import { playSfx } from '../../sound/sfx';
 import { pendingDoctrineDraft, chooseDraftDoctrine } from '../../../game/items/doctrine-store';
@@ -22,16 +23,10 @@ export function DoctrineDraftModal() {
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="doctrine-draft-title"
-      style={{
-        position: 'fixed', inset: 0, zIndex: 300,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(10, 8, 16, 0.78)', backdropFilter: 'blur(3px)',
-      }}
-    >
+    // Forced choice: the victory draft must be resolved by picking a doctrine,
+    // so dismissable={false} (no Escape / backdrop close) — see report Topic 1
+    // / QW2b. It still gains focus-trap, scroll-lock and dialog ARIA from Modal.
+    <Modal open onClose={() => {}} dismissable={false} labelledBy="doctrine-draft-title" backdrop="rgba(10, 8, 16, 0.78)">
       <OrnateFrame width="min(760px, 94vw)" padding="hero" style={{ textAlign: 'center' }}>
         <div style={{
           fontFamily: 'var(--imp-font-display)', fontSize: 'var(--imp-text-xs)',
@@ -97,6 +92,6 @@ export function DoctrineDraftModal() {
           })}
         </div>
       </OrnateFrame>
-    </div>
+    </Modal>
   );
 }

@@ -50,7 +50,7 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - [DONE] ME2 · Botón "Fusionar" (⛬) en la fila agrupada de ExercitusTab, gateado con `canConsolidate` (≥2 instancias que liberan ranura). Abre `ConfirmDialog` con preview (N→M cohortes, ranuras liberadas, "no cuesta oro ni iuniores") → llama a `mergeCohorts` (nueva acción en strategic-store que espeja el patrón de removeCohort: escribe roster + recomputa size). (Topic 4) — CIERRA FASE 3.
 - [DONE] MO1a · Escala de z-index (`--imp-z-overlay/modal/confirm/tooltip`) en design-tokens + componente `Modal` (backdrop, Esc, click-fuera opt-out, scroll-lock, focus-trap+restore, ARIA) + `ConfirmDialog` migrado encima (zIndex var(--imp-z-confirm)). (Topic 1)
 - [DONE] MO1b · `OptionsModal` (SettingsPanel) migrado a `<Modal>`: eliminados su backdrop/Esc/stopPropagation propios; ahora en la capa `--imp-z-modal` (700, sobre overlays de gameplay, bajo confirm). Hereda scroll-lock + focus-trap. (Topic 1)
-- [READY] MO1c · Migrar `DoctrineDraftModal` a `<Modal dismissable={false}>` (mantiene la elección obligatoria de QW2b; hereda focus-trap/scroll-lock/ARIA). (Topic 1)
+- [DONE] MO1c · `DoctrineDraftModal` migrado a `<Modal dismissable={false}>` (elección obligatoria intacta: sin Esc/click-fuera; QW2b respetado). Hereda focus-trap (Tab entre las 3 doctrinas), scroll-lock y ARIA. z-300 → `--imp-z-modal`. (Topic 1)
 - [READY] MO1d · Migrar `CampaignEventModal`, el battle modal (IterBelliScreen .ib-bm) y `TutorialOverlay` a `<Modal>` (uno por commit). (Topic 1)
 
 ### Fase 4 — Dificultad
@@ -78,3 +78,4 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - ME2 DONE — UI de merge: botón ⛬ Fusionar en la card agrupada de Exercitus + ConfirmDialog con preview + acción mergeCohorts en strategic-store. tsc+14 tests army+verify(18/18)+build verde. Reporte (Topic 4) sincronizado. ✅ FASE 3 (Merge units) COMPLETA.
 - MO1a DONE — escala de z-index en design-tokens + componente Modal (Esc/click-fuera/scroll-lock/focus-trap/ARIA) + ConfirmDialog migrado encima. Base de la primitiva. Migraciones de los demás modales: MO1b/c/d. tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
 - MO1b DONE — OptionsModal/SettingsPanel migrado a Modal (capa por token, sin backdrop/Esc propios). tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
+- MO1c DONE — DoctrineDraftModal migrado a Modal con dismissable={false} (forzado, QW2b respetado). tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
