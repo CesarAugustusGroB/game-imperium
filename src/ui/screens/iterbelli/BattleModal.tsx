@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
+import { Modal } from '../../components/Modal';
 import { OrnateFrame } from '../../components/OrnateFrame';
 import { playSfx } from '../../sound/sfx';
 import { iterBelliState, applyBattleOutcome } from '../../../game/iterBelli/iter-belli-state';
@@ -88,7 +89,10 @@ export function BattleModal() {
   if (!s) return null;
 
   return (
-    <div class="ib-overlay">
+    // The decisive battle is a forced flow (resolve it, then Continue) — no
+    // Escape / backdrop dismiss. Modal adds scroll-lock, focus-trap and dialog
+    // ARIA; the dark battle backdrop is preserved.
+    <Modal open onClose={() => {}} dismissable={false} label="Decisive battle" backdrop="rgba(0,0,0,0.62)">
       <OrnateFrame width="min(960px, 96vw)" padding="compact" style={{ maxHeight: '94vh', overflow: 'auto' }}>
         {s.phase === 'deployment' ? (
           <DeploymentPanel />
@@ -117,6 +121,6 @@ export function BattleModal() {
           </>
         )}
       </OrnateFrame>
-    </div>
+    </Modal>
   );
 }

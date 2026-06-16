@@ -52,7 +52,8 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - [DONE] MO1b · `OptionsModal` (SettingsPanel) migrado a `<Modal>`: eliminados su backdrop/Esc/stopPropagation propios; ahora en la capa `--imp-z-modal` (700, sobre overlays de gameplay, bajo confirm). Hereda scroll-lock + focus-trap. (Topic 1)
 - [DONE] MO1c · `DoctrineDraftModal` migrado a `<Modal dismissable={false}>` (elección obligatoria intacta: sin Esc/click-fuera; QW2b respetado). Hereda focus-trap (Tab entre las 3 doctrinas), scroll-lock y ARIA. z-300 → `--imp-z-modal`. (Topic 1)
 - [DONE] MO1d · `TutorialOverlay` migrado a `<Modal>` (dismissable: click-fuera + Esc → finish; antes solo click-fuera). Eliminado su keyframe local (Modal anima el backdrop). z-400 → `--imp-z-modal`. NOTA: `CampaignEventModal` del plan NO existe en esta rama (la investigación se hizo sobre feat/balance-exponencial; esta viene de develop). (Topic 1)
-- [READY] MO1e · Migrar el battle modal `BattleModal.tsx` (clase `.ib-overlay`, z-600 en IterBelliScreen) a `<Modal dismissable={false}>` (flujo forzado de batalla). Cuidado: muy entrelazado con IterBelliScreen; verificar a fondo. (Topic 1) — ÚLTIMO de MO1.
+- [DONE] MO1e · `BattleModal.tsx` migrado a `<Modal dismissable={false}>` (flujo forzado: sin Esc/click-fuera; hereda scroll-lock/focus-trap/ARIA). Backdrop oscuro preservado. Descubierto: `.ib-overlay` lo comparte `EndgameCard` → MO1f. (Topic 1)
+- [READY] MO1f · Migrar `EndgameCard.tsx` (otro usuario de `.ib-overlay`) a `<Modal>`; luego se puede retirar la clase `.ib-overlay` de IterBelliScreen. ÚLTIMO de MO1. (Topic 1)
 
 ### Fase 4 — Dificultad
 - [READY] DF1 · Multiplicador global de dificultad: capa ×factor sobre soldados enemigos / mult de stats / % atrición / victoryGold, con Normal = ×1. Selector. Validar con `tools/sim-playthrough.ts` que cada nivel cae en su banda. Deltas en centenas. (Topic 10)
@@ -81,3 +82,4 @@ shippeable por disparo. Commit + push automático tras cada paso verde.
 - MO1b DONE — OptionsModal/SettingsPanel migrado a Modal (capa por token, sin backdrop/Esc propios). tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
 - MO1c DONE — DoctrineDraftModal migrado a Modal con dismissable={false} (forzado, QW2b respetado). tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
 - MO1d DONE — TutorialOverlay migrado a Modal (saltable: click-fuera + Esc). CampaignEventModal del plan no existe en develop. Battle modal queda como MO1e. tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
+- MO1e DONE — BattleModal migrado a Modal (dismissable={false}, flujo de batalla forzado). .ib-overlay aún lo usa EndgameCard → MO1f. tsc+verify(18/18)+build verde. Reporte (Topic 1) sincronizado.
