@@ -7,7 +7,7 @@ Estado por vuelta — particionado para que cada vuelta sea acotada y completabl
 
 ## Plan
 - **V1 — Title / Commander / App router / Forum shell + Overview** ✅
-- **V2 — Provinciae / Consilium / Exercitus** ⏳
+- **V2 — Provinciae / Consilium / Exercitus** ✅
 - **V3 — Doctrinae / Decreta / DoctrineDraftModal / TutorialOverlay + Iter Belli (IterBelliScreen, OperationCard, CampaignLog, CampaignResourceBar, Itinerary)** ⏳
 - **V4 — Batalla (BattleModal + battle/*, DeploymentPanel, OrderBar, CenterTrack, ArmyStatus, DecretaBar, BattleCanvas) + EndgameCard + transversal (recursos/save)** ⏳
 
@@ -22,3 +22,15 @@ Descartados (falsos positivos / edge cases especulativos, sin cambio):
 - `App.tsx` bootResuming + arrow-keys race — edge cases no probados; el "fix" cambiaría comportamiento sin bug demostrado.
 
 Commit: ver `fix(ui): V1 bug sweep`.
+
+## V2 — hallazgos y veredicto
+Consilium: **sin bugs** (hire/dismiss/afford/effects verificados correctos).
+
+Corregidos (alta confianza, ProvinciaeTab.tsx):
+- `getNetGoldIncome` omitía `uniqueFeature.goldPerSeason` → el ledger/admin subestimaba el ingreso neto vs el tick real (`getProvinceIncome` sí lo suma). Añadido `featureGold` antes del multiplicador de gobernador, replicando la fórmula exacta.
+- Auto-select de provincia escribía `selectedProvinceId.value` **durante el render** → movido a `useEffect([selected?.id])`.
+
+Descartados (verificados, sin cambio):
+- Bar acumulador de población (`(accumPct/barRef)*100`): correcto para "progreso hacia el siguiente punto de pob." (1 unidad = 1/barRef del ancho); el fix propuesto sobrellenaría. (Overflow cosmético solo en pop≥10, no se toca.)
+- Exercitus `healIndex` "stale closure": en Preact+signals, mutar el roster re-renderiza y regenera handlers con índice fresco → no hay closure stale real.
+- Exercitus `maxBuyable`/`ammoBuyable` ignoran descuento de tienda: bug real pero estrecho (solo con doctrina shop-discount) y el cálculo exacto con `ceil`+descuento es delicado → diferido para no introducir un cálculo sutil mal.

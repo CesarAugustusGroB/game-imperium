@@ -1313,8 +1313,9 @@ function getNetGoldIncome(province: Province): number {
 
   const subsistence = 1;
   const tradeGoodGold = province.tradeGood ? TRADE_GOOD_DATA[province.tradeGood].flatGold : 0;
+  const featureGold = province.uniqueFeature?.goldPerSeason ?? 0;
 
-  let goldTotal = taxRevenue + buildingGold + subsistence + tradeGoodGold;
+  let goldTotal = taxRevenue + buildingGold + subsistence + tradeGoodGold + featureGold;
   for (const trait of traits) {
     if (trait.type === 'income-bonus' && trait.resource === 'gold') {
       goldTotal = Math.floor(goldTotal * (1 + trait.percent / 100));
@@ -2791,12 +2792,16 @@ export function ProvinciaeTab() {
   const accent = faction ? FACTION_COLORS[faction] : 'var(--color-gold-primary)';
   const allProvinces = provinces.value;
 
-  // Auto-select first province if none selected or selected doesn't exist
+  // Auto-select first province if none selected or selected doesn't exist.
   const selectedId = selectedProvinceId.value;
   const selected = allProvinces.find(p => p.id === selectedId) ?? allProvinces[0] ?? null;
-  if (selected && selectedId !== selected.id) {
-    selectedProvinceId.value = selected.id;
-  }
+  // Sync the persisted selection in an effect — writing a signal during render
+  // schedules an extra render and can warn under @preact/signals.
+  useEffect(() => {
+    if (selected && selectedProvinceId.value !== selected.id) {
+      selectedProvinceId.value = selected.id;
+    }
+  }, [selected?.id]);
 
   // Empire-wide aggregates for header
   const totalPop = allProvinces.reduce((s, p) => s + p.population, 0);
