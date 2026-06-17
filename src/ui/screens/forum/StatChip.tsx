@@ -18,7 +18,7 @@ interface StatChipProps {
 
 export function StatChip({ r, accent = '#d4a843' }: StatChipProps) {
   const deltaColor = (r.delta ?? 0) >= 0 ? '#7a9a6a' : '#c24a3a';
-  const sign = (r.delta ?? 0) >= 0 ? '+' : '';
+  const sign = (r.delta ?? 0) > 0 ? '+' : '';
   const valueLabel = typeof r.value === 'number' ? r.value.toLocaleString() : r.value;
   const chip = (
     <div

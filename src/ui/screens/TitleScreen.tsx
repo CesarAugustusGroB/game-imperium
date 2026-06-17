@@ -607,11 +607,14 @@ export function TitleScreen() {
     if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
   }, []);
 
+  const continuingRef = useRef(false);
   const canContinue = hasActiveRunSave();
 
   async function handleContinue() {
+    if (continuingRef.current) return;
+    continuingRef.current = true;
     const restored = await restoreActiveRun();
-    if (!restored) return;
+    if (!restored) { continuingRef.current = false; return; }
     navigateTo('forum');
   }
 

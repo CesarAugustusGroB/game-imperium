@@ -361,7 +361,7 @@ export function Sidebar({ accent = '#d4a843' }: SidebarProps) {
 
       {/* Collapse toggle */}
       <button
-        onClick={() => { sidebarCollapsed.value = !collapsed; }}
+        onClick={() => { sidebarCollapsed.value = !sidebarCollapsed.value; }}
         title={collapsed ? 'Expand' : 'Collapse'}
         style={{
           display: 'flex', alignItems: 'center',
