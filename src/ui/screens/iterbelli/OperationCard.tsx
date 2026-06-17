@@ -1,5 +1,5 @@
 import { CATEGORIES } from '../../../data/iter-belli-locations';
-import { currentLocation } from '../../../game/iterBelli/iter-belli-state';
+import { currentLocation, effectiveCardCost } from '../../../game/iterBelli/iter-belli-state';
 import type { CardEffects, CardInstance, IterBelliState, OperationCard as Card } from '../../../game/iterBelli/iter-belli-types';
 import { isCrisisDef } from '../../../game/iterBelli/iter-belli-types';
 import { GameIcon } from '../../components/GameIcon';
@@ -84,7 +84,7 @@ export function OperationCard({ card, state, onPlay }: Props) {
   const isCommitment = opCard.cardType === 'compromiso';
   const isGamble = opCard.cardType === 'arriesgada';
   const isQuest = !!opCard.questId;
-  const cost = opCard.cost ?? {};
+  const cost = effectiveCardCost(opCard);
 
   let canPlay = true;
   if (cost.gold && state.gold < cost.gold) canPlay = false;

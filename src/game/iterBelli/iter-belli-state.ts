@@ -273,14 +273,12 @@ function applyEffects(eff: CardEffects): boolean {
 
 // ── Public actions ───────────────────────────────────────────────────────────
 
-export function playCard(instanceId: number): void {
-  if (S.finished || S.phase !== 'campaign') return;
-  const card = S.pool.find((c) => c.instanceId === instanceId);
-  if (!card || isCrisisDef(card.def)) return;
-  const def = card.def;
-  tallyCardPlayed(); // telemetry (plan S-J)
-
-  // Effective cost = base cost + doctrine cost deltas (discounts), clamped ≥ 0.
+/**
+ * Effective cost of a card = base cost + doctrine cost deltas (discounts), clamped ≥ 0.
+ * Exported so the card UI gates affordability and shows the SAME cost that playCard charges
+ * (otherwise a doctrine-discounted card looks unaffordable and can't be played).
+ */
+export function effectiveCardCost(def: OperationCard): CardCost {
   const cost: CardCost = { ...(def.cost ?? {}) };
   for (const m of S.doctrineModifiers) {
     if (!m.costDelta) continue;
@@ -294,6 +292,19 @@ export function playCard(instanceId: number): void {
   if (cost.gold != null) cost.gold = Math.max(0, cost.gold);
   if (cost.supplies != null) cost.supplies = Math.max(0, cost.supplies);
   if (cost.iuniores != null) cost.iuniores = Math.max(0, cost.iuniores);
+  return cost;
+}
+
+export function playCard(instanceId: number): void {
+  if (S.finished || S.phase !== 'campaign') return;
+  const card = S.pool.find((c) => c.instanceId === instanceId);
+  if (!card || isCrisisDef(card.def)) return;
+  const def = card.def;
+  tallyCardPlayed(); // telemetry (plan S-J)
+
+  // Effective cost = base + doctrine cost deltas (discounts), clamped ≥ 0.
+  // Shared with the card UI (effectiveCardCost) so charge and display never diverge.
+  const cost = effectiveCardCost(def);
   // Costs apply regardless of gamble outcome.
   applyChange('supplies', -(cost.supplies ?? 0));
   applyChange('gold', -(cost.gold ?? 0));

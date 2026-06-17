@@ -8,7 +8,7 @@ Estado por vuelta — particionado para que cada vuelta sea acotada y completabl
 ## Plan
 - **V1 — Title / Commander / App router / Forum shell + Overview** ✅
 - **V2 — Provinciae / Consilium / Exercitus** ✅
-- **V3 — Doctrinae / Decreta / DoctrineDraftModal / TutorialOverlay + Iter Belli (IterBelliScreen, OperationCard, CampaignLog, CampaignResourceBar, Itinerary)** ⏳
+- **V3 — Doctrinae / Decreta / DoctrineDraftModal / TutorialOverlay + Iter Belli (IterBelliScreen, OperationCard, CampaignLog, CampaignResourceBar, Itinerary)** ✅
 - **V4 — Batalla (BattleModal + battle/*, DeploymentPanel, OrderBar, CenterTrack, ArmyStatus, DecretaBar, BattleCanvas) + EndgameCard + transversal (recursos/save)** ⏳
 
 ## V1 — hallazgos y veredicto
@@ -34,3 +34,14 @@ Descartados (verificados, sin cambio):
 - Bar acumulador de población (`(accumPct/barRef)*100`): correcto para "progreso hacia el siguiente punto de pob." (1 unidad = 1/barRef del ancho); el fix propuesto sobrellenaría. (Overflow cosmético solo en pop≥10, no se toca.)
 - Exercitus `healIndex` "stale closure": en Preact+signals, mutar el roster re-renderiza y regenera handlers con índice fresco → no hay closure stale real.
 - Exercitus `maxBuyable`/`ammoBuyable` ignoran descuento de tienda: bug real pero estrecho (solo con doctrina shop-discount) y el cálculo exacto con `ceil`+descuento es delicado → diferido para no introducir un cálculo sutil mal.
+
+## V3 — hallazgos y veredicto
+Doctrinae/Decreta: **sin bugs** (equip/upgrade/cast/sell/afford verificados; coste mostrado == coste cobrado vía la misma `getUpgradeCost`).
+
+Corregido (alta confianza):
+- **OperationCard mostraba/chequeaba el costo CRUDO**, pero `playCard` aplica `costDelta` de doctrinas (la doctrina azul descuenta oro en cartas de Diplomacia) y clampa ≥0 → una carta con descuento se veía gris/injugable y mostraba el coste sin descuento. Fix a prueba de divergencias: extraído `effectiveCardCost(def)` exportado desde `iter-belli-state.ts`, usado por `playCard` (cobro) Y `OperationCard` (afford + filas de coste).
+
+Descartados (verificados, sin cambio):
+- `CampaignResourceBar` timer sin cleanup: intencional (comentado), id-guard hace inocuo el timer stale, Preact tolera setState post-unmount y los timers se autoexpiran en 1700ms (no se acumulan). Cleanup ingenuo cortaría el flash → no se toca.
+- `DoctrineDraftModal d.levels[0]`: `levels` es `TierTuple` (3) garantizado por el tipo y los datos → no es bug, sería guardia defensiva.
+- `CampaignLog` key por índice: log append-only → seguro hoy (el agente mismo lo bajó del umbral).
