@@ -27,7 +27,7 @@ export const DECRETUM_MARS: Decretum = {
   description: 'Invoke the god of war. All units deal +60% damage this battle.',
   effect: { type: 'buff', stat: 'atk', multiplier: 0.6, duration: 'battle' },
   rarity: 'legendary',
-  castCost: { iuniores: 2 },
+  castCost: { iuniores: 200 },
 };
 
 // ── Blue (Diplomatic) — 3 scrolls ──
@@ -45,8 +45,8 @@ export const DECRETUM_SENATE: Decretum = {
   id: 'decretum_senate',
   name: 'Decretum of the Senate',
   color: 'blue',
-  description: 'A decree from the Senate floor. Gain 3 Gold immediately.',
-  effect: { type: 'resource-gain', resource: 'gold', amount: 3 },
+  description: 'A decree from the Senate floor. Gain 30 Gold immediately.',
+  effect: { type: 'resource-gain', resource: 'gold', amount: 30 },
   rarity: 'common',
 };
 
@@ -86,7 +86,7 @@ export const DECRETUM_ORACLE: Decretum = {
   description: 'Fate itself intervenes — prevent the next unit death this battle.',
   effect: { type: 'prevent-death', count: 1 },
   rarity: 'legendary',
-  castCost: { gold: 1 },
+  castCost: { gold: 10 },
 };
 
 // ── Purple (Economic) — 3 scrolls ──
@@ -95,8 +95,8 @@ export const DECRETUM_MERCHANT: Decretum = {
   id: 'decretum_merchant',
   name: 'Decretum of the Merchant',
   color: 'purple',
-  description: 'Your trade contacts pay handsomely. Gain 5 Gold immediately.',
-  effect: { type: 'resource-gain', resource: 'gold', amount: 5 },
+  description: 'Your trade contacts pay handsomely. Gain 50 Gold immediately.',
+  effect: { type: 'resource-gain', resource: 'gold', amount: 50 },
   rarity: 'rare',
 };
 
@@ -104,8 +104,8 @@ export const DECRETUM_TAX: Decretum = {
   id: 'decretum_tax',
   name: 'Decretum of the Tax',
   color: 'purple',
-  description: 'Levy emergency taxes. Gain 3 Gold immediately.',
-  effect: { type: 'resource-gain', resource: 'gold', amount: 3 },
+  description: 'Levy emergency taxes. Gain 30 Gold immediately.',
+  effect: { type: 'resource-gain', resource: 'gold', amount: 30 },
   rarity: 'common',
 };
 
@@ -145,7 +145,7 @@ export const DECRETUM_RIOT: Decretum = {
   description: 'Unleash chaos on the battlefield. Deal 1500 area damage — beware friendly fire.',
   effect: { type: 'damage', amount: 1500, target: 'area' },
   rarity: 'legendary',
-  castCost: { iuniores: 1 },
+  castCost: { iuniores: 100 },
 };
 
 // ── Red (Military) — 3 additional scrolls ──
@@ -204,7 +204,7 @@ export const DECRETUM_LEGATUS: Decretum = {
   description: 'Your legate secures favorable terms — advantage on your next 2 rolls, and deserters sap the enemy line (up to 30% of its strength joins yours).',
   effect: { type: 'event-modifier', outcome: 'favorable' },
   rarity: 'legendary',
-  castCost: { gold: 1 },
+  castCost: { gold: 10 },
   extraEffects: [{ type: 'convert-enemy-next-battle', count: 1 }],
 };
 
@@ -224,7 +224,7 @@ export const DECRETUM_PAX: Decretum = {
   description: 'Buy the silence of hostile chiefs. Reduce campaign threat by 2. Castable only while a campaign is underway.',
   effect: { type: 'threat-reduction', amount: 2 },
   rarity: 'rare',
-  castCost: { gold: 2 },
+  castCost: { gold: 20 },
 };
 
 // ── Gold (Religious) — 3 additional scrolls ──
@@ -251,8 +251,8 @@ export const DECRETUM_PIETAS: Decretum = {
   id: 'decretum_pietas',
   name: 'Vow of Pietas',
   color: 'gold',
-  description: 'Sacred devotion swells the ranks. Gain 3 Iuniores immediately.',
-  effect: { type: 'resource-gain', resource: 'iuniores', amount: 3 },
+  description: 'Sacred devotion swells the ranks. Gain 300 Iuniores immediately.',
+  effect: { type: 'resource-gain', resource: 'iuniores', amount: 300 },
   rarity: 'common',
 };
 
@@ -262,8 +262,8 @@ export const DECRETUM_AERARIUM: Decretum = {
   id: 'decretum_aerarium',
   name: 'Edictum Aerarii',
   color: 'purple',
-  description: 'Unlock the treasury reserves. Gain 4 Gold immediately.',
-  effect: { type: 'resource-gain', resource: 'gold', amount: 4 },
+  description: 'Unlock the treasury reserves. Gain 40 Gold immediately.',
+  effect: { type: 'resource-gain', resource: 'gold', amount: 40 },
   rarity: 'common',
 };
 
@@ -280,10 +280,10 @@ export const DECRETUM_CURSUS: Decretum = {
   id: 'decretum_cursus',
   name: 'Cursus Honorum Aureus',
   color: 'purple',
-  description: 'Offices and coin flow freely — gain 10 Gold. Next province investment costs 50% less.',
-  effect: { type: 'resource-gain', resource: 'gold', amount: 10 },
+  description: 'Offices and coin flow freely — gain 100 Gold. Next province investment costs 50% less.',
+  effect: { type: 'resource-gain', resource: 'gold', amount: 100 },
   rarity: 'legendary',
-  castCost: { gold: 1 },
+  castCost: { gold: 10 },
   extraEffects: [{ type: 'investment-discount', percent: 50 }],
 };
 
@@ -314,7 +314,7 @@ export const DECRETUM_TRIUMPHUS: Decretum = {
   description: 'The triumph is declared — the crowd\'s frenzy grants +50% movement and twice spares your legion from falling.',
   effect: { type: 'prevent-death', count: 2 },
   rarity: 'legendary',
-  castCost: { gold: 2 },
+  castCost: { gold: 20 },
   extraEffects: [{ type: 'buff', stat: 'agi', multiplier: 0.5, duration: 'battle' }],
 };
 

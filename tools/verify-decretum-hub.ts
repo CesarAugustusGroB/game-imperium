@@ -124,7 +124,7 @@ check('supplies-gain → campaign-supplies', annona?.kind === 'campaign-supplies
 check('describe campaign-threat', describeHubEffect({ kind: 'campaign-threat', amount: 2 }).includes('2'));
 check('describe campaign-supplies', describeHubEffect({ kind: 'campaign-supplies', amount: 6 }).includes('6'));
 
-addResource('gold', 10); // ensure castCost is affordable so only the campaign gate decides
+addResource('gold', 30); // ensure castCost is affordable so only the campaign gate decides
 check('Annona Militaris NOT castable without active campaign', !isCastableAtHub(DECRETUM_ANNONA_MILITARIS, 'white'));
 check('Pax Empta NOT castable without active campaign', !isCastableAtHub(DECRETUM_PAX, 'white'));
 decretumHand.value = [DECRETUM_PAX];
@@ -139,7 +139,7 @@ const threatBefore = iterBelliState.value.threat;
 const paxGoldBefore = getResource('gold');
 check('cast Pax Empta returns true', castDecretumAtHub(DECRETUM_PAX.id) === true);
 check('Pax Empta reduced threat by 2 (clamped ≥0)', iterBelliState.value.threat === Math.max(0, threatBefore - 2));
-check('Pax Empta paid 2 gold', getResource('gold') === paxGoldBefore - 2);
+check('Pax Empta paid 20 gold', getResource('gold') === paxGoldBefore - 20);
 check('Pax Empta consumed the scroll', decretumHand.value.length === 0);
 
 const suppliesBefore = iterBelliState.value.supplies;
