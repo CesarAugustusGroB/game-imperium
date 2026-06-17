@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { Modal } from '../../components/Modal';
-import { OrnateFrame } from '../../components/OrnateFrame';
 import { playSfx } from '../../sound/sfx';
 import { iterBelliState, applyBattleOutcome } from '../../../game/iterBelli/iter-belli-state';
 import { veteranStacks } from '../../../game/core/game-state';
@@ -93,10 +92,12 @@ export function BattleModal() {
 
   return (
     // The decisive battle is a forced flow (resolve it, then Continue) — no
-    // Escape / backdrop dismiss. Modal adds scroll-lock, focus-trap and dialog
-    // ARIA; the dark battle backdrop is preserved.
-    <Modal open onClose={() => {}} dismissable={false} label="Decisive battle" backdrop="rgba(0,0,0,0.62)">
-      <OrnateFrame width="min(960px, 96vw)" padding="compact" style={{ maxHeight: '94vh', overflow: 'auto' }}>
+    // Escape / backdrop dismiss. Modal still supplies scroll-lock, focus-trap and
+    // dialog ARIA; here it renders full-screen (padding:0, no centered card) so the
+    // battle fills the entire viewport instead of a 960px window.
+    <Modal open onClose={() => {}} dismissable={false} label="Decisive battle" backdrop="#07050a" style={{ padding: 0 }}>
+      <div class="ib-bm-screen">
+        <div class="ib-bm-screen-inner">
         {s.phase === 'deployment' ? (
           <DeploymentPanel />
         ) : (
@@ -123,7 +124,8 @@ export function BattleModal() {
             </div>
           </>
         )}
-      </OrnateFrame>
+        </div>
+      </div>
     </Modal>
   );
 }

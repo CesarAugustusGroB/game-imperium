@@ -156,6 +156,9 @@ if (typeof document !== 'undefined') {
   .ib-section-title { font-family: var(--imp-font-display); font-size: var(--imp-text-lg); letter-spacing: var(--imp-title-letter); text-transform: uppercase; color: var(--imp-gold-hi); margin-bottom: 8px; }
 
   /* ── Battle modal ── */
+  /* Full-screen battle: fills the viewport instead of a centered 960px card. */
+  .ib-bm-screen { width: 100vw; height: 100dvh; overflow-y: auto; background: radial-gradient(circle at 50% -10%, rgba(46,34,70,0.5), transparent 55%), #07050a; }
+  .ib-bm-screen-inner { width: min(1480px, 94vw); margin: 0 auto; padding: clamp(18px, 3.5vh, 40px) clamp(12px, 2.4vw, 28px); box-sizing: border-box; }
   .ib-bm-arena { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: stretch; margin-bottom: 14px; }
   @media (max-width: 640px) { .ib-bm-arena { grid-template-columns: 1fr; } }
   .ib-bm-army { background: var(--imp-panel); border: 1px solid var(--imp-gold-faint); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; gap: 6px; }
@@ -223,7 +226,7 @@ if (typeof document !== 'undefined') {
   .ib-end-stats > div { display: flex; justify-content: space-between; border-bottom: 1px solid var(--imp-gold-faint); padding-bottom: 3px; }
   .ib-end-stats span { color: var(--imp-text-mid); }
   .ib-end-stats strong { color: var(--imp-text-hi); font-family: var(--imp-font-mono); }
-  .ib-bm-canvas { display:block; width:100%; height:300px; background:#07050a; border:1px solid var(--imp-gold-faint); border-radius: var(--radius-sm); margin-bottom: 12px; }
+  .ib-bm-canvas { display:block; width:100%; height: clamp(300px, 40vh, 540px); background:#07050a; border:1px solid var(--imp-gold-faint); border-radius: var(--radius-sm); margin-bottom: 12px; }
   .ib-bm-deploy { padding: 6px 2px 2px; }
   .ib-bm-forms { display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:10px; }
   .ib-bm-form { text-align:left; padding:12px; border-radius:3px; cursor:pointer; background: var(--imp-panel-soft); border:1px solid var(--imp-gold-dim); border-left:3px solid var(--imp-gold); color: var(--imp-text); }
