@@ -18,14 +18,15 @@ export function BattleCanvas({ state, round, lastOrders, lastLosses }: Props) {
   useEffect(() => {
     if (!ref.current) return;
     const fx = createBattleFx(ref.current);
-    fxRef.current = fx; fx.resize(); fx.start();
+    fxRef.current = fx; fx.setState(state); fx.resize(); fx.start();
     const onResize = () => fx.resize();
     addEventListener('resize', onResize);
     return () => { removeEventListener('resize', onResize); fx.stop(); };
   }, []);
 
-  // Keep the FX engine pointed at the latest battle state.
-  fxRef.current?.setState(state);
+  // Keep the FX engine pointed at the latest battle state — in an effect, not the
+  // render body, so the first mount's state isn't dropped before fxRef is populated.
+  useEffect(() => { fxRef.current?.setState(state); }, [state]);
 
   // Fire visual effects once per new round.
   useEffect(() => {

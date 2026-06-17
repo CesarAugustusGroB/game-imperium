@@ -23,7 +23,13 @@ function orderChips(o: OrderDef, you: BattleArmy, S: BattleState): { text: strin
     const dmg = expectedOrderDamage(S, you, S.enemy, o);
     if (dmg > 0) chips.push({ text: `≈${Math.round(dmg)} daño`, tone: 'good' });
   }
-  if (o.check) chips.push({ text: `prueba: dado + mov ${you.stats.movement} ≥ ${o.check}` });
+  if (o.check) {
+    // Retreat needs check + 6 when encircled (see resolver.ts) — surface the real
+    // threshold so an encircled player isn't misled by the base number.
+    const encircledRetreat = o.effect === 'retreat' && you.encircled;
+    const need = o.check + (encircledRetreat ? 6 : 0);
+    chips.push({ text: `prueba: dado + mov ${you.stats.movement} ≥ ${need}${encircledRetreat ? ' (encerclado)' : ''}`, tone: encircledRetreat ? 'warn' : undefined });
+  }
   if (o.ammo) chips.push({ text: `−${o.ammo} munición`, tone: you.ammo < o.ammo ? 'bad' : 'warn' });
   if (o.sMorale) chips.push({ text: `${o.sMorale > 0 ? '+' : ''}${o.sMorale} moral propia`, tone: o.sMorale > 0 ? 'good' : 'bad' });
   if (o.drums) chips.push({ text: '+moral sostenida', tone: 'good' });
